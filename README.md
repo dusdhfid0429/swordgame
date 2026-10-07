@@ -1,0 +1,43 @@
+# 강호윤회록
+
+신영웅문의 시스템을 옮겨 만든 쿼터뷰 무협 브라우저 게임입니다. 엔진 없이 canvas 한 장으로 돌아가는 단일 HTML 파일입니다.
+
+- 공개 버전: https://claude.ai/artifact/CFv5nS6GmLaCen2q9skDvA
+- 그림은 모두 코드로 그렸고, 주인공 스프라이트는 직접 제공한 시트를 base64로 넣었습니다(`src/r_atlas.js`). 신영웅문 원작 에셋은 쓰지 않았습니다.
+
+## 실행
+
+`dist/gangho.html` 을 브라우저로 열면 바로 플레이됩니다. 저장은 브라우저 localStorage(`ganghoyunhoe-save-v1`)에 됩니다.
+
+## 수정 후 빌드
+
+```
+python3 build.py        # src/ 조각을 이어 dist/gangho.html 생성
+```
+
+`src/` 파일은 한 스크립트로 이어 붙여지므로 전역 이름이 겹치지 않게 주의하세요. 순서는 `build.py` 의 `PARTS` 에 있습니다.
+
+## 테스트
+
+```
+npm i -D playwright && npx playwright install chromium
+node tests/t2.js        # 전 시스템 자동 플레이, tests/shots/ 에 스크린샷
+```
+
+## 파일 구성
+
+| 파일 | 내용 |
+|---|---|
+| `g_head.html` | CSS, 화면 DOM, 하단 패널 |
+| `g_data.js` | 근골·신분·무기·오행·무공 생성·몬스터·직업·레시피 등 데이터 |
+| `g_core.js` | 캐릭터 상태, 아이템, 전투 계산, 초식/연속기/필살기, 내공 수련, 길들이기 |
+| `g_world.js` | 맵 생성(개봉 마을, 동굴, 산채, 농지, 집터), 좌표 변환, 바닥 굽기 |
+| `g_life.js` | 갱신 루프, 이동/길찾기, 몹 AI, 상호작용, 농사·제작, 해 넘김, 죽음·윤회, 비무, 저장 |
+| `g_ui.js` | 로그, HUD, 스킬 바, 각종 창(K/B/I/P/L/H), 상점·NPC 대화 |
+| `g_screens.js` | 타이틀, 캐릭터 생성, 환생 화면, 입력 처리 |
+| `g_draw.js` | 그리기(날씨·계절·동굴 어둠), NPC·짐승·말, 미니맵, 메인 루프 |
+| `r_*.js` | 이전 프로토타입 「흑풍채 토벌기」에서 가져와 고친 엔진 조각(초식 실행, 이펙트, 건물, 캐릭터 그리기) |
+
+## 조작
+
+클릭 이동·공격 / 초식 Q A Z E D C (넘버패드 7 4 1 9 6 3) / 필살기 S / 특수무공 1~3 / 신공 V / 물약 4~5 / 경공 Space / 운기 X / 창 K B I P L H / Esc 닫기
