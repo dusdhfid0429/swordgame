@@ -115,6 +115,48 @@ function drawFx2(f){
     ctx.strokeStyle=`rgba(255,80,60,${.5+.4*Math.sin(time*25)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,rx,ry,0,0,7);ctx.stroke();return}
   drawFx(f);
 }
+// ================= 운기조식: 주변의 기운이 소용돌이치며 몸으로 빨려든다 =================
+// 기운 한 줄기는 몸 둘레 바깥에서 생겨 나선을 그리며 점점 빨라지고, 단전(몸 가운데)에 닿으면 사라진다.
+// 닿을 때마다 몸의 빛이 조금씩 밝아진다. 정파는 금빛·푸른빛, 사파는 붉은빛·보랏빛.
+const MED={k:0,parts:[],lt:0,pulse:0,spin:0};
+function medSpawn(){const r0=50+Math.random()*60;return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
+  h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0}}
+function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
+  MED.k=clamp(MED.k+(P.medit&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
+  if(MED.k<=0){MED.parts.length=0;return}
+  const want=Math.round(54*MED.k);while(MED.parts.length<want)MED.parts.push(medSpawn());
+  for(const q of MED.parts){const near=1-q.r/q.r0;q.v+=dt*(50+220*near*near);q.r-=q.v*dt;q.a+=q.w*dt*(1+near*3);q.life+=dt;
+    if(q.r<4){MED.pulse=Math.min(1,MED.pulse+.07);if(MED.parts.length>want)q.dead=1;else Object.assign(q,medSpawn())}}
+  MED.parts=MED.parts.filter(q=>!q.dead)}
+function medPos(q,r,a,c){return[c.x+Math.cos(a)*r,c.y+Math.sin(a)*r*.48+q.h*(r/q.r0)]}
+function drawMedit(front){
+  if(!front)medTick();if(MED.k<=0)return;
+  const p=toScreen(P.x,P.y),k=MED.k,col=P.side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255'],c={x:p.x,y:p.y-30};
+  ctx.save();
+  if(!front){
+    // 발밑: 천천히 도는 두 겹의 기운 고리
+    for(const[rr,dir,al]of[[30,1,.7],[44,-1,.4]]){ctx.strokeStyle=`rgba(${col[0]},${al*k})`;ctx.lineWidth=1.8;ctx.setLineDash([7,5]);ctx.lineDashOffset=-MED.spin*14*dir;
+      ctx.beginPath();ctx.ellipse(p.x,p.y,rr*k,rr*.5*k,0,0,7);ctx.stroke()}
+    ctx.setLineDash([]);
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,40*k);g.addColorStop(0,`rgba(${col[0]},${.22*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(p.x,p.y,40*k,20*k,0,0,7);ctx.fill();
+  }else{
+    // 기운 줄기: 지나온 나선을 꼬리로 남기며 단전으로. 색이 바래지 않게 줄기는 보통 합성, 머리만 밝게 더한다.
+    ctx.globalCompositeOperation='source-over';
+    for(const q of MED.parts){const near=1-q.r/q.r0,al=Math.min(1,q.life*3)*k*(.45+.55*near),cc=col[q.c],sw=q.w*(1+near*3);
+      const pts=[];for(let j=0;j<7;j++)pts.push(medPos(q,q.r+q.v*.035*j,q.a-sw*.035*j,c));
+      const[hx,hy]=pts[0],[ex,ey]=pts[6],gr=ctx.createLinearGradient(ex,ey,hx,hy);gr.addColorStop(0,`rgba(${cc},0)`);gr.addColorStop(1,`rgba(${cc},${al})`);
+      ctx.strokeStyle=gr;ctx.lineWidth=q.s;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(ex,ey);for(let j=5;j>=0;j--)ctx.lineTo(pts[j][0],pts[j][1]);ctx.stroke()}
+    ctx.globalCompositeOperation='lighter';
+    for(const q of MED.parts){const near=1-q.r/q.r0,al=Math.min(1,q.life*3)*k*(.3+.7*near),[x,y]=medPos(q,q.r,q.a,c);
+      ctx.fillStyle=`rgba(${col[q.c]},${al*.5})`;ctx.beginPath();ctx.arc(x,y,q.s*.9,0,7);ctx.fill()}
+    // 단전의 빛: 기운이 닿을수록 밝아진다
+    ctx.globalCompositeOperation='lighter';const pr=18+12*MED.pulse+2*Math.sin(time*5),g=ctx.createRadialGradient(c.x,c.y+6,0,c.x,c.y+6,pr*1.8);
+    g.addColorStop(0,`rgba(255,250,230,${(.25+.35*MED.pulse)*k})`);g.addColorStop(.4,`rgba(${col[0]},${(.18+.25*MED.pulse)*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
+    ctx.fillStyle=g;ctx.fillRect(c.x-pr*1.8,c.y+6-pr*1.8,pr*3.6,pr*3.6);
+  }
+  ctx.restore();
+}
 // ================= frame =================
 function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 const NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
@@ -153,7 +195,7 @@ function draw(){
   if(P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
-  if(P.hp>0)list.push({d:P.x+P.y,f:()=>{if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true)}});
+  if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1)}});
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
   list.sort((a,b)=>a.d-b.d).forEach(o=>o.f());
   // weather
