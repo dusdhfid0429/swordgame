@@ -74,6 +74,9 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .card h3,.card h4{margin:0;font-family:var(--display);font-weight:400;font-size:17px}
 .card h4{font-size:15px}
 .card p,.note{margin:0;font-size:12px;color:var(--paper-dim);line-height:1.5}
+.wnote{position:sticky;top:34px;z-index:1;margin:0;padding:7px 10px;font-size:13px;background:#0b0a09f2;border:1px solid var(--bronze);color:#9db8e0}
+.wnote.xp{color:var(--good)}.wnote.sys{color:#e8d9a8}.wnote.dmg{color:var(--bad)}
+.win,.screen{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
@@ -170,7 +173,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
       <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div></div>
     <div class="chan" id="chan" hidden><span id="chant"></span><i id="chanb"></i></div>
     <div class="banner"><div id="banner"></div></div>
-    <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><div id="wbody" style="display:grid;gap:10px"></div></div>
+    <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><p class="wnote" id="wnote" hidden role="status"></p><div id="wbody" style="display:grid;gap:10px"></div></div>
     <div class="screen" id="scr" hidden><div class="box" id="scrbox"></div></div>
   </div>
   <div class="panel">
@@ -529,15 +532,22 @@ const addMat=(k,n=1)=>{P.mats[k]=(P.mats[k]||0)+n};
 const hasMats=need=>Object.entries(need).every(([k,n])=>(P.mats[k]||0)>=n);
 const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
+// why a book can't be read right now, or null if it can
+function readBlock(it){
+  if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
+  if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
+  const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
+  if(a.side!==P.side)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
+  if(!s&&learnedArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
+  if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
+  if(P.vit<f.cost)return `활력이 부족합니다. (필요 ${f.cost}, 지금 ${P.vit})`;
+  return null}
 function readBook(it){
-  if(it.slot==='sbook'){if(P.sp[it.sk]){log('이미 익힌 특수무공입니다.','info');return}P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
-  if(it.slot==='tbook'){const j=P.jobs[it.job];if(j.on){log('이미 익힌 기술입니다.','info');return}j.on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
-  const a=ARTS[it.art],f=a.forms[it.form];
-  if(a.side!==P.side){log(`${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다.`,'info');return}
-  if(!A(a.id)&&learnedArts().length>=artCap()){log(`오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`,'info');return}
-  const s=A(a.id);if(s&&s.f[it.form]){log('이미 익힌 초식입니다.','info');return}
-  if((s?s.p:0)<f.req){log(`[${f.n}]은(는) ${a.n} 숙련도 ${f.req}이 필요합니다. (지금 ${Math.floor(s?s.p:0)})`,'info');return}
-  if(P.vit<f.cost){log(`활력이 부족합니다. (필요 ${f.cost})`,'info');return}
+  const no=readBlock(it);if(no){log(no,'info');return}
+  if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
+  if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
+  const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   P.vit-=f.cost;if(!s)P.arts[a.id]={p:0,f:a.forms.map(()=>false)};P.arts[a.id].f[it.form]=true;P.bag.splice(P.bag.indexOf(it),1);
   log(`${a.n}의 [${f.n}]을(를) 익혔습니다. (활력 -${f.cost})`,'xp');
   if(allLearned(a.id))log(`${a.n}의 모든 초식을 익혀 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다. (S / 키패드 5)`,'xp');
@@ -1320,7 +1330,9 @@ const logEl=$('log');
 const DIGF=[21,8,0,16,0,0,1,8,8,0];
 function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이\(가\)|은\(는\)|와\(과\)|\(으\)로)/g,(m,ch,tag,j)=>{const f=/[0-9]/.test(ch)?DIGF[+ch]:(ch.charCodeAt(0)-0xAC00)%28;tag=tag||'';
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
-function log(t,c){const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
+function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
+let noteT;
+function winNote(t,c){const w=$('wnote');if(!w||$('win').hidden)return;w.textContent=josa(t);w.className='wnote '+(c||'');w.hidden=false;clearTimeout(noteT);noteT=setTimeout(()=>w.hidden=true,3500)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
@@ -1380,7 +1392,7 @@ let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
 function openPanel(id,arg){if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
-function closePanels(){panel=null;$('win').hidden=true;if(playing)paused=false}
+function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
@@ -1419,7 +1431,7 @@ function pBag(){
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
   const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook';
-    return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span></div>
+    return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
   return `<div class="eqs">${eq}</div><div class="list">${bag}</div><h4 style="margin:0;font-family:var(--display);font-weight:400">재료와 소모품</h4><div class="mats">${mats}</div>

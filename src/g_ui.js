@@ -5,7 +5,9 @@ const logEl=$('log');
 const DIGF=[21,8,0,16,0,0,1,8,8,0];
 function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이\(가\)|은\(는\)|와\(과\)|\(으\)로)/g,(m,ch,tag,j)=>{const f=/[0-9]/.test(ch)?DIGF[+ch]:(ch.charCodeAt(0)-0xAC00)%28;tag=tag||'';
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
-function log(t,c){const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
+function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
+let noteT;
+function winNote(t,c){const w=$('wnote');if(!w||$('win').hidden)return;w.textContent=josa(t);w.className='wnote '+(c||'');w.hidden=false;clearTimeout(noteT);noteT=setTimeout(()=>w.hidden=true,3500)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
@@ -65,7 +67,7 @@ let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
 function openPanel(id,arg){if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
-function closePanels(){panel=null;$('win').hidden=true;if(playing)paused=false}
+function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
@@ -104,7 +106,7 @@ function pBag(){
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
   const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook';
-    return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span></div>
+    return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
   return `<div class="eqs">${eq}</div><div class="list">${bag}</div><h4 style="margin:0;font-family:var(--display);font-weight:400">재료와 소모품</h4><div class="mats">${mats}</div>

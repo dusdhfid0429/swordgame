@@ -55,6 +55,21 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('menu → 인물',await p.evaluate(()=>panel==='char'));
   await p.screenshot({path:shot('m_char')});
   await p.tap('#wx');
+  // 행낭에서 비급 읽기: 못 읽는 비급은 이유가 행낭 안에 보이고, 읽을 수 있는 비급은 탭 한 번에 익힌다
+  await p.evaluate(()=>{const a=art();P.bag.push(mkBook(a.id,a.forms.length-1));const o=Object.values(ARTS).find(x=>x.side!==P.side);P.bag.push(mkBook(o.id,0));
+    const b=Object.values(ARTS).find(x=>x.side===P.side&&x.id!==a.id&&!A(x.id));if(b)P.bag.push(mkBook(b.id,0))});
+  await p.tap('#tmenu');await p.tap('[data-act="open:bag"]');await p.waitForTimeout(200);
+  const reasons=await p.evaluate(()=>[...document.querySelectorAll('#wbody .it .bad')].map(e=>e.textContent));
+  ok(`unreadable books show why (${reasons.length}: ${reasons.join(' / ')})`,reasons.length>=2);
+  const ids=await p.evaluate(()=>P.bag.filter(i=>i.slot==='book').map(i=>({id:i.id,no:readBlock(i)})));
+  const bad=ids.find(i=>i.no),good=ids.find(i=>!i.no);
+  await p.locator(`[data-act="read:${bad.id}"]`).tap();await p.waitForTimeout(150);
+  const note=await p.evaluate(()=>!$('wnote').hidden&&$('wnote').textContent);
+  ok(`tapping an unreadable book shows the reason in the window (${note})`,!!note);
+  await p.screenshot({path:shot('m_bag')});
+  if(good){const n0=await p.evaluate(()=>learnedArts().length);await p.locator(`[data-act="read:${good.id}"]`).tap();await p.waitForTimeout(150);
+    ok('tapping a readable book learns it',await p.evaluate(n0=>learnedArts().length>n0&&!$('wnote').hidden,n0))}
+  await p.tap('#wx');
   // 짧게 톡: 땅을 치면 그리로 걷는다 (조이스틱 영역 안에서도)
   await p.evaluate(()=>{P.x=20.5;P.y=20.5;P.target=null;P.path=null});await p.waitForTimeout(200);
   await p.tap('#joyz',{position:{x:120,y:150}});await p.waitForTimeout(100);

@@ -81,15 +81,22 @@ const addMat=(k,n=1)=>{P.mats[k]=(P.mats[k]||0)+n};
 const hasMats=need=>Object.entries(need).every(([k,n])=>(P.mats[k]||0)>=n);
 const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
+// why a book can't be read right now, or null if it can
+function readBlock(it){
+  if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
+  if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
+  const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
+  if(a.side!==P.side)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
+  if(!s&&learnedArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
+  if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
+  if(P.vit<f.cost)return `활력이 부족합니다. (필요 ${f.cost}, 지금 ${P.vit})`;
+  return null}
 function readBook(it){
-  if(it.slot==='sbook'){if(P.sp[it.sk]){log('이미 익힌 특수무공입니다.','info');return}P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
-  if(it.slot==='tbook'){const j=P.jobs[it.job];if(j.on){log('이미 익힌 기술입니다.','info');return}j.on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
-  const a=ARTS[it.art],f=a.forms[it.form];
-  if(a.side!==P.side){log(`${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다.`,'info');return}
-  if(!A(a.id)&&learnedArts().length>=artCap()){log(`오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`,'info');return}
-  const s=A(a.id);if(s&&s.f[it.form]){log('이미 익힌 초식입니다.','info');return}
-  if((s?s.p:0)<f.req){log(`[${f.n}]은(는) ${a.n} 숙련도 ${f.req}이 필요합니다. (지금 ${Math.floor(s?s.p:0)})`,'info');return}
-  if(P.vit<f.cost){log(`활력이 부족합니다. (필요 ${f.cost})`,'info');return}
+  const no=readBlock(it);if(no){log(no,'info');return}
+  if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
+  if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
+  const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   P.vit-=f.cost;if(!s)P.arts[a.id]={p:0,f:a.forms.map(()=>false)};P.arts[a.id].f[it.form]=true;P.bag.splice(P.bag.indexOf(it),1);
   log(`${a.n}의 [${f.n}]을(를) 익혔습니다. (활력 -${f.cost})`,'xp');
   if(allLearned(a.id))log(`${a.n}의 모든 초식을 익혀 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다. (S / 키패드 5)`,'xp');
