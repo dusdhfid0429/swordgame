@@ -287,7 +287,7 @@ function saveGame(silent){
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride'])delete p[k];
     const data={G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
       plots:plots.map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
-    localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
+    const s=JSON.stringify(data);localStorage.setItem(SAVE_KEY,s);tossSave(s);if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
 function loadGame(){

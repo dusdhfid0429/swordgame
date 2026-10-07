@@ -163,6 +163,20 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
   #tbtns{transform:scale(.82);transform-origin:100% 100%}
   #joyz{height:60%}
 }
+/* ---- 앱인토스: 토스가 오른쪽 위에 ··· 와 X 를 띄우므로 그 줄을 비우고, 안전 영역을 지키고, 세로만 쓴다 ---- */
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+.toss .status{top:calc(var(--sat) + 6px);left:calc(var(--sal) + 8px)}
+.toss #log{top:calc(var(--sat) + 124px);left:calc(var(--sal) + 8px)}
+.toss #mini{top:calc(var(--sat) + 58px);right:calc(var(--sar) + 10px)}
+.toss #tmenu{top:calc(var(--sat) + 58px);right:calc(var(--sar) + 126px)}
+.toss .zone{top:calc(var(--sat) + 126px);right:calc(var(--sar) + 10px)}
+.toss #tbtns{bottom:calc(var(--sab) + 12px);right:calc(var(--sar) + 10px)}
+.toss #joyz{bottom:var(--sab)}
+.toss .win{top:calc(50% + var(--sat)/2);max-height:calc(100% - var(--sat) - var(--sab) - 64px)}
+.toss .screen{padding-top:calc(var(--sat) + 56px);padding-bottom:calc(var(--sab) + 16px)}
+.exitq{position:absolute;inset:0;display:grid;place-items:center;background:#000b;z-index:5;padding:16px}
+.exitq .card{width:min(320px,100%);gap:10px;padding:16px;text-align:center}
+@media (orientation:landscape){.toss #stage::after{content:'휴대폰을 세로로 들어 주세요';position:absolute;inset:0;display:grid;place-items:center;background:#0b0a09f6;font:22px var(--display);color:var(--paper);z-index:9}}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">

@@ -163,6 +163,20 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
   #tbtns{transform:scale(.82);transform-origin:100% 100%}
   #joyz{height:60%}
 }
+/* ---- 앱인토스: 토스가 오른쪽 위에 ··· 와 X 를 띄우므로 그 줄을 비우고, 안전 영역을 지키고, 세로만 쓴다 ---- */
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+.toss .status{top:calc(var(--sat) + 6px);left:calc(var(--sal) + 8px)}
+.toss #log{top:calc(var(--sat) + 124px);left:calc(var(--sal) + 8px)}
+.toss #mini{top:calc(var(--sat) + 58px);right:calc(var(--sar) + 10px)}
+.toss #tmenu{top:calc(var(--sat) + 58px);right:calc(var(--sar) + 126px)}
+.toss .zone{top:calc(var(--sat) + 126px);right:calc(var(--sar) + 10px)}
+.toss #tbtns{bottom:calc(var(--sab) + 12px);right:calc(var(--sar) + 10px)}
+.toss #joyz{bottom:var(--sab)}
+.toss .win{top:calc(50% + var(--sat)/2);max-height:calc(100% - var(--sat) - var(--sab) - 64px)}
+.toss .screen{padding-top:calc(var(--sat) + 56px);padding-bottom:calc(var(--sab) + 16px)}
+.exitq{position:absolute;inset:0;display:grid;place-items:center;background:#000b;z-index:5;padding:16px}
+.exitq .card{width:min(320px,100%);gap:10px;padding:16px;text-align:center}
+@media (orientation:landscape){.toss #stage::after{content:'휴대폰을 세로로 들어 주세요';position:absolute;inset:0;display:grid;place-items:center;background:#0b0a09f6;font:22px var(--display);color:var(--paper);z-index:9}}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">
@@ -1307,7 +1321,7 @@ function saveGame(silent){
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride'])delete p[k];
     const data={G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
       plots:plots.map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
-    localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
+    const s=JSON.stringify(data);localStorage.setItem(SAVE_KEY,s);tossSave(s);if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
 function loadGame(){
@@ -1473,7 +1487,7 @@ function pHelp(){
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·강호사와 질주·기록. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 플레이 90초가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
-  <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
+  ${INTOSS?'':`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
@@ -1580,6 +1594,7 @@ function act(s){
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
     case'ctl':closePanels();setTouch(x==='t');return;
+    case'exit':closePanels();askExit();return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}
@@ -2244,10 +2259,54 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','기본기 · 내공 수련')}${M('open:arts','무공','무공 바꾸기 · 초식')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 의뢰')}${M('open:hist','강호사','지난 생들')}
     ${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
-    ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
+    ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${INTOSS?M('exit','끝내기','진행을 기록하고 나간다'):M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
 }
 let pref=null;try{pref=localStorage.getItem('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
+
+// ================= 앱인토스 (토스 인앱) =================
+// 토스 안에서는 toss/bridge.js 가 SDK를 window.AIT 에 넣고 'ait-ready' 를 쏜다.
+// 브라우저에서는 AIT가 없으니 화면을 내릴 때 멈추는 것 말고는 하는 일이 없다.
+// 주소 끝에 #toss 를 붙이면 토스 화면 배치(상단 버튼 자리, 세로 고정 안내)만 흉내 낸다.
+var INTOSS=false,tossKey=null,tossReady=false;
+const tossSaveKey=()=>SAVE_KEY+(tossKey?':'+tossKey:'');
+// 토스 저장소에도 같은 기록을 남긴다. 사용자 키에 묶여 있어 앱을 지웠다 깔아도 키는 같다.
+function tossSave(s){const sdk=window.AIT;if(!sdk||!sdk.Storage||!tossReady)return;sdk.Storage.setItem(tossSaveKey(),s).catch(()=>{})}
+function tossLayout(){INTOSS=true;document.body.classList.add('toss');if(!TOUCH)setTouch(true);else resize()}
+// 종료 확인 창 (안드로이드 뒤로 가기)
+const EXITQ=document.createElement('div');EXITQ.className='exitq';EXITQ.hidden=true;EXITQ.setAttribute('role','dialog');EXITQ.setAttribute('aria-modal','true');
+EXITQ.innerHTML=`<div class="card"><h3>강호를 떠날까요?</h3><p>지금까지의 진행은 기록해 둡니다.</p><div class="center"><button type="button" class="btn" data-q="stay">계속하기</button><button type="button" class="btn pri" data-q="leave">끝내기</button></div></div>`;
+$('stage').appendChild(EXITQ);
+let exitPaused=false;
+function askExit(){if(!EXITQ.hidden)return;exitPaused=!paused;paused=true;EXITQ.hidden=false}
+function stayIn(){EXITQ.hidden=true;if(exitPaused&&$('win').hidden)paused=false;exitPaused=false}
+EXITQ.addEventListener('click',async e=>{const q=e.target.closest('[data-q]');if(!q)return;
+  if(q.dataset.q==='stay'){stayIn();return}
+  saveGame(true);const sdk=window.AIT;try{if(sdk&&sdk.Screen&&sdk.Screen.close)await sdk.Screen.close();else stayIn()}catch(err){stayIn()}});
+function onBack(){
+  if(!EXITQ.hidden){stayIn();return}
+  if(!$('win').hidden){closePanels();return}
+  askExit()}
+// 화면을 내리면 멈추고 기록한다. 돌아오면 이어서 한다.
+let hidePaused=false;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){if(playing){saveGame(true);if(!paused){paused=true;hidePaused=true}}}
+  else if(hidePaused){hidePaused=false;if($('win').hidden&&EXITQ.hidden)paused=false;last=performance.now()}});
+async function tossInit(){
+  const sdk=window.AIT;if(!sdk||tossInit.done)return;tossInit.done=1;tossLayout();
+  try{if(sdk.Screen&&sdk.Screen.setOrientation)await sdk.Screen.setOrientation({type:'portrait'})}catch(e){}
+  try{const SA=sdk.SafeArea||sdk.SafeAreaInsets;if(SA&&SA.subscribe)SA.subscribe({onEvent:i=>{const r=document.documentElement.style;
+    for(const k of['top','bottom','left','right'])r.setProperty('--sa'+k[0],(i[k]||0)+'px')}})}catch(e){}
+  try{sdk.graniteEvent.addEventListener('backEvent',{onEvent:onBack,onError:()=>{}})}catch(e){}
+  try{const r=await sdk.getUserKeyForGame();if(r&&r.type==='HASH')tossKey=r.hash}catch(e){}
+  // 토스 저장소의 기록이 있으면 그걸 쓴다 (아직 플레이를 시작하지 않았을 때만)
+  try{const s=await sdk.Storage.getItem(tossSaveKey());if(s&&!playing)localStorage.setItem(SAVE_KEY,s)}catch(e){}
+  tossReady=true;
+  if(!playing&&!scrEl.hidden&&box.querySelector('.title'))showTitle();
+}
+addEventListener('ait-ready',tossInit);
+if(window.AIT)setTimeout(tossInit);
+else if(/[?#&]toss/.test(location.href))tossLayout();
 
 // ================= palettes for the cast =================
 Object.assign(PAL,{
