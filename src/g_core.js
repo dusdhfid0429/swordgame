@@ -247,7 +247,7 @@ function special(k){
 function shingong(){
   if(!P.sg.name){log('절세신공을 아직 얻지 못했습니다. 화경에 오른 뒤 우두머리를 쓰러뜨려 열 장을 모으세요.','info');return}
   if(realmIdx()<5||P.fame<200){log('절세신공은 화경을 넘어 명성 200을 얻어야 온전히 쓸 수 있습니다.','info');return}
-  if(P.mode!=='manual'){log('절세신공은 수동초식 상태에서만 펼칠 수 있습니다. (Tab)','info');return}
+  if(P.mode!=='manual'&&!TOUCH){log('절세신공은 수동초식 상태에서만 펼칠 수 있습니다. (Tab)','info');return}
   if(P.scd.신공>0)return;P.scd.신공=5;const n=P.sg.name;showBanner(n,'절세신공');P.flash=.4;P.flashCol='255,215,120';
   if(n==='역천용상비전'){P.buff.ult=5;P.ucd=0}
   else if(n==='사신십삼탈혼')P.buff.crit=5;

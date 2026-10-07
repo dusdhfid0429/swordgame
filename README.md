@@ -22,6 +22,7 @@ python3 build.py        # src/ 조각을 이어 dist/gangho.html 생성
 ```
 npm i -D playwright && npx playwright install chromium
 node tests/t2.js        # 전 시스템 자동 플레이, tests/shots/ 에 스크린샷
+node tests/t3_touch.js  # 휴대폰 화면에서 터치 조작 확인
 ```
 
 ## 파일 구성
@@ -35,9 +36,12 @@ node tests/t2.js        # 전 시스템 자동 플레이, tests/shots/ 에 스�
 | `g_life.js` | 갱신 루프, 이동/길찾기, 몹 AI, 상호작용, 농사·제작, 해 넘김, 죽음·윤회, 비무, 저장 |
 | `g_ui.js` | 로그, HUD, 스킬 바, 각종 창(K/B/I/P/L/H), 상점·NPC 대화 |
 | `g_screens.js` | 타이틀, 캐릭터 생성, 환생 화면, 입력 처리 |
+| `g_touch.js` | 모바일 터치 조작: 조이스틱, 버튼 여섯 개, 메뉴 |
 | `g_draw.js` | 그리기(날씨·계절·동굴 어둠), NPC·짐승·말, 미니맵, 메인 루프 |
 | `r_*.js` | 이전 프로토타입 「흑풍채 토벌기」에서 가져와 고친 엔진 조각(초식 실행, 이펙트, 건물, 캐릭터 그리기) |
 
 ## 조작
 
-클릭 이동·공격 / 초식 Q A Z E D C (넘버패드 7 4 1 9 6 3) / 필살기 S / 특수무공 1~3 / 신공 V / 물약 4~5 / 경공 Space / 운기 X / 창 K B I P L H / Esc 닫기
+휴대폰·태블릿에서는 터치 조작 화면이 자동으로 켜집니다. 왼쪽 아래를 끌어 이동하고, 오른쪽 아래의 공격·필살·경공·비기·약·상황 버튼과 ☰ 메뉴 하나로 모든 것을 합니다. 공격 버튼은 자동초식으로 익힌 초식을 차례로 잇습니다. 조작법 창에서 PC 조작과 서로 바꿀 수 있습니다 (`src/g_touch.js`).
+
+PC: 클릭 이동·공격 / 초식 Q A Z E D C (넘버패드 7 4 1 9 6 3) / 필살기 S / 특수무공 1~3 / 신공 V / 물약 4~5 / 경공 Space / 운기 X / 창 K B I P L H / Esc 닫기

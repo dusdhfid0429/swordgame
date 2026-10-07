@@ -52,6 +52,7 @@ function hud(){
   const g=$('b_신공');g.querySelector('.nm').textContent=P.sg.name?P.sg.name.slice(0,2):'신공';g.classList.toggle('off',!P.sg.name);g.querySelector('.cd').style.height=(P.scd.신공/5*100)+'%';
   for(const k of['금창약','소환단']){const b=$('b_'+k);b.querySelector('.nm').textContent=k;b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('lock',!(P.mats[k]>0))}
   $('b_medit').classList.toggle('used',P.medit);$('b_ridebtn').classList.toggle('off',!allies.some(x=>x.d&&x.d.ride));
+  if(TOUCH)touchHud();
   if(P.chan){$('chan').hidden=false;$('chant').textContent=P.chan.label;$('chanb').style.width=(P.chan.t/P.chan.dur*100)+'%'}else $('chan').hidden=true;
 }
 function plabel(f){
@@ -61,11 +62,11 @@ function plabel(f){
 
 // ================= windows =================
 let panel=null;
-const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법'};
+const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
 function openPanel(id,arg){if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){panel=null;$('win').hidden=true;if(playing)paused=false}
-function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp}[panel];
+function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
@@ -137,6 +138,15 @@ function pHist(){
     ${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');
 }
 function pHelp(){
+  if(TOUCH)return `<div class="help"><p><b>이동</b> 화면 왼쪽 아래를 누른 채 끌면 그쪽으로 걷는다. 사람·적·채집물·땅을 톡 치면 그리로 간다.</p>
+  <p><b>공격</b> 가장 가까운 적과 싸운다. 익힌 초식을 차례로 이어 연속기가 된다. 누르고 있으면 다음 적으로 계속 넘어간다.</p>
+  <p><b>필살</b> 무공의 초식을 모두 익히면 열린다. <b>경공</b> 바라보는 쪽으로 도약해 강과 지붕도 넘는다.</p>
+  <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
+  <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
+  <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
+  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·강호사와 질주·기록. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>나이</b> 플레이 90초가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
+  <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
@@ -146,7 +156,8 @@ function pHelp(){
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 플레이 90초가 1년. 13세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
-  <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>`;
+  <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
+  <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
 // ================= NPC dialogs =================
 const TIPS=['흑풍채 깊숙한 곳에 채주가 산다더군. 3분쯤 지나면 다시 나타나지.','숭산 기슭 동굴에 혈교 놈들이 숨어 있소. 안쪽 상자엔 기연이 잠들어 있다던데.','사파 무공은 일찍 강해지지만 끝에 가서는 정파가 낫다는 말이 있지.','쌀은 비를 좋아하고, 목화는 볕을 좋아하오. 겨울엔 보리만 버티지.','황하 잉어로 끓인 잉어찜은 개봉에서만 맛볼 수 있는 별미요.','말을 길들이면 훨씬 빨리 달릴 수 있소. 남쪽 초원에 야생마가 있지.','오성이 높으면 더 많은 무공을 익히고 숙련도 빨리 오른다더군.','초식은 순서대로 이어 쳐야 추가 공력이 붙소. 끊기면 처음부터요.'];
@@ -237,6 +248,11 @@ function act(s){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(`${ARTS[x].cls}을(를) 장착해야 펼칠 수 있습니다.`,'info');setArt(x);break;
     case'mode':toggleMode();break;
+    case'open':openPanel(x);return;
+    case'medit':closePanels();meditate();return;
+    case'run':closePanels();toggleRun();return;
+    case'save':closePanels();saveGame();return;
+    case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}
