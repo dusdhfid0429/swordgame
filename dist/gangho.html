@@ -2866,7 +2866,7 @@ function hqSpawns(s,th){
 for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const[th,place]=HQ_THEME[s.id];
   REGIONS['hq_'+s.id]={name:place,hq:s.id,theme:th,gen:()=>genHQ(s,th),bake:()=>bakeHQ(th),
     zone:(x,y)=>inHQ(x,y)&&y<=16?`${s.n} 본산`:y>=31?`${place} 어귀`:`${place} 산길`,
-    spawns:hqSpawns(s,th),bosses:[],gates:[{x:20.5,y:38.6,to:'gaebong',tx:POST_AT.x,ty:POST_AT.y,label:'개봉'}],npcs:hqNpcs(s,20.5,8.7)}}
+    spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 관도와 잇는다 (맨 아래 관도 절)
 // 소림사는 숭산 꼭대기 암자를 본산으로 쓴다
 Object.assign(REGIONS.sungsan,{name:'숭산 소림사',hq:'shaolin',npcs:hqNpcs(SECTS.shaolin,20.5,7.4),
   zone:(x,y)=>y>=31?'숭산 산문':y<=9&&x>=14&&x<=26?'소림사':y<=13?'숭산 설봉':'숭산 산중'});
@@ -2970,6 +2970,62 @@ function hqDlg(n){
   const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
   return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
+
+// ================= 관도: 개봉과 본산을 걸어서 잇는 길 =================
+// 개봉 가장자리 출입구 → 관도(갈림길 지역) → 각 본산 아래 출입구. 역참 말은 그대로 지름길로 남긴다.
+//            [북방 관도] ── 하북팽가·황보세가·철검문·녹림채·마영방·흑풍채 본채·천산 천마신교
+//  [숭산] ┐     │
+//  [서쪽 관도]─[개봉]─[동쪽 관도]      서쪽: 화산·종남·공동·곤륜·청성·아미·점창·당가·신창
+//                │                       동쪽: 혈랑곡·흑사방·만독곡·귀영문·칠살·살수·사혈·음양·혈수
+//           [남쪽 관도]                   남쪽: 무당·개방·모용·장강·남궁·제갈·청풍·금강·하오문
+const HUBS={
+  road_w:{name:'서쪽 관도',from:'w',th:'forest',hqs:['hwasan','jongnam','kongtong','kunlun','cheongseong','emei','jeomchang','dang','sinchang']},
+  road_s:{name:'남쪽 관도',from:'s',th:'lake',hqs:['mudang','gaebang','moyong','janggang','namgung','jegal','cheongpung','geumgang','haomun']},
+  road_e:{name:'동쪽 관도',from:'e',th:'canyon',hqs:['hyeolrang','heuksa','mandok','gwiyeong','chilsal','salsu','sahyeol','eumyang','hyeolsu']},
+  road_n:{name:'북방 관도',from:'n',th:'snow',hqs:['paeng','hwangbo','cheolgeom','noklim','mayeong','heukpung','cheonma']}};
+const OPP={n:'s',s:'n',w:'e',e:'w'};
+// 가장자리 출입구 자리와, 그 출입구로 들어왔을 때 서는 자리(안쪽으로 2.4칸)
+const edgePt=(sd,t)=>sd==='n'?{x:t,y:1.2}:sd==='s'?{x:t,y:38.6}:sd==='w'?{x:1.2,y:t}:{x:38.6,y:t};
+const inPt=(sd,t)=>sd==='n'?{x:t,y:3.6}:sd==='s'?{x:t,y:36.2}:sd==='w'?{x:3.6,y:t}:{x:36.2,y:t};
+const GAE_T={n:33.5,w:27.5,s:20.5,e:35.5};   // 개봉 쪽 출입구 자리
+const hubOf=sid=>Object.keys(HUBS).find(k=>HUBS[k].hqs.includes(sid));
+for(const[id,h]of Object.entries(HUBS)){
+  const ent=OPP[h.from],gates=[{...edgePt(ent,20.5),to:'gaebong',...(({x,y})=>({tx:x,ty:y}))(inPt(h.from,GAE_T[h.from])),label:'개봉',sd:ent}];
+  const sides=['n','w','s','e'].filter(q=>q!==ent);let k=0;
+  for(const sd of sides)for(const t of[9.5,20.5,31.5]){const sid=h.hqs[k++];if(!sid)continue;const s=SECTS[sid];
+    gates.push({...edgePt(sd,t),to:'hq_'+sid,tx:20.5,ty:36.2,label:hqPlace(s),sd});
+    REGIONS['hq_'+sid].gates=[{x:20.5,y:38.6,to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(sd,t)),label:h.name}]}
+  const far=(x,y)=>Math.hypot(x-20,y-20)>6;
+  REGIONS[id]={name:h.name,hub:1,theme:h.th,gen:()=>genHub(id,h),bake:()=>bakeHQ(h.th),gates,bosses:[],npcs:[],
+    zone:(x,y)=>{let b=null,bd=7;for(const g of gates){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}return b?`${h.name} · ${b.label} 갈림길`:h.name},
+    spawns:[['정파 무인',2,far,(x,y)=>mkFac('정',0,x,y)],['사파 무인',2,far,(x,y)=>mkFac('사',0,x,y)],['마교도',2,far,(x,y)=>mkFac('마',0,x,y)],
+      ['산적',3,far],['산적궁수',1,far],['늑대',2,far],['사슴',2,far]]};
+  REGIONS.gaebong.gates.push({...edgePt(h.from,GAE_T[h.from]),to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(ent,20.5)),label:h.name});
+}
+// 관도 지도: 출입구마다 안쪽으로 들어와 한가운데 갈림길(주막)에서 모두 만난다
+function genHub(id,h){
+  const R=REGIONS[id],seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0),r=rng(9100+seed*13),o1=seed*.07;
+  map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
+  const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])road.add(i+','+j)};
+  for(const g of R.gates){let x=Math.max(1,Math.min(N-3,Math.floor(g.x))),y=Math.max(1,Math.min(N-3,Math.floor(g.y)));const vert=g.sd==='n'||g.sd==='s';
+    if(vert){while(y!==19){mark(x,y);y+=Math.sign(19-y)}while(x!==19){mark(x,y);x+=Math.sign(19-x)}}
+    else{while(x!==19){mark(x,y);x+=Math.sign(19-x)}while(y!==19){mark(x,y);y+=Math.sign(19-y)}}mark(19,19)}
+  const base=HQ_BASE[h.th]===10?7:HQ_BASE[h.th],tree=h.th==='snow'?'pine':'tree';
+  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
+    const hi=fbm(x*.16+o1,y*.16+o1*.5),rd=road.has(x+','+y),near=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>road.has((x+dx)+','+(y+dy)));
+    let g=base;if(hi>.64)g=h.th==='canyon'?10:6;if(h.th==='snow'&&hi<.3)g=0;if(rd)g=1;
+    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=N-2;
+    if(!rd){if(x===0||y===0||x===N-1||y===N-1)o=r()<.6?tree:'rock';else if(edge)o=r()<.7?(r()<.6?tree:'rock'):null;
+      else if(!near&&Math.hypot(x-20,y-20)>4){const v=r();o=v<.1?tree:v<.14?(h.th==='forest'?'pine':'rock'):v<.16&&h.th==='forest'?'bamboo':null}}
+    map[y][x]={g,v:r()};objs[y][x]=o}}
+  // 갈림길 주막과 등롱
+  const inn={x:22,y:15,w:3,h:2,kind:'inn'};let ok=true;for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++)if(road.has(i+','+j))ok=false;
+  if(ok){for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++){objs[j][i]='B';map[j][i].g=4}builds.push(inn)}
+  for(const[x,y]of[[17,17],[22,22],[17,22]])if(!road.has(x+','+y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
+  for(const[t,n,ok2]of[['herb',8,g=>g===0||g===7],['wood',5,g=>g===0||g===7],['ore',5,g=>g===6||g===8||g===10]])
+    for(let i=0;i<300&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok2(map[y][x].g))put(t,x,y)}
+}
 
 // ================= 앱인토스 (토스 인앱) =================
 // 토스 안에서는 toss/bridge.js 가 SDK를 window.AIT 에 넣고 'ait-ready' 를 쏜다.
