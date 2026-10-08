@@ -190,11 +190,12 @@ function draw(){
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
   for(const n of nodes)if(vis(n.x,n.y))list.push({d:n.x+n.y-.2,f:()=>drawNode(n)});
   for(const pl of plots)if(pl.crop&&vis(pl.x,pl.y))list.push({d:pl.x+pl.y+.9,f:()=>drawPlot(pl)});
+  for(const t of tombs())if(vis(t.x,t.y))list.push({d:t.x+t.y-.3,f:()=>drawTomb(t)});
   for(const d of drops)list.push({d:d.x+d.y-.1,f:()=>drawDrop(d)});
   if(G.giyeon)list.push({d:G.giyeon.x+G.giyeon.y,f:()=>drawGiyeon(G.giyeon)});
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
-  for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):drawFighter(e,false)});
+  for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1)}});
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
@@ -247,6 +248,7 @@ const miniXY=(x,y)=>[75+(x-y)*1.85,2+(x+y)*1];
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
+  for(const t of tombs()){const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}
   const[x,y]=miniXY(P.x,P.y);mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(x,y,2.4,0,7);mctx.fill()}
 

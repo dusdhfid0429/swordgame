@@ -466,7 +466,7 @@ let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],e
 let paused=true,playing=false;
 const ARTS=buildArts();
 // G: what outlives a single life (lineage, house, history)
-let G={lives:0,history:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null};
+let G={lives:0,history:[],tombs:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null};
 let itemId=0;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -633,6 +633,7 @@ function onKill(e){
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
+  if(e.tomb){tombKill(e);return}
   // loot
   const out=[];
   // 은자가 0인 적(강시 등)은 빈 주머니를 떨어뜨리지 않는다. 0은 거짓이라 아이템으로 오인돼 화면이 멈췄었다.
@@ -1052,7 +1053,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=13;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
@@ -1299,6 +1300,7 @@ function die(cause){
   const wis=karma>=60?1:0;
   const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:RANKS[realm],fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:P.sectName||(P.sect?(P.sect==='정'?'무당파':'혈교'):null),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
+  makeTomb(cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
   G.heir=P.children.length?{children:P.children.map(c=>({...c})),silver:Math.floor(P.silver/2),side:P.side}:null;
   if(!G.heir){G.house=null;G.storage={mats:{},bag:[]}}
@@ -2370,6 +2372,82 @@ function drawTrainFx(front){
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;
   if(e.code==='KeyT'){trnOpen?closeTrain():openTrain()}else if(e.code==='Escape'&&trnOpen)closeTrain()});
 
+// ================= 무덤 던전: 죽은 자리에 봉분이 남고, 그 생의 내가 망령 보스로 지킨다 =================
+// 가까이 가면 망령과 강시 둘이 깨어난다. 망령을 쓰러뜨리면 그 생이 지녔던 물건 중 일부를 등급별 확률로 떨어뜨리고 무덤은 사라진다.
+const TOMB_MAX=6,TOMB_WAKE=4.5,TOMB_FORGET=24;
+// 등급이 높을수록 덜 나온다
+const TOMB_DROP={하품:.6,중품:.4,상품:.2,명품:.08};
+function tombDropP(it){
+  if(it.slot==='book')return Math.max(.12,.4-it.form*.06);
+  if(it.slot==='sbook'||it.slot==='tbook')return .25;
+  return TOMB_DROP[QN(it.q||1)]??.3}
+const tombs=()=>G.tombs||(G.tombs=[]);
+// 무덤 자리: 마을 안이나 막힌 곳이면 가까운 바깥 빈 땅으로 옮긴다
+function tombSpot(x,y){
+  const ok=(i,j)=>walk(i,j)&&!inTown(i,j)&&!plots.some(pl=>Math.abs(pl.x-i)<2&&Math.abs(pl.y-j)<2)&&!NPCS.some(n=>Math.hypot(n.x-i-.5,n.y-j-.5)<3)&&!tombs().some(t=>Math.hypot(t.x-i-.5,t.y-j-.5)<3);
+  for(let r=0;r<14;r++)for(let a=0;a<Math.max(1,r*8);a++){const i=Math.floor(x+Math.cos(a/(r*8||1)*6.283)*r),j=Math.floor(y+Math.sin(a/(r*8||1)*6.283)*r);if(ok(i,j))return{x:i+.5,y:j+.5}}
+  return null}
+function makeTomb(cause){
+  const s=tombSpot(P.x,P.y);if(!s)return;
+  const items=[...Object.values(P.eq).filter(Boolean),...P.bag].map(it=>JSON.parse(JSON.stringify(it)));
+  const ri=realmIdx();
+  tombs().push({id:Date.now()%1e9,x:s.x,y:s.y,name:P.name,life:P.lifeNo,age:Math.floor(P.age),cause,cls:curCls(),el:art().el||null,side:P.side,realm:RANKS[ri],
+    hp:Math.round(P.maxHp*2.5+ri*120),atk:Math.max(10,Math.round(atk()*.75)),def:2+ri*2,hm:Math.round(P.st.agi*2+ri*4),xp:120+ri*60,items});
+  while(tombs().length>TOMB_MAX)tombs().shift();
+}
+function tombGhostPal(cls){const k='ghost'+cls;if(!PAL[k])PAL[k]={...PAL.hero,robe:['#c8d6ee','#7a8cb0'],robeB:'#6a7a9c',inner:'#3a4a78',sash:'#3a4a78',hairband:'#6a7ac8',weapon:CLASS[cls].draw,anim:CLASS[cls].anim};return k}
+function tombWake(t){
+  t.awake=1;const ranged=t.cls==='궁';
+  const e=mkMob(`${t.name}의 망령`,t.x,t.y+1.2,{hp:t.hp,atk:t.atk,def:t.def,hm:t.hm,sp:2,reach:ranged?5:CLASS[t.cls].reach,ranged,el:t.el,pal:tombGhostPal(t.cls),hostile:1,boss:1,aggro:9,xp:t.xp,big:1.1});
+  e.tomb=t.id;e.ghost=1;e.wcls=t.cls;e.aggro=true;mobs.push(e);
+  for(const dx of[-1.4,1.4]){const g=mkMob('강시',t.x+dx,t.y+.6);g.name='무덤을 지키는 강시';g.tombGuard=t.id;g.aggro=true;mobs.push(g)}
+  shake=Math.max(shake,.4);fx.push({t:'ring',x:t.x,y:t.y,life:.8,max:.8});
+  showBanner(`${t.name}의 무덤`,`${t.life}번째 생 · ${t.realm}`);log(`${t.name}의 망령이 깨어났습니다. 쓰러뜨리면 그 생에 지녔던 물건을 되찾을 수 있습니다.`,'dmg');
+}
+function tombTick(){
+  if(G.duel)return;
+  for(const t of tombs()){const d=Math.hypot(t.x-P.x,t.y-P.y);
+    const live=mobs.some(m=>m.tomb===t.id&&m.hp>0);
+    if(!live&&P.hp>0&&d<TOMB_WAKE)tombWake(t);
+    // 멀리 떠나면 망령은 다시 잠든다 (기운을 되찾는다)
+    else if(live&&d>TOMB_FORGET){mobs=mobs.filter(m=>m.tomb!==t.id&&m.tombGuard!==t.id);t.awake=0}}
+}
+function tombKill(e){
+  const i=tombs().findIndex(t=>t.id===e.tomb);if(i<0)return;const t=tombs()[i];tombs().splice(i,1);
+  const out=t.items.filter(it=>Math.random()<tombDropP(it));
+  // 하나도 안 나오면 가장 흔한 물건 하나는 남긴다
+  if(!out.length&&t.items.length)out.push(t.items.reduce((a,b)=>tombDropP(b)>tombDropP(a)?b:a));
+  out.forEach((it,k)=>{it.id=++itemId;drops.push({x:t.x+(k%3-1)*.4,y:t.y+.4+Math.floor(k/3)*.4,it:{item:it},t:Math.random()*6})});
+  for(const m of mobs)if(m.tombGuard===t.id&&m.hp>0)m.hp=0;mobs=mobs.filter(m=>m.tombGuard!==t.id||m.hp>0);
+  fx.push({t:'lvl',x:t.x,y:t.y,life:1.2});showBanner('무덤 정화',`${t.name}이(가) 잠들었습니다`);
+  log(`${t.name}의 망령이 잠들고 무덤이 허물어졌습니다. 물건 ${out.length}/${t.items.length}개가 남았습니다.`,'xp');
+  P.feats.push(`${Math.floor(P.age)}세에 전생 ${t.name}의 망령을 잠재웠다`);
+}
+function drawTomb(t){
+  const p=toScreen(t.x,t.y),live=mobs.some(m=>m.tomb===t.id&&m.hp>0);
+  ctx.save();ctx.translate(p.x,p.y);
+  // 봉분
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,4,40,15,0,0,7);ctx.fill();
+  let g=ctx.createRadialGradient(-8,-14,4,0,-4,40);g.addColorStop(0,'#b09a70');g.addColorStop(.55,'#86704c');g.addColorStop(1,'#4e3f2a');
+  ctx.fillStyle='#4a3c28';ctx.beginPath();ctx.ellipse(0,0,36,13,0,0,Math.PI);ctx.fill();
+  ctx.fillStyle=g;ctx.strokeStyle='#2a2116';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-36,0);ctx.bezierCurveTo(-30,-8,-16,-27,0,-28);ctx.bezierCurveTo(16,-27,30,-8,36,0);ctx.ellipse(0,0,36,13,0,0,Math.PI);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(120,150,70,.8)';for(let k=0;k<7;k++){const a=k*.9+1,xx=Math.cos(a)*26,yy=-6-Math.abs(Math.sin(a))*14;ctx.fillRect(xx,yy,2,3);ctx.fillRect(xx+3,yy+1,2,2)}
+  ctx.strokeStyle='rgba(20,22,10,.6)';ctx.lineWidth=1;for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*8,-22+Math.abs(k)*3);ctx.lineTo(k*9+2,-17+Math.abs(k)*3);ctx.stroke()}
+  // 비석
+  ctx.fillStyle='#2a2a2c';ctx.fillRect(-7,8,14,4);g=ctx.createLinearGradient(-6,0,6,0);g.addColorStop(0,'#8a8a86');g.addColorStop(1,'#5a5a58');
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-6,10);ctx.lineTo(-6,-10);ctx.quadraticCurveTo(0,-15,6,-10);ctx.lineTo(6,10);ctx.fill();
+  ctx.fillStyle='#2a2a2a';for(let k=0;k<4;k++)ctx.fillRect(-1,-7+k*4,2,2);
+  // 원혼 기운
+  const n=live?9:4;for(let k=0;k<n;k++){const a=time*(live?1.6:.7)+k*2.1,r=18+Math.sin(a*1.3+k)*10,yy=-14-((time*14+k*11)%34);
+    ctx.fillStyle=`rgba(${live?'190,170,255':'150,170,220'},${(live?.55:.3)*(1-((time*14+k*11)%34)/34)})`;ctx.beginPath();ctx.arc(Math.cos(a)*r,yy,live?3:2,0,7);ctx.fill()}
+  ctx.restore();
+  if(dist(t,P)<9){const s=`${t.name}의 무덤`;ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y-37);ctx.fillStyle='#b8b0ff';ctx.fillText(s,p.x,p.y-38)}
+}
+// 망령: 반투명하고 푸른 기운이 감돈다
+function drawGhost(e){
+  const p=toScreen(e.x,e.y);ctx.save();const g=ctx.createRadialGradient(p.x,p.y-30,4,p.x,p.y-30,46);g.addColorStop(0,'rgba(150,140,255,.35)');g.addColorStop(1,'rgba(150,140,255,0)');
+  ctx.fillStyle=g;ctx.fillRect(p.x-50,p.y-80,100,100);ctx.globalAlpha=.72+.12*Math.sin(time*3);drawFighter(e,false);ctx.restore()}
+
 // ================= palettes for the cast =================
 Object.assign(PAL,{
   archer:{...PAL.bandit,robe:['#6e7a4c','#33391f'],robeB:'#424a28',band:'#4a5a2a',weapon:'bow',anim:'punch'},
@@ -2562,11 +2640,12 @@ function draw(){
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
   for(const n of nodes)if(vis(n.x,n.y))list.push({d:n.x+n.y-.2,f:()=>drawNode(n)});
   for(const pl of plots)if(pl.crop&&vis(pl.x,pl.y))list.push({d:pl.x+pl.y+.9,f:()=>drawPlot(pl)});
+  for(const t of tombs())if(vis(t.x,t.y))list.push({d:t.x+t.y-.3,f:()=>drawTomb(t)});
   for(const d of drops)list.push({d:d.x+d.y-.1,f:()=>drawDrop(d)});
   if(G.giyeon)list.push({d:G.giyeon.x+G.giyeon.y,f:()=>drawGiyeon(G.giyeon)});
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
-  for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):drawFighter(e,false)});
+  for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1)}});
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
@@ -2619,6 +2698,7 @@ const miniXY=(x,y)=>[75+(x-y)*1.85,2+(x+y)*1];
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
+  for(const t of tombs()){const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}
   const[x,y]=miniXY(P.x,P.y);mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(x,y,2.4,0,7);mctx.fill()}
 
