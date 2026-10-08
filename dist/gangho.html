@@ -398,6 +398,7 @@ function buildArts(){
       d:`${SIDES[side].base} 계열 ${CLASS[c].n} · 오행 ${el}. 초식 ${forms.length}개와 필살기.`};
   }));
   addSectArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);
+  addGiyeonArts(arts,pool,ults);
   arts.base={id:'base',side:null,cls:'권',el:null,n:'기초권각',c:'235,225,200',pt:'dot',base:1,
     forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qi:0},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qi:4},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qi:8}],
     ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'};
@@ -554,8 +555,9 @@ const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||
 const TIERN={big:'대문파',small:'소문파',one:'단일 문파'};
 // 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
 // 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
-const AGR=['하승','중승','상승','절정'],AGR_C=['dim','','good','gold'];
-const GMUL=[1,1.12,1.28,1.45],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3]],GCOST=[15,20,30,45],GMAST=[1.15,1,.9,.8];
+// 4번 천고는 기연으로만 얻는 무공의 등급이다 (g_giyeon.js)
+const AGR=['하승','중승','상승','절정','천고'],AGR_C=['dim','','good','gold','gold'];
+const GMUL=[1,1.12,1.28,1.45,1.6],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3],[2.2,1.4]],GCOST=[15,20,30,45,60],GMAST=[1.15,1,.9,.8,.75];
 const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):(hi?3:2);
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
@@ -668,6 +670,53 @@ function migrateSect(){if(!P)return;P.pas=P.pas||{};P.merit=P.merit||{};P.mtot=P
   if(P.sect&&SECTS[P.sect]&&P.mtot[P.sect]==null)P.mtot[P.sect]=P.merit[P.sect]||0}
 const sectName=()=>P.sect==='own'?P.sectName:P.sect&&SECTS[P.sect]?SECTS[P.sect].n:null;
 
+// ================= 기연 무공: 기연으로만 얻는 천고의 무공 =================
+// 설계: docs/세력_문파_설계.md 16장
+// - 무기마다 하나씩 6가지. 등급은 절정 위의 천고(AGR[4]): 초식·필살기가 가장 세고 숙련은 가장 더디게 오른다.
+// - 상점·문파·비급·떨굼 어디에서도 나오지 않는다. 기연 터(이따금 반짝이는 자리)와 보물상자의 기연에서만 만난다.
+// - 비급이 없다. 만나는 순간 1초식을 깨치고, 나머지 초식은 기초권각처럼 숙련이 차면 저절로 열린다.
+// - 정사 어느 쪽이든 익힐 수 있고, 오성이 정한 무공 가짓수에 들지 않는다. 제자에게 전수할 수 없다.
+// - 한 생에 최대 GY_MAX가지. 보물상자 기연은 GY_P.chest, 기연 터는 GY_P.spot 확률로 이 무공이 나온다.
+const GY_MAX=2,GY_P={chest:.4,spot:.15};
+const GY_ARTS={
+  gy_geom:{n:'천외비선검',cls:'검',el:'금',forms:['비선출운','유성낙월','천외일섬','선학귀소','만검귀종'],ult:'비선승천',d:'하늘 밖에서 내려온 신선이 남긴 검. 벼랑 끝 바위에 새겨져 전한다'},
+  gy_do:{n:'혈월광도',cls:'도',el:'화',forms:['월하참','혈영단','광풍노도','적월만천','혈해귀원'],ult:'혈월천하',d:'붉은 달이 뜨는 밤에만 글자가 떠오르는 도보'},
+  gy_chang:{n:'용음비창',cls:'창',el:'수',forms:['잠룡출수','용음일성','비룡재천','항룡유회','신룡파해'],ult:'용음만리',d:'깊은 못 밑 용의 뼈에 새겨진 창법'},
+  gy_bong:{n:'항마금강봉',cls:'봉',el:'토',forms:['금강도','복호세','항마일봉','나한타산','금강부동'],ult:'대항마인',d:'무너진 옛 절터 불상 속에서 나온 봉법'},
+  gy_gwon:{n:'태허무극권',cls:'권',el:'목',forms:['허실상생','태허일권','무극환','건곤역전','태극귀일'],ult:'태허무극',d:'이름 없는 노인이 꿈속에서 일러 준 권법'},
+  gy_gung:{n:'사일신궁',cls:'궁',el:'화',forms:['낙일전','연주삼시','천랑사','관일장홍','구일낙천'],ult:'사일',d:'아홉 해를 쏘아 떨어뜨렸다는 옛 궁신의 활법'}};
+// buildArts에서 부른다: 문파 무공과 같은 틀(초식 무늬 풀)로 만들되 등급은 천고(4)
+function addGiyeonArts(arts,pool,ults){
+  const g=4,mul=GMUL[g];
+  Object.entries(GY_ARTS).forEach(([id,a],ai)=>{
+    const r=rng(911+a.n.charCodeAt(0)*13+a.n.charCodeAt(1)*3+ai);
+    const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
+    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,a.forms.length-1).sort((x,y)=>x.cd-y.cd)];
+    const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
+    const u=ults[a.cls][ai%ults[a.cls].length],EC=EL[a.el];
+    arts[id]={id,side:null,cls:a.cls,el:a.el,n:a.n,c:EC.c,pt:EC.pt,elc:a.el==='금',forms,gy:1,grade:g,
+      ult:{n:a.ult,steps:[F('','circle',{rad:3,m:GULT[g][0],stun:.4}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
+      d:`${a.d}. 천고 기연 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개는 숙련이 차면 저절로 열린다.`};
+  });
+}
+const gyMine=()=>Object.keys(GY_ARTS).filter(id=>P.arts[id]);
+// 이번 기연에서 무공을 만날 수 있으면 그 id. 지금 쥔 무기(맨손이면 펼치는 무공)의 무공을 반쯤 더 쳐 준다
+function gyRoll(src){
+  if(gyMine().length>=GY_MAX||Math.random()>=(GY_P[src]||0))return null;
+  const left=Object.keys(GY_ARTS).filter(id=>!P.arts[id]);if(!left.length)return null;
+  const w=P.eq.weapon,c=w?w.cls:curCls(),mine=left.find(id=>GY_ARTS[id].cls===c);
+  return mine&&Math.random()<.5?mine:pick(left)}
+function gyLearn(id){const a=ARTS[id];
+  P.arts[id]={p:0,f:a.forms.map((f,i)=>i===0)};
+  log(`기연: 천고의 무공 [${a.n}]을(를) 만나 첫 초식 [${a.forms[0].n}]을(를) 깨쳤습니다. 나머지 초식은 숙련이 차면 열립니다.`,'xp');
+  if(!G.gyLog)G.gyLog=[];if(!G.gyLog.includes(id))G.gyLog.push(id);
+  if(hasWeaponFor(a.cls))setArt(id);
+  return a}
+// 무공 창 맨 아래 한 줄: 강호에 전하는 기연 무공 중 몇 가지를 만났나 (여러 생에 걸쳐)
+function gyNote(){const seen=G.gyLog||[];
+  return `<p class="note">기연 무공 ${seen.length}/${Object.keys(GY_ARTS).length} · ${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}. 기연 터와 보물상자의 기연에서만 만나며, 한 생에 ${GY_MAX}가지까지.</p>`}
+
 // ================= state =================
 const TW=64,TH=32,MID=20;
 let N=40;   // 지금 지역의 격자 크기. 지역마다 다르다 (REGIONS[..].size, 기본 40)
@@ -725,6 +774,8 @@ const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'));
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
+// 오성이 정한 가짓수에 드는 무공 (기연 무공은 들지 않는다)
+const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
@@ -769,7 +820,7 @@ function readBlock(it){
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(a.side!==P.side)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
-  if(!s&&learnedArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
   if(P.vit<f.cost)return `활력이 부족합니다. (필요 ${f.cost}, 지금 ${P.vit})`;
@@ -831,7 +882,7 @@ function gainMast(id,v){
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
-  if(a.base)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`기초권각의 [${f.n}]을(를) 깨우쳤습니다.`,'xp')}});
+  if(a.base||a.gy)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
 }
 function damage(e,d,kb,stun,from=P,crit){
@@ -993,7 +1044,8 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 
 // ================= 기연 =================
 function giyeon(src){
-  const r=Math.random(),k=pick(STATS).k;
+  const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
+  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
@@ -1706,13 +1758,14 @@ function pChar(){
 }
 function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
-    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
+    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
       <p>${a.d}${a.el?` ${EL[a.el].fx}.`:''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls}이(가) 있어야 펼칠 수 있다.</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
-  return `<div class="row2"><span class="note">익힌 무공 ${learnedArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
+  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
+    ${gyNote()}
     ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>

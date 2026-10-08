@@ -55,6 +55,8 @@ const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'));
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
+// 오성이 정한 가짓수에 드는 무공 (기연 무공은 들지 않는다)
+const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
@@ -99,7 +101,7 @@ function readBlock(it){
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(a.side!==P.side)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
-  if(!s&&learnedArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
   if(P.vit<f.cost)return `활력이 부족합니다. (필요 ${f.cost}, 지금 ${P.vit})`;
@@ -161,7 +163,7 @@ function gainMast(id,v){
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
-  if(a.base)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`기초권각의 [${f.n}]을(를) 깨우쳤습니다.`,'xp')}});
+  if(a.base||a.gy)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
 }
 function damage(e,d,kb,stun,from=P,crit){
@@ -323,7 +325,8 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 
 // ================= 기연 =================
 function giyeon(src){
-  const r=Math.random(),k=pick(STATS).k;
+  const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
+  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}

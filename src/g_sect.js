@@ -68,8 +68,9 @@ const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||
 const TIERN={big:'대문파',small:'소문파',one:'단일 문파'};
 // 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
 // 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
-const AGR=['하승','중승','상승','절정'],AGR_C=['dim','','good','gold'];
-const GMUL=[1,1.12,1.28,1.45],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3]],GCOST=[15,20,30,45],GMAST=[1.15,1,.9,.8];
+// 4번 천고는 기연으로만 얻는 무공의 등급이다 (g_giyeon.js)
+const AGR=['하승','중승','상승','절정','천고'],AGR_C=['dim','','good','gold','gold'];
+const GMUL=[1,1.12,1.28,1.45,1.6],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3],[2.2,1.4]],GCOST=[15,20,30,45,60],GMAST=[1.15,1,.9,.8,.75];
 const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):(hi?3:2);
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
