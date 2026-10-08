@@ -122,7 +122,7 @@ const MED={k:0,parts:[],lt:0,pulse:0,spin:0};
 function medSpawn(){const r0=50+Math.random()*60;return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
   h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0}}
 function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
-  MED.k=clamp(MED.k+(P.medit&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
+  MED.k=clamp(MED.k+((P.medit||P.chan&&P.chan.label==='내공 수련')&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
   if(MED.k<=0){MED.parts.length=0;return}
   const want=Math.round(54*MED.k);while(MED.parts.length<want)MED.parts.push(medSpawn());
   for(const q of MED.parts){const near=1-q.r/q.r0;q.v+=dt*(50+220*near*near);q.r-=q.v*dt;q.a+=q.w*dt*(1+near*3);q.life+=dt;

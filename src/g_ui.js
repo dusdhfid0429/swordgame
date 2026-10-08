@@ -38,7 +38,7 @@ function hud(){
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   $('hpt').textContent=`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`;$('qit').textContent=`내공 ${Math.floor(P.qi)}/${P.maxQi}`;
   $('mst').textContent=`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':' · 무기 없음'}`;
-  $('res').textContent=`활력 ${P.vit} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
+  $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
   $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
   $('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
   $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);
@@ -73,7 +73,7 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
   const ri=realmIdx(),nx=REALM_QI[ri+1],c=qiCost(P.side,P.qiN),youth=!adult();
-  const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`생명 +${v*10}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`내공 +${v*6}, 회복 ${(2+v*.25).toFixed(1)}/초`;
+  const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib">${youth?B('stat:'+k,`수련 · 활력 ${statCost(k)}`,{d:P.vit<statCost(k)}):'<small class="dim">유아기 지남</small>'}</div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
@@ -81,7 +81,7 @@ function pChar(){
     <div class="card"><h4>기본기 <small class="dim">${youth?'유아기(13~17세)에만 다질 수 있다':'근골과 유아기에 정해졌다. 이제 기연·윤회로만 바뀐다'}</small></h4><div class="list">${stats}</div></div>
     <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
       <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
-      <p>${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
+      <p>내공은 내공 심법 수련으로만 오른다. ${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
       <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('qi',`운기조식으로 내공 수련 · 활력 ${c}`,{pri:1,d:P.vit<c})}</div></div>
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
@@ -278,7 +278,7 @@ function act(s){
       log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;P.vit+=q.vit;P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
     case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;

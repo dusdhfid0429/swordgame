@@ -38,12 +38,17 @@ const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0)));
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def);
-const baseQi=()=>40+P.st.qi*6+P.qiN*SIDES[P.side].gain+P.qiBonus;
+// 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
+const baseQi=()=>80+P.qiN*SIDES[P.side].gain+P.qiBonus;
+const maxVit=()=>150+P.st.end*25;
+// 활력을 얻는다. 지구력이 정한 최대치까지만 찬다 (전생에서 넘겨받아 이미 넘친 활력은 깎지 않는다).
+function gainVit(v){const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
+  if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
 const realmIdx=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
 const realmName=()=>RANKS[realmIdx()];
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+P.st.qi*.25)*(P.medit?5:1);
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1);
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -52,7 +57,7 @@ const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
 function recalc(){
   const oldAge=Math.max(0,P.age-50);
-  P.maxHp=Math.round((60+P.st.end*10+gear('hp'))*(1-Math.min(.4,oldAge*.012)));
+  P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012)));
   P.maxQi=baseQi()+gear('qi');P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
@@ -160,7 +165,7 @@ function onKill(e){
   if(e.duel){duelEnd(true,e);return}
   const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03));
   if(d.villager){v=P.side==='사'?8:0;P.evil+=P.side==='정'?20:8;log('양민이 죽었습니다. 무거운 악업이 쌓였습니다.','dmg')}
-  P.vit+=v;P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;P.feats.push(`${Math.floor(P.age)}세에 ${e.kind}을(를) 쓰러뜨렸다`)}
+  gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;P.feats.push(`${Math.floor(P.age)}세에 ${e.kind}을(를) 쓰러뜨렸다`)}
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
@@ -294,7 +299,7 @@ function mkAlly(kind,k,x,y){
   if(kind==='pet'){const d=MOBS[k];return{kind,k,d,name:k,x,y,hp:d.hp*1.2,maxHp:d.hp*1.2,atk:d.atk||4,sp:d.sp,reach:1.2,age:R1(1,4),life:d.life,mode:'follow',cd:0,hit:0,fx:1,fy:1,moving:false,bob:Math.random()*6,swing:0}}
   return{kind:'disciple',k:'제자',d:{pal:'disciple'},name:k,x,y,lv:1,xp:0,hp:120,maxHp:120,atk:9,sp:2.6,reach:1.3,mode:'follow',cd:0,hit:0,fx:1,fy:1,moving:false,bob:Math.random()*6,swing:0,wind:0};
 }
-function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp=a.maxHp;a.atk+=3;P.vit+=15;P.fame+=1;log(`제자 ${a.name}이(가) ${a.lv}단계로 성장했습니다. 사부로서 활력 +15`,'xp')}}
+function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp=a.maxHp;a.atk+=3;gainVit(15);P.fame+=1;log(`제자 ${a.name}이(가) ${a.lv}단계로 성장했습니다. 사부로서 활력 +15`,'xp')}}
 
 // ================= 기연 =================
 function giyeon(src){

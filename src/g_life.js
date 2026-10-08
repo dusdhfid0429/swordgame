@@ -41,7 +41,7 @@ function updateP(dt){
   if(P.poison>0){P.poison-=dt;P.hp-=P.maxHp*.02*dt;if(P.hp<=0){P.hp=0;die('독');return}}
   if(P.run){P.qi-=4*dt;if(P.qi<=0){P.qi=0;P.run=false;log('내공이 바닥나 질주를 멈춥니다.','info')}}
   P.qi=Math.min(P.maxQi,P.qi+qiRegen()*dt*(P.run?0:1));
-  if(P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.end*.2)*(P.medit?3:1)*dt);
+  if(P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.qi*.2)*(P.medit?3:1)*dt);
   if(P.chan){P.chan.t+=dt;if(P.chan.t>=P.chan.dur){const c=P.chan;P.chan=null;c.fn()}}
   let kx=0,ky=0;
   if(keys.arrowup){kx--;ky--}if(keys.arrowdown){kx++;ky++}if(keys.arrowleft){kx--;ky++}if(keys.arrowright){kx++;ky--}
@@ -202,7 +202,7 @@ function useNearest(){
   if(t.npc)openNpc(t.npc);else if(t.house)openHouse();else if(t.spouse)familyTalk();else interact(t);
 }
 function plotAction(p){
-  if(p.crop&&p.g>=1){const c=CROPS[p.crop];let k=R1(2,4);if(c.season&&season()===c.season)k+=2;addMat(p.crop,k);log(`${p.crop} ${k}개를 거뒀습니다.`,'xp');P.vit+=3;p.crop=null;p.g=0;return}
+  if(p.crop&&p.g>=1){const c=CROPS[p.crop];let k=R1(2,4);if(c.season&&season()===c.season)k+=2;addMat(p.crop,k);log(`${p.crop} ${k}개를 거뒀습니다.`,'xp');gainVit(3);p.crop=null;p.g=0;return}
   if(p.crop){log(`${p.crop}이(가) ${Math.floor(p.g*100)}% 자랐습니다. (${CROPS[p.crop].d})`,'info');return}
   const seeds=Object.keys(CROPS).filter(c=>P.mats[CROPS[c].seed]>0);
   if(!seeds.length){log('씨앗이 없습니다. 잡화상이나 포목점에서 사세요.','info');return}
@@ -221,7 +221,7 @@ function craft(r){
   if(r.make(1).item===undefined&&!r.make(1).mat&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   useMats(r.need);const q=clamp(.6+j.lv/100*.85+Math.random()*.2,.5,1.6),out=r.make(q);
   if(out.mat){addMat(out.mat,out.n);log(`${out.mat} ${out.n}개를 만들었습니다.`,'sys')}else{P.bag.push(out);log(`${itemLabel(out)}을(를) 만들었습니다.`,'xp')}
-  const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);P.vit+=1;renderOpen();
+  const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);gainVit(1);renderOpen();
 }
 function useCon(k){
   if(!(P.mats[k]>0)){log(`${k}이(가) 없습니다.`,'info');return}if(P.hp<=0)return;
