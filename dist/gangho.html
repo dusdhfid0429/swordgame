@@ -79,6 +79,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .wnote.xp{color:var(--good)}
 /* 천하 지도 */
 .world{width:100%;height:auto;max-height:60vh;display:block;background:#15110c;border:1px solid #4a3c27}
+.wf-j{color:#8fb8ff}.wf-s{color:#f0a060}.wf-m{color:#ff6a5a}
 .world line{stroke:#6a5634;stroke-width:2;stroke-dasharray:4 3}
 .world circle{fill:#8a7454;stroke:#1a140c;stroke-width:2}.world text{fill:#e8d9a8;font:13px var(--body);text-anchor:middle;paint-order:stroke;stroke:#0b0a09;stroke-width:3px}
 .world .me circle,.world .me rect{fill:#ffd36a;stroke:#fff}.world .me text{fill:#ffd36a;font-weight:700}.world rect{fill:#c9b48a;stroke:#1a140c}
@@ -502,6 +503,7 @@ const ALLY={
   magyo:{n:'마교',side:'사',npc:'magyo',d:'천마를 받드는 단일 문파. 정사 어느 쪽과도 손잡지 않는다.'}};
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=[
+  // 정의맹: 9파1방
   ['shaolin','소림사','jeong','big','무림의 태산북두. 권과 곤이 단단하다.',[['나한권','권','토','n'],['나한곤법','봉','토','n'],['여래신장','권','금','h']]],
   ['mudang','무당파','jeong','big','부드러움으로 강함을 이기는 도가의 문파.',[['태극권','권','수','n'],['양의검법','검','수','n'],['태극혜검','검','수','h']]],
   ['hwasan','화산파','jeong','big','매화처럼 화려하고 빠른 검의 문파.',[['매화검법','검','목','n'],['낙안검법','검','화','n'],['이십사수매화검','검','목','h']]],
@@ -512,34 +514,38 @@ const SECT_DATA=[
   ['cheongseong','청성파','jeong','big','사천 청성산의 도가 검파.',[['송풍검법','검','목','n'],['청성권','권','목','n'],['최혼검','검','목','h']]],
   ['jongnam','종남파','jeong','big','장안 남쪽 종남산의 검파.',[['종남검법','검','금','n'],['천강장','권','토','n'],['천강북두검','검','금','h']]],
   ['gaebang','개방','jeong','big','천하 거지들의 방회. 소식이 가장 빠르다.',[['연환장','권','토','n'],['타구봉법','봉','토','n'],['항룡십팔장','권','화','h']]],
-  ['namgung','남궁세가','jeong','small','검으로 이름난 정파 세가.',[['창궁검법','검','금','n'],['제왕검형','검','금','h']]],
-  ['moyong','모용세가','jeong','small','상대의 수를 되돌려주는 세가.',[['연환쾌검','검','수','n'],['두전성이','권','수','h']]],
-  ['paeng','하북팽가','jeong','small','도 하나로 일어선 호방한 세가.',[['오호단문도','도','화','n'],['혼원벽력도','도','화','h']]],
-  ['jegal','제갈세가','jeong','small','지략과 진법, 궁술의 세가.',[['팔진궁술','궁','목','n'],['와룡신궁','궁','목','h']]],
-  ['hwangbo','황보세가','jeong','small','단단한 권으로 이름난 세가.',[['황보권','권','토','n'],['금강불괴장','권','토','h']]],
-  ['dang','사천당가','jeong','small','암기와 독을 다루는 정파 세가.',[['당가비전궁','궁','수','n'],['만천화우','궁','수','h']]],
-  ['cheolgeom','철검문','jeong','small','무쇠 같은 검을 쓰는 작은 문파.',[['철검삼식','검','금','n'],['철혈검법','검','금','h']]],
-  ['sinchang','신창문','jeong','small','창 한 자루로 버텨 온 문파.',[['신창십삼식','창','목','n'],['폭우이화창','창','목','h']]],
-  ['cheongpung','청풍문','jeong','small','바람처럼 가벼운 도를 쓰는 문파.',[['청풍도법','도','목','n'],['청풍만리도','도','목','h']]],
-  ['geumgang','금강문','jeong','small','불가 속가 제자들의 곤법 문파.',[['금강곤법','봉','토','n'],['금강항마곤','봉','토','h']]],
-  ['hyeolrang','혈랑곡','sacheon','big','사천맹 4대문파. 늑대처럼 무리 지어 싸운다.',[['혈랑참','도','화','n'],['랑아권','권','화','n'],['혈월광랑도','도','화','h']]],
-  ['heuksa','흑사방','sacheon','big','사천맹 4대문파. 뱀처럼 휘감는 장법과 창.',[['흑사장','권','수','n'],['흑사창','창','수','n'],['만사귀종장','권','수','h']]],
-  ['mandok','만독문','sacheon','big','사천맹 4대문파. 독과 독침의 문파.',[['오독장','권','목','n'],['독침술','궁','목','n'],['만독탈혼장','권','목','h']]],
-  ['gwiyeong','귀영문','sacheon','big','사천맹 4대문파. 그림자처럼 숨어 베는 검.',[['귀영검법','검','수','n'],['귀전술','궁','수','n'],['귀영무흔검','검','수','h']]],
-  ['haomun','하오문','sacheon','small','저잣거리 건달들의 문파. 정보가 빠르다.',[['하오권','권','토','n'],['천라지망수','권','토','h']]],
-  ['noklim','녹림채','sacheon','small','산을 근거로 한 산적 연합.',[['녹림도법','도','목','n'],['녹림패왕도','도','목','h']]],
-  ['janggang','장강수로채','sacheon','small','장강 물길을 쥔 수적들.',[['수로창법','창','수','n'],['장강파랑창','창','수','h']]],
-  ['chilsal','칠살문','sacheon','small','일곱 번 베어 반드시 죽이는 검.',[['칠살검','검','금','n'],['칠살탈명검','검','금','h']]],
-  ['salsu','살수문','sacheon','small','돈을 받고 사람을 쏘는 살수들.',[['살수궁술','궁','금','n'],['일시필살궁','궁','금','h']]],
-  ['sahyeol','사혈문','sacheon','small','피를 바쳐 창을 다루는 문파.',[['사혈창','창','화','n'],['혈해마창','창','화','h']]],
-  ['eumyang','음양교','sacheon','small','음양의 기를 뒤섞는 사이한 장법.',[['음양장','권','수','n'],['음양쌍절장','권','수','h']]],
-  ['hyeolsu','혈수문','sacheon','small','피 묻은 곤을 휘두르는 문파.',[['혈수곤','봉','화','n'],['혈수파천곤','봉','화','h']]],
-  ['mayeong','마영방','sacheon','small','허상으로 눈을 속이는 검.',[['마영검','검','목','n'],['마영분신검','검','목','h']]],
+  // 정의맹: 정파 세가와 소문파
+  ['namgung','남궁세가','jeong','small','안휘 황산 아래, 검으로 이름난 정파 제일세가.',[['창궁검법','검','금','n'],['제왕검형','검','금','h']]],
+  ['moyong','모용세가','jeong','small','요녕 심양의 세가. 상대의 수를 되돌려준다.',[['연환쾌검','검','수','n'],['두전성이','권','수','h']]],
+  ['paeng','하북팽가','jeong','small','북경의 호방한 도법 세가.',[['오호단문도','도','화','n'],['혼원벽력도','도','화','h']]],
+  ['eon','진주언가','jeong','small','하북 진주의 권법 세가.',[['언가권','권','토','n'],['진주패왕권','권','금','h']]],
+  ['jegal','제갈세가','jeong','small','융중산의 지략과 진법, 궁술의 세가.',[['팔진궁술','궁','목','n'],['와룡신궁','궁','목','h']]],
+  ['hwangbo','황보세가','jeong','small','산동 제남의 단단한 권법 세가.',[['황보권','권','토','n'],['금강불괴장','권','토','h']]],
+  ['ak','산동악가','jeong','small','악무목의 창법을 이은 충의의 세가.',[['악가창법','창','금','n'],['악가신창','창','금','h']]],
+  ['dang','사천당가','jeong','small','암기와 독을 다루는 사천의 세가.',[['당가비전궁','궁','수','n'],['만천화우','궁','수','h']]],
+  ['hyeongsan','형산파','jeong','small','호남 형산의 검파. 검이 바람을 탄다.',[['형산검법','검','화','n'],['회풍낙안검','검','화','h']]],
+  ['cheonsan','천산파','jeong','small','서역 천산 설봉의 검파.',[['천산검법','검','수','n'],['천산육양장','권','수','h']]],
+  // 사천맹: 4대문파
+  ['noklim','녹림채','sacheon','big','사천맹 4대문파. 녹림산을 근거로 천하 산적을 거느린다.',[['녹림도법','도','목','n'],['산채궁술','궁','목','n'],['녹림패왕도','도','목','h']]],
+  ['janggang','장강수로채','sacheon','big','사천맹 4대문파. 장강삼협 물길을 쥔 수적들.',[['수로창법','창','수','n'],['수전비도','궁','수','n'],['장강파랑창','창','수','h']]],
+  ['haomun','하오문','sacheon','big','사천맹 4대문파. 광주 저잣거리에서 일어난 건달과 정보꾼의 문파.',[['하오권','권','토','n'],['하오비도','궁','금','n'],['천라지망수','권','토','h']]],
+  ['sama','사마세가','sacheon','big','사천맹 4대문파. 낙양의 사파 세가. 검과 도가 모두 사납다.',[['사마검법','검','금','n'],['사마도법','도','화','n'],['사마천강검','검','금','h']]],
+  // 사천맹: 사파 소문파와 새외 세력
+  ['dongjeong','동정수로채','sacheon','small','동정호의 수적. 노를 곤처럼 휘두른다.',[['동정곤법','봉','수','n'],['노도파천곤','봉','수','h']]],
+  ['yasu','야수궁','sacheon','small','운남 밀림에서 짐승처럼 싸우는 궁.',[['야수권','권','목','n'],['백수지왕조','권','목','h']]],
+  ['gwangpung','광풍사','sacheon','small','서역 객십 사막을 휩쓰는 마적 떼.',[['광풍도','도','토','n'],['사막광풍도','도','토','h']]],
+  ['taeyang','태양궁','sacheon','small','화염산 아래 불을 받드는 궁.',[['태양창','창','화','n'],['열양신창','창','화','h']]],
+  ['bukhae','북해빙궁','sacheon','small','북해 얼음 위의 궁. 장법과 검이 차갑다.',[['빙백장','권','수','n'],['빙궁한검','검','수','h']]],
+  ['podal','포달랍궁','sacheon','small','서장 밀종의 궁. 대수인과 금강저를 쓴다.',[['밀종대수인','권','토','n'],['금강항마저','봉','금','h']]],
+  ['mandok','만독문','sacheon','small','귀주 묘강의 독과 독침의 문파.',[['오독장','권','목','n'],['만독탈혼장','권','목','h']]],
+  ['hyeolrang','혈랑곡','sacheon','small','감숙 협곡에서 늑대처럼 무리 지어 싸운다.',[['혈랑참','도','화','n'],['혈월광랑도','도','화','h']]],
+  ['gwiyeong','귀영문','sacheon','small','섬서에 숨은 그림자 살수들.',[['귀영검법','검','수','n'],['귀영무흔검','검','수','h']]],
   ['heukpung','흑풍채','sacheon','small','개봉 동쪽에 진을 친 산채.',[['흑풍도','도','토','n'],['흑풍광사도','도','토','h']]],
+  // 마교
   ['cheonma','천마신교','magyo','one','마교 그 자체. 교주 천마 아래 하나로 뭉쳤다.',[['혈마장','권','화','n'],['마령도법','도','화','n'],['천마검법','검','화','h'],['천마신장','권','화','h']]]];
-const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S${i}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
+const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
-const artSect=artId=>{const m=/^S(\d+)_/.exec(artId);return m?SECTS[SECT_DATA[+m[1]][0]]:null};
+const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 const TIERN={big:'대문파',small:'소문파',one:'단일 문파'};
 // buildArts에서 부른다: 문파 무공을 일반 무공과 같은 틀(초식 무늬 풀)로 만든다
 function addSectArts(arts,pool,ults,formName,ultName){
@@ -635,8 +641,14 @@ function sectAct(a,x,y){
       if(fi<0||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
   }
   return false}
-// 예전 저장: 무당파('정')·혈교('사') 제자는 새 문파로 옮긴다
+// 예전 저장: 무당파('정')·혈교('사') 제자는 새 문파로 옮긴다. 무림전도 개편으로 없어진 문파는 같은 세력의 새 문파로 옮긴다
+const SECT_MOVED={heuksa:'sama',cheolgeom:'eon',sinchang:'ak',cheongpung:'hyeongsan',geumgang:'cheonsan',chilsal:'dongjeong',salsu:'yasu',sahyeol:'gwangpung',eumyang:'podal',hyeolsu:'taeyang',mayeong:'bukhae'};
+// 예전 무공 번호(S문파순번_n) → 새 번호(S_문파_n). 저장 글자 그대로 바꾼다
+const OLD_ART={"0_0":'shaolin_0',"0_1":'shaolin_1',"0_2":'shaolin_2',"1_0":'mudang_0',"1_1":'mudang_1',"1_2":'mudang_2',"2_0":'hwasan_0',"2_1":'hwasan_1',"2_2":'hwasan_2',"3_0":'emei_0',"3_1":'emei_1',"3_2":'emei_2',"4_0":'kunlun_0',"4_1":'kunlun_1',"4_2":'kunlun_2',"5_0":'kongtong_0',"5_1":'kongtong_1',"5_2":'kongtong_2',"6_0":'jeomchang_0',"6_1":'jeomchang_1',"6_2":'jeomchang_2',"7_0":'cheongseong_0',"7_1":'cheongseong_1',"7_2":'cheongseong_2',"8_0":'jongnam_0',"8_1":'jongnam_1',"8_2":'jongnam_2',"9_0":'gaebang_0',"9_1":'gaebang_1',"9_2":'gaebang_2',"10_0":'namgung_0',"10_1":'namgung_1',"11_0":'moyong_0',"11_1":'moyong_1',"12_0":'paeng_0',"12_1":'paeng_1',"13_0":'jegal_0',"13_1":'jegal_1',"14_0":'hwangbo_0',"14_1":'hwangbo_1',"15_0":'dang_0',"15_1":'dang_1',"16_0":'eon_0',"16_1":'eon_1',"17_0":'ak_0',"17_1":'ak_1',"18_0":'hyeongsan_0',"18_1":'hyeongsan_1',"19_0":'cheonsan_0',"19_1":'cheonsan_1',"20_0":'hyeolrang_0',"20_1":'hyeolrang_0',"20_2":'hyeolrang_1',"21_0":'sama_0',"21_1":'sama_0',"21_2":'sama_2',"22_0":'mandok_0',"22_1":'mandok_0',"22_2":'mandok_1',"23_0":'gwiyeong_0',"23_1":'gwiyeong_0',"23_2":'gwiyeong_1',"24_0":'haomun_0',"24_1":'haomun_2',"25_0":'noklim_0',"25_1":'noklim_2',"26_0":'janggang_0',"26_1":'janggang_2',"27_0":'dongjeong_0',"27_1":'dongjeong_1',"28_0":'yasu_0',"28_1":'yasu_1',"29_0":'gwangpung_0',"29_1":'gwangpung_1',"30_0":'podal_0',"30_1":'podal_1',"31_0":'taeyang_0',"31_1":'taeyang_1',"32_0":'bukhae_0',"32_1":'bukhae_1',"33_0":'heukpung_0',"33_1":'heukpung_1',"34_0":'cheonma_0',"34_1":'cheonma_1',"34_2":'cheonma_2',"34_3":'cheonma_3'};
+const migrateArtIds=raw=>raw&&raw.replace(/"S(\d+_\d+)"/g,(m,k)=>OLD_ART[k]?`"S_${OLD_ART[k]}"`:m);
 function migrateSect(){if(!P)return;P.merit=P.merit||{};P.mtot=P.mtot||{};if(P.sect==='정')P.sect='mudang';else if(P.sect==='사')P.sect='hyeolrang';
+  for(const o of[P.merit,P.mtot])for(const[a,b]of Object.entries(SECT_MOVED))if(o[a]!=null){o[b]=(o[b]||0)+o[a];delete o[a]}
+  if(SECT_MOVED[P.sect]){const was=P.sect;P.sect=SECT_MOVED[was];setTimeout(()=>log(`강호의 판도가 바뀌어 문파가 ${SECTS[P.sect].n}(으)로 옮겨졌습니다.`,'sys'),600)}
   if(P.sect&&SECTS[P.sect]&&P.mtot[P.sect]==null)P.mtot[P.sect]=P.merit[P.sect]||0}
 const sectName=()=>P.sect==='own'?P.sectName:P.sect&&SECTS[P.sect]?SECTS[P.sect].n:null;
 
@@ -1537,7 +1549,7 @@ function saveGame(silent){
   }catch(e){}
 }
 function loadGame(){
-  let data=null;try{data=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
+  let data=null;try{data=JSON.parse(migrateArtIds(localStorage.getItem(SAVE_KEY))||'null')}catch(e){}
   return data;
 }
 function applySave(data){
@@ -2868,15 +2880,15 @@ function rankHtml(s){
 const HQ_THEME={
   mudang:['peak','무당산'],hwasan:['peak','화산'],emei:['peak','아미산'],kunlun:['snow','곤륜산'],kongtong:['canyon','공동산'],
   jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
-  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
-  dang:['manor','사천당가'],cheolgeom:['canyon','철검문'],sinchang:['manor','신창문'],cheongpung:['forest','청풍문'],geumgang:['peak','금강문'],
-  hyeolrang:['canyon','혈랑곡'],heuksa:['swamp','흑사방 총타'],mandok:['swamp','만독곡'],gwiyeong:['dark','귀영문 은신처'],
-  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','동정호 수채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
-  sahyeol:['canyon','사혈문'],eumyang:['swamp','음양교'],hyeolsu:['canyon','혈수문'],mayeong:['dark','마영방'],heukpung:['canyon','흑풍채 본채'],
-  cheonma:['dark','십만대산 천마신교']};
+  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],eon:['manor','진주언가'],jegal:['forest','융중산 와룡강'],
+  hwangbo:['manor','황보세가'],ak:['manor','산동악가'],dang:['manor','사천당가'],hyeongsan:['peak','형산'],cheonsan:['snow','천산'],
+  noklim:['forest','녹림산 녹림채'],janggang:['lake','장강삼협 수채'],haomun:['manor','광주 하오문'],sama:['manor','낙양 사마세가'],
+  dongjeong:['lake','동정호 수채'],yasu:['forest','야수궁'],gwangpung:['canyon','객십 광풍사'],taeyang:['canyon','화염산 태양궁'],
+  bukhae:['snow','북해빙궁'],podal:['snow','포달랍궁'],mandok:['swamp','만독곡'],hyeolrang:['canyon','혈랑곡'],gwiyeong:['dark','귀영문 은신처'],
+  heukpung:['canyon','흑풍채 본채'],cheonma:['dark','십만대산 천마신교']};
 const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
-function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
+function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
@@ -3010,20 +3022,24 @@ function hqDlg(n){
 // - 개봉은 하남성 동쪽의 성 안 마을(지역 개봉), 숭산 소림사는 개봉 북쪽으로 그대로 잇는다.
 // map: 무림전도(2000×1333)에서의 자리, 천하 지도 창에 그린다
 const PROV={
-  henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','haomun','heukpung','cheolgeom'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
-  hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','geumgang'],d:'북경을 품은 메마른 북방의 들'},
-  shandong:{n:'산동성',size:44,th:'coast',map:[1425,630],sects:['hwangbo','sinchang'],d:'태산과 동쪽 바다'},
+  henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','sama','heukpung'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
+  hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
+  shandong:{n:'산동성',size:44,th:'coast',map:[1425,630],sects:['hwangbo','ak'],d:'태산과 동쪽 바다'},
   liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong'],d:'산해관 너머 눈 덮인 동북'},
-  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','cheongpung'],d:'황산의 기암과 소나무'},
+  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung'],d:'황산의 기암과 소나무'},
   shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gwiyeong'],d:'황토 고원과 화산·종남산'},
-  gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang','sahyeol'],d:'하서회랑의 모래와 바위'},
+  gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
   qinghai:{n:'청해성',size:60,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
-  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','heuksa'],d:'숲이 짙은 천부지국. 아미산·청성산'},
-  yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','salsu'],d:'붉은 흙과 밀림, 점창산'},
-  guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok','eumyang','hyeolsu'],d:'독충의 늪과 기암, 묘강'},
-  hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim'],d:'장강이 가로지르는 무당산의 땅'},
-  hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['janggang','chilsal'],d:'동정호 물길'},
-  guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma','mayeong'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'}};
+  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang'],d:'숲이 짙은 천부지국. 아미산·청성산'},
+  yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
+  guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
+  hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
+  hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
+  guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
+  guangdong:{n:'광동성',size:52,th:'subtrop',map:[1320,1110],sects:['haomun'],d:'주강 하구의 광주와 남쪽 바다'},
+  xinjiang:{n:'신강',size:64,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
+  tibet:{n:'서장',size:60,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
+  mongol:{n:'내몽고',size:56,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'}};
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
 const PV_LINKS=[
@@ -3032,7 +3048,9 @@ const PV_LINKS=[
   ['shaanxi','w',.4,'gansu','e',.5],['shaanxi','s',.4,'sichuan','n',.6],['shaanxi','s',.8,'hubei','n',.2],['gansu','w',.6,'qinghai','e',.4],
   ['qinghai','s',.7,'sichuan','w',.3],['sichuan','e',.4,'hubei','w',.5],['sichuan','s',.4,'yunnan','n',.5],['sichuan','s',.8,'guizhou','n',.4],
   ['hubei','s',.5,'hunan','n',.5],['hunan','w',.5,'guizhou','e',.4],['hunan','s',.4,'guangxi','n',.7],['yunnan','e',.4,'guizhou','w',.5],
-  ['guizhou','s',.5,'guangxi','n',.3],['yunnan','e',.8,'guangxi','w',.5]];
+  ['guizhou','s',.5,'guangxi','n',.3],['yunnan','e',.8,'guangxi','w',.5],
+  ['guangxi','e',.5,'guangdong','w',.5],['hunan','s',.75,'guangdong','n',.4],['xinjiang','e',.4,'gansu','w',.25],['xinjiang','s',.7,'tibet','n',.4],
+  ['tibet','e',.3,'qinghai','w',.5],['tibet','e',.75,'sichuan','w',.6],['mongol','s',.75,'hebei','n',.3],['mongol','s',.3,'shaanxi','n',.5],['mongol','w',.5,'gansu','n',.5]];
 const pvEdge=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:1.2}:sd==='s'?{x:v,y:S-1.4}:sd==='w'?{x:1.2,y:v}:{x:S-1.4,y:v}};
 const pvIn=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:3.6}:sd==='s'?{x:v,y:S-3.8}:sd==='w'?{x:3.6,y:v}:{x:S-3.8,y:v}};
 const pvOfSect=sid=>Object.keys(PROV).find(k=>PROV[k].sects.includes(sid));
@@ -3045,11 +3063,12 @@ function pvInner(k,p){
     pts.push({x:best.x,y:best.y,to:'hq_'+sid})}
   return pts}
 // 바닥 그림은 본산 그림을 같이 쓴다 (테마 이름이 다르면 풀빛만 고른다)
-const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest'};
-HQ_GRASS.miao=[48,66,40];
+const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest',subtrop:'subtrop',gobi:'canyon',plateau:'plateau',steppe:'steppe'};
+HQ_GRASS.miao=[48,66,40];HQ_GRASS.subtrop=[34,76,36];HQ_GRASS.plateau=[70,74,52];HQ_GRASS.steppe=[78,100,50];
 const PV_BEAST={plain:[['토끼',4],['양',3],['말',2]],north:[['늑대',3],['말',2]],coast:[['토끼',3],['멧돼지',2]],cold:[['늑대',4],['곰',1]],hills:[['사슴',3],['호랑이',1]],
   loess:[['늑대',3],['멧돼지',2]],desert:[['늑대',3],['말',2]],highland:[['늑대',3],['곰',1],['양',2]],basin:[['사슴',3],['곰',1],['멧돼지',2]],
-  jungle:[['호랑이',2],['멧돼지',2]],miao:[['늑대',2],['멧돼지',3]],river:[['사슴',3],['멧돼지',2]],lake:[['사슴',2],['토끼',3]],karst:[['호랑이',1],['멧돼지',3]]};
+  jungle:[['호랑이',2],['멧돼지',2]],miao:[['늑대',2],['멧돼지',3]],river:[['사슴',3],['멧돼지',2]],lake:[['사슴',2],['토끼',3]],karst:[['호랑이',1],['멧돼지',3]],
+  subtrop:[['멧돼지',3],['호랑이',1]],gobi:[['늑대',3],['말',3]],plateau:[['양',3],['곰',1],['늑대',2]],steppe:[['말',4],['양',3],['늑대',2]]};
 // 지형 규칙: base 바닥, alt(높은 곳) 바닥, 나무·바위 밀도, 물(강·호수·바다)
 const PV_TH={
   plain:{base:0,alt:5,altAt:.63,tree:'tree',tv:.04,rv:.01,river:{y:.22}},
@@ -3065,7 +3084,11 @@ const PV_TH={
   miao:{base:9,alt:0,altAt:.35,low:true,tree:'tree',tv:.09,rv:.07,pools:.68},
   river:{base:0,alt:7,altAt:.66,tree:'tree',tv:.08,rv:.02,bamboo:.03,river:{y:.7,w:3}},
   lake:{base:0,alt:7,altAt:.68,tree:'tree',tv:.07,rv:.02,lake:{x:.5,y:.32,rx:.24,ry:.15}},
-  karst:{base:0,alt:6,altAt:.62,tree:'tree',tv:.07,rv:.13,river:{y:.4}}};
+  karst:{base:0,alt:6,altAt:.62,tree:'tree',tv:.07,rv:.13,river:{y:.4}},
+  subtrop:{base:0,alt:5,altAt:.66,tree:'tree',tv:.1,rv:.02,bamboo:.07,river:{y:.45,w:3},sea:'s'},
+  gobi:{base:12,alt:8,altAt:.7,tree:'pine',tv:.006,rv:.05,lake:{x:.62,y:.3,rx:.06,ry:.05}},
+  plateau:{base:7,alt:8,altAt:.55,tree:'pine',tv:.01,rv:.06,lake:{x:.7,y:.6,rx:.1,ry:.07}},
+  steppe:{base:0,alt:7,altAt:.7,tree:'tree',tv:.008,rv:.012}};
 // 성 지역 등록
 for(const[k,p]of Object.entries(PROV)){
   const id=pvId(k),S=p.size,gates=[];
@@ -3096,6 +3119,7 @@ function genProv(id,k,p){
     if(T.river){const w=T.river.w||2,ry=Math.floor(T.river.y*S+2.5*Math.sin(x*.18+o1));if(y>=ry&&y<ry+w)return true}
     if(T.lake){const L=T.lake;if(((x/S-L.x)/L.rx)**2+((y/S-L.y)/L.ry)**2<1)return true}
     if(T.sea==='e'&&x>S*.86+2*Math.sin(y*.3))return true;
+    if(T.sea==='s'&&y>S*.86+2*Math.sin(x*.3))return true;
     if(T.pools&&fbm(x*.21+o1,y*.21)>T.pools)return true;return false};
   for(let y=0;y<S;y++){map[y]=[];objs[y]=[];for(let x=0;x<S;x++){
     const hi=fbm(x*.15+o1,y*.15+o1*.6),rd=road.has(x+','+y),near=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>road.has((x+dx)+','+(y+dy)));
@@ -3120,15 +3144,16 @@ for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()
 // ================= 천하 지도 창 =================
 const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};
 function pWorld(){
-  const here=provOfReg(REG),X=v=>(v-780)*.62,Y=v=>(v-400)*.62;
+  const here=provOfReg(REG),X=v=>(v-480)*.52,Y=v=>(v-330)*.52;
   const lines=PV_LINKS.map(([a,,,b])=>{const A=PROV[a].map,Bm=PROV[b].map;return `<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(Bm[0])}" y2="${Y(Bm[1])}"/>`}).join('');
   const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here;
     return `<g class="${me?'me':''}"><circle cx="${X(x)}" cy="${Y(y)}" r="${me?9:6}"/><text x="${X(x)}" y="${Y(y)-12}">${p.n}</text></g>`}).join('');
   const P0=PROV.henan.map,gae=`<g class="${REG==='gaebong'?'me':''} city"><rect x="${X(P0[0])+14}" y="${Y(P0[1])-4}" width="8" height="8"/><text x="${X(P0[0])+38}" y="${Y(P0[1])+16}">개봉</text></g>`;
-  const cur=here?PROV[here]:null,list=here?PROV[here].sects.map(sid=>`${SECTS[sid].n}(${hqPlace(SECTS[sid])})`).join(' · '):'';
+  const cur=here?PROV[here]:null,sn=s=>`<b class="wf-${alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':'s'}">${s.n}</b>(${hqPlace(s)})`,list=here?(here==='henan'?['shaolin',...PROV[here].sects]:PROV[here].sects).map(sid=>sn(SECTS[sid])).join(' · '):'';
   return `<svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg>
     <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''}${cur?` · ${cur.d}`:''}</p>
-    ${list?`<p class="note">이 성의 문파: ${list}${here==='henan'?' · 소림사(숭산)':''}</p>`:''}
+    ${list?`<p class="note">이 성의 문파: ${list}</p>`:''}
+    <p class="note"><b class="wf-j">정파(정의맹)</b> · <b class="wf-s">사파(사천맹)</b> · <b class="wf-m">마교</b></p>
     <p class="note dim">성 가장자리의 이정표로 이웃 성에 가고, 성 안의 이정표로 문파 본산에 들어간다. 역참 말을 타면 개봉과 본산 사이를 바로 오간다.</p>`}
 $('mini').addEventListener('click',()=>{if(playing)openPanel('world')});
 
