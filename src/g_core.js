@@ -274,10 +274,12 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 function trainQi(){
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
-  P.chan={t:0,dur:1.6,label:'내공 수련',fn:()=>{const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+  const done=()=>{const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
     log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차, 다음 ${qiCost(P.side,P.qiN)})`,'xp');
-    if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}renderOpen()}};
-  closePanels();
+    if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}renderOpen()};
+  // 인물창에서 누르면 창을 닫지 않고 그 자리에서 잠깐 운기한 뒤 결과를 보여 준다 (창이 열려 있는 동안 시간은 멈춰 있다)
+  if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
+  P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
 }
 const statCost=k=>12+(P.st[k]-P.base[k])*6;
 function trainStat(k){

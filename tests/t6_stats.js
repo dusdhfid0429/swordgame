@@ -17,6 +17,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`활력은 최대치에서 멈춘다 (+${r.gained})`,r.gained===5&&r.capped);
   ok('이미 넘친 활력(전생에서 받은 것)은 깎지 않는다',r.overKept);
   ok(`내공 심법 수련 → 내공 +${r.qiTrain}`,r.qiTrain>0);
+  // 인물창에서 수련: 창이 닫히지 않고 결과가 창에 바로 보인다
+  await p.evaluate(()=>{P.vit=5000;openPanel('char')});const n0=await p.evaluate(()=>P.qiN);
+  await p.click('[data-act="qi"]');await p.waitForTimeout(1300);
+  const w=await p.evaluate(()=>({open:!$('win').hidden&&panel==='char',n:P.qiN,txt:$('wbody').textContent.includes(`수련 ${P.qiN}회`)}));
+  ok(`인물창에서 수련해도 창이 열려 있고 결과가 보인다 (${n0}→${w.n})`,w.open&&w.n===n0+1&&w.txt);
+  await p.evaluate(()=>closePanels());
   await p.waitForTimeout(200);ok(`HUD shows 활력 n/max (${await p.evaluate(()=>$('res').textContent)})`,/활력 \d+\/\d+/.test(await p.evaluate(()=>$('res').textContent)));
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

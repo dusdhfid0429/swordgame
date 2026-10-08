@@ -82,7 +82,7 @@ function pChar(){
     <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
       <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
       <p>내공은 내공 심법 수련으로만 오른다. ${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
-      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('qi',`운기조식으로 내공 수련 · 활력 ${c}`,{pri:1,d:P.vit<c})}</div></div>
+      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('qi',P.qiTraining?'운기 중…':`운기조식으로 내공 수련 · 활력 ${c}`,{pri:1,d:P.vit<c||P.qiTraining})}</div></div>
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
