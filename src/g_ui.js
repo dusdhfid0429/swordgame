@@ -75,11 +75,11 @@ function plabel(f){
 
 // ================= windows =================
 let panel=null;
-const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
+const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴',world:'천하 지도'};
 function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
-function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
+function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){

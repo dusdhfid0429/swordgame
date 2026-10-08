@@ -1,5 +1,6 @@
 // ================= state =================
-const TW=64,TH=32,N=40,MID=20;
+const TW=64,TH=32,MID=20;
+let N=40;   // 지금 지역의 격자 크기. 지역마다 다르다 (REGIONS[..].size, 기본 40)
 let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],embers=[],drops=[],eprojs=[],S=1,W=0,H=0,cam={x:0,y:0},keys={},time=0,shake=0,tod=.3;
 let paused=true,playing=false;
 const ARTS=buildArts();

@@ -77,6 +77,11 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s;z-index:4}.fade.on{opacity:1}
 .wnote{position:sticky;top:34px;z-index:1;margin:0;padding:7px 10px;font-size:13px;background:#0b0a09f2;border:1px solid var(--bronze);color:#9db8e0}
 .wnote.xp{color:var(--good)}
+/* 천하 지도 */
+.world{width:100%;height:auto;max-height:60vh;display:block;background:#15110c;border:1px solid #4a3c27}
+.world line{stroke:#6a5634;stroke-width:2;stroke-dasharray:4 3}
+.world circle{fill:#8a7454;stroke:#1a140c;stroke-width:2}.world text{fill:#e8d9a8;font:13px var(--body);text-anchor:middle;paint-order:stroke;stroke:#0b0a09;stroke-width:3px}
+.world .me circle,.world .me rect{fill:#ffd36a;stroke:#fff}.world .me text{fill:#ffd36a;font-weight:700}.world rect{fill:#c9b48a;stroke:#1a140c}
 /* 시스템 메시지: 화면 맨 위 레이어. 창 위에도 보이고, 상단 상태창·지도 아래 / 하단 조작 버튼 위에 뜬다 */
 .sysmsg{position:absolute;left:50%;top:104px;transform:translateX(-50%);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:30;pointer-events:none}
 .sysmsg p{margin:0;max-width:100%;padding:8px 16px;background:rgba(14,11,8,.9);border:1px solid var(--bronze);border-radius:8px;font-size:14px;line-height:1.45;color:#e8d9a8;text-align:center;word-break:keep-all;
@@ -636,7 +641,8 @@ function migrateSect(){if(!P)return;P.merit=P.merit||{};P.mtot=P.mtot||{};if(P.s
 const sectName=()=>P.sect==='own'?P.sectName:P.sect&&SECTS[P.sect]?SECTS[P.sect].n:null;
 
 // ================= state =================
-const TW=64,TH=32,N=40,MID=20;
+const TW=64,TH=32,MID=20;
+let N=40;   // 지금 지역의 격자 크기. 지역마다 다르다 (REGIONS[..].size, 기본 40)
 let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],embers=[],drops=[],eprojs=[],S=1,W=0,H=0,cam={x:0,y:0},keys={},time=0,shake=0,tod=.3;
 let paused=true,playing=false;
 const ARTS=buildArts();
@@ -1303,7 +1309,7 @@ function autoAttack(e){
   basicStrike(e);
 }
 function moveEnt(e,dx,dy){const r=.22;if(walkAt(e.x+dx+Math.sign(dx)*r,e.y))e.x+=dx;if(walkAt(e.x,e.y+dy+Math.sign(dy)*r))e.y+=dy}
-function findPath(sx,sy,tx,ty,lim=1400){
+function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*N/1600);
   if(!walk(tx,ty)){let best=null,bd=9;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]])if(walk(tx+a,ty+b)){const d=Math.hypot(tx+a-sx,ty+b-sy);if(d<bd){bd=d;best=[tx+a,ty+b]}}if(!best)return null;[tx,ty]=best}
   const k=(x,y)=>y*N+x,g=new Map([[k(sx,sy),0]]),came=new Map,closed=new Set,open=[[sx,sy,0]];let it=0;
   while(open.length&&it++<lim){
@@ -1621,11 +1627,11 @@ function plabel(f){
 
 // ================= windows =================
 let panel=null;
-const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
+const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴',world:'천하 지도'};
 function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
-function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
+function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
@@ -2369,7 +2375,7 @@ addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
   if(k==='escape'){closePanels();return}
   if(!playing)return;keys[k]=true;if(k.startsWith('arrow')||k===' '||k==='tab')e.preventDefault();
-  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist'}[e.code];
+  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist',KeyG:'world'}[e.code];
   if(menu){openPanel(menu);return}
   if(paused)return;
   if(e.code in KEYF){useForm(KEYF[e.code]);return}
@@ -2470,7 +2476,7 @@ function touchHud(){
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   return `<div class="mgrid">${M('open:char','인물','기본기 · 내공 수련')}${M('open:arts','무공','무공 바꾸기 · 초식')}${M('open:bag','행낭','장비 · 비급 읽기')}
-    ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 의뢰')}${M('open:hist','강호사','지난 생들')}
+    ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 의뢰')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}
     ${M('trainwin','수련','기본기 · 내공 심법')}${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
     ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${INTOSS?M('exit','끝내기','진행을 기록하고 나간다'):M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
 }
@@ -2861,13 +2867,13 @@ function rankHtml(s){
 // [지형, 지명]. 지형: peak 산봉우리, snow 설산, forest 숲, lake 호수, manor 장원, swamp 늪, canyon 붉은 협곡, dark 검은 땅
 const HQ_THEME={
   mudang:['peak','무당산'],hwasan:['peak','화산'],emei:['peak','아미산'],kunlun:['snow','곤륜산'],kongtong:['canyon','공동산'],
-  jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['lake','동정호 군산'],
-  namgung:['manor','남궁세가'],moyong:['lake','연자오'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
+  jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
+  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
   dang:['manor','사천당가'],cheolgeom:['canyon','철검문'],sinchang:['manor','신창문'],cheongpung:['forest','청풍문'],geumgang:['peak','금강문'],
   hyeolrang:['canyon','혈랑곡'],heuksa:['swamp','흑사방 총타'],mandok:['swamp','만독곡'],gwiyeong:['dark','귀영문 은신처'],
-  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','장강수로채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
+  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','동정호 수채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
   sahyeol:['canyon','사혈문'],eumyang:['swamp','음양교'],hyeolsu:['canyon','혈수문'],mayeong:['dark','마영방'],heukpung:['canyon','흑풍채 본채'],
-  cheonma:['dark','천산 천마신교']};
+  cheonma:['dark','십만대산 천마신교']};
 const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
@@ -2889,7 +2895,7 @@ function hqSpawns(s,th){
 for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const[th,place]=HQ_THEME[s.id];
   REGIONS['hq_'+s.id]={name:place,hq:s.id,theme:th,gen:()=>genHQ(s,th),bake:()=>bakeHQ(th),
     zone:(x,y)=>inHQ(x,y)&&y<=16?`${s.n} 본산`:y>=31?`${place} 어귀`:`${place} 산길`,
-    spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 관도와 잇는다 (맨 아래 관도 절)
+    spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 본산이 있는 성(省) 지도와 잇는다 (g_province.js)
 // 소림사는 숭산 꼭대기 암자를 본산으로 쓴다
 Object.assign(REGIONS.sungsan,{name:'숭산 소림사',hq:'shaolin',npcs:hqNpcs(SECTS.shaolin,20.5,7.4),
   zone:(x,y)=>y>=31?'숭산 산문':y<=9&&x>=14&&x<=26?'소림사':y<=13?'숭산 설봉':'숭산 산중'});
@@ -2941,17 +2947,18 @@ function genHQ(s,th){
 }
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
 const HQ_GRASS={peak:[44,80,46],snow:[58,76,60],forest:[32,64,32],lake:[52,88,52],manor:[60,86,46],swamp:[50,62,36],canyon:[86,80,46],dark:[38,44,38]};
-function bakeHQ(th){
-  const gw=N*TW,gh=N*TH,c=document.createElement('canvas');c.width=gw;c.height=gh;
-  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th],stair=th==='peak'||th==='snow';
-  for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
-    const a=(px-gw/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
+// k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
+function bakeHQ(th,k=Math.min(1,40/N)){
+  const GW=N*TW,gw=Math.round(GW*k),gh=Math.round(N*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
+  for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
+    const px=qx/k,py=qy/k,a=(px-GW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
     if(gx<0||gy<0||gx>=N||gy>=N)continue;
     const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
-    const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(px,py)*.16;
+    const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
     let R,G,B;
-    if(t===2){const w=fbm(gx*2.5,gy*4);if(th==='swamp'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
+    if(t===2){const w=fbm(gx*2.5,gy*4);if(th==='swamp'||th==='miao'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
     else if(t===3){R=136;G=96;B=60;const gr=vn(gx*40,gy*4);R*=.8+gr*.35;G*=.8+gr*.35;B*=.8+gr*.3;if(frac(gx*4)<.1){R*=.45;G*=.45;B*=.45}}
     else if(t===1){if(stair){const st=frac(gy*2),h=hash(Math.floor(gx*2),Math.floor(gy*2));R=(126+n*22)*(.88+h*.2);G=(120+n*20)*(.88+h*.2);B=(110+n*18)*(.88+h*.2);if(st<.08){R*=.6;G*=.6;B*=.6}}
       else{const k=vn(gx*6,gy*6);R=122+n*24+k*10;G=102+n*20+k*8;B=74+n*14}}
@@ -2962,18 +2969,19 @@ function bakeHQ(th){
     else if(t===8){const k=fbm(gx*.6,gy*.6);R=212+n*26-k*18;G=220+n*24-k*14;B=232+n*18-k*6;if(vn(gx*5+3,gy*5)>.8){R-=60;G-=56;B-=46}}
     else if(t===9){const k=vn(gx*3,gy*3);R=64+n*24+k*10;G=60+n*22+k*8;B=38+n*12;if(vn(gx*8,gy*8)>.76){R*=.7;G*=.8;B*=.7}}
     else if(t===10){const k=vn(gx*2.5,gy*2.5),band=Math.sin((gx+gy)*1.6+k*3)*.5+.5;R=128+n*34+band*20;G=70+n*20+band*10;B=46+n*12}
+    else if(t===12){const k2=vn(gx*2,gy*2),dune=Math.sin(gx*1.3+gy*.7+k2*4)*.5+.5;R=196+n*26+dune*18;G=168+n*22+dune*14;B=112+n*16}
     else if(t===11){const k=vn(gx*3,gy*3);R=40+n*18+k*10;G=36+n*16+k*8;B=38+n*16+k*8;if(vn(gx*11,gy*11)>.82){R+=60;G+=14;B+=8}}
     else{const big=vn(gx*.2,gy*.2);R=gc[0]+n*34+big*16;G=gc[1]+n*40+big*14;B=gc[2]+n*20;const dirt=fbm(gx*.5+20,gy*.5);if(dirt>.64){const k=Math.min(1,(dirt-.64)*5);R+=(100-R)*k;G+=(94-G)*k;B+=(80-B)*k}}
     const fade=Math.min(1,Math.min(gx,gy,N-gx,N-gy)/1.6);
-    const i=(py*gw+px)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
+    const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
-  const r=rng(57+th.length),sp=(gx,gy)=>[(gx-gy)*TW/2+gw/2,(gx+gy)*TH/2];g.lineCap='round';
+  const r=rng(57+th.length),sp=(gx,gy)=>[((gx-gy)*TW/2+GW/2)*k,(gx+gy)*TH/2*k];g.lineCap='round';
   const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
-  for(let k=0;k<16000;k++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
-    g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3,y-2-r()*4);g.stroke()}
-  for(let k=0;k<900;k++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11)continue;const[x,y]=sp(gx,gy),s=1.5+r()*3.5;
-    g.fillStyle=t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
+  for(let q=0;q<16000*N*N/1600;q++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
+    g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
+  for(let q=0;q<900*N*N/1600;q++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
+    g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
   return c;
 }
 // ---- 역참: 은자를 내고 말을 타 개봉과 모든 본산을 오간다 ----
@@ -2994,61 +3002,135 @@ function hqDlg(n){
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
   return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
 
-// ================= 관도: 개봉과 본산을 걸어서 잇는 길 =================
-// 개봉 가장자리 출입구 → 관도(갈림길 지역) → 각 본산 아래 출입구. 역참 말은 그대로 지름길로 남긴다.
-//            [북방 관도] ── 하북팽가·황보세가·철검문·녹림채·마영방·흑풍채 본채·천산 천마신교
-//  [숭산] ┐     │
-//  [서쪽 관도]─[개봉]─[동쪽 관도]      서쪽: 화산·종남·공동·곤륜·청성·아미·점창·당가·신창
-//                │                       동쪽: 혈랑곡·흑사방·만독곡·귀영문·칠살·살수·사혈·음양·혈수
-//           [남쪽 관도]                   남쪽: 무당·개방·모용·장강·남궁·제갈·청풍·금강·하오문
-const HUBS={
-  road_w:{name:'서쪽 관도',from:'w',th:'forest',hqs:['hwasan','jongnam','kongtong','kunlun','cheongseong','emei','jeomchang','dang','sinchang']},
-  road_s:{name:'남쪽 관도',from:'s',th:'lake',hqs:['mudang','gaebang','moyong','janggang','namgung','jegal','cheongpung','geumgang','haomun']},
-  road_e:{name:'동쪽 관도',from:'e',th:'canyon',hqs:['hyeolrang','heuksa','mandok','gwiyeong','chilsal','salsu','sahyeol','eumyang','hyeolsu']},
-  road_n:{name:'북방 관도',from:'n',th:'snow',hqs:['paeng','hwangbo','cheolgeom','noklim','mayeong','heukpung','cheonma']}};
-const OPP={n:'s',s:'n',w:'e',e:'w'};
-// 가장자리 출입구 자리와, 그 출입구로 들어왔을 때 서는 자리(안쪽으로 2.4칸)
-const edgePt=(sd,t)=>sd==='n'?{x:t,y:1.2}:sd==='s'?{x:t,y:38.6}:sd==='w'?{x:1.2,y:t}:{x:38.6,y:t};
-const inPt=(sd,t)=>sd==='n'?{x:t,y:3.6}:sd==='s'?{x:t,y:36.2}:sd==='w'?{x:3.6,y:t}:{x:36.2,y:t};
-const GAE_T={n:33.5,w:27.5,s:20.5,e:35.5};   // 개봉 쪽 출입구 자리
-const hubOf=sid=>Object.keys(HUBS).find(k=>HUBS[k].hqs.includes(sid));
-for(const[id,h]of Object.entries(HUBS)){
-  const ent=OPP[h.from],gates=[{...edgePt(ent,20.5),to:'gaebong',...(({x,y})=>({tx:x,ty:y}))(inPt(h.from,GAE_T[h.from])),label:'개봉',sd:ent}];
-  const sides=['n','w','s','e'].filter(q=>q!==ent);let k=0;
-  for(const sd of sides)for(const t of[9.5,20.5,31.5]){const sid=h.hqs[k++];if(!sid)continue;const s=SECTS[sid];
-    gates.push({...edgePt(sd,t),to:'hq_'+sid,tx:20.5,ty:36.2,label:hqPlace(s),sd});
-    REGIONS['hq_'+sid].gates=[{x:20.5,y:38.6,to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(sd,t)),label:h.name}]}
-  const far=(x,y)=>Math.hypot(x-20,y-20)>6;
-  REGIONS[id]={name:h.name,hub:1,theme:h.th,gen:()=>genHub(id,h),bake:()=>bakeHQ(h.th),gates,bosses:[],npcs:[],
-    zone:(x,y)=>{let b=null,bd=7;for(const g of gates){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}return b?`${h.name} · ${b.label} 갈림길`:h.name},
-    spawns:[['정파 무인',2,far,(x,y)=>mkFac('정',0,x,y)],['사파 무인',2,far,(x,y)=>mkFac('사',0,x,y)],['마교도',2,far,(x,y)=>mkFac('마',0,x,y)],
-      ['산적',3,far],['산적궁수',1,far],['늑대',2,far],['사슴',2,far]]};
-  REGIONS.gaebong.gates.push({...edgePt(h.from,GAE_T[h.from]),to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(ent,20.5)),label:h.name});
+
+// ================= 천하: 성(省) 지도 14곳 =================
+// 탄마 중국무림전도(누구나 무료 사용)를 참고해 성과 이웃 관계, 문파 자리를 정했다. 설계: docs/맵이동_설계.md
+// - 성 하나 = 지역 하나. 크기는 지도에서 차지하는 넓이에 따라 44~64칸(본산·개봉·숭산은 40칸).
+// - 성끼리는 가장자리 출입구로 지도 위치대로 잇는다. 성 안의 본산 입구(안쪽 출입구)로 각 문파 본산에 들어간다.
+// - 개봉은 하남성 동쪽의 성 안 마을(지역 개봉), 숭산 소림사는 개봉 북쪽으로 그대로 잇는다.
+// map: 무림전도(2000×1333)에서의 자리, 천하 지도 창에 그린다
+const PROV={
+  henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','haomun','heukpung','cheolgeom'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
+  hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','geumgang'],d:'북경을 품은 메마른 북방의 들'},
+  shandong:{n:'산동성',size:44,th:'coast',map:[1425,630],sects:['hwangbo','sinchang'],d:'태산과 동쪽 바다'},
+  liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong'],d:'산해관 너머 눈 덮인 동북'},
+  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','cheongpung'],d:'황산의 기암과 소나무'},
+  shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gwiyeong'],d:'황토 고원과 화산·종남산'},
+  gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang','sahyeol'],d:'하서회랑의 모래와 바위'},
+  qinghai:{n:'청해성',size:60,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
+  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','heuksa'],d:'숲이 짙은 천부지국. 아미산·청성산'},
+  yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','salsu'],d:'붉은 흙과 밀림, 점창산'},
+  guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok','eumyang','hyeolsu'],d:'독충의 늪과 기암, 묘강'},
+  hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim'],d:'장강이 가로지르는 무당산의 땅'},
+  hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['janggang','chilsal'],d:'동정호 물길'},
+  guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma','mayeong'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'}};
+const pvId=k=>'pv_'+k;
+// 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
+const PV_LINKS=[
+  ['henan','n',.5,'hebei','s',.5],['henan','e',.3,'shandong','w',.5],['henan','e',.75,'anhui','w',.3],['henan','w',.5,'shaanxi','e',.5],['henan','s',.5,'hubei','n',.6],
+  ['hebei','e',.7,'shandong','n',.4],['hebei','n',.7,'liaoning','s',.3],['shandong','s',.4,'anhui','n',.6],['anhui','w',.7,'hubei','e',.4],
+  ['shaanxi','w',.4,'gansu','e',.5],['shaanxi','s',.4,'sichuan','n',.6],['shaanxi','s',.8,'hubei','n',.2],['gansu','w',.6,'qinghai','e',.4],
+  ['qinghai','s',.7,'sichuan','w',.3],['sichuan','e',.4,'hubei','w',.5],['sichuan','s',.4,'yunnan','n',.5],['sichuan','s',.8,'guizhou','n',.4],
+  ['hubei','s',.5,'hunan','n',.5],['hunan','w',.5,'guizhou','e',.4],['hunan','s',.4,'guangxi','n',.7],['yunnan','e',.4,'guizhou','w',.5],
+  ['guizhou','s',.5,'guangxi','n',.3],['yunnan','e',.8,'guangxi','w',.5]];
+const pvEdge=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:1.2}:sd==='s'?{x:v,y:S-1.4}:sd==='w'?{x:1.2,y:v}:{x:S-1.4,y:v}};
+const pvIn=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:3.6}:sd==='s'?{x:v,y:S-3.8}:sd==='w'?{x:3.6,y:v}:{x:S-3.8,y:v}};
+const pvOfSect=sid=>Object.keys(PROV).find(k=>PROV[k].sects.includes(sid));
+// 성 안 출입구(본산 입구·개봉) 자리: 가장자리에서 7칸 이상, 서로 9칸 이상 떨어뜨린다
+function pvInner(k,p){
+  const S=p.size,r=rng(5300+k.length*97+k.charCodeAt(0)*13),pts=[];
+  if(k==='henan')pts.push({x:Math.floor(S*.8)+.5,y:Math.floor(S*.5)+.5,to:'gaebong'});
+  for(const sid of p.sects){let best=null;for(let t=0;t<200;t++){const x=7+Math.floor(r()*(S-14))+.5,y=7+Math.floor(r()*(S-14))+.5;
+    if(Math.hypot(x-S/2,y-S/2)<6)continue;const d=Math.min(99,...pts.map(q=>Math.hypot(q.x-x,q.y-y)));if(d>=9){best={x,y};break}if(!best||d>best.d)best={x,y,d}}
+    pts.push({x:best.x,y:best.y,to:'hq_'+sid})}
+  return pts}
+// 바닥 그림은 본산 그림을 같이 쓴다 (테마 이름이 다르면 풀빛만 고른다)
+const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest'};
+HQ_GRASS.miao=[48,66,40];
+const PV_BEAST={plain:[['토끼',4],['양',3],['말',2]],north:[['늑대',3],['말',2]],coast:[['토끼',3],['멧돼지',2]],cold:[['늑대',4],['곰',1]],hills:[['사슴',3],['호랑이',1]],
+  loess:[['늑대',3],['멧돼지',2]],desert:[['늑대',3],['말',2]],highland:[['늑대',3],['곰',1],['양',2]],basin:[['사슴',3],['곰',1],['멧돼지',2]],
+  jungle:[['호랑이',2],['멧돼지',2]],miao:[['늑대',2],['멧돼지',3]],river:[['사슴',3],['멧돼지',2]],lake:[['사슴',2],['토끼',3]],karst:[['호랑이',1],['멧돼지',3]]};
+// 지형 규칙: base 바닥, alt(높은 곳) 바닥, 나무·바위 밀도, 물(강·호수·바다)
+const PV_TH={
+  plain:{base:0,alt:5,altAt:.63,tree:'tree',tv:.04,rv:.01,river:{y:.22}},
+  north:{base:7,alt:0,altAt:.6,tree:'tree',tv:.05,rv:.03},
+  coast:{base:0,alt:6,altAt:.68,tree:'pine',tv:.05,rv:.03,sea:'e'},
+  cold:{base:0,alt:8,altAt:.5,tree:'pine',tv:.11,rv:.03},
+  hills:{base:0,alt:6,altAt:.6,tree:'pine',tv:.11,rv:.06,river:{y:.7}},
+  loess:{base:7,alt:6,altAt:.62,tree:'pine',tv:.04,rv:.05},
+  desert:{base:12,alt:6,altAt:.64,tree:'tree',tv:.008,rv:.04},
+  highland:{base:0,alt:8,altAt:.62,tree:'pine',tv:.03,rv:.06,lake:{x:.3,y:.32,rx:.14,ry:.1}},
+  basin:{base:0,alt:7,altAt:.66,tree:'tree',tv:.13,rv:.02,bamboo:.06,river:{y:.62}},
+  jungle:{base:0,alt:10,altAt:.6,tree:'tree',tv:.17,rv:.02,bamboo:.06},
+  miao:{base:9,alt:0,altAt:.35,low:true,tree:'tree',tv:.09,rv:.07,pools:.68},
+  river:{base:0,alt:7,altAt:.66,tree:'tree',tv:.08,rv:.02,bamboo:.03,river:{y:.7,w:3}},
+  lake:{base:0,alt:7,altAt:.68,tree:'tree',tv:.07,rv:.02,lake:{x:.5,y:.32,rx:.24,ry:.15}},
+  karst:{base:0,alt:6,altAt:.62,tree:'tree',tv:.07,rv:.13,river:{y:.4}}};
+// 성 지역 등록
+for(const[k,p]of Object.entries(PROV)){
+  const id=pvId(k),S=p.size,gates=[];
+  for(const[a,sa,ta,b,sb,tb]of PV_LINKS){
+    if(a===k){const at=pvIn(PROV[b].size,sb,tb);gates.push({...pvEdge(S,sa,ta),to:pvId(b),tx:at.x,ty:at.y,label:PROV[b].n,sd:sa})}
+    if(b===k){const at=pvIn(PROV[a].size,sa,ta);gates.push({...pvEdge(S,sb,tb),to:pvId(a),tx:at.x,ty:at.y,label:PROV[a].n,sd:sb})}}
+  for(const q of pvInner(k,p)){
+    if(q.to==='gaebong'){gates.push({x:q.x,y:q.y,to:'gaebong',tx:3.6,ty:27.5,label:'개봉',inner:1});REGIONS.gaebong.gates.push({x:1.2,y:27.5,to:id,tx:q.x,ty:q.y+2.4,label:p.n})}
+    else{const sid=q.to.slice(3),s=SECTS[sid];gates.push({x:q.x,y:q.y,to:q.to,tx:20.5,ty:36.2,label:hqPlace(s),inner:1});
+      REGIONS[q.to].gates=[{x:20.5,y:38.6,to:id,tx:q.x,ty:q.y+2.4,label:p.n}];REGIONS[q.to].prov=k}}
+  const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))],far=(x,y)=>Math.hypot(x-S/2,y-S/2)>6;
+  const local=f=>{const l=p.sects.filter(sid=>alFac(SECTS[sid].al)===f);return l.length?pick(l):undefined};
+  const spawns=[];for(const f of['정','사','마'])spawns.push([FAC_KIND[f][0],facs.includes(f)?3:1,far,(x,y)=>mkFac(f,0,x,y,local(f))]);
+  spawns.push(['산적',3,far],['산적궁수',1,far]);for(const[b,c]of PV_BEAST[p.th])spawns.push([b,c,far]);
+  REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
+    zone:(x,y)=>{let b=null,bd=6;for(const g of gates)if(g.inner){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}
+      return b?`${p.n} · ${b.label} 어귀`:Math.hypot(x-S/2,y-S/2)<5?`${p.n} 객잔 거리`:p.n}};
 }
-// 관도 지도: 출입구마다 안쪽으로 들어와 한가운데 갈림길(주막)에서 모두 만난다
-function genHub(id,h){
-  const R=REGIONS[id],seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0),r=rng(9100+seed*13),o1=seed*.07;
+REGIONS.sungsan.prov='henan';REGIONS.gaebong.prov='henan';
+// 성 지도: 출입구마다 한가운데 객잔 거리로 굽이진 길을 낸다. 물을 건너는 길은 다리가 된다.
+function genProv(id,k,p){
+  const R=REGIONS[id],S=N,T=PV_TH[p.th],r=rng(8800+k.length*131+k.charCodeAt(1)*7),o1=k.charCodeAt(0)*.05,C=Math.floor(S/2);
   map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
-  const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])road.add(i+','+j)};
-  for(const g of R.gates){let x=Math.max(1,Math.min(N-3,Math.floor(g.x))),y=Math.max(1,Math.min(N-3,Math.floor(g.y)));const vert=g.sd==='n'||g.sd==='s';
-    if(vert){while(y!==19){mark(x,y);y+=Math.sign(19-y)}while(x!==19){mark(x,y);x+=Math.sign(19-x)}}
-    else{while(x!==19){mark(x,y);x+=Math.sign(19-x)}while(y!==19){mark(x,y);y+=Math.sign(19-y)}}mark(19,19)}
-  const base=HQ_BASE[h.th]===10?7:HQ_BASE[h.th],tree=h.th==='snow'?'pine':'tree';
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
-    const hi=fbm(x*.16+o1,y*.16+o1*.5),rd=road.has(x+','+y),near=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>road.has((x+dx)+','+(y+dy)));
-    let g=base;if(hi>.64)g=h.th==='canyon'?10:6;if(h.th==='snow'&&hi<.3)g=0;if(rd)g=1;
-    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=N-2;
-    if(!rd){if(x===0||y===0||x===N-1||y===N-1)o=r()<.6?tree:'rock';else if(edge)o=r()<.7?(r()<.6?tree:'rock'):null;
-      else if(!near&&Math.hypot(x-20,y-20)>4){const v=r();o=v<.1?tree:v<.14?(h.th==='forest'?'pine':'rock'):v<.16&&h.th==='forest'?'bamboo':null}}
+  const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])if(i>=1&&j>=1&&i<S-1&&j<S-1)road.add(i+','+j)};
+  for(const g of R.gates){let x=Math.max(1,Math.min(S-3,Math.floor(g.x))),y=Math.max(1,Math.min(S-3,Math.floor(g.y)));
+    for(let n=0;n<S*4&&(x!==C||y!==C);n++){mark(x,y);const dx=C-x,dy=C-y;if(dy===0||(dx!==0&&r()<Math.abs(dx)/(Math.abs(dx)+Math.abs(dy))))x+=Math.sign(dx);else y+=Math.sign(dy)}mark(C,C)}
+  const water=(x,y)=>{
+    if(T.river){const w=T.river.w||2,ry=Math.floor(T.river.y*S+2.5*Math.sin(x*.18+o1));if(y>=ry&&y<ry+w)return true}
+    if(T.lake){const L=T.lake;if(((x/S-L.x)/L.rx)**2+((y/S-L.y)/L.ry)**2<1)return true}
+    if(T.sea==='e'&&x>S*.86+2*Math.sin(y*.3))return true;
+    if(T.pools&&fbm(x*.21+o1,y*.21)>T.pools)return true;return false};
+  for(let y=0;y<S;y++){map[y]=[];objs[y]=[];for(let x=0;x<S;x++){
+    const hi=fbm(x*.15+o1,y*.15+o1*.6),rd=road.has(x+','+y),near=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>road.has((x+dx)+','+(y+dy)));
+    let g=T.base;if(T.low?hi<T.altAt:hi>T.altAt)g=T.alt;const wt=water(x,y);if(wt)g=2;if(rd)g=wt?3:1;
+    let o=null;const edge=x<=1||y<=1||x>=S-2||y>=S-2;
+    if(!rd&&!wt){if(x===0||y===0||x===S-1||y===S-1)o=r()<.6?T.tree:'rock';else if(edge)o=r()<.7?(r()<.6?T.tree:'rock'):null;
+      else if(!near&&Math.hypot(x-C,y-C)>4){const v=r(),cliff=fbm(x*.3+o1,y*.3);o=g===6&&cliff>.64?'rock':v<T.tv?T.tree:v<T.tv+T.rv?'rock':v<T.tv+T.rv+(T.bamboo||0)?'bamboo':null}}
     map[y][x]={g,v:r()};objs[y][x]=o}}
-  // 갈림길 주막과 등롱
-  const inn={x:22,y:15,w:3,h:2,kind:'inn'};let ok=true;for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++)if(road.has(i+','+j))ok=false;
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++)if(map[y][x].g===3&&(map[y-1]&&map[y-1][x].g===2||map[y+1]&&map[y+1][x].g===2))rails.push({x,y});
+  // 한가운데 객잔 거리
+  const inn={x:C+2,y:C-4,w:3,h:2,kind:'inn'};let ok=true;for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++)if(road.has(i+','+j)||map[j][i].g===2)ok=false;
   if(ok){for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++){objs[j][i]='B';map[j][i].g=4}builds.push(inn)}
-  for(const[x,y]of[[17,17],[22,22],[17,22]])if(!road.has(x+','+y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  for(const[x,y]of[[C-2,C-2],[C+3,C+3],[C-2,C+3]])if(!road.has(x+','+y)&&map[y][x].g!==2){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  for(const[t,n,ok2]of[['herb',8,g=>g===0||g===7],['wood',5,g=>g===0||g===7],['ore',5,g=>g===6||g===8||g===10]])
-    for(let i=0;i<300&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok2(map[y][x].g))put(t,x,y)}
+  const want=(t,n,okg)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(okg(map[y][x].g))put(t,x,y)}};
+  const sc=S*S/1600;want('herb',Math.round(8*sc),g=>g===0||g===7||g===9);want('wood',Math.round(5*sc),g=>g===0||g===7);want('ore',Math.round(5*sc),g=>g===6||g===8||g===10||g===12);
+  if(T.river||T.lake||T.sea){let n=0;for(let i=0;i<600&&n<4;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(walk(x,y)&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>map[y+dy][x+dx].g===2)){put('fish',x,y);n++}}}
 }
+// 지역마다 격자 크기(N)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
+for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()}}
+
+// ================= 천하 지도 창 =================
+const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};
+function pWorld(){
+  const here=provOfReg(REG),X=v=>(v-780)*.62,Y=v=>(v-400)*.62;
+  const lines=PV_LINKS.map(([a,,,b])=>{const A=PROV[a].map,Bm=PROV[b].map;return `<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(Bm[0])}" y2="${Y(Bm[1])}"/>`}).join('');
+  const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here;
+    return `<g class="${me?'me':''}"><circle cx="${X(x)}" cy="${Y(y)}" r="${me?9:6}"/><text x="${X(x)}" y="${Y(y)-12}">${p.n}</text></g>`}).join('');
+  const P0=PROV.henan.map,gae=`<g class="${REG==='gaebong'?'me':''} city"><rect x="${X(P0[0])+14}" y="${Y(P0[1])-4}" width="8" height="8"/><text x="${X(P0[0])+38}" y="${Y(P0[1])+16}">개봉</text></g>`;
+  const cur=here?PROV[here]:null,list=here?PROV[here].sects.map(sid=>`${SECTS[sid].n}(${hqPlace(SECTS[sid])})`).join(' · '):'';
+  return `<svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg>
+    <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''}${cur?` · ${cur.d}`:''}</p>
+    ${list?`<p class="note">이 성의 문파: ${list}${here==='henan'?' · 소림사(숭산)':''}</p>`:''}
+    <p class="note dim">성 가장자리의 이정표로 이웃 성에 가고, 성 안의 이정표로 문파 본산에 들어간다. 역참 말을 타면 개봉과 본산 사이를 바로 오간다.</p>`}
+$('mini').addEventListener('click',()=>{if(playing)openPanel('world')});
 
 // ================= 앱인토스 (토스 인앱) =================
 // 토스 안에서는 toss/bridge.js 가 SDK를 window.AIT 에 넣고 'ait-ready' 를 쏜다.
@@ -3263,7 +3345,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
-  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y);
+  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
   const sea=P?season():'봄';
   if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -3340,9 +3422,9 @@ function draw(){
 }
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
-function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626'];
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5,py-1,3.2,2.2)}miniBase=c}
-const miniXY=(x,y)=>[75+(x-y)*1.85,2+(x+y)*1];
+function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870'];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=40/N;g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+const miniXY=(x,y)=>[75+(x-y)*74/N,2+(x+y)*40/N];
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
   for(const g of REGION().gates){const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}

@@ -82,7 +82,7 @@ function autoAttack(e){
   basicStrike(e);
 }
 function moveEnt(e,dx,dy){const r=.22;if(walkAt(e.x+dx+Math.sign(dx)*r,e.y))e.x+=dx;if(walkAt(e.x,e.y+dy+Math.sign(dy)*r))e.y+=dy}
-function findPath(sx,sy,tx,ty,lim=1400){
+function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*N/1600);
   if(!walk(tx,ty)){let best=null,bd=9;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]])if(walk(tx+a,ty+b)){const d=Math.hypot(tx+a-sx,ty+b-sy);if(d<bd){bd=d;best=[tx+a,ty+b]}}if(!best)return null;[tx,ty]=best}
   const k=(x,y)=>y*N+x,g=new Map([[k(sx,sy),0]]),came=new Map,closed=new Set,open=[[sx,sy,0]];let it=0;
   while(open.length&&it++<lim){

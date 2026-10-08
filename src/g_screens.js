@@ -110,7 +110,7 @@ addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
   if(k==='escape'){closePanels();return}
   if(!playing)return;keys[k]=true;if(k.startsWith('arrow')||k===' '||k==='tab')e.preventDefault();
-  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist'}[e.code];
+  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist',KeyG:'world'}[e.code];
   if(menu){openPanel(menu);return}
   if(paused)return;
   if(e.code in KEYF){useForm(KEYF[e.code]);return}

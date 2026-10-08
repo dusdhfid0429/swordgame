@@ -166,7 +166,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
-  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y);
+  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
   const sea=P?season():'봄';
   if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -243,9 +243,9 @@ function draw(){
 }
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
-function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626'];
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5,py-1,3.2,2.2)}miniBase=c}
-const miniXY=(x,y)=>[75+(x-y)*1.85,2+(x+y)*1];
+function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870'];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=40/N;g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+const miniXY=(x,y)=>[75+(x-y)*74/N,2+(x+y)*40/N];
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
   for(const g of REGION().gates){const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
