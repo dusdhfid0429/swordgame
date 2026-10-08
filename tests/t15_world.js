@@ -1,4 +1,4 @@
-// 천하 지도: 무림전도를 참고한 성 18곳, 성마다 다른 크기·지형, 지도대로 이어진 길, 성 안의 본산 입구
+// 천하 지도: 무림전도를 참고한 성 22곳, 성마다 다른 크기·지형, 지도대로 이어진 길, 성 안의 본산 입구
 const {chromium}=require(process.env.PWPATH||'playwright');
 const shot=n=>__dirname+'/shots/'+n+'.png';
 (async()=>{
@@ -11,8 +11,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const g=await p.evaluate(()=>{const bad=[];let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){n++;const T=REGIONS[gt.to];if(!T||!T.gates.some(b=>b.to===id))bad.push(id+'→'+gt.to)}
     const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>Object.values(REGIONS).filter(R=>R.size&&R.gates.some(q=>q.to==='hq_'+s.id)).length===1);
     return{bad,n,pv:pv.length,mn:Math.min(...sizes),mx:Math.max(...sizes),themes:new Set(pv.map(k=>PROV[k].th)).size,placed,gae:REGIONS.gaebong.gates.map(q=>q.label).join('·')}});
-  ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===18&&g.mn<g.mx&&g.themes>=12);
-  ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 34곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성');
+  ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===22&&g.mn<g.mx&&g.themes>=12);
+  ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성');
   // 모든 지역: 도착 자리에서 모든 출입구까지 걸어서 간다 (지역 크기도 맞게)
   const bfs=await p.evaluate(()=>{const bad=[],cur=REG,sz={};
     for(const[id,R]of Object.entries(REGIONS)){R.gen();sz[id]=N;if(N!==(R.size||40))bad.push(id+' 크기');
@@ -40,9 +40,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.screenshot({path:shot('world_sichuan')});
   // 천하 지도 창
   await p.tap('#tmenu');await p.tap('[data-act="open:world"]');await p.waitForTimeout(200);
-  ok('천하 지도 창: 성 18곳, 지금 위치 강조',await p.evaluate(()=>panel==='world'&&document.querySelectorAll('.world circle').length===18&&document.querySelector('.world .me text').textContent==='사천성'));
+  ok('천하 지도 창: 성 22곳, 지금 위치 강조',await p.evaluate(()=>panel==='world'&&document.querySelectorAll('.world circle').length===22&&document.querySelector('.world .me text').textContent==='사천성'));
   await p.screenshot({path:shot('world_map')});await p.evaluate(()=>closePanels());
-  for(const k of['gansu','yunnan','guizhou','hunan','liaoning','xinjiang','tibet','mongol','guangdong']){await p.evaluate(k=>{const R=REGIONS['pv_'+k];travel({to:'pv_'+k,tx:R.size/2+.5,ty:R.size/2+2.5})},k);await p.waitForTimeout(1600);
+  for(const k of['gansu','yunnan','guizhou','hunan','liaoning','xinjiang','tibet','mongol','guangdong','jiangsu','zhejiang','hainan','tianzhu']){await p.evaluate(k=>{const R=REGIONS['pv_'+k];travel({to:'pv_'+k,tx:R.size/2+.5,ty:R.size/2+2.5})},k);await p.waitForTimeout(1600);
     await p.evaluate(()=>{for(let i=0;i<3;i++)spawnTick()});await p.waitForTimeout(500);await p.screenshot({path:shot('world_'+k)})}
   ok('역참 말도 그대로',await p.evaluate(()=>!!npcAt('post')));
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
