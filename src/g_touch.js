@@ -87,7 +87,7 @@ function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   return `<div class="mgrid">${M('open:char','인물','기본기 · 내공 수련')}${M('open:arts','무공','무공 바꾸기 · 초식')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 의뢰')}${M('open:hist','강호사','지난 생들')}
-    ${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
+    ${M('trainwin','수련','기본기 · 내공 심법')}${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
     ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
 }
 let pref=null;try{pref=localStorage.getItem('ganghoyunhoe-ctl')}catch(e){}

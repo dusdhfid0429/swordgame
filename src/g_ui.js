@@ -65,7 +65,7 @@ function plabel(f){
 // ================= windows =================
 let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
-function openPanel(id,arg){if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
@@ -74,15 +74,15 @@ const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" d
 function pChar(){
   const ri=realmIdx(),nx=REALM_QI[ri+1],c=qiCost(P.side,P.qiN),youth=!adult();
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초`;
-    return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib">${youth?B('stat:'+k,`수련 · 활력 ${statCost(k)}`,{d:P.vit<statCost(k)}):'<small class="dim">유아기 지남</small>'}</div></div>`}).join('');
+    return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib">${youth?'':'<small class="dim">유아기 지남</small>'}</div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p></div>
-    <div class="card"><h4>기본기 <small class="dim">${youth?'유아기(13~17세)에만 다질 수 있다':'근골과 유아기에 정해졌다. 이제 기연·윤회로만 바뀐다'}</small></h4><div class="list">${stats}</div></div>
+    <div class="card"><h4>기본기 <small class="dim">${youth?'유아기(13~17세)에만 다질 수 있다':'근골과 유아기에 정해졌다. 이제 기연·윤회로만 바뀐다'}</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (T)',{pri:1})}</div></div>
     <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
       <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
       <p>내공은 내공 심법 수련으로만 오른다. ${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
-      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('qi',P.qiTraining?'운기 중…':`운기조식으로 내공 수련 · 활력 ${c}`,{pri:1,d:P.vit<c||P.qiTraining})}</div></div>
+      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('trainwin','수련 창에서 내공 수련')}</div></div>
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
@@ -250,6 +250,7 @@ function act(s){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(`${ARTS[x].cls}을(를) 장착해야 펼칠 수 있습니다.`,'info');setArt(x);break;
     case'mode':toggleMode();break;
+    case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;

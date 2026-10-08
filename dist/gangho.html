@@ -163,6 +163,17 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
   #tbtns{transform:scale(.82);transform-origin:100% 100%}
   #joyz{height:60%}
 }
+/* ---- 수련 창: 화면 아래쪽에 붙고 시간은 흐른다. 캐릭터(화면 가운데)를 가리지 않게 높이를 제한 ---- */
+.trn{position:absolute;left:50%;bottom:calc(8px + var(--sab,0px));transform:translateX(-50%);width:min(560px,calc(100% - 16px));max-height:min(40%,330px);overflow:auto;z-index:3;
+  background:linear-gradient(#2c2419f2,#17120cf2);border:2px solid var(--bronze);box-shadow:0 6px 24px #000c,inset 0 1px 0 var(--bronze-hi);padding:8px 10px;display:grid;gap:6px;touch-action:pan-y}
+.thead{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:17px}
+.thead small{font-family:var(--body);font-size:12px;color:var(--paper-dim);margin-left:6px}
+.tlist{display:grid;gap:4px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#0a0806e6;border:1px solid #4a3c27;padding:5px 8px}
+.tname{font-size:13px}.tname b{font-family:var(--display);font-weight:400;font-size:15px}.tname small{display:block;font-size:11px;color:var(--paper-dim)}
+.tbtn{position:relative;overflow:hidden;min-width:118px}.tbtn .tcd{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--exp)}
+.tbtn.busy{border-color:var(--exp);color:#f6e7b8}
+.trn-on #tbtns,.trn-on #joyz{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">
@@ -1039,7 +1050,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=13;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
@@ -1406,7 +1417,7 @@ function plabel(f){
 // ================= windows =================
 let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴'};
-function openPanel(id,arg){if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu}[panel];
@@ -1415,15 +1426,15 @@ const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" d
 function pChar(){
   const ri=realmIdx(),nx=REALM_QI[ri+1],c=qiCost(P.side,P.qiN),youth=!adult();
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초`;
-    return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib">${youth?B('stat:'+k,`수련 · 활력 ${statCost(k)}`,{d:P.vit<statCost(k)}):'<small class="dim">유아기 지남</small>'}</div></div>`}).join('');
+    return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib">${youth?'':'<small class="dim">유아기 지남</small>'}</div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p></div>
-    <div class="card"><h4>기본기 <small class="dim">${youth?'유아기(13~17세)에만 다질 수 있다':'근골과 유아기에 정해졌다. 이제 기연·윤회로만 바뀐다'}</small></h4><div class="list">${stats}</div></div>
+    <div class="card"><h4>기본기 <small class="dim">${youth?'유아기(13~17세)에만 다질 수 있다':'근골과 유아기에 정해졌다. 이제 기연·윤회로만 바뀐다'}</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (T)',{pri:1})}</div></div>
     <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
       <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
       <p>내공은 내공 심법 수련으로만 오른다. ${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
-      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('qi',P.qiTraining?'운기 중…':`운기조식으로 내공 수련 · 활력 ${c}`,{pri:1,d:P.vit<c||P.qiTraining})}</div></div>
+      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('trainwin','수련 창에서 내공 수련')}</div></div>
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
@@ -1591,6 +1602,7 @@ function act(s){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(`${ARTS[x].cls}을(를) 장착해야 펼칠 수 있습니다.`,'info');setArt(x);break;
     case'mode':toggleMode();break;
+    case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
@@ -2259,11 +2271,97 @@ function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   return `<div class="mgrid">${M('open:char','인물','기본기 · 내공 수련')}${M('open:arts','무공','무공 바꾸기 · 초식')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 의뢰')}${M('open:hist','강호사','지난 생들')}
-    ${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
+    ${M('trainwin','수련','기본기 · 내공 심법')}${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
     ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
 }
 let pref=null;try{pref=localStorage.getItem('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
+
+// ================= 수련 창: 화면 아래에 붙어 캐릭터를 가리지 않는다 =================
+// 시간은 멈추지 않는다. 한 번 수련하면 연출이 끝날 때까지(약간의 쿨타임) 다음 수련을 할 수 없다.
+// 기본기(근력·지구력·민첩력·본원진기)는 유아기에만, 내공 심법은 언제든.
+const TRN_DUR={str:1.3,end:1.4,agi:1.2,qi:1.4,neigong:1.6};
+const TRN_COL={str:'255,110,50',end:'230,180,90',agi:'110,230,170',qi:'150,255,170'};
+const TRN_FX={str:'근력',end:'지구력',agi:'민첩력',qi:'본원진기'};
+let trnOpen=false,trnBusy=null;   // trnBusy = {k,t,dur}
+const TRN=document.createElement('div');TRN.id='trn';TRN.className='trn';TRN.hidden=true;TRN.setAttribute('role','dialog');TRN.setAttribute('aria-label','수련');
+$('stage').appendChild(TRN);
+function openTrain(){if(!playing||!P)return;closePanels();trnOpen=true;TRN.hidden=false;document.body.classList.add('trn-on');renderTrain()}
+function closeTrain(){trnOpen=false;TRN.hidden=true;document.body.classList.remove('trn-on')}
+function trnRow(k,name,val,desc,cost,can,why){
+  const busy=trnBusy&&trnBusy.k===k;
+  return `<div class="trow"><div class="tname"><b>${name}</b> <span class="num gold">${val}</span><small>${desc}</small></div>
+    <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="${k}"${can&&!trnBusy?'':' disabled'}>${why||`수련 · 활력 ${cost}`}<i class="tcd"></i></button></div>`}
+function renderTrain(){
+  if(!trnOpen)return;const youth=!adult(),c=qiCost(P.side,P.qiN),fight=inCombat();
+  const rows=STATS.map(({k,n})=>{const v=P.st[k],cost=statCost(k);
+    const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10}`;
+    return trnRow(k,n,v,desc,cost,youth&&P.vit>=cost&&!fight,!youth?'유아기 지남':fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
+  TRN.innerHTML=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세${youth?' · 유아기':''}</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
+    <div class="tlist">${rows}${trnRow('neigong','내공 심법',baseQi(),`${realmName()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
+}
+TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
+  if(k==='close'){closeTrain();return}startTrain(k)});
+function startTrain(k){
+  if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
+  const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
+  if(!neo&&adult()){log('기본기는 유아기(18세 전)에만 다질 수 있습니다.','info');return}
+  if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
+  P.path=null;P.target=null;P.medit=false;P.chan=null;
+  trnBusy={k,t:0,dur:TRN_DUR[k]};if(neo)P.qiTraining=true;else trainFx(k);renderTrain();
+}
+// 매 프레임: 쿨타임을 흘리고, 끝나면 능력치를 올린다
+function trainTick(dt){
+  if(trnOpen&&(trainTick.r=(trainTick.r||0)-dt)<=0){trainTick.r=.5;if(!trnBusy)renderTrain()}
+  if(!trnBusy)return;const b=trnBusy;b.t+=dt;
+  const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
+  if(b.t<b.dur)return;trnBusy=null;
+  if(P.hp>0&&!inCombat()){
+    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+        addText(P.x,P.y,`내공 +${SIDES[P.side].gain}`,'#9db8e0');log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차)`,'xp');
+        if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}}}
+    else{const c=statCost(b.k);if(P.vit>=c&&!adult()){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys')}}
+  }else{P.qiTraining=false;log('수련이 끊겼습니다.','info')}
+  renderTrain();
+}
+// ---- 능력치마다 다른 연출 ----
+let TFX=[];
+function trainFx(k){const n=k==='str'?26:k==='end'?3:k==='agi'?14:24;
+  TFX.push({k,t:0,dur:TRN_DUR[k],p:Array.from({length:n},(_,i)=>({a:Math.random()*7,r:Math.random(),s:Math.random(),i}))})}
+function drawTrainFx(front){
+  const dt=front?Math.min(.05,Math.max(0,time-(drawTrainFx.lt??time))):0;if(front)drawTrainFx.lt=time;
+  if(!TFX.length)return;const p=toScreen(P.x,P.y);ctx.save();
+  for(const f of TFX){if(front)f.t+=dt;const u=Math.min(1,f.t/f.dur),col=TRN_COL[f.k],fade=u<.15?u/.15:u>.8?(1-u)/.2:1;
+    if(f.k==='str'){ // 근력: 몸에 붉은 열기가 모였다가 땅을 내리쳐 충격파와 불티가 튄다
+      const hit=.55,v=u<hit?u/hit:1;
+      if(!front){if(u>=hit){const w=(u-hit)/(1-hit);ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${col},${(1-w)*.9})`;ctx.lineWidth=3*(1-w)+1;
+          ctx.beginPath();ctx.ellipse(p.x,p.y,10+70*w,5+35*w,0,0,7);ctx.stroke();
+          ctx.strokeStyle=`rgba(255,200,120,${(1-w)*.8})`;ctx.lineWidth=1.5;for(const q of f.p.slice(0,10)){const L=18+40*w*q.r;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+Math.cos(q.a)*L,p.y+Math.sin(q.a)*L*.5);ctx.stroke()}}}
+      else{ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,34);g.addColorStop(0,`rgba(${col},${(u<hit?.35*v:.35*(1-(u-hit)/(1-hit)))})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.fillRect(p.x-40,p.y-70,80,80);
+        if(u<hit)for(const q of f.p){const r=(1-v)*50*(.5+q.r)+4,a=q.a+v*3;ctx.fillStyle=`rgba(${col},${.8*v})`;ctx.beginPath();ctx.arc(p.x+Math.cos(a)*r,p.y-28+Math.sin(a)*r*.6,1.6,0,7);ctx.fill()}
+        else{const w=(u-hit)/(1-hit);for(const q of f.p){const d=w*(30+40*q.r),h=w*(30+40*q.s)-w*w*30;ctx.fillStyle=`rgba(255,${150+100*q.s|0},80,${1-w})`;ctx.fillRect(p.x+Math.cos(q.a)*d,p.y-h,2,2)}}
+        if(u>=hit&&!f.shook){f.shook=1;shake=Math.max(shake,.18)}}}
+    else if(f.k==='end'){ // 지구력: 발밑에서 금빛 방벽이 세 겹으로 차례로 솟아 몸을 감싼다
+      ctx.globalCompositeOperation='lighter';
+      for(let i=0;i<3;i++){const w=clamp((u-i*.18)/.55,0,1);if(w<=0)continue;const y=p.y-w*58,rx=26-6*w,al=(1-w*.6)*fade;
+        const back=!front;ctx.strokeStyle=`rgba(${col},${al*(back?.45:.9)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(p.x,y,rx,rx*.42,0,back?Math.PI:0,back?Math.PI*2:Math.PI);ctx.stroke()}
+      if(front){const g=ctx.createLinearGradient(0,p.y,0,p.y-70);g.addColorStop(0,`rgba(${col},${.22*fade})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(p.x,p.y-32,24,40,0,0,7);ctx.fill()}}
+    else if(f.k==='agi'){ // 민첩력: 푸른 바람이 빠르게 몸을 휘감고 잎이 흩날린다
+      ctx.globalCompositeOperation='lighter';
+      for(const q of f.p){const a=q.a+f.t*(7+q.s*4),r=20+q.r*16,y=p.y-10-q.s*50,inFront=Math.sin(a)>0;if(inFront!==!!front)continue;
+        ctx.strokeStyle=`rgba(${col},${.75*fade})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(p.x,y,r,r*.35,0,a-.9,a);ctx.stroke();
+        if(q.i%3===0){ctx.fillStyle=`rgba(190,255,150,${.9*fade})`;ctx.beginPath();ctx.ellipse(p.x+Math.cos(a)*r,y+Math.sin(a)*r*.35,3,1.4,a,0,7);ctx.fill()}}
+      if(front&&Math.random()<dt*14)fx.push({t:'ghost',x:P.x,y:P.y,life:.3,col:col})}
+    else if(f.k==='qi'){ // 본원진기: 땅에서 초록 생기가 피어올라 몸에 스미고, 심장처럼 두 번 고동친다
+      ctx.globalCompositeOperation='lighter';
+      if(front){for(const q of f.p){const w=(u*1.4+q.s)%1,x=p.x+Math.cos(q.a)*(24*(1-w)+2),y=p.y-4-w*44;ctx.fillStyle=`rgba(${col},${(1-w)*.9*fade})`;ctx.beginPath();ctx.arc(x,y,1.4+q.r*1.4,0,7);ctx.fill()}
+        const beat=Math.max(0,Math.sin(u*Math.PI*4))**6,g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,30+10*beat);g.addColorStop(0,`rgba(220,255,220,${(.15+.4*beat)*fade})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.fillRect(p.x-45,p.y-75,90,90)}
+      else{ctx.fillStyle=`rgba(${col},${.18*fade})`;ctx.beginPath();ctx.ellipse(p.x,p.y,30,15,0,0,7);ctx.fill()}}
+  }
+  ctx.restore();if(front)TFX=TFX.filter(f=>f.t<f.dur);
+}
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;
+  if(e.code==='KeyT'){trnOpen?closeTrain():openTrain()}else if(e.code==='Escape'&&trnOpen)closeTrain()});
 
 // ================= palettes for the cast =================
 Object.assign(PAL,{
@@ -2462,7 +2560,7 @@ function draw(){
   if(P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
-  if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1)}});
+  if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1)}});
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
   list.sort((a,b)=>a.d-b.d).forEach(o=>o.f());
   // weather
