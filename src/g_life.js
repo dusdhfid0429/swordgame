@@ -291,7 +291,7 @@ const SAVE_KEY='ganghoyunhoe-save-v1';
 function saveGame(silent){
   if(!P)return;
   try{
-    const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride'])delete p[k];
+    const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
     const data={G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
       plots:plots.map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
     const s=JSON.stringify(data);localStorage.setItem(SAVE_KEY,s);tossSave(s);if(!silent)log('기록했습니다.','info');
