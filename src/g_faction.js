@@ -101,15 +101,15 @@ function rankHtml(s){
 const HQ_THEME={
   mudang:['peak','무당산'],hwasan:['peak','화산'],emei:['peak','아미산'],kunlun:['snow','곤륜산'],kongtong:['canyon','공동산'],
   jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
-  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
-  dang:['manor','사천당가'],cheolgeom:['canyon','철검문'],sinchang:['manor','신창문'],cheongpung:['forest','청풍문'],geumgang:['peak','금강문'],
-  hyeolrang:['canyon','혈랑곡'],heuksa:['swamp','흑사방 총타'],mandok:['swamp','만독곡'],gwiyeong:['dark','귀영문 은신처'],
-  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','동정호 수채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
-  sahyeol:['canyon','사혈문'],eumyang:['swamp','음양교'],hyeolsu:['canyon','혈수문'],mayeong:['dark','마영방'],heukpung:['canyon','흑풍채 본채'],
-  cheonma:['dark','십만대산 천마신교']};
+  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],eon:['manor','진주언가'],jegal:['forest','융중산 와룡강'],
+  hwangbo:['manor','황보세가'],ak:['manor','산동악가'],dang:['manor','사천당가'],hyeongsan:['peak','형산'],cheonsan:['snow','천산'],
+  noklim:['forest','녹림산 녹림채'],janggang:['lake','장강삼협 수채'],haomun:['manor','광주 하오문'],sama:['manor','낙양 사마세가'],
+  dongjeong:['lake','동정호 수채'],yasu:['forest','야수궁'],gwangpung:['canyon','객십 광풍사'],taeyang:['canyon','화염산 태양궁'],
+  bukhae:['snow','북해빙궁'],podal:['snow','포달랍궁'],mandok:['swamp','만독곡'],hyeolrang:['canyon','혈랑곡'],gwiyeong:['dark','귀영문 은신처'],
+  heukpung:['canyon','흑풍채 본채'],cheonma:['dark','십만대산 천마신교']};
 const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
-function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
+function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};

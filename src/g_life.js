@@ -310,7 +310,7 @@ function saveGame(silent){
   }catch(e){}
 }
 function loadGame(){
-  let data=null;try{data=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
+  let data=null;try{data=JSON.parse(migrateArtIds(localStorage.getItem(SAVE_KEY))||'null')}catch(e){}
   return data;
 }
 function applySave(data){
