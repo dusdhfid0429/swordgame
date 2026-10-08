@@ -66,6 +66,13 @@ const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,
 const sectOf=id=>SECTS[id]||null;
 const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 const TIERN={big:'대문파',small:'소문파',one:'단일 문파'};
+// 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
+// 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
+const AGR=['하승','중승','상승','절정'],AGR_C=['dim','','good','gold'];
+const GMUL=[1,1.12,1.28,1.45],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3]],GCOST=[15,20,30,45],GMAST=[1.15,1,.9,.8];
+const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):(hi?3:2);
+const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
+const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
 // buildArts에서 부른다: 문파 무공을 일반 무공과 같은 틀(초식 무늬 풀)로 만든다
 function addSectArts(arts,pool,ults,formName,ultName){
   for(const s of Object.values(SECTS))for(const a of s.arts){
@@ -73,12 +80,12 @@ function addSectArts(arts,pool,ults,formName,ultName){
     const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
     const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
     const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((x,y)=>x.cd-y.cd)];
-    const mul=a.hi?1.35:1.12;
+    const g=sectGrade(s,a.hi),mul=GMUL[g];
     const forms=pick.map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];
     arts[a.id]={id:a.id,side,cls:a.cls,el:a.el,n:a.n,c:EC.c,pt:EC.pt,elc:a.el==='금',forms,sect:s.id,hi:a.hi,
-      ult:{n:ultName(),steps:[F('','circle',{rad:2.8,m:a.hi?1.9:1.5,stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*(a.hi?1.25:1),delay:(x.delay||0)+.18}))]},
-      d:`${s.n}의 ${a.hi?'고급':'일반'} 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개와 필살기.`};
+      grade:g,ult:{n:ultName(),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
+      d:`${s.n}(${TIERN[s.tier]})의 ${AGR[g]} ${a.hi?'고급':'일반'} 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개와 필살기.`};
   }
 }
 // ---- 가입 조건 ----
@@ -104,13 +111,13 @@ const SMIS={
 function sectMissions(s){const pool=SMIS[s.al],y=Math.floor(P.age),a=(s.i*3+y)%pool.length,b=(s.i*3+y+1+(s.i%2))%pool.length;
   return [a,b===a?(a+1)%pool.length:b].map(i=>({...pool[i],n:`[${s.n}] ${pool[i].n}`,sect:s.id,vit:Math.round(pool[i].merit*1.5),fame:Math.round(pool[i].merit/5),good:s.al==='jeong'?3:0,key:`${s.id}:${i}:${y}`}))}
 // 직위가 일대제자(조장·향주) 이상이면 자기 문파 비급이 20% 싸다 (g_faction.js)
-const meritCost=(a,fi)=>Math.round((a.hi?40:20)*(fi+1)*rankDisc(artSect(a.id).id));
+const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id));
 // ---- 세력 연락관 창 ----
 let sectView=null;
 function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
-  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
+  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier!=='small'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
@@ -124,7 +131,7 @@ function sectDetail(s,hq){
   const hi=s.arts.find(a=>a.hi);
   const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member;
     const why=!same?'':lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
-    return `<div class="it"><div style="color:rgb(${A2.c})">${A2.n} <small class="${a.hi?'good':'dim'}">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
+    return `<div class="it"><div style="color:rgb(${A2.c})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   const mis=same?sectMissions(s).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
     return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${q.mob.join('·')} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 공적 ${q.merit} · 은자 ${q.silver}</span></div>
