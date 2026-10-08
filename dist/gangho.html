@@ -525,6 +525,20 @@ const SECT_DATA=[
   ['dang','사천당가','jeong','small','암기와 독을 다루는 사천의 세가.',[['당가비전궁','궁','수','n'],['만천화우','궁','수','h']]],
   ['hyeongsan','형산파','jeong','small','호남 형산의 검파. 검이 바람을 탄다.',[['형산검법','검','화','n'],['회풍낙안검','검','화','h']]],
   ['cheonsan','천산파','jeong','small','서역 천산 설봉의 검파.',[['천산검법','검','수','n'],['천산육양장','권','수','h']]],
+  ['taesan','태산파','jeong','small','오악의 으뜸 태산의 검파.',[['태산검법','검','토','n'],['태산십팔반','검','토','h']]],
+  ['yangga','양가장','jeong','small','청주의 충신 집안. 대대로 창을 쓴다.',[['양가창법','창','금','n'],['양가회마창','창','금','h']]],
+  ['jeonjin','전진교','jeong','small','곤유산의 도가 교파.',[['전진검법','검','목','n'],['선천공','권','목','h']]],
+  ['gomyo','고묘파','jeong','small','종남산 옛 무덤에 숨어 사는 여인들의 문파.',[['옥녀검법','검','수','n'],['옥녀소심검','검','수','h']]],
+  ['ungga','사천운가','jeong','small','검각산의 검가.',[['운가검법','검','목','n'],['검각운룡검','검','목','h']]],
+  ['seolsan','설산파','jeong','small','대설산 눈 속의 검파.',[['설산검법','검','수','n'],['설산비룡장','권','수','h']]],
+  ['jangbaek','장백파','jeong','small','장백산(백두산) 아래의 검파.',[['장백검법','검','수','n'],['장백삼절검','검','수','h']]],
+  ['danri','단리세가','jeong','small','안휘 봉양의 도법 세가.',[['단리도법','도','토','n'],['단리파천도','도','토','h']]],
+  ['sanggwan','상관세가','jeong','small','항주의 검가.',[['상관검법','검','금','n'],['상관비검','검','금','h']]],
+  ['danmok','단목세가','jeong','small','항주의 창가.',[['단목창법','창','목','n'],['단목신창','창','목','h']]],
+  ['bota','보타문','jeong','small','동해 보타산의 불가 문파.',[['보타장','권','수','n'],['자항보도곤','봉','수','h']]],
+  ['mosan','모산파','jeong','small','강소 모산의 도사들. 부적과 검을 쓴다.',[['모산검법','검','토','n'],['모산부록검','검','화','h']]],
+  ['nabu','나부파','jeong','small','광동 나부산의 문파.',[['나부권','권','화','n'],['나부신검','검','화','h']]],
+  ['haenam','해남파','jeong','small','남쪽 바다 섬의 쾌검 문파.',[['해남검법','검','수','n'],['해남쾌검','검','수','h']]],
   // 사천맹: 4대문파
   ['noklim','녹림채','sacheon','big','사천맹 4대문파. 녹림산을 근거로 천하 산적을 거느린다.',[['녹림도법','도','목','n'],['산채궁술','궁','목','n'],['녹림패왕도','도','목','h']]],
   ['janggang','장강수로채','sacheon','big','사천맹 4대문파. 장강삼협 물길을 쥔 수적들.',[['수로창법','창','수','n'],['수전비도','궁','수','n'],['장강파랑창','창','수','h']]],
@@ -537,6 +551,7 @@ const SECT_DATA=[
   ['taeyang','태양궁','sacheon','small','화염산 아래 불을 받드는 궁.',[['태양창','창','화','n'],['열양신창','창','화','h']]],
   ['bukhae','북해빙궁','sacheon','small','북해 얼음 위의 궁. 장법과 검이 차갑다.',[['빙백장','권','수','n'],['빙궁한검','검','수','h']]],
   ['podal','포달랍궁','sacheon','small','서장 밀종의 궁. 대수인과 금강저를 쓴다.',[['밀종대수인','권','토','n'],['금강항마저','봉','금','h']]],
+  ['daeroe','대뢰음사','sacheon','small','천축의 큰 절. 중원 밖에서 불법과 무공을 닦는다.',[['대력금강장','권','금','n'],['천축나한봉','봉','금','h']]],
   ['mandok','만독문','sacheon','small','귀주 묘강의 독과 독침의 문파.',[['오독장','권','목','n'],['만독탈혼장','권','목','h']]],
   ['hyeolrang','혈랑곡','sacheon','small','감숙 협곡에서 늑대처럼 무리 지어 싸운다.',[['혈랑참','도','화','n'],['혈월광랑도','도','화','h']]],
   ['gwiyeong','귀영문','sacheon','small','섬서에 숨은 그림자 살수들.',[['귀영검법','검','수','n'],['귀영무흔검','검','수','h']]],
@@ -2882,13 +2897,16 @@ const HQ_THEME={
   jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
   namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],eon:['manor','진주언가'],jegal:['forest','융중산 와룡강'],
   hwangbo:['manor','황보세가'],ak:['manor','산동악가'],dang:['manor','사천당가'],hyeongsan:['peak','형산'],cheonsan:['snow','천산'],
+  taesan:['peak','태산'],yangga:['manor','청주 양가장'],jeonjin:['peak','곤유산 전진교'],gomyo:['forest','종남산 고묘'],ungga:['peak','검각산 운가'],
+  seolsan:['snow','대설산'],jangbaek:['snow','장백산'],danri:['manor','봉양 단리세가'],sanggwan:['manor','항주 상관세가'],danmok:['manor','항주 단목세가'],
+  bota:['lake','보타산'],mosan:['peak','모산'],nabu:['forest','나부산'],haenam:['lake','해남도 해남파'],daeroe:['peak','천축 대뢰음사'],
   noklim:['forest','녹림산 녹림채'],janggang:['lake','장강삼협 수채'],haomun:['manor','광주 하오문'],sama:['manor','낙양 사마세가'],
   dongjeong:['lake','동정호 수채'],yasu:['forest','야수궁'],gwangpung:['canyon','객십 광풍사'],taeyang:['canyon','화염산 태양궁'],
   bukhae:['snow','북해빙궁'],podal:['snow','포달랍궁'],mandok:['swamp','만독곡'],hyeolrang:['canyon','혈랑곡'],gwiyeong:['dark','귀영문 은신처'],
   heukpung:['canyon','흑풍채 본채'],cheonma:['dark','십만대산 천마신교']};
 const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
-function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
+function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
@@ -3024,22 +3042,26 @@ function hqDlg(n){
 const PROV={
   henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','sama','heukpung'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
   hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
-  shandong:{n:'산동성',size:44,th:'coast',map:[1425,630],sects:['hwangbo','ak'],d:'태산과 동쪽 바다'},
-  liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong'],d:'산해관 너머 눈 덮인 동북'},
-  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung'],d:'황산의 기암과 소나무'},
-  shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gwiyeong'],d:'황토 고원과 화산·종남산'},
+  shandong:{n:'산동성',size:52,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
+  liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
+  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','danri'],d:'황산의 기암과 소나무'},
+  shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
   gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
   qinghai:{n:'청해성',size:60,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
-  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang'],d:'숲이 짙은 천부지국. 아미산·청성산'},
+  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
   yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
   guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
   hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
   hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
   guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
-  guangdong:{n:'광동성',size:52,th:'subtrop',map:[1320,1110],sects:['haomun'],d:'주강 하구의 광주와 남쪽 바다'},
+  guangdong:{n:'광동성',size:52,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
   xinjiang:{n:'신강',size:64,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
   tibet:{n:'서장',size:60,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
-  mongol:{n:'내몽고',size:56,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'}};
+  mongol:{n:'내몽고',size:56,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
+  jiangsu:{n:'강소성',size:44,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
+  zhejiang:{n:'절강성',size:48,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
+  hainan:{n:'해남도',size:40,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
+  tianzhu:{n:'천축',size:48,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
 const PV_LINKS=[
@@ -3050,7 +3072,9 @@ const PV_LINKS=[
   ['hubei','s',.5,'hunan','n',.5],['hunan','w',.5,'guizhou','e',.4],['hunan','s',.4,'guangxi','n',.7],['yunnan','e',.4,'guizhou','w',.5],
   ['guizhou','s',.5,'guangxi','n',.3],['yunnan','e',.8,'guangxi','w',.5],
   ['guangxi','e',.5,'guangdong','w',.5],['hunan','s',.75,'guangdong','n',.4],['xinjiang','e',.4,'gansu','w',.25],['xinjiang','s',.7,'tibet','n',.4],
-  ['tibet','e',.3,'qinghai','w',.5],['tibet','e',.75,'sichuan','w',.6],['mongol','s',.75,'hebei','n',.3],['mongol','s',.3,'shaanxi','n',.5],['mongol','w',.5,'gansu','n',.5]];
+  ['tibet','e',.3,'qinghai','w',.5],['tibet','e',.75,'sichuan','w',.6],['mongol','s',.75,'hebei','n',.3],['mongol','s',.3,'shaanxi','n',.5],['mongol','w',.5,'gansu','n',.5],
+  ['anhui','e',.4,'jiangsu','w',.5],['shandong','s',.75,'jiangsu','n',.4],['jiangsu','s',.5,'zhejiang','n',.5],['anhui','s',.5,'zhejiang','w',.4],
+  ['guangdong','s',.3,'hainan','n',.5],['tibet','s',.5,'tianzhu','n',.5]];
 const pvEdge=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:1.2}:sd==='s'?{x:v,y:S-1.4}:sd==='w'?{x:1.2,y:v}:{x:S-1.4,y:v}};
 const pvIn=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:3.6}:sd==='s'?{x:v,y:S-3.8}:sd==='w'?{x:3.6,y:v}:{x:S-3.8,y:v}};
 const pvOfSect=sid=>Object.keys(PROV).find(k=>PROV[k].sects.includes(sid));
@@ -3063,12 +3087,13 @@ function pvInner(k,p){
     pts.push({x:best.x,y:best.y,to:'hq_'+sid})}
   return pts}
 // 바닥 그림은 본산 그림을 같이 쓴다 (테마 이름이 다르면 풀빛만 고른다)
-const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest',subtrop:'subtrop',gobi:'canyon',plateau:'plateau',steppe:'steppe'};
-HQ_GRASS.miao=[48,66,40];HQ_GRASS.subtrop=[34,76,36];HQ_GRASS.plateau=[70,74,52];HQ_GRASS.steppe=[78,100,50];
+const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest',subtrop:'subtrop',gobi:'canyon',plateau:'plateau',steppe:'steppe',canal:'lake',tea:'peak',island:'subtrop',india:'india'};
+HQ_GRASS.miao=[48,66,40];HQ_GRASS.subtrop=[34,76,36];HQ_GRASS.plateau=[70,74,52];HQ_GRASS.steppe=[78,100,50];HQ_GRASS.india=[88,92,46];
 const PV_BEAST={plain:[['토끼',4],['양',3],['말',2]],north:[['늑대',3],['말',2]],coast:[['토끼',3],['멧돼지',2]],cold:[['늑대',4],['곰',1]],hills:[['사슴',3],['호랑이',1]],
   loess:[['늑대',3],['멧돼지',2]],desert:[['늑대',3],['말',2]],highland:[['늑대',3],['곰',1],['양',2]],basin:[['사슴',3],['곰',1],['멧돼지',2]],
   jungle:[['호랑이',2],['멧돼지',2]],miao:[['늑대',2],['멧돼지',3]],river:[['사슴',3],['멧돼지',2]],lake:[['사슴',2],['토끼',3]],karst:[['호랑이',1],['멧돼지',3]],
-  subtrop:[['멧돼지',3],['호랑이',1]],gobi:[['늑대',3],['말',3]],plateau:[['양',3],['곰',1],['늑대',2]],steppe:[['말',4],['양',3],['늑대',2]]};
+  subtrop:[['멧돼지',3],['호랑이',1]],gobi:[['늑대',3],['말',3]],plateau:[['양',3],['곰',1],['늑대',2]],steppe:[['말',4],['양',3],['늑대',2]],
+  canal:[['사슴',2],['토끼',3]],tea:[['사슴',3],['멧돼지',1]],island:[['멧돼지',3],['토끼',2]],india:[['호랑이',2],['멧돼지',2],['양',2]]};
 // 지형 규칙: base 바닥, alt(높은 곳) 바닥, 나무·바위 밀도, 물(강·호수·바다)
 const PV_TH={
   plain:{base:0,alt:5,altAt:.63,tree:'tree',tv:.04,rv:.01,river:{y:.22}},
@@ -3088,7 +3113,11 @@ const PV_TH={
   subtrop:{base:0,alt:5,altAt:.66,tree:'tree',tv:.1,rv:.02,bamboo:.07,river:{y:.45,w:3},sea:'s'},
   gobi:{base:12,alt:8,altAt:.7,tree:'pine',tv:.006,rv:.05,lake:{x:.62,y:.3,rx:.06,ry:.05}},
   plateau:{base:7,alt:8,altAt:.55,tree:'pine',tv:.01,rv:.06,lake:{x:.7,y:.6,rx:.1,ry:.07}},
-  steppe:{base:0,alt:7,altAt:.7,tree:'tree',tv:.008,rv:.012}};
+  steppe:{base:0,alt:7,altAt:.7,tree:'tree',tv:.008,rv:.012},
+  canal:{base:0,alt:5,altAt:.6,tree:'tree',tv:.05,rv:.01,bamboo:.02,river:{y:.3,w:2},lake:{x:.7,y:.68,rx:.12,ry:.1}},
+  tea:{base:0,alt:6,altAt:.64,tree:'pine',tv:.08,rv:.04,bamboo:.06,lake:{x:.28,y:.3,rx:.12,ry:.09},sea:'e'},
+  island:{base:12,alt:0,altAt:.45,low:true,tree:'tree',tv:.1,rv:.02,bamboo:.03,sea:'s'},
+  india:{base:7,alt:0,altAt:.55,tree:'tree',tv:.05,rv:.03,river:{y:.62,w:3}}};
 // 성 지역 등록
 for(const[k,p]of Object.entries(PROV)){
   const id=pvId(k),S=p.size,gates=[];
@@ -3144,7 +3173,7 @@ for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()
 // ================= 천하 지도 창 =================
 const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};
 function pWorld(){
-  const here=provOfReg(REG),X=v=>(v-480)*.52,Y=v=>(v-330)*.52;
+  const here=provOfReg(REG),X=v=>(v-300)*.44,Y=v=>(v-330)*.44;
   const lines=PV_LINKS.map(([a,,,b])=>{const A=PROV[a].map,Bm=PROV[b].map;return `<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(Bm[0])}" y2="${Y(Bm[1])}"/>`}).join('');
   const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here;
     return `<g class="${me?'me':''}"><circle cx="${X(x)}" cy="${Y(y)}" r="${me?9:6}"/><text x="${X(x)}" y="${Y(y)-12}">${p.n}</text></g>`}).join('');

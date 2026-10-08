@@ -9,7 +9,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
   const cnt=await p.evaluate(()=>{const v=Object.values(SECTS);const f=(al,t)=>v.filter(s=>s.al===al&&(!t||s.tier===t)).length;return{jb:f('jeong','big'),js:f('jeong','small'),sb:f('sacheon','big'),ss:f('sacheon','small'),m:f('magyo'),arts:Object.values(ARTS).filter(a=>a.sect).length,hi:Object.values(ARTS).filter(a=>a.hi).length}});
-  ok(`세력 구도: 정의맹 ${cnt.jb}+${cnt.js}, 사천맹 ${cnt.sb}+${cnt.ss}, 마교 ${cnt.m} · 문파 무공 ${cnt.arts}(고급 ${cnt.hi})`,cnt.jb===10&&cnt.js>=10&&cnt.sb===4&&cnt.ss>=10&&cnt.m===1&&cnt.hi===36);
+  ok(`세력 구도: 정의맹 ${cnt.jb}+${cnt.js}, 사천맹 ${cnt.sb}+${cnt.ss}, 마교 ${cnt.m} · 문파 무공 ${cnt.arts}(고급 ${cnt.hi})`,cnt.jb===10&&cnt.js>=10&&cnt.sb===4&&cnt.ss>=10&&cnt.m===1&&cnt.hi===51);
   // 정의맹 연락관
   await p.evaluate(()=>{const n=npcAt('jeong');P.x=n.x+.8;P.y=n.y+.2;P.path=null});await p.waitForTimeout(300);await p.tap('#t_ctx');await p.waitForTimeout(200);
   ok('정의맹 연락관 창에 9파1방과 소문파 목록',await p.evaluate(()=>panel==='npc'&&$('wbody').textContent.includes('9파1방')&&$('wbody').textContent.includes('화산파')&&$('wbody').textContent.includes('남궁세가')));
