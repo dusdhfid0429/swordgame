@@ -77,7 +77,7 @@ function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비�
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
 const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급',bbook:'보법 비급'};
 function itemDesc(it){
-  if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
@@ -157,7 +157,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
 }
 function gainMast(id,v){
-  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125));
+  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]);
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);

@@ -105,7 +105,7 @@ function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
       <p>${a.d}${a.el?` ${EL[a.el].fx}.`:''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls}이(가) 있어야 펼칠 수 있다.</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${learnedArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
