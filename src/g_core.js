@@ -4,7 +4,7 @@ let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],e
 let paused=true,playing=false;
 const ARTS=buildArts();
 // G: what outlives a single life (lineage, house, history)
-let G={lives:0,history:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null};
+let G={lives:0,history:[],tombs:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null};
 let itemId=0;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -171,6 +171,7 @@ function onKill(e){
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
+  if(e.tomb){tombKill(e);return}
   // loot
   const out=[];
   // 은자가 0인 적(강시 등)은 빈 주머니를 떨어뜨리지 않는다. 0은 거짓이라 아이템으로 오인돼 화면이 멈췄었다.

@@ -11,7 +11,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=13;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
@@ -258,6 +258,7 @@ function die(cause){
   const wis=karma>=60?1:0;
   const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:RANKS[realm],fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:P.sectName||(P.sect?(P.sect==='정'?'무당파':'혈교'):null),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
+  makeTomb(cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
   G.heir=P.children.length?{children:P.children.map(c=>({...c})),silver:Math.floor(P.silver/2),side:P.side}:null;
   if(!G.heir){G.house=null;G.storage={mats:{},bag:[]}}
