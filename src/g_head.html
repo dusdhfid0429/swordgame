@@ -177,6 +177,17 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .exitq{position:absolute;inset:0;display:grid;place-items:center;background:#000b;z-index:5;padding:16px}
 .exitq .card{width:min(320px,100%);gap:10px;padding:16px;text-align:center}
 @media (orientation:landscape){.toss #stage::after{content:'휴대폰을 세로로 들어 주세요';position:absolute;inset:0;display:grid;place-items:center;background:#0b0a09f6;font:22px var(--display);color:var(--paper);z-index:9}}
+/* ---- 수련 창: 화면 아래쪽에 붙고 시간은 흐른다. 캐릭터(화면 가운데)를 가리지 않게 높이를 제한 ---- */
+.trn{position:absolute;left:50%;bottom:calc(8px + var(--sab,0px));transform:translateX(-50%);width:min(560px,calc(100% - 16px));max-height:min(40%,330px);overflow:auto;z-index:3;
+  background:linear-gradient(#2c2419f2,#17120cf2);border:2px solid var(--bronze);box-shadow:0 6px 24px #000c,inset 0 1px 0 var(--bronze-hi);padding:8px 10px;display:grid;gap:6px;touch-action:pan-y}
+.thead{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:17px}
+.thead small{font-family:var(--body);font-size:12px;color:var(--paper-dim);margin-left:6px}
+.tlist{display:grid;gap:4px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#0a0806e6;border:1px solid #4a3c27;padding:5px 8px}
+.tname{font-size:13px}.tname b{font-family:var(--display);font-weight:400;font-size:15px}.tname small{display:block;font-size:11px;color:var(--paper-dim)}
+.tbtn{position:relative;overflow:hidden;min-width:118px}.tbtn .tcd{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--exp)}
+.tbtn.busy{border-color:var(--exp);color:#f6e7b8}
+.trn-on #tbtns,.trn-on #joyz{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">

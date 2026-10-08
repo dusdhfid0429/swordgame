@@ -19,6 +19,7 @@ EXITQ.addEventListener('click',async e=>{const q=e.target.closest('[data-q]');if
   saveGame(true);const sdk=window.AIT;try{if(sdk&&sdk.Screen&&sdk.Screen.close)await sdk.Screen.close();else stayIn()}catch(err){stayIn()}});
 function onBack(){
   if(!EXITQ.hidden){stayIn();return}
+  if(trnOpen){closeTrain();return}
   if(!$('win').hidden){closePanels();return}
   askExit()}
 // 화면을 내리면 멈추고 기록한다. 돌아오면 이어서 한다.
