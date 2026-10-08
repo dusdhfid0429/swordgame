@@ -118,7 +118,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyS'||e.code==='Numpad5'){ultimate();return}
   if(e.code==='Digit1')special('암기');else if(e.code==='Digit2')special('독공');else if(e.code==='Digit3')special('점혈');
   else if(e.code==='Digit4')useCon('금창약');else if(e.code==='Digit5')useCon('소환단');
-  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
+  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
   else if(e.code==='KeyM')rideToggle();else if(e.code==='KeyF')useNearest();else if(e.code==='Tab')toggleMode();
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);

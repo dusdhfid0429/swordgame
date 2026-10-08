@@ -57,6 +57,7 @@ function perchMove(kx,ky,sp){
   return true}
 // 경공이 끝날 때
 function leapLand(L){
+  bobLand(L);
   P.z=L.z1||0;P.perch=L.to||null;
   if(P.perch){addText(P.x,P.y-.3,P.perch.k==='roof'?'지붕 위':'나무 위','#cfe3ff');if(typeof sfx==='function')sfx('land')}
   else if(L.plunge)plungeHit(L);
