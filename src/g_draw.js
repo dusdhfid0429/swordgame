@@ -183,6 +183,7 @@ function draw(){
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
+    if(ob.startsWith('flag:')){list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
     const fade=tall&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
     list.push({d:i+j+1,f:()=>{if(fade)ctx.globalAlpha=.4;ctx.drawImage(spr,p.x-spr.width/2,p.y-spr.height+(tall?12:10));ctx.globalAlpha=1}})}

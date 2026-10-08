@@ -9,7 +9,9 @@ function drawFighter(e,isP){
   if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
   if(isP&&heroSprite()){const[fi,useB,lk]=heroFrame(),f=HF[fi],k=.47,lift=P.sj>0?Math.sin((1-P.sj/.6)*Math.PI)*22:jump;ctx.translate(0,-lift);ctx.scale(side,1);
-    const img=useB?(flash&&HBODYW?HBODYW:HBODY):(flash&&HEROW?HEROW:HERO);
+    const gb=heroGarb(),img=useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
+    // 일대제자부터 문파 망토 (도트 몸이 코드 사람보다 1.2배 크다)
+    if(gb&&gb.pal.cape&&!flash){const tr=e.moving?7:0,wv=Math.sin(time*8);ctx.save();ctx.translate(-2,-8);drawCape(gb.pal,tr,wv,1.2);ctx.restore()}
     ctx.drawImage(img,f[0],0,f[1],f[2],-f[3]*k,-f[2]*k+3-f[4]*k,f[1]*k,f[2]*k);
     if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
     if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
@@ -44,7 +46,8 @@ function drawFighter(e,isP){
   const vh=l=>12.5*Math.cos(l[0])+13*Math.cos(l[1]);ctx.translate(0,st?25.5-Math.max(vh(frontLeg),vh(backLeg)):0);
   const withLean=fn=>{ctx.save();ctx.translate(0,-29);ctx.rotate(lean);ctx.translate(0,29);fn();ctx.restore()};
   // cape (boss) and sash tails (hero) stream behind
-  if(pal.cape)withLean(()=>poly([[-7,-45],[4,-45],[-10-trail*1.6,-4+wv*2],[-22-trail*2,-8+wv*3]],Fc(pal.cape)));
+  if(pal.cape&&pal.capeLen)withLean(()=>drawCape(flash?{...pal,cape:'#ffffff',emb:null}:pal,trail,wv));
+  else if(pal.cape)withLean(()=>poly([[-7,-45],[4,-45],[-10-trail*1.6,-4+wv*2],[-22-trail*2,-8+wv*3]],Fc(pal.cape)));
   if(pal.jade)seg([[-6,-30],[-12-trail,-22+wv*2],[-17-trail*1.4,-15+wv*3]],2.2,Fc(pal.sash));
   // ponytail behind the head (drawn over it in back view)
   const tail=()=>{if(pal.tail)withLean(()=>seg([[-2,-58],[-6-trail*.6,-52+wv],[-8-trail,-42+wv*1.5]],3,Fc(pal.hair)))};
@@ -61,6 +64,7 @@ function drawFighter(e,isP){
   poly([[-8,-30],[1,-30],[-1+bk*.6,hem-1],[-10+bk-trail*.5,hem+wv*.6]],Fc(pal.robeB));
   leg([2,-26],frontLeg);
   poly([[-1,-30],[8,-30],[11+ff,hem-2],[2+ff*.7,hem]],Fc(lg(-2,11,pal.robe[0],pal.robe[1])));
+  if(pal.patch&&!flash){ctx.fillStyle='rgba(60,50,30,.75)';ctx.fillRect(3,-22,4,4);ctx.fillStyle='rgba(150,120,80,.7)';ctx.fillRect(-6,-16,4,3)}
   withLean(()=>{
     // torso, cross collar, sash and pendant
     poly([[-8,-45],[8,-45],[7.6,-37],[7,-29],[-7,-29],[-8,-37]],Fc(lg(-8,8,pal.robe[0],pal.robe[1])));
@@ -68,6 +72,7 @@ function drawFighter(e,isP){
     if(pal.armor){poly([[-10,-46],[-2,-46],[-3,-38],[-11,-39]],lg(-11,-2,'#7c776c','#24221e'));poly([[2,-46],[11,-46],[11,-38],[3,-38]],lg(2,11,'#7c776c','#24221e'));
       ctx.strokeStyle='rgba(20,18,16,.7)';ctx.lineWidth=1;for(let y=-42;y<-32;y+=3){ctx.beginPath();ctx.moveTo(-6,y);ctx.lineTo(6,y);ctx.stroke()}}
     poly([[-7.6,-32.5],[7.6,-32.5],[7.3,-28.5],[-7.3,-28.5]],Fc(pal.sash));
+    if(pal.emb&&!back&&!flash)drawEmblem(ctx,pal.emb,-3.5,-39,5.5);
     if(pal.jade){const sway=mv?s1*2:0;seg([[5,-28.5],[5.5+sway,-21]],1.2,pal.trim);ctx.fillStyle='#5fbf8f';ctx.beginPath();ctx.arc(5.6+sway,-19.5,2,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.lineWidth=.8;ctx.stroke();
       seg([[5.6+sway,-17.5],[5.8+sway*1.2,-13]],1.4,'#b8291f')}
     // neck and head
@@ -98,6 +103,6 @@ function drawFighter(e,isP){
   if(!isP&&e.stun>0&&!e.npc){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(sc>1.2?88:68)+Math.sin(a)*3,2,0,7);ctx.fill()}}
   if(!isP&&!e.npc){const w=30*sc,y=p.y-(sc>1.2?94:74);
     ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-w/2-1,y-1,w+2,5);ctx.fillStyle='#c0261b';ctx.fillRect(p.x-w/2,y,w*Math.max(0,e.hp/e.maxHp),3);
-    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?'#9cc8f0':'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5)}}
+    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?'#9cc8f0':'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
   if(e.npc){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
 }

@@ -130,6 +130,8 @@ function genProv(id,k,p){
   for(const[x,y]of[[C-2,C-2],[C+3,C+3],[C-2,C+3]])if(!road.has(x+','+y)&&map[y][x].g!==2){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,okg)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(okg(map[y][x].g))put(t,x,y)}};
+  // 본산 입구 이정표 옆에 그 문파 깃발
+  for(const g of R.gates)if(g.inner&&g.to.startsWith('hq_')){const x=Math.floor(g.x),y=Math.floor(g.y);for(const[dx,dy]of[[3,-1],[-3,-1],[3,1],[-3,1]]){const fx=x+dx,fy=y+dy;if(fx>0&&fy>0&&fx<S-1&&fy<S-1&&!road.has(fx+','+fy)&&map[fy][fx].g!==2&&!objs[fy][fx]){objs[fy][fx]='flag:'+g.to.slice(3);break}}}
   const sc=S*S/1600;want('herb',Math.round(8*sc),g=>g===0||g===7||g===9);want('wood',Math.round(5*sc),g=>g===0||g===7);want('ore',Math.round(5*sc),g=>g===6||g===8||g===10||g===12);
   if(T.river||T.lake||T.sea){let n=0;for(let i=0;i<600&&n<4;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(walk(x,y)&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>map[y+dy][x+dx].g===2)){put('fish',x,y);n++}}}
 }

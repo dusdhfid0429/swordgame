@@ -76,7 +76,8 @@ function showRebirth(e,cause){
 }
 
 // ================= input =================
-const C=$('game'),ctx=C.getContext('2d');const L=document.createElement('canvas'),lx=L.getContext('2d');
+const C=$('game');let ctx=C.getContext('2d');  // let: 문파 옷 미리보기가 잠시 바꿔 끼운다
+const L=document.createElement('canvas'),lx=L.getContext('2d');
 function resize(){const r=C.getBoundingClientRect();S=Math.max(.8,Math.min(1.3,r.width/900));W=r.width/S;H=r.height/S;C.width=L.width=r.width*devicePixelRatio;C.height=L.height=r.height*devicePixelRatio}
 addEventListener('resize',resize);
 function pickAt(ev){
