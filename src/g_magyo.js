@@ -3,9 +3,9 @@
 // - 조직: 교주 천마 → 부교주 → 사대호법 → 장로원 → 오당(당주) → 향주 → 정예교도 → 교도. 직위는 일곱 단(g_faction.js SRANK.magyo).
 // - 오당: 입교한 뒤 오당 광장에서 당 하나에 든다. 일반 무공은 당마다 하나씩이라 자기 당 무공만 익히고(공적 30% 싸다),
 //   장로가 되면 다른 당 무공도 익힌다. 고급 무공(천마검법·천마신장)은 교 전체의 것. 마교는 바깥 사람에게 비급을 주지 않는다.
-// - 본거지: 다른 문파의 40×40 본산과 달리 신강 십만대산 전체(72×72)가 마교 땅이다.
-//   남쪽 협곡 → 천마관(관문) → 마교 성읍(객잔·병기당·독약당·역참) → 오당 광장(당마다 전각과 당주) → 천마신전(교주).
-//   전각은 검은 벽에 붉은 기와. 마교도가 성읍과 광장을 지키고, 정·사 무인은 관문 밖 협곡까지만 쳐들어온다.
+// - 본거지: 다른 문파 본산은 1~4맵이지만 마교는 신강 십만대산의 여덟 맵이 모두 마교 땅이다 (g_stage.js 틀).
+//   협곡 → 천마관 → 마교 성읍 → 혈마연무장 → 오당 광장 → 장로원 → 천마신전(교주) → 천마동(장로 이상만).
+//   전각은 검은 벽에 붉은 기와. 마교도가 관문부터 신전까지 지키고, 정·사 무인은 협곡까지만 쳐들어온다.
 const MDANG={
   hyeolma:{n:'혈마당',art:'S_cheonma_0',cls:'권',d:'피를 끓여 쓰는 장법의 당. 마교의 선봉'},
   maryeong:{n:'마령당',art:'S_cheonma_1',cls:'도',d:'귀기 어린 도법으로 적진을 가르는 당'},
@@ -49,64 +49,35 @@ function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.d
   if(P.sect!=='cheonma')P.dang=null;
   return r}}
 
-// ---- 십만대산: 마교 본거지 지역 ----
-const MG_S=72,MG_C=36;
-const mgRoad=y=>MG_C+Math.round(2*Math.sin(y*.14));
-// 골짜기 너비: 협곡은 좁고, 성읍·광장은 넓다
-const mgHalf=y=>y>=62?7:y>=54?5:y>=38?15:y>=19?17:12;
-const MG_HALL={hyeolma:[MG_C-15,21],maryeong:[MG_C-15,27],hyeolyeong:[MG_C-15,33],gwiryeong:[MG_C+12,21],amhyeol:[MG_C+12,27]};
-const inMgTown=(x,y)=>y>=38&&y<54&&Math.abs(x-mgRoad(y))<=15,inMgPlaza=(x,y)=>y>=19&&y<38&&Math.abs(x-MG_C)<=16,inMgTemple=(x,y)=>y<19&&Math.abs(x-MG_C)<=11;
-function genMagyo(){
-  N=MG_S;const r=rng(66601);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];const rx=mgRoad(y),hw=mgHalf(y);for(let x=0;x<N;x++){
-    const dx=Math.abs(x-rx),hi=fbm(x*.15+3,y*.15+7),inV=dx<=hw&&y>=2;
-    let g=hi>.62?10:hi<.3?6:11;
-    if(inMgPlaza(x,y)&&y>=20&&y<=36&&Math.abs(x-MG_C)<=14)g=4;
-    if(inMgTemple(x,y)&&y>=3)g=4;
-    if(y>=19&&(x===rx||x===rx+1))g=1;
-    let o=null;
-    if(x===0||y===0||x===N-1||y===N-1)o='rock';
-    else if(!inV){const v=r();o=dx>hw+2||v<.7?(v<.12?'pine':'rock'):null}
-    else if(g!==4&&g!==1){const v=r();o=dx>=hw-1?(v<.55?'rock':v<.7?'pine':null):v<.035?'pine':v<.06?'rock':null}
-    map[y][x]={g,v:r()};objs[y][x]=o}}
-  // 천마관: 협곡을 가로막는 바위 벽과 관문 망루 둘
-  for(let y=55;y<=60;y++){const rx=mgRoad(y);for(let x=rx-9;x<=rx+10;x++)if(Math.abs(x-rx-.5)>2.5&&x>0&&x<N-1)objs[y][x]='rock'}
-  const bs=[{x:mgRoad(57)-4,y:56,w:2,h:2},{x:mgRoad(57)+4,y:56,w:2,h:2},
-    // 마교 성읍
-    {x:mgRoad(44)-9,y:42,w:3,h:2,kind:'inn'},{x:mgRoad(44)+5,y:42,w:3,h:2,kind:'smith'},{x:mgRoad(49)-9,y:48,w:2,h:2},{x:mgRoad(49)+5,y:48,w:3,h:2},
-    {x:mgRoad(40)-13,y:45,w:2,h:2},{x:mgRoad(40)+11,y:45,w:2,h:2},
-    // 오당 전각과 장로원
-    ...Object.values(MG_HALL).map(([x,y])=>({x,y,w:3,h:2,kind:'hall'})),{x:MG_C+12,y:33,w:3,h:2,kind:'hall'},
-    // 천마신전
-    {x:MG_C-3,y:5,w:7,h:3,kind:'temple'},{x:MG_C-10,y:8,w:2,h:3},{x:MG_C+9,y:8,w:2,h:3}];
-  for(const b of bs){b.mg=1;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===1)map[j][i].g=4}builds.push(b)}
-  // 신전 앞 화톳불, 광장 등롱, 성읍 길 등롱
-  const lp=(x,y)=>{if(objs[y][x]==null&&map[y][x].g!==1){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}};
-  for(const[x,y]of[[MG_C-4,10],[MG_C+5,10],[MG_C-8,14],[MG_C+9,14],[MG_C-6,20],[MG_C+7,20],[MG_C-6,36],[MG_C+7,36]])lp(x,y);
-  for(let y=40;y<=52;y+=4){const rx=mgRoad(y);lp(rx-2,y);lp(rx+3,y)}
-  placeFlags('cheonma',[[mgRoad(54)-2,54],[mgRoad(54)+3,54],[MG_C-2,17],[MG_C+3,17],[MG_C-2,38],[MG_C+3,38]]);
-  const put=(t,x,y)=>{if(walk(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  const want=(t,n,ok)=>{for(let i=0;i<600&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok(map[y][x].g,x,y))put(t,x,y)}};
-  want('ore',14,g=>g===6||g===10||g===11);want('herb',8,(g,x,y)=>g===11&&y>=54);
-}
-const MG_ARRIVE={x:mgRoad(67)+.5,y:67.5};
-function mgZone(x,y){
-  if(Math.abs(x-mgRoad(y))>mgHalf(y)+1)return'십만대산 험봉';
-  return y>=61?'십만대산 협곡':y>=54?'천마관':y>=38?'마교 성읍':y>=19?'오당 광장':'천마신전'}
-function mgNpcs(){const s=SECTS.cheonma;
-  return[{id:'hq',hq:'cheonma',n:'천마신교 교주 천마',x:MG_C+.5,y:9.4,pal:masterPal(s)},
-    ...Object.entries(MG_HALL).map(([k,[x,y]])=>({id:'dang_'+k,dang:k,n:`${MDANG[k].n}주`,x:x+1.5,y:y+2.7,pal:sectPal('cheonma',3,MDANG[k].cls,{elite:1})})),
-    {id:'inn',n:'마교 객잔 주인',x:mgRoad(44)-7.5,y:44.7,pal:'keeper'},{id:'smith',n:'병기당 대장장이',x:mgRoad(44)+6.5,y:44.7,pal:'smithy'},
-    {id:'pharm',n:'독약당 의원',x:mgRoad(49)-8,y:50.7,pal:'keeper'},{id:'post',n:'역참 마부',x:MG_ARRIVE.x+2.5,y:MG_ARRIVE.y-.6,pal:'keeper'}]}
-function mgSpawns(){
-  const own=(x,y)=>(inMgTown(x,y)||inMgPlaza(x,y)||inMgTemple(x,y)),out=(x,y)=>y>=61;
-  const sp=[['마교도',9,own,(x,y)=>mkFac('마',0,x,y,'cheonma')],['마교 고수',3,(x,y)=>inMgPlaza(x,y)||inMgTemple(x,y),(x,y)=>mkFac('마',1,x,y,'cheonma')],
-    ['정파 무인',2,out,(x,y)=>mkFac('정',0,x,y)],['사파 무인',2,out,(x,y)=>mkFac('사',0,x,y)],['늑대',3,(x,y)=>y>=54&&!own(x,y)],['호랑이',1,(x,y)=>y>=58]];
-  return sp}
-{const R=REGIONS.hq_cheonma;
-  Object.assign(R,{name:'십만대산 천마신교',size:MG_S,theme:'dark',big:1,arrive:MG_ARRIVE,gen:genMagyo,bake:()=>chunkGround('dark'),zone:mgZone,spawns:mgSpawns(),npcs:mgNpcs()});
-  // 신강과 잇는 출입구: 남쪽 협곡 끝
-  R.gates.forEach(g=>{g.x=mgRoad(70)+.5;g.y=MG_S-1.4});
-  for(const p of Object.values(REGIONS))for(const g of p.gates||[])if(g.to==='hq_cheonma'){g.tx=MG_ARRIVE.x;g.ty=MG_ARRIVE.y}}
-// 예전 저장(40×40 본산 시절 자리)에서 불러와 바위 속에 서 있으면 협곡 입구로 옮긴다
-{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(id==='hq_cheonma'&&P&&P.reg==='hq_cheonma'&&!walkAt(P.x,P.y)){P.x=MG_ARRIVE.x;P.y=MG_ARRIVE.y}}}
+// ---- 십만대산: 마교 여덟 맵 (g_stage.js 틀) ----
+// 오당 광장의 다섯 전각 자리 (왼쪽 셋, 오른쪽 둘. 오른쪽 아래는 오당 회의청)
+const MG_HALL={hyeolma:[7,9],maryeong:[7,17],hyeolyeong:[7,25],gwiryeong:[30,9],amhyeol:[30,17]};
+// 협곡 → 천마관 → 마교 성읍 → 혈마연무장 → 오당 광장 → 장로원 → 천마신전(교주) → 천마동(장로 이상만)
+{const s=SECTS.cheonma,th='dark',own=(n0,n1,area)=>ownSp(s,area,n0,n1),M=REGIONS.hq_cheonma,keep={gates:M.gates,prov:M.prov};
+  const st=(k,c)=>stageRegion({id:k,s,th,mg:1,seed:9100+k.length*7+(c.seed||0),...c});
+  st('hq_cheonma_1',{name:'십만대산 협곡',seed:1,top:1,nodes:{ore:8,herb:4},spawns:[...foeSp(s,y=>true,3),['늑대',3,(x,y)=>y>=8],['호랑이',1,(x,y)=>y<=20]]});
+  st('hq_cheonma_2',{name:'천마관',seed:2,top:1,wall:[27,12],flags:[[16,29],[24,29],[16,14],[24,14]],lamps:[[17,25],[23,25],[17,10],[23,10]],
+    zone:(x,y)=>y>=27?'천마관 외관':y>=12?'천마관 내관':'천마관 뒷길',spawns:[...own(5,1,(x,y)=>y>=13&&y<=26)]});
+  st('hq_cheonma_3',{name:'마교 성읍',seed:3,top:1,yard:[10,13,30,30],
+    builds:[{x:11,y:15,w:3,h:2,kind:'inn'},{x:26,y:15,w:3,h:2,kind:'smith'},{x:11,y:21,w:2,h:2},{x:27,y:21,w:2,h:2},{x:11,y:26,w:3,h:2},{x:26,y:26,w:3,h:2}],
+    lamps:[[15,18],[25,18],[15,24],[25,24]],flags:[[16,31],[24,31]],
+    npcs:[{id:'inn',n:'마교 객잔 주인',x:12.5,y:17.7,pal:'keeper'},{id:'smith',n:'병기당 대장장이',x:27.5,y:17.7,pal:'smithy'},
+      {id:'pharm',n:'독약당 의원',x:12,y:23.7,pal:'keeper'},{id:'post',n:'역참 마부',x:23.5,y:34.4,pal:'keeper'}],spawns:[...own(4,0,(x,y)=>y>=13&&y<=30)]});
+  st('hq_cheonma_4',{name:'혈마연무장',seed:4,top:1,yard:[7,8,33,30],
+    builds:[{x:8,y:9,w:3,h:2,kind:'hall'},{x:30,y:9,w:3,h:2,kind:'hall'},{x:8,y:27,w:2,h:2},{x:31,y:27,w:2,h:2}],lamps:[[12,12],[28,12],[12,26],[28,26]],flags:[[15,31],[25,31]],
+    npcs:[{id:'steward',steward:'cheonma',n:'혈마연무장 교두',x:9.5,y:11.7,pal:sectPal('cheonma',3,'도',{elite:1})}],spawns:[...own(7,2,(x,y)=>y>=8&&y<=30)]});
+  st('hq_cheonma_5',{name:'오당 광장',seed:5,top:1,yard:[6,8,34,32],
+    builds:[...Object.values(MG_HALL).map(([x,y])=>({x,y,w:3,h:2,kind:'hall'})),{x:30,y:25,w:3,h:2,kind:'hall'}],lamps:[[12,13],[28,13],[12,29],[28,29]],flags:[[15,33],[25,33]],
+    npcs:Object.entries(MG_HALL).map(([k,[x,y]])=>({id:'dang_'+k,dang:k,n:`${MDANG[k].n}주`,x:x+1.5,y:y+2.7,pal:sectPal('cheonma',3,MDANG[k].cls,{elite:1})})),
+    spawns:[...own(4,1,(x,y)=>y>=8&&y<=32)]});
+  st('hq_cheonma_6',{name:'장로원',seed:6,top:1,yard:[11,8,29,26],builds:[{x:16,y:10,w:5,h:3,kind:'hall'},{x:12,y:18,w:2,h:2},{x:26,y:18,w:2,h:2}],lamps:[[14,14],[25,14]],flags:[[16,27],[24,27]],
+    npcs:[{id:'elder',elder:'cheonma',n:'장로원 대장로',x:18.5,y:14.7,pal:sectPal('cheonma',4,'검',{master:1})}],spawns:[...own(2,1,(x,y)=>y>=8&&y<=26)]});
+  // 천마신전: 장문인 맵 자리(hq_cheonma)를 새 틀로 바꾼다. 성(省)으로 나가는 출입구는 linkChain이 협곡으로 옮긴다
+  st('hq_cheonma',{name:'천마신전',seed:7,top:1,topX:12,yard:[8,4,32,24],
+    builds:[{x:17,y:5,w:7,h:3,kind:'temple'},{x:9,y:8,w:2,h:3},{x:29,y:8,w:2,h:3}],lamps:[[16,11],[25,11],[14,18],[26,18]],flags:[[17,25],[23,25],[15,9],[26,9]],
+    npcs:[{id:'hq',hq:'cheonma',n:'천마신교 교주 천마',x:20.5,y:9.6,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}],
+    spawns:[...own(3,2,(x,y)=>y>=4&&y<=24)]});
+  Object.assign(REGIONS.hq_cheonma,keep);
+  st('hq_cheonma_8',{name:'천마동',seed:8,yard:[12,6,28,16],need:()=>P.sect==='cheonma'&&rankIdx('cheonma')>=MG_ELDER?null:'천마동은 마교 장로 이상만 든다.',
+    builds:[{x:18,y:7,w:3,h:3,kind:'pavilion'}],lamps:[[15,9],[25,9]],nodes:{ore:14,herb:6,chest:[24,8]},spawns:[['강시',2,(x,y)=>y<=20]]});
+  linkChain(s,['hq_cheonma_1','hq_cheonma_2','hq_cheonma_3','hq_cheonma_4','hq_cheonma_5','hq_cheonma_6','hq_cheonma','hq_cheonma_8'])}

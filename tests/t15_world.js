@@ -9,7 +9,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
   const g=await p.evaluate(()=>{const bad=[];let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){n++;const T=REGIONS[gt.to];if(!T||!T.gates.some(b=>b.to===id))bad.push(id+'→'+gt.to)}
-    const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>Object.values(REGIONS).filter(R=>R.size&&R.gates.some(q=>q.to==='hq_'+s.id)).length===1);
+    const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>{const first=(REGIONS[hqId(s)].chain||[hqId(s)])[0];return Object.values(REGIONS).filter(R=>R.prov&&!R.hq&&R.gates.some(q=>q.to===first)).length===1});
     return{bad,n,pv:pv.length,mn:Math.min(...sizes),mx:Math.max(...sizes),themes:new Set(pv.map(k=>PROV[k].th)).size,placed,gae:REGIONS.gaebong.gates.map(q=>q.label).join('·')}});
   ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===22&&g.mn<g.mx&&g.themes>=12);
   const sz=await p.evaluate(()=>['xinjiang','tibet','qinghai','sichuan','henan','zhejiang','hainan'].map(k=>PROV[k].size));
@@ -27,11 +27,11 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     }
     loadRegion(cur);return{bad,n:Object.keys(sz).length}});
   ok(`지역 ${bfs.n}곳 모두 도착 자리에서 모든 출입구로 길이 이어진다 ${bfs.bad.join(', ')}`,!bfs.bad.length);
-  // 실제로 걸어서: 개봉 → 하남성 → 섬서성 → 화산 → 섬서성 → 하남성 → 개봉
+  // 실제로 걸어서: 개봉 → 하남성 → 섬서성 → 화산 산문 → 외원 → 화산 본산 → 되돌아 개봉
   const walkTo=async(to)=>{await p.evaluate(to=>{const g=REGION().gates.find(q=>q.to===to);P.gateLock=0;const dx=g.x<5?1.6:g.x>N-5?-1.6:0,dy=g.y<5?1.6:g.y>N-5?-1.6:dx?0:1.6;P.x=g.x+dx;P.y=g.y+dy;P.path=[{x:g.x,y:g.y}]},to);
     await p.waitForFunction(to=>REG===to&&!P.traveling,to,{timeout:9000}).catch(()=>{});await p.waitForTimeout(500);return p.evaluate(()=>({reg:REG,n:N,x:P.x.toFixed(1),y:P.y.toFixed(1),zone:$('zone').textContent,walk:walkAt(P.x,P.y)}))};
   await p.evaluate(()=>{P.maxHp*=60;P.hp=P.maxHp});
-  const route=['pv_henan','pv_shaanxi','hq_hwasan','pv_shaanxi','pv_henan','gaebong'];const got=[];
+  const route=['pv_henan','pv_shaanxi','hq_hwasan_gate','hq_hwasan_outer','hq_hwasan','hq_hwasan_outer','hq_hwasan_gate','pv_shaanxi','pv_henan','gaebong'];const got=[];
   for(const r of route){const s=await walkTo(r);got.push(`${s.zone}(${s.n})`);if(s.reg!==r||!s.walk){ok(`걸어서 ${r}`,false);break}}
   ok(`걸어서 ${got.join(' → ')}`,got.length===route.length);
   // 큰 지역 화면과 바닥 그림 크기

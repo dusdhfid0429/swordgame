@@ -19,14 +19,14 @@ const SECT_DATA=[
   ['jongnam','종남파','jeong','big','장안 남쪽 종남산의 검파.',[['종남검법','검','금','n'],['천강장','권','토','n'],['천강북두검','검','금','h']]],
   ['gaebang','개방','jeong','big','천하 거지들의 방회. 소식이 가장 빠르다.',[['연환장','권','토','n'],['타구봉법','봉','토','n'],['항룡십팔장','권','화','h']]],
   // 정의맹: 정파 세가와 소문파
-  ['namgung','남궁세가','jeong','small','안휘 황산 아래, 검으로 이름난 정파 제일세가.',[['창궁검법','검','금','n'],['제왕검형','검','금','h']]],
-  ['moyong','모용세가','jeong','small','요녕 심양의 세가. 상대의 수를 되돌려준다.',[['연환쾌검','검','수','n'],['두전성이','권','수','h']]],
-  ['paeng','하북팽가','jeong','small','북경의 호방한 도법 세가.',[['오호단문도','도','화','n'],['혼원벽력도','도','화','h']]],
+  ['namgung','남궁세가','jeong','mid','안휘 황산 아래, 검으로 이름난 정파 제일세가.',[['창궁검법','검','금','n'],['제왕검형','검','금','h']]],
+  ['moyong','모용세가','jeong','mid','요녕 심양의 세가. 상대의 수를 되돌려준다.',[['연환쾌검','검','수','n'],['두전성이','권','수','h']]],
+  ['paeng','하북팽가','jeong','mid','북경의 호방한 도법 세가.',[['오호단문도','도','화','n'],['혼원벽력도','도','화','h']]],
   ['eon','진주언가','jeong','small','하북 진주의 권법 세가.',[['언가권','권','토','n'],['진주패왕권','권','금','h']]],
-  ['jegal','제갈세가','jeong','small','융중산의 지략과 진법, 궁술의 세가.',[['팔진궁술','궁','목','n'],['와룡신궁','궁','목','h']]],
-  ['hwangbo','황보세가','jeong','small','산동 제남의 단단한 권법 세가.',[['황보권','권','토','n'],['금강불괴장','권','토','h']]],
+  ['jegal','제갈세가','jeong','mid','융중산의 지략과 진법, 궁술의 세가.',[['팔진궁술','궁','목','n'],['와룡신궁','궁','목','h']]],
+  ['hwangbo','황보세가','jeong','mid','산동 제남의 단단한 권법 세가.',[['황보권','권','토','n'],['금강불괴장','권','토','h']]],
   ['ak','산동악가','jeong','small','악무목의 창법을 이은 충의의 세가.',[['악가창법','창','금','n'],['악가신창','창','금','h']]],
-  ['dang','사천당가','jeong','small','암기와 독을 다루는 사천의 세가.',[['당가비전궁','궁','수','n'],['만천화우','궁','수','h']]],
+  ['dang','사천당가','jeong','mid','암기와 독을 다루는 사천의 세가.',[['당가비전궁','궁','수','n'],['만천화우','궁','수','h']]],
   ['hyeongsan','형산파','jeong','small','호남 형산의 검파. 검이 바람을 탄다.',[['형산검법','검','화','n'],['회풍낙안검','검','화','h']]],
   ['cheonsan','천산파','jeong','small','서역 천산 설봉의 검파.',[['천산검법','검','수','n'],['천산육양장','권','수','h']]],
   ['taesan','태산파','jeong','small','오악의 으뜸 태산의 검파.',[['태산검법','검','토','n'],['태산십팔반','검','토','h']]],
@@ -52,10 +52,10 @@ const SECT_DATA=[
   ['dongjeong','동정수로채','sacheon','small','동정호의 수적. 노를 곤처럼 휘두른다.',[['동정곤법','봉','수','n'],['노도파천곤','봉','수','h']]],
   ['yasu','야수궁','sacheon','small','운남 밀림에서 짐승처럼 싸우는 궁.',[['야수권','권','목','n'],['백수지왕조','권','목','h']]],
   ['gwangpung','광풍사','sacheon','small','서역 객십 사막을 휩쓰는 마적 떼.',[['광풍도','도','토','n'],['사막광풍도','도','토','h']]],
-  ['taeyang','태양궁','sacheon','small','화염산 아래 불을 받드는 궁.',[['태양창','창','화','n'],['열양신창','창','화','h']]],
-  ['bukhae','북해빙궁','sacheon','small','북해 얼음 위의 궁. 장법과 검이 차갑다.',[['빙백장','권','수','n'],['빙궁한검','검','수','h']]],
-  ['podal','포달랍궁','sacheon','small','서장 밀종의 궁. 대수인과 금강저를 쓴다.',[['밀종대수인','권','토','n'],['금강항마저','봉','금','h']]],
-  ['daeroe','대뢰음사','sacheon','small','천축의 큰 절. 중원 밖에서 불법과 무공을 닦는다.',[['대력금강장','권','금','n'],['천축나한봉','봉','금','h']]],
+  ['taeyang','태양궁','sacheon','mid','화염산 아래 불을 받드는 궁.',[['태양창','창','화','n'],['열양신창','창','화','h']]],
+  ['bukhae','북해빙궁','sacheon','mid','북해 얼음 위의 궁. 장법과 검이 차갑다.',[['빙백장','권','수','n'],['빙궁한검','검','수','h']]],
+  ['podal','포달랍궁','sacheon','mid','서장 밀종의 궁. 대수인과 금강저를 쓴다.',[['밀종대수인','권','토','n'],['금강항마저','봉','금','h']]],
+  ['daeroe','대뢰음사','sacheon','mid','천축의 큰 절. 중원 밖에서 불법과 무공을 닦는다.',[['대력금강장','권','금','n'],['천축나한봉','봉','금','h']]],
   ['mandok','만독문','sacheon','small','귀주 묘강의 독과 독침의 문파.',[['오독장','권','목','n'],['만독탈혼장','권','목','h']]],
   ['hyeolrang','혈랑곡','sacheon','small','감숙 협곡에서 늑대처럼 무리 지어 싸운다.',[['혈랑참','도','화','n'],['혈월광랑도','도','화','h']]],
   ['gwiyeong','귀영문','sacheon','small','섬서에 숨은 그림자 살수들.',[['귀영검법','검','수','n'],['귀영무흔검','검','수','h']]],
@@ -66,13 +66,14 @@ const SECT_DATA=[
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
 const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
-const TIERN={big:'대문파',small:'소문파',one:'단일 문파'};
+// 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
+const TIERN={big:'대문파',mid:'중견문파',small:'소문파',one:'단일 문파'};
 // 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
 // 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
 // 4번 천고는 기연으로만 얻는 무공의 등급이다 (g_giyeon.js)
 const AGR=['하승','중승','상승','절정','천고'],AGR_C=['dim','','good','gold','gold'];
 const GMUL=[1,1.12,1.28,1.45,1.6],GULT=[[1.5,1],[1.6,1.05],[1.8,1.15],[2,1.3],[2.2,1.4]],GCOST=[15,20,30,45,60],GMAST=[1.15,1,.9,.8,.75];
-const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):(hi?3:2);
+const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):s.tier==='mid'?2:(hi?3:2);
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
 // buildArts에서 부른다: 문파 무공을 일반 무공과 같은 틀(초식 무늬 풀)로 만든다
@@ -120,11 +121,12 @@ function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
   const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
-  const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier!=='small'),small=list.filter(s=>s.tier==='small');
+  const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier==='big'||s.tier==='one'),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
   return `${head}<p class="note">${al.d}</p>${mine?`<p class="note">지금 소속: <b>${mine.n}</b> (${ALLY[mine.al].n})</p>`:''}
     <h4 style="margin:0">${alId==='jeong'?'9파1방':alId==='sacheon'?'4대문파':'본교'}</h4><div class="list">${big.map(row).join('')}</div>
+    ${mid.length?`<h4 style="margin:0">중견문파</h4><div class="list">${mid.map(row).join('')}</div>`:''}
     ${small.length?`<h4 style="margin:0">소문파</h4><div class="list">${small.map(row).join('')}</div>`:''}${ownSectHtml(al)}`;
 }
 // hq: 본산 장문인 앞에서 보는 창. 가입은 본산에서만 된다.
