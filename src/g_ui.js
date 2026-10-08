@@ -191,6 +191,7 @@ function buy(id,i){
 }
 function pNpc(n){
   const sellB=B('sellmode','물건 팔기 (행낭)');
+  if(n.id==='bank')return `<p class="note">"맡긴 물건은 목숨 걸고 지키겠소. 자식 대까지도 말이오."</p><p class="note">집에 있는 창고와 같은 창고다. 자식으로 윤회하면 그대로 이어진다.</p>${storageHtml()}`;
   if(n.id==='inn')return `<p class="note">"어서 오시오. 묵어 가시려오?"</p><div class="row2"><span class="note">하룻밤 묵으면 생명과 내공이 모두 차고 기록된다.</span>${B('sleep','묵기 · 은자 10',{pri:1,d:P.silver<10})}</div>
     <div class="list">${shopList('inn')}</div><div class="row2">${B('rumor','소문 듣기')}${sellB}</div>`;
   if(n.id==='smith'){const w=P.eq.weapon,rc=w?Math.ceil((w.maxDur-w.dur)*.6):0;
@@ -233,13 +234,17 @@ function sectDlg(side){
     <h4 style="margin:0">${name} 비급</h4><div class="list">${books}</div>
     <div class="row2"><span class="note">절정 이상, 명성 150이면 하산해 자기 문파를 세울 수 있다.</span>${B('found','문파 창설',{d:!found})}</div>`;
 }
-function pHouse(){
+const STORE_MAX=60;
+// 창고: 마을 창고지기와 내 집에서 같은 창고를 쓴다. 자식으로 윤회하면 그대로 이어진다.
+function storageHtml(){
   const st=G.storage,items=st.bag.map((it,i)=>`<div class="it"><div style="color:${itemCol(it)}">${esc(itemLabel(it))}<span>${itemDesc(it)}</span></div><div class="ib">${B('take:'+i,'꺼내기',{d:P.bag.length>=24})}</div></div>`).join('');
   const mats=Object.entries(st.mats).filter(([k,n])=>n>0).map(([k,n])=>`${k} ${n}`).join(' · ')||'없음';
-  return `<div class="row2"><span class="note">집에서 쉬면 생명과 내공이 차고 기록된다. 창고는 자식에게 이어진다.</span>${B('rest','쉬기',{pri:1})}</div>
-    <div class="card"><div class="row2"><h4>창고 재료</h4><span>${B('putm','재료 모두 맡기기')} ${B('takem','재료 모두 꺼내기')}</span></div><p>${mats}</p></div>
-    <div class="card"><h4>창고 물건</h4><div class="list">${items||'<p class="note">비어 있음</p>'}</div></div>
-    <div class="card"><h4>행낭에서 맡기기</h4><div class="list">${P.bag.map(it=>`<div class="it"><div style="color:${itemCol(it)}">${esc(itemLabel(it))}</div><div class="ib">${B('put:'+it.id,'맡기기')}</div></div>`).join('')||'<p class="note">행낭이 비어 있음</p>'}</div></div>`;
+  return `<div class="card"><div class="row2"><h4>창고 재료</h4><span>${B('putm','재료 모두 맡기기')} ${B('takem','재료 모두 꺼내기')}</span></div><p>${mats}</p></div>
+    <div class="card"><h4>창고 물건 <small class="dim">${st.bag.length}/${STORE_MAX}</small></h4><div class="list">${items||'<p class="note">비어 있음</p>'}</div></div>
+    <div class="card"><h4>행낭에서 맡기기</h4><div class="list">${P.bag.map(it=>`<div class="it"><div style="color:${itemCol(it)}">${esc(itemLabel(it))}</div><div class="ib">${B('put:'+it.id,'맡기기',{d:st.bag.length>=STORE_MAX})}</div></div>`).join('')||'<p class="note">행낭이 비어 있음</p>'}</div></div>`;
+}
+function pHouse(){
+  return `<div class="row2"><span class="note">집에서 쉬면 생명과 내공이 차고 기록된다. 창고는 자식에게 이어진다.</span>${B('rest','쉬기',{pri:1})}</div>${storageHtml()}`;
 }
 function openHouse(){openPanel('house')}
 // one click handler for every window button
@@ -291,8 +296,8 @@ function act(s){
     case'rest':P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('집에서 쉬었습니다.','sys');if(P.spouse)familyTalk();closePanels();return;
     case'putm':for(const[k,v]of Object.entries(P.mats))if(v>0&&!CONSUME[k]&&k!=='비도'){G.storage.mats[k]=(G.storage.mats[k]||0)+v;P.mats[k]=0}break;
     case'takem':for(const[k,v]of Object.entries(G.storage.mats)){addMat(k,v);G.storage.mats[k]=0}break;
-    case'put':{const i=P.bag.findIndex(i=>i.id===n);if(i>=0)G.storage.bag.push(P.bag.splice(i,1)[0]);break}
-    case'take':if(P.bag.length<24)P.bag.push(G.storage.bag.splice(n,1)[0]);break;
+    case'put':{const i=P.bag.findIndex(i=>i.id===n);if(i>=0&&G.storage.bag.length<STORE_MAX)G.storage.bag.push(P.bag.splice(i,1)[0]);break}
+    case'take':if(P.bag.length<24&&G.storage.bag[n])P.bag.push(G.storage.bag.splice(n,1)[0]);break;
   }
   renderOpen();
 }

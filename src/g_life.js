@@ -4,7 +4,8 @@ const NPCS=[
   {id:'sa',n:'혈교 분타주',x:26,y:17.6,pal:'cultist'},{id:'pharm',n:'약방 의원 허씨',x:16,y:25.6,pal:'keeper'},
   {id:'cloth',n:'포목점 주인 진씨',x:23,y:24.6,pal:'keeper'},{id:'jeong',n:'무당파 진인',x:26,y:25.6,pal:'taoist'},
   {id:'gen',n:'잡화상 노씨',x:18.5,y:23.4,pal:'keeper'},{id:'mae',n:'매파 할멈',x:18.4,y:19.4,pal:'matron'},
-  {id:'board',n:'의뢰판',x:21.5,y:19.3,board:1},{id:'arena',n:'비무 관리인',x:22.2,y:21.2,pal:'judge'},{id:'land',n:'토지 관리인',x:14.6,y:21.4,pal:'keeper'}];
+  {id:'board',n:'의뢰판',x:21.5,y:19.3,board:1},{id:'arena',n:'비무 관리인',x:22.2,y:21.2,pal:'judge'},{id:'land',n:'토지 관리인',x:14.6,y:21.4,pal:'keeper'},
+  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'}];
 const npcAt=id=>NPCS.find(n=>n.id===id);
 let dlg=null;
 // ================= update =================
