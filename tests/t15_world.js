@@ -12,6 +12,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>Object.values(REGIONS).filter(R=>R.size&&R.gates.some(q=>q.to==='hq_'+s.id)).length===1);
     return{bad,n,pv:pv.length,mn:Math.min(...sizes),mx:Math.max(...sizes),themes:new Set(pv.map(k=>PROV[k].th)).size,placed,gae:REGIONS.gaebong.gates.map(q=>q.label).join('·')}});
   ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===22&&g.mn<g.mx&&g.themes>=12);
+  const sz=await p.evaluate(()=>['xinjiang','tibet','qinghai','sichuan','henan','zhejiang','hainan'].map(k=>PROV[k].size));
+  ok(`실제 면적 비례 크기: 신강 ${sz[0]} > 서장 ${sz[1]} > 청해 ${sz[2]} > 사천 ${sz[3]} > 하남 ${sz[4]} > 절강 ${sz[5]} > 해남 ${sz[6]}`,sz.every((v,i)=>!i||v<sz[i-1])&&sz[0]>=150);
   ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성');
   // 모든 지역: 도착 자리에서 모든 출입구까지 걸어서 간다 (지역 크기도 맞게)
   const bfs=await p.evaluate(()=>{const bad=[],cur=REG,sz={};
@@ -35,8 +37,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 큰 지역 화면과 바닥 그림 크기
   await p.evaluate(()=>{P.silver=500});await walkTo('pv_henan');await walkTo('pv_hubei');const r2=await walkTo('pv_sichuan');
   await p.evaluate(()=>{P.x=N/2+.5;P.y=N/2+2.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;for(let i=0;i<4;i++)spawnTick()});await p.waitForTimeout(800);
-  const gr=await p.evaluate(()=>({w:ground.width,h:ground.height,mobs:mobs.length,loc:mobs.filter(m=>m.sect&&PROV.sichuan.sects.includes(m.sect)).length}));
-  ok(`사천성 ${r2.n}칸: 바닥 그림 ${gr.w}×${gr.h} (휴대폰 메모리용 축소), 몹 ${gr.mobs} (사천 문파 무인 ${gr.loc})`,r2.reg==='pv_sichuan'&&r2.n===64&&gr.w<=2560&&gr.mobs>5);
+  const gr=await p.evaluate(()=>({ch:!!ground.chunked,kept:ground.chunked?ground.cache.size:0,keep:CHUNK_KEEP,mobs:mobs.length,loc:mobs.filter(m=>m.sect&&PROV.sichuan.sects.includes(m.sect)).length}));
+  ok(`사천성 ${r2.n}칸: 바닥은 조각 ${gr.kept}개만 구움, 몹 ${gr.mobs} (사천 문파 무인 ${gr.loc})`,r2.reg==='pv_sichuan'&&r2.n===88&&gr.ch&&gr.kept>0&&gr.kept<=gr.keep&&gr.mobs>5);
   await p.screenshot({path:shot('world_sichuan')});
   // 천하 지도 창
   await p.tap('#tmenu');await p.tap('[data-act="open:world"]');await p.waitForTimeout(200);

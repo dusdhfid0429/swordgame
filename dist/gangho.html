@@ -789,9 +789,13 @@ function mkMob(kind,x,y,extra){
 }
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
 function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
+// 큰 지역(64칸 넘게)은 몹을 사람 둘레 24칸 안에 내고, 44칸 넘게 멀어진 몹은 거둔다. 넓어도 비어 보이지 않고 몹 수도 늘지 않는다
+const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
+  const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
   for(const[k,cap,test,mk]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
-    for(let t=0;t<30;t++){const x=1+Math.floor(Math.random()*(N-2)),y=1+Math.floor(Math.random()*(N-2));
+    for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
+      y=big?Math.max(1,Math.min(N-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2));
       if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
   for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;
@@ -2978,12 +2982,13 @@ function genHQ(s,th){
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
 const HQ_GRASS={peak:[44,80,46],snow:[58,76,60],forest:[32,64,32],lake:[52,88,52],manor:[60,86,46],swamp:[50,62,36],canyon:[86,80,46],dark:[38,44,38]};
 // k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
-function bakeHQ(th,k=Math.min(1,40/N)){
-  const GW=N*TW,gw=Math.round(GW*k),gh=Math.round(N*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+// x0,y0,C: 큰 지역은 C×C칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모
+function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){
+  const GW=N*TW,X0=(x0-y0-C)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round(C*TW*k),gh=Math.round(C*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
-    const px=qx/k,py=qy/k,a=(px-GW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
-    if(gx<0||gy<0||gx>=N||gy>=N)continue;
+    const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
+    if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+C||gx>=N||gy>=N)continue;
     const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
     const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
@@ -3006,14 +3011,27 @@ function bakeHQ(th,k=Math.min(1,40/N)){
     const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
-  const r=rng(57+th.length),sp=(gx,gy)=>[((gx-gy)*TW/2+GW/2)*k,(gx+gy)*TH/2*k];g.lineCap='round';
+  const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*C/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(N-1,y0+r()*C);g.lineCap='round';
   const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
-  for(let q=0;q<16000*N*N/1600;q++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
+  for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>N-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
-  for(let q=0;q<900*N*N/1600;q++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
+  for(let q=0;q<900*A;q++){const gx=rx(),gy=ry(),t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
     g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
   return c;
 }
+// 큰 지역(성) 바닥: 한 장으로 구우면 휴대폰 메모리가 모자라서, 12×12칸 조각을 화면 가까이에서만 굽고 멀어진 조각은 버린다
+const CHUNK=12,CHUNK_K=.6,CHUNK_KEEP=64;
+const chunkGround=th=>({chunked:1,th,cache:new Map,n:0});
+function drawChunks(gr,o){
+  const C=CHUNK,n=Math.ceil(N/C),m=C*TW*.6;let budget=gr.cache.size?1:99;
+  for(let cy=0;cy<n;cy++)for(let cx=0;cx<n;cx++){
+    const x=o.x+(cx-cy-1)*C*TW/2,y=o.y+(cx+cy)*C*TH/2,w=C*TW,h=C*TH;
+    if(x+w<-m||x>W+m||y+h<-m||y>H+m)continue;const key=cx+','+cy,near=!(x+w<0||x>W||y+h<0||y>H);
+    let c=gr.cache.get(key);
+    if(!c){if(budget<=0&&!near)continue;budget--;c=bakeHQ(gr.th,CHUNK_K,cx*C,cy*C,C);gr.n++}
+    else gr.cache.delete(key);gr.cache.set(key,c);
+    if(near)ctx.drawImage(c,x,y,w,h)}
+  while(gr.cache.size>CHUNK_KEEP)gr.cache.delete(gr.cache.keys().next().value)}
 // ---- 역참: 은자를 내고 말을 타 개봉과 모든 본산을 오간다 ----
 function postDlg(){
   const row=(id,n,sub,fee)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${fee}`,{d:P.silver<fee})}</div></div>`;
@@ -3039,29 +3057,30 @@ function hqDlg(n){
 // - 성끼리는 가장자리 출입구로 지도 위치대로 잇는다. 성 안의 본산 입구(안쪽 출입구)로 각 문파 본산에 들어간다.
 // - 개봉은 하남성 동쪽의 성 안 마을(지역 개봉), 숭산 소림사는 개봉 북쪽으로 그대로 잇는다.
 // map: 무림전도(2000×1333)에서의 자리, 천하 지도 창에 그린다
+// size: 실제 면적(만 ㎢)에 비례한 한 변 칸 수. 하남(16.7만 ㎢)=48칸 기준, 칸 수 = 48×√(면적/16.7만). 해남도만 본산 입구가 들어가도록 30칸으로 올렸다.
 const PROV={
   henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','sama','heukpung'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
-  hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
-  shandong:{n:'산동성',size:52,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
-  liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
+  hebei:{n:'하북성',size:54,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
+  shandong:{n:'산동성',size:46,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
+  liaoning:{n:'요녕성',size:46,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
   anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','danri'],d:'황산의 기암과 소나무'},
-  shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
-  gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
-  qinghai:{n:'청해성',size:60,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
-  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
-  yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
-  guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
-  hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
-  hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
-  guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
-  guangdong:{n:'광동성',size:52,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
-  xinjiang:{n:'신강',size:64,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
-  tibet:{n:'서장',size:60,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
-  mongol:{n:'내몽고',size:56,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
-  jiangsu:{n:'강소성',size:44,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
-  zhejiang:{n:'절강성',size:48,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
-  hainan:{n:'해남도',size:40,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
-  tianzhu:{n:'천축',size:48,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
+  shaanxi:{n:'섬서성',size:54,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
+  gansu:{n:'감숙성',size:82,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
+  qinghai:{n:'청해성',size:100,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
+  sichuan:{n:'사천성',size:88,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
+  yunnan:{n:'운남성',size:74,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
+  guizhou:{n:'귀주성',size:50,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
+  hubei:{n:'호북성',size:50,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
+  hunan:{n:'호남성',size:54,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
+  guangxi:{n:'광서성',size:58,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
+  guangdong:{n:'광동성',size:50,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
+  xinjiang:{n:'신강',size:152,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
+  tibet:{n:'서장',size:130,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
+  mongol:{n:'내몽고',size:128,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
+  jiangsu:{n:'강소성',size:40,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
+  zhejiang:{n:'절강성',size:38,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
+  hainan:{n:'해남도',size:30,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
+  tianzhu:{n:'천축',size:90,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
 const PV_LINKS=[
@@ -3132,7 +3151,7 @@ for(const[k,p]of Object.entries(PROV)){
   const local=f=>{const l=p.sects.filter(sid=>alFac(SECTS[sid].al)===f);return l.length?pick(l):undefined};
   const spawns=[];for(const f of['정','사','마'])spawns.push([FAC_KIND[f][0],facs.includes(f)?3:1,far,(x,y)=>mkFac(f,0,x,y,local(f))]);
   spawns.push(['산적',3,far],['산적궁수',1,far]);for(const[b,c]of PV_BEAST[p.th])spawns.push([b,c,far]);
-  REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
+  REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>N>48?chunkGround(PV_PAINT[p.th]||p.th):bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
     zone:(x,y)=>{let b=null,bd=6;for(const g of gates)if(g.inner){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}
       return b?`${p.n} · ${b.label} 어귀`:Math.hypot(x-S/2,y-S/2)<5?`${p.n} 객잔 거리`:p.n}};
 }
@@ -3399,7 +3418,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
-  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
+  const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
   const sea=P?season():'봄';
   if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -3409,7 +3428,9 @@ function draw(){
   if(P.path&&P.path.length){const l=P.path[P.path.length-1],p=toScreen(l.x,l.y),k=(time*2)%1;ctx.strokeStyle=`rgba(230,200,120,${1-k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,6+k*10,3+k*5,0,0,7);ctx.stroke()}
   if(P.target&&P.target.hp>0){const p=toScreen(P.target.x,P.target.y);ctx.strokeStyle=P.target.d.hostile||P.target.aggro?'rgba(220,60,40,.85)':'rgba(230,200,120,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,18,8,0,0,7);ctx.stroke()}
   const list=[],pp=toScreen(P.x,P.y),vis=(x,y,m=90)=>{const p=toScreen(x,y);return p.x>-m&&p.x<W+m&&p.y>-40&&p.y<H+200};
-  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
+  // 큰 지역은 사람 둘레만 살핀다
+  const vr=Math.ceil(W/TW+H/TH)+4,j0=Math.max(0,Math.floor(P.y)-vr),j1=Math.min(N,Math.floor(P.y)+vr),i0=Math.max(0,Math.floor(P.x)-vr),i1=Math.min(N,Math.floor(P.x)+vr);
+  for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
     const p=toScreen(i+.5,j+.5);if(p.x<-90||p.x>W+90||p.y<-20||p.y>H+190)continue;
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
