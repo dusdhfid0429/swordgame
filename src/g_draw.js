@@ -204,6 +204,7 @@ function draw(){
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
     // 높은 곳에 있거나 그리로 뛰는 중이면 그 지붕·나무보다 나중에 그린다
     const pd=P.perch?perchD():lt&&P.leap.t/P.leap.dur>.45?(lt.k==='roof'?lt.b.x+lt.b.w+lt.b.y+lt.b.h-1+.6:lt.i+lt.j+1.1):P.leap&&P.leap.z0>0&&P.leap.t/P.leap.dur<.5?P.x+P.y+3:P.x+P.y;
+    if(P.perch&&joy.on){const a=leapAim();if(a){const s=toScreen(a.x,a.y),az=a.q.z,k=(time*2)%1;list.push({d:99999,f:()=>{ctx.strokeStyle=`rgba(190,220,255,${.9-k*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(s.x,s.y-az,8+k*8,4+k*4,0,0,7);ctx.stroke()}})}}
     if(z>2){const g=toScreen(P.x,P.y);list.push({d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});

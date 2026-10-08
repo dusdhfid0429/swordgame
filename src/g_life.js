@@ -184,7 +184,9 @@ function rideToggle(){
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
   if(P.hp<=0)return;if(P.qi<12){log('내공이 부족합니다.','info');return}if(P.leap)return;
-  const LEAP=P.ride?4:3.6;let land=null,to=null;
+  // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
+  if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
+  const LEAP=leapRange();let land=null,to=null;
   // 지붕·나무 위로 (말을 탔으면 못 오른다)
   if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<N-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);

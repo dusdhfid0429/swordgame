@@ -35,6 +35,10 @@ function plungeHit(L){
   addText(P.x,P.y-.4,'낙하 공격','#ffd36a');if(n)gainMast(X.key,1)}
 // 경공 착지 자리 고르기: 바라보는 쪽에 지붕·나무가 있으면 그 위로
 function leapPerch(LEAP){
+  // 높은 곳에서 나무로 건너뛸 때는 바로 옆 나무보다 2.6칸쯤 떨어진 나무를 고른다 (숲에서 한 칸씩만 옮겨 가지 않게)
+  if(P.perch){let best=null,bs=1e9;for(let d=1;d<=LEAP;d+=.25)for(const o of[0,.4,-.4]){const q=perchAt(P.x+P.fx*d-P.fy*o,P.y+P.fy*d+P.fx*o);
+      if(q&&q.k==='tree'&&!samePerch(q,P.perch)){const s=Math.abs(d-2.6)+Math.abs(o)*.5;if(s<bs){bs=s;best={q,x:q.x,y:q.y}}}}
+    if(best)return best}
   for(let d=.7;d<=LEAP;d+=.15)for(const o of[0,.35,-.35]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o,q=perchAt(nx,ny);
     if(!q||samePerch(q,P.perch))continue;
     if(q.k==='tree')return{q,x:q.x,y:q.y};
@@ -45,8 +49,10 @@ function leapPerch(LEAP){
 function perchMove(kx,ky,sp){
   const q=P.perch;if(!q||P.leap)return false;
   if(kx||ky){const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;P.path=null;P.target=null;P.talk=null;P.medit=false;
-    if(q.k==='tree'){perchDrop();return true}
+    // 나무: 조이스틱은 경공으로 건너뛸 쪽을 겨눈다. 0.5초 넘게 계속 밀면 아래로 내려온다
+    if(q.k==='tree'){const t0=P.edgeT||0;P.edgeT=t0+sp/(moveSpd()||1);if(t0===0)addText(P.x,P.y-.3,'경공으로 건너뛰기','#cfe3ff');if(P.edgeT>.5){P.edgeT=0;perchDrop()}return true}
     P.roofGoal=null;roofStep(q.b,P.fx*sp*.85,P.fy*sp*.85,true);return true}
+  if(q.k==='tree')P.edgeT=0;
   // 지붕 위 한 점을 눌렀으면 그리로 걷는다
   if(P.roofGoal&&q.k==='roof'){const g=P.roofGoal,dx=g.x-P.x,dy=g.y-P.y,l=Math.hypot(dx,dy);
     if(l<.06){P.roofGoal=null;return true}const m=Math.min(l,sp*.85);P.fx=dx/l;P.fy=dy/l;roofStep(q.b,P.fx*m,P.fy*m,false);return true}
@@ -68,6 +74,10 @@ function roofStep(b,dx,dy,push){
 // 화면에서 누른 곳이 지금 선 지붕 위인가 (지붕 높이만큼 올려서 본다)
 function roofTap(cx,cy){const q=P.perch;if(!q||q.k!=='roof')return false;const g=toGrid(cx,cy+(P.z||0)*S);
   if(!onRoof(q.b,g.x,g.y,.05))return false;const M=.2;P.roofGoal={x:Math.max(q.b.x+M,Math.min(q.b.x+q.b.w-M,g.x)),y:Math.max(q.b.y+M,Math.min(q.b.y+q.b.h-M,g.y))};P.path=null;return true}
+// 높은 곳에서 경공이 닿는 거리: 높이만큼 더 멀리
+const leapRange=()=>(P.ride?4:3.6)+(P.perch?Math.min(1.6,(P.z||0)/60):0);
+// 높은 곳에서 조이스틱을 기울이면 경공으로 내려앉을 자리를 미리 보여 준다
+function leapAim(){if(!P.perch||!joy.on&&!P.aimKey)return null;return leapPerch(leapRange())}
 // 경공이 끝날 때
 function leapLand(L){
   P.roofGoal=null;P.edgeT=0;

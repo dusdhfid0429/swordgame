@@ -50,8 +50,18 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 나무 위에서는 적이 알아채는 거리가 절반
   const s6=await p.evaluate(()=>{const e=mkMob('늑대',P.x+4,P.y);mobs.push(e);window._t=e;return(e.d.aggro||6)});
   await p.waitForTimeout(600);ok(`나무 위에 숨으면 ${s6}칸 안이라도 4칸 떨어진 늑대가 알아채지 못한다`,await p.evaluate(()=>!window._t.aggro));
-  await p.evaluate(()=>perchMove(1,0,.1));await p.waitForTimeout(700);
-  ok('나무에서 움직이면 아래로 내려온다',await p.evaluate(()=>!P.perch&&P.z===0&&walkAt(P.x,P.y)));
+  // 나무에서 나무로: 조이스틱으로 겨누고 경공
+  await p.evaluate(()=>{mobs=[]});
+  const hop=await p.evaluate(()=>{const q=P.perch,from={i:q.i,j:q.j};let to=null;
+    for(let r=2;r<=4&&!to;r++)for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]]){const i=q.i+dx*r,j=q.j+dy*r;if(i>2&&j>2&&i<N-3&&j<N-3&&PERCH_TREE[objs[j][i]]){to={i,j,dx,dy};break}}
+    if(!to)return{none:1};const l=Math.hypot(to.dx,to.dy);joy.on=true;joy.gx=to.dx/l;joy.gy=to.dy/l;
+    for(let i=0;i<3;i++)perchMove(joy.gx,joy.gy,.03);const still=!!P.perch,aim=leapAim();P.qi=P.maxQi;leap();joy.on=false;return{to,from,still,aim:!!aim}});
+  await p.waitForTimeout(900);
+  const hop2=await p.evaluate(h=>({k:P.perch&&P.perch.k,i:P.perch&&P.perch.i,j:P.perch&&P.perch.j}),hop);
+  ok(`나무 위에서 조이스틱을 잠깐 기울이면 떨어지지 않고 겨눈 자리가 보이며, 경공으로 그쪽 나무 위로 건너뛴다 (${hop.from?`${hop.from.i},${hop.from.j} → ${hop2.i},${hop2.j}`:'없음'})`,hop.still&&hop.aim&&hop2.k==='tree'&&(hop2.i!==hop.from.i||hop2.j!==hop.from.j)&&((hop2.i-hop.from.i)*hop.to.dx+(hop2.j-hop.from.j)*hop.to.dy)>0);
+  await p.screenshot({path:shot('height_tree_hop')});
+  await p.evaluate(()=>{for(let i=0;i<45;i++)perchMove(1,0,.05)});await p.waitForTimeout(700);
+  ok('나무에서 조이스틱을 계속 밀면 아래로 내려온다',await p.evaluate(()=>!P.perch&&P.z===0&&walkAt(P.x,P.y)));
   // 지역을 옮기면 높이가 풀린다
   await p.evaluate(()=>{P.perch={k:'tree',i:1,j:1,z:30};P.z=30;travel({to:'gaebong',tx:20.5,ty:20.5})});await p.waitForTimeout(800);
   ok('지역을 옮기면 땅에 선다',await p.evaluate(()=>!P.perch&&P.z===0));
