@@ -170,6 +170,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .tb.big.on{box-shadow:0 0 0 2px var(--exp),0 2px 10px #000a}
 #t_ult{right:100px;bottom:2px;border-color:#c58bff}
 #t_leap{right:14px;bottom:100px}
+#t_step{right:148px;bottom:84px;width:52px;height:52px;font-size:12px;border-color:#8fc8ff}
 #t_spec{right:84px;bottom:76px;width:52px;height:52px;font-size:12px}
 #t_pot{right:168px;bottom:8px;width:52px;height:52px;font-size:11px}
 #t_ctx{right:6px;bottom:172px;width:auto;min-width:64px;height:44px;border-radius:22px;padding:0 12px;border-color:var(--exp);color:#f6e7b8;font-size:14px}
@@ -620,6 +621,7 @@ function sectDetail(s,hq){
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${pasSectHtml(s)}
+    ${bobSectHtml(s)}
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}</div>`:''}${member?teachHtml():''}`;
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
@@ -640,6 +642,7 @@ function sectAct(a,x,y){
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
     case'sleave':{const s=SECTS[P.sect];if(!s)return true;if(!confirm(`${s.n}에서 하산할까요? 익힌 무공은 남지만 고급 무공의 다음 초식은 더 받을 수 없습니다.`))return true;
       P.sect=null;log(`${s.n}에서 하산했습니다.`,'info');return true}
+    case'blearn':learnBob(x,1);return true;
     case'plearn':{const q=PAS[x];if(q&&q.sect)learnPas(x);return true}
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
@@ -676,7 +679,7 @@ function newLife(o){
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
-    duel:0,taught:-1,pas:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
+    duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
@@ -735,9 +738,10 @@ function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(co
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
-const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급'};
+const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급',bbook:'보법 비급'};
 function itemDesc(it){
   if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
@@ -752,6 +756,7 @@ const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
 // why a book can't be read right now, or null if it can
 function readBlock(it){
+  if(it.slot==='bbook'){bobInit();return P.bob[it.bob]?'이미 익힌 보법입니다.':null}
   if(it.slot==='pbook')return P.pas&&P.pas[it.pas]?'이미 익힌 패시브 무공입니다.':null;
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
@@ -764,6 +769,7 @@ function readBlock(it){
   return null}
 function readBook(it){
   const no=readBlock(it);if(no){log(no,'info');return}
+  if(it.slot==='bbook'){if(learnBob(it.bob))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='pbook'){if(learnPas(it.pas,1))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
@@ -1293,7 +1299,7 @@ function update(dt){
 }
 function updateP(dt){
   for(let i=0;i<6;i++)P.fcd[i]=Math.max(0,P.fcd[i]-dt);for(const k in P.scd)P.scd[k]=Math.max(0,P.scd[k]-dt);
-  for(const k of['gcd','bcd','ucd','swing','palm','inv','hit','flash','jump','satk','sj'])P[k]=Math.max(0,P[k]-dt);
+  for(const k of['bcd2','gcd','bcd','ucd','swing','palm','inv','hit','flash','jump','satk','sj'])P[k]=Math.max(0,P[k]-dt);
   for(const k of['atk','hm','crit','ult'])P.buff[k]=Math.max(0,(P.buff[k]||0)-dt);
   P.lastHit+=dt;
   if(P.poison>0){P.poison-=dt;P.hp-=P.maxHp*.02*dt;if(P.hp<=0){P.hp=0;die('독');return}}
@@ -1698,6 +1704,7 @@ function pArts(){
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${learnedArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
+    ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
     <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">오행 상극</b> 화→금→목→토→수→화, 이기는 쪽 1.3배. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
@@ -1707,7 +1714,7 @@ function pBag(){
   const sell=shopMode;
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
-  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook';
+  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
@@ -1773,24 +1780,25 @@ const SHOP={
   pharm:[['금창약','mat',15],['소환단','mat',20],['해독단','mat',10],['tbook:약재','tbook',60]],
   cloth:[['armor','gear',40],['boots','gear',30],['목화씨','mat',5],['tbook:직물','tbook',60]],
   gen:[['볍씨','mat',5],['보리씨','mat',5],['배추씨','mat',5],['목화씨','mat',5],['sbook:암기','sbook',100],['sbook:독공','sbook',100],['sbook:점혈','sbook',100],
-    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60])]};
+    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60]),['bbook:b_seom','bbook',180],['bbook:b_chil','bbook',180]]};
 function shopList(id){
   return SHOP[id].map(([k,t,p],i)=>{
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?'비도 10자루':k;return shopRow(nm,CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
     if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}`,p,`buy:${id}:${i}`)}
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
+    if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
     if(t==='pbook'){const q=PAS[k.split(':')[1]],has=P.pas&&P.pas[q.id];return shopRow(`패시브 비급 · ${q.n} <small class="dim">${PTYPE[q.type].n}</small>`,has?'이미 익혔다':`${PTYPE[q.type].f(pasVal(q,0))}~${PTYPE[q.type].f(pasVal(q,100)).replace(/^[^+-]*/,'')} · ${q.d}`,p,`buy:${id}:${i}`,has)}
     if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?60:p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
   }).join('');
 }
 function buy(id,i){
   const[k,t,p0]=SHOP[id][i];const p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?60:p0;if(P.silver<p)return;
-  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
+  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook'||t==='bbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
   if(t==='mat')addMat(k);else if(t==='mat10')addMat('비도',10);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
   else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):mkGear('boots','짚신',1,{spd:.12,hm:3}));
-  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
+  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
 function pNpc(n){
@@ -1851,6 +1859,7 @@ function act(s){
     case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
     case'wsel':wSel=x;break;
+    case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;
     case'snd':sndToggle(x);break;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
@@ -2431,7 +2440,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyS'||e.code==='Numpad5'){ultimate();return}
   if(e.code==='Digit1')special('암기');else if(e.code==='Digit2')special('독공');else if(e.code==='Digit3')special('점혈');
   else if(e.code==='Digit4')useCon('금창약');else if(e.code==='Digit5')useCon('소환단');
-  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
+  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
   else if(e.code==='KeyM')rideToggle();else if(e.code==='KeyF')useNearest();else if(e.code==='Tab')toggleMode();
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
@@ -2448,6 +2457,7 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
     <button type="button" class="tb big" id="t_atk"><span>공격</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_ult"><span>필살</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_leap"><span>경공</span><i class="cd"></i></button>
+    <button type="button" class="tb" id="t_step"><span>보법</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_spec"><span>비기</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_pot"><span>약</span><em></em></button>
     <button type="button" class="tb ctx" id="t_ctx"><span></span></button>
@@ -2481,6 +2491,7 @@ function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
 hold('t_ult',()=>ultimate());
 hold('t_leap',()=>leap());
+hold('t_step',()=>bobeop());
 hold('t_spec',()=>{const k=specPick();if(k==='신공')shingong();else if(k)special(k);else log(specMsg(),'info')});
 hold('t_pot',()=>{const k=potPick();if(k)useCon(k);else log('금창약도 소환단도 없습니다.','info')});
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
@@ -2517,6 +2528,7 @@ function touchHud(){
   const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
   $('t_leap').classList.toggle('off',P.qi<12);cd('t_leap',P.leap?1:0);
+  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',(P.bcd2||0)/(P.bmax||1))}
   const hasSp=P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
   $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
   const pk=potPick()||'금창약';$('t_pot').querySelector('span').textContent=pk==='금창약'?'금창약':'소환단';$('t_pot').querySelector('em').textContent=P.mats[pk]||0;$('t_pot').classList.toggle('off',!potPick());
@@ -3579,10 +3591,100 @@ function perchMove(kx,ky,sp){
   return true}
 // 경공이 끝날 때
 function leapLand(L){
+  bobLand(L);
   P.z=L.z1||0;P.perch=L.to||null;
   if(P.perch){addText(P.x,P.y-.3,P.perch.k==='roof'?'지붕 위':'나무 위','#cfe3ff');if(typeof sfx==='function')sfx('land')}
   else if(L.plunge)plungeHit(L);
   if(L.after){const a=L.after;P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(a.x),Math.floor(a.y))}}
+
+// ================= 보법: 회피기 (경공과 따로) =================
+// 경공은 멀리·높이 뛰는 이동기, 보법은 싸움 중 짧게 미끄러지는 회피기다. 설계: docs/세력_문파_설계.md 14장
+// - 보법 버튼(터치) · Shift 또는 W(키보드). 쓰는 동안 잠깐 몸이 흐려져 피해를 받지 않는다(무적).
+// - 두 타입
+//   직선(line): 조이스틱 방향(놓았으면 바라보는 쪽)으로 정해진 거리만큼 곧게 미끄러진다. 적 사이는 빠져나가고 벽·물에서는 멈춘다.
+//   간파(flank): 둘레를 살펴 공격하기 좋은 자리로 옮긴다. 상대 등 뒤를 잡고, 다른 적에게 둘러싸이지 않는 자리를 고른다.
+//               등 뒤를 잡으면 다음 일격이 치명타가 된다. 조이스틱을 기울이고 있으면 그쪽 자리를 더 쳐 준다.
+// - 등급(하승·중승·상승·절정)이 높을수록 미끄러지는 거리와 살피는 범위가 넓고, 다시 쓰는 시간이 짧다.
+// - 살피는 자리 수는 등급과 상관없이 최대 96곳, 견주는 적은 가까운 순으로 최대 24명이라 절정에서도 1ms 안팎이다.
+const BGRADE=['하승','중승','상승','절정'];
+const BG={len:[2.6,3.2,3.8,4.5],rad:[2.8,3.8,4.8,6.2],cd:[3.2,2.8,2.4,2],qi:[5,6,8,10],inv:[.3,.34,.38,.42]};
+const BOBS={
+  b_basic:{n:'기초보법',t:'line',g:0,d:'발을 엇갈려 한 걸음 비켜선다. 누구나 안다'},
+  b_seom:{n:'섬전보',t:'line',g:1,d:'번개처럼 곧게 내닫는다'},
+  b_chil:{n:'칠성보',t:'flank',g:1,d:'북두칠성 자리를 밟아 상대의 옆구리로 돈다'},
+  b_yuun:{n:'유운보',t:'line',g:2,d:'흐르는 구름처럼 적 사이를 미끄러져 빠진다'},
+  b_gugung:{n:'구궁팔괘보',t:'flank',g:2,d:'구궁의 방위로 상대의 빈 등 뒤를 잡는다'},
+  b_ilwi:{n:'일위도강',t:'line',g:3,d:'갈댓잎 하나로 강을 건너듯 길게 뻗어 나간다'},
+  b_neungpa:{n:'능파미보',t:'flank',g:3,d:'물결 위를 걷듯 어지러운 싸움 한가운데서도 가장 좋은 자리를 찾는다'}};
+// 얻는 곳: 하승·중승은 개봉 잡화점 비급, 상승은 문파 본산에서 정식제자 이상 공적 100, 절정은 호법(당주) 이상 공적 300
+const BCOST=[0,0,100,300],BRANK=[0,0,1,3],BPRICE=[0,180];
+const bobOf=()=>BOBS[P.bcur]||BOBS.b_basic;
+function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur='b_basic';if(P.bcd2==null)P.bcd2=0}
+function bobBlock(id,viaSect){const b=BOBS[id];bobInit();if(P.bob[id])return'이미 익혔다';
+  if(b.g>=2){if(!viaSect)return'문파에서';if(!P.sect)return'문파 제자만';if(rankIdx(P.sect)<BRANK[b.g])return`${rankName(P.sect,BRANK[b.g])} 이상`;if((P.merit[P.sect]||0)<BCOST[b.g])return`공적 ${BCOST[b.g]} 필요`}
+  return null}
+function learnBob(id,viaSect){const b=BOBS[id],no=bobBlock(id,viaSect);if(no)return false;if(b.g>=2)P.merit[P.sect]-=BCOST[b.g];
+  P.bob[id]=1;P.bcur=id;log(`보법 [${b.n}](${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'})을(를) 익혔습니다. 보법 버튼으로 씁니다.`,'xp');showBanner(b.n,`${BGRADE[b.g]} 보법`);return true}
+function mkBBook(id){const b=BOBS[id];return{id:++itemId,slot:'bbook',bob:id,name:`보법 비급 · ${b.n}`,price:40}}
+
+// ---- 자리 찾기 ----
+// 가는 길이 막히지 않았나 (적은 빠져나가고, 벽·물·나무·바위에서 막힌다)
+function bobClear(x0,y0,x1,y1){const l=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(l/.3));for(let i=1;i<=n;i++){const t=i/n;if(!walkAt(x0+(x1-x0)*t,y0+(y1-y0)*t))return false}return true}
+function bobLine(b,dx,dy){const L=BG.len[b.g];let best=null;
+  for(let d=L;d>=.6;d-=.15){const x=P.x+dx*d,y=P.y+dy*d;if(!walkAt(x,y)||!bobClear(P.x,P.y,x,y))continue;
+    if(mobs.some(e=>e.hp>0&&Math.hypot(e.x-x,e.y-y)<.45))continue;best={x,y};break}
+  return best}
+// 간파: 후보 자리마다 점수를 매겨 가장 좋은 곳
+function bobFlank(b,jx,jy){
+  const R=BG.rad[b.g],fs=foes().filter(e=>dist(e,P)<R+3).sort((a,c)=>dist(a,P)-dist(c,P)).slice(0,24);
+  let T=P.target&&P.target.hp>0&&dist(P.target,P)<R+2&&fs.includes(P.target)?P.target:fs[0]||null;
+  const reach=Math.max(.9,Math.min(2.2,CLASS[hasWeaponFor(curCls())?curCls():'권'].reach*.8));
+  const rings=Math.min(6,Math.max(3,Math.round(R/.9))),per=16;let best=null,bs=-1e9,tried=0;
+  for(let r=1;r<=rings;r++){const rad=R*r/rings;
+    for(let k=0;k<per;k++){const a=(k+(r%2)*.5)/per*Math.PI*2,x=P.x+Math.cos(a)*rad,y=P.y+Math.sin(a)*rad;tried++;
+      if(!walkAt(x,y))continue;let s=0,near=0,close=9;
+      for(const e of fs){const d=Math.hypot(e.x-x,e.y-y);close=Math.min(close,d);if(e!==T&&d<1.7)near++}
+      if(close<.55)continue;
+      s-=near*3;                                              // 다른 적에게 둘러싸이면 나쁘다
+      if(T){const tx=x-T.x,ty=y-T.y,td=Math.hypot(tx,ty)||1;
+        s-=Math.abs(td-reach)*2.2;                            // 칼이 닿는 거리
+        const back=-(tx*(T.fx||0)+ty*(T.fy||0))/td;s+=back*3.5}  // 상대 등 뒤
+      else{s+=Math.min(4,close)*.8}                           // 상대가 없으면 적에게서 멀리
+      if(jx||jy)s+=((x-P.x)*jx+(y-P.y)*jy)/rad*2.5;           // 조이스틱 쪽
+      s-=rad*.15;
+      if(s>bs&&bobClear(P.x,P.y,x,y)){bs=s;best={x,y,T,back:T?-((x-T.x)*(T.fx||0)+(y-T.y)*(T.fy||0))/(Math.hypot(x-T.x,y-T.y)||1):0}}}}
+  BOB_STAT.tried=tried;BOB_STAT.foes=fs.length;return best}
+const BOB_STAT={tried:0,foes:0,ms:0};
+function bobeop(){
+  if(!P||P.hp<=0||P.leap)return false;bobInit();
+  if(P.perch){perchDrop();return true}
+  const b=bobOf(),q=BG.qi[b.g];
+  if((P.bcd2||0)>0)return false;if(P.qi<q){log('내공이 부족합니다.','info');return false}
+  const t0=performance.now(),jx=joy.on?joy.gx:0,jy=joy.on?joy.gy:0;
+  let dst=null;
+  if(b.t==='flank')dst=bobFlank(b,jx,jy);
+  if(!dst){const dx=jx||jy?jx:P.fx,dy=jx||jy?jy:P.fy;dst=bobLine(b,dx,dy)}
+  BOB_STAT.ms=performance.now()-t0;
+  if(!dst){addText(P.x,P.y,'막혔다','#9a8d72');return false}
+  P.qi-=q;P.bcd2=BG.cd[b.g];P.bmax=BG.cd[b.g];P.inv=Math.max(P.inv,BG.inv[b.g]);P.path=null;P.chan=null;P.medit=false;
+  P.leap={sx:P.x,sy:P.y,ex:dst.x,ey:dst.y,t:0,dur:.2+Math.hypot(dst.x-P.x,dst.y-P.y)*.025,z0:0,z1:0,to:null,step:1};
+  for(let i=0;i<4;i++)fx.push({t:'ghost',x:P.x+(dst.x-P.x)*i/4,y:P.y+(dst.y-P.y)*i/4,life:.3+i*.05,col:'190,220,255'});
+  if(dst.T){P.target=dst.T;if(dst.back>.5){P.buff.crit=Math.max(P.buff.crit||0,1.4);addText(dst.x,dst.y,'배후','#ffd36a')}}
+  if(typeof sfx==='function')sfx('dodge');
+  return true}
+// 보법이 끝나면 상대를 바라본다
+function bobLand(L){if(L.step&&P.target&&P.target.hp>0)face(P.target.x,P.target.y)}
+
+// ---- 화면 ----
+function bobRow(id,btn){const b=BOBS[id],on=P.bcur===id;
+  return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${BG.len[b.g]}칸 미끄러짐`:`둘레 ${BG.rad[b.g]}칸을 살핌`} · 내공 ${BG.qi[b.g]} · ${BG.cd[b.g]}초</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
+function bobArtsHtml(){bobInit();const mine=Object.keys(BOBS).filter(id=>P.bob[id]);
+  return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 버튼':'Shift 또는 W'}</small></h4><div class="list">${mine.map(id=>bobRow(id,P.bcur===id?'':B('bsel:'+id,'쓰기'))).join('')}</div>
+    <p class="note">직선 보법은 조이스틱(또는 바라보는) 방향으로 곧게 빠지고, 간파 보법은 상대 등 뒤나 덜 둘러싸인 자리를 찾아 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타. 경공은 멀리·높이 뛰는 이동기로 따로 쓴다.</p>
+    <p class="note">하승·중승 비급은 개봉 잡화점, 상승·절정은 문파 본산에서 직위와 공적으로 익힌다.</p></div>`}
+function bobSectHtml(s){if(P.sect!==s.id)return'';bobInit();const list=Object.keys(BOBS).filter(id=>BOBS[id].g>=2);
+  return `<h4 style="margin:0">문파 보법 <small class="dim">상승은 ${rankName(s.id,BRANK[2])}, 절정은 ${rankName(s.id,BRANK[3])} 이상</small></h4><div class="list">${list.map(id=>{const no=bobBlock(id,1);
+    return bobRow(id,P.bob[id]?'<small class="good">익힘</small>':B('blearn:'+id,no||`익히기 · 공적 ${BCOST[BOBS[id].g]}`,{d:!!no,pri:!no}))}).join('')}</div>`}
 
 // ================= 소리: 배경음악과 효과음 =================
 // 바깥 음원 파일 없이 Web Audio로 그 자리에서 연주한다 (저작권 걱정 없음, 파일 크기 0).

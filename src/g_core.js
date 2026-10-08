@@ -16,7 +16,7 @@ function newLife(o){
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
-    duel:0,taught:-1,pas:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
+    duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
@@ -75,9 +75,10 @@ function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(co
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
-const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급'};
+const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급',bbook:'보법 비급'};
 function itemDesc(it){
   if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
@@ -92,6 +93,7 @@ const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
 // why a book can't be read right now, or null if it can
 function readBlock(it){
+  if(it.slot==='bbook'){bobInit();return P.bob[it.bob]?'이미 익힌 보법입니다.':null}
   if(it.slot==='pbook')return P.pas&&P.pas[it.pas]?'이미 익힌 패시브 무공입니다.':null;
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
@@ -104,6 +106,7 @@ function readBlock(it){
   return null}
 function readBook(it){
   const no=readBlock(it);if(no){log(no,'info');return}
+  if(it.slot==='bbook'){if(learnBob(it.bob))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='pbook'){if(learnPas(it.pas,1))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}

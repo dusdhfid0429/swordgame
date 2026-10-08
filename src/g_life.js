@@ -39,7 +39,7 @@ function update(dt){
 }
 function updateP(dt){
   for(let i=0;i<6;i++)P.fcd[i]=Math.max(0,P.fcd[i]-dt);for(const k in P.scd)P.scd[k]=Math.max(0,P.scd[k]-dt);
-  for(const k of['gcd','bcd','ucd','swing','palm','inv','hit','flash','jump','satk','sj'])P[k]=Math.max(0,P[k]-dt);
+  for(const k of['bcd2','gcd','bcd','ucd','swing','palm','inv','hit','flash','jump','satk','sj'])P[k]=Math.max(0,P[k]-dt);
   for(const k of['atk','hm','crit','ult'])P.buff[k]=Math.max(0,(P.buff[k]||0)-dt);
   P.lastHit+=dt;
   if(P.poison>0){P.poison-=dt;P.hp-=P.maxHp*.02*dt;if(P.hp<=0){P.hp=0;die('독');return}}

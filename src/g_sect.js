@@ -135,6 +135,7 @@ function sectDetail(s,hq){
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${pasSectHtml(s)}
+    ${bobSectHtml(s)}
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}</div>`:''}${member?teachHtml():''}`;
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
@@ -155,6 +156,7 @@ function sectAct(a,x,y){
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
     case'sleave':{const s=SECTS[P.sect];if(!s)return true;if(!confirm(`${s.n}에서 하산할까요? 익힌 무공은 남지만 고급 무공의 다음 초식은 더 받을 수 없습니다.`))return true;
       P.sect=null;log(`${s.n}에서 하산했습니다.`,'info');return true}
+    case'blearn':learnBob(x,1);return true;
     case'plearn':{const q=PAS[x];if(q&&q.sect)learnPas(x);return true}
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;

@@ -110,6 +110,7 @@ function pArts(){
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${learnedArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
+    ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
     <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">오행 상극</b> 화→금→목→토→수→화, 이기는 쪽 1.3배. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
@@ -119,7 +120,7 @@ function pBag(){
   const sell=shopMode;
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
-  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook';
+  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
@@ -185,24 +186,25 @@ const SHOP={
   pharm:[['금창약','mat',15],['소환단','mat',20],['해독단','mat',10],['tbook:약재','tbook',60]],
   cloth:[['armor','gear',40],['boots','gear',30],['목화씨','mat',5],['tbook:직물','tbook',60]],
   gen:[['볍씨','mat',5],['보리씨','mat',5],['배추씨','mat',5],['목화씨','mat',5],['sbook:암기','sbook',100],['sbook:독공','sbook',100],['sbook:점혈','sbook',100],
-    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60])]};
+    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60]),['bbook:b_seom','bbook',180],['bbook:b_chil','bbook',180]]};
 function shopList(id){
   return SHOP[id].map(([k,t,p],i)=>{
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?'비도 10자루':k;return shopRow(nm,CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
     if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}`,p,`buy:${id}:${i}`)}
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
+    if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
     if(t==='pbook'){const q=PAS[k.split(':')[1]],has=P.pas&&P.pas[q.id];return shopRow(`패시브 비급 · ${q.n} <small class="dim">${PTYPE[q.type].n}</small>`,has?'이미 익혔다':`${PTYPE[q.type].f(pasVal(q,0))}~${PTYPE[q.type].f(pasVal(q,100)).replace(/^[^+-]*/,'')} · ${q.d}`,p,`buy:${id}:${i}`,has)}
     if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?60:p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
   }).join('');
 }
 function buy(id,i){
   const[k,t,p0]=SHOP[id][i];const p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?60:p0;if(P.silver<p)return;
-  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
+  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook'||t==='bbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
   if(t==='mat')addMat(k);else if(t==='mat10')addMat('비도',10);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
   else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):mkGear('boots','짚신',1,{spd:.12,hm:3}));
-  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
+  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
 function pNpc(n){
@@ -263,6 +265,7 @@ function act(s){
     case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
     case'wsel':wSel=x;break;
+    case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;
     case'snd':sndToggle(x);break;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;

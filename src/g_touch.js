@@ -9,6 +9,7 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
     <button type="button" class="tb big" id="t_atk"><span>공격</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_ult"><span>필살</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_leap"><span>경공</span><i class="cd"></i></button>
+    <button type="button" class="tb" id="t_step"><span>보법</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_spec"><span>비기</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_pot"><span>약</span><em></em></button>
     <button type="button" class="tb ctx" id="t_ctx"><span></span></button>
@@ -42,6 +43,7 @@ function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
 hold('t_ult',()=>ultimate());
 hold('t_leap',()=>leap());
+hold('t_step',()=>bobeop());
 hold('t_spec',()=>{const k=specPick();if(k==='신공')shingong();else if(k)special(k);else log(specMsg(),'info')});
 hold('t_pot',()=>{const k=potPick();if(k)useCon(k);else log('금창약도 소환단도 없습니다.','info')});
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
@@ -78,6 +80,7 @@ function touchHud(){
   const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
   $('t_leap').classList.toggle('off',P.qi<12);cd('t_leap',P.leap?1:0);
+  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',(P.bcd2||0)/(P.bmax||1))}
   const hasSp=P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
   $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
   const pk=potPick()||'금창약';$('t_pot').querySelector('span').textContent=pk==='금창약'?'금창약':'소환단';$('t_pot').querySelector('em').textContent=P.mats[pk]||0;$('t_pot').classList.toggle('off',!potPick());
