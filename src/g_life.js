@@ -235,7 +235,6 @@ function useCon(k){
 // ================= 나이 and 윤회 =================
 function newYear(){
   const a=Math.floor(P.age);birthdayVit();
-  if(a===18)log('열여덟이 되어 유아기가 끝났습니다. 이제 기본기는 기연이나 윤회로만 바뀝니다.','sys');
   if(a>=50){recalc()}
   if(a===P.life-5)log('기력이 쇠해 갑니다. 남은 날이 많지 않습니다.','dmg');
   for(const a2 of allies.slice())if(a2.kind==='pet'){a2.age++;if(a2.age>=a2.life){log(`${a2.name}이(가) 늙어 숨을 거뒀습니다.`,'dmg');if(P.ride===a2)P.ride=null;allies.splice(allies.indexOf(a2),1)}}

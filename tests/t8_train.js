@@ -12,7 +12,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     await p.evaluate(()=>localStorage.clear());
     const tap=s=>mobile?p.tap(s):p.click(s);
     await tap('[data-s="new"]');await tap('[data-s="start"]');await p.waitForTimeout(400);
-    await p.evaluate(()=>{P.vit=2000;P.x=27.5;P.y=13.5;P.path=null;mobs=mobs.filter(m=>dist(m,P)>12)});await p.waitForTimeout(300);
+    await p.evaluate(()=>{P.vit=2000;P.x=27.5;P.y=13.5;P.path=null;mobs=mobs.filter(m=>m.d.villager);spawnTick=()=>{}});await p.waitForTimeout(300);
     const tag=mobile?'phone':'pc';
     if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyT');
     await p.waitForTimeout(200);
@@ -34,7 +34,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     await p.waitForFunction(()=>!trnBusy,null,{timeout:4000});
     ok(`${tag}: 내공 심법 수련`,await p.evaluate(q0=>P.qiN===q0+1,q0));
     await p.evaluate(()=>{P.age=20});await p.waitForTimeout(700);
-    ok(`${tag}: 유아기가 지나면 기본기 버튼이 잠긴다`,await p.evaluate(()=>TRN.querySelector('[data-tr="str"]').disabled&&!TRN.querySelector('[data-tr="neigong"]').disabled));
+    ok(`${tag}: 유아기가 지나도 기본기 버튼이 열려 있다`,await p.evaluate(()=>!TRN.querySelector('[data-tr="str"]').disabled));
+    {const s0=await p.evaluate(()=>P.st.str);await tap('[data-tr="str"]');await p.waitForFunction(()=>!trnBusy,null,{timeout:4000});
+      ok(`${tag}: 20세에도 근력이 오른다`,await p.evaluate(s0=>P.st.str===s0+1,s0))}
     await tap('[data-tr="close"]');ok(`${tag}: 닫기`,await p.evaluate(()=>TRN.hidden));
     await c.close();
   }

@@ -1,6 +1,6 @@
 // ================= 수련 창: 화면 아래에 붙어 캐릭터를 가리지 않는다 =================
 // 시간은 멈추지 않는다. 한 번 수련하면 연출이 끝날 때까지(약간의 쿨타임) 다음 수련을 할 수 없다.
-// 기본기(근력·지구력·민첩력·본원진기)는 유아기에만, 내공 심법은 언제든.
+// 기본기(근력·지구력·민첩력·본원진기)와 내공 심법 모두 나이와 상관없이 활력으로 수련한다.
 const TRN_DUR={str:1.3,end:1.4,agi:1.2,qi:1.4,neigong:1.6};
 const TRN_COL={str:'255,110,50',end:'230,180,90',agi:'110,230,170',qi:'150,255,170'};
 const TRN_FX={str:'근력',end:'지구력',agi:'민첩력',qi:'본원진기'};
@@ -8,25 +8,26 @@ let trnOpen=false,trnBusy=null;   // trnBusy = {k,t,dur}
 const TRN=document.createElement('div');TRN.id='trn';TRN.className='trn';TRN.hidden=true;TRN.setAttribute('role','dialog');TRN.setAttribute('aria-label','수련');
 $('stage').appendChild(TRN);
 function openTrain(){if(!playing||!P)return;closePanels();trnOpen=true;TRN.hidden=false;document.body.classList.add('trn-on');renderTrain()}
-function closeTrain(){trnOpen=false;TRN.hidden=true;document.body.classList.remove('trn-on')}
+function closeTrain(){trnOpen=false;renderTrain.h='';TRN.hidden=true;document.body.classList.remove('trn-on')}
 function trnRow(k,name,val,desc,cost,can,why){
   const busy=trnBusy&&trnBusy.k===k;
   return `<div class="trow"><div class="tname"><b>${name}</b> <span class="num gold">${val}</span><small>${desc}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="${k}"${can&&!trnBusy?'':' disabled'}>${why||`수련 · 활력 ${cost}`}<i class="tcd"></i></button></div>`}
 function renderTrain(){
-  if(!trnOpen)return;const youth=!adult(),c=qiCost(P.side,P.qiN),fight=inCombat();
+  if(!trnOpen)return;const c=qiCost(P.side,P.qiN),fight=inCombat();
   const rows=STATS.map(({k,n})=>{const v=P.st[k],cost=statCost(k);
     const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10}`;
-    return trnRow(k,n,v,desc,cost,youth&&P.vit>=cost&&!fight,!youth?'유아기 지남':fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
-  TRN.innerHTML=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세${youth?' · 유아기':''}</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
+    return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
+  // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
+  const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
     <div class="tlist">${rows}${trnRow('neigong','내공 심법',baseQi(),`${realmName()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
+  if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
 function startTrain(k){
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
   const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
-  if(!neo&&adult()){log('기본기는 유아기(18세 전)에만 다질 수 있습니다.','info');return}
   if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;
   trnBusy={k,t:0,dur:TRN_DUR[k]};if(neo)P.qiTraining=true;else trainFx(k);renderTrain();
@@ -41,7 +42,7 @@ function trainTick(dt){
     if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
         addText(P.x,P.y,`내공 +${SIDES[P.side].gain}`,'#9db8e0');log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차)`,'xp');
         if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}}}
-    else{const c=statCost(b.k);if(P.vit>=c&&!adult()){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys')}}
+    else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys')}}
   }else{P.qiTraining=false;log('수련이 끊겼습니다.','info')}
   renderTrain();
 }

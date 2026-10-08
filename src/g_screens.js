@@ -58,7 +58,7 @@ function beginLife(){
 function startPlay(fresh){
   scrEl.hidden=true;playing=true;paused=false;lastYear=Math.floor(P.age);logEl.innerHTML='';
   if(fresh){log(`${P.name}, ${STATUS[P.status].n}의 자식으로 개봉에서 태어났습니다.`,'sys');
-    log(TOUCH?'☰ 메뉴 → 행낭에서 비급을 읽어 첫 초식을 익히세요. 18세 전에는 인물에서 기본기를 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 유아기(18세 전)에는 인물(K)에서 기본기를 다질 수 있습니다.','info');
+    log(TOUCH?'☰ 메뉴 → 행낭에서 비급을 읽어 첫 초식을 익히세요. ☰ 메뉴 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(T) 창에서 기본기와 내공을 다질 수 있습니다.','info');
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 공격 버튼으로 싸움 · ☰ 메뉴의 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else log(`${P.name}의 생을 이어갑니다. ${Math.floor(P.age)}세.`,'sys');
   P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();saveGame(true);

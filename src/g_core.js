@@ -283,7 +283,6 @@ function trainQi(){
 }
 const statCost=k=>12+(P.st[k]-P.base[k])*6;
 function trainStat(k){
-  if(adult()){log('기본기는 유아기(18세 전)에만 다질 수 있습니다. 그 뒤로는 기연이나 윤회로만 바뀝니다.','info');return}
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
 }
