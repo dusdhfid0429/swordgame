@@ -10,7 +10,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
       const want=s.tier==='small'?(a.hi?2:1):(a.hi?3:2);if(g!==want)bad.push(a.n)}
-    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base).every(a=>(a.grade||0)===0);
+    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy).every(a=>(a.grade||0)===0);
     // 같은 무기·같은 초식 자리의 위력 견주기: 화산 매화검법(대·일반) vs 남궁 창궁검법(소·일반), 이십사수매화검(대·고급) vs 제왕검형(소·고급)
     return{cnt,bad,gen,mul:[GMUL[artGrade('S_hwasan_0')],GMUL[artGrade('S_namgung_0')],GMUL[artGrade('S_hwasan_2')],GMUL[artGrade('S_namgung_1')]],
       cost:[meritCost({id:'S_hwasan_2'},0),meritCost({id:'S_namgung_1'},0),meritCost({id:'S_hwasan_0'},0),meritCost({id:'S_namgung_0'},0)],
