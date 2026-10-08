@@ -100,13 +100,13 @@ function rankHtml(s){
 // [지형, 지명]. 지형: peak 산봉우리, snow 설산, forest 숲, lake 호수, manor 장원, swamp 늪, canyon 붉은 협곡, dark 검은 땅
 const HQ_THEME={
   mudang:['peak','무당산'],hwasan:['peak','화산'],emei:['peak','아미산'],kunlun:['snow','곤륜산'],kongtong:['canyon','공동산'],
-  jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['lake','동정호 군산'],
-  namgung:['manor','남궁세가'],moyong:['lake','연자오'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
+  jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
+  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],jegal:['forest','와룡강'],hwangbo:['manor','황보세가'],
   dang:['manor','사천당가'],cheolgeom:['canyon','철검문'],sinchang:['manor','신창문'],cheongpung:['forest','청풍문'],geumgang:['peak','금강문'],
   hyeolrang:['canyon','혈랑곡'],heuksa:['swamp','흑사방 총타'],mandok:['swamp','만독곡'],gwiyeong:['dark','귀영문 은신처'],
-  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','장강수로채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
+  haomun:['manor','하오문 본거지'],noklim:['forest','녹림채'],janggang:['lake','동정호 수채'],chilsal:['canyon','칠살문'],salsu:['dark','살수문 비처'],
   sahyeol:['canyon','사혈문'],eumyang:['swamp','음양교'],hyeolsu:['canyon','혈수문'],mayeong:['dark','마영방'],heukpung:['canyon','흑풍채 본채'],
-  cheonma:['dark','천산 천마신교']};
+  cheonma:['dark','십만대산 천마신교']};
 const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
@@ -128,7 +128,7 @@ function hqSpawns(s,th){
 for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const[th,place]=HQ_THEME[s.id];
   REGIONS['hq_'+s.id]={name:place,hq:s.id,theme:th,gen:()=>genHQ(s,th),bake:()=>bakeHQ(th),
     zone:(x,y)=>inHQ(x,y)&&y<=16?`${s.n} 본산`:y>=31?`${place} 어귀`:`${place} 산길`,
-    spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 관도와 잇는다 (맨 아래 관도 절)
+    spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 본산이 있는 성(省) 지도와 잇는다 (g_province.js)
 // 소림사는 숭산 꼭대기 암자를 본산으로 쓴다
 Object.assign(REGIONS.sungsan,{name:'숭산 소림사',hq:'shaolin',npcs:hqNpcs(SECTS.shaolin,20.5,7.4),
   zone:(x,y)=>y>=31?'숭산 산문':y<=9&&x>=14&&x<=26?'소림사':y<=13?'숭산 설봉':'숭산 산중'});
@@ -180,17 +180,18 @@ function genHQ(s,th){
 }
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
 const HQ_GRASS={peak:[44,80,46],snow:[58,76,60],forest:[32,64,32],lake:[52,88,52],manor:[60,86,46],swamp:[50,62,36],canyon:[86,80,46],dark:[38,44,38]};
-function bakeHQ(th){
-  const gw=N*TW,gh=N*TH,c=document.createElement('canvas');c.width=gw;c.height=gh;
-  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th],stair=th==='peak'||th==='snow';
-  for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
-    const a=(px-gw/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
+// k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
+function bakeHQ(th,k=Math.min(1,40/N)){
+  const GW=N*TW,gw=Math.round(GW*k),gh=Math.round(N*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
+  for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
+    const px=qx/k,py=qy/k,a=(px-GW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
     if(gx<0||gy<0||gx>=N||gy>=N)continue;
     const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
-    const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(px,py)*.16;
+    const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
     let R,G,B;
-    if(t===2){const w=fbm(gx*2.5,gy*4);if(th==='swamp'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
+    if(t===2){const w=fbm(gx*2.5,gy*4);if(th==='swamp'||th==='miao'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
     else if(t===3){R=136;G=96;B=60;const gr=vn(gx*40,gy*4);R*=.8+gr*.35;G*=.8+gr*.35;B*=.8+gr*.3;if(frac(gx*4)<.1){R*=.45;G*=.45;B*=.45}}
     else if(t===1){if(stair){const st=frac(gy*2),h=hash(Math.floor(gx*2),Math.floor(gy*2));R=(126+n*22)*(.88+h*.2);G=(120+n*20)*(.88+h*.2);B=(110+n*18)*(.88+h*.2);if(st<.08){R*=.6;G*=.6;B*=.6}}
       else{const k=vn(gx*6,gy*6);R=122+n*24+k*10;G=102+n*20+k*8;B=74+n*14}}
@@ -201,18 +202,19 @@ function bakeHQ(th){
     else if(t===8){const k=fbm(gx*.6,gy*.6);R=212+n*26-k*18;G=220+n*24-k*14;B=232+n*18-k*6;if(vn(gx*5+3,gy*5)>.8){R-=60;G-=56;B-=46}}
     else if(t===9){const k=vn(gx*3,gy*3);R=64+n*24+k*10;G=60+n*22+k*8;B=38+n*12;if(vn(gx*8,gy*8)>.76){R*=.7;G*=.8;B*=.7}}
     else if(t===10){const k=vn(gx*2.5,gy*2.5),band=Math.sin((gx+gy)*1.6+k*3)*.5+.5;R=128+n*34+band*20;G=70+n*20+band*10;B=46+n*12}
+    else if(t===12){const k2=vn(gx*2,gy*2),dune=Math.sin(gx*1.3+gy*.7+k2*4)*.5+.5;R=196+n*26+dune*18;G=168+n*22+dune*14;B=112+n*16}
     else if(t===11){const k=vn(gx*3,gy*3);R=40+n*18+k*10;G=36+n*16+k*8;B=38+n*16+k*8;if(vn(gx*11,gy*11)>.82){R+=60;G+=14;B+=8}}
     else{const big=vn(gx*.2,gy*.2);R=gc[0]+n*34+big*16;G=gc[1]+n*40+big*14;B=gc[2]+n*20;const dirt=fbm(gx*.5+20,gy*.5);if(dirt>.64){const k=Math.min(1,(dirt-.64)*5);R+=(100-R)*k;G+=(94-G)*k;B+=(80-B)*k}}
     const fade=Math.min(1,Math.min(gx,gy,N-gx,N-gy)/1.6);
-    const i=(py*gw+px)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
+    const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
-  const r=rng(57+th.length),sp=(gx,gy)=>[(gx-gy)*TW/2+gw/2,(gx+gy)*TH/2];g.lineCap='round';
+  const r=rng(57+th.length),sp=(gx,gy)=>[((gx-gy)*TW/2+GW/2)*k,(gx+gy)*TH/2*k];g.lineCap='round';
   const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
-  for(let k=0;k<16000;k++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
-    g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3,y-2-r()*4);g.stroke()}
-  for(let k=0;k<900;k++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11)continue;const[x,y]=sp(gx,gy),s=1.5+r()*3.5;
-    g.fillStyle=t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
+  for(let q=0;q<16000*N*N/1600;q++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
+    g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
+  for(let q=0;q<900*N*N/1600;q++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
+    g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
   return c;
 }
 // ---- 역참: 은자를 내고 말을 타 개봉과 모든 본산을 오간다 ----
@@ -233,58 +235,3 @@ function hqDlg(n){
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
   return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
 
-// ================= 관도: 개봉과 본산을 걸어서 잇는 길 =================
-// 개봉 가장자리 출입구 → 관도(갈림길 지역) → 각 본산 아래 출입구. 역참 말은 그대로 지름길로 남긴다.
-//            [북방 관도] ── 하북팽가·황보세가·철검문·녹림채·마영방·흑풍채 본채·천산 천마신교
-//  [숭산] ┐     │
-//  [서쪽 관도]─[개봉]─[동쪽 관도]      서쪽: 화산·종남·공동·곤륜·청성·아미·점창·당가·신창
-//                │                       동쪽: 혈랑곡·흑사방·만독곡·귀영문·칠살·살수·사혈·음양·혈수
-//           [남쪽 관도]                   남쪽: 무당·개방·모용·장강·남궁·제갈·청풍·금강·하오문
-const HUBS={
-  road_w:{name:'서쪽 관도',from:'w',th:'forest',hqs:['hwasan','jongnam','kongtong','kunlun','cheongseong','emei','jeomchang','dang','sinchang']},
-  road_s:{name:'남쪽 관도',from:'s',th:'lake',hqs:['mudang','gaebang','moyong','janggang','namgung','jegal','cheongpung','geumgang','haomun']},
-  road_e:{name:'동쪽 관도',from:'e',th:'canyon',hqs:['hyeolrang','heuksa','mandok','gwiyeong','chilsal','salsu','sahyeol','eumyang','hyeolsu']},
-  road_n:{name:'북방 관도',from:'n',th:'snow',hqs:['paeng','hwangbo','cheolgeom','noklim','mayeong','heukpung','cheonma']}};
-const OPP={n:'s',s:'n',w:'e',e:'w'};
-// 가장자리 출입구 자리와, 그 출입구로 들어왔을 때 서는 자리(안쪽으로 2.4칸)
-const edgePt=(sd,t)=>sd==='n'?{x:t,y:1.2}:sd==='s'?{x:t,y:38.6}:sd==='w'?{x:1.2,y:t}:{x:38.6,y:t};
-const inPt=(sd,t)=>sd==='n'?{x:t,y:3.6}:sd==='s'?{x:t,y:36.2}:sd==='w'?{x:3.6,y:t}:{x:36.2,y:t};
-const GAE_T={n:33.5,w:27.5,s:20.5,e:35.5};   // 개봉 쪽 출입구 자리
-const hubOf=sid=>Object.keys(HUBS).find(k=>HUBS[k].hqs.includes(sid));
-for(const[id,h]of Object.entries(HUBS)){
-  const ent=OPP[h.from],gates=[{...edgePt(ent,20.5),to:'gaebong',...(({x,y})=>({tx:x,ty:y}))(inPt(h.from,GAE_T[h.from])),label:'개봉',sd:ent}];
-  const sides=['n','w','s','e'].filter(q=>q!==ent);let k=0;
-  for(const sd of sides)for(const t of[9.5,20.5,31.5]){const sid=h.hqs[k++];if(!sid)continue;const s=SECTS[sid];
-    gates.push({...edgePt(sd,t),to:'hq_'+sid,tx:20.5,ty:36.2,label:hqPlace(s),sd});
-    REGIONS['hq_'+sid].gates=[{x:20.5,y:38.6,to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(sd,t)),label:h.name}]}
-  const far=(x,y)=>Math.hypot(x-20,y-20)>6;
-  REGIONS[id]={name:h.name,hub:1,theme:h.th,gen:()=>genHub(id,h),bake:()=>bakeHQ(h.th),gates,bosses:[],npcs:[],
-    zone:(x,y)=>{let b=null,bd=7;for(const g of gates){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}return b?`${h.name} · ${b.label} 갈림길`:h.name},
-    spawns:[['정파 무인',2,far,(x,y)=>mkFac('정',0,x,y)],['사파 무인',2,far,(x,y)=>mkFac('사',0,x,y)],['마교도',2,far,(x,y)=>mkFac('마',0,x,y)],
-      ['산적',3,far],['산적궁수',1,far],['늑대',2,far],['사슴',2,far]]};
-  REGIONS.gaebong.gates.push({...edgePt(h.from,GAE_T[h.from]),to:id,...(({x,y})=>({tx:x,ty:y}))(inPt(ent,20.5)),label:h.name});
-}
-// 관도 지도: 출입구마다 안쪽으로 들어와 한가운데 갈림길(주막)에서 모두 만난다
-function genHub(id,h){
-  const R=REGIONS[id],seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0),r=rng(9100+seed*13),o1=seed*.07;
-  map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
-  const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])road.add(i+','+j)};
-  for(const g of R.gates){let x=Math.max(1,Math.min(N-3,Math.floor(g.x))),y=Math.max(1,Math.min(N-3,Math.floor(g.y)));const vert=g.sd==='n'||g.sd==='s';
-    if(vert){while(y!==19){mark(x,y);y+=Math.sign(19-y)}while(x!==19){mark(x,y);x+=Math.sign(19-x)}}
-    else{while(x!==19){mark(x,y);x+=Math.sign(19-x)}while(y!==19){mark(x,y);y+=Math.sign(19-y)}}mark(19,19)}
-  const base=HQ_BASE[h.th]===10?7:HQ_BASE[h.th],tree=h.th==='snow'?'pine':'tree';
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
-    const hi=fbm(x*.16+o1,y*.16+o1*.5),rd=road.has(x+','+y),near=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>road.has((x+dx)+','+(y+dy)));
-    let g=base;if(hi>.64)g=h.th==='canyon'?10:6;if(h.th==='snow'&&hi<.3)g=0;if(rd)g=1;
-    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=N-2;
-    if(!rd){if(x===0||y===0||x===N-1||y===N-1)o=r()<.6?tree:'rock';else if(edge)o=r()<.7?(r()<.6?tree:'rock'):null;
-      else if(!near&&Math.hypot(x-20,y-20)>4){const v=r();o=v<.1?tree:v<.14?(h.th==='forest'?'pine':'rock'):v<.16&&h.th==='forest'?'bamboo':null}}
-    map[y][x]={g,v:r()};objs[y][x]=o}}
-  // 갈림길 주막과 등롱
-  const inn={x:22,y:15,w:3,h:2,kind:'inn'};let ok=true;for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++)if(road.has(i+','+j))ok=false;
-  if(ok){for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++){objs[j][i]='B';map[j][i].g=4}builds.push(inn)}
-  for(const[x,y]of[[17,17],[22,22],[17,22]])if(!road.has(x+','+y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
-  const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  for(const[t,n,ok2]of[['herb',8,g=>g===0||g===7],['wood',5,g=>g===0||g===7],['ore',5,g=>g===6||g===8||g===10]])
-    for(let i=0;i<300&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok2(map[y][x].g))put(t,x,y)}
-}
