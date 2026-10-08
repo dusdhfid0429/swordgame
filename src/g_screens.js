@@ -104,6 +104,7 @@ C.addEventListener('pointerdown',ev=>{
   if(h.kind==='node'){const t={node:h.o};if(dist(h.o,P)<1.3)interact(t);else{P.goal={x:h.o.x,y:h.o.y,...t};go(h.o.x,h.o.y)}return}
   if(h.kind==='plot'){const c={x:h.o.x+.5,y:h.o.y+.5},t={plot:h.o};if(dist(c,P)<1.3)interact(t);else{P.goal={...c,...t};go(c.x,c.y)}return}
   if(h.kind==='house'){const d=houseDoor();if(dist(d,P)<1.4)openHouse();else{P.goal={x:d.x,y:d.y,house:1};go(d.x,d.y)}return}
+  {const cr=C.getBoundingClientRect();if(roofTap(ev.clientX-cr.left,ev.clientY-cr.top))return}
   go(h.g.x,h.g.y);
 });
 const KEYF={KeyQ:0,KeyA:1,KeyZ:2,KeyE:3,KeyD:4,KeyC:5,Numpad7:0,Numpad4:1,Numpad1:2,Numpad9:3,Numpad6:4,Numpad3:5};

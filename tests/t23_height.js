@@ -20,6 +20,12 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 지붕 위를 걷는다
   const s2=await p.evaluate(()=>{const x0=P.x;for(let i=0;i<5;i++)perchMove(1,0,.08);return{dx:P.x-x0,perch:!!P.perch}});
   ok(`지붕 위를 걷는다 (${s2.dx.toFixed(2)}칸)`,s2.dx>.2&&s2.perch);
+  // 작은 지붕: 가장자리에 닿으면 멈추고, 잠깐 미는 정도로는 떨어지지 않는다
+  const se=await p.evaluate(()=>{for(let i=0;i<30;i++)perchMove(0,-1,.05);const a=!!P.perch,y=P.y;for(let i=0;i<4;i++)perchMove(0,-1,.05);return{a,b:!!P.perch,y}});
+  ok('지붕 끝에 닿으면 멈추고 잠깐 밀어서는 떨어지지 않는다',se.a&&se.b);
+  // 지붕 위 한 점을 누르면 그리로 걷는다
+  const tp=await p.evaluate(()=>{const b=P.perch.b,tx=b.x+b.w-.4,ty=b.y+b.h-.4,s=toScreen(tx,ty);const ok=roofTap(s.x*S,(s.y-P.z)*S);for(let i=0;i<120&&P.roofGoal;i++)perchMove(0,0,.05);return{ok,d:Math.hypot(P.x-tx,P.y-ty),perch:!!P.perch}});
+  ok(`지붕 위를 누르면 지붕 위로 걸어간다 (남은 거리 ${tp.d.toFixed(2)})`,tp.ok&&tp.d<.1&&tp.perch);
   // 근접 적은 닿지 않는다
   await p.evaluate(()=>{const e=mkMob('늑대',P.x,P.y+2.2);e.aggro=true;mobs.push(e);window._w=e});
   const hp0=await p.evaluate(()=>P.hp);await p.waitForTimeout(3000);
