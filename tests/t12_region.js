@@ -22,7 +22,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const path=await p.evaluate(()=>{const seen=new Set(),q=[[20,37]];seen.add('20,37');while(q.length){const[x,y]=q.shift();if(y<=7&&x>=17&&x<=23)return true;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=(x+dx)+','+(y+dy);if(!seen.has(k)&&walk(x+dx,y+dy)){seen.add(k);q.push([x+dx,y+dy])}}}return false});
   ok('산문에서 산정 암자까지 걸어서 갈 수 있다',path);
   for(const[n,y]of[['mid',24],['top',8]]){await p.evaluate(y=>{P.x=SS_PATH(y)+.5;P.y=y+.5;P.path=null;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y},y);await p.waitForTimeout(500);await p.screenshot({path:shot('region_sungsan_'+n)})}
-  ok('암자 구역 이름',await p.evaluate(()=>$('zone').textContent.includes('암자')));
+  ok('소림사 구역 이름',await p.evaluate(()=>$('zone').textContent.includes('소림사')));
   // 숭산에서 죽으면 무덤은 숭산에만 있다
   await p.evaluate(()=>{P.x=SS_PATH(20)+.5;P.y=20.5;const tb=G.tombs.length;P.hp=1;makeTomb('전투')});
   const tomb=await p.evaluate(()=>G.tombs.at(-1).reg);ok(`숭산 무덤은 숭산 소속 (${tomb})`,tomb==='sungsan');

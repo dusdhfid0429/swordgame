@@ -77,7 +77,8 @@ function pChar(){
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
-    <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p></div>
+    <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
+    <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}</p></div>
     <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (T)',{pri:1})}</div></div>
     <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
       <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
@@ -120,7 +121,7 @@ function pAlly(){
     <div class="card"><h4>제자 <small class="dim">${P.sect==='own'?esc(P.sectName):'문파를 세우면 받을 수 있다'}</small></h4><div class="list">${dis||'<p class="note">제자가 없습니다.</p>'}</div></div>
     <div class="card"><h4>가족</h4><p>${P.spouse?`배우자 <b class="gold">${esc(P.spouse.name)}</b> · 가족 유대로 활력 +10%${G.house&&G.house.built?' · 집에서 기다린다':''}`:'혼인하지 않았다. 매파 할멈을 찾아가라.'}</p>
       <p>${P.children.length?'자식 '+P.children.map(c=>`${esc(c.name)} (${c.age}세)`).join(', ')+' · 죽은 뒤 자식으로 이어 살면 집과 창고, 은자 절반을 물려받는다.':'자식이 없다.'}</p>
-      <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect?esc(sectName())+' 제자':'없음'}</p></div>`;
+      <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect?esc(sectName())+' '+(rankName()||'제자'):'없음'}</p></div>`;
 }
 function pLife(){
   const jobs=Object.entries(JOBS).map(([k,j])=>{const s=P.jobs[k],rs=RECIPES.filter(r=>r.job===k);
@@ -190,6 +191,7 @@ function buy(id,i){
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
 function pNpc(n){
+  if(n.hq)return hqDlg(n);if(n.id==='post')return postDlg();
   const sellB=B('sellmode','물건 팔기 (행낭)');
   if(n.id==='bank')return `<p class="note">"맡긴 물건은 목숨 걸고 지키겠소. 자식 대까지도 말이오."</p><p class="note">집에 있는 창고와 같은 창고다. 자식으로 윤회하면 그대로 이어진다.</p>${storageHtml()}`;
   if(n.id==='inn')return `<p class="note">"어서 오시오. 묵어 가시려오?"</p><div class="row2"><span class="note">하룻밤 묵으면 생명과 내공이 모두 차고 기록된다.</span>${B('sleep','묵기 · 은자 10',{pri:1,d:P.silver<10})}</div>
@@ -269,7 +271,7 @@ function act(s){
       log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){P.merit[q.sect]=(P.merit[q.sect]||0)+q.merit;log(`${SECTS[q.sect].n} 공적 +${q.merit}`,'xp')}if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp')}if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
     case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;

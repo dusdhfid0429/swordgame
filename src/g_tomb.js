@@ -10,7 +10,7 @@ function tombDropP(it){
 const tombs=()=>G.tombs||(G.tombs=[]);
 // 무덤 자리: 마을 안이나 막힌 곳이면 가까운 바깥 빈 땅으로 옮긴다
 function tombSpot(x,y){
-  const ok=(i,j)=>walk(i,j)&&!inTown(i,j)&&!plots.some(pl=>Math.abs(pl.x-i)<2&&Math.abs(pl.y-j)<2)&&!(REG==='gaebong'&&NPCS.some(n=>Math.hypot(n.x-i-.5,n.y-j-.5)<3))&&!tombs().some(t=>Math.hypot(t.x-i-.5,t.y-j-.5)<3);
+  const ok=(i,j)=>walk(i,j)&&!inTown(i,j)&&!plots.some(pl=>Math.abs(pl.x-i)<2&&Math.abs(pl.y-j)<2)&&!(npcsHere().some(n=>Math.hypot(n.x-i-.5,n.y-j-.5)<3))&&!tombs().some(t=>Math.hypot(t.x-i-.5,t.y-j-.5)<3);
   for(let r=0;r<14;r++)for(let a=0;a<Math.max(1,r*8);a++){const i=Math.floor(x+Math.cos(a/(r*8||1)*6.283)*r),j=Math.floor(y+Math.sin(a/(r*8||1)*6.283)*r);if(ok(i,j))return{x:i+.5,y:j+.5}}
   return null}
 function makeTomb(cause){
