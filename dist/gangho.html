@@ -617,6 +617,7 @@ function sectDetail(s,hq){
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
+    ${pasSectHtml(s)}
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}</div>`:''}${member?teachHtml():''}`;
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
@@ -637,6 +638,7 @@ function sectAct(a,x,y){
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
     case'sleave':{const s=SECTS[P.sect];if(!s)return true;if(!confirm(`${s.n}에서 하산할까요? 익힌 무공은 남지만 고급 무공의 다음 초식은 더 받을 수 없습니다.`))return true;
       P.sect=null;log(`${s.n}에서 하산했습니다.`,'info');return true}
+    case'plearn':{const q=PAS[x];if(q&&q.sect)learnPas(x);return true}
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
     case'mbuy':{const a2=ARTS[x],s=artSect(x),meta=s.arts.find(q=>q.id===x),fi=+y,c=meritCost(meta,fi);
@@ -648,7 +650,7 @@ const SECT_MOVED={heuksa:'sama',cheolgeom:'eon',sinchang:'ak',cheongpung:'hyeong
 // 예전 무공 번호(S문파순번_n) → 새 번호(S_문파_n). 저장 글자 그대로 바꾼다
 const OLD_ART={"0_0":'shaolin_0',"0_1":'shaolin_1',"0_2":'shaolin_2',"1_0":'mudang_0',"1_1":'mudang_1',"1_2":'mudang_2',"2_0":'hwasan_0',"2_1":'hwasan_1',"2_2":'hwasan_2',"3_0":'emei_0',"3_1":'emei_1',"3_2":'emei_2',"4_0":'kunlun_0',"4_1":'kunlun_1',"4_2":'kunlun_2',"5_0":'kongtong_0',"5_1":'kongtong_1',"5_2":'kongtong_2',"6_0":'jeomchang_0',"6_1":'jeomchang_1',"6_2":'jeomchang_2',"7_0":'cheongseong_0',"7_1":'cheongseong_1',"7_2":'cheongseong_2',"8_0":'jongnam_0',"8_1":'jongnam_1',"8_2":'jongnam_2',"9_0":'gaebang_0',"9_1":'gaebang_1',"9_2":'gaebang_2',"10_0":'namgung_0',"10_1":'namgung_1',"11_0":'moyong_0',"11_1":'moyong_1',"12_0":'paeng_0',"12_1":'paeng_1',"13_0":'jegal_0',"13_1":'jegal_1',"14_0":'hwangbo_0',"14_1":'hwangbo_1',"15_0":'dang_0',"15_1":'dang_1',"16_0":'eon_0',"16_1":'eon_1',"17_0":'ak_0',"17_1":'ak_1',"18_0":'hyeongsan_0',"18_1":'hyeongsan_1',"19_0":'cheonsan_0',"19_1":'cheonsan_1',"20_0":'hyeolrang_0',"20_1":'hyeolrang_0',"20_2":'hyeolrang_1',"21_0":'sama_0',"21_1":'sama_0',"21_2":'sama_2',"22_0":'mandok_0',"22_1":'mandok_0',"22_2":'mandok_1',"23_0":'gwiyeong_0',"23_1":'gwiyeong_0',"23_2":'gwiyeong_1',"24_0":'haomun_0',"24_1":'haomun_2',"25_0":'noklim_0',"25_1":'noklim_2',"26_0":'janggang_0',"26_1":'janggang_2',"27_0":'dongjeong_0',"27_1":'dongjeong_1',"28_0":'yasu_0',"28_1":'yasu_1',"29_0":'gwangpung_0',"29_1":'gwangpung_1',"30_0":'podal_0',"30_1":'podal_1',"31_0":'taeyang_0',"31_1":'taeyang_1',"32_0":'bukhae_0',"32_1":'bukhae_1',"33_0":'heukpung_0',"33_1":'heukpung_1',"34_0":'cheonma_0',"34_1":'cheonma_1',"34_2":'cheonma_2',"34_3":'cheonma_3'};
 const migrateArtIds=raw=>raw&&raw.replace(/"S(\d+_\d+)"/g,(m,k)=>OLD_ART[k]?`"S_${OLD_ART[k]}"`:m);
-function migrateSect(){if(!P)return;P.merit=P.merit||{};P.mtot=P.mtot||{};if(P.sect==='정')P.sect='mudang';else if(P.sect==='사')P.sect='hyeolrang';
+function migrateSect(){if(!P)return;P.pas=P.pas||{};P.merit=P.merit||{};P.mtot=P.mtot||{};if(P.sect==='정')P.sect='mudang';else if(P.sect==='사')P.sect='hyeolrang';
   for(const o of[P.merit,P.mtot])for(const[a,b]of Object.entries(SECT_MOVED))if(o[a]!=null){o[b]=(o[b]||0)+o[a];delete o[a]}
   if(SECT_MOVED[P.sect]){const was=P.sect;P.sect=SECT_MOVED[was];setTimeout(()=>log(`강호의 판도가 바뀌어 문파가 ${SECTS[P.sect].n}(으)로 옮겨졌습니다.`,'sys'),600)}
   if(P.sect&&SECTS[P.sect]&&P.mtot[P.sect]==null)P.mtot[P.sect]=P.merit[P.sect]||0}
@@ -672,7 +674,7 @@ function newLife(o){
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
-    duel:0,taught:-1,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
+    duel:0,taught:-1,pas:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
@@ -692,9 +694,9 @@ const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]|
 const hasWeaponFor=c=>c==='권'||!!(P.eq.weapon&&P.eq.weapon.cls===c);
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
-const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0)));
+const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk')));
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
-const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def);
+const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
 const baseQi=()=>80+P.qiN*SIDES[P.side].gain+P.qiBonus;
 // 윤회로 물려받은 활력은 다섯 몫으로 나눠 생일마다 한 몫씩 받는다
@@ -705,9 +707,9 @@ function gainVit(v){const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
 const realmIdx=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
 const realmName=()=>RANKS[realmIdx()];
-const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
+const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1);
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'));
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -716,8 +718,8 @@ const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
 function recalc(){
   const oldAge=Math.max(0,P.age-50);
-  P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012)));
-  P.maxQi=baseQi()+gear('qi');P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
+  P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
+  P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
 const TIERS=['입문','소성','대성','극성'];
@@ -731,9 +733,10 @@ function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(co
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
-const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서'};
+const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급'};
 function itemDesc(it){
   if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
   if(it.hp)a.push(`체력 +${it.hp}`);if(it.def)a.push(`받는 피해 -${it.def}%`);if(it.qi)a.push(`내공 +${it.qi}`);if(it.hm)a.push(`현묘도 +${it.hm}`);if(it.spd)a.push(`이동 +${it.spd}`);
@@ -747,6 +750,7 @@ const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
 // why a book can't be read right now, or null if it can
 function readBlock(it){
+  if(it.slot==='pbook')return P.pas&&P.pas[it.pas]?'이미 익힌 패시브 무공입니다.':null;
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
@@ -758,6 +762,7 @@ function readBlock(it){
   return null}
 function readBook(it){
   const no=readBlock(it);if(no){log(no,'info');return}
+  if(it.slot==='pbook'){if(learnPas(it.pas,1))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
@@ -795,7 +800,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const pHit=clamp(.74+(hmv()-e.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16);
-  const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0);if(crit)d*=1.6;
+  const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'?0:e.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
@@ -825,6 +830,7 @@ function damage(e,d,kb,stun,from=P,crit){
   if(e.hp<=0)onKill(e);
 }
 function onKill(e){
+  gainPas(2);
   fx.push({t:'puff',x:e.x,y:e.y,life:.6});if(P.target===e)P.target=null;
   if(e.duel){duelEnd(true,e);return}
   const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03));
@@ -1290,7 +1296,8 @@ function updateP(dt){
   if(P.poison>0){P.poison-=dt;P.hp-=P.maxHp*.02*dt;if(P.hp<=0){P.hp=0;die('독');return}}
   if(P.run){P.qi-=4*dt;if(P.qi<=0){P.qi=0;P.run=false;log('내공이 바닥나 질주를 멈춥니다.','info')}}
   P.qi=Math.min(P.maxQi,P.qi+qiRegen()*dt*(P.run?0:1));
-  if(P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.qi*.2)*(P.medit?3:1)*dt);
+  if(P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.qi*.2)*(P.medit?3:1)*(1+pv('hreg'))*dt);
+  if(P.medit)gainPas(.5*dt);   // 운기조식하면 패시브 숙련이 오른다
   if(P.chan){P.chan.t+=dt;if(P.chan.t>=P.chan.dur){const c=P.chan;P.chan=null;c.fn()}}
   let kx=0,ky=0;
   if(keys.arrowup){kx--;ky--}if(keys.arrowdown){kx++;ky++}if(keys.arrowleft){kx--;ky++}if(keys.arrowright){kx++;ky--}
@@ -1680,6 +1687,7 @@ function pArts(){
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${learnedArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
+    ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
     <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">오행 상극</b> 화→금→목→토→수→화, 이기는 쪽 1.3배. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
 }
@@ -1688,7 +1696,7 @@ function pBag(){
   const sell=shopMode;
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
-  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook';
+  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
@@ -1753,23 +1761,25 @@ const SHOP={
   smith:[...CLS.filter(c=>c!=='권').map(c=>['weapon:'+c,'weapon',45]),['weapon:권','weapon',35],['비도','mat10',20],['tbook:대장','tbook',60]],
   pharm:[['금창약','mat',15],['소환단','mat',20],['해독단','mat',10],['tbook:약재','tbook',60]],
   cloth:[['armor','gear',40],['boots','gear',30],['목화씨','mat',5],['tbook:직물','tbook',60]],
-  gen:[['볍씨','mat',5],['보리씨','mat',5],['배추씨','mat',5],['목화씨','mat',5],['sbook:암기','sbook',100],['sbook:독공','sbook',100],['sbook:점혈','sbook',100]]};
+  gen:[['볍씨','mat',5],['보리씨','mat',5],['배추씨','mat',5],['목화씨','mat',5],['sbook:암기','sbook',100],['sbook:독공','sbook',100],['sbook:점혈','sbook',100],
+    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60])]};
 function shopList(id){
   return SHOP[id].map(([k,t,p],i)=>{
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?'비도 10자루':k;return shopRow(nm,CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
     if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}`,p,`buy:${id}:${i}`)}
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
+    if(t==='pbook'){const q=PAS[k.split(':')[1]],has=P.pas&&P.pas[q.id];return shopRow(`패시브 비급 · ${q.n} <small class="dim">${PTYPE[q.type].n}</small>`,has?'이미 익혔다':`${PTYPE[q.type].f(pasVal(q,0))}~${PTYPE[q.type].f(pasVal(q,100)).replace(/^[^+-]*/,'')} · ${q.d}`,p,`buy:${id}:${i}`,has)}
     if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?60:p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
   }).join('');
 }
 function buy(id,i){
   const[k,t,p0]=SHOP[id][i];const p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?60:p0;if(P.silver<p)return;
-  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
+  if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
   if(t==='mat')addMat(k);else if(t==='mat10')addMat('비도',10);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
   else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):mkGear('boots','짚신',1,{spd:.12,hm:3}));
-  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
+  else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
 function pNpc(n){
@@ -2951,6 +2961,86 @@ function drawFlag(i,j,sid){
   poly(pts,L.accent);ctx.strokeStyle=L.trim;ctx.lineWidth=1.6;ctx.stroke();
   drawEmblem(ctx,sid,x0+fw/2+wv*.5,y0+fh/2+wv,20);ctx.restore()}
 function placeFlags(sid,spots){for(const[x,y]of spots)if(objs[y]&&objs[y][x]==null&&map[y][x].g!==2&&map[y][x].g!==1&&map[y][x].g!==3)objs[y][x]='flag:'+sid}
+
+// ================= 패시브 무공 (심법·신법·외공) =================
+// 익히면 늘 켜져 있는 무공. 버프 종류(타입)마다 하나씩 공용 무공이 있고, 문파마다 고유 패시브 셋이 있다.
+// - 공용(1단계): 문파 가입 없이 잡화점 비급으로 익힌다.
+// - 문파(2·3단계): 그 문파 제자만, 정해진 직위 이상에서 공적으로 익힌다.
+//   같은 타입의 하위 단계 무공을 대성(숙련 50)해야 익힐 수 있다. 2단계는 같은 타입 공용 무공, 3단계는 같은 타입 2단계 무공.
+// - 같은 타입은 겹치지 않고 가장 센 것 하나만 듣는다. 숙련 0에서 효과 35%, 숙련 100에서 100%.
+// - 숙련은 적을 쓰러뜨릴 때와 운기조식할 때 오른다.
+// 설계: docs/세력_문파_설계.md 13장
+const PTYPE={
+  spd:{n:'이동속도',v:[.04,.08,.12],f:v=>`이동속도 +${Math.round(v*100)}%`},
+  hp:{n:'최대 생명',v:[.06,.12,.2],f:v=>`최대 생명 +${Math.round(v*100)}%`},
+  qi:{n:'최대 내공',v:[.06,.12,.2],f:v=>`최대 내공 +${Math.round(v*100)}%`},
+  atk:{n:'공격력',v:[.04,.08,.12],f:v=>`공격력 +${Math.round(v*100)}%`},
+  def:{n:'피해 감소',v:[.03,.06,.1],f:v=>`받는 피해 -${Math.round(v*100)}%`},
+  crit:{n:'치명타',v:[.02,.04,.07],f:v=>`치명타 확률 +${Math.round(v*100)}%`},
+  hreg:{n:'생명 회복',v:[.3,.6,1],f:v=>`생명 회복 +${Math.round(v*100)}%`},
+  qreg:{n:'내공 회복',v:[.15,.3,.5],f:v=>`내공 회복 +${Math.round(v*100)}%`}};
+const PT_KEYS=Object.keys(PTYPE);
+// 공용 패시브: 타입마다 하나
+const PCOMMON={spd:['팔보간섬','가볍게 디디는 걸음의 기초'],hp:['십단금','몸을 두드려 단련하는 외공'],qi:['토납법','숨을 고르게 들이고 내는 내공의 기초'],atk:['역발산공','힘을 한 점에 모으는 법'],
+  def:['포피술','살갗을 단단히 하는 외공'],crit:['명목술','상대의 빈틈을 보는 눈'],hreg:['양생법','몸의 기운을 고르는 도인술'],qreg:['조식법','흩어진 내기를 빨리 거두는 호흡']};
+// 문파 고유 패시브: [A타입, B타입, A 2단계 이름, B 2단계 이름, A 3단계 이름]. 직위: A2 정식제자, B2 일대제자, A3 호법(당주)
+const PSECT={
+  shaolin:['hp','qi','금종조','역근경','금강불괴'],mudang:['spd','qi','제운종','태극심법','태극신행'],hwasan:['spd','qi','암향표','자하신공','매화비영보'],
+  emei:['def','qreg','아미호신공','청정심법','불광호체'],kunlun:['spd','atk','운룡신법','곤륜강기','곤륜비영'],kongtong:['atk','hp','칠상결','공동호체공','공동패력'],
+  jeomchang:['crit','spd','분광안','점창보','점창혜안'],cheongseong:['hreg','crit','청성양생결','청성안법','청성회춘공'],jongnam:['def','qi','종남호신공','종남심법','천강호체'],
+  gaebang:['spd','hp','소요유','개방호체공','취팔선보'],cheonma:['qi','atk','천마신공','혈마강기','천마대법'],
+  namgung:['atk','def','제왕검기','남궁호신공','창궁패천기'],moyong:['qi','crit','모용심법','두전안','신공환원'],paeng:['atk','hp','오호패력','팽가호체','혼원벽력기'],
+  dang:['crit','qreg','당가암안','당가조식','만천혜안'],jegal:['crit','qi','팔진안','와룡심법','신산혜안'],hwangbo:['hp','def','황보호체','금강호신공','황보불괴체'],
+  bota:['hreg','qi','관음양생결','자항심법','보타회춘공'],taeyang:['atk','qreg','열양강기','태양조식','대일패천공'],bukhae:['def','qi','빙백호체','빙궁심법','빙백호신강기'],
+  gwiyeong:['spd','crit','귀영보','귀영안','무흔신행'],podal:['hp','qi','밀종호체','대수인심법','밀종금강체']};
+const PWORD={spd:['보법','신행'],hp:['호체공','금강체'],qi:['심법','신공'],atk:['강기결','패천공'],def:['철포삼','호신강기'],crit:['안법','혜안통'],hreg:['양생결','회춘공'],qreg:['토납술','주천대법']};
+const PRANK=[1,2,3];   // A2, B2, A3을 익힐 수 있는 직위
+const sectShort=n=>/세가$/.test(n)?n.slice(0,-2):/^..(.)가$/.test(n)?n[2]+'가':n.replace(/(세가|수로채|신교|파|문|방|채|궁|사|교|곡|장)$/,'')||n;
+const PAS={};
+for(const k of PT_KEYS){const[n,d]=PCOMMON[k];PAS['P_'+k]={id:'P_'+k,n,d,type:k,tier:0,sect:null,rank:0}}
+for(const s of Object.values(SECTS)){
+  let o=PSECT[s.id];
+  if(!o){let h=0;for(const ch of s.id)h=(h*31+ch.charCodeAt(0))>>>0;const a=PT_KEYS[h%8],b=PT_KEYS[(h>>>3)%8]===a?PT_KEYS[(h%8+3)%8]:PT_KEYS[(h>>>3)%8],sh=sectShort(s.n);
+    o=[a,b,sh+PWORD[a][0],sh+PWORD[b][0],sh+PWORD[a][1]]}
+  [[o[0],1,o[2]],[o[1],1,o[3]],[o[0],2,o[4]]].forEach(([type,tier,n],j)=>{const id=`PS_${s.id}_${j}`;
+    PAS[id]={id,n,type,tier,sect:s.id,rank:PRANK[j],d:`${s.n}의 ${tier===2?'비전 ':''}${PTYPE[type].n} 무공`}})}
+const pasOf=sid=>Object.values(PAS).filter(p=>p.sect===sid);
+const pasCost=p=>p.tier===2?150:60;
+const pasVal=(p,m)=>PTYPE[p.type].v[p.tier]*(.35+.65*Math.min(100,m)/100);
+// 타입별 효과: 같은 타입은 가장 센 것 하나
+function pv(type){if(!P||!P.pas)return 0;let b=0;for(const id in P.pas){const p=PAS[id];if(p&&p.type===type)b=Math.max(b,pasVal(p,P.pas[id].p))}return b}
+// 익힐 수 있는지: 못 익히면 까닭을 돌려준다
+function pasBlock(p){
+  if(!P.pas)P.pas={};if(P.pas[p.id])return'이미 익혔다';
+  if(p.sect){if(P.sect!==p.sect)return'제자만';if(rankIdx(p.sect)<p.rank)return`${rankName(p.sect,p.rank)} 이상`}
+  if(p.tier>0){const low=Object.keys(P.pas).some(id=>PAS[id]&&PAS[id].type===p.type&&PAS[id].tier===p.tier-1&&P.pas[id].p>=50);
+    if(!low)return p.tier===1?`${PCOMMON[p.type][0]} 대성 필요`:`${PTYPE[p.type].n} 2단계 대성 필요`}
+  if(p.sect&&(P.merit[p.sect]||0)<pasCost(p))return`공적 ${pasCost(p)} 필요`;
+  return null}
+function learnPas(id,free){const p=PAS[id];if(!p)return false;const no=pasBlock(p);if(no&&!(free&&!p.sect&&no!=='이미 익혔다'))return false;
+  if(p.sect)P.merit[p.sect]-=pasCost(p);P.pas[id]={p:0};recalc();
+  log(`패시브 무공 [${p.n}]을(를) 익혔습니다. ${PTYPE[p.type].f(pasVal(p,0))}부터 시작합니다.`,'xp');showBanner(p.n,`${PTYPE[p.type].n} 패시브`);return true}
+// 숙련: 쓰러뜨릴 때 v=2, 운기조식 1초에 v=.5. 무공 숙련처럼 오성이 높을수록 빠르고, 높아질수록 느려진다
+function gainPas(v){if(!P||!P.pas)return;let ch=false;
+  for(const id in P.pas){const s=P.pas[id],p=PAS[id];if(!p||s.p>=100)continue;const b=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125));
+    if(Math.floor(b)!==Math.floor(s.p))ch=true;
+    if(tierOf(b)!==tierOf(s.p)){showBanner(`${p.n} ${TIERS[tierOf(s.p)]}`,PTYPE[p.type].f(pasVal(p,s.p)));log(`[${p.n}] ${TIERS[tierOf(s.p)]}: ${PTYPE[p.type].f(pasVal(p,s.p))}`,'xp')}}
+  if(ch)recalc()}
+// 공용 패시브 비급 (잡화점)
+function mkPBook(id){const p=PAS[id];return{id:++itemId,slot:'pbook',pas:id,name:`패시브 비급 · ${p.n}`,price:30}}
+// ---- 화면 ----
+function pasRow(p,btn){const s=P.pas&&P.pas[p.id],m=s?s.p:0;
+  return `<div class="it"><div>${p.n} <small class="${p.tier?'good':'dim'}">${['공용','문파','문파 비전'][p.tier]} · ${PTYPE[p.type].n}</small><span>${s?`${PTYPE[p.type].f(pasVal(p,m))} · 숙련 ${Math.floor(m)} ${TIERS[tierOf(m)]}`:`${PTYPE[p.type].f(pasVal(p,0))}~${PTYPE[p.type].f(pasVal(p,100)).replace(/^[^+-]*/,'')}`}${p.sect&&!s?` · ${rankName(p.sect,p.rank)} 이상`:''}</span>${s?`<div class="mbar"><i style="width:${m}%"></i></div>`:''}</div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
+function pasArtsHtml(){
+  const mine=Object.keys(P.pas||{}).map(id=>PAS[id]).filter(Boolean).sort((a,b)=>PT_KEYS.indexOf(a.type)-PT_KEYS.indexOf(b.type)||a.tier-b.tier);
+  const sum=PT_KEYS.filter(k=>pv(k)>0).map(k=>PTYPE[k].f(pv(k))).join(' · ');
+  return `<div class="card"><h4>패시브 무공 <small class="dim">늘 켜져 있다 · 같은 종류는 가장 센 것 하나</small></h4>
+    ${mine.length?`<p>${sum}</p><div class="list">${mine.map(p=>pasRow(p)).join('')}</div>`:'<p class="note">익힌 패시브 무공이 없다. 공용 패시브는 개봉 잡화점에서 비급을 사서 익히고, 문파 패시브는 문파에서 직위와 공적으로 익힌다.</p>'}
+    <p class="note">숙련은 적을 쓰러뜨리거나 운기조식할 때 오른다. 문파 패시브는 같은 종류의 하위 무공을 대성(숙련 50)해야 익힐 수 있다.</p></div>`}
+function pasSectHtml(s){
+  const list=pasOf(s.id),member=P.sect===s.id;
+  return `<h4 style="margin:0">문파 패시브 <small class="dim">직위가 오르면 더 익힐 수 있다</small></h4><div class="list">${list.map(p=>{const no=pasBlock(p);
+    return pasRow(p,P.pas&&P.pas[p.id]?'<small class="good">익힘</small>':member?B('plearn:'+p.id,no||`익히기 · 공적 ${pasCost(p)}`,{d:!!no,pri:!no}):`<small class="dim">${no}</small>`)}).join('')}</div>`}
 
 // ================= 세력 무인, 문파 직위, 문파 본산 =================
 // 정파·사파·마교 무인 몹은 서로 적이다. 정파와 사파는 서로 싸우고, 마교는 정사 모두를 공격한다.
