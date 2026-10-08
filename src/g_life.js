@@ -52,9 +52,10 @@ function updateP(dt){
   if(keys.arrowup){kx--;ky--}if(keys.arrowdown){kx++;ky++}if(keys.arrowleft){kx--;ky++}if(keys.arrowright){kx++;ky--}
   if(joy.on){kx+=joy.gx;ky+=joy.gy}
   P.moving=false;const sp=moveSpd()*dt;P.runT=Math.max(0,(P.runT||0)-dt);
-  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;
+  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e;
     if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:'170,200,255'});
-    if(k>=1){P.leap=null;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45})}}
+    if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L)}}
+  else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
   else{
     if(P.target){const e=P.target;
@@ -127,17 +128,22 @@ function updateMob(e,dt){
   const hostP=d.fac?mobFoeP(e):d.hostile;
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
   if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
-  if(!e.aggro&&hostP&&P.hp>0){if(dist(e,P)<(d.aggro||6)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
+  if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
   if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
+  // 높은 곳의 사람에게는 맨손·병장기가 닿지 않는다: 아래에서 맴돌다 오래 못 닿으면 돌아간다
+  if(tg===P&&P.perch&&!d.ranged&&!e.wind&&!(e.slam>0)){e.perchT=(e.perchT||0)+dt;
+    if(e.perchT>6&&!d.boss){e.aggro=false;e.tgt=null;e.perchT=0;e.giveUp=time+10;e.goal={x:e.home.x,y:e.home.y};return}
+    if(dd>1.6)chase(e,tg,dt,spd);else{e.moving=false;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}return}
+  if(tg===P&&!P.perch)e.perchT=0;
   // telegraphed heavy move for bosses and duelists
   if(d.boss||e.duel||d.elite){e.skT-=dt;if(e.skT<=0&&dd<6&&!e.wind){e.skT=5+Math.random()*3;
     if(d.ranged||(e.duel&&e.d.ranged)){for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:'255,200,140'})}}
     else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1})}}}
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35);
-    if(hostP){if(dist(P,c)<2)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
+    if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
       if(d.ranged)eprojs.push({x:e.x,y:e.y,vx:(tg.x-e.x)/dd*10,vy:(tg.y-e.y)/dd*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'});
@@ -149,7 +155,7 @@ function updateMob(e,dt){
   for(const o of mobs)if(o!==e&&o.hp>0){const q=dist(o,e);if(q<.6&&q>0)moveEnt(e,(e.x-o.x)/q*.02,(e.y-o.y)/q*.02)}
 }
 function updateEprojs(dt){
-  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y))q.left=0;
+  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y)&&!(P.perch&&dist(q,P)<2.2))q.left=0;
     const sf=q.src&&q.src.d&&q.src.d.fac,hp=!sf||mobFoeP(q.src);
     if(hp&&q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
     if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}
@@ -178,12 +184,14 @@ function rideToggle(){
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
   if(P.hp<=0)return;if(P.qi<12){log('내공이 부족합니다.','info');return}if(P.leap)return;
-  const LEAP=P.ride?4:3.6;let land=null;
+  const LEAP=P.ride?4:3.6;let land=null,to=null;
+  // 지붕·나무 위로 (말을 탔으면 못 오른다)
+  if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<N-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
-  for(let d=LEAP;d>.2&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
+  for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
   const dur=heroSprite()?.6:.42;P.qi-=12;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=.6;P.satk=0}else{P.jump=.35}
-  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur};fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
+  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur,z0:P.z||0,z1:to?to.z:0,to};P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
 }
 // ================= 생활: gathering, farming, crafting =================
 function interact(t){
@@ -318,7 +326,7 @@ function applySave(data){
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
-  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     migrateSect();
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;
