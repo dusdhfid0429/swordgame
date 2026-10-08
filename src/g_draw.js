@@ -95,7 +95,8 @@ function drawPlot(pl){
   if(g>=1){const q=toScreen(pl.x+.5,pl.y+.5);ctx.fillStyle=`rgba(255,230,140,${.5+.4*Math.sin(time*4)})`;ctx.font='11px "Gowun Dodum"';ctx.textAlign='center';ctx.fillText('수확',q.x,q.y-28)}
 }
 function drawDrop(d){
-  const p=toScreen(d.x,d.y),it=d.it,bob=Math.sin(time*3+d.t)*2;
+  const it=d.it;if(!it||!(it.silver||it.mat||it.page||it.item))return;
+  const p=toScreen(d.x,d.y),bob=Math.sin(time*3+d.t)*2;
   const col=it.silver?'#e8c66e':it.page?'#ffd36a':it.item?itemCol(it.item):'#d8d2c2';
   if(it.item||it.page){const h=46,g=ctx.createLinearGradient(0,p.y-h,0,p.y);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,col+'88');ctx.fillStyle=g;ctx.fillRect(p.x-4,p.y-h,8,h)}
   ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(p.x,p.y,8,3.5,0,0,7);ctx.fill();

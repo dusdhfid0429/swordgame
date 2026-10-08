@@ -173,7 +173,8 @@ function onKill(e){
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
   // loot
   const out=[];
-  if(d.silver)out.push({silver:R1(d.silver[0],d.silver[1])});
+  // 은자가 0인 적(강시 등)은 빈 주머니를 떨어뜨리지 않는다. 0은 거짓이라 아이템으로 오인돼 화면이 멈췄었다.
+  if(d.silver){const s=R1(d.silver[0],d.silver[1]);if(s>0)out.push({silver:s})}
   if(d.meat)out.push({mat:'고기',n:d.meat});if(d.hide)out.push({mat:'가죽',n:d.hide});
   const bk=d.boss?1:d.elite?.3:e.kind==='혈교무인'?.3:e.kind==='강시'?.2:d.hostile&&!d.beast?.07:0;
   if(Math.random()<bk)out.push({item:randomBook()});if(d.boss&&Math.random()<.6)out.push({item:randomBook()});
@@ -199,6 +200,7 @@ function pickUp(d){
   if(it.mat){addMat(it.mat,it.n);log(`${it.mat} ${it.n}개를 얻었습니다.`,'sys');return true}
   if(it.page){P.sg.pages[it.page]=(P.sg.pages[it.page]||0)+1;log(`절세신공 [${it.page}] 한 장을 얻었습니다. (${P.sg.pages[it.page]}/10)`,'xp');
     if(!P.sg.name&&P.sg.pages[it.page]>=10){P.sg.name=it.page;log(`절세신공 [${it.page}]을(를) 완성했습니다. 수동초식 상태에서 V로 펼칩니다.`,'xp');showBanner('절세신공',it.page)}return true}
+  if(!it.item)return true;
   if(P.bag.length>=24){if(!d.full){log('행낭이 가득 찼습니다.','info');d.full=1}return false}
   P.bag.push(it.item);log(`${itemLabel(it.item)}을(를) 얻었습니다.`,it.item.slot==='book'?'xp':'sys');return true;
 }
