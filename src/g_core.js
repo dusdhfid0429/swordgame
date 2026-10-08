@@ -120,9 +120,13 @@ function mkMob(kind,x,y,extra){
 }
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
 function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
+// 큰 지역(64칸 넘게)은 몹을 사람 둘레 24칸 안에 내고, 44칸 넘게 멀어진 몹은 거둔다. 넓어도 비어 보이지 않고 몹 수도 늘지 않는다
+const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
+  const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
   for(const[k,cap,test,mk]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
-    for(let t=0;t<30;t++){const x=1+Math.floor(Math.random()*(N-2)),y=1+Math.floor(Math.random()*(N-2));
+    for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
+      y=big?Math.max(1,Math.min(N-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2));
       if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
   for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;

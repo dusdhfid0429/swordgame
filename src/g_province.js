@@ -4,29 +4,30 @@
 // - 성끼리는 가장자리 출입구로 지도 위치대로 잇는다. 성 안의 본산 입구(안쪽 출입구)로 각 문파 본산에 들어간다.
 // - 개봉은 하남성 동쪽의 성 안 마을(지역 개봉), 숭산 소림사는 개봉 북쪽으로 그대로 잇는다.
 // map: 무림전도(2000×1333)에서의 자리, 천하 지도 창에 그린다
+// size: 실제 면적(만 ㎢)에 비례한 한 변 칸 수. 하남(16.7만 ㎢)=48칸 기준, 칸 수 = 48×√(면적/16.7만). 해남도만 본산 입구가 들어가도록 30칸으로 올렸다.
 const PROV={
   henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','sama','heukpung'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
-  hebei:{n:'하북성',size:48,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
-  shandong:{n:'산동성',size:52,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
-  liaoning:{n:'요녕성',size:48,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
+  hebei:{n:'하북성',size:54,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
+  shandong:{n:'산동성',size:46,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
+  liaoning:{n:'요녕성',size:46,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
   anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','danri'],d:'황산의 기암과 소나무'},
-  shaanxi:{n:'섬서성',size:52,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
-  gansu:{n:'감숙성',size:56,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
-  qinghai:{n:'청해성',size:60,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
-  sichuan:{n:'사천성',size:64,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
-  yunnan:{n:'운남성',size:56,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
-  guizhou:{n:'귀주성',size:48,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
-  hubei:{n:'호북성',size:52,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
-  hunan:{n:'호남성',size:52,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
-  guangxi:{n:'광서성',size:52,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
-  guangdong:{n:'광동성',size:52,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
-  xinjiang:{n:'신강',size:64,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
-  tibet:{n:'서장',size:60,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
-  mongol:{n:'내몽고',size:56,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
-  jiangsu:{n:'강소성',size:44,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
-  zhejiang:{n:'절강성',size:48,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
-  hainan:{n:'해남도',size:40,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
-  tianzhu:{n:'천축',size:48,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
+  shaanxi:{n:'섬서성',size:54,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
+  gansu:{n:'감숙성',size:82,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
+  qinghai:{n:'청해성',size:100,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
+  sichuan:{n:'사천성',size:88,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
+  yunnan:{n:'운남성',size:74,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
+  guizhou:{n:'귀주성',size:50,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
+  hubei:{n:'호북성',size:50,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
+  hunan:{n:'호남성',size:54,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
+  guangxi:{n:'광서성',size:58,th:'karst',map:[1140,1125],sects:['cheonma'],d:'봉우리가 숲처럼 솟은 남방. 십만대산'},
+  guangdong:{n:'광동성',size:50,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
+  xinjiang:{n:'신강',size:152,th:'gobi',map:[560,390],sects:['cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산이 있는 서역'},
+  tibet:{n:'서장',size:130,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
+  mongol:{n:'내몽고',size:128,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
+  jiangsu:{n:'강소성',size:40,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
+  zhejiang:{n:'절강성',size:38,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
+  hainan:{n:'해남도',size:30,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
+  tianzhu:{n:'천축',size:90,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
 const PV_LINKS=[
@@ -97,7 +98,7 @@ for(const[k,p]of Object.entries(PROV)){
   const local=f=>{const l=p.sects.filter(sid=>alFac(SECTS[sid].al)===f);return l.length?pick(l):undefined};
   const spawns=[];for(const f of['정','사','마'])spawns.push([FAC_KIND[f][0],facs.includes(f)?3:1,far,(x,y)=>mkFac(f,0,x,y,local(f))]);
   spawns.push(['산적',3,far],['산적궁수',1,far]);for(const[b,c]of PV_BEAST[p.th])spawns.push([b,c,far]);
-  REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
+  REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>N>48?chunkGround(PV_PAINT[p.th]||p.th):bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
     zone:(x,y)=>{let b=null,bd=6;for(const g of gates)if(g.inner){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}
       return b?`${p.n} · ${b.label} 어귀`:Math.hypot(x-S/2,y-S/2)<5?`${p.n} 객잔 거리`:p.n}};
 }

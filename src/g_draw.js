@@ -166,7 +166,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
-  const o=toScreen(0,0);ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
+  const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
   const sea=P?season():'봄';
   if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -176,7 +176,9 @@ function draw(){
   if(P.path&&P.path.length){const l=P.path[P.path.length-1],p=toScreen(l.x,l.y),k=(time*2)%1;ctx.strokeStyle=`rgba(230,200,120,${1-k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,6+k*10,3+k*5,0,0,7);ctx.stroke()}
   if(P.target&&P.target.hp>0){const p=toScreen(P.target.x,P.target.y);ctx.strokeStyle=P.target.d.hostile||P.target.aggro?'rgba(220,60,40,.85)':'rgba(230,200,120,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,18,8,0,0,7);ctx.stroke()}
   const list=[],pp=toScreen(P.x,P.y),vis=(x,y,m=90)=>{const p=toScreen(x,y);return p.x>-m&&p.x<W+m&&p.y>-40&&p.y<H+200};
-  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
+  // 큰 지역은 사람 둘레만 살핀다
+  const vr=Math.ceil(W/TW+H/TH)+4,j0=Math.max(0,Math.floor(P.y)-vr),j1=Math.min(N,Math.floor(P.y)+vr),i0=Math.max(0,Math.floor(P.x)-vr),i1=Math.min(N,Math.floor(P.x)+vr);
+  for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
     const p=toScreen(i+.5,j+.5);if(p.x<-90||p.x>W+90||p.y<-20||p.y>H+190)continue;
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}

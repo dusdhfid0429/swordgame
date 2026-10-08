@@ -184,12 +184,13 @@ function genHQ(s,th){
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
 const HQ_GRASS={peak:[44,80,46],snow:[58,76,60],forest:[32,64,32],lake:[52,88,52],manor:[60,86,46],swamp:[50,62,36],canyon:[86,80,46],dark:[38,44,38]};
 // k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
-function bakeHQ(th,k=Math.min(1,40/N)){
-  const GW=N*TW,gw=Math.round(GW*k),gh=Math.round(N*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+// x0,y0,C: 큰 지역은 C×C칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모
+function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){
+  const GW=N*TW,X0=(x0-y0-C)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round(C*TW*k),gh=Math.round(C*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
-    const px=qx/k,py=qy/k,a=(px-GW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
-    if(gx<0||gy<0||gx>=N||gy>=N)continue;
+    const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
+    if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+C||gx>=N||gy>=N)continue;
     const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
     const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
@@ -212,14 +213,27 @@ function bakeHQ(th,k=Math.min(1,40/N)){
     const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
-  const r=rng(57+th.length),sp=(gx,gy)=>[((gx-gy)*TW/2+GW/2)*k,(gx+gy)*TH/2*k];g.lineCap='round';
+  const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*C/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(N-1,y0+r()*C);g.lineCap='round';
   const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
-  for(let q=0;q<16000*N*N/1600;q++){const gx=1+r()*(N-2),gy=1+r()*(N-2),t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
+  for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>N-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
-  for(let q=0;q<900*N*N/1600;q++){const gx=r()*N,gy=r()*N,t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
+  for(let q=0;q<900*A;q++){const gx=rx(),gy=ry(),t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
     g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
   return c;
 }
+// 큰 지역(성) 바닥: 한 장으로 구우면 휴대폰 메모리가 모자라서, 12×12칸 조각을 화면 가까이에서만 굽고 멀어진 조각은 버린다
+const CHUNK=12,CHUNK_K=.6,CHUNK_KEEP=64;
+const chunkGround=th=>({chunked:1,th,cache:new Map,n:0});
+function drawChunks(gr,o){
+  const C=CHUNK,n=Math.ceil(N/C),m=C*TW*.6;let budget=gr.cache.size?1:99;
+  for(let cy=0;cy<n;cy++)for(let cx=0;cx<n;cx++){
+    const x=o.x+(cx-cy-1)*C*TW/2,y=o.y+(cx+cy)*C*TH/2,w=C*TW,h=C*TH;
+    if(x+w<-m||x>W+m||y+h<-m||y>H+m)continue;const key=cx+','+cy,near=!(x+w<0||x>W||y+h<0||y>H);
+    let c=gr.cache.get(key);
+    if(!c){if(budget<=0&&!near)continue;budget--;c=bakeHQ(gr.th,CHUNK_K,cx*C,cy*C,C);gr.n++}
+    else gr.cache.delete(key);gr.cache.set(key,c);
+    if(near)ctx.drawImage(c,x,y,w,h)}
+  while(gr.cache.size>CHUNK_KEEP)gr.cache.delete(gr.cache.keys().next().value)}
 // ---- 역참: 은자를 내고 말을 타 개봉과 모든 본산을 오간다 ----
 function postDlg(){
   const row=(id,n,sub,fee)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${fee}`,{d:P.silver<fee})}</div></div>`;
