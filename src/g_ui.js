@@ -7,7 +7,18 @@ function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
 let noteT;
-function winNote(t,c){const w=$('wnote');if(!w||$('win').hidden)return;w.textContent=josa(t);w.className='wnote '+(c||'');w.hidden=false;clearTimeout(noteT);noteT=setTimeout(()=>w.hidden=true,3500)}
+// 창(행낭·인물창 등)이나 수련 창이 열려 있을 때의 메시지는 화면 맨 위 레이어에 잠깐 띄웠다가 서서히 지운다.
+// 위치는 위쪽 상태창·지도 아래, 아래쪽 조이스틱·버튼 위라 조작을 가리지 않고, 터치도 통과한다.
+const SYS=document.createElement('div');SYS.className='sysmsg';SYS.setAttribute('role','status');SYS.setAttribute('aria-live','polite');$('stage').appendChild(SYS);
+function sysMsg(t,c){
+  t=josa(t);const last=SYS.lastElementChild;
+  if(last&&last.textContent===t&&last.classList.contains('on')){clearTimeout(last.t);last.t=setTimeout(()=>sysOut(last),2600);return}
+  const p=document.createElement('p');p.className=c||'';p.textContent=t;SYS.appendChild(p);
+  while(SYS.children.length>(document.body.classList.contains('touch')?2:3))SYS.firstElementChild.remove();document.body.classList.add('sys-on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.classList.add('on')));
+  p.t=setTimeout(()=>sysOut(p),2600+Math.min(1600,t.length*30))}
+function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()=>{p.remove();if(!SYS.children.length)document.body.classList.remove('sys-on')},650)}
+function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}

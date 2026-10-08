@@ -64,11 +64,11 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ids=await p.evaluate(()=>P.bag.filter(i=>i.slot==='book').map(i=>({id:i.id,no:readBlock(i)})));
   const bad=ids.find(i=>i.no),good=ids.find(i=>!i.no);
   await p.locator(`[data-act="read:${bad.id}"]`).tap();await p.waitForTimeout(150);
-  const note=await p.evaluate(()=>!$('wnote').hidden&&$('wnote').textContent);
-  ok(`tapping an unreadable book shows the reason in the window (${note})`,!!note);
+  const note=await p.evaluate(()=>{const q=document.querySelector('.sysmsg p:last-child');return q&&q.textContent});
+  ok(`tapping an unreadable book shows the reason as a system message (${note})`,!!note);
   await p.screenshot({path:shot('m_bag')});
   if(good){const n0=await p.evaluate(()=>learnedArts().length);await p.locator(`[data-act="read:${good.id}"]`).tap();await p.waitForTimeout(150);
-    ok('tapping a readable book learns it',await p.evaluate(n0=>learnedArts().length>n0&&!$('wnote').hidden,n0))}
+    ok('tapping a readable book learns it',await p.evaluate(n0=>learnedArts().length>n0&&!!document.querySelector('.sysmsg p'),n0))}
   await p.tap('#wx');
   // 짧게 톡: 땅을 치면 그리로 걷는다 (조이스틱 영역 안에서도)
   await p.evaluate(()=>{P.x=20.5;P.y=20.5;P.target=null;P.path=null});await p.waitForTimeout(200);
