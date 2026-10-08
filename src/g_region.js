@@ -7,7 +7,7 @@ const SS_PATH=y=>20+Math.round(4*Math.sin((39-y)*.22)*Math.min(1,(39-y)/5));
 const SS_STREAM=x=>24+Math.round(1.5*Math.sin(x*.3));
 const REGIONS={
   gaebong:{name:'개봉',gen:genGaebong,bake:bakeGaebong,zone:null,spawns:null,
-    bosses:[['흑풍채주',35.5,22.5,150],['혈교장로',6.5,4.5,240]],
+    bosses:[],neutral:1,   // 중립지대: 두목도 하남성으로 옮겼다
     gates:[{x:20.5,y:1.2,to:'sungsan',tx:20.5,ty:36.4,label:'숭산 산중'}]},
   sungsan:{name:'숭산',gen:genSungsan,bake:bakeSungsan,
     zone:(x,y)=>y>=31?'숭산 산문':y<=9&&x>=14&&x<=26?'산정 암자':y<=13?'숭산 설봉':'숭산 산중',
@@ -35,7 +35,7 @@ function travel(g){
     loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;
     allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
     const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
-    showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.`,'sys');
+    showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
     saveGame(true);FADE.classList.remove('on');P.traveling=0;
   },320);
 }

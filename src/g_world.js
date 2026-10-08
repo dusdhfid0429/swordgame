@@ -15,8 +15,8 @@ const ARENA={x:23.5,y:19.6,r:1.6};
 let nodes=[],plots=[],tents=[];
 function regionAt(x,y){
   if(REG!=='gaebong')return REGIONS[REG].zone(x,y);
-  if(inCave(x,y))return'혈교 동굴';if(y<RIV)return x>26?'숭산 깊은 숲':'숭산 기슭';if(y<=RIV+1)return'황하 나루';
-  if(inTown(x,y))return'개봉 성내';if(inCamp(x,y)||x>=29)return'흑풍채';if(x<=12&&y<=27)return'개봉 서쪽 농지';if(inBamboo(x,y))return'남쪽 대숲';return'남쪽 초원'}
+  if(inCave(x,y))return'빈 동굴';if(y<RIV)return x>26?'숭산 깊은 숲':'숭산 기슭';if(y<=RIV+1)return'황하 나루';
+  if(inTown(x,y))return'개봉 성내';if(inCamp(x,y)||x>=29)return'옛 산채 터';if(x<=12&&y<=27)return'개봉 서쪽 농지';if(inBamboo(x,y))return'남쪽 대숲';return'남쪽 초원'}
 function genGaebong(){
   const r=rng(1987);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){

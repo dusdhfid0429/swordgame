@@ -108,7 +108,7 @@ function genProv(id,k,p){
   const R=REGIONS[id],S=N,T=PV_TH[p.th],r=rng(8800+k.length*131+k.charCodeAt(1)*7),o1=k.charCodeAt(0)*.05,C=Math.floor(S/2);
   map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])if(i>=1&&j>=1&&i<S-1&&j<S-1)road.add(i+','+j)};
-  for(const g of R.gates){let x=Math.max(1,Math.min(S-3,Math.floor(g.x))),y=Math.max(1,Math.min(S-3,Math.floor(g.y)));
+  for(const g of[...R.gates,...(R.lairs||[])]){let x=Math.max(1,Math.min(S-3,Math.floor(g.x))),y=Math.max(1,Math.min(S-3,Math.floor(g.y)));
     for(let n=0;n<S*4&&(x!==C||y!==C);n++){mark(x,y);const dx=C-x,dy=C-y;if(dy===0||(dx!==0&&r()<Math.abs(dx)/(Math.abs(dx)+Math.abs(dy))))x+=Math.sign(dx);else y+=Math.sign(dy)}mark(C,C)}
   const water=(x,y)=>{
     if(T.river){const w=T.river.w||2,ry=Math.floor(T.river.y*S+2.5*Math.sin(x*.18+o1));if(y>=ry&&y<ry+w)return true}
@@ -130,11 +130,25 @@ function genProv(id,k,p){
   for(const[x,y]of[[C-2,C-2],[C+3,C+3],[C-2,C+3]])if(!road.has(x+','+y)&&map[y][x].g!==2){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,okg)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(okg(map[y][x].g))put(t,x,y)}};
+  // 소굴: 둘레를 비우고 흙·바위 바닥, 산채는 천막
+  for(const L of R.lairs||[]){const cx=Math.floor(L.x),cy=Math.floor(L.y);for(let j=cy-4;j<=cy+4;j++)for(let i=cx-4;i<=cx+4;i++)if(i>0&&j>0&&i<S-1&&j<S-1&&Math.hypot(i-cx,j-cy)<4.6){objs[j][i]=null;if(map[j][i].g!==1)map[j][i].g=map[j][i].g===2?1:L.g}
+    if(L.tents)for(const[dx,dy]of[[-3,-2],[3,-2],[-3,2]]){const x=cx+dx,y=cy+dy;if(!road.has(x+','+y)){objs[y][x]='tent';tents.push({x,y})}}}
   // 본산 입구 이정표 옆에 그 문파 깃발
   for(const g of R.gates)if(g.inner&&g.to.startsWith('hq_')){const x=Math.floor(g.x),y=Math.floor(g.y);for(const[dx,dy]of[[3,-1],[-3,-1],[3,1],[-3,1]]){const fx=x+dx,fy=y+dy;if(fx>0&&fy>0&&fx<S-1&&fy<S-1&&!road.has(fx+','+fy)&&map[fy][fx].g!==2&&!objs[fy][fx]){objs[fy][fx]='flag:'+g.to.slice(3);break}}}
   const sc=S*S/1600;want('herb',Math.round(8*sc),g=>g===0||g===7||g===9);want('wood',Math.round(5*sc),g=>g===0||g===7);want('ore',Math.round(5*sc),g=>g===6||g===8||g===10||g===12);
   if(T.river||T.lake||T.sea){let n=0;for(let i=0;i<600&&n<4;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(walk(x,y)&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>map[y+dy][x+dx].g===2)){put('fish',x,y);n++}}}
 }
+// 소굴: 성 안의 두목 자리와 그 둘레 몹. 개봉을 중립지대로 바꾸며 흑풍채 산채와 혈교 동굴을 하남성으로 옮겼다
+const PV_LAIRS={henan:[
+  {n:'흑풍채 산채',boss:['흑풍채주',150],sp:[['산적',6],['산적궁수',3],['산적두목',1]],g:7,tents:1},
+  {n:'혈교 동굴',boss:['혈교장로',240],sp:[['혈교무인',3],['강시',2]],g:6}]};
+for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;R.lairs=[];
+  // 자리: 출입구·다른 소굴·한가운데 객잔에서 가장 먼 칸 (가장자리에서 7칸 안쪽)
+  for(const L of list){let c=null,bd=-1;for(let y=7;y<S-7;y++)for(let x=7;x<S-7;x++){const q={x:x+.5,y:y+.5};
+      const d=Math.min(...R.gates.map(g=>Math.hypot(g.x-q.x,g.y-q.y)),...R.lairs.map(o=>Math.hypot(o.x-q.x,o.y-q.y)*.8),Math.hypot(q.x-S/2,q.y-S/2));if(d>bd){bd=d;c=q}}
+    const lr={...L,x:c.x,y:c.y};R.lairs.push(lr);R.bosses.push([L.boss[0],c.x,c.y+1,L.boss[1]]);
+    for(const[kind,cap]of L.sp)R.spawns.push([kind,cap,(x,y)=>Math.hypot(x+.5-c.x,y+.5-c.y)<6.5&&Math.hypot(x+.5-c.x,y+.5-c.y)>1.5])}
+  const z=R.zone;R.zone=(x,y)=>{const l=R.lairs.find(q=>Math.hypot(q.x-x,q.y-y)<7);return l?`${R.name} · ${l.n}`:z(x,y)}}
 // 지역마다 격자 크기(N)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
 for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()}}
 
