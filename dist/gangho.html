@@ -76,7 +76,19 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .card p,.note{margin:0;font-size:12px;color:var(--paper-dim);line-height:1.5}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s;z-index:4}.fade.on{opacity:1}
 .wnote{position:sticky;top:34px;z-index:1;margin:0;padding:7px 10px;font-size:13px;background:#0b0a09f2;border:1px solid var(--bronze);color:#9db8e0}
-.wnote.xp{color:var(--good)}.wnote.sys{color:#e8d9a8}.wnote.dmg{color:var(--bad)}
+.wnote.xp{color:var(--good)}
+/* 시스템 메시지: 화면 맨 위 레이어. 창 위에도 보이고, 상단 상태창·지도 아래 / 하단 조작 버튼 위에 뜬다 */
+.sysmsg{position:absolute;left:50%;top:104px;transform:translateX(-50%);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:30;pointer-events:none}
+.sysmsg p{margin:0;max-width:100%;padding:8px 16px;background:rgba(14,11,8,.9);border:1px solid var(--bronze);border-radius:8px;font-size:14px;line-height:1.45;color:#e8d9a8;text-align:center;word-break:keep-all;
+  box-shadow:0 6px 20px rgba(0,0,0,.6);opacity:0;transform:translateY(-10px) scale(.97);transition:opacity .35s ease,transform .35s ease}
+.sysmsg p.on{opacity:1;transform:none}.sysmsg p.off{opacity:0;transform:translateY(-6px);transition-duration:.6s}
+.sysmsg p.xp{color:#ffd98a;border-color:#a8853e}.sysmsg p.dmg{color:#f0968a;border-color:#7a3a30}.sysmsg p.info{color:#a9c4ea}
+.touch .sysmsg{top:calc(126px + env(safe-area-inset-top,0px));width:min(360px,calc(100% - 24px));gap:4px}
+/* 메시지가 떠 있는 동안은 같은 내용의 작은 기록 줄을 숨겨 겹쳐 보이지 않게 */
+.touch #log{transition:opacity .3s}.touch.sys-on #log{opacity:0}
+.touch .sysmsg p{font-size:13px;padding:7px 12px}
+@media (max-height:520px){.touch .sysmsg{top:calc(8px + env(safe-area-inset-top,0px));width:min(320px,40vw)}}
+@media (prefers-reduced-motion:reduce){.sysmsg p{transition:opacity .2s}}.wnote.sys{color:#e8d9a8}.wnote.dmg{color:var(--bad)}
 .win,.screen{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
@@ -1541,7 +1553,18 @@ function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove()}
 let noteT;
-function winNote(t,c){const w=$('wnote');if(!w||$('win').hidden)return;w.textContent=josa(t);w.className='wnote '+(c||'');w.hidden=false;clearTimeout(noteT);noteT=setTimeout(()=>w.hidden=true,3500)}
+// 창(행낭·인물창 등)이나 수련 창이 열려 있을 때의 메시지는 화면 맨 위 레이어에 잠깐 띄웠다가 서서히 지운다.
+// 위치는 위쪽 상태창·지도 아래, 아래쪽 조이스틱·버튼 위라 조작을 가리지 않고, 터치도 통과한다.
+const SYS=document.createElement('div');SYS.className='sysmsg';SYS.setAttribute('role','status');SYS.setAttribute('aria-live','polite');$('stage').appendChild(SYS);
+function sysMsg(t,c){
+  t=josa(t);const last=SYS.lastElementChild;
+  if(last&&last.textContent===t&&last.classList.contains('on')){clearTimeout(last.t);last.t=setTimeout(()=>sysOut(last),2600);return}
+  const p=document.createElement('p');p.className=c||'';p.textContent=t;SYS.appendChild(p);
+  while(SYS.children.length>(document.body.classList.contains('touch')?2:3))SYS.firstElementChild.remove();document.body.classList.add('sys-on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.classList.add('on')));
+  p.t=setTimeout(()=>sysOut(p),2600+Math.min(1600,t.length*30))}
+function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()=>{p.remove();if(!SYS.children.length)document.body.classList.remove('sys-on')},650)}
+function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
