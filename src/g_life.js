@@ -1,11 +1,11 @@
 // ================= town people =================
 const NPCS=[
   {id:'inn',n:'객잔 주인 왕씨',x:16.5,y:17.6,pal:'keeper'},{id:'smith',n:'대장장이 철씨',x:23.5,y:17.6,pal:'smithy'},
-  {id:'sa',n:'혈교 분타주',x:26,y:17.6,pal:'cultist'},{id:'pharm',n:'약방 의원 허씨',x:16,y:25.6,pal:'keeper'},
-  {id:'cloth',n:'포목점 주인 진씨',x:23,y:24.6,pal:'keeper'},{id:'jeong',n:'무당파 진인',x:26,y:25.6,pal:'taoist'},
+  {id:'sa',n:'사천맹 연락관',x:26,y:17.6,pal:'cultist'},{id:'pharm',n:'약방 의원 허씨',x:16,y:25.6,pal:'keeper'},
+  {id:'cloth',n:'포목점 주인 진씨',x:23,y:24.6,pal:'keeper'},{id:'jeong',n:'정의맹 연락관',x:26,y:25.6,pal:'taoist'},
   {id:'gen',n:'잡화상 노씨',x:18.5,y:23.4,pal:'keeper'},{id:'mae',n:'매파 할멈',x:18.4,y:19.4,pal:'matron'},
   {id:'board',n:'의뢰판',x:21.5,y:19.3,board:1},{id:'arena',n:'비무 관리인',x:22.2,y:21.2,pal:'judge'},{id:'land',n:'토지 관리인',x:14.6,y:21.4,pal:'keeper'},
-  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'}];
+  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'},{id:'magyo',n:'마교 밀사',x:26.5,y:20.4,pal:'cultist'}];
 const npcAt=id=>NPCS.find(n=>n.id===id);
 let dlg=null;
 // ================= update =================
@@ -257,7 +257,7 @@ function die(cause){
   const bonus=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3);
   const wis=karma>=60?1:0;
   const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:RANKS[realm],fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
-    arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:P.sectName||(P.sect?(P.sect==='정'?'무당파':'혈교'):null),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
+    arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:sectName(),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
   makeTomb(cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
   G.heir=P.children.length?{children:P.children.map(c=>({...c})),silver:Math.floor(P.silver/2),side:P.side}:null;
@@ -307,6 +307,7 @@ function applySave(data){
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+    migrateSect();
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;
 }

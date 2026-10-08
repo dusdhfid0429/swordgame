@@ -120,7 +120,7 @@ function pAlly(){
     <div class="card"><h4>제자 <small class="dim">${P.sect==='own'?esc(P.sectName):'문파를 세우면 받을 수 있다'}</small></h4><div class="list">${dis||'<p class="note">제자가 없습니다.</p>'}</div></div>
     <div class="card"><h4>가족</h4><p>${P.spouse?`배우자 <b class="gold">${esc(P.spouse.name)}</b> · 가족 유대로 활력 +10%${G.house&&G.house.built?' · 집에서 기다린다':''}`:'혼인하지 않았다. 매파 할멈을 찾아가라.'}</p>
       <p>${P.children.length?'자식 '+P.children.map(c=>`${esc(c.name)} (${c.age}세)`).join(', ')+' · 죽은 뒤 자식으로 이어 살면 집과 창고, 은자 절반을 물려받는다.':'자식이 없다.'}</p>
-      <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect?(P.sect==='정'?'무당파 제자':'혈교 제자'):'없음'}</p></div>`;
+      <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect?esc(sectName())+' 제자':'없음'}</p></div>`;
 }
 function pLife(){
   const jobs=Object.entries(JOBS).map(([k,j])=>{const s=P.jobs[k],rs=RECIPES.filter(r=>r.job===k);
@@ -163,7 +163,7 @@ function pHelp(){
 }
 // ================= NPC dialogs =================
 const TIPS=['흑풍채 깊숙한 곳에 채주가 산다더군. 3분쯤 지나면 다시 나타나지.','숭산 기슭 동굴에 혈교 놈들이 숨어 있소. 안쪽 상자엔 기연이 잠들어 있다던데.','사파 무공은 일찍 강해지지만 끝에 가서는 정파가 낫다는 말이 있지.','쌀은 비를 좋아하고, 목화는 볕을 좋아하오. 겨울엔 보리만 버티지.','황하 잉어로 끓인 잉어찜은 개봉에서만 맛볼 수 있는 별미요.','말을 길들이면 훨씬 빨리 달릴 수 있소. 남쪽 초원에 야생마가 있지.','오성이 높으면 더 많은 무공을 익히고 숙련도 빨리 오른다더군.','초식은 순서대로 이어 쳐야 추가 공력이 붙소. 끊기면 처음부터요.'];
-function openNpc(n){shopMode=null;if(n.board&&(!G.board||!G.board.length))G.board=[0,1,2].map(()=>({...pick(QUESTS)}));openPanel('npc',n)}
+function openNpc(n){shopMode=null;sectView=null;if(n.board&&(!G.board||!G.board.length))G.board=[0,1,2].map(()=>({...pick(QUESTS)}));openPanel('npc',n)}
 function shopRow(label,desc,price,act,d){return `<div class="it"><div>${label}<span>${desc}</span></div><div class="ib">${B(act,`사기 · 은자 ${price}`,{d:d||P.silver<price})}</div></div>`}
 const SHOP={
   inn:[['주먹밥','mat',8],['보리죽','mat',8],['고기볶음','mat',20],['tbook:요리','tbook',60]],
@@ -199,7 +199,7 @@ function pNpc(n){
   if(n.id==='pharm')return `<p class="note">"약초를 캐 오면 값을 쳐 주겠소."</p><div class="list">${shopList('pharm')}</div>${sellB}`;
   if(n.id==='cloth')return `<p class="note">"좋은 옷은 칼날도 비껴가게 하지."</p><div class="list">${shopList('cloth')}</div>${sellB}`;
   if(n.id==='gen')return `<p class="note">"씨앗부터 비급까지, 없는 것 빼고 다 있소."</p><div class="list">${shopList('gen')}</div>${sellB}`;
-  if(n.id==='jeong'||n.id==='sa')return sectDlg(n.id==='jeong'?'정':'사');
+  if(n.id==='jeong'||n.id==='sa'||n.id==='magyo')return allianceDlg(n.id==='jeong'?'jeong':n.id==='sa'?'sacheon':'magyo');
   if(n.id==='mae'){
     if(P.spouse)return `<p class="note">"${esc(P.spouse.name)}와(과) 금슬이 좋다고 소문이 자자하오. 자식 복도 있기를."</p>`;
     const ok=P.age>=18&&P.silver>=200&&P.fame>=20;
@@ -219,21 +219,6 @@ function pNpc(n){
     return `<p class="note">"좋은 집을 지으셨구려."</p>`}
   return '';
 }
-function sectDlg(side){
-  const name=side==='정'?'무당파':'혈교',me=P.sect===side;
-  if(P.side!==side)return `<p class="note">"${SIDES[P.side].n}의 무리가 여기서 무엇을 찾는가. 썩 물러가라."</p>`;
-  if(P.sect==='own')return `<p class="note">"${esc(P.sectName)}의 문주께서 오셨구려."</p>${B('disciple',`제자 받기 · 은자 50 (${allies.filter(a=>a.kind==='disciple').length}/3)`,{pri:1,d:P.silver<50||allies.filter(a=>a.kind==='disciple').length>=3})}`;
-  if(!me){const ok=P.age<18||P.fame>=50;return `<p class="note">"${name}에 들고 싶은가? 어린 나이(18세 전)에 오거나, 강호에 이름을 떨친 자(명성 50)만 받는다."</p>
-    <p class="note">제자가 되면 사부가 해마다 초식 하나를 무료로 전수하고, ${name}의 비급을 살 수 있다.</p>${B('join:'+side,`${name} 입문`,{pri:1,d:!ok})}`}
-  const a=art(),s=A(a.id),fi=a.side===side?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,can=fi>=0&&P.taught<Math.floor(P.age);
-  const books=CLS.filter(c=>c===curCls()||c===P.startCls).flatMap(c=>ELS.map((e,ei)=>ARTS[side+c+ei])).map(x=>{const st=A(x.id),fi2=x.forms.findIndex((f,i)=>!(st&&st.f[i]));if(fi2<0)return '';const f=x.forms[fi2],price=40*(fi2+1);
-    return `<div class="it"><div style="color:rgb(${x.c})">${x.n} · ${f.n}<span>${CLASS[x.cls].n}·${x.el} · ${fi2+1}초식 · 숙련 ${f.req} · 활력 ${f.cost}</span></div><div class="ib">${B(`sbuy:${x.id}:${fi2}`,`비급 · 은자 ${price}`,{d:P.silver<price||P.bag.length>=24})}</div></div>`}).join('');
-  const found=realmIdx()>=3&&P.fame>=150;
-  return `<p class="note">"수련은 게을리하지 않았겠지?"</p>
-    <div class="row2"><span class="note">${fi>=0?`[${a.forms[fi].n}]을(를) 전수받을 수 있다`:'지금 펼치는 무공에서 전수받을 초식이 없다'}${P.taught>=Math.floor(P.age)?' · 올해는 이미 배웠다':''}</span>${B('teach','가르침 청하기',{pri:1,d:!can})}</div>
-    <h4 style="margin:0">${name} 비급</h4><div class="list">${books}</div>
-    <div class="row2"><span class="note">절정 이상, 명성 150이면 하산해 자기 문파를 세울 수 있다.</span>${B('found','문파 창설',{d:!found})}</div>`;
-}
 const STORE_MAX=60;
 // 창고: 마을 창고지기와 내 집에서 같은 창고를 쓴다. 자식으로 윤회하면 그대로 이어진다.
 function storageHtml(){
@@ -251,6 +236,7 @@ function openHouse(){openPanel('house')}
 $('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(b.dataset.act)});
 function act(s){
   const[a,x,y]=s.split(':'),n=+x;
+  if(sectAct(a,x,y)){renderOpen();return}
   switch(a){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(`${ARTS[x].cls}을(를) 장착해야 펼칠 수 있습니다.`,'info');setArt(x);break;
@@ -283,11 +269,10 @@ function act(s){
       log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){P.merit[q.sect]=(P.merit[q.sect]||0)+q.merit;log(`${SECTS[q.sect].n} 공적 +${q.merit}`,'xp')}if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
     case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;
-    case'join':P.sect=x;log(`${x==='정'?'무당파':'혈교'}의 제자가 되었습니다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${x==='정'?'무당파':'혈교'}에 입문했다`);break;
     case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(P.age);log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
     case'sbuy':{const fi=+y,price=40*(fi+1);if(P.silver>=price){P.silver-=price;P.bag.push(mkBook(x,fi));log('비급을 샀습니다. 행낭에서 읽으세요.','sys')}break}
     case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;P.feats.push(`${Math.floor(P.age)}세에 ${P.sectName}을(를) 세웠다`);break}
