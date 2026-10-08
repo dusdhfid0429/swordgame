@@ -154,16 +154,50 @@ for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()
 
 // ================= 천하 지도 창 =================
 const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};
+// 고른 성(또는 개봉). 지도에서 성을 누르면 바뀌고, 다른 성으로 옮기면 지금 성으로 돌아온다
+let wSel=null,wSelAt=null;
+const PV_NB=k=>[...new Set(PV_LINKS.flatMap(([a,,,b])=>a===k?[b]:b===k?[a]:[]))].concat(k==='henan'?['gaebong']:[]);
+// 지금 성에서 고른 곳까지 성 단위 길 (너비 우선)
+function pvRoute(from,to){if(!from||from===to)return[from];const prev={[from]:null},q=[from];
+  while(q.length){const c=q.shift();if(c===to)break;for(const n of(c==='gaebong'?['henan']:PV_NB(c)))if(!(n in prev)){prev[n]=c;q.push(n)}}
+  if(!(to in prev))return null;const r=[];for(let c=to;c!=null;c=prev[c])r.unshift(c);return r}
+const pvName=k=>k==='gaebong'?'개봉':PROV[k].n;
+const facCls=s=>'wf-'+(alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':'s');
+function pvInfo(k){
+  const here=REG==='gaebong'?'gaebong':provOfReg(REG),route=pvRoute(here,k);
+  const way=!route?'':route.length<2?'<b class="gold">지금 여기 있다</b>':`가는 길: ${route.map(pvName).join(' → ')} <small class="dim">(성 ${route.length-1}곳 이동)</small>`;
+  const nb=PV_NB(k==='gaebong'?'henan':k).filter(n=>n!==k).map(n=>`<button type="button" class="btn" data-act="wsel:${n}">${pvName(n)}</button>`).join(' ');
+  if(k==='gaebong'){
+    const fac=NPCS.filter(n=>!n.board).map(n=>n.n.replace(/ [^ ]+씨$| 할멈$/,'')).join(' · ');
+    return `<div class="card"><h4>개봉 <small class="dim">하남성 동쪽의 큰 마을 · 중립지대</small></h4>
+      <p>${way}</p><p class="note">몬스터 없이 사슴·토끼·양·말·멧돼지 같은 짐승과 양민만 다닌다. 정파·사파·마교 누구도 여기서 싸우지 않는다.</p>
+      <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p><p class="note">이웃: ${nb}</p></div>`}
+  const p=PROV[k],R=REGIONS[pvId(k)],sects=(k==='henan'?['shaolin',...p.sects]:p.sects).map(sid=>SECTS[sid]);
+  const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))];
+  const fname={정:'<b class="wf-j">정파 무인</b>',사:'<b class="wf-s">사파 무인</b>',마:'<b class="wf-m">마교도</b>'};
+  const fighters=['정','사','마'].map(f=>fname[f]+(facs.includes(f)?' 많음':' 드묾')).join(' · ');
+  const beasts=PV_BEAST[p.th].map(b=>b[0]).join(' · ');
+  const sl=sects.map(s=>`<b class="${facCls(s)}">${s.n}</b>${P.sect===s.id?' <small class="good">내 문파</small>':''} <small class="dim">${alFac(s.al)==='정'?'정의맹':alFac(s.al)==='마'?'마교':'사천맹'} · 본산 ${hqPlace(s)}</small>`).join('<br>');
+  const lairs=(R.lairs||[]).map(l=>`<b class="bad">${l.n}</b>(두목 ${l.boss[0]})`).join(' · ');
+  return `<div class="card"><h4>${p.n} <small class="dim">${p.d}</small></h4>
+    <p>${way}</p>
+    <p class="note">크기 ${p.size}×${p.size}칸${p.size>=100?' · 아주 넓다':p.size>=70?' · 넓다':p.size<=40?' · 작다':''} · 한가운데 객잔 거리</p>
+    <h4 style="margin:6px 0 2px">문파 ${sects.length}곳</h4>${sects.length?`<p>${sl}</p>`:'<p class="note">이 성에는 문파 본산이 없다.</p>'}
+    <p class="note">무인: ${fighters} · 산적</p><p class="note">짐승: ${beasts}</p>
+    ${lairs?`<p class="note">소굴: ${lairs}</p>`:''}
+    <p class="note">이웃 성: ${nb}</p></div>`}
 function pWorld(){
-  const here=provOfReg(REG),X=v=>(v-300)*.44,Y=v=>(v-330)*.44;
+  const here=provOfReg(REG),cur0=REG==='gaebong'?'gaebong':here;
+  if(wSelAt!==REG){wSelAt=REG;wSel=cur0}const sel=wSel||cur0,X=v=>(v-300)*.44,Y=v=>(v-330)*.44;
   const lines=PV_LINKS.map(([a,,,b])=>{const A=PROV[a].map,Bm=PROV[b].map;return `<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(Bm[0])}" y2="${Y(Bm[1])}"/>`}).join('');
-  const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here;
-    return `<g class="${me?'me':''}"><circle cx="${X(x)}" cy="${Y(y)}" r="${me?9:6}"/><text x="${X(x)}" y="${Y(y)-12}">${p.n}</text></g>`}).join('');
-  const P0=PROV.henan.map,gae=`<g class="${REG==='gaebong'?'me':''} city"><rect x="${X(P0[0])+14}" y="${Y(P0[1])-4}" width="8" height="8"/><text x="${X(P0[0])+38}" y="${Y(P0[1])+16}">개봉</text></g>`;
-  const cur=here?PROV[here]:null,sn=s=>`<b class="wf-${alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':'s'}">${s.n}</b>(${hqPlace(s)})`,list=here?(here==='henan'?['shaolin',...PROV[here].sects]:PROV[here].sects).map(sid=>sn(SECTS[sid])).join(' · '):'';
+  const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here&&REG!=='gaebong';
+    return `<g class="pv${me?' me':''}${k===sel?' sel':''}" data-act="wsel:${k}"><circle class="hit" cx="${X(x)}" cy="${Y(y)}" r="18"/>${k===sel?`<circle class="ring" cx="${X(x)}" cy="${Y(y)}" r="13"/>`:''}<circle cx="${X(x)}" cy="${Y(y)}" r="${me?9:6}"/><text x="${X(x)}" y="${Y(y)-12}">${p.n}</text></g>`}).join('');
+  const P0=PROV.henan.map,gx=X(P0[0])+18,gy=Y(P0[1]);
+  const gae=`<g class="pv city${REG==='gaebong'?' me':''}${sel==='gaebong'?' sel':''}" data-act="wsel:gaebong"><circle class="hit" cx="${gx}" cy="${gy}" r="14"/>${sel==='gaebong'?`<circle class="ring" cx="${gx}" cy="${gy}" r="10"/>`:''}<rect x="${gx-4}" y="${gy-4}" width="8" height="8"/><text x="${gx+20}" y="${gy+16}">개봉</text></g>`;
+  const cur=here?PROV[here]:null;
   return `<svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg>
-    <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''}${cur?` · ${cur.d}`:''}</p>
-    ${list?`<p class="note">이 성의 문파: ${list}</p>`:''}
+    <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''} · <span class="dim">지도에서 성을 누르면 그 지역 정보를 본다</span></p>
+    ${pvInfo(sel)}
     <p class="note"><b class="wf-j">정파(정의맹)</b> · <b class="wf-s">사파(사천맹)</b> · <b class="wf-m">마교</b></p>
     <p class="note dim">성 가장자리의 이정표로 이웃 성에 가고, 성 안의 이정표로 문파 본산에 들어간다. 역참 말을 타면 개봉과 본산 사이를 바로 오간다.</p>`}
 $('mini').addEventListener('click',()=>{if(playing)openPanel('world')});

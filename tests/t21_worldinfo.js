@@ -1,0 +1,31 @@
+// 천하 지도: 성을 눌러 그 지역 정보(문파·무인·짐승·소굴·이웃·가는 길)를 본다
+const {chromium}=require(process.env.PWPATH||'playwright');
+const shot=n=>__dirname+'/shots/'+n+'.png';
+(async()=>{
+  const b=await chromium.launch();const errs=[];
+  const c=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await c.newPage();
+  p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
+  const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
+  await p.evaluate(()=>openPanel('world'));await p.waitForTimeout(300);
+  const txt=()=>p.evaluate(()=>$('wbody').textContent);
+  let t=await txt();ok('처음엔 지금 있는 개봉 정보 (중립지대·시설·역참)',t.includes('중립지대')&&t.includes('역참')&&t.includes('지금 여기 있다'));
+  // 지도에서 섬서성을 손가락으로 누른다
+  const box=await p.evaluate(()=>{const r=document.querySelector('#wbody [data-act="wsel:shaanxi"] .hit').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}});
+  await p.touchscreen.tap(box.x,box.y);await p.waitForTimeout(300);t=await txt();
+  ok('섬서성을 누르면: 화산파·종남파 본산, 무인, 짐승, 이웃 성, 가는 길',['섬서성','화산파','종남파','정파 무인 많음','늑대','감숙성','가는 길: 개봉 → 하남성 → 섬서성'].every(s=>t.includes(s)));
+  await p.screenshot({path:shot('world_info')});
+  // 이웃 버튼으로 감숙성
+  await p.tap('#wbody .card [data-act="wsel:gansu"]');await p.waitForTimeout(300);t=await txt();
+  ok('이웃 성 버튼으로 감숙성, 길이 한 칸 늘어난다',t.includes('공동파')&&t.includes('성 3곳 이동'));
+  // 하남성 소굴
+  await p.evaluate(()=>act('wsel:henan'));t=await txt();ok('하남성: 소림사와 흑풍채 산채·혈교 동굴 소굴',t.includes('소림사')&&t.includes('흑풍채 산채')&&t.includes('혈교장로'));
+  // 모든 성과 개봉을 열어도 오류 없음, 경로가 있다
+  const all=await p.evaluate(()=>[...Object.keys(PROV),'gaebong'].every(k=>{act('wsel:'+k);return $('wbody').textContent.includes(k==='gaebong'?'개봉':PROV[k].n)&&/가는 길|지금 여기/.test($('wbody').textContent)}));
+  ok('22개 성과 개봉 모두 정보와 가는 길이 나온다',all);
+  // 다른 성으로 옮기면 그 성이 먼저 고른 곳이 된다
+  await p.evaluate(()=>{closePanels();travel({to:'pv_sichuan',tx:44,ty:44})});await p.waitForTimeout(1500);
+  await p.evaluate(()=>openPanel('world'));await p.waitForTimeout(200);t=await txt();ok('사천성에 가서 열면 사천성 정보가 먼저',t.includes('아미파')&&t.includes('지금 여기 있다'));
+  console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
+})();

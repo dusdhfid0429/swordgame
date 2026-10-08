@@ -42,7 +42,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.screenshot({path:shot('world_sichuan')});
   // 천하 지도 창
   await p.tap('#tmenu');await p.tap('[data-act="open:world"]');await p.waitForTimeout(200);
-  ok('천하 지도 창: 성 22곳, 지금 위치 강조',await p.evaluate(()=>panel==='world'&&document.querySelectorAll('.world circle').length===22&&document.querySelector('.world .me text').textContent==='사천성'));
+  ok('천하 지도 창: 성 22곳, 지금 위치 강조',await p.evaluate(()=>panel==='world'&&document.querySelectorAll('.world g.pv:not(.city)').length===22&&document.querySelector('.world .me text').textContent==='사천성'));
   await p.screenshot({path:shot('world_map')});await p.evaluate(()=>closePanels());
   for(const k of['gansu','yunnan','guizhou','hunan','liaoning','xinjiang','tibet','mongol','guangdong','jiangsu','zhejiang','hainan','tianzhu']){await p.evaluate(k=>{const R=REGIONS['pv_'+k];travel({to:'pv_'+k,tx:R.size/2+.5,ty:R.size/2+2.5})},k);await p.waitForTimeout(1600);
     await p.evaluate(()=>{for(let i=0;i<3;i++)spawnTick()});await p.waitForTimeout(500);await p.screenshot({path:shot('world_'+k)})}

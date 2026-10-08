@@ -262,6 +262,7 @@ function act(s){
     case'mode':toggleMode();break;
     case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
+    case'wsel':wSel=x;break;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
