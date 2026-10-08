@@ -27,5 +27,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 다른 성으로 옮기면 그 성이 먼저 고른 곳이 된다
   await p.evaluate(()=>{closePanels();travel({to:'pv_sichuan',tx:44,ty:44})});await p.waitForTimeout(1500);
   await p.evaluate(()=>openPanel('world'));await p.waitForTimeout(200);t=await txt();ok('사천성에 가서 열면 사천성 정보가 먼저',t.includes('아미파')&&t.includes('지금 여기 있다'));
+  // 이동 중 표시가 저장에 남아 다시는 이동하지 못하던 문제
+  const tv=await p.evaluate(()=>JSON.parse(localStorage.getItem(SAVE_KEY)).P.traveling);
+  const st=await p.evaluate(()=>{const d=JSON.parse(localStorage.getItem(SAVE_KEY));d.P.traveling=1;applySave(d);return P.traveling});
+  await p.evaluate(()=>travel(REGION().gates[0]));await p.waitForTimeout(700);
+  ok(`이동한 뒤 저장에 이동 중 표시가 없고(${tv}), 예전 저장에 남아 있어도 불러오면 풀려서(${st}) 다시 이동된다`,!tv&&!st&&await p.evaluate(()=>REG!=='pv_sichuan'&&!P.traveling));
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

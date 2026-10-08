@@ -318,7 +318,7 @@ function applySave(data){
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
-  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     migrateSect();
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;
