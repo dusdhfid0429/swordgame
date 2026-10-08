@@ -61,6 +61,8 @@ function startPlay(fresh){
     log(TOUCH?'☰ 메뉴 → 행낭에서 비급을 읽어 첫 초식을 익히세요. ☰ 메뉴 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(T) 창에서 기본기와 내공을 다질 수 있습니다.','info');
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 공격 버튼으로 싸움 · ☰ 메뉴의 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else log(`${P.name}의 생을 이어갑니다. ${Math.floor(P.age)}세.`,'sys');
+  // 새로 태어나거나 이어 할 때는 늘 개봉 성내에서 시작한다
+  if(REG!=='gaebong'){mobs=[];drops=[];loadRegion('gaebong')}P.reg='gaebong';P.gateLock=0;
   P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();saveGame(true);
 }
 function showRebirth(e,cause){
@@ -81,12 +83,12 @@ function pickAt(ev){
   const r=C.getBoundingClientRect(),sx=(ev.clientX-r.left)/S,sy=(ev.clientY-r.top)/S;
   // pick by screen position against each thing's body (feet at p, body ~50px up)
   let best=null,bd=26;const test=(o,kind,h=34)=>{const p=toScreen(o.x,o.y),d=Math.hypot(p.x-sx,(p.y-h)-sy);if(d<bd){bd=d;best={kind,o}}};
-  for(const n of NPCS)test(n,'npc',n.board?20:36);for(const m of mobs)if(m.hp>0)test(m,m.d.villager?'vil':'mob',m.d.beast?14*m.d.size:36);
+  if(REG==='gaebong')for(const n of NPCS)test(n,'npc',n.board?20:36);for(const m of mobs)if(m.hp>0)test(m,m.d.villager?'vil':'mob',m.d.beast?14*m.d.size:36);
   if(best)return best;
   const g=toGrid(ev.clientX-r.left,ev.clientY-r.top);
   for(const n of nodes)if(Math.hypot(n.x-g.x,n.y-g.y)<.6&&(n.t!=='chest'||!P.chest))return{kind:'node',o:n,g};
   const pl=plots.find(p=>Math.floor(g.x)===p.x&&Math.floor(g.y)===p.y);if(pl)return{kind:'plot',o:pl,g};
-  if(G.house&&G.house.built){const l=LOTS[G.house.lot];if(g.x>=l.x-.3&&g.x<=l.x+l.w+.3&&g.y>=l.y-.3&&g.y<=l.y+l.h+.8)return{kind:'house',g}}
+  if(REG==='gaebong'&&G.house&&G.house.built){const l=LOTS[G.house.lot];if(g.x>=l.x-.3&&g.x<=l.x+l.w+.3&&g.y>=l.y-.3&&g.y<=l.y+l.h+.8)return{kind:'house',g}}
   return{kind:'ground',g};
 }
 C.addEventListener('contextmenu',e=>e.preventDefault());

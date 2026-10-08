@@ -1,21 +1,23 @@
 // ---------- world: 개봉 성내 at the centre, 황하 to the north with 숭산 forest and the 혈교 cave beyond,
 // farmland and house lots to the west, 흑풍채 bandit camp to the east, grassland and bamboo to the south ----------
 // ground: 0 grass, 1 road, 2 river, 3 bridge, 4 granite plaza, 5 farmland, 6 cave stone, 7 trampled camp dirt
+let REG='gaebong';   // 지금 서 있는 지역 (g_region.js)
 const TOWN={x0:14,y0:14,x1:27,y1:27};
-const inTown=(x,y)=>x>=TOWN.x0&&x<=TOWN.x1&&y>=TOWN.y0&&y<=TOWN.y1;
+const inTown=(x,y)=>REG==='gaebong'&&x>=TOWN.x0&&x<=TOWN.x1&&y>=TOWN.y0&&y<=TOWN.y1;
 const RIV=9;const isRiver=y=>y===RIV||y===RIV+1;
-const inBamboo=(x,y)=>x>=2&&x<=11&&y>=29&&y<=37;
-const inCave=(x,y)=>x>=2&&x<=10&&y>=1&&y<=7;
-const inCamp=(x,y)=>x>=30&&x<=38&&y>=13&&y<=31;
-const inFarm=(x,y)=>x>=3&&x<=10&&y>=15&&y<=22;
+const inBamboo=(x,y)=>REG==='gaebong'&&x>=2&&x<=11&&y>=29&&y<=37;
+const inCave=(x,y)=>REG==='gaebong'&&x>=2&&x<=10&&y>=1&&y<=7;
+const inCamp=(x,y)=>REG==='gaebong'&&x>=30&&x<=38&&y>=13&&y<=31;
+const inFarm=(x,y)=>REG==='gaebong'&&x>=3&&x<=10&&y>=15&&y<=22;
 const LOTS=[{x:3,y:24,w:3,h:2},{x:8,y:24,w:3,h:2}];
 const inLot=(x,y)=>LOTS.some(l=>x>=l.x&&x<l.x+l.w&&y>=l.y&&y<l.y+l.h);
 const ARENA={x:23.5,y:19.6,r:1.6};
 let nodes=[],plots=[],tents=[];
 function regionAt(x,y){
+  if(REG!=='gaebong')return REGIONS[REG].zone(x,y);
   if(inCave(x,y))return'혈교 동굴';if(y<RIV)return x>26?'숭산 깊은 숲':'숭산 기슭';if(y<=RIV+1)return'황하 나루';
   if(inTown(x,y))return'개봉 성내';if(inCamp(x,y)||x>=29)return'흑풍채';if(x<=12&&y<=27)return'개봉 서쪽 농지';if(inBamboo(x,y))return'남쪽 대숲';return'남쪽 초원'}
-function genMap(){
+function genGaebong(){
   const r=rng(1987);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
     let g=isRiver(y)?2:0,o=null;
@@ -62,7 +64,7 @@ function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;const a=wx/(TW/
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const frac=v=>v-Math.floor(v);
 
-function bakeGround(){
+function bakeGaebong(){
   const gw=N*TW,gh=N*TH,c=document.createElement('canvas');c.width=gw;c.height=gh;
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data;
   for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
