@@ -5,8 +5,11 @@ const NPCS=[
   {id:'cloth',n:'포목점 주인 진씨',x:23,y:24.6,pal:'keeper'},{id:'jeong',n:'정의맹 연락관',x:26,y:25.6,pal:'taoist'},
   {id:'gen',n:'잡화상 노씨',x:18.5,y:23.4,pal:'keeper'},{id:'mae',n:'매파 할멈',x:18.4,y:19.4,pal:'matron'},
   {id:'board',n:'의뢰판',x:21.5,y:19.3,board:1},{id:'arena',n:'비무 관리인',x:22.2,y:21.2,pal:'judge'},{id:'land',n:'토지 관리인',x:14.6,y:21.4,pal:'keeper'},
-  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'},{id:'magyo',n:'마교 밀사',x:26.5,y:20.4,pal:'cultist'}];
+  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'},{id:'magyo',n:'마교 밀사',x:26.5,y:20.4,pal:'cultist'},
+  {id:'post',n:'역참 마부',x:15.6,y:19.6,pal:'keeper'}];
 const npcAt=id=>NPCS.find(n=>n.id===id);
+// 지금 지역의 사람들: 개봉은 마을 사람, 본산은 장문인과 역참 마부 (REGIONS[..].npcs)
+const npcsHere=()=>REG==='gaebong'?NPCS:(REGION().npcs||[]);
 let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=13;
@@ -118,9 +121,13 @@ function updateMob(e,dt){
   if(d.villager){if(!e.angry)wander(e,dt,inTown);else wander(e,dt);return}
   // aggro: hostile mobs notice the hero (or a companion) nearby; everyone gives up past their leash
   if(G.duel&&!e.duel){e.aggro=false;wander(e,dt);return}
+  // 세력 무인: 적 세력 무인을 찾아 싸우고, 같은 편 플레이어에게는 덤비지 않는다 (g_faction.js)
+  if(d.fac){if(e.tgt&&e.tgt.hp<=0){e.tgt=null;e.aggro=false}facScan(e,dt)}
+  const hostP=d.fac?mobFoeP(e):d.hostile;
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
-  if(!e.aggro&&d.hostile&&P.hp>0){if(dist(e,P)<(d.aggro||6)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
-  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
+  if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
+  if(!e.aggro&&hostP&&P.hp>0){if(dist(e,P)<(d.aggro||6)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
+  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
@@ -129,10 +136,11 @@ function updateMob(e,dt){
     if(d.ranged||(e.duel&&e.d.ranged)){for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:'255,200,140'})}}
     else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1})}}}
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35);
-    if(dist(P,c)<2)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}return}
+    if(hostP){if(dist(P,c)<2)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
+    if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
       if(d.ranged)eprojs.push({x:e.x,y:e.y,vx:(tg.x-e.x)/dd*10,vy:(tg.y-e.y)/dd*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'});
-      else if(dist(e,tg)<reach+.3){if(tg===P)hurtP(e.atk,e);else hurtAlly(tg,e.atk)}}
+      else if(dist(e,tg)<reach+.3){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
     return}
   e.cd-=dt;e.moving=false;
   if(dd<reach){if(e.cd<=0)e.wind=d.boss?.5:.4;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}
@@ -141,8 +149,10 @@ function updateMob(e,dt){
 }
 function updateEprojs(dt){
   for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y))q.left=0;
-    if(q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
-    for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}}
+    const sf=q.src&&q.src.d&&q.src.d.fac,hp=!sf||mobFoeP(q.src);
+    if(hp&&q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
+    if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}
+    if(sf)for(const o of mobs)if(q.left>0&&o!==q.src&&o.hp>0&&o.d.fac&&facFoe(o.d.fac,sf)&&dist(q,o)<.45){q.left=0;mobHurt(o,q.dmg,q.src)}}
   eprojs=eprojs.filter(q=>q.left>0);
 }
 // ================= companions: tamed beasts and disciples =================
@@ -151,8 +161,8 @@ function updateAlly(a,dt){
   if(a.hp<=0||a===P.ride)return;a.hit=Math.max(0,a.hit-dt);a.swing=Math.max(0,(a.swing||0)-dt);a.cd-=dt;
   if(a.mode==='wait'){a.moving=false;a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.04*dt);return}
   a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.004*dt);
-  let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&dist(P.target,a)<9?P.target:null;
-  if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&dist(m,P)<5){tg=m;break}
+  let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
+  if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5){tg=m;break}
   if(G.duel)tg=null;
   if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=1.1;a.swing=.24;const dm=Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def));damage(tg,dm,.2,0,a);if(!tg.tgt||Math.random()<.3)tg.tgt=a}}
     else chase(a,tg,dt,a.sp);return}
@@ -193,7 +203,8 @@ function nearestThing(r=1.6){
   let best=null,bd=r;const consider=(o,d)=>{if(d<bd){bd=d;best=o}};
   for(const n of nodes)if(n.t!=='chest'||!P.chest)consider({node:n},dist(n,P));
   for(const p of plots)consider({plot:p},Math.hypot(p.x+.5-P.x,p.y+.5-P.y));
-  if(REG==='gaebong'){for(const n of NPCS)consider({npc:n},dist(n,P)*.9);
+  for(const n of npcsHere())consider({npc:n},dist(n,P)*.9);
+  if(REG==='gaebong'){
   if(G.house&&G.house.built){const h=houseDoor();consider({house:1},dist(h,P))}
   if(P.spouse&&G.house&&G.house.built){const s=spousePos();consider({spouse:1},dist(s,P))}}
   return best;
@@ -235,7 +246,7 @@ function useCon(k){
 }
 // ================= 나이 and 윤회 =================
 function newYear(){
-  const a=Math.floor(P.age);birthdayVit();
+  const a=Math.floor(P.age);birthdayVit();rankStipend();
   if(a>=50){recalc()}
   if(a===P.life-5)log('기력이 쇠해 갑니다. 남은 날이 많지 않습니다.','dmg');
   for(const a2 of allies.slice())if(a2.kind==='pet'){a2.age++;if(a2.age>=a2.life){log(`${a2.name}이(가) 늙어 숨을 거뒀습니다.`,'dmg');if(P.ride===a2)P.ride=null;allies.splice(allies.indexOf(a2),1)}}

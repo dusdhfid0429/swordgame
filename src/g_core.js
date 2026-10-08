@@ -14,7 +14,7 @@ function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
-    jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},spouse:null,children:[],quests:[],
+    jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
@@ -114,15 +114,15 @@ function setArt(id){if(!A(id))return;P.cur=id;P.fcd=[0,0,0,0,0,0];P.chain={last:
 // ================= mobs =================
 function mkMob(kind,x,y,extra){
   const d=MOBS[kind]||extra,m={kind,d,name:kind,x,y,home:{x,y},hp:d.hp,maxHp:d.hp,atk:d.atk||0,def:d.def||0,hm:d.hm||0,sp:d.sp,el:d.el||null,reach:d.reach||(d.beast?1.1:1.2),
-    cd:1+Math.random(),wind:0,swing:0,hit:0,kb:{x:0,y:0},fx:1,fy:1,bob:Math.random()*6,moving:false,aggro:false,flee:0,stun:0,slow:0,burn:0,psn:0,nohe:0,wt:Math.random()*3,goal:null,skT:4+Math.random()*3};
+    cd:1+Math.random(),wind:0,swing:0,hit:0,kb:{x:0,y:0},fx:1,fy:1,bob:Math.random()*6,moving:false,aggro:false,flee:0,stun:0,slow:0,burn:0,psn:0,nohe:0,wt:Math.random()*3,goal:null,skT:4+Math.random()*3,isMob:1};
   if(extra)Object.assign(m,extra.o||{});return m;
 }
-const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
-function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
+const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
+function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
 function spawnTick(){
-  for(const[k,cap,test]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
+  for(const[k,cap,test,mk]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
     for(let t=0;t<30;t++){const x=1+Math.floor(Math.random()*(N-2)),y=1+Math.floor(Math.random()*(N-2));
-      if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mkMob(k,x+.5,y+.5));break}}
+      if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
   for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;
     if(G.bossT[k]<=0&&Math.hypot(x-P.x,y-P.y)>7){mobs.push(mkMob(k,x,y));G.bossT[k]=t;log(`${k}이(가) 모습을 드러냈다는 소문이 돕니다.`,'dmg')}}
@@ -157,6 +157,7 @@ function damage(e,d,kb,stun,from=P,crit){
   e.hp-=d;e.hit=.12;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
+  if(e.d.fac&&!e.angry&&!facFoe(e.d.fac,pfac()))facBetray(e);
   if(e.d.villager&&!e.angry){e.angry=1;e.flee=4;P.evil+=P.side==='정'?10:4;log('양민을 해쳤습니다. 악업이 쌓입니다.','dmg')}
   else if(e.d.passive)e.flee=3,e.fleeFrom=from;
   else e.aggro=true;
@@ -171,6 +172,7 @@ function onKill(e){
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
+  facKill(e);
   if(e.tomb){tombKill(e);return}
   // loot
   const out=[];

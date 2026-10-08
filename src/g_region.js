@@ -24,6 +24,7 @@ function loadRegion(id){
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
+  NPCF=npcsHere().filter(n=>!n.board).map(npcFighter);
 }
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다.
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);

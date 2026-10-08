@@ -83,7 +83,7 @@ function pickAt(ev){
   const r=C.getBoundingClientRect(),sx=(ev.clientX-r.left)/S,sy=(ev.clientY-r.top)/S;
   // pick by screen position against each thing's body (feet at p, body ~50px up)
   let best=null,bd=26;const test=(o,kind,h=34)=>{const p=toScreen(o.x,o.y),d=Math.hypot(p.x-sx,(p.y-h)-sy);if(d<bd){bd=d;best={kind,o}}};
-  if(REG==='gaebong')for(const n of NPCS)test(n,'npc',n.board?20:36);for(const m of mobs)if(m.hp>0)test(m,m.d.villager?'vil':'mob',m.d.beast?14*m.d.size:36);
+  for(const n of npcsHere())test(n,'npc',n.board?20:36);for(const m of mobs)if(m.hp>0)test(m,m.d.villager||peaceful(m)?'vil':'mob',m.d.beast?14*m.d.size:36);
   if(best)return best;
   const g=toGrid(ev.clientX-r.left,ev.clientY-r.top);
   for(const n of nodes)if(Math.hypot(n.x-g.x,n.y-g.y)<.6&&(n.t!=='chest'||!P.chest))return{kind:'node',o:n,g};
@@ -96,7 +96,7 @@ C.addEventListener('pointerdown',ev=>{
   if(!playing||paused||P.hp<=0)return;const h=pickAt(ev);P.medit=false;P.goal=null;P.talk=null;
   if(ev.button===2){if(h.kind==='mob'&&h.o.d.beast)tame(h.o);return}
   if(h.kind==='mob'){P.target=h.o;P.repath=0;P.path=null;return}
-  if(h.kind==='vil'){if(ev.shiftKey){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,'양민','#e8dcc0');return}
+  if(h.kind==='vil'){if(ev.shiftKey){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
   if(h.kind==='npc'){if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
