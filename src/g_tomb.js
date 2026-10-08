@@ -10,14 +10,14 @@ function tombDropP(it){
 const tombs=()=>G.tombs||(G.tombs=[]);
 // 무덤 자리: 마을 안이나 막힌 곳이면 가까운 바깥 빈 땅으로 옮긴다
 function tombSpot(x,y){
-  const ok=(i,j)=>walk(i,j)&&!inTown(i,j)&&!plots.some(pl=>Math.abs(pl.x-i)<2&&Math.abs(pl.y-j)<2)&&!NPCS.some(n=>Math.hypot(n.x-i-.5,n.y-j-.5)<3)&&!tombs().some(t=>Math.hypot(t.x-i-.5,t.y-j-.5)<3);
+  const ok=(i,j)=>walk(i,j)&&!inTown(i,j)&&!plots.some(pl=>Math.abs(pl.x-i)<2&&Math.abs(pl.y-j)<2)&&!(REG==='gaebong'&&NPCS.some(n=>Math.hypot(n.x-i-.5,n.y-j-.5)<3))&&!tombs().some(t=>Math.hypot(t.x-i-.5,t.y-j-.5)<3);
   for(let r=0;r<14;r++)for(let a=0;a<Math.max(1,r*8);a++){const i=Math.floor(x+Math.cos(a/(r*8||1)*6.283)*r),j=Math.floor(y+Math.sin(a/(r*8||1)*6.283)*r);if(ok(i,j))return{x:i+.5,y:j+.5}}
   return null}
 function makeTomb(cause){
   const s=tombSpot(P.x,P.y);if(!s)return;
   const items=[...Object.values(P.eq).filter(Boolean),...P.bag].map(it=>JSON.parse(JSON.stringify(it)));
   const ri=realmIdx();
-  tombs().push({id:Date.now()%1e9,x:s.x,y:s.y,name:P.name,life:P.lifeNo,age:Math.floor(P.age),cause,cls:curCls(),el:art().el||null,side:P.side,realm:RANKS[ri],
+  tombs().push({id:Date.now()%1e9,reg:REG,x:s.x,y:s.y,name:P.name,life:P.lifeNo,age:Math.floor(P.age),cause,cls:curCls(),el:art().el||null,side:P.side,realm:RANKS[ri],
     hp:Math.round(P.maxHp*2.5+ri*120),atk:Math.max(10,Math.round(atk()*.75)),def:2+ri*2,hm:Math.round(P.st.agi*2+ri*4),xp:120+ri*60,items});
   while(tombs().length>TOMB_MAX)tombs().shift();
 }
@@ -32,7 +32,7 @@ function tombWake(t){
 }
 function tombTick(){
   if(G.duel)return;
-  for(const t of tombs()){const d=Math.hypot(t.x-P.x,t.y-P.y);
+  for(const t of tombs()){if((t.reg||'gaebong')!==REG)continue;const d=Math.hypot(t.x-P.x,t.y-P.y);
     const live=mobs.some(m=>m.tomb===t.id&&m.hp>0);
     if(!live&&P.hp>0&&d<TOMB_WAKE)tombWake(t);
     // 멀리 떠나면 망령은 다시 잠든다 (기운을 되찾는다)

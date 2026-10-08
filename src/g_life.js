@@ -11,7 +11,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=13;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick();
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
@@ -20,7 +20,7 @@ function update(dt){
   if(G.giyeon&&dist(G.giyeon,P)<.7){G.giyeon=null;G.gT=150+Math.random()*120;giyeon('spot')}
   spawnT-=dt;if(spawnT<=0){spawnT=2;spawnTick()}
   saveT-=dt;if(saveT<=0){saveT=30;saveGame()}
-  for(const p of plots)growPlot(p,dt);
+  for(const p of GAE_PLOTS||plots)growPlot(p,dt);
   for(const n of nodes)n.cd=Math.max(0,n.cd-dt);
   if(P.hp>0)updateP(dt);
   for(const e of mobs)updateMob(e,dt);
@@ -193,9 +193,9 @@ function nearestThing(r=1.6){
   let best=null,bd=r;const consider=(o,d)=>{if(d<bd){bd=d;best=o}};
   for(const n of nodes)if(n.t!=='chest'||!P.chest)consider({node:n},dist(n,P));
   for(const p of plots)consider({plot:p},Math.hypot(p.x+.5-P.x,p.y+.5-P.y));
-  for(const n of NPCS)consider({npc:n},dist(n,P)*.9);
+  if(REG==='gaebong'){for(const n of NPCS)consider({npc:n},dist(n,P)*.9);
   if(G.house&&G.house.built){const h=houseDoor();consider({house:1},dist(h,P))}
-  if(P.spouse&&G.house&&G.house.built){const s=spousePos();consider({spouse:1},dist(s,P))}
+  if(P.spouse&&G.house&&G.house.built){const s=spousePos();consider({spouse:1},dist(s,P))}}
   return best;
 }
 function useNearest(){
@@ -294,7 +294,7 @@ function saveGame(silent){
   try{
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
     const data={G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
-      plots:plots.map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
+      plots:(GAE_PLOTS||plots).map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
@@ -305,7 +305,7 @@ function loadGame(){
 function applySave(data){
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
-  data.plots&&data.plots.forEach((s,i)=>{if(plots[i])Object.assign(plots[i],s)});
+  {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;

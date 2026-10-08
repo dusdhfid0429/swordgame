@@ -120,10 +120,10 @@ function mkMob(kind,x,y,extra){
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
 function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
 function spawnTick(){
-  for(const[k,cap,test]of SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
+  for(const[k,cap,test]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
     for(let t=0;t<30;t++){const x=1+Math.floor(Math.random()*(N-2)),y=1+Math.floor(Math.random()*(N-2));
       if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mkMob(k,x+.5,y+.5));break}}
-  for(const[k,x,y,t]of[['흑풍채주',35.5,22.5,150],['혈교장로',6.5,4.5,240]]){
+  for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;
     if(G.bossT[k]<=0&&Math.hypot(x-P.x,y-P.y)>7){mobs.push(mkMob(k,x,y));G.bossT[k]=t;log(`${k}이(가) 모습을 드러냈다는 소문이 돕니다.`,'dmg')}}
 }
