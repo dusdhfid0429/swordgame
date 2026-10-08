@@ -72,9 +72,7 @@ function facKill(e){
 SMIS.jeong.push({n:'사파 무인 소탕',kind:'kill',mob:['사파 무인','사파 고수'],cnt:5,merit:20,silver:35},{n:'마교도 토벌',kind:'kill',mob:['마교도','마교 고수'],cnt:4,merit:25,silver:45});
 SMIS.sacheon.push({n:'정파 무인 사냥',kind:'kill',mob:['정파 무인','정파 고수'],cnt:5,merit:20,silver:40},{n:'마교도 격퇴',kind:'kill',mob:['마교도','마교 고수'],cnt:4,merit:25,silver:45});
 SMIS.magyo.push({n:'정파 척살',kind:'kill',mob:['정파 무인','정파 고수'],cnt:5,merit:22,silver:45},{n:'사파 척살',kind:'kill',mob:['사파 무인','사파 고수'],cnt:5,merit:22,silver:45});
-// 개봉 남쪽 초원에서 정파와 사파 순찰대가 마주치고, 북쪽 숲에는 마교도가 숨어든다
-SPAWNS.push(['정파 무인',3,(x,y)=>y>28&&x>=13&&x<=21&&!inBamboo(x,y),(x,y)=>mkFac('정',0,x,y)],['사파 무인',3,(x,y)=>y>28&&x>=22&&x<=31,(x,y)=>mkFac('사',0,x,y)],
-  ['마교도',2,(x,y)=>y<RIV-1&&x>=12&&x<=26,(x,y)=>mkFac('마',0,x,y)]);
+// 개봉은 중립지대라 세력 무인이 순찰하지 않는다
 
 // ================= 문파 직위 =================
 // 문파에 있는 동안 얻은 공적을 따로 누적(P.mtot)해 직위가 오른다. 비급에 공적을 써도 직위는 내려가지 않는다.

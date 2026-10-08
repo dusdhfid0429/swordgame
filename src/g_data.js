@@ -102,10 +102,10 @@ const MOBS={
   호랑이:{beast:'tiger',hp:330,atk:26,def:4,hm:24,sp:2.9,xp:70,hostile:1,aggro:7,meat:3,hide:3,tame:140,life:24,size:1.3,col:['#d88a2e','#5a2e10'],stripes:1,el:'금'},
   양민:{villager:1,hp:30,atk:0,sp:1.1,xp:0,passive:1,pal:'villager'}};
 // spawn regions: [mob, cap, test(x,y)]
+// 개봉은 중립지대(2026-10-08 사용자 결정): 싸움을 거는 몹 없이 기본 동물과 양민만 산다.
+// 예전 흑풍채 산채(산적·흑풍채주)와 혈교 동굴(혈교무인·강시·혈교장로)은 하남성으로 옮겼다 (g_province.js PV_LAIRS)
 const SPAWNS=[
-  ['산적',8,(x,y)=>inCamp(x,y)],['산적궁수',4,(x,y)=>inCamp(x,y)],['산적두목',2,(x,y)=>inCamp(x,y)&&x>33],
-  ['혈교무인',3,(x,y)=>inCave(x,y)],['강시',2,(x,y)=>inCave(x,y)],
-  ['늑대',4,(x,y)=>y<RIV-1&&x>12],['곰',1,(x,y)=>y<RIV-1&&x>16],['호랑이',1,(x,y)=>y<RIV-1&&x>28],['사슴',3,(x,y)=>y<RIV-1&&x>12],
+  ['사슴',4,(x,y)=>y<RIV-1&&x>12],['토끼',3,(x,y)=>y<RIV-1&&x>12],
   ['토끼',4,(x,y)=>y>28&&!inBamboo(x,y)],['양',4,(x,y)=>y>29&&x>13&&x<30],['말',2,(x,y)=>y>30&&x>14],['멧돼지',2,(x,y)=>(inBamboo(x,y)||y>32)],
   ['양민',6,(x,y)=>inTown(x,y)]];
 
