@@ -8,24 +8,21 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:사"]');await p.tap('[data-s="cls:권"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
-  // 신강에서 십만대산으로 들어간다
-  await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS.pv_xinjiang.gates.find(q=>q.to==='hq_cheonma');travel(g)});await p.waitForTimeout(1500);
-  const r=await p.evaluate(()=>{
-    // 도착 자리에서 교주·당주·상점까지 걸어서 닿는가 (BFS)
-    const seen=new Set,q=[[Math.floor(P.x),Math.floor(P.y)]];seen.add(q[0]+'');
-    while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
-    const reach=npcsHere().filter(n=>{for(const[dx,dy]of[[0,0],[0,1],[1,0],[-1,0],[0,-1]])if(seen.has([Math.floor(n.x)+dx,Math.floor(n.y)+dy]+''))return true;return false}).map(n=>n.n);
-    return{reg:REG,N,walk:walkAt(P.x,P.y),zone:regionAt(Math.floor(P.x),Math.floor(P.y)),npcs:npcsHere().length,reach,
-      zones:[...new Set([[36,66],[37,57],[37,46],[36,30],[36,12]].map(([x,y])=>regionAt(x,y)))],mg:builds.filter(b=>b.mg).length,
-      gate:REGION().gates.map(g=>g.to)}});
-  ok(`십만대산 ${r.N}×${r.N}, 도착 자리 ${r.zone} 걸을 수 있음`,r.reg==='hq_cheonma'&&r.N===72&&r.walk);
-  ok(`구역 ${r.zones.join('·')}`,r.zones.length===5);
-  ok(`NPC ${r.npcs}명 모두 걸어서 닿음 (${r.reach.length})`,r.npcs===10&&r.reach.length===10);
-  ok(`마교 전각 ${r.mg}채, 신강으로 나가는 출입구`,r.mg>=15&&r.gate.includes('pv_xinjiang'));
-  await p.evaluate(()=>{P.x=36.5;P.y=24.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;tod=.55});await p.waitForTimeout(900);
+  // 신강에서 십만대산 여덟 맵으로
+  await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS.pv_xinjiang.gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
+  const r=await p.evaluate(()=>({reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
+    npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,REGIONS[id].npcs.length]))}));
+  ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes('pv_xinjiang'));
+  ok(`NPC: ${JSON.stringify(r.npc)}`,r.npc['마교 성읍']===4&&r.npc['오당 광장']===5&&r.npc['천마신전']>=1&&r.npc['장로원']===1);
+  const mg=await p.evaluate(()=>{const out=[];for(const id of REGION().chain){loadRegion(id);out.push(builds.filter(b=>b.mg).length===builds.length)}loadRegion('hq_cheonma_1');return out.every(Boolean)});
+  ok('여덟 맵의 전각이 모두 검은 벽·붉은 기와',mg);
+  await p.evaluate(()=>{P.reg='hq_cheonma_5';loadRegion('hq_cheonma_5');P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;tod=.55});await p.waitForTimeout(900);
   await p.screenshot({path:shot('magyo_plaza')});
-  await p.evaluate(()=>{P.x=36.5;P.y=12.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(700);
+  await p.evaluate(()=>{P.reg='hq_cheonma';loadRegion('hq_cheonma');P.x=20.5;P.y=13.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick()});await p.waitForTimeout(900);
   await p.screenshot({path:shot('magyo_temple')});
+  // 천마동은 장로 이상만
+  const cave=await p.evaluate(()=>{const g=REGION().gates.find(q=>q.to==='hq_cheonma_8');return g.need()});
+  ok(`천마동 출입 조건: ${cave}`,!!cave&&cave.includes('장로'));
   // 마교도는 교도가 아니면 적, 교도면 같은 편
   const f0=await p.evaluate(()=>{const m=mobs.find(e=>e.sect==='cheonma');return m?mobFoeP(m):null});
   // 입교 전: 비급은 교도만
@@ -36,7 +33,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const j=await p.evaluate(()=>({sect:P.sect,dang:P.dang||null,foe:mobs.filter(e=>e.sect==='cheonma').some(m=>mobFoeP(m)),blk:mgArtBlock({id:'S_cheonma_0'})}));
   ok(`입교: 당 없음, 마교도와 같은 편, 일반 무공은 '${j.blk}'`,j.sect==='cheonma'&&!j.dang&&!j.foe&&j.blk==='당에 든 뒤');
   // 혈마당 입당
-  await p.evaluate(()=>{closePanels();openNpc(npcsHere().find(n=>n.dang==='hyeolma'))});await p.waitForTimeout(200);
+  await p.evaluate(()=>{closePanels();P.reg='hq_cheonma_5';loadRegion('hq_cheonma_5');openNpc(npcsHere().find(n=>n.dang==='hyeolma'))});await p.waitForTimeout(200);
   await p.screenshot({path:shot('magyo_dang')});
   await p.locator('[data-act="mdang:hyeolma"]').tap();await p.waitForTimeout(200);
   const d=await p.evaluate(()=>({dang:P.dang,art:!!(P.arts.S_cheonma_0&&P.arts.S_cheonma_0.f[0]),own:mgArtBlock({id:'S_cheonma_0'}),other:mgArtBlock({id:'S_cheonma_1'}),
@@ -53,8 +50,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 하산하면 당도 잃는다
   const lv=await p.evaluate(()=>{sectAct('sleave');return P.dang});
   ok('하산하면 당이 없어짐',lv===null);
-  // 예전 자리(40×40 시절)에서 불러오면 협곡 입구로
-  const old=await p.evaluate(()=>{loadRegion('gaebong');P.reg='hq_cheonma';P.x=20.5;P.y=36.2;loadRegion('hq_cheonma');return walkAt(P.x,P.y)});
+  // 예전 72×72 십만대산 자리에서 불러오면 맵 안 출입구 앞으로
+  const old=await p.evaluate(()=>{loadRegion('gaebong');P.reg='hq_cheonma';P.x=60.5;P.y=66.5;loadRegion('hq_cheonma');return walkAt(P.x,P.y)});
   ok('예전 본산 자리 저장도 걸을 수 있는 곳에 놓임',old);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();
