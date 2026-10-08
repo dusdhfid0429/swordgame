@@ -4,7 +4,7 @@
 const ALLY={
   jeong:{n:'정의맹',side:'정',npc:'jeong',d:'9파1방과 정파 소문파가 모인 무림맹. 협의를 앞세운다.'},
   sacheon:{n:'사천맹',side:'사',npc:'sa',d:'사파 4대문파가 이끄는 연합. 힘과 이익이 곧 법이다.'},
-  magyo:{n:'마교',side:'사',npc:'magyo',d:'천마를 받드는 단일 문파. 정사 어느 쪽과도 손잡지 않는다.'}};
+  magyo:{n:'마교',side:'사',npc:'magyo',d:'천마를 받드는 단일 문파. 오당과 장로원·사대호법을 거느려 정의맹·사천맹과 홀로 맞서며, 정사 어느 쪽과도 손잡지 않는다.'}};
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=[
   // 정의맹: 9파1방
@@ -61,7 +61,8 @@ const SECT_DATA=[
   ['gwiyeong','귀영문','sacheon','small','섬서에 숨은 그림자 살수들.',[['귀영검법','검','수','n'],['귀영무흔검','검','수','h']]],
   ['heukpung','흑풍채','sacheon','small','개봉 동쪽에 진을 친 산채.',[['흑풍도','도','토','n'],['흑풍광사도','도','토','h']]],
   // 마교
-  ['cheonma','천마신교','magyo','one','마교 그 자체. 교주 천마 아래 하나로 뭉쳤다.',[['혈마장','권','화','n'],['마령도법','도','화','n'],['천마검법','검','화','h'],['천마신장','권','화','h']]]];
+  // 마교는 문파 하나가 세력 하나다. 일반 무공은 오당이 하나씩 맡고(g_magyo.js MDANG), 고급 무공은 교 전체의 것이다. 뒤 셋은 오당 개편으로 더했다(번호를 지키려고 끝에)
+  ['cheonma','천마신교','magyo','one','마교 그 자체. 교주 천마 아래 오당·장로원·사대호법이 하나로 뭉쳤다.',[['혈마장','권','화','n'],['마령도법','도','화','n'],['천마검법','검','화','h'],['천마신장','권','화','h'],['혈영창법','창','수','n'],['귀령곤법','봉','토','n'],['흑혈탈혼시','궁','목','n']]]];
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
 const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
@@ -112,7 +113,7 @@ const SMIS={
 function sectMissions(s){const pool=SMIS[s.al],y=Math.floor(P.age),a=(s.i*3+y)%pool.length,b=(s.i*3+y+1+(s.i%2))%pool.length;
   return [a,b===a?(a+1)%pool.length:b].map(i=>({...pool[i],n:`[${s.n}] ${pool[i].n}`,sect:s.id,vit:Math.round(pool[i].merit*1.5),fame:Math.round(pool[i].merit/5),good:s.al==='jeong'?3:0,key:`${s.id}:${i}:${y}`}))}
 // 직위가 일대제자(조장·향주) 이상이면 자기 문파 비급이 20% 싸다 (g_faction.js)
-const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id));
+const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id)*dangDisc(a.id));
 // ---- 세력 연락관 창 ----
 let sectView=null;
 function allianceDlg(alId){
@@ -131,7 +132,7 @@ function sectDetail(s,hq){
   const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=P.side===al.side;
   const hi=s.arts.find(a=>a.hi);
   const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member;
-    const why=!same?'':lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
+    const mb=s.id==='cheonma'?mgArtBlock(a):'',why=!same?'':mb?mb:lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
     return `<div class="it"><div style="color:rgb(${A2.c})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   const mis=same?sectMissions(s).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
@@ -169,7 +170,7 @@ function sectAct(a,x,y){
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
     case'mbuy':{const a2=ARTS[x],s=artSect(x),meta=s.arts.find(q=>q.id===x),fi=+y,c=meritCost(meta,fi);
-      if(fi<0||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
+      if(fi<0||(s.id==='cheonma'&&mgArtBlock(meta))||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
   }
   return false}
 // 예전 저장: 무당파('정')·혈교('사') 제자는 새 문파로 옮긴다. 무림전도 개편으로 없어진 문파는 같은 세력의 새 문파로 옮긴다

@@ -76,23 +76,25 @@ SMIS.magyo.push({n:'정파 척살',kind:'kill',mob:['정파 무인','정파 고�
 
 // ================= 문파 직위 =================
 // 문파에 있는 동안 얻은 공적을 따로 누적(P.mtot)해 직위가 오른다. 비급에 공적을 써도 직위는 내려가지 않는다.
-const SRANK={jeong:['속가제자','정식제자','일대제자','호법','장로'],sacheon:['졸개','정예','조장','당주','장로'],magyo:['교도','정예교도','향주','당주','장로']};
-const RANK_PTS=[0,60,180,400,800];
+const SRANK={jeong:['속가제자','정식제자','일대제자','호법','장로'],sacheon:['졸개','정예','조장','당주','장로'],magyo:['교도','정예교도','향주','당주','장로','호법','부교주']};
+// 마교만 직위가 일곱 단(호법·부교주). 다른 세력은 다섯 단에서 멈춘다
+const RANK_PTS=[0,60,180,400,800,1400,2200];
+const rankTop=sid=>{const s=SECTS[sid];return s?SRANK[s.al].length-1:4};
 const HI_RANK=[0,1,2,2,3,4];   // 고급 무공 n번째 초식 비급에 필요한 직위
-function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0;let i=0;while(i<4&&t>=RANK_PTS[i+1])i++;return i}
+function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1));
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토'][a]}.`,'sys')}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
-function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.'][i]||''}
+function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
 // 해마다 직위에 따른 녹봉
 function rankStipend(){const s=P.sect&&SECTS[P.sect];if(!s)return;const i=rankIdx(),v=i*15;if(v>0){P.silver+=v;log(`${s.n} ${rankName()} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}}
 function rankHtml(s){
-  const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=RANK_PTS[i+1];
+  const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=i<rankTop(s.id)?RANK_PTS[i+1]:0;
   return `<div class="card"><h4>직위 <b>${rankName(s.id)}</b></h4><p>누적 공적 ${t}${nx?` / ${nx} (다음 ${rankName(s.id,i+1)})`:' · 최고 직위'} · 공적 획득 +${i*10}% · 녹봉 해마다 은자 ${i*15}${i>=2?' · 비급 공적 20% 할인':''}</p>
     <p class="dim">${SRANK[s.al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p></div>`}
 
@@ -114,7 +116,7 @@ const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
-const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
+const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
 function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];

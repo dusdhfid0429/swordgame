@@ -491,7 +491,7 @@ const QUESTS=[
 const ALLY={
   jeong:{n:'정의맹',side:'정',npc:'jeong',d:'9파1방과 정파 소문파가 모인 무림맹. 협의를 앞세운다.'},
   sacheon:{n:'사천맹',side:'사',npc:'sa',d:'사파 4대문파가 이끄는 연합. 힘과 이익이 곧 법이다.'},
-  magyo:{n:'마교',side:'사',npc:'magyo',d:'천마를 받드는 단일 문파. 정사 어느 쪽과도 손잡지 않는다.'}};
+  magyo:{n:'마교',side:'사',npc:'magyo',d:'천마를 받드는 단일 문파. 오당과 장로원·사대호법을 거느려 정의맹·사천맹과 홀로 맞서며, 정사 어느 쪽과도 손잡지 않는다.'}};
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=[
   // 정의맹: 9파1방
@@ -548,7 +548,8 @@ const SECT_DATA=[
   ['gwiyeong','귀영문','sacheon','small','섬서에 숨은 그림자 살수들.',[['귀영검법','검','수','n'],['귀영무흔검','검','수','h']]],
   ['heukpung','흑풍채','sacheon','small','개봉 동쪽에 진을 친 산채.',[['흑풍도','도','토','n'],['흑풍광사도','도','토','h']]],
   // 마교
-  ['cheonma','천마신교','magyo','one','마교 그 자체. 교주 천마 아래 하나로 뭉쳤다.',[['혈마장','권','화','n'],['마령도법','도','화','n'],['천마검법','검','화','h'],['천마신장','권','화','h']]]];
+  // 마교는 문파 하나가 세력 하나다. 일반 무공은 오당이 하나씩 맡고(g_magyo.js MDANG), 고급 무공은 교 전체의 것이다. 뒤 셋은 오당 개편으로 더했다(번호를 지키려고 끝에)
+  ['cheonma','천마신교','magyo','one','마교 그 자체. 교주 천마 아래 오당·장로원·사대호법이 하나로 뭉쳤다.',[['혈마장','권','화','n'],['마령도법','도','화','n'],['천마검법','검','화','h'],['천마신장','권','화','h'],['혈영창법','창','수','n'],['귀령곤법','봉','토','n'],['흑혈탈혼시','궁','목','n']]]];
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
 const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
@@ -599,7 +600,7 @@ const SMIS={
 function sectMissions(s){const pool=SMIS[s.al],y=Math.floor(P.age),a=(s.i*3+y)%pool.length,b=(s.i*3+y+1+(s.i%2))%pool.length;
   return [a,b===a?(a+1)%pool.length:b].map(i=>({...pool[i],n:`[${s.n}] ${pool[i].n}`,sect:s.id,vit:Math.round(pool[i].merit*1.5),fame:Math.round(pool[i].merit/5),good:s.al==='jeong'?3:0,key:`${s.id}:${i}:${y}`}))}
 // 직위가 일대제자(조장·향주) 이상이면 자기 문파 비급이 20% 싸다 (g_faction.js)
-const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id));
+const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id)*dangDisc(a.id));
 // ---- 세력 연락관 창 ----
 let sectView=null;
 function allianceDlg(alId){
@@ -618,7 +619,7 @@ function sectDetail(s,hq){
   const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=P.side===al.side;
   const hi=s.arts.find(a=>a.hi);
   const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member;
-    const why=!same?'':lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
+    const mb=s.id==='cheonma'?mgArtBlock(a):'',why=!same?'':mb?mb:lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
     return `<div class="it"><div style="color:rgb(${A2.c})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   const mis=same?sectMissions(s).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
@@ -656,7 +657,7 @@ function sectAct(a,x,y){
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
     case'mbuy':{const a2=ARTS[x],s=artSect(x),meta=s.arts.find(q=>q.id===x),fi=+y,c=meritCost(meta,fi);
-      if(fi<0||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
+      if(fi<0||(s.id==='cheonma'&&mgArtBlock(meta))||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
   }
   return false}
 // 예전 저장: 무당파('정')·혈교('사') 제자는 새 문파로 옮긴다. 무림전도 개편으로 없어진 문파는 같은 세력의 새 문파로 옮긴다
@@ -2202,14 +2203,15 @@ function drawBuild(b,alpha){
   if(pav){quad([scr(x,y,5),scr(X1,y,5),scr(X1,Y1,5),scr(x,Y1,5)],'#b4ad9e');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,5),scr(x,Y1,5)],'#8f897c');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,5),scr(X1,Y1,5)],'#77716a');
     for(const[i,j]of[[x+.2,y+.2],[X1-.2,y+.2],[x+.2,Y1-.2],[X1-.2,Y1-.2]]){const q=scr(i,j,5);seg([q,up(q,WH-5)],4,'#7a2416')}
     const t=scr(x+w/2,y+h/2,5);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(t[0],t[1]-6,9,4.5,0,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.stroke()}
-  else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,'#c3b69b',false,b)}
+  else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.mg?'#2a2020':'#c3b69b',false,b)}
+  const RC=b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:['#2e343c','#2a3038','#3a414b','#4d5663'];
   const H0=WH+(pav?0:4),RH=H0+10+8*Math.min(w,h);
   const Et=scr(x-o,y-o,H0),Er=scr(X1+o,y-o,H0),Eb=scr(X1+o,Y1+o,H0),El=scr(x-o,Y1+o,H0);
   let R1,R2;
   if(w>=h){const d=(h+2*o)/2,cy=(y+Y1)/2;R1=scr(x-o+d,cy,RH);R2=scr(X1+o-d,cy,RH);
-    roofFace(Et,Er,R1,R2,'#2e343c',10);roofFace(Et,El,R1,null,'#2a3038',6);roofFace(Er,Eb,R2,null,'#3a414b',6);roofFace(El,Eb,R1,R2,'#4d5663',Math.round(w*5))}
+    roofFace(Et,Er,R1,R2,RC[0],10);roofFace(Et,El,R1,null,RC[1],6);roofFace(Er,Eb,R2,null,RC[2],6);roofFace(El,Eb,R1,R2,RC[3],Math.round(w*5))}
   else{const d=(w+2*o)/2,cx=(x+X1)/2;R1=scr(cx,y-o+d,RH);R2=scr(cx,Y1+o-d,RH);
-    roofFace(Et,El,R1,R2,'#2a3038',10);roofFace(Et,Er,R1,null,'#2e343c',6);roofFace(El,Eb,R2,null,'#4d5663',6);roofFace(Er,Eb,R1,R2,'#3a414b',Math.round(h*5))}
+    roofFace(Et,El,R1,R2,RC[1],10);roofFace(Et,Er,R1,null,RC[0],6);roofFace(El,Eb,R2,null,RC[3],6);roofFace(Er,Eb,R1,R2,RC[2],Math.round(h*5))}
   curl(El,-9);curl(Eb,0);curl(Er,9);
   ctx.strokeStyle='#22262c';ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(...R1);ctx.lineTo(...R2);ctx.stroke();
   if(pav){ctx.fillStyle='#c9a14a';ctx.beginPath();ctx.arc(R1[0],R1[1]-4,3,0,7);ctx.fill()}
@@ -2989,7 +2991,7 @@ const embImg=(sid,px=22)=>LOOK[sid]?`<img class="emb" src="${embUrl(sid)}" width
 function drawEmblem(g,sid,x,y,s){const cv=embCanvas(sid,s>40?96:48);if(cv)g.drawImage(cv,x-s/2,y-s/2,s,s)}
 
 // ---- 코드로 그리는 사람(몹·장문인)의 옷 ----
-function sectPal(sid,rank,cls,o={}){
+function sectPal(sid,rank,cls,o={}){rank=Math.min(4,rank);   // 마교 호법·부교주는 장로 옷을 입는다
   const L=lookOf(sid);if(!L)return null;const k=`garb_${sid}_${rank}_${cls}_${o.elite?1:0}_${o.master?1:0}`;if(PAL[k])return k;
   const robe=rankRobe(L,rank),W=CLASS[cls]||CLASS.검,monk=L.x==='monk',fac=alFac(SECTS[sid].al);
   PAL[k]={...PAL.hero,robe:[robe,cShade(robe,.55)],robeB:cShade(robe,.72),
@@ -3019,7 +3021,7 @@ function recolorAtlas(img,robe){
     d[i]=o[0];d[i+1]=o[1];d[i+2]=o[2]}
   g.putImageData(id,0,0);return c}
 function heroGarb(){
-  if(!P||!P.sect||!LOOK[P.sect])return null;const rank=rankIdx(P.sect),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
+  if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
   const imgs=HERO_GARB[key];if(!imgs)return null;
   return{...imgs,rank,pal:{cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?P.sect:null}}}
@@ -3212,23 +3214,25 @@ SMIS.magyo.push({n:'정파 척살',kind:'kill',mob:['정파 무인','정파 고�
 
 // ================= 문파 직위 =================
 // 문파에 있는 동안 얻은 공적을 따로 누적(P.mtot)해 직위가 오른다. 비급에 공적을 써도 직위는 내려가지 않는다.
-const SRANK={jeong:['속가제자','정식제자','일대제자','호법','장로'],sacheon:['졸개','정예','조장','당주','장로'],magyo:['교도','정예교도','향주','당주','장로']};
-const RANK_PTS=[0,60,180,400,800];
+const SRANK={jeong:['속가제자','정식제자','일대제자','호법','장로'],sacheon:['졸개','정예','조장','당주','장로'],magyo:['교도','정예교도','향주','당주','장로','호법','부교주']};
+// 마교만 직위가 일곱 단(호법·부교주). 다른 세력은 다섯 단에서 멈춘다
+const RANK_PTS=[0,60,180,400,800,1400,2200];
+const rankTop=sid=>{const s=SECTS[sid];return s?SRANK[s.al].length-1:4};
 const HI_RANK=[0,1,2,2,3,4];   // 고급 무공 n번째 초식 비급에 필요한 직위
-function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0;let i=0;while(i<4&&t>=RANK_PTS[i+1])i++;return i}
+function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1));
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토'][a]}.`,'sys')}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
-function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.'][i]||''}
+function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
 // 해마다 직위에 따른 녹봉
 function rankStipend(){const s=P.sect&&SECTS[P.sect];if(!s)return;const i=rankIdx(),v=i*15;if(v>0){P.silver+=v;log(`${s.n} ${rankName()} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}}
 function rankHtml(s){
-  const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=RANK_PTS[i+1];
+  const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=i<rankTop(s.id)?RANK_PTS[i+1]:0;
   return `<div class="card"><h4>직위 <b>${rankName(s.id)}</b></h4><p>누적 공적 ${t}${nx?` / ${nx} (다음 ${rankName(s.id,i+1)})`:' · 최고 직위'} · 공적 획득 +${i*10}% · 녹봉 해마다 은자 ${i*15}${i>=2?' · 비급 공적 20% 할인':''}</p>
     <p class="dim">${SRANK[s.al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p></div>`}
 
@@ -3250,7 +3254,7 @@ const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
 const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
-const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
+const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
 function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];
@@ -3683,6 +3687,119 @@ function leapLand(L){
   if(P.perch){addText(P.x,P.y-.3,P.perch.k==='roof'?'지붕 위':'나무 위','#cfe3ff');if(typeof sfx==='function')sfx('land')}
   else if(L.plunge)plungeHit(L);
   if(L.after){const a=L.after;P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(a.x),Math.floor(a.y))}}
+
+// ================= 마교: 문파 하나로 세력 하나 =================
+// 정의맹·사천맹은 문파 여럿이 모인 연합이고, 마교(천마신교)는 문파 하나가 그대로 세력이다. 설계: docs/세력_문파_설계.md 17장
+// - 조직: 교주 천마 → 부교주 → 사대호법 → 장로원 → 오당(당주) → 향주 → 정예교도 → 교도. 직위는 일곱 단(g_faction.js SRANK.magyo).
+// - 오당: 입교한 뒤 오당 광장에서 당 하나에 든다. 일반 무공은 당마다 하나씩이라 자기 당 무공만 익히고(공적 30% 싸다),
+//   장로가 되면 다른 당 무공도 익힌다. 고급 무공(천마검법·천마신장)은 교 전체의 것. 마교는 바깥 사람에게 비급을 주지 않는다.
+// - 본거지: 다른 문파의 40×40 본산과 달리 신강 십만대산 전체(72×72)가 마교 땅이다.
+//   남쪽 협곡 → 천마관(관문) → 마교 성읍(객잔·병기당·독약당·역참) → 오당 광장(당마다 전각과 당주) → 천마신전(교주).
+//   전각은 검은 벽에 붉은 기와. 마교도가 성읍과 광장을 지키고, 정·사 무인은 관문 밖 협곡까지만 쳐들어온다.
+const MDANG={
+  hyeolma:{n:'혈마당',art:'S_cheonma_0',cls:'권',d:'피를 끓여 쓰는 장법의 당. 마교의 선봉'},
+  maryeong:{n:'마령당',art:'S_cheonma_1',cls:'도',d:'귀기 어린 도법으로 적진을 가르는 당'},
+  hyeolyeong:{n:'혈영대',art:'S_cheonma_4',cls:'창',d:'붉은 그림자처럼 들이치는 창기병'},
+  gwiryeong:{n:'귀령당',art:'S_cheonma_5',cls:'봉',d:'곤으로 관문과 신전을 지키는 수비의 당'},
+  amhyeol:{n:'암혈당',art:'S_cheonma_6',cls:'궁',d:'어둠 속에서 독시를 날리는 암살과 척후의 당'}};
+const MG_ELDER=4;   // 장로부터 다른 당 무공도 익힌다
+const dangOfArt=id=>Object.keys(MDANG).find(k=>MDANG[k].art===id);
+const dangDisc=id=>P&&P.sect==='cheonma'&&P.dang&&MDANG[P.dang].art===id?.7:1;
+// 마교 무공을 익힐 수 없는 까닭 (없으면 '')
+function mgArtBlock(a){
+  if(!P||P.sect!=='cheonma')return '교도만';if(a.hi)return '';
+  const d=dangOfArt(a.id);if(!d||d===P.dang)return '';
+  if(!P.dang)return '당에 든 뒤';
+  return rankIdx('cheonma')>=MG_ELDER?'':`${MDANG[d].n} 무공 · 장로부터`}
+function mgJoinDang(k){const D=MDANG[k];if(!D||P.sect!=='cheonma'||P.dang)return false;
+  P.dang=k;const a=ARTS[D.art];if(!P.arts[a.id])P.arts[a.id]={p:0,f:a.forms.map((f,i)=>i===0)};else P.arts[a.id].f[0]=true;
+  log(`${D.n}에 들었습니다. 당의 무공 [${a.n}]의 첫 초식 [${a.forms[0].n}]을(를) 익혔습니다. 당 무공 비급은 공적이 30% 쌉니다.`,'xp');
+  showBanner(D.n,'천마신교 오당');P.feats.push(`${Math.floor(P.age)}세에 천마신교 ${D.n}에 들었다`);return true}
+
+// ---- 화면 ----
+function mgOrgHtml(){const i=P.sect==='cheonma'?rankIdx('cheonma'):-1,R=SRANK.magyo;
+  const al=k=>Object.values(SECTS).filter(s=>s.al===k).length;
+  return `<div class="card"><h4>천마신교의 짜임 <small class="dim">문파 하나가 곧 세력</small></h4>
+    <p>교주 천마 → ${R.slice(1).reverse().map((n,k)=>{const j=R.length-1-k;return j===i?`<b class="gold">${n}</b>`:n}).join(' → ')} → ${i===0?'<b class="gold">교도</b>':'교도'}</p>
+    <p>오당: ${Object.entries(MDANG).map(([k,D])=>`${P.dang===k?`<b class="gold">${D.n}</b>`:D.n}(${CLASS[D.cls].n})`).join(' · ')}</p>
+    <p class="note">정의맹 ${al('jeong')}문파, 사천맹 ${al('sacheon')}문파와 홀로 맞선다. 입교하면 오당 광장에서 당 하나에 든다. 자기 당 무공만 익히다가 장로가 되면 다른 당 무공도 익힌다. 직위는 다른 세력보다 두 단 높은 호법·부교주까지 오른다.</p></div>`}
+function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.dang===n.dang;
+  const hi=P.sect!=='cheonma'?`"교도가 아니면 이 전각에 발을 들이지 마라."`:mine?`"${rankName('cheonma')}, ${D.n}의 이름을 높여라."`:P.dang?`"${MDANG[P.dang].n} 사람이 무슨 일인가."`:`"아직 당이 없군. ${D.n}에 들겠는가?"`;
+  const st=A(a.id),blk=mgArtBlock({id:a.id});
+  const join=P.sect==='cheonma'&&!P.dang?`<div class="row2"><span class="note">당은 한 번 고르면 바꿀 수 없다. 들면 [${a.n}]의 첫 초식을 바로 익힌다.</span>${B('mdang:'+n.dang,`${D.n} 입당`,{pri:1})}</div>`:'';
+  return `<p class="note">${hi}</p><div class="row2"><span class="note">${embImg('cheonma',22)} <b>${D.n}</b> · 천마신교 오당${mine?' · <span class="good">내 당</span>':''}</span></div><p class="note">${D.d}.</p>${join}
+    <div class="list"><div class="it"><div style="color:rgb(${a.c})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
+    <p class="note">비급은 천마신전의 교주에게서 공적으로 받는다.</p>${mgOrgHtml()}`}
+{const _hq=hqDlg;hqDlg=function(n){return n.hq==='cheonma'?_hq(n)+mgOrgHtml():_hq(n)}}
+{const _np=pNpc;pNpc=function(n){return n.dang?dangDlg(n):_np(n)}}
+{const _sa=sectAct;sectAct=function(a,x,y){
+  if(a==='mdang'){mgJoinDang(x);return true}
+  const r=_sa(a,x,y);
+  if(a==='sjoin'&&x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
+  if(P.sect!=='cheonma')P.dang=null;
+  return r}}
+
+// ---- 십만대산: 마교 본거지 지역 ----
+const MG_S=72,MG_C=36;
+const mgRoad=y=>MG_C+Math.round(2*Math.sin(y*.14));
+// 골짜기 너비: 협곡은 좁고, 성읍·광장은 넓다
+const mgHalf=y=>y>=62?7:y>=54?5:y>=38?15:y>=19?17:12;
+const MG_HALL={hyeolma:[MG_C-15,21],maryeong:[MG_C-15,27],hyeolyeong:[MG_C-15,33],gwiryeong:[MG_C+12,21],amhyeol:[MG_C+12,27]};
+const inMgTown=(x,y)=>y>=38&&y<54&&Math.abs(x-mgRoad(y))<=15,inMgPlaza=(x,y)=>y>=19&&y<38&&Math.abs(x-MG_C)<=16,inMgTemple=(x,y)=>y<19&&Math.abs(x-MG_C)<=11;
+function genMagyo(){
+  N=MG_S;const r=rng(66601);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
+  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];const rx=mgRoad(y),hw=mgHalf(y);for(let x=0;x<N;x++){
+    const dx=Math.abs(x-rx),hi=fbm(x*.15+3,y*.15+7),inV=dx<=hw&&y>=2;
+    let g=hi>.62?10:hi<.3?6:11;
+    if(inMgPlaza(x,y)&&y>=20&&y<=36&&Math.abs(x-MG_C)<=14)g=4;
+    if(inMgTemple(x,y)&&y>=3)g=4;
+    if(y>=19&&(x===rx||x===rx+1))g=1;
+    let o=null;
+    if(x===0||y===0||x===N-1||y===N-1)o='rock';
+    else if(!inV){const v=r();o=dx>hw+2||v<.7?(v<.12?'pine':'rock'):null}
+    else if(g!==4&&g!==1){const v=r();o=dx>=hw-1?(v<.55?'rock':v<.7?'pine':null):v<.035?'pine':v<.06?'rock':null}
+    map[y][x]={g,v:r()};objs[y][x]=o}}
+  // 천마관: 협곡을 가로막는 바위 벽과 관문 망루 둘
+  for(let y=55;y<=60;y++){const rx=mgRoad(y);for(let x=rx-9;x<=rx+10;x++)if(Math.abs(x-rx-.5)>2.5&&x>0&&x<N-1)objs[y][x]='rock'}
+  const bs=[{x:mgRoad(57)-4,y:56,w:2,h:2},{x:mgRoad(57)+4,y:56,w:2,h:2},
+    // 마교 성읍
+    {x:mgRoad(44)-9,y:42,w:3,h:2,kind:'inn'},{x:mgRoad(44)+5,y:42,w:3,h:2,kind:'smith'},{x:mgRoad(49)-9,y:48,w:2,h:2},{x:mgRoad(49)+5,y:48,w:3,h:2},
+    {x:mgRoad(40)-13,y:45,w:2,h:2},{x:mgRoad(40)+11,y:45,w:2,h:2},
+    // 오당 전각과 장로원
+    ...Object.values(MG_HALL).map(([x,y])=>({x,y,w:3,h:2,kind:'hall'})),{x:MG_C+12,y:33,w:3,h:2,kind:'hall'},
+    // 천마신전
+    {x:MG_C-3,y:5,w:7,h:3,kind:'temple'},{x:MG_C-10,y:8,w:2,h:3},{x:MG_C+9,y:8,w:2,h:3}];
+  for(const b of bs){b.mg=1;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  // 신전 앞 화톳불, 광장 등롱, 성읍 길 등롱
+  const lp=(x,y)=>{if(objs[y][x]==null&&map[y][x].g!==1){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}};
+  for(const[x,y]of[[MG_C-4,10],[MG_C+5,10],[MG_C-8,14],[MG_C+9,14],[MG_C-6,20],[MG_C+7,20],[MG_C-6,36],[MG_C+7,36]])lp(x,y);
+  for(let y=40;y<=52;y+=4){const rx=mgRoad(y);lp(rx-2,y);lp(rx+3,y)}
+  placeFlags('cheonma',[[mgRoad(54)-2,54],[mgRoad(54)+3,54],[MG_C-2,17],[MG_C+3,17],[MG_C-2,38],[MG_C+3,38]]);
+  const put=(t,x,y)=>{if(walk(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
+  const want=(t,n,ok)=>{for(let i=0;i<600&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok(map[y][x].g,x,y))put(t,x,y)}};
+  want('ore',14,g=>g===6||g===10||g===11);want('herb',8,(g,x,y)=>g===11&&y>=54);
+}
+const MG_ARRIVE={x:mgRoad(67)+.5,y:67.5};
+function mgZone(x,y){
+  if(Math.abs(x-mgRoad(y))>mgHalf(y)+1)return'십만대산 험봉';
+  return y>=61?'십만대산 협곡':y>=54?'천마관':y>=38?'마교 성읍':y>=19?'오당 광장':'천마신전'}
+function mgNpcs(){const s=SECTS.cheonma;
+  return[{id:'hq',hq:'cheonma',n:'천마신교 교주 천마',x:MG_C+.5,y:9.4,pal:masterPal(s)},
+    ...Object.entries(MG_HALL).map(([k,[x,y]])=>({id:'dang_'+k,dang:k,n:`${MDANG[k].n}주`,x:x+1.5,y:y+2.7,pal:sectPal('cheonma',3,MDANG[k].cls,{elite:1})})),
+    {id:'inn',n:'마교 객잔 주인',x:mgRoad(44)-7.5,y:44.7,pal:'keeper'},{id:'smith',n:'병기당 대장장이',x:mgRoad(44)+6.5,y:44.7,pal:'smithy'},
+    {id:'pharm',n:'독약당 의원',x:mgRoad(49)-8,y:50.7,pal:'keeper'},{id:'post',n:'역참 마부',x:MG_ARRIVE.x+2.5,y:MG_ARRIVE.y-.6,pal:'keeper'}]}
+function mgSpawns(){
+  const own=(x,y)=>(inMgTown(x,y)||inMgPlaza(x,y)||inMgTemple(x,y)),out=(x,y)=>y>=61;
+  const sp=[['마교도',9,own,(x,y)=>mkFac('마',0,x,y,'cheonma')],['마교 고수',3,(x,y)=>inMgPlaza(x,y)||inMgTemple(x,y),(x,y)=>mkFac('마',1,x,y,'cheonma')],
+    ['정파 무인',2,out,(x,y)=>mkFac('정',0,x,y)],['사파 무인',2,out,(x,y)=>mkFac('사',0,x,y)],['늑대',3,(x,y)=>y>=54&&!own(x,y)],['호랑이',1,(x,y)=>y>=58]];
+  return sp}
+{const R=REGIONS.hq_cheonma;
+  Object.assign(R,{name:'십만대산 천마신교',size:MG_S,theme:'dark',big:1,arrive:MG_ARRIVE,gen:genMagyo,bake:()=>chunkGround('dark'),zone:mgZone,spawns:mgSpawns(),npcs:mgNpcs()});
+  // 신강과 잇는 출입구: 남쪽 협곡 끝
+  R.gates.forEach(g=>{g.x=mgRoad(70)+.5;g.y=MG_S-1.4});
+  for(const p of Object.values(REGIONS))for(const g of p.gates||[])if(g.to==='hq_cheonma'){g.tx=MG_ARRIVE.x;g.ty=MG_ARRIVE.y}}
+// 예전 저장(40×40 본산 시절 자리)에서 불러와 바위 속에 서 있으면 협곡 입구로 옮긴다
+{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(id==='hq_cheonma'&&P&&P.reg==='hq_cheonma'&&!walkAt(P.x,P.y)){P.x=MG_ARRIVE.x;P.y=MG_ARRIVE.y}}}
 
 // ================= 보법: 회피기 (경공과 따로) =================
 // 경공은 멀리·높이 뛰는 이동기, 보법은 싸움 중 짧게 미끄러지는 회피기다. 설계: docs/세력_문파_설계.md 14장

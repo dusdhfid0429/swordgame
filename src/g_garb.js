@@ -93,7 +93,7 @@ const embImg=(sid,px=22)=>LOOK[sid]?`<img class="emb" src="${embUrl(sid)}" width
 function drawEmblem(g,sid,x,y,s){const cv=embCanvas(sid,s>40?96:48);if(cv)g.drawImage(cv,x-s/2,y-s/2,s,s)}
 
 // ---- 코드로 그리는 사람(몹·장문인)의 옷 ----
-function sectPal(sid,rank,cls,o={}){
+function sectPal(sid,rank,cls,o={}){rank=Math.min(4,rank);   // 마교 호법·부교주는 장로 옷을 입는다
   const L=lookOf(sid);if(!L)return null;const k=`garb_${sid}_${rank}_${cls}_${o.elite?1:0}_${o.master?1:0}`;if(PAL[k])return k;
   const robe=rankRobe(L,rank),W=CLASS[cls]||CLASS.검,monk=L.x==='monk',fac=alFac(SECTS[sid].al);
   PAL[k]={...PAL.hero,robe:[robe,cShade(robe,.55)],robeB:cShade(robe,.72),
@@ -123,7 +123,7 @@ function recolorAtlas(img,robe){
     d[i]=o[0];d[i+1]=o[1];d[i+2]=o[2]}
   g.putImageData(id,0,0);return c}
 function heroGarb(){
-  if(!P||!P.sect||!LOOK[P.sect])return null;const rank=rankIdx(P.sect),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
+  if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
   const imgs=HERO_GARB[key];if(!imgs)return null;
   return{...imgs,rank,pal:{cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?P.sect:null}}}
