@@ -80,6 +80,7 @@ function genSungsan(){
   // 산정 암자와 등롱
   const b={x:19,y:4,w:3,h:2,kind:'temple'};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]='B';builds.push(b);
   for(const[x,y]of[[17,7],[23,7],[SS_PATH(30)-2,31],[SS_PATH(30)+2,31]]){if(map[y][x].g!==4)map[y][x].g=1;objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  placeFlags('shaolin',[[16,9],[24,9]]);
   for(let x=0;x<N;x++){const y=SS_STREAM(x);for(const yy of[y,y+1])if(map[yy][x].g===3)rails.push({x,y:yy})}
   const put=(t,x,y)=>{if(walk(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   for(let i=0;i<300&&nodes.filter(n=>n.t==='herb').length<14;i++){const x=2+Math.floor(r()*(N-4)),y=10+Math.floor(r()*(N-12));if(map[y][x].g===0)put('herb',x,y)}

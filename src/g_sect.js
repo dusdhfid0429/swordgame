@@ -110,7 +110,7 @@ let sectView=null;
 function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
-  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
+  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier!=='small'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
@@ -132,7 +132,7 @@ function sectDetail(s,hq){
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 고급 무공 [${hi.n}]의 첫 초식을 바로 익힌다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
-  return `<div class="row2"><span class="note"><b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}
+  return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}</div>`:''}${member?teachHtml():''}`;
 }
@@ -148,7 +148,7 @@ function ownSectHtml(al){
 function sectAct(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
-    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;const h=s.arts.find(q=>q.hi);
+    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const h=s.arts.find(q=>q.hi);
       if(!P.arts[h.id])P.arts[h.id]={p:0,f:ARTS[h.id].forms.map((f,i)=>i===0)};
       log(`${s.n}에 입문했습니다. 고급 무공 [${h.n}]의 첫 초식 [${ARTS[h.id].forms[0].n}]을(를) 익혔습니다.`,'xp');showBanner(`${s.n} 입문`,h.n);
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}

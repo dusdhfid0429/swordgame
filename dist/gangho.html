@@ -80,6 +80,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 /* 천하 지도 */
 .world{width:100%;height:auto;max-height:60vh;display:block;background:#15110c;border:1px solid #4a3c27}
 .wf-j{color:#8fb8ff}.wf-s{color:#f0a060}.wf-m{color:#ff6a5a}
+.emb{vertical-align:middle;display:inline-block}.garb .garbprev{width:100%;max-width:340px;image-rendering:auto;display:block;margin:4px auto 0}.garbnames{display:grid;grid-template-columns:repeat(5,1fr);max-width:340px;margin:0 auto;text-align:center;font-size:12px}
 .world line{stroke:#6a5634;stroke-width:2;stroke-dasharray:4 3}
 .world circle{fill:#8a7454;stroke:#1a140c;stroke-width:2}.world text{fill:#e8d9a8;font:13px var(--body);text-anchor:middle;paint-order:stroke;stroke:#0b0a09;stroke-width:3px}
 .world .me circle,.world .me rect{fill:#ffd36a;stroke:#fff}.world .me text{fill:#ffd36a;font-weight:700}.world rect{fill:#c9b48a;stroke:#1a140c}
@@ -592,7 +593,7 @@ let sectView=null;
 function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
-  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
+  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier!=='small'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
@@ -614,7 +615,7 @@ function sectDetail(s,hq){
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 고급 무공 [${hi.n}]의 첫 초식을 바로 익힌다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
-  return `<div class="row2"><span class="note"><b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}
+  return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}</div>`:''}${member?teachHtml():''}`;
 }
@@ -630,7 +631,7 @@ function ownSectHtml(al){
 function sectAct(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
-    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;const h=s.arts.find(q=>q.hi);
+    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const h=s.arts.find(q=>q.hi);
       if(!P.arts[h.id])P.arts[h.id]={p:0,f:ARTS[h.id].forms.map((f,i)=>i===0)};
       log(`${s.n}에 입문했습니다. 고급 무공 [${h.n}]의 첫 초식 [${ARTS[h.id].forms[0].n}]을(를) 익혔습니다.`,'xp');showBanner(`${s.n} 입문`,h.n);
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
@@ -1645,7 +1646,8 @@ function plabel(f){
 // ================= windows =================
 let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴',world:'천하 지도'};
-function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+let panelAt=0;
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld}[panel];
@@ -1815,7 +1817,9 @@ function pHouse(){
 }
 function openHouse(){openPanel('house')}
 // one click handler for every window button
-$('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(b.dataset.act)});
+// 창을 연 손가락 탭의 click이 막 열린 창의 버튼을 누르지 않게 (터치 버튼은 pointerdown에 창을 연다). 창 안에서 눌러 시작한 탭과 키보드는 그대로
+let wDown=0;$('wbody').addEventListener('pointerdown',()=>{wDown=performance.now()});
+$('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||(e.detail&&wDown<panelAt))return;act(b.dataset.act)});
 function act(s){
   const[a,x,y]=s.split(':'),n=+x;
   if(sectAct(a,x,y)){renderOpen();return}
@@ -1969,7 +1973,9 @@ function drawFighter(e,isP){
   if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
   if(isP&&heroSprite()){const[fi,useB,lk]=heroFrame(),f=HF[fi],k=.47,lift=P.sj>0?Math.sin((1-P.sj/.6)*Math.PI)*22:jump;ctx.translate(0,-lift);ctx.scale(side,1);
-    const img=useB?(flash&&HBODYW?HBODYW:HBODY):(flash&&HEROW?HEROW:HERO);
+    const gb=heroGarb(),img=useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
+    // 일대제자부터 문파 망토 (도트 몸이 코드 사람보다 1.2배 크다)
+    if(gb&&gb.pal.cape&&!flash){const tr=e.moving?7:0,wv=Math.sin(time*8);ctx.save();ctx.translate(-2,-8);drawCape(gb.pal,tr,wv,1.2);ctx.restore()}
     ctx.drawImage(img,f[0],0,f[1],f[2],-f[3]*k,-f[2]*k+3-f[4]*k,f[1]*k,f[2]*k);
     if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
     if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
@@ -2004,7 +2010,8 @@ function drawFighter(e,isP){
   const vh=l=>12.5*Math.cos(l[0])+13*Math.cos(l[1]);ctx.translate(0,st?25.5-Math.max(vh(frontLeg),vh(backLeg)):0);
   const withLean=fn=>{ctx.save();ctx.translate(0,-29);ctx.rotate(lean);ctx.translate(0,29);fn();ctx.restore()};
   // cape (boss) and sash tails (hero) stream behind
-  if(pal.cape)withLean(()=>poly([[-7,-45],[4,-45],[-10-trail*1.6,-4+wv*2],[-22-trail*2,-8+wv*3]],Fc(pal.cape)));
+  if(pal.cape&&pal.capeLen)withLean(()=>drawCape(flash?{...pal,cape:'#ffffff',emb:null}:pal,trail,wv));
+  else if(pal.cape)withLean(()=>poly([[-7,-45],[4,-45],[-10-trail*1.6,-4+wv*2],[-22-trail*2,-8+wv*3]],Fc(pal.cape)));
   if(pal.jade)seg([[-6,-30],[-12-trail,-22+wv*2],[-17-trail*1.4,-15+wv*3]],2.2,Fc(pal.sash));
   // ponytail behind the head (drawn over it in back view)
   const tail=()=>{if(pal.tail)withLean(()=>seg([[-2,-58],[-6-trail*.6,-52+wv],[-8-trail,-42+wv*1.5]],3,Fc(pal.hair)))};
@@ -2021,6 +2028,7 @@ function drawFighter(e,isP){
   poly([[-8,-30],[1,-30],[-1+bk*.6,hem-1],[-10+bk-trail*.5,hem+wv*.6]],Fc(pal.robeB));
   leg([2,-26],frontLeg);
   poly([[-1,-30],[8,-30],[11+ff,hem-2],[2+ff*.7,hem]],Fc(lg(-2,11,pal.robe[0],pal.robe[1])));
+  if(pal.patch&&!flash){ctx.fillStyle='rgba(60,50,30,.75)';ctx.fillRect(3,-22,4,4);ctx.fillStyle='rgba(150,120,80,.7)';ctx.fillRect(-6,-16,4,3)}
   withLean(()=>{
     // torso, cross collar, sash and pendant
     poly([[-8,-45],[8,-45],[7.6,-37],[7,-29],[-7,-29],[-8,-37]],Fc(lg(-8,8,pal.robe[0],pal.robe[1])));
@@ -2028,6 +2036,7 @@ function drawFighter(e,isP){
     if(pal.armor){poly([[-10,-46],[-2,-46],[-3,-38],[-11,-39]],lg(-11,-2,'#7c776c','#24221e'));poly([[2,-46],[11,-46],[11,-38],[3,-38]],lg(2,11,'#7c776c','#24221e'));
       ctx.strokeStyle='rgba(20,18,16,.7)';ctx.lineWidth=1;for(let y=-42;y<-32;y+=3){ctx.beginPath();ctx.moveTo(-6,y);ctx.lineTo(6,y);ctx.stroke()}}
     poly([[-7.6,-32.5],[7.6,-32.5],[7.3,-28.5],[-7.3,-28.5]],Fc(pal.sash));
+    if(pal.emb&&!back&&!flash)drawEmblem(ctx,pal.emb,-3.5,-39,5.5);
     if(pal.jade){const sway=mv?s1*2:0;seg([[5,-28.5],[5.5+sway,-21]],1.2,pal.trim);ctx.fillStyle='#5fbf8f';ctx.beginPath();ctx.arc(5.6+sway,-19.5,2,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.lineWidth=.8;ctx.stroke();
       seg([[5.6+sway,-17.5],[5.8+sway*1.2,-13]],1.4,'#b8291f')}
     // neck and head
@@ -2058,7 +2067,7 @@ function drawFighter(e,isP){
   if(!isP&&e.stun>0&&!e.npc){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(sc>1.2?88:68)+Math.sin(a)*3,2,0,7);ctx.fill()}}
   if(!isP&&!e.npc){const w=30*sc,y=p.y-(sc>1.2?94:74);
     ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-w/2-1,y-1,w+2,5);ctx.fillStyle='#c0261b';ctx.fillRect(p.x-w/2,y,w*Math.max(0,e.hp/e.maxHp),3);
-    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?'#9cc8f0':'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5)}}
+    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?'#9cc8f0':'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
   if(e.npc){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
 }
 
@@ -2357,7 +2366,8 @@ function showRebirth(e,cause){
 }
 
 // ================= input =================
-const C=$('game'),ctx=C.getContext('2d');const L=document.createElement('canvas'),lx=L.getContext('2d');
+const C=$('game');let ctx=C.getContext('2d');  // let: 문파 옷 미리보기가 잠시 바꿔 끼운다
+const L=document.createElement('canvas'),lx=L.getContext('2d');
 function resize(){const r=C.getBoundingClientRect();S=Math.max(.8,Math.min(1.3,r.width/900));W=r.width/S;H=r.height/S;C.width=L.width=r.width*devicePixelRatio;C.height=L.height=r.height*devicePixelRatio}
 addEventListener('resize',resize);
 function pickAt(ev){
@@ -2744,6 +2754,7 @@ function genSungsan(){
   // 산정 암자와 등롱
   const b={x:19,y:4,w:3,h:2,kind:'temple'};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]='B';builds.push(b);
   for(const[x,y]of[[17,7],[23,7],[SS_PATH(30)-2,31],[SS_PATH(30)+2,31]]){if(map[y][x].g!==4)map[y][x].g=1;objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  placeFlags('shaolin',[[16,9],[24,9]]);
   for(let x=0;x<N;x++){const y=SS_STREAM(x);for(const yy of[y,y+1])if(map[yy][x].g===3)rails.push({x,y:yy})}
   const put=(t,x,y)=>{if(walk(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   for(let i=0;i<300&&nodes.filter(n=>n.t==='herb').length<14;i++){const x=2+Math.floor(r()*(N-4)),y=10+Math.floor(r()*(N-12));if(map[y][x].g===0)put('herb',x,y)}
@@ -2781,6 +2792,166 @@ function bakeSungsan(){
   return c;
 }
 
+// ================= 문파 상징과 의복 =================
+// 문파마다 상징 마크(글자·도형·색)와 옷 색이 있고, 직위가 오를수록 옷이 달라진다. 가입하면 내 캐릭터도 그 옷을 입는다.
+// 직위별 옷: 0 속가제자 = 문파 색을 누른 수련복, 1 정식제자 = 문파 색 + 띠·머리끈, 2 일대제자 = 금테 + 어깨 망토(마크),
+//            3 호법·당주 = 허리까지 오는 망토, 4 장로 = 땅에 끌리는 짙은 망토에 금테
+// 설계: docs/세력_문파_설계.md 12장
+// [글자, 마크 모양, 옷 색, 띠 색(마크 바탕), 테 색, 덧붙임]
+// 덧붙임: monk 민머리 승려, short 짧은 옷(산적·마적), band 머리띠, mask 복면, patch 기운 옷, taiji 태극, plum 매화
+const LOOK={
+  shaolin:['卍','circle','#d88a2e','#a3271c','#f0c060','monk'],
+  mudang:['武','circle','#5a6f8c','#e8e4d8','#c9a14a','taiji'],
+  hwasan:['華','circle','#26262e','#d0446a','#f0b8c8','plum'],
+  emei:['峨','hex','#b8bcc8','#6a3a8a','#e8e0f0'],
+  kunlun:['崑','diamond','#dfe8f0','#3a7aa8','#a8d0e8'],
+  kongtong:['崆','square','#8a7a5a','#5a3a1a','#d8b860'],
+  jeomchang:['點','diamond','#5a8a5a','#2a4a2a','#d8c870'],
+  cheongseong:['靑','hex','#3a7a74','#1a3a38','#a0d8c8'],
+  jongnam:['終','shield','#6a7484','#2a3444','#c9a14a'],
+  gaebang:['丐','octagon','#8a7454','#4a6a2a','#c0a060','patch'],
+  namgung:['宮','shield','#e8e0c8','#2a4a8a','#d8b040'],
+  moyong:['慕','circle','#c8d8e8','#4a6a9a','#f0f0f8'],
+  paeng:['彭','square','#6a2a24','#d8a040','#f0d070'],
+  eon:['彦','octagon','#8a8a6a','#4a3a2a','#d8c070'],
+  jegal:['葛','hex','#e8e8e0','#2a5a4a','#9ab8a8'],
+  hwangbo:['皇','shield','#c8a040','#6a3a14','#f0e090'],
+  ak:['岳','shield','#3a4a6a','#a8281c','#d8b040'],
+  dang:['唐','diamond','#3a5a3a','#9a2a6a','#a8c860'],
+  hyeongsan:['衡','diamond','#8a9ab0','#3a4a6a','#e8e8f0'],
+  cheonsan:['天','hex','#e8f0f8','#7aa8d8','#c0d8f0'],
+  taesan:['泰','square','#9a8a6a','#3a5a2a','#e0d090'],
+  yangga:['楊','shield','#7a3a2a','#e0c060','#f0e0a0'],
+  jeonjin:['全','circle','#e0dccc','#3a3a5a','#b8a878'],
+  gomyo:['古','circle','#f0f0f0','#8a8aa8','#c8c8e0'],
+  ungga:['雲','octagon','#a8c0d8','#4a6a8a','#e8f0f8'],
+  seolsan:['雪','diamond','#f0f4f8','#5a8ab8','#d8e8f8'],
+  jangbaek:['白','hex','#d0d8d0','#3a6a5a','#b0d0c0'],
+  danri:['段','square','#6a5a7a','#c9a14a','#e8d8f0'],
+  sanggwan:['上','shield','#8ab0a0','#2a5a4a','#e8e0c0'],
+  danmok:['木','octagon','#7a8a5a','#3a2a1a','#d8c078'],
+  bota:['普','circle','#d8c8a0','#2a6a8a','#f0e0b0','monk'],
+  mosan:['茅','diamond','#4a3a6a','#d8b040','#f0e090'],
+  nabu:['羅','hex','#a87a5a','#3a6a3a','#e8d098'],
+  haenam:['海','circle','#2a6a8a','#e8e0c0','#88d0e8'],
+  noklim:['綠','shield','#3a4a2a','#8a2a1a','#a89850','short'],
+  janggang:['江','octagon','#2a3a4a','#4a8aa8','#a89860','band'],
+  haomun:['下','square','#5a4a3a','#a87a2a','#d8b060'],
+  sama:['司','shield','#2a1a2a','#8a2a4a','#c9a14a'],
+  dongjeong:['洞','octagon','#2a4a4a','#3a7a6a','#a8a870','band'],
+  yasu:['獸','diamond','#6a4a2a','#c88a2a','#e8c070','short'],
+  gwangpung:['風','hex','#a88a5a','#5a2a1a','#e8c888','short'],
+  taeyang:['陽','circle','#c84a1a','#f0c040','#ffe890'],
+  bukhae:['氷','hex','#a8c8e0','#2a4a7a','#e8f8ff'],
+  podal:['密','circle','#a8281c','#e8a020','#f8d870','monk'],
+  daeroe:['雷','octagon','#d8a040','#8a2a1a','#f8e8a8','monk'],
+  mandok:['毒','diamond','#2a3a1a','#7a2a8a','#a8c860'],
+  hyeolrang:['狼','shield','#3a2a2a','#a81818','#a89080'],
+  gwiyeong:['鬼','diamond','#1a1a24','#4a4a6a','#a8a8c8','mask'],
+  heukpung:['黑','square','#2a2620','#5a4a2a','#a88a50','band'],
+  cheonma:['魔','hex','#1a1414','#a01818','#d8a840']};
+const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgbHex=c=>'#'+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const cMix=(a,b,t)=>{const A=hexRgb(a),B=hexRgb(b);return rgbHex(A.map((v,i)=>v+(B[i]-v)*t))};
+const cShade=(a,k)=>rgbHex(hexRgb(a).map(v=>v*k));
+const lookOf=sid=>{const L=LOOK[sid];return L&&{sid,glyph:L[0],shape:L[1],robe:L[2],accent:L[3],trim:L[4],x:L[5]||''}};
+// 직위 0(속가제자)은 문파 색을 회색 쪽으로 눌러 수련복처럼 보이게
+const rankRobe=(L,rank)=>rank<1?cMix(L.robe,'#8a8884',.5):L.robe;
+
+// ---- 상징 마크 (캔버스에 한 번 그려 두고 다시 쓴다) ----
+const EMB={};
+function shapePath(g,shape,c,r){g.beginPath();
+  if(shape==='circle')g.arc(c,c,r,0,7);
+  else if(shape==='diamond'){g.moveTo(c,c-r);g.lineTo(c+r,c);g.lineTo(c,c+r);g.lineTo(c-r,c)}
+  else if(shape==='square'){const s=r*.86;g.rect(c-s,c-s,s*2,s*2)}
+  else if(shape==='shield'){g.moveTo(c-r*.82,c-r*.86);g.lineTo(c+r*.82,c-r*.86);g.lineTo(c+r*.82,c-r*.1);g.quadraticCurveTo(c+r*.7,c+r*.62,c,c+r);g.quadraticCurveTo(c-r*.7,c+r*.62,c-r*.82,c-r*.1)}
+  else{const n=shape==='hex'?6:8;for(let i=0;i<n;i++){const a=Math.PI*2*i/n+(n===8?Math.PI/8:Math.PI/6);g[i?'lineTo':'moveTo'](c+Math.cos(a)*r,c+Math.sin(a)*r)}}
+  g.closePath()}
+function embCanvas(sid,S=96){
+  const key=sid+'_'+S;if(EMB[key])return EMB[key];const L=lookOf(sid);if(!L)return null;
+  const cv=document.createElement('canvas');cv.width=cv.height=S;const g=cv.getContext('2d'),c=S/2,r=S*.44;
+  shapePath(g,L.shape,c,r);g.fillStyle=L.trim;g.fill();
+  shapePath(g,L.shape,c,r*.86);const gr=g.createLinearGradient(0,c-r,0,c+r);gr.addColorStop(0,cMix(L.accent,'#ffffff',.12));gr.addColorStop(1,cShade(L.accent,.7));g.fillStyle=gr;g.fill();
+  g.lineWidth=S*.02;g.strokeStyle='rgba(10,7,5,.8)';shapePath(g,L.shape,c,r);g.stroke();
+  const ink=hexRgb(L.accent).reduce((a,v)=>a+v,0)>420?'#1a1612':L.trim;
+  if(L.x==='taiji'){const t=r*.56;g.fillStyle='#f4f0e6';g.beginPath();g.arc(c,c,t,0,7);g.fill();g.fillStyle='#1a1612';g.beginPath();g.arc(c,c,t,-Math.PI/2,Math.PI/2);g.arc(c,c+t/2,t/2,Math.PI/2,-Math.PI/2,true);g.arc(c,c-t/2,t/2,Math.PI/2,-Math.PI/2);g.fill();
+    g.fillStyle='#f4f0e6';g.beginPath();g.arc(c,c+t/2,t/7,0,7);g.fill();g.fillStyle='#1a1612';g.beginPath();g.arc(c,c-t/2,t/7,0,7);g.fill();g.strokeStyle=L.trim;g.lineWidth=S*.02;g.beginPath();g.arc(c,c,t,0,7);g.stroke()}
+  else if(L.x==='plum'){const p=r*.24;for(let i=0;i<5;i++){const a=-Math.PI/2+i*Math.PI*2/5;g.fillStyle='#f6d8e0';g.beginPath();g.arc(c+Math.cos(a)*p*1.15,c+Math.sin(a)*p*1.15,p,0,7);g.fill()}
+    g.fillStyle=L.accent;g.beginPath();g.arc(c,c,p*.6,0,7);g.fill();g.fillStyle='#f0c040';for(let i=0;i<5;i++){const a=-Math.PI/2+i*Math.PI*2/5+.6;g.beginPath();g.arc(c+Math.cos(a)*p*.45,c+Math.sin(a)*p*.45,S*.012,0,7);g.fill()}}
+  else{g.font=`bold ${Math.round(S*.46)}px "Noto Serif KR","Noto Serif CJK KR","Noto Serif CJK SC","Nanum Myeongjo",serif`;g.textAlign='center';g.textBaseline='middle';
+    g.lineWidth=S*.05;g.strokeStyle=ink==='#1a1612'?'rgba(255,255,255,.35)':'rgba(10,7,5,.7)';g.strokeText(L.glyph,c,c+S*.03);g.fillStyle=ink;g.fillText(L.glyph,c,c+S*.03)}
+  return EMB[key]=cv}
+const EMBURL={};
+const embUrl=sid=>EMBURL[sid]||(EMBURL[sid]=embCanvas(sid)?embCanvas(sid).toDataURL():'');
+const embImg=(sid,px=22)=>LOOK[sid]?`<img class="emb" src="${embUrl(sid)}" width="${px}" height="${px}" alt="${SECTS[sid]?SECTS[sid].n:''} 상징">`:'';
+function drawEmblem(g,sid,x,y,s){const cv=embCanvas(sid,s>40?96:48);if(cv)g.drawImage(cv,x-s/2,y-s/2,s,s)}
+
+// ---- 코드로 그리는 사람(몹·장문인)의 옷 ----
+function sectPal(sid,rank,cls,o={}){
+  const L=lookOf(sid);if(!L)return null;const k=`garb_${sid}_${rank}_${cls}_${o.elite?1:0}_${o.master?1:0}`;if(PAL[k])return k;
+  const robe=rankRobe(L,rank),W=CLASS[cls]||CLASS.검,monk=L.x==='monk',fac=alFac(SECTS[sid].al);
+  PAL[k]={...PAL.hero,robe:[robe,cShade(robe,.55)],robeB:cShade(robe,.72),
+    inner:rank>=1?L.accent:cShade(robe,.8),sash:rank>=1?L.accent:cShade(robe,.6),trim:rank>=2?L.trim:cShade(robe,.85),
+    hairband:monk?null:rank>=1?L.accent:null,tail:monk?0:1,hair:monk?'#c8987a':o.master?'#d8d4cc':PAL.hero.hair,
+    weapon:o.master?'none':W.draw,anim:W.anim,jade:0,beard:o.master||o.elite?1:0,armor:o.elite&&fac!=='정'&&!monk&&!o.master?1:0,
+    short:L.x==='short'&&!o.master?1:0,band:L.x==='band'||L.x==='short'&&rank<3?L.accent:null,mask:L.x==='mask'&&!o.master?'#14141c':null,patch:L.x==='patch'?1:0,
+    cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?sid:null};
+  return k}
+// 망토: 길이 1 어깨, 2 허리, 3 땅까지. 뒤쪽 가운데에 문파 마크
+function drawCape(pal,trail,wv,sc=1){
+  const L=pal.capeLen||3,yb=[0,-30,-17,-3][L]*sc,w=[0,.55,.8,1][L],top=-45*sc;
+  const pts=[[-7*sc,top],[4*sc,top],[(-6-4*w)*sc-trail*1.6*w,yb+wv*2],[(-12-10*w)*sc-trail*2*w,yb-4*sc+wv*3]];
+  poly(pts,pal.cape);
+  if(pal.capeEdge){ctx.strokeStyle=pal.capeEdge;ctx.lineWidth=1.4*sc;ctx.beginPath();ctx.moveTo(...pts[1]);ctx.lineTo(...pts[2]);ctx.lineTo(...pts[3]);ctx.lineTo(...pts[0]);ctx.stroke()}
+  if(pal.emb){const cx=(pts[0][0]+pts[1][0]+pts[2][0]+pts[3][0])/4,cy=(pts[0][1]+pts[1][1]+pts[2][1]+pts[3][1])/4;drawEmblem(ctx,pal.emb,cx,cy,(L===1?7:L===2?9:11)*sc)}}
+
+// ---- 내 캐릭터(도트 그림)의 옷: 남색 겉옷 픽셀만 문파 색으로 바꿔 칠한 그림을 문파·직위(속가/정식)마다 만들어 둔다 ----
+const HERO_GARB={};
+function recolorAtlas(img,robe){
+  const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
+  const id=g.getImageData(0,0,c.width,c.height),d=id.data,B=hexRgb(robe),dark=B.map(v=>v*.22),light=B.map(v=>v+(255-v)*.38);
+  for(let i=0;i<d.length;i+=4){if(d[i+3]<20)continue;const r=d[i],gg=d[i+1],b=d[i+2],l=r*.3+gg*.59+b*.11;
+    if(b-r<15||l>=140)continue;  // 겉옷(푸른 기가 도는 어두운 색)만. 머리카락·피부·흰 속옷·칼은 그대로
+    const u=Math.max(0,Math.min(1,(l-12)/108));let o;
+    if(u<.42){const t=u/.42;o=dark.map((v,k)=>v+(B[k]-v)*t)}else{const t=(u-.42)/.58;o=B.map((v,k)=>v+(light[k]-v)*t)}
+    d[i]=o[0];d[i+1]=o[1];d[i+2]=o[2]}
+  g.putImageData(id,0,0);return c}
+function heroGarb(){
+  if(!P||!P.sect||!LOOK[P.sect])return null;const rank=rankIdx(P.sect),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
+  if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
+  const imgs=HERO_GARB[key];if(!imgs)return null;
+  return{...imgs,rank,pal:{cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?P.sect:null}}}
+
+// ---- 직위별 옷 미리보기 (문파 창) ----
+const GARB_PREV={};
+function garbPreview(sid){
+  const pk=sid+(P&&P.sect===sid?rankIdx(sid):'');if(GARB_PREV[pk])return GARB_PREV[pk];const s=SECTS[sid],cls=s.arts[0].cls,w=68,h=124,cv=document.createElement('canvas');cv.width=w*5*2;cv.height=h*2;
+  const og=ctx,sv={x:cam.x,y:cam.y,W,H,time};
+  try{
+    // drawFighter는 화면(ctx)에 그리므로, 잠시 미리보기 캔버스로 바꿔 끼운다
+    ctx=cv.getContext('2d');ctx.scale(2,2);time=0.4;
+    for(let r=0;r<5;r++){const e={x:20,y:20,fx:1,fy:0,moving:false,hit:0,big:1.45,pal:sectPal(sid,r,cls,{elite:r>=2,master:r>=4}),d:{},npc:1,n:''},p=iso(20,20);
+      cam.x=p.x+W/2-(w*r+w/2+6);cam.y=p.y+H/2-(h-26);drawFighter(e,false)}
+    ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';SRANK[s.al].forEach((n,r)=>{ctx.fillStyle=P&&P.sect===sid&&rankIdx(sid)===r?'#e8c66e':'#cfc4ae';ctx.fillText(n,w*r+w/2,h-6)})}
+  catch(err){}
+  ctx=og;cam.x=sv.x;cam.y=sv.y;time=sv.time;
+  return GARB_PREV[pk]=cv.toDataURL()}
+function garbHtml(s){
+  if(!LOOK[s.id])return'';const L=lookOf(s.id),names=SRANK[s.al];
+  return `<div class="card garb"><h4>${embImg(s.id,34)} ${s.n}의 상징과 의복</h4>
+    <img class="garbprev" src="${garbPreview(s.id)}" alt="${s.n} 직위별 의복: ${names.join(', ')}">
+    <p class="dim">상징 '${L.glyph}'. 가입하면 이 옷을 입고, 직위가 오르면 옷이 바뀐다: 속가제자 수련복 → 정식제자 띠 → 일대제자 금테·어깨 망토 → ${names[3]} 허리 망토 → 장로 긴 망토.</p></div>`}
+
+// ---- 본산 깃발: 'flag:문파' 물체 ----
+function drawFlag(i,j,sid){
+  const p=toScreen(i+.5,j+.5),L=lookOf(sid);if(!L)return;const wv=Math.sin(time*2.4+i+j);
+  ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,0,8,3.5,0,0,7);ctx.fill();
+  ctx.fillStyle='#3a2a1c';ctx.fillRect(-1.6,-78,3.2,78);ctx.fillStyle=L.trim;ctx.beginPath();ctx.arc(0,-79,2.6,0,7);ctx.fill();
+  const x0=1.5,y0=-74,fw=26,fh=36,pts=[[x0,y0],[x0+fw,y0+wv*2],[x0+fw+wv,y0+fh+wv*2],[x0+fw*.5,y0+fh+6+wv],[x0,y0+fh]];
+  poly(pts,L.accent);ctx.strokeStyle=L.trim;ctx.lineWidth=1.6;ctx.stroke();
+  drawEmblem(ctx,sid,x0+fw/2+wv*.5,y0+fh/2+wv,20);ctx.restore()}
+function placeFlags(sid,spots){for(const[x,y]of spots)if(objs[y]&&objs[y][x]==null&&map[y][x].g!==2&&map[y][x].g!==1&&map[y][x].g!==3)objs[y][x]='flag:'+sid}
+
 // ================= 세력 무인, 문파 직위, 문파 본산 =================
 // 정파·사파·마교 무인 몹은 서로 적이다. 정파와 사파는 서로 싸우고, 마교는 정사 모두를 공격한다.
 // 플레이어 편(문파의 세력, 없으면 정·사 성향)과 같은 무인은 먼저 덤비지 않는다.
@@ -2817,7 +2988,9 @@ function mkFac(fac,elite,x,y,sid){
   const s=SECTS[sid]||pick(Object.values(SECTS).filter(q=>alFac(q.al)===fac)),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
   const e=mkMob(kind,x,y),bow=cls==='궁';
   e.d={...e.d,el:a.el,ranged:bow?1:0};e.el=a.el;e.reach=bow?5:cls==='창'?1.8:cls==='봉'?1.6:1.3;
-  e.pal=facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${elite?'고수':fac==='마'?'교도':'제자'}`;
+  // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
+  const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
+  e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
   return e}
 // 0.5초마다 주변의 적 세력 무인을 찾아 노린다
 function facScan(e,dt){
@@ -2868,7 +3041,7 @@ function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1));
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`)}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토'][a]}.`,'sys')}}
   return v}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
@@ -2899,7 +3072,7 @@ function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'�
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
-function masterPal(s){const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
+function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];
 const HQ_BEAST={peak:[['늑대',3],['호랑이',1]],snow:[['늑대',4],['호랑이',1]],forest:[['늑대',2],['곰',1],['사슴',3]],lake:[['사슴',2],['멧돼지',2]],
   manor:[['토끼',3],['양',2]],swamp:[['늑대',2],['멧돼지',2]],canyon:[['늑대',3],['멧돼지',1]],dark:[['늑대',3],['호랑이',1]]};
@@ -2958,6 +3131,8 @@ function genHQ(s,th){
   if(th==='manor')bs.push({x:10,y:22,w:3,h:2},{x:27,y:24,w:3,h:2});
   for(const b of bs){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of[[16,6],[24,6],[14,14],[26,14]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  // 문파 깃발: 산문(산길이 마당에 닿는 곳) 양옆과 본전 앞
+  {const q=hqPath(17,sd);placeFlags(s.id,[[q-1,17],[q+2,17],[17,11],[24,11]])}
   for(let y=16;y<N;y++){const px=hqPath(y,sd);for(const x of[px,px+1])if(map[y][x].g===3)rails.push({x,y})}
   const put=(t,x,y)=>{if(walk(x,y)&&!inHQ(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,ok)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok(map[y][x].g))put(t,x,y)}};
@@ -3168,6 +3343,8 @@ function genProv(id,k,p){
   for(const[x,y]of[[C-2,C-2],[C+3,C+3],[C-2,C+3]])if(!road.has(x+','+y)&&map[y][x].g!==2){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   const put=(t,x,y)=>{if(walk(x,y)&&!road.has(x+','+y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,okg)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(okg(map[y][x].g))put(t,x,y)}};
+  // 본산 입구 이정표 옆에 그 문파 깃발
+  for(const g of R.gates)if(g.inner&&g.to.startsWith('hq_')){const x=Math.floor(g.x),y=Math.floor(g.y);for(const[dx,dy]of[[3,-1],[-3,-1],[3,1],[-3,1]]){const fx=x+dx,fy=y+dy;if(fx>0&&fy>0&&fx<S-1&&fy<S-1&&!road.has(fx+','+fy)&&map[fy][fx].g!==2&&!objs[fy][fx]){objs[fy][fx]='flag:'+g.to.slice(3);break}}}
   const sc=S*S/1600;want('herb',Math.round(8*sc),g=>g===0||g===7||g===9);want('wood',Math.round(5*sc),g=>g===0||g===7);want('ore',Math.round(5*sc),g=>g===6||g===8||g===10||g===12);
   if(T.river||T.lake||T.sea){let n=0;for(let i=0;i<600&&n<4;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(walk(x,y)&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>map[y+dy][x+dx].g===2)){put('fish',x,y);n++}}}
 }
@@ -3375,6 +3552,7 @@ function draw(){
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
+    if(ob.startsWith('flag:')){list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
     const fade=tall&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
     list.push({d:i+j+1,f:()=>{if(fade)ctx.globalAlpha=.4;ctx.drawImage(spr,p.x-spr.width/2,p.y-spr.height+(tall?12:10));ctx.globalAlpha=1}})}

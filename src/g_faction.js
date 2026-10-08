@@ -34,7 +34,9 @@ function mkFac(fac,elite,x,y,sid){
   const s=SECTS[sid]||pick(Object.values(SECTS).filter(q=>alFac(q.al)===fac)),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
   const e=mkMob(kind,x,y),bow=cls==='궁';
   e.d={...e.d,el:a.el,ranged:bow?1:0};e.el=a.el;e.reach=bow?5:cls==='창'?1.8:cls==='봉'?1.6:1.3;
-  e.pal=facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${elite?'고수':fac==='마'?'교도':'제자'}`;
+  // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
+  const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
+  e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
   return e}
 // 0.5초마다 주변의 적 세력 무인을 찾아 노린다
 function facScan(e,dt){
@@ -85,7 +87,7 @@ function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1));
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`)}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토'][a]}.`,'sys')}}
   return v}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
@@ -116,7 +118,7 @@ function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'�
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
-function masterPal(s){const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
+function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];
 const HQ_BEAST={peak:[['늑대',3],['호랑이',1]],snow:[['늑대',4],['호랑이',1]],forest:[['늑대',2],['곰',1],['사슴',3]],lake:[['사슴',2],['멧돼지',2]],
   manor:[['토끼',3],['양',2]],swamp:[['늑대',2],['멧돼지',2]],canyon:[['늑대',3],['멧돼지',1]],dark:[['늑대',3],['호랑이',1]]};
@@ -175,6 +177,8 @@ function genHQ(s,th){
   if(th==='manor')bs.push({x:10,y:22,w:3,h:2},{x:27,y:24,w:3,h:2});
   for(const b of bs){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of[[16,6],[24,6],[14,14],[26,14]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  // 문파 깃발: 산문(산길이 마당에 닿는 곳) 양옆과 본전 앞
+  {const q=hqPath(17,sd);placeFlags(s.id,[[q-1,17],[q+2,17],[17,11],[24,11]])}
   for(let y=16;y<N;y++){const px=hqPath(y,sd);for(const x of[px,px+1])if(map[y][x].g===3)rails.push({x,y})}
   const put=(t,x,y)=>{if(walk(x,y)&&!inHQ(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,ok)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok(map[y][x].g))put(t,x,y)}};

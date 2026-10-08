@@ -76,7 +76,8 @@ function plabel(f){
 // ================= windows =================
 let panel=null;
 const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴',world:'천하 지도'};
-function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+let panelAt=0;
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld}[panel];
@@ -246,7 +247,9 @@ function pHouse(){
 }
 function openHouse(){openPanel('house')}
 // one click handler for every window button
-$('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(b.dataset.act)});
+// 창을 연 손가락 탭의 click이 막 열린 창의 버튼을 누르지 않게 (터치 버튼은 pointerdown에 창을 연다). 창 안에서 눌러 시작한 탭과 키보드는 그대로
+let wDown=0;$('wbody').addEventListener('pointerdown',()=>{wDown=performance.now()});
+$('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||(e.detail&&wDown<panelAt))return;act(b.dataset.act)});
 function act(s){
   const[a,x,y]=s.split(':'),n=+x;
   if(sectAct(a,x,y)){renderOpen();return}
