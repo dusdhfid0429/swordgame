@@ -33,7 +33,7 @@ function travel(g){
   setTimeout(()=>{
     try{
       mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;
+      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.perch=null;P.z=0;
       allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
       const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');

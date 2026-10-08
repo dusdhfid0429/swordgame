@@ -60,6 +60,7 @@ function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)ret
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기'};
 function ctxPick(){
+  if(P.perch)return{l:'내려가기',fn:()=>perchDrop()};
   const t=nearestThing();
   if(t){if(t.npc)return{l:'대화',fn:()=>openNpc(t.npc)};if(t.house)return{l:'집',fn:openHouse};if(t.spouse)return{l:'가족',fn:familyTalk};
     if(t.plot)return{l:'농사',fn:()=>interact(t)};return{l:NODEL[t.node.t]||'행동',fn:()=>interact(t)}}

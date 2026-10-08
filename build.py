@@ -4,7 +4,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, 'src')
 PARTS = ['r_noise.js', 'r_proto_arts.js', 'g_data.js', 'g_sect.js', 'g_core.js', 'g_world.js', 'r_props.js',
          'r_exec.js', 'g_life.js', 'g_ui.js', 'r_draw1.js', 'r_atlas.js', 'r_fighter.js',
-         'r_build.js', 'r_fx.js', 'g_screens.js', 'g_touch.js', 'g_train.js', 'g_tomb.js', 'g_region.js', 'g_garb.js', 'g_passive.js', 'g_faction.js', 'g_province.js', 'g_toss.js', 'g_audio.js', 'g_draw.js']
+         'r_build.js', 'r_fx.js', 'g_screens.js', 'g_touch.js', 'g_train.js', 'g_tomb.js', 'g_region.js', 'g_garb.js', 'g_passive.js', 'g_faction.js', 'g_province.js', 'g_toss.js', 'g_height.js', 'g_audio.js', 'g_draw.js']
 rd = lambda p: open(os.path.join(SRC, p), encoding='utf8').read()
 js = '\n'.join(rd(p) for p in PARTS)
 os.makedirs(os.path.join(ROOT, 'dist'), exist_ok=True)

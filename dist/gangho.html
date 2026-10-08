@@ -815,7 +815,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
   const pHit=clamp(.74+(hmv()-e.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16);
+  const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'?0:e.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
@@ -1260,7 +1260,8 @@ function blinkTo(X,tg){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col:X.art.c});con
 const blockedAt=(x,y)=>{const i=Math.floor(x),j=Math.floor(y);return i<0||j<0||i>=N||j>=N||!!objs[j][i]};
 function updateProjs(dt){
   for(const q of projs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;q.trail.push({x:q.x,y:q.y});if(q.trail.length>8)q.trail.shift();
-    if(blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
+    if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
+    if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
     for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);hitE(q.X,e,q.m,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(!q.pierce){q.left=0;break}}}
   projs=projs.filter(q=>q.left>0);
 }
@@ -1319,9 +1320,10 @@ function updateP(dt){
   if(keys.arrowup){kx--;ky--}if(keys.arrowdown){kx++;ky++}if(keys.arrowleft){kx--;ky++}if(keys.arrowright){kx++;ky--}
   if(joy.on){kx+=joy.gx;ky+=joy.gy}
   P.moving=false;const sp=moveSpd()*dt;P.runT=Math.max(0,(P.runT||0)-dt);
-  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;
+  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e;
     if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:'170,200,255'});
-    if(k>=1){P.leap=null;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45})}}
+    if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L)}}
+  else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
   else{
     if(P.target){const e=P.target;
@@ -1394,17 +1396,22 @@ function updateMob(e,dt){
   const hostP=d.fac?mobFoeP(e):d.hostile;
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
   if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
-  if(!e.aggro&&hostP&&P.hp>0){if(dist(e,P)<(d.aggro||6)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
+  if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
   if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
+  // 높은 곳의 사람에게는 맨손·병장기가 닿지 않는다: 아래에서 맴돌다 오래 못 닿으면 돌아간다
+  if(tg===P&&P.perch&&!d.ranged&&!e.wind&&!(e.slam>0)){e.perchT=(e.perchT||0)+dt;
+    if(e.perchT>6&&!d.boss){e.aggro=false;e.tgt=null;e.perchT=0;e.giveUp=time+10;e.goal={x:e.home.x,y:e.home.y};return}
+    if(dd>1.6)chase(e,tg,dt,spd);else{e.moving=false;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}return}
+  if(tg===P&&!P.perch)e.perchT=0;
   // telegraphed heavy move for bosses and duelists
   if(d.boss||e.duel||d.elite){e.skT-=dt;if(e.skT<=0&&dd<6&&!e.wind){e.skT=5+Math.random()*3;
     if(d.ranged||(e.duel&&e.d.ranged)){for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:'255,200,140'})}}
     else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1})}}}
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35);
-    if(hostP){if(dist(P,c)<2)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
+    if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
       if(d.ranged)eprojs.push({x:e.x,y:e.y,vx:(tg.x-e.x)/dd*10,vy:(tg.y-e.y)/dd*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'});
@@ -1416,7 +1423,7 @@ function updateMob(e,dt){
   for(const o of mobs)if(o!==e&&o.hp>0){const q=dist(o,e);if(q<.6&&q>0)moveEnt(e,(e.x-o.x)/q*.02,(e.y-o.y)/q*.02)}
 }
 function updateEprojs(dt){
-  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y))q.left=0;
+  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y)&&!(P.perch&&dist(q,P)<2.2))q.left=0;
     const sf=q.src&&q.src.d&&q.src.d.fac,hp=!sf||mobFoeP(q.src);
     if(hp&&q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
     if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}
@@ -1445,12 +1452,14 @@ function rideToggle(){
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
   if(P.hp<=0)return;if(P.qi<12){log('내공이 부족합니다.','info');return}if(P.leap)return;
-  const LEAP=P.ride?4:3.6;let land=null;
+  const LEAP=P.ride?4:3.6;let land=null,to=null;
+  // 지붕·나무 위로 (말을 탔으면 못 오른다)
+  if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<N-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
-  for(let d=LEAP;d>.2&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
+  for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
   const dur=heroSprite()?.6:.42;P.qi-=12;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=.6;P.satk=0}else{P.jump=.35}
-  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur};fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
+  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur,z0:P.z||0,z1:to?to.z:0,to};P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
 }
 // ================= 생활: gathering, farming, crafting =================
 function interact(t){
@@ -1585,7 +1594,7 @@ function applySave(data){
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
-  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     migrateSect();
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;
@@ -2505,6 +2514,7 @@ function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)ret
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기'};
 function ctxPick(){
+  if(P.perch)return{l:'내려가기',fn:()=>perchDrop()};
   const t=nearestThing();
   if(t){if(t.npc)return{l:'대화',fn:()=>openNpc(t.npc)};if(t.house)return{l:'집',fn:openHouse};if(t.spouse)return{l:'가족',fn:familyTalk};
     if(t.plot)return{l:'농사',fn:()=>interact(t)};return{l:NODEL[t.node.t]||'행동',fn:()=>interact(t)}}
@@ -2736,7 +2746,7 @@ function travel(g){
   setTimeout(()=>{
     try{
       mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;
+      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.perch=null;P.z=0;
       allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
       const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
@@ -3570,6 +3580,70 @@ addEventListener('ait-ready',tossInit);
 if(window.AIT)setTimeout(tossInit);
 else if(/[?#&]toss/.test(location.href))tossLayout();
 
+// ================= 높이: 지붕과 나무 위 =================
+// 경공(도약)으로 집 지붕이나 나무 위에 올라선다. 설계: docs/맵이동_설계.md 12장
+// - 지붕: 지붕 위를 걸어 다닐 수 있고, 가장자리 밖으로 걸어 나가면 뛰어내린다. 지붕에서 지붕으로 건너뛸 수 있다.
+// - 나무: 가지 위에 선다. 움직이면 바로 아래로 내려온다. 나무 위에 있으면 적이 알아채는 거리가 절반이 된다.
+// - 높은 곳의 이점: 맨손·병장기로 덤비는 적은 닿지 않는다(활·암기를 쓰는 적만 쏜다). 높은 곳에서 쏜 화살·장풍은 장애물을 넘고 20% 세다.
+//   높은 곳에서 적을 고르면 그 적 위로 뛰어내리며 낙하 공격(높이가 높을수록 세다)을 한다.
+// - 덤비던 적이 6초 동안 닿지 못하면 포기하고 돌아간다(두목은 끝까지 기다린다).
+const PERCH_TREE={tree:1,pine:1,bamboo:1};
+const buildAt=(i,j)=>builds.find(b=>i>=b.x&&i<b.x+b.w&&j>=b.y&&j<b.y+b.h);
+function roofZ(b){const pav=b.kind==='pavilion',WH=pav?34:38,H0=WH+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h);return Math.round(pav?RH*.85:H0+(RH-H0)*.55)}
+function treeZ(ob,i,j){const set=SPRITES[ob],s=set[(i*7+j*3)%set.length];return Math.round(Math.max(28,(s.height-12)*.62))}
+// 그 자리의 높은 곳: 지붕이나 나무
+function perchAt(x,y){const i=Math.floor(x),j=Math.floor(y);if(i<0||j<0||i>=N||j>=N)return null;const o=objs[j][i];
+  if(o==='B'){const b=buildAt(i,j);return b?{k:'roof',b,z:roofZ(b)}:null}
+  if(PERCH_TREE[o])return{k:'tree',i,j,z:treeZ(o,i,j),x:i+.5,y:j+.5};return null}
+const samePerch=(a,b)=>!!a&&!!b&&a.k===b.k&&(a.k==='roof'?a.b===b.b:a.i===b.i&&a.j===b.j);
+const onRoof=(b,x,y,m=.18)=>x>b.x+m&&x<b.x+b.w-m&&y>b.y+m&&y<b.y+b.h-m;
+const perchD=()=>{const q=P.perch;return q.k==='roof'?q.b.x+q.b.w+q.b.y+q.b.h-1+.6:q.i+q.j+1.1};
+// 높은 곳에서 내려간다: 가고 싶은 쪽(없으면 바라보는 쪽)의 가까운 땅으로. after가 있으면 내려가서 그리로 길을 잡는다
+function perchDrop(tx,ty,after){
+  if(!P.perch||P.leap)return false;const ax=tx==null?P.x+P.fx*2:tx,ay=ty==null?P.y+P.fy*2:ty;let best=null,bd=1e9;
+  const q=P.perch,x0=q.k==='roof'?q.b.x-1:q.i-1,x1=q.k==='roof'?q.b.x+q.b.w:q.i+1,y0=q.k==='roof'?q.b.y-1:q.j-1,y1=q.k==='roof'?q.b.y+q.b.h:q.j+1;
+  for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++)if(walk(i,j)){const d=Math.hypot(i+.5-ax,j+.5-ay)+Math.hypot(i+.5-P.x,j+.5-P.y)*.3;if(d<bd){bd=d;best={x:i+.5,y:j+.5}}}
+  if(!best)return false;
+  P.leap={sx:P.x,sy:P.y,ex:best.x,ey:best.y,t:0,dur:.38,z0:P.z||0,z1:0,to:null,after};P.path=null;P.perch=null;P.medit=false;return true}
+// 낙하 공격: 높은 곳에서 적 위로 뛰어내린다
+function plunge(e){
+  if(!P.perch||P.leap||!e)return false;const z=P.z||0,dur=.45;
+  P.leap={sx:P.x,sy:P.y,ex:e.x,ey:e.y,t:0,dur,z0:z,z1:0,to:null,plunge:z};P.perch=null;P.path=null;P.inv=Math.max(P.inv,dur);P.medit=false;
+  if(heroSprite()&&!P.ride){P.sj=.6;P.satk=0}else P.jump=.35;face(e.x,e.y);return true}
+function plungeHit(L){
+  const X=mkX(hasWeaponFor(curCls())?P.cur:'base'),m=1.3+L.plunge/45;let n=0;
+  for(const e of foes())if(dist(e,P)<1.7){hitE(X,e,m,.5,.6);n++}
+  fx.push({t:'puff',x:P.x,y:P.y,life:.6});fRing(X,P,1.7,X.art.c,4,.35);shake=.3;
+  addText(P.x,P.y-.4,'낙하 공격','#ffd36a');if(n)gainMast(X.key,1)}
+// 경공 착지 자리 고르기: 바라보는 쪽에 지붕·나무가 있으면 그 위로
+function leapPerch(LEAP){
+  for(let d=.7;d<=LEAP;d+=.15)for(const o of[0,.35,-.35]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o,q=perchAt(nx,ny);
+    if(!q||samePerch(q,P.perch))continue;
+    if(q.k==='tree')return{q,x:q.x,y:q.y};
+    const b=q.b;let x=nx,y=ny;for(let k=0;k<20&&!onRoof(b,x,y,.3);k++){x+=P.fx*.1;y+=P.fy*.1}
+    x=Math.max(b.x+.3,Math.min(b.x+b.w-.3,x));y=Math.max(b.y+.3,Math.min(b.y+b.h-.3,y));return{q,x,y}}
+  return null}
+// 높은 곳에서의 움직임. 처리했으면 true
+function perchMove(kx,ky,sp){
+  const q=P.perch;if(!q||P.leap)return false;
+  if(kx||ky){const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;P.path=null;P.target=null;P.talk=null;P.medit=false;
+    if(q.k==='tree'){perchDrop();return true}
+    const nx=P.x+P.fx*sp*.85,ny=P.y+P.fy*sp*.85;
+    if(onRoof(q.b,nx,ny)){P.x=nx;P.y=ny;P.moving=true}else perchDrop(P.x+P.fx*2,P.y+P.fy*2);return true}
+  // 적을 골랐으면: 활은 그 자리에서 쏘고, 아니면 뛰어내리며 낙하 공격
+  if(P.target&&P.target.hp>0){const e=P.target,rr=CLASS[hasWeaponFor(curCls())?curCls():'권'].reach;
+    if(rr>=4&&dist(e,P)<rr){face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
+    else if(dist(e,P)<5.5)plunge(e);else{perchDrop(e.x,e.y)}
+    return true}
+  if(P.path&&P.path.length||P.talk||P.goal){const dst=P.path&&P.path.length?P.path[P.path.length-1]:P.talk||P.goal;perchDrop(dst.x,dst.y,{x:dst.x,y:dst.y});return true}
+  return true}
+// 경공이 끝날 때
+function leapLand(L){
+  P.z=L.z1||0;P.perch=L.to||null;
+  if(P.perch){addText(P.x,P.y-.3,P.perch.k==='roof'?'지붕 위':'나무 위','#cfe3ff');if(typeof sfx==='function')sfx('land')}
+  else if(L.plunge)plungeHit(L);
+  if(L.after){const a=L.after;P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(a.x),Math.floor(a.y))}}
+
 // ================= 소리: 배경음악과 효과음 =================
 // 바깥 음원 파일 없이 Web Audio로 그 자리에서 연주한다 (저작권 걱정 없음, 파일 크기 0).
 // - 배경음악: 오음 음계(궁·상·각·치·우)로 가야금(고쟁) 같은 뜯는 소리, 대금(적) 같은 피리, 북을 그때그때 지어 낸다.
@@ -3938,10 +4012,10 @@ function draw(){
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
     if(ob.startsWith('flag:')){list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
-    const fade=tall&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
+    const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
     list.push({d:i+j+1,f:()=>{if(fade)ctx.globalAlpha=.4;ctx.drawImage(spr,p.x-spr.width/2,p.y-spr.height+(tall?12:10));ctx.globalAlpha=1}})}
   for(const b of builds){const d=b.x+b.w-1+b.y+b.h-1+1,l=scr(b.x,b.y+b.h)[0]-20,r=scr(b.x+b.w,b.y)[0]+20,bt=scr(b.x+b.w,b.y+b.h)[1];
-    const hide=P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,f:()=>drawBuild(b,hide?.45:1)})}
+    const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,f:()=>drawBuild(b,hide?.45:1)})}
   for(const rl of rails)list.push({d:rl.x+rl.y+.5,f:()=>drawRail(rl)});
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
   for(const n of nodes)if(vis(n.x,n.y))list.push({d:n.x+n.y-.2,f:()=>drawNode(n)});
@@ -3954,7 +4028,11 @@ function draw(){
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
-  if(P.hp>0)list.push({d:P.x+P.y,f:()=>{drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1)}});
+  if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
+    // 높은 곳에 있거나 그리로 뛰는 중이면 그 지붕·나무보다 나중에 그린다
+    const pd=P.perch?perchD():lt&&P.leap.t/P.leap.dur>.45?(lt.k==='roof'?lt.b.x+lt.b.w+lt.b.y+lt.b.h-1+.6:lt.i+lt.j+1.1):P.leap&&P.leap.z0>0&&P.leap.t/P.leap.dur<.5?P.x+P.y+3:P.x+P.y;
+    if(z>2){const g=toScreen(P.x,P.y);list.push({d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
+    list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
   list.sort((a,b)=>a.d-b.d).forEach(o=>o.f());
   // weather

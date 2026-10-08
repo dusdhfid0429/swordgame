@@ -141,7 +141,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
   const pHit=clamp(.74+(hmv()-e.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16);
+  const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'?0:e.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
