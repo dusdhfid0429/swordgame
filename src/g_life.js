@@ -234,7 +234,7 @@ function useCon(k){
 }
 // ================= 나이 and 윤회 =================
 function newYear(){
-  const a=Math.floor(P.age);
+  const a=Math.floor(P.age);birthdayVit();
   if(a===18)log('열여덟이 되어 유아기가 끝났습니다. 이제 기본기는 기연이나 윤회로만 바뀝니다.','sys');
   if(a>=50){recalc()}
   if(a===P.life-5)log('기력이 쇠해 갑니다. 남은 날이 많지 않습니다.','dmg');
@@ -242,6 +242,13 @@ function newYear(){
   for(const c of P.children)c.age++;
   if(P.spouse&&P.children.length<3&&a<52&&Math.random()<.35){const c={name:P.name[0]+pick(['진','연','후','설','휘','린','찬','하','윤','결']),age:0};P.children.push(c);log(`자식 ${c.name}이(가) 태어났습니다.`,'xp');P.feats.push(`${a}세에 자식 ${c.name}을(를) 얻었다`)}
   if(a>=P.life)die('천수');
+}
+// 생일 선물: 전생의 활력 한 몫. 활력이 가득 차 못 받은 만큼은 다음 생일로 넘긴다.
+function birthdayVit(){
+  if(!P.vitInst)P.vitInst=[];const n=P.vitInst.length;if(!n&&!(P.vitCarry>0))return;
+  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=v-got;
+  if(got>0)log(`생일을 맞아 전생의 활력 ${got}을(를) 받았습니다.${n?` (${6-n}/5)`:''}${P.vitCarry?` 활력이 가득 차 ${P.vitCarry}은(는) 다음 생일로 넘깁니다.`:''}`,'xp');
+  else if(P.vitCarry)log(`활력이 가득 차 전생의 활력 ${P.vitCarry}을(를) 다음 생일로 넘깁니다.`,'info');
 }
 function die(cause){
   if(!playing)return;playing=false;paused=true;P.hp=0;

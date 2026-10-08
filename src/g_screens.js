@@ -33,7 +33,7 @@ function renderCreate(){
   const heir=G.heir&&G.heir.children.length?`<div class="card"><h4>대물림</h4><p>전생의 자식으로 이어 살면 집과 창고, 은자 ${G.heir.silver}을(를) 물려받는다. 계열은 부모를 따른다.</p>
     <div class="center">${G.heir.children.map((c,i)=>`<button type="button" class="opt" data-s="heir:${i}" aria-pressed="${CR.heir===c}"><b>${esc(c.name)}</b><span>${c.age}세</span></button>`).join('')}<button type="button" class="opt" data-s="noheir" aria-pressed="${!CR.heir}"><b>남으로 태어나기</b><span>가문을 잇지 않는다</span></button></div></div>`:'';
   box.innerHTML=josa(`<h2 class="title" style="font-size:44px">${G.lives?`제${G.lives+1}생`:'탄생'}</h2>
-    <div class="card"><div class="row2"><h3>신분 · ${st.n}</h3><span class="tag">오성 ${CR.wis}${G.wisCarry?` (전생의 선업 +${G.wisCarry})`:''} · 시작 활력 ${st.vit+(G.bonusVit||0)} · 은자 ${st.silver+(CR.heir?G.heir.silver:0)}</span></div><p>${CR.heir?'가문을 이어 무가 이상으로 태어난다. ':''}${st.d}${G.bonusVit?` 전생의 보상 활력 ${G.bonusVit}를 받는다.`:''} 근골과 오성은 타고나는 값이라 기연이나 윤회로만 오른다.</p></div>
+    <div class="card"><div class="row2"><h3>신분 · ${st.n}</h3><span class="tag">오성 ${CR.wis}${G.wisCarry?` (전생의 선업 +${G.wisCarry})`:''} · 시작 활력 ${st.vit} · 은자 ${st.silver+(CR.heir?G.heir.silver:0)}</span></div><p>${CR.heir?'가문을 이어 무가 이상으로 태어난다. ':''}${st.d}${G.bonusVit?` 전생의 보상 활력 ${G.bonusVit}은(는) 다섯 몫으로 나뉘어 생일마다 ${Math.ceil(G.bonusVit/5)}씩 받는다.`:''} 근골과 오성은 타고나는 값이라 기연이나 윤회로만 오른다.</p></div>
     ${heir}
     <div class="row2"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
       <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>기초 내공 ${SIDES[s].base}</span></button>`).join('')}</div></div>
@@ -68,7 +68,7 @@ function showRebirth(e,cause){
   box.innerHTML=josa(`<h2 class="title" style="font-size:46px">${cause==='천수'?'천수를 다하다':'쓰러지다'}</h2>
    <div class="card"><h3>${esc(e.name)} · ${e.age}세</h3><p>${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg} · 경지 ${e.realm}</p>
    <p>선업 <span class="good">${e.good}</span> · 악업 <span class="bad">${e.evil}</span> · 명성 ${e.fame} · 처치 ${e.kills}</p>${e.arts.length?`<p>${e.arts.map(esc).join(', ')}</p>`:''}${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>
-   <div class="card"><h4>윤회의 수레바퀴</h4><p>업보에 따라 다음 생은 <b class="gold">${ns.n}</b>(으)로 태어난다. 보상 활력 <b class="gold">${G.bonusVit}</b>${G.wisCarry?`, 선업으로 오성 +${G.wisCarry}`:''}.</p>
+   <div class="card"><h4>윤회의 수레바퀴</h4><p>업보에 따라 다음 생은 <b class="gold">${ns.n}</b>(으)로 태어난다. 보상 활력 <b class="gold">${G.bonusVit}</b> (다음 생에서 생일마다 다섯 번 나눠 받음)${G.wisCarry?`, 선업으로 오성 +${G.wisCarry}`:''}.</p>
    <p>${G.heir?`자식 ${G.heir.children.map(c=>esc(c.name)).join(', ')}(으)로 이어 살 수 있다.`:'이어 살 자식이 없어 집과 창고는 남에게 넘어갔다.'} 이 생은 강호사에 기록되었다.</p></div>
    <div class="center"><button class="btn pri" type="button" data-s="rebirth">다시 태어나기</button></div>`);
 }
