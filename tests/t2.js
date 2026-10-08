@@ -30,7 +30,7 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
   await step('craft',()=>{P.jobs.약재.on=1;P.mats.약초=10;craft(RECIPES.find(r=>r.n==='금창약'));P.jobs.대장.on=1;P.mats.광석=10;P.mats.목재=10;P.mats.가죽=5;P.x=23.5;P.y=18.5;craft(RECIPES.find(r=>r.n.startsWith('각궁')));return{bag:P.bag.map(i=>i.name),lv:P.jobs.대장.lv}});
   await step('shop',()=>{P.silver=2000;openNpc(npcAt('gen'));act('buy:gen:4');act('buy:gen:0');return{bag:P.bag.length,seed:P.mats.볍씨}});
   await p.screenshot({path:__dirname+'/shots/s2_shop.png'});
-  await step('sect',()=>{closePanels();openNpc(npcAt('sa'));act('join:사');renderOpen();return P.sect});
+  await step('sect',()=>{closePanels();openNpc(npcAt('sa'));act('sview:hyeolrang');act('sjoin:hyeolrang');return P.sect});
   await p.screenshot({path:__dirname+'/shots/s2_sect.png'});
   await step('board',()=>{closePanels();openNpc(npcAt('board'));act('qtake:0');return P.quests.map(q=>q.n)});
   await step('marry',()=>{closePanels();P.age=19;P.fame=50;openNpc(npcAt('mae'));act('marry');return P.spouse});
