@@ -9,7 +9,8 @@ const REALM_NEED={oe:[0,42,54,68,84,102,122],ne:REALM_QI,mu:[0,3,7,12,18,26,36]}
 // 무공 하나의 깨달음: 입문 1·소성 2·대성 3·극성 4·돈오(숙련 100) 6, 등급(하승~천고)이 높을수록 무겁다. 기본 무공은 절반.
 const MU_W=[1,1.2,1.5,1.8,2];
 const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
-const pillarVal=k=>k==='oe'?STATS.reduce((a,{k})=>a+P.st[k],0):k==='ne'?baseQi():Math.round(Object.keys(P.arts).reduce((a,id)=>a+artMu(id),0)*10)/10;
+// 무리에는 깨달음(P.enl, g_realmfx.js)이 더해진다
+const pillarVal=k=>k==='oe'?STATS.reduce((a,{k})=>a+P.st[k],0):k==='ne'?baseQi():Math.round((Object.keys(P.arts).reduce((a,id)=>a+artMu(id),0)+(P.enl||0))*10)/10;
 // 벽: 세 기둥이 모두 다음 경지 문턱에 닿았는데 경지가 아직 그대로인 상태
 const atWall=()=>realmIdx()<RANKS.length-1&&PILLARS.every(({k})=>pillarVal(k)>=REALM_NEED[k][realmIdx()+1]);
 const lacking=()=>{const r=realmIdx()+1;if(r>=RANKS.length)return[];return PILLARS.filter(({k})=>pillarVal(k)<REALM_NEED[k][r])};

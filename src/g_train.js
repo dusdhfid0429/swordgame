@@ -20,7 +20,7 @@ function renderTrain(){
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
-    <div class="tlist">${pgRow()}${rows}${trnRow('neigong','내공 심법',baseQi(),`${realmName()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
+    <div class="tlist">${pgRow()}${rows}${trnRow('neigong','내공 심법',baseQi(),`${gapja(baseQi())} · ${school()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
   if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
@@ -41,7 +41,7 @@ function trainTick(dt){
   if(P.hp>0&&!inCombat()){
     if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
         addText(P.x,P.y,`내공 +${SIDES[P.side].gain}`,'#9db8e0');log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차)`,'xp');
-        wallCheck()}}
+        qiTrained()}}
     else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys');wallCheck()}}
   }else{P.qiTraining=false;log('수련이 끊겼습니다.','info')}
   renderTrain();

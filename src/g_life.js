@@ -205,7 +205,7 @@ function interact(t){
   if(n.t==='chest'){if(P.chest){log('이번 생의 기연은 이미 얻었습니다.','info');return}P.chest=1;n.cd=99999;giyeon('chest');return}
   const L={herb:['약초를 캔다',1.2],ore:['광석을 캔다',1.8],wood:['나무를 벤다',1.6],fish:['잉어를 낚는다',2.2]}[n.t];
   P.chan={t:0,dur:L[1],label:L[0],fn:()=>{
-    if(n.t==='herb'){const k=R1(1,2);addMat('약초',k);log(`약초 ${k}개를 캤습니다.`,'sys');n.cd=40}
+    if(n.t==='herb'){const k=R1(1,2);addMat('약초',k);log(`약초 ${k}개를 캤습니다.`,'sys');n.cd=40;snowSam()}
     else if(n.t==='ore'){const k=R1(1,2);addMat('광석',k);log(`광석 ${k}개를 캤습니다.`,'sys');n.cd=55}
     else if(n.t==='wood'){const k=R1(1,3);addMat('목재',k);log(`목재 ${k}개를 얻었습니다.`,'sys');n.cd=45}
     else{if(Math.random()<.55){addMat('잉어');log('황하 잉어를 낚았습니다.','sys')}else log('놓쳤습니다.','info');n.cd=6}}};
