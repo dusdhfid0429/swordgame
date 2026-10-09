@@ -74,7 +74,7 @@ function recalc(){
   runHooks('recalc');
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
-const TIERS=['입문','소성','대성','극성'];
+const TIERS=GD.TIERS;
 function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t:tierOf(p),mul:1+p/100,combo}}
 
 // ================= items =================
@@ -85,7 +85,7 @@ function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(co
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
-const SLOTN={weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',book:'초식 비급',sbook:'특수무공',tbook:'기술서',pbook:'패시브 비급',bbook:'보법 비급'};
+const SLOTN=GD.SLOTN;
 function itemDesc(it){
   if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
@@ -300,7 +300,7 @@ function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기
   a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈
-const SPEC={암기:{qi:0,cd:.9,key:'1'},독공:{qi:20,cd:6,key:'2'},점혈:{qi:15,cd:8,key:'3'}};
+const SPEC=GD.SPEC;
 function special(k){
   if(P.hp<=0)return;if(!P.sp[k]){log(`[${k}]을(를) 익히지 못했습니다. 잡화상에서 특수무공 비급을 구할 수 있습니다.`,'info');return}
   if(P.scd[k]>0)return;const s=SPEC[k];if(P.qi<s.qi){log('내공이 부족합니다.','info');return}

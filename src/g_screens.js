@@ -21,7 +21,7 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='rebirth')showCreate();
 });
 let CR=null;
-const NAMES1=['이','김','장','왕','유','진','한','백','남궁','제갈','모용','당','팽','소','위','곽'],NAMES2=['청','운','설','무','연','휘','결','현','진','하','린','호','강','월','영','도'];
+const NAMES1=GD.NAMES1,NAMES2=GD.NAMES2;
 const rname=()=>pick(NAMES1)+pick(NAMES2)+(Math.random()<.6?pick(NAMES2):'');
 function rollGG(side){const n=STATUS[G.nextStatus??1].pick,idx=GEUNGOL[side].map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}return idx.slice(0,n).sort((a,b)=>a-b)}
 function showCreate(){

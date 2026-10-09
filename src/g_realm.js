@@ -2,12 +2,10 @@
 // 사용자 결정(2026-10-09): 경지는 내공만으로 오르지 않는다. 활력으로 다진 스탯의 합(외공), 내공, 무공 숙련의 합(무리)이
 // 함께 다음 경지 문턱에 닿으면 "벽"에 막히고, 안전한 곳에서 폐관수련으로 벽을 깨야 오른다. 실패하면 주화입마.
 // 설계: docs/경지_설계.md
-const PILLARS=[{k:'oe',n:'외공',d:'근력·지구력·민첩력·본원진기의 합',lack:'몸이 기를 감당하지 못한다'},
-  {k:'ne',n:'내공',d:'단전에 쌓인 기',lack:'단전의 기가 얕다'},
-  {k:'mu',n:'무리',d:'익힌 무공의 경지 합',lack:'무리에 대한 깨달음이 부족하다'}];
+const PILLARS=GD.PILLARS;
 const REALM_NEED={oe:[0,42,54,68,84,102,122],ne:REALM_QI,mu:[0,3,7,12,18,26,36]};
 // 무공 하나의 깨달음: 입문 1·소성 2·대성 3·극성 4·돈오(숙련 100) 6, 등급(하승~천고)이 높을수록 무겁다. 기본 무공은 절반.
-const MU_W=[1,1.2,1.5,1.8,2];
+const MU_W=GD.MU_W;
 const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
 // 무리에는 깨달음(P.enl, g_realmfx.js)이 더해진다
 const pillarVal=k=>k==='oe'?STATS.reduce((a,{k})=>a+P.st[k],0):k==='ne'?baseQi():Math.round((Object.keys(P.arts).reduce((a,id)=>a+artMu(id),0)+(P.enl||0))*10)/10;
@@ -31,7 +29,7 @@ const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
 const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
 // 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
-const PG_BASE=[0,.85,.75,.65,.55,.45,.35];
+const PG_BASE=GD.PG_BASE;
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
   if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
   if(pill)c+=.1;c+=PG_SCHOOL[school()]||0;return clamp(c,.05,.95)}

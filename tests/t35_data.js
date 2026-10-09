@@ -1,0 +1,60 @@
+// 데이터 파일과 저장소: 받아 둔 데이터 팩을 언제 쓰는지, 업데이트 받기, 바깥 저장소(토스·서버 자리)에 기록 올리고 받기.
+const {chromium}=require(process.env.PWPATH||'playwright');
+const fs=require('fs'),path=require('path');
+const PACK=JSON.parse(fs.readFileSync(path.join(__dirname,'../dist/gamedata.json'),'utf8'));
+(async()=>{
+  const b=await chromium.launch();const errs=[];
+  const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();
+  p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
+  const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
+  const url='file://'+path.resolve(__dirname,'../dist/gangho.html');
+  await p.goto(url);await p.waitForFunction(()=>typeof STORE==='object'&&typeof GD==='object');
+  const base=await p.evaluate(()=>({rev:GD._meta.rev,schema:GD._meta.schema,n:Object.keys(GD).length,same:GD===GD_BUNDLED,arts:ARTS.length}));
+  ok(`묶인 데이터로 시작: 표 ${base.n}개, rev ${base.rev}`,base.same&&base.n>100);
+  // 받아 둔 팩: rev가 크면 쓰고, schema가 다르거나 표가 빠졌으면 무시한다
+  const mk=(rev,f)=>{const d=JSON.parse(JSON.stringify(PACK));d._meta.rev=rev;if(f)f(d);return JSON.stringify(d)};
+  const tryPack=async raw=>{await p.evaluate(r=>{localStorage.clear();localStorage.setItem(GD_CACHE_KEY,r)},raw);await p.reload();
+    await p.waitForFunction(()=>typeof GD==='object');return p.evaluate(()=>({rev:GD._meta.rev,same:GD===GD_BUNDLED,gold:GD.SHOP&&JSON.stringify(GD.SHOP).length}))};
+  const higher=await tryPack(mk(base.rev+1));
+  ok(`더 새 팩(rev ${higher.rev})을 씀`,!higher.same&&higher.rev===base.rev+1);
+  const same=await tryPack(mk(base.rev));ok('같은 rev 팩은 무시',same.same);
+  const schema=await tryPack(mk(base.rev+1,d=>d._meta.schema++));ok('schema가 다른 팩은 무시',schema.same);
+  const missing=await tryPack(mk(base.rev+1,d=>delete d.SHOP));ok('표가 빠진 팩은 무시',missing.same);
+  const shape=await tryPack(mk(base.rev+1,d=>d.SPAWNS={}));ok('표 모양(목록/사전)이 다른 팩은 무시',shape.same);
+  const broken=await tryPack('{"_meta":');ok('깨진 팩은 무시',broken.same);
+  // 업데이트 받기: 주소가 없으면 꺼짐, 버전이 같으면 그대로, 새것이면 받아 보관 → 다음 실행부터 씀
+  await p.evaluate(()=>localStorage.clear());await p.reload();await p.waitForFunction(()=>typeof gdCheckUpdate==='function');
+  let ver={schema:base.schema,rev:base.rev},pack=mk(base.rev+1);
+  await p.route('https://upd.test/**',r=>{const u=r.request().url();
+    if(u.endsWith('/gamedata-version.json'))return r.fulfill({contentType:'application/json',body:JSON.stringify(ver),headers:{'access-control-allow-origin':'*'}});
+    if(u.endsWith('/gamedata.json'))return r.fulfill({contentType:'application/json',body:pack,headers:{'access-control-allow-origin':'*'}});
+    r.abort()});
+  const off=await p.evaluate(()=>gdCheckUpdate(''));ok('주소가 없으면 받지 않음',off==='off');
+  const cur=await p.evaluate(()=>gdCheckUpdate('https://upd.test/g'));ok('버전이 같으면 그대로',cur==='current');
+  ver={schema:base.schema,rev:base.rev+1};pack=mk(base.rev+1,d=>delete d.SHOP);
+  const bad=await p.evaluate(()=>gdCheckUpdate('https://upd.test/g').then(r=>[r,localStorage.getItem(GD_CACHE_KEY)]));ok('받은 팩이 모자라면 보관하지 않음',bad[0]==='bad'&&bad[1]==null);
+  pack=mk(base.rev+1);
+  const got=await p.evaluate(()=>gdCheckUpdate('https://upd.test/g').then(r=>[r,GD===GD_BUNDLED]));
+  ok('새 팩을 받아 보관, 지금 판은 그대로',got[0]==='saved'&&got[1]);
+  await p.reload();await p.waitForFunction(()=>typeof GD==='object');
+  const next=await p.evaluate(()=>({rev:GD._meta.rev,arts:ARTS.length}));ok(`다음 실행부터 새 데이터(rev ${next.rev}), 무공 ${next.arts}`,next.rev===base.rev+1&&next.arts===base.arts);
+  // 저장소: 바깥 저장소를 붙이면 기록이 따라 올라가고, 바깥 기록이 더 새것이면 그걸 받는다
+  await p.evaluate(()=>localStorage.clear());await p.reload();await p.waitForFunction(()=>typeof storeAdd==='function');
+  await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>typeof playing!=='undefined'&&playing);
+  const up=await p.evaluate(async()=>{window.REMOTE={};storeAdd({name:'fake',pull:async k=>REMOTE[k]??null,push:async(k,s)=>{REMOTE[k]=s}});
+    P.silver=777;saveGame(true);await new Promise(r=>setTimeout(r,50));const d=JSON.parse(REMOTE[SAVE_KEY]||'null');return d&&{silver:d.P.silver,t:d.t,local:STORE.get(SAVE_KEY)===REMOTE[SAVE_KEY]}});
+  ok(`기록이 바깥 저장소에도 올라감 (은 ${up&&up.silver}, 시각 붙음)`,up&&up.silver===777&&up.t>0&&up.local);
+  const down=await p.evaluate(async()=>{const d=JSON.parse(REMOTE[SAVE_KEY]);d.P.silver=999;d.t=Date.now()+60000;REMOTE[SAVE_KEY]=JSON.stringify(d);
+    const from=await storeSync(SAVE_KEY);return{from,silver:loadGame().P.silver}});
+  ok(`바깥 기록이 더 새것이면 받음 (${down.from}, 은 ${down.silver})`,down.from==='fake'&&down.silver===999);
+  const stale=await p.evaluate(async()=>{const d=JSON.parse(REMOTE[SAVE_KEY]);d.P.silver=1;d.t=1;REMOTE[SAVE_KEY]=JSON.stringify(d);
+    const from=await storeSync(SAVE_KEY);return{from,remote:JSON.parse(REMOTE[SAVE_KEY]).P.silver,local:loadGame().P.silver}});
+  ok(`바깥 기록이 옛것이면 기기 기록을 올림 (바깥 은 ${stale.remote})`,stale.from==='local'&&stale.remote===999&&stale.local===999);
+  const retry=await p.evaluate(async()=>{let fail=true;const R={};storeAdd({name:'fake',pull:async k=>{if(fail)throw 0;return R[k]??null},push:async(k,s)=>{if(fail)throw 0;R[k]=s}});
+    P.silver=555;saveGame(true);await new Promise(r=>setTimeout(r,50));const before=R[SAVE_KEY];fail=false;await storeSync(SAVE_KEY);
+    return{before:before==null,after:R[SAVE_KEY]&&JSON.parse(R[SAVE_KEY]).P.silver,local:loadGame().P.silver}});
+  ok(`올리기 실패는 다음 맞추기 때 다시 올림 (은 ${retry.after})`,retry.before&&retry.after===555&&retry.local===555);
+  const set=await p.evaluate(()=>{STORE_BACKENDS.length=0;const R={};storeAdd({name:'x',pull:async()=>null,push:async(k,s)=>{R[k]=s}});setTouch(true);sndSave();return Object.keys(R)});
+  ok('조작·소리 설정은 기기 안에만',set.length===0);
+  console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
+})();

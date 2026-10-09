@@ -2,7 +2,7 @@
 // 가까이 가면 망령과 강시 둘이 깨어난다. 망령을 쓰러뜨리면 그 생이 지녔던 물건 중 일부를 등급별 확률로 떨어뜨리고 무덤은 사라진다.
 const TOMB_MAX=6,TOMB_WAKE=4.5,TOMB_FORGET=24;
 // 등급이 높을수록 덜 나온다
-const TOMB_DROP={하품:.6,중품:.4,상품:.2,명품:.08};
+const TOMB_DROP=GD.TOMB_DROP;
 function tombDropP(it){
   if(it.slot==='book')return Math.max(.12,.4-it.form*.06);
   if(it.slot==='sbook'||it.slot==='tbook')return .25;

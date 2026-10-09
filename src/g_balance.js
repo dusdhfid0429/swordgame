@@ -6,15 +6,13 @@
 // 설계: docs/경지_설계.md 3부
 
 // 경지 표준: 공격력·생명·현묘도 (tests로 뽑은 정파 검객의 문턱 수치)
-const STD=[[26,130,28],[32,160,34],[38,190,40],[44,220,46],[52,260,54],[62,310,64],[72,360,74]];
+const STD=GD.STD;
 // 졸개는 약하게, 정예는 같은 경지 한 사람 몫, 보스는 준비해야 이긴다
-const TIER={n:{h:.4,a:.3,m:.6,d:1},e:{h:1.4,a:.45,m:.8,d:1.5},b:{h:3,a:.55,m:1,d:2}};
+const TIER=GD.TIER;
 // 사람 몹의 경지 (짐승은 경지만 붙이고 수치는 그대로)
-const MOB_REALM={산적:0,산적궁수:0,산적두목:1,흑풍채주:2,혈교무인:2,강시:2,혈교장로:4,
-  멧돼지:0,늑대:0,곰:1,호랑이:2,
-  '정파 무인':0,'사파 무인':0,'마교도':0,'정파 고수':2,'사파 고수':2,'마교 고수':2};
+const MOB_REALM=GD.MOB_REALM;
 // 혈교무인·강시는 졸개가 아니라 정예 몫
-const MOB_TIER={혈교무인:'e',강시:'e'};
+const MOB_TIER=GD.MOB_TIER;
 function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm==null)return e;
   const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'];
   e.maxHp=e.hp=Math.round(h*t.h);e.atk=Math.round(a*t.a);e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
@@ -32,10 +30,7 @@ hook('mobHurt',c=>{if(c.src&&c.src.d&&c.t.d)c.dm*=rMul(rDiff(mobRealm(c.src),mob
 
 // ---- 4) 지역 위험도: 지역마다 나오는 경지의 바닥(lo)과 천장(hi) ----
 // 졸개·정예의 경지는 min(hi, 원래 경지 + lo). 보스는 제 경지 그대로. 짐승은 lo보다 낮으면 lo로 끌어올려 수치도 표준 비율만큼 키운다.
-const PV_DANGER={henan:[0,1],
-  hebei:[1,2],shandong:[1,2],anhui:[1,2],shaanxi:[1,2],hubei:[1,2],hunan:[1,2],jiangsu:[1,2],zhejiang:[1,2],
-  liaoning:[2,3],gansu:[2,3],sichuan:[2,3],yunnan:[2,3],guizhou:[2,3],guangxi:[2,3],guangdong:[2,3],hainan:[2,3],
-  qinghai:[3,4],mongol:[3,4],xinjiang:[3,4],tibet:[3,4],tianzhu:[3,4]};
+const PV_DANGER=GD.PV_DANGER;
 function danger(id=REG){const R=REGIONS[id];if(!R||id==='gaebong')return[0,0];
   if(id==='sungsan')return[0,1];
   if(/천마동|달마동/.test(R.name||''))return[5,5];
@@ -54,7 +49,7 @@ hook('facMade',e=>{const r=regionRealm(e,e.realm);
 
 // ---- 5) 비무 사다리: 경지마다 한 명, 일곱 명 ----
 // 비무 상대는 같은 경지 한 사람 몫보다 질기다(생명 ×2.2, 공격력 ×0.6). 이기면 다음 경지 고수가 도전장을 보낸다.
-DUELISTS.push({n:'은거고수 청허자',cls:'검',el:'수',fame:120,silver:320},{n:'천하제일인 무영',cls:'도',el:'화',fame:200,silver:500});
+/* DUELISTS에 덧붙이던 것은 data/mobs.json 으로 옮김 */
 DUELISTS.forEach((o,i)=>{const[a,h,m]=STD[i];Object.assign(o,{realm:i,hp:Math.round(h*2.2),atk:Math.round(a*.6),hm:m,def:2+Math.round(i*1.5)})});
 hook('duelStart',(o,e)=>{e.realm=o.realm});
 hook('duelEnd',({win,was})=>{const nx=DUELISTS[P.duel];

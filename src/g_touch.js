@@ -19,7 +19,7 @@ const statusEl=document.querySelector('.status'),panelEl=document.querySelector(
 function setTouch(on){
   TOUCH=on;document.body.classList.toggle('touch',on);
   if(on){TUI.prepend(logEl);TUI.prepend(statusEl)}else{panelEl.prepend(logEl);panelEl.prepend(statusEl)}
-  try{localStorage.setItem('ganghoyunhoe-ctl',on?'t':'k')}catch(e){}
+  try{STORE.set('ganghoyunhoe-ctl',on?'t':'k',1)}catch(e){}
   joy.on=false;joy.m=0;touchAtk=false;resize();
 }
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
@@ -94,5 +94,5 @@ function pMenu(){
     ${M('trainwin','수련','기본기 · 내공 심법')}${M('medit','운기조식','내공을 빨리 채운다')}${M('run',P.run?'질주 끄기':'질주','내공을 쓰며 달린다')}${M('ride',P.ride?'말에서 내리기':'말 타기','말이 곁에 있을 때')}
     ${M('save','기록','지금 상태를 저장')}${M('open:help','조작법','')}${M('ctl:k','PC 조작으로','키보드·마우스 화면')}</div>`;
 }
-let pref=null;try{pref=localStorage.getItem('ganghoyunhoe-ctl')}catch(e){}
+let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
