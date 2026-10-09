@@ -28,6 +28,9 @@ const PROV={
   zhejiang:{n:'절강성',size:38,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
   hainan:{n:'해남도',size:30,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
   tianzhu:{n:'천축',size:90,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
+// 성을 40×40 맵 여러 장으로 나눈다 (2026-10-09 사용자 결정, g_split.js): 한 변 맵 수 = round(실제 칸 수/32).
+// 무림전도를 80%로 줄인 셈이다. 성 전체는 (맵 수×40)칸으로 한 번에 만들고 40칸씩 잘라 보여 준다.
+for(const p of Object.values(PROV)){p.real=p.size;p.cols=Math.max(1,Math.round(p.size/32));p.size=p.cols*40}
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
 const PV_LINKS=[
@@ -181,7 +184,7 @@ function pvInfo(k){
   const lairs=(R.lairs||[]).map(l=>`<b class="bad">${l.n}</b>(두목 ${l.boss[0]})`).join(' · ');
   return `<div class="card"><h4>${p.n} <small class="dim">${p.d}</small></h4>
     <p>${way}</p>
-    <p class="note">크기 ${p.size}×${p.size}칸${p.size>=100?' · 아주 넓다':p.size>=70?' · 넓다':p.size<=40?' · 작다':''} · 한가운데 객잔 거리</p>
+    <p class="note">맵 ${p.cols}×${p.cols} = ${p.cols*p.cols}장${p.cols>=4?' · 아주 넓다':p.cols>=3?' · 넓다':p.cols<=1?' · 작다':''} · 한가운데 객잔 거리</p>
     <h4 style="margin:6px 0 2px">문파 ${sects.length}곳</h4>${sects.length?`<p>${sl}</p>`:'<p class="note">이 성에는 문파 본산이 없다.</p>'}
     <p class="note">무인: ${fighters} · 산적</p><p class="note">짐승: ${beasts}</p>
     ${lairs?`<p class="note">소굴: ${lairs}</p>`:''}
