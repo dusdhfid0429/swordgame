@@ -25,8 +25,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
       for(const g of R.gates)if(!near(g.x,g.y))bad.push(`${R.name}→${g.label}`);for(const m of R.npcs)if(!near(m.x,m.y))bad.push(`${R.name}:${m.n}`)}
     loadRegion('gaebong');return{n,bad}});
   ok(`맵 ${walkAll.n}개 모두 출입구·NPC까지 걸어서 닿음 ${walkAll.bad.slice(0,6).join(' / ')}`,walkAll.n>=60&&walkAll.bad.length===0);
-  // 숭산(소림사)에서 위로 나한당까지
-  const ss=await p.evaluate(()=>{loadRegion('sungsan');const g=REGION().gates.find(q=>q.to==='hq_shaolin_yard');
+  // 소림사 본산에서 위로 나한당까지
+  const ss=await p.evaluate(()=>{loadRegion('hq_shaolin');const g=REGION().gates.find(q=>q.to==='hq_shaolin_yard');
     const seen=new Set,st=REGION().npcs.find(n=>n.hq==='shaolin'),q=[[Math.floor(st.x),Math.floor(st.y)+1]];seen.add(q[0]+'');
     while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
     const r=g&&[0,1,-1].some(d=>seen.has([Math.floor(g.x)+d,Math.floor(g.y)]+'')||seen.has([Math.floor(g.x)+d,Math.floor(g.y)+1]+''));loadRegion('gaebong');return r});
