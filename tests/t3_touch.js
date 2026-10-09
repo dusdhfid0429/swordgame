@@ -29,15 +29,19 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`joystick moves up-right (dx ${dx.toFixed(2)}, dy ${dy.toFixed(2)}) and stops`,dy<-1&&Math.abs(dx/dy-1/3)<.15&&!after.joy);
   // 상황 버튼: 사람 곁에서는 '대화'
   const npc=await p.evaluate(()=>{const n=NPCS.find(n=>!n.board);P.x=n.x+.8;P.y=n.y+.3;P.path=null;return n.n});
-  await p.waitForTimeout(400);
+  await p.waitForFunction(()=>!$('t_ctx').hidden&&$('t_ctx').textContent.trim()==='대화',null,{timeout:1500}).catch(()=>{});
   const ctx=await p.evaluate(()=>!$('t_ctx').hidden&&$('t_ctx').textContent.trim());
+  if(ctx!=='대화')console.log('(대화 버튼 실패 때 상태: '+JSON.stringify(await p.evaluate(()=>{const n=NPCS.find(n=>!n.board),t=nearestThing();return{P:[P.x,P.y],n:[n.x,n.y],t:t&&Object.keys(t),perch:!!P.perch,joy:joy.on,paused,panel,reg:REG,trav:P.traveling}}))+')');
   ok(`context button says 대화 near ${npc} (${ctx})`,ctx==='대화');
   await p.tap('#t_ctx');await p.waitForTimeout(200);
   ok('context button opens NPC window',await p.evaluate(()=>panel==='npc'));
   await p.screenshot({path:shot('m_npc')});
   await p.tap('#wx');
-  // 공격: 산채로 옮겨 버튼을 누르고 있으면 계속 싸운다
-  await p.evaluate(()=>{P.x=29.5;P.y=21.5;P.path=null;P.hp=P.maxHp=5000;P.qi=P.maxQi});
+  // 공격: 버튼을 누르고 있으면 가까운 상대를 잡아 계속 싸운다.
+  // 개봉은 2026-10-08부터 중립지대라 옛 산채 터에 산적이 없어 상대를 직접 둔다.
+  // 늑대는 첫 초식 한 번에 쓰러져 1.2초 뒤엔 잡은 상대가 없곤 했다(가끔 실패하던 원인). 오래 버티는 늑대로 둔다.
+  await p.evaluate(()=>{P.x=29.5;P.y=21.5;P.path=null;P.target=null;P.hp=P.maxHp=5000;P.qi=P.maxQi;
+    for(const[dx,dy]of[[2.5,.5],[-2.5,1]]){const w=mkMob('늑대',P.x+dx,P.y+dy);w.hp=w.maxHp=5000;mobs.push(w)}});
   await p.waitForTimeout(300);
   const box=await p.locator('#t_atk').boundingBox();
   const kills0=await p.evaluate(()=>mobs.filter(m=>m.hp<=0).length+(P.kills||0));

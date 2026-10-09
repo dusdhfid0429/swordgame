@@ -197,6 +197,7 @@ function draw(){
   for(const d of drops)list.push({d:d.x+d.y-.1,f:()=>drawDrop(d)});
   if(G.giyeon)list.push({d:G.giyeon.x+G.giyeon.y,f:()=>drawGiyeon(G.giyeon)});
   for(const g of REGION().gates)if(vis(g.x,g.y))list.push({d:g.x+g.y-.4,f:()=>drawGate(g)});
+  for(const m of lmHints())list.push({d:9999,f:()=>drawLmName(m)});
   if(REGION().edges)for(const h of pvEdgeHints())list.push({d:h.x+h.y-.4,f:()=>drawEdgeHint(h)});
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}

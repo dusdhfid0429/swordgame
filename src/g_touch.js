@@ -73,7 +73,7 @@ function ctxPick(){
   if(P.medit)return{l:'운기 끝',fn:meditate};
   if(!inCombat()&&(P.qi<P.maxQi||P.hp<P.maxHp))return{l:'운기',fn:meditate};
   return null}
-let ctxT=0,ctxNow=null;
+let ctxT=0,ctxNow=null;   // 상황 버튼은 프레임 수가 아니라 실제 시간 0.15초마다 고른다 (느린 기기에서 늦게 뜨던 것)
 function touchHud(){
   if(P.mode!=='auto')P.mode='auto';
   if(touchAtk&&!paused&&!joy.on)touchTarget();
@@ -85,7 +85,7 @@ function touchHud(){
   $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
   const pk=potPick()||'금창약';$('t_pot').querySelector('span').textContent=pk==='금창약'?'금창약':'소환단';$('t_pot').querySelector('em').textContent=P.mats[pk]||0;$('t_pot').classList.toggle('off',!potPick());
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
-  if((ctxT-=1/60)<=0){ctxT=.15;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l}
+  {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l}}
 }
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
