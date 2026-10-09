@@ -30,7 +30,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const hasPrev=await p.evaluate(()=>!!document.querySelector('.garbprev')&&document.querySelector('.garbprev').naturalWidth===680);
   ok('본산 문파 창에 마크와 직위별 의복 미리보기',hasPrev);
   await p.screenshot({path:shot('garb_panel')});
-  await p.evaluate(()=>{const b=document.querySelector('[data-act="sjoin:hwasan"]');b&&b.click()});await p.waitForTimeout(400);
+  await p.waitForSelector('[data-act="sjoin:hwasan"]',{timeout:5000}).catch(()=>{});await p.evaluate(()=>{const b=document.querySelector('[data-act="sjoin:hwasan"]');b&&b.click()});await p.waitForTimeout(400);
   const g0=await p.evaluate(()=>{closePanels();const g=heroGarb();return{sect:P.sect,ok:!!g,rank:g&&g.rank,cape:g&&g.pal.capeLen,log:$('log').textContent.includes('수련복')}});
   ok(`가입 전엔 기본 옷(${before===null}), 가입하면 화산파 ${g0.rank}단계 옷`,before===null&&g0.sect==='hwasan'&&g0.ok&&g0.rank===0&&g0.cape===0&&g0.log);
   const pix=await p.evaluate(()=>{const g=heroGarb(),c=g.hero.getContext('2d').getImageData(0,0,95,155).data,h=document.createElement('canvas');h.width=95;h.height=155;const x=h.getContext('2d');x.drawImage(HERO,0,0);const o=x.getImageData(0,0,95,155).data;let d=0,same=0;for(let i=0;i<o.length;i+=4){if(o[i+3]<20)continue;if(o[i]!==c[i]||o[i+2]!==c[i+2])d++;else same++}return{d,same}});
