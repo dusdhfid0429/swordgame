@@ -148,14 +148,27 @@ function spawnTick(){
     if(G.bossT[k]<=0&&Math.hypot(x-P.x,y-P.y)>7){mobs.push(mkMob(k,x,y));G.bossT[k]=t;log(`${k}이(가) 모습을 드러냈다는 소문이 돕니다.`,'dmg')}}
 }
 
+// ================= 훅: 다른 파일이 핵심 함수에 규칙을 더하는 자리 =================
+// 함수를 감싸 덮어쓰지 않고 hook(이름, 함수)로 등록한다. 핵심 함수가 정해진 자리에서 runHooks로 부른다.
+// 전투 보정은 곱셈·덧셈이라 등록 순서와 상관없이 결과가 같다.
+//  hit(c)        내가 칠 때, 명중 판정 전. c={X,e,from,m 배율,def 적용할 방어,hm 상대 현묘도}
+//  hitDone(c)    내 공격이 맞은 뒤. c.hp0 = 맞기 전 상대 생명
+//  hurt(c)       내가 맞을 때, 회피 판정 전. c={src,dm 피해,hm 상대 현묘도}
+//  hurtDone(c)   맞은 뒤. c.hp0 = 맞기 전 내 생명
+//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}
+const HOOKS={};
+const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
+const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
+
 // ================= combat =================
 function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
-  const pHit=clamp(.74+(hmv()-e.hm)/110,.25,.98);
+  const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
+  const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
-  d=Math.max(1,Math.round(d-(el==='금'?0:e.def)));
+  d=Math.max(1,Math.round(d-(el==='금'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
   if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07);
@@ -164,6 +177,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   gainMast(X.key,1);
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
+  if(from===P)runHooks('hitDone',c);
 }
 function gainMast(id,v){
   const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]);
@@ -230,11 +244,13 @@ function pickUp(d){
 }
 function hurtP(dm,src){
   if(P.inv>0||P.hp<=0)return;
-  if(Math.random()<clamp((hmv()-(src.hm||0))/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');return}
+  const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
+  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
   if(P.hp<=0){if(G.duel){P.hp=1;duelEnd(false)}else{P.hp=0;die('전투')}}
+  runHooks('hurtDone',c);
 }
 
 // ================= 초식, 연속기, 필살기 =================
@@ -259,7 +275,7 @@ function basicStrike(e){
   if(a.cls==='궁'&&useArt!=='base'){projs.push({x:P.x,y:P.y,vx:P.fx*14,vy:P.fy*14,left:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:'arrow',trail:[],ph:0})}
   else{anim(.2);hitE(X,e,.75,.25,0);fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}
 }
-function ultimate(){
+function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(P.hp<=0)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
   if(!hasWeaponFor(a.cls)){log(`${a.cls}이(가) 필요합니다.`,'info');return}

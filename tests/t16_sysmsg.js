@@ -12,6 +12,7 @@ const hit=(a,b)=>a&&b&&a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t;
     await p.evaluate(()=>{const b=Object.values(ARTS).find(x=>x.side===P.side&&!x.sect&&!A(x.id)&&x.cls===curCls());P.bag.push(mkBook(b.id,0));P.vit+=200;openPanel('bag')});await p.waitForTimeout(200);
     const id=await p.evaluate(()=>P.bag.find(i=>i.slot==='book').id);
     await p.locator(`[data-act="read:${id}"]`).tap();await p.waitForTimeout(450);
+    await p.waitForFunction(()=>{const m=document.querySelector('.sysmsg p.on');return m&&+getComputedStyle(m).opacity>.9},null,{timeout:5000}).catch(()=>{});   // 바쁜 기계에서는 나타나는 데 더 걸린다
     const r=await p.evaluate(()=>{const R=e=>{if(!e)return null;const q=e.getBoundingClientRect();return q.width?{l:q.left,r:q.right,t:q.top,b:q.bottom}:null};
       const m=document.querySelector('.sysmsg p.on'),z=+getComputedStyle(document.querySelector('.sysmsg')).zIndex,cs=m&&getComputedStyle(m);
       const ui=['joy','tbtns','mini','wx'].map(i=>R($(i))).concat([R(document.querySelector('.status'))]);

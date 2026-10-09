@@ -88,22 +88,21 @@ function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;
 function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r)}
 
 // ---- 전투: 검기·검강·검사, 호신강기, 이기어검 ----
-{const _h=hitE;hitE=function(X,e,m,kb,stun,from=P,echo){
-  if(!e||e.hp<=0||from!==P)return _h(X,e,m,kb,stun,from,echo);
-  const r=realmIdx();let mm=m;if(r>=4)mm*=1.25;else if(r>=2)mm*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)mm*=1+SC().ult;
-  if(sig('마공')&&P.hp<P.maxHp*.3)mm*=1.25;
-  const d0=e.def;if(r>=2)e.def=Math.round(d0*.5);const hp0=e.hp;_h(X,e,mm,kb,stun,from,echo);e.def=d0;
-  if(e.hp<hp0){if(sig('사불'))P.hp=Math.min(P.maxHp,P.hp+(hp0-Math.max(0,e.hp))*.06);if(sig('사공'))e.slow=Math.max(e.slow||0,2)}
-  if(r>=2&&e.hp<hp0)fParts(null,e,r>=4?'255,230,140':'150,210,255',r>=4?6:3,60,'dot',.35);
-  if(r>=3&&e.hp<hp0&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
-    if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);GL({t:'line',x:P.x,y:P.y,ex:o.x,ey:o.y,w:2,life:.25,col:'200,230,255'})}}}}
-{const _u=ultimate;ultimate=function(){P.ultT=time;return _u.apply(this,arguments)}}
-{const _hp=hurtP;hurtP=function(dm,src){const r=realmIdx();
-  if(src&&src.d&&r>=4&&mobRealm(src)<=r-2&&P.inv<=0&&P.hp>0){dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
-  if(src&&src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))dm*=.85;
-  if(src&&src.d&&school()==='사불'&&src.d.fac==='정')dm*=.85;
-  if(sig('불가'))dm*=.9;
-  const h0=P.hp,r2=_hp(dm,src);if(sig('도가')&&src&&src.isMob&&src.hp>0&&P.hp<h0)damage(src,Math.max(1,Math.round((h0-Math.max(0,P.hp))*.15)),0,0,P);return r2}}
+hook('hit',c=>{const r=realmIdx();
+  if(r>=4)c.m*=1.25;else if(r>=2)c.m*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)c.m*=1+SC().ult;
+  if(sig('마공')&&P.hp<P.maxHp*.3)c.m*=1.25;
+  if(r>=2)c.def=Math.round(c.def*.5)});
+hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
+  if(sig('사불'))P.hp=Math.min(P.maxHp,P.hp+(c.hp0-Math.max(0,e.hp))*.06);if(sig('사공'))e.slow=Math.max(e.slow||0,2);
+  if(r>=2)fParts(null,e,r>=4?'255,230,140':'150,210,255',r>=4?6:3,60,'dot',.35);
+  if(r>=3&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
+    if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);GL({t:'line',x:P.x,y:P.y,ex:o.x,ey:o.y,w:2,life:.25,col:'200,230,255'})}}});
+hook('hurt',c=>{const r=realmIdx(),src=c.src;
+  if(src.d&&r>=4&&mobRealm(src)<=r-2){c.dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
+  if(src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))c.dm*=.85;
+  if(src.d&&school()==='사불'&&src.d.fac==='정')c.dm*=.85;
+  if(sig('불가'))c.dm*=.9});
+hook('hurtDone',c=>{const src=c.src;if(sig('도가')&&src.isMob&&src.hp>0&&P.hp<c.hp0)damage(src,Math.max(1,Math.round((c.hp0-Math.max(0,P.hp))*.15)),0,0,P)});
 {const _rc=recalc;recalc=function(){_rc();if(!P)return;const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}}}
 
 // ---- 경지 차이 체감: 두 단계 아래 하수는 겁먹고 달아난다 (정종의 화경 반박귀진만 기운이 숨어 덤빈다) ----

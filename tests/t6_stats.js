@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.vit=maxVit()-5;o.gained=gainVit(100);o.capped=P.vit===maxVit();
     P.vit=maxVit()+200;const hi=P.vit;gainVit(10);o.overKept=P.vit===hi;
     P.vit=5000;o.q1=P.maxQi;for(const m of mobs)m.aggro=false;trainQi();return o});
-  await p.waitForTimeout(2200);r.qiTrain=await p.evaluate(q1=>P.maxQi-q1,r.q1);
+  await p.waitForFunction(q1=>P.maxQi>q1,r.q1,{timeout:10000}).catch(()=>{});r.qiTrain=await p.evaluate(q1=>P.maxQi-q1,r.q1);   // 시간 대신 결과를 기다린다 (바쁜 기계에서 흔들림)
   ok(`본원진기 +5 → 생명 +${r.hpUp}, 내공은 그대로`,r.hpUp===50&&r.qiSame);
   ok(`지구력 +4 → 활력 최대 +${r.vitUp}, 생명은 그대로`,r.vitUp===100&&r.hpSameEnd);
   ok(`활력은 최대치에서 멈춘다 (+${r.gained})`,r.gained===5&&r.capped);

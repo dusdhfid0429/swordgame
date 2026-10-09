@@ -26,11 +26,9 @@ function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm=
 // 경지 차이: 한 단계마다 ±15% 피해, ±5% 명중 (세 단계까지)
 const rDiff=(a,b)=>clamp(a-b,-3,3);
 const rMul=dd=>1+.15*dd;
-{const _h=hitE;hitE=function(X,e,m,kb,stun,from=P,echo){if(!e||e.hp<=0||from!==P)return _h(X,e,m,kb,stun,from,echo);
-  const dd=rDiff(realmIdx(),mobRealm(e)),hm0=e.hm;e.hm=hm0-5.5*dd;try{return _h(X,e,m*rMul(dd),kb,stun,from,echo)}finally{e.hm=hm0}}}
-{const _hp=hurtP;hurtP=function(dm,src){if(!src||!src.d)return _hp(dm,src);
-  const dd=rDiff(mobRealm(src),realmIdx()),hm0=src.hm||0;src.hm=hm0+10*dd;try{return _hp(dm*rMul(dd),src)}finally{src.hm=hm0}}}
-{const _mh=mobHurt;mobHurt=function(t,dm,src){if(src&&src.d&&t&&t.d)dm*=rMul(rDiff(mobRealm(src),mobRealm(t)));return _mh(t,dm,src)}}
+hook('hit',c=>{const dd=rDiff(realmIdx(),mobRealm(c.e));c.hm-=5.5*dd;c.m*=rMul(dd)});
+hook('hurt',c=>{if(!c.src.d)return;const dd=rDiff(mobRealm(c.src),realmIdx());c.hm+=10*dd;c.dm*=rMul(dd)});
+hook('mobHurt',c=>{if(c.src&&c.src.d&&c.t.d)c.dm*=rMul(rDiff(mobRealm(c.src),mobRealm(c.t)))});
 
 // ---- 4) 지역 위험도: 지역마다 나오는 경지의 바닥(lo)과 천장(hi) ----
 // 졸개·정예의 경지는 min(hi, 원래 경지 + lo). 보스는 제 경지 그대로. 짐승은 lo보다 낮으면 lo로 끌어올려 수치도 표준 비율만큼 키운다.
