@@ -8,11 +8,11 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:사"]');await p.tap('[data-s="cls:권"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
-  // 신강에서 십만대산 여덟 맵으로
-  await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS.pv_xinjiang.gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
-  const r=await p.evaluate(()=>({reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
+  // 신강 십만대산 산 맵 중턱 포털에서 마교 여덟 맵으로
+  await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS[REGIONS.hq_cheonma_1.lmVia].gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
+  const r=await p.evaluate(()=>({via:REGIONS.hq_cheonma_1.lmVia,reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
     npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,REGIONS[id].npcs.length]))}));
-  ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes('pv_xinjiang'));
+  ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes(r.via));
   ok(`NPC: ${JSON.stringify(r.npc)}`,r.npc['마교 성읍']===4&&r.npc['오당 광장']===5&&r.npc['천마신전']>=1&&r.npc['장로원']===1);
   const mg=await p.evaluate(()=>{const out=[];for(const id of REGION().chain){loadRegion(id);out.push(builds.filter(b=>b.mg).length===builds.length)}loadRegion('hq_cheonma_1');return out.every(Boolean)});
   ok('여덟 맵의 전각이 모두 검은 벽·붉은 기와',mg);

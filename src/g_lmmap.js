@@ -12,7 +12,7 @@ const lmId=(k,i)=>`lm_${k}_${i}`;
 // 산 중턱 포털 자리 (문파가 여럿이면 길 양쪽·조금 아래로)
 const LM_PORTAL_M=[[5,20],[-5,20],[5,27]],LM_PORTAL_C=[[20,10],[14,10],[26,10]];
 function lmMapCfg(k,i,m,p){
-  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':'peak'):PV_PAINT[p.th]||'manor';
+  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor';
   const base={id,name:m.n,th,seed};
   if(m.t==='m')return{...base,yard:[16,3,24,8],builds:[{x:19,y:4,w:2,h:2,kind:'pavilion'}],lamps:[[18,7],[22,7]],nodes:{herb:7,ore:6,wood:2}};
   if(m.t==='c')return{...base,th:'manor',yard:[8,7,32,30],wall:33,
@@ -50,7 +50,8 @@ for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
 function lmPair(sid,k){const s=LM_SECT[sid];if(!s)return null;const F=REGIONS[pvId(k)];let best=null,bd=80;
   // 세가(가문)는 도시·명소를 먼저, 나머지는 산을 먼저 찾는다
   const fam=/세가$|가$|양가장/.test(SECTS[sid].n);
-  for(const pass of fam?['cs','m']:['m','cs']){for(const m of F.marks||[])if(m.gate&&pass.includes(m.t)){const d=Math.hypot(m.sx-s[0],m.sy-s[1]);if(d<bd){bd=d;best=m}}if(best)break}
+  // 세가가 산에 들어가는 것은 본산 이름에 그 산이 있을 때만 (융중산 와룡강·검각산 운가). 남궁세가처럼 아니면 들판에 둔다
+  for(const pass of fam?['cs','m']:['m','cs']){for(const m of F.marks||[])if(m.gate&&pass.includes(m.t)&&!(fam&&m.t==='m'&&!hqPlace(SECTS[sid]).includes(m.n))){const d=Math.hypot(m.sx-s[0],m.sy-s[1]);if(d<bd){bd=d;best=m}}if(best)break}
   return best}
 for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(sid,k);if(!m)continue;
   const s=SECTS[sid],first=(REGIONS[hqId(s)].chain||[hqId(s)])[0],F=REGIONS[pvId(k)],L=REGIONS[m.gate],c=L.stage;

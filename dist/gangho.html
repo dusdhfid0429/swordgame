@@ -3413,7 +3413,7 @@ const LM_SECT={gaebang:[4000,2145],sama:[3820,2120],paeng:[4140,1575],eon:[4050,
   ungga:[3145,2400],seolsan:[2885,2600],jeomchang:[2670,3090],yasu:[2780,3440],mudang:[3625,2420],jegal:[3810,2420],noklim:[3895,2500],
   janggang:[3605,2568],dongjeong:[3850,2812],hyeongsan:[3880,2973],haomun:[3880,3418],nabu:[4040,3400],cheonsan:[1310,978],gwangpung:[868,1168],
   taeyang:[2040,1076],podal:[1800,2552],bukhae:[2965,280],mosan:[4405,2460],sanggwan:[4475,2638],danmok:[4480,2600],bota:[4770,2610],
-  haenam:[3555,3875],daeroe:[1160,2810],_gaebong:[3973,2145]};
+  cheonma:[1110,1500],haenam:[3555,3875],daeroe:[1160,2810],_gaebong:[3973,2145]};
 const LM_DATA={
   henan:[['정주','c',3895,2160],['낙양','c',3793,2168],['삼문협','s',3703,2140],['함곡관','s',3754,2172],['용문','s',3790,2205],['여남','s',3970,2332],['대별산','m',3863,2368]],
   // 산서성(태원·오태산·항산·운강석굴·태항산)과 북경·천진을 하북성에
@@ -3442,7 +3442,9 @@ const LM_DATA={
   guangxi:[['계림','s',3613,3193],['대요산','m',3625,3335],['남녕','c',3413,3460]],
   guangdong:[['광주','c',3912,3418],['단하산','m',3942,3205],['나부산','m',3997,3400],['향항','s',3985,3507],['오문','s',3938,3528],['주강','t',4060,3520]],
   xinjiang:[['오로목제','c',1858,972],['토로번','c',1960,1090],['화염산','m',2000,1076],['천산','m',1273,978],['객십','c',833,1168],['준갈이분지','t',1805,832],
-    ['파음포로극초원','t',1578,1032],['대막','td',1460,1190],['탑리목분지','t',1458,1335],['탑극랍마간사막','td',1455,1425],['고목탑격사막','td',2118,1135],['총령','t',730,1375]],
+    ['파음포로극초원','t',1578,1032],['대막','td',1460,1190],['탑리목분지','t',1458,1335],['탑극랍마간사막','td',1455,1425],['고목탑격사막','td',2118,1135],['총령','t',730,1375],
+    // 무림전도에는 없지만 사용자 결정(2026-10-08)으로 마교 본거지 십만대산을 신강 남서쪽 곤륜 기슭에 둔다
+    ['십만대산','m',1090,1480]],
   tibet:[['랍살','c',1833,2552],['주목랑마','m',1440,2637]],
   mongol:[['호화호특','c',3720,1495],['몽혁살리달격산','m',2930,280],['북해','tl',2935,400]],
   // 상해를 강소성에
@@ -4026,7 +4028,7 @@ const lmId=(k,i)=>`lm_${k}_${i}`;
 // 산 중턱 포털 자리 (문파가 여럿이면 길 양쪽·조금 아래로)
 const LM_PORTAL_M=[[5,20],[-5,20],[5,27]],LM_PORTAL_C=[[20,10],[14,10],[26,10]];
 function lmMapCfg(k,i,m,p){
-  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':'peak'):PV_PAINT[p.th]||'manor';
+  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor';
   const base={id,name:m.n,th,seed};
   if(m.t==='m')return{...base,yard:[16,3,24,8],builds:[{x:19,y:4,w:2,h:2,kind:'pavilion'}],lamps:[[18,7],[22,7]],nodes:{herb:7,ore:6,wood:2}};
   if(m.t==='c')return{...base,th:'manor',yard:[8,7,32,30],wall:33,
@@ -4064,7 +4066,8 @@ for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
 function lmPair(sid,k){const s=LM_SECT[sid];if(!s)return null;const F=REGIONS[pvId(k)];let best=null,bd=80;
   // 세가(가문)는 도시·명소를 먼저, 나머지는 산을 먼저 찾는다
   const fam=/세가$|가$|양가장/.test(SECTS[sid].n);
-  for(const pass of fam?['cs','m']:['m','cs']){for(const m of F.marks||[])if(m.gate&&pass.includes(m.t)){const d=Math.hypot(m.sx-s[0],m.sy-s[1]);if(d<bd){bd=d;best=m}}if(best)break}
+  // 세가가 산에 들어가는 것은 본산 이름에 그 산이 있을 때만 (융중산 와룡강·검각산 운가). 남궁세가처럼 아니면 들판에 둔다
+  for(const pass of fam?['cs','m']:['m','cs']){for(const m of F.marks||[])if(m.gate&&pass.includes(m.t)&&!(fam&&m.t==='m'&&!hqPlace(SECTS[sid]).includes(m.n))){const d=Math.hypot(m.sx-s[0],m.sy-s[1]);if(d<bd){bd=d;best=m}}if(best)break}
   return best}
 for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(sid,k);if(!m)continue;
   const s=SECTS[sid],first=(REGIONS[hqId(s)].chain||[hqId(s)])[0],F=REGIONS[pvId(k)],L=REGIONS[m.gate],c=L.stage;

@@ -10,7 +10,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   const cnt=await p.evaluate(()=>{const by={c:0,s:0,m:0,t:0};let n=0,want=0;for(const k of Object.keys(PROV)){want+=(LM_DATA[k]||[]).length;for(const m of REGIONS[pvId(k)].marks){by[m.t]++;n++}}
     const win=Object.values(REGIONS).filter(R=>R.win).reduce((a,R)=>a+R.marks.length,0);return{n,want,by,win}});
-  ok(`땅이름 ${cnt.n}/${cnt.want}곳 (도시 ${cnt.by.c} · 명소 ${cnt.by.s} · 산 ${cnt.by.m} · 지형 ${cnt.by.t}), 맵에 나눠진 수 ${cnt.win}`,cnt.n===cnt.want&&cnt.n>140&&cnt.win===cnt.n);
+  ok(`땅이름 ${cnt.n}/${cnt.want}곳 (도시 ${cnt.by.c} · 명소 ${cnt.by.s} · 산 ${cnt.by.m} · 지형 ${cnt.by.t}), 맵에 나눠진 수 ${cnt.win}`,cnt.n===cnt.want&&cnt.n>=143&&cnt.win===cnt.n);
   // 지도 순서 그대로: 북경은 석가장보다 북쪽, 낙양은 정주보다 서쪽, 돈황은 란주보다 서쪽
   const ord=await p.evaluate(()=>{const at=(k,n)=>REGIONS[pvId(k)].marks.find(m=>m.n===n);
     return{bj:at('hebei','북경').y<at('hebei','석가장').y,ly:at('henan','낙양').x<at('henan','정주').x,dh:at('gansu','돈황').x<at('gansu','란주').x,
@@ -21,7 +21,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
       n++;const L=REGIONS[m.gate];if(!L||L.size!==40)bad.push(m.n+'(맵없음)');
       const w=Object.values(REGIONS).filter(R=>R.win&&R.win.k===k&&R.gates.some(g=>g.to===m.gate)).length;if(w!==1)bad.push(m.n+'(입구'+w+')')}
     return{n,bad}});
-  ok(`장소 맵 ${lm.n}장, 들판 맵마다 입구 하나 ${lm.bad.slice(0,6).join(' ')}`,lm.n===119&&lm.bad.length===0);
+  ok(`장소 맵 ${lm.n}장, 들판 맵마다 입구 하나 ${lm.bad.slice(0,6).join(' ')}`,lm.n===120&&lm.bad.length===0);
   // 문파는 짝 장소 맵 안 포털로: 화산 안 화산파, 아미산 안 아미파, 북경 안 하북팽가
   const pr=await p.evaluate(()=>{const out={};for(const[sid,k,mn]of[['hwasan','shaanxi','화산'],['emei','sichuan','아미산'],['mudang','hubei','무당산'],['paeng','hebei','북경'],['kunlun','qinghai','곤륜산']]){
     const F=REGIONS[pvId(k)],m=F.marks.find(q=>q.n===mn),L=REGIONS[m.gate],first=REGIONS['hq_'+sid].chain[0],back=REGIONS[first].gates.find(g=>g.to===m.gate);
