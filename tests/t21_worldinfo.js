@@ -30,7 +30,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 이동 중 표시가 저장에 남아 다시는 이동하지 못하던 문제
   const tv=await p.evaluate(()=>JSON.parse(localStorage.getItem(SAVE_KEY)).P.traveling);
   const st=await p.evaluate(()=>{const d=JSON.parse(localStorage.getItem(SAVE_KEY));d.P.traveling=1;applySave(d);return P.traveling});
-  await p.evaluate(()=>travel(REGION().gates[0]));await p.waitForTimeout(700);
+  await p.evaluate(()=>{const e=REGION().edges||{};travel(REGION().gates[0]||{to:e.n||e.w||e.e||e.s,tx:20.5,ty:20.5})});await p.waitForTimeout(700);
   ok(`이동한 뒤 저장에 이동 중 표시가 없고(${tv}), 예전 저장에 남아 있어도 불러오면 풀려서(${st}) 다시 이동된다`,!tv&&!st&&await p.evaluate(()=>REG!=='pv_sichuan'&&!P.traveling));
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

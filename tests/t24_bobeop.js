@@ -11,7 +11,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('처음부터 기초보법(하승·직선)을 안다, 터치 보법 버튼',await p.evaluate(()=>P.bob.b_basic&&bobOf().t==='line'&&!!$('t_step')));
   await p.evaluate(()=>{travel({to:'pv_henan',tx:24.5,ty:24.5})});await p.waitForTimeout(1500);
   // 탁 트인 자리 찾기
-  const open=await p.evaluate(()=>{for(let j=6;j<N-6;j++)for(let i=6;i<N-6;i++){let f=true;for(let y=j-5;y<=j+5&&f;y++)for(let x=i-5;x<=i+5;x++)if(!walk(x,y)){f=false;break}if(f)return{x:i+.5,y:j+.5}}return null});
+  const open=await p.evaluate(()=>{for(let j=6;j<N-6;j++)for(let i=6;i<N-6;i++){let f=true;for(let y=j-5;y<=j+5&&f;y++)for(let x=i-5;x<=i+5;x++)if(!walk(x,y)){f=false;break}if(f)return{x:i+.5,y:j+.5}}
+    // 40칸 맵에 트인 곳이 없으면 가운데를 비운다 (시험용)
+    for(let y=14;y<=26;y++)for(let x=14;x<=26;x++){objs[y][x]=null;map[y][x].g=0}return{x:20.5,y:20.5}});
   const setup=o=>p.evaluate(o=>{mobs=[];P.x=o.x;P.y=o.y;P.leap=null;P.perch=null;P.z=0;P.qi=P.maxQi;P.bcd2=0;P.target=null;P.fx=1;P.fy=0;P.buff.crit=0;joy.on=false},o);
   await setup(open);
   // 직선: 바라보는 쪽으로, 늑대 사이를 빠져나간다
