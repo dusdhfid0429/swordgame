@@ -17,7 +17,7 @@ function makeTomb(cause){
   const s=tombSpot(P.x,P.y);if(!s)return;
   const items=[...Object.values(P.eq).filter(Boolean),...P.bag].map(it=>JSON.parse(JSON.stringify(it)));
   const ri=realmIdx();
-  tombs().push({id:Date.now()%1e9,reg:REG,x:s.x,y:s.y,name:P.name,life:P.lifeNo,age:Math.floor(P.age),cause,cls:curCls(),el:art().el||null,side:P.side,realm:RANKS[ri],
+  tombs().push({id:Date.now()%1e9,reg:REG,x:s.x,y:s.y,name:P.name,life:P.lifeNo,age:Math.floor(P.age),cause,cls:curCls(),el:art().el||null,side:P.side,realm:rk(ri),
     hp:Math.round(P.maxHp*2.5+ri*120),atk:Math.max(10,Math.round(atk()*.75)),def:2+ri*2,hm:Math.round(P.st.agi*2+ri*4),xp:120+ri*60,items});
   while(tombs().length>TOMB_MAX)tombs().shift();
 }

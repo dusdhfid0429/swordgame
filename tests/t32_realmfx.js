@@ -27,8 +27,23 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`호신강기: 산적(${r4.mr}) 공격 ${r4.d2} → ${r4.d1}`,r4.d1<=Math.ceil(r4.d2*.25));
   // 경지 차이: 하수 산적은 겁먹고 달아난다, 반박귀진(화경)이면 덤빈다
   const r5=await p.evaluate(()=>{P.realm=4;const e=mkMob('산적',P.x+2,P.y);mobs=[e];updateMob(e,.05);const f1=e.flee>0&&!e.aggro;
-    P.realm=5;realmFxSync();const e2=mkMob('산적',P.x+2,P.y);mobs=[e2];updateMob(e2,.05);return{f1,f2:e2.flee>0,a2:e2.aggro,sense:senseText(mkMob('혈교장로',0,0))}});
+    P.realm=5;P.sect='namgung';realmFxSync();const e2=mkMob('산적',P.x+2,P.y);mobs=[e2];updateMob(e2,.05);P.sect=null;return{f1,f2:e2.flee>0,a2:e2.aggro,sense:senseText(mkMob('혈교장로',0,0))}});
   ok(`하수는 달아남 ${r5.f1}, 반박귀진이면 겁먹지 않음 ${!r5.f2}, 혈교장로 기도 '${r5.sense}'`,r5.f1&&!r5.f2);
+  // 화경·현경은 심법 계열마다 이름과 고유 특성이 다르고 수치는 같다
+  const sm=await p.evaluate(()=>{const names={};for(const[sid,k]of[['namgung','정종'],['mudang','도가'],['shaolin','불가'],['podal','사불'],['mandok','사공'],['cheonma','마공']]){P.sect=sid;P.realm=5;const a=realmName();P.realm=6;names[k]=a+'/'+realmName()}
+    P.realm=5;const R=Math.random;Math.random=()=>.99;const hit=(sid)=>{P.sect=sid;P.inv=0;P.hp=P.maxHp;const e=mkMob('혈교장로',P.x+1,P.y);e.hp=99999;mobs=[e];hurtP(100,e);return{took:P.maxHp-P.hp,refl:99999-e.hp}};
+    const jj=hit('namgung'),bg=hit('shaolin'),dg=hit('mudang');
+    Math.random=()=>.5;
+    P.sect='podal';P.hp=50;const X=mkX('base');const e=mkMob('강시',P.x+1,P.y);e.hp=e.maxHp=99999;mobs=[e];hitE(X,e,1,0,0);const leech=P.hp-50;
+    P.sect='mandok';const e3=mkMob('강시',P.x+1,P.y);e3.hp=99999;e3.slow=0;hitE(X,e3,1,0,0);const slow=e3.slow;
+    P.sect='cheonma';P.hp=P.maxHp;const e4=mkMob('강시',P.x+1,P.y);e4.hp=99999;hitE(X,e4,1,0,0);const full=99999-e4.hp;P.hp=P.maxHp*.2;const e5=mkMob('강시',P.x+1,P.y);e5.hp=99999;hitE(X,e5,1,0,0);const low=99999-e5.hp;
+    Math.random=R;P.sect=null;mobs=[];return{names,jj,bg,dg,leech,slow,full,low}});
+  ok(`계열별 이름 ${JSON.stringify(sm.names)}`,sm.names.정종==='화경/현경'&&sm.names.도가==='귀원경/등선경'&&sm.names.불가==='금강경/보리경'&&sm.names.사불==='혈불경/명왕경'&&sm.names.사공==='사왕경/사신경'&&sm.names.마공==='마화경/천마경');
+  ok(`고유 특성: 금강불괴 ${sm.bg.took}<${sm.jj.took}, 태극 반탄 ${sm.dg.refl}, 혈불공 +${Math.round(sm.leech)}, 사기 둔화 ${sm.slow}, 천마해체 ${sm.full}→${sm.low}`,sm.bg.took<sm.jj.took&&sm.dg.refl>0&&sm.jj.refl===0&&sm.leech>0&&sm.slow>=2&&sm.low>sm.full*1.2);
+  // 수치는 계열마다 다르되 밸런스 점수는 같다 (내공 10%=1, 기본기 1=1, 수명 5년=1, 필살기 10%=1)
+  const bal=await p.evaluate(()=>{const o={};for(const[k,c]of Object.entries(SUMMIT)){const st=Object.values(c.st).reduce((a,b)=>a+b,0);o[k]=[Math.round(c.q*10+st+c.l5/5),Math.round(c.l6/5+c.ult*10)]}
+    P.realm=5;P.sect='cheonma';const mg=danMul();P.sect='mudang';const dg=danMul();P.sect=null;return{o,mg,dg}});
+  ok(`밸런스 점수(화경/현경) ${JSON.stringify(bal.o)}, 상단전 마공 ×${bal.mg} 도가 ×${bal.dg}`,Object.values(bal.o).every(v=>v[0]===13&&v[1]===7)&&bal.mg===1.5&&bal.dg===1.4);
   // 화경 환골탈태: 기본기 +2, 수명 +10 (한 번만)
   const r6=await p.evaluate(()=>{const s=P.st.str,l=P.life;realmFxSync();return{s:P.st.str-s,l:P.life-l,once:P.rfx[5]}});
   ok(`환골탈태 한 번만: 다시 맞춰도 근력 +${r6.s}, 수명 +${r6.l}`,r6.s===0&&r6.l===0&&r6.once);

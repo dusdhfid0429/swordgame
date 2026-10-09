@@ -52,7 +52,7 @@ const qiRealm=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return 
 const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
-const realmName=()=>RANKS[realmIdx()];
+const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
 const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul()*realmQiMul();
