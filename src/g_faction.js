@@ -37,7 +37,7 @@ function mkFac(fac,elite,x,y,sid){
   // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
   const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
   e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
-  return e}
+  runHooks('facMade',e);return e}
 // 0.5초마다 주변의 적 세력 무인을 찾아 노린다
 function facScan(e,dt){
   e.fscan=(e.fscan||0)-dt;if(e.fscan>0)return;e.fscan=.45+Math.random()*.2;
@@ -49,7 +49,8 @@ function facScan(e,dt){
 }
 // 몹끼리의 타격. 쓰러져도 전리품은 없고, 가끔 은자 주머니가 떨어진다.
 function mobHurt(t,dm,src){
-  if(t.hp<=0)return;dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;
+  if(t.hp<=0)return;{const c={t,src,dm};runHooks('mobHurt',c);dm=c.dm}
+  dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;
   if(dist(t,P)<14)addText(t.x,t.y,dm,'#c8b8a0');
   if(t.d.fac&&(!t.tgt||t.tgt.hp<=0||!t.tgt.isMob||Math.random()<.3)){t.tgt=src;t.aggro=true}
   if(t.hp<=0){t.hp=0;fx.push({t:'puff',x:t.x,y:t.y,life:.6});if(P.target===t)P.target=null;
@@ -249,5 +250,5 @@ function postGo(id){
 function hqDlg(n){
   const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
-  return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
+  const c={n,html:`<p class="note">${hi}</p>${sectDetail(s,true)}`};runHooks('hqDlg',c);return c.html}
 

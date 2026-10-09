@@ -14,7 +14,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
@@ -71,6 +71,7 @@ function recalc(){
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
+  runHooks('recalc');
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
 const TIERS=['입문','소성','대성','극성'];
@@ -131,7 +132,7 @@ function setArt(id){if(!A(id))return;P.cur=id;P.fcd=[0,0,0,0,0,0];P.chain={last:
 function mkMob(kind,x,y,extra){
   const d=MOBS[kind]||extra,m={kind,d,name:kind,x,y,home:{x,y},hp:d.hp,maxHp:d.hp,atk:d.atk||0,def:d.def||0,hm:d.hm||0,sp:d.sp,el:d.el||null,reach:d.reach||(d.beast?1.1:1.2),
     cd:1+Math.random(),wind:0,swing:0,hit:0,kb:{x:0,y:0},fx:1,fy:1,bob:Math.random()*6,moving:false,aggro:false,flee:0,stun:0,slow:0,burn:0,psn:0,nohe:0,wt:Math.random()*3,goal:null,skT:4+Math.random()*3,isMob:1};
-  if(extra)Object.assign(m,extra.o||{});return m;
+  if(extra)Object.assign(m,extra.o||{});runHooks('mobMade',m,kind,extra);return m;
 }
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
 function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
@@ -148,14 +149,38 @@ function spawnTick(){
     if(G.bossT[k]<=0&&Math.hypot(x-P.x,y-P.y)>7){mobs.push(mkMob(k,x,y));G.bossT[k]=t;log(`${k}이(가) 모습을 드러냈다는 소문이 돕니다.`,'dmg')}}
 }
 
+// ================= 훅: 다른 파일이 핵심 함수에 규칙을 더하는 자리 =================
+// 함수를 감싸 덮어쓰지 않고 hook(이름, 함수)로 등록한다. 핵심 함수가 정해진 자리에서 runHooks로 부른다.
+// 전투 보정은 곱셈·덧셈이라 등록 순서와 상관없이 결과가 같다.
+//  hit(c)        내가 칠 때, 명중 판정 전. c={X,e,from,m 배율,def 적용할 방어,hm 상대 현묘도}
+//  hitDone(c)    내 공격이 맞은 뒤. c.hp0 = 맞기 전 상대 생명
+//  hurt(c)       내가 맞을 때, 회피 판정 전. c={src,dm 피해,hm 상대 현묘도}
+//  hurtDone(c)   맞은 뒤. c.hp0 = 맞기 전 내 생명
+//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}
+//  recalc()      능력치를 다시 셈한 뒤          mobMade(m,kind,extra) / facMade(e)  몹·세력 무인을 만든 뒤
+//  mobTick(e,dt) 몹 한 프레임 전                kill(e)        몹을 처치한 뒤(보상 뒤)
+//  mastDone(c)   숙련이 오른 뒤. c={id,s,before} trainTick(dt)  매 프레임 (수련 창)
+//  duelStart(o,e) / duelEnd(c)  비무 시작·끝. c={win,e,o,was 이전 단계,me 내 경지}
+//  loadRegion(c) 맵을 열기 전, c.id를 바꿀 수 있다   regionLoaded(id)  맵을 연 뒤
+//  travel(c)     출입구로 가기 전, c.g를 바꿀 수 있다
+//  gate(c)       출입구 검사 전, c.stop=true면 막는다   gateDone()  출입구 검사 뒤
+//  npcDlg(c) / hqDlg(c)  사람·본산 대화. c.html을 채우면 그것을 쓴다 / 덧붙인다
+//  sectAct(c) / sectActDone(c)  문파 행동. c.done=true면 기본 행동을 건너뛴다
+//  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
+//  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
+const HOOKS={};
+const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
+const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
+
 // ================= combat =================
 function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
-  const pHit=clamp(.74+(hmv()-e.hm)/110,.25,.98);
+  const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
+  const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
-  d=Math.max(1,Math.round(d-(el==='금'?0:e.def)));
+  d=Math.max(1,Math.round(d-(el==='금'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
   if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07);
@@ -164,6 +189,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   gainMast(X.key,1);
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
+  if(from===P)runHooks('hitDone',c);
 }
 function gainMast(id,v){
   const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]);
@@ -172,6 +198,7 @@ function gainMast(id,v){
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
   if(a.base||a.gy)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
+  runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
   e.hp-=d;e.hit=.12;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
@@ -193,6 +220,7 @@ function onKill(e){
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
+  runHooks('kill',e);
   facKill(e);
   if(e.tomb){tombKill(e);return}
   // loot
@@ -230,11 +258,13 @@ function pickUp(d){
 }
 function hurtP(dm,src){
   if(P.inv>0||P.hp<=0)return;
-  if(Math.random()<clamp((hmv()-(src.hm||0))/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');return}
+  const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
+  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
   if(P.hp<=0){if(G.duel){P.hp=1;duelEnd(false)}else{P.hp=0;die('전투')}}
+  runHooks('hurtDone',c);
 }
 
 // ================= 초식, 연속기, 필살기 =================
@@ -259,7 +289,7 @@ function basicStrike(e){
   if(a.cls==='궁'&&useArt!=='base'){projs.push({x:P.x,y:P.y,vx:P.fx*14,vy:P.fy*14,left:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:'arrow',trail:[],ph:0})}
   else{anim(.2);hitE(X,e,.75,.25,0);fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}
 }
-function ultimate(){
+function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(P.hp<=0)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
   if(!hasWeaponFor(a.cls)){log(`${a.cls}이(가) 필요합니다.`,'info');return}
@@ -331,7 +361,8 @@ function mkAlly(kind,k,x,y){
 function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp=a.maxHp;a.atk+=3;gainVit(15);P.fame+=1;log(`제자 ${a.name}이(가) ${a.lv}단계로 성장했습니다. 사부로서 활력 +15`,'xp')}}
 
 // ================= 기연 =================
-function giyeon(src){
+function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
+function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
   if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}

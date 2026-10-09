@@ -158,7 +158,8 @@ function ownSectHtml(al){
   if(P.sect==='own')return `<div class="row2"><span class="note">${esc(P.sectName)}의 문주</span>${B('disciple',`제자 받기 · 은자 50 (${allies.filter(a=>a.kind==='disciple').length}/3)`,{pri:1,d:P.silver<50||allies.filter(a=>a.kind==='disciple').length>=3})}</div>`;
   const found=P.sect&&realmIdx()>=3&&P.fame>=150;
   return `<div class="row2"><span class="note">문파의 제자로 절정 이상, 명성 150이면 하산해 자기 문파를 세울 수 있다.</span>${B('found','문파 창설',{d:!found})}</div>`}
-function sectAct(a,x,y){
+function sectAct(a,x,y){const c={a,x,y,done:false,r:undefined};runHooks('sectAct',c);if(c.done)return c.r;c.r=sectActBase(a,x,y);runHooks('sectActDone',c);return c.r}
+function sectActBase(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
     case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const h=s.arts.find(q=>q.hi);

@@ -74,4 +74,4 @@ for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(s
   R.gates=[{x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:3.2,label:'개봉'},{x,y,to:'hq_shaolin',tx:20.5,ty:36.2,label:S.n,portal:1}];
   REGIONS.hq_shaolin.gates.push({x:20.5,y:38.6,to:'sungsan',tx:x,ty:y+2,label:'숭산'});REGIONS.hq_shaolin.lmVia='sungsan';REGIONS.hq_shaolin.prov='henan'}
 // 예전 저장이 숭산 꼭대기(옛 소림사 자리)였으면 걸을 수 있는 곳으로
-{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.4}}}
+hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.4}});
