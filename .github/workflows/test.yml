@@ -1,0 +1,27 @@
+# 푸시와 PR마다 dist를 새로 빌드하고 전체 테스트를 돌린다. 하나라도 실패하면 빨간불.
+name: test
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Playwright 설치
+        run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: 빌드
+        run: python3 build.py
+      - name: dist가 소스와 같은지
+        run: git diff --exit-code --stat dist/ || (echo "dist가 src와 다릅니다. python3 build.py 후 커밋하세요." && exit 1)
+      - name: 테스트
+        run: node tests/run.js -j 2
+      - name: 스크린샷 올리기
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: {name: shots, path: tests/shots, if-no-files-found: ignore}

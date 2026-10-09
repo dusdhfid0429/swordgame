@@ -50,6 +50,6 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
   await p.reload();await p.waitForTimeout(2500);await p.click('[data-s="cont"]');await p.waitForTimeout(800);
   await step('loaded',()=>({name:P.name,age:P.age,playing}));
   await p.screenshot({path:__dirname+'/shots/s2_loaded.png'});
-  console.log(errs.join('\n'));
+  console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');
   await b.close();
 })();

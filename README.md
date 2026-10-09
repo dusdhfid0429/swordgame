@@ -21,10 +21,15 @@ python3 build.py        # src/ 조각을 이어 dist/gangho.html 생성
 
 ```
 npm i -D playwright && npx playwright install chromium
-node tests/t2.js        # 전 시스템 자동 플레이, tests/shots/ 에 스크린샷
-node tests/t3_touch.js  # 휴대폰 화면에서 터치 조작 확인
-node tests/t4_toss.js   # 가짜 토스 SDK로 앱인토스 대응 확인
+python3 build.py
+node tests/run.js              # tests/t*.js 전부, 4개씩 나란히. 하나라도 실패하면 exit 1
+node tests/run.js realm touch  # 이름에 realm·touch가 든 것만
+node tests/run.js -j 1 -t 600  # 하나씩, 파일마다 600초 제한
+node tests/run.js toss         # 가짜 토스 SDK로 앱인토스 대응 확인 (t4_toss)
 ```
+
+각 테스트는 `PASS …`/`FAIL …` 줄과 마지막에 `no console errors` 또는 `ERRORS`를 찍습니다. 러너는 `FAIL` 줄, `ERRORS`, 0이 아닌 종료 코드, 시간 초과를 실패로 셉니다. 스크린샷은 `tests/shots/`(커밋하지 않음)에 남습니다.
+GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확인, 전체 테스트를 돌립니다.
 
 ## 파일 구성
 
