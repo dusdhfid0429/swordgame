@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{travel({to:'hq_hwasan',tx:20.5,ty:30})});await p.waitForTimeout(1500);
   await p.evaluate(()=>{mobs=[];P.qi=P.maxQi;P.maxHp=9999;P.hp=9999});
   // 전각 지붕 앞에 서서 지붕 쪽으로 경공
-  const r1=await p.evaluate(()=>{const bd=builds.find(q=>q.kind==='temple');const x=bd.x+bd.w/2,y=bd.y+bd.h+.6;P.x=x;P.y=y;P.fx=0;P.fy=-1;leap();return{bd:[bd.x,bd.y,bd.w,bd.h]}});
+  const r1=await p.evaluate(()=>{const bd=builds.find(q=>q.kind==='temple');const x=bd.x+.5,y=bd.y+bd.h+.6;P.x=x;P.y=y;P.fx=0;P.fy=-1;leap();return{bd:[bd.x,bd.y,bd.w,bd.h]}});
   await p.waitForTimeout(900);
   const s1=await p.evaluate(()=>({k:P.perch&&P.perch.k,z:P.z,x:P.x,y:P.y}));
   ok(`경공으로 전각 지붕 위에 오른다 (높이 ${s1.z})`,s1.k==='roof'&&s1.z>40);
@@ -38,7 +38,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const s4=await p.evaluate(()=>({hp:window._v.hp,perch:!!P.perch,z:P.z,walk:walkAt(P.x,P.y)}));
   ok(`지붕에서 적을 고르면 낙하 공격 (늑대 ${s3} → ${Math.round(s4.hp)}), 땅에 내려선다`,s4.hp<s3&&!s4.perch&&s4.z===0&&s4.walk);
   // 지붕에서 걸어 나가면 뛰어내린다
-  await p.evaluate(()=>{mobs=[];const bd=builds.find(q=>q.kind==='temple');P.x=bd.x+bd.w/2;P.y=bd.y+bd.h+.6;P.fx=0;P.fy=-1;P.qi=P.maxQi;P.target=null;leap()});await p.waitForTimeout(900);
+  await p.evaluate(()=>{mobs=[];const bd=builds.find(q=>q.kind==='temple');P.x=bd.x+.5;P.y=bd.y+bd.h+.6;P.fx=0;P.fy=-1;P.qi=P.maxQi;P.target=null;leap()});await p.waitForTimeout(900);
   await p.evaluate(()=>{for(let i=0;i<40&&P.perch;i++)perchMove(0,1,.1)});await p.waitForTimeout(700);
   ok('지붕 가장자리 밖으로 걸으면 뛰어내린다',await p.evaluate(()=>!P.perch&&P.z===0&&walkAt(P.x,P.y)));
   // 나무 위

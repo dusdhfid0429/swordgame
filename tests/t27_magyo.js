@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 신강 십만대산 산 맵 중턱 포털에서 마교 여덟 맵으로
   await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS[REGIONS.hq_cheonma_1.lmVia].gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
   const r=await p.evaluate(()=>({via:REGIONS.hq_cheonma_1.lmVia,reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
-    npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,REGIONS[id].npcs.length]))}));
+    npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,npcsOf(id).length]))}));
   ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes(r.via));
   ok(`NPC: ${JSON.stringify(r.npc)}`,r.npc['마교 성읍']===4&&r.npc['오당 광장']===5&&r.npc['천마신전']>=1&&r.npc['장로원']===1);
   const mg=await p.evaluate(()=>{const out=[];for(const id of REGION().chain){loadRegion(id);out.push(builds.filter(b=>b.mg).length===builds.length)}loadRegion('hq_cheonma_1');return out.every(Boolean)});
@@ -26,14 +26,14 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 마교도는 교도가 아니면 적, 교도면 같은 편
   const f0=await p.evaluate(()=>{const m=mobs.find(e=>e.sect==='cheonma');return m?mobFoeP(m):null});
   // 입교 전: 비급은 교도만
-  await p.evaluate(()=>openNpc(npcsHere().find(n=>n.hq==='cheonma')));await p.waitForTimeout(200);
+  await p.evaluate(()=>openNpc(hqNpc(REG)));await p.waitForTimeout(200);
   const t0=await p.evaluate(()=>$('wbody').textContent);
   ok(`입교 전 마교도는 적(${f0}), 교주 창에 짜임과 '교도만'`,f0!==false&&t0.includes('천마신교의 짜임')&&t0.includes('교도만')&&t0.includes('부교주'));
   await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(200);
   const j=await p.evaluate(()=>({sect:P.sect,dang:P.dang||null,foe:mobs.filter(e=>e.sect==='cheonma').some(m=>mobFoeP(m)),blk:mgArtBlock({id:'S_cheonma_0'})}));
   ok(`입교: 당 없음, 마교도와 같은 편, 일반 무공은 '${j.blk}'`,j.sect==='cheonma'&&!j.dang&&!j.foe&&j.blk==='당에 든 뒤');
   // 혈마당 입당
-  await p.evaluate(()=>{closePanels();P.reg='hq_cheonma_5';loadRegion('hq_cheonma_5');openNpc(npcsHere().find(n=>n.dang==='hyeolma'))});await p.waitForTimeout(200);
+  await p.evaluate(()=>{closePanels();P.reg='hq_cheonma_5';loadRegion('hq_cheonma_5');openNpc(findNpc(REG,n=>n.dang==='hyeolma'))});await p.waitForTimeout(200);
   await p.screenshot({path:shot('magyo_dang')});
   await p.locator('[data-act="mdang:hyeolma"]').tap();await p.waitForTimeout(200);
   const d=await p.evaluate(()=>({dang:P.dang,art:!!(P.arts.S_cheonma_0&&P.arts.S_cheonma_0.f[0]),own:mgArtBlock({id:'S_cheonma_0'}),other:mgArtBlock({id:'S_cheonma_1'}),

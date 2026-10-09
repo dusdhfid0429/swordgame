@@ -5,7 +5,7 @@
 // - 높은 곳의 이점: 맨손·병장기로 덤비는 적은 닿지 않는다(활·암기를 쓰는 적만 쏜다). 높은 곳에서 쏜 화살·장풍은 장애물을 넘고 20% 세다.
 //   높은 곳에서 적을 고르면 그 적 위로 뛰어내리며 낙하 공격(높이가 높을수록 세다)을 한다.
 // - 덤비던 적이 6초 동안 닿지 못하면 포기하고 돌아간다(두목은 끝까지 기다린다).
-const PERCH_TREE={tree:1,pine:1,bamboo:1};
+const PERCH_TREE={tree:1,pine:1,bamboo:1,plum:1,maple:1};
 const buildAt=(i,j)=>builds.find(b=>i>=b.x&&i<b.x+b.w&&j>=b.y&&j<b.y+b.h);
 function roofZ(b){const pav=b.kind==='pavilion',WH=pav?34:38,H0=WH+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h);return Math.round(pav?RH*.85:H0+(RH-H0)*.55)}
 function treeZ(ob,i,j){const set=SPRITES[ob],s=set[(i*7+j*3)%set.length];return Math.round(Math.max(28,(s.height-12)*.62))}

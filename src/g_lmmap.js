@@ -8,19 +8,22 @@
 // - 호수·사막 같은 지형은 들판 맵에 그대로 둔다.
 // - 문파 짝: 무림전도에서 문파 표시와 80픽셀 안에 있는 산(없으면 도시·명소). 세가는 도시·명소를 먼저. 짝이 없는 문파 입구는 들판에 그대로.
 const LM_SNOW=/장백산|천산|곤륜산|매리설산|대설산|주목랑마|아니마경산|아할랍달택산|몽혁살리달격산|기련산|공알산/;
+const LM_SAND=/명사산/,LM_RED=/화염산|단하산/;
 const lmId=(k,i)=>`lm_${k}_${i}`;
+// 명소 종류별 맵 (data/world.json LM_STYLE: 이름 패턴 → 지형·담·강·바다·천막·석탑). 도시 바닥은 성 지형을 따른다 (CITY_TH: 사막·눈)
+const lmStyle=n=>{for(const[re,st]of GD.LM_STYLE)if(new RegExp(re).test(n))return st;return null};
 // 산 중턱 포털 자리 (문파가 여럿이면 길 양쪽·조금 아래로)
 const LM_PORTAL_M=GD.LM_PORTAL_M,LM_PORTAL_C=GD.LM_PORTAL_C;
 function lmMapCfg(k,i,m,p){
-  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor';
+  const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':LM_SAND.test(m.n)?'sand':LM_RED.test(m.n)?'canyon':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor',st=m.t==='s'?lmStyle(m.n):null;
   const base={id,name:m.n,th,seed};
   if(m.t==='m')return{...base,w:20,h:40,yard:[6,3,14,8],builds:[{x:9,y:4,w:2,h:2,kind:'pavilion'}],lamps:[[8,7],[12,7]],nodes:{herb:5,ore:4,wood:2}};
-  if(m.t==='c')return{...base,th:'manor',yard:[8,7,32,30],wall:33,
+  if(m.t==='c'||st&&st.town){if(st&&st.town)m.town=1;return{...base,th:GD.CITY_TH[p.th]||'manor',yard:[8,7,32,30],wall:33,
     builds:[{x:9,y:9,w:3,h:2,kind:'inn'},{x:28,y:9,w:3,h:2,kind:'hall'},{x:9,y:15,w:2,h:2,kind:'house'},{x:29,y:15,w:2,h:2,kind:'house'},
       {x:9,y:21,w:2,h:3,kind:'smith'},{x:29,y:21,w:2,h:2,kind:'temple'},{x:13,y:26,w:2,h:2,kind:'house'},{x:25,y:26,w:2,h:2,kind:'house'}],
-    lamps:[[17,12],[23,12],[17,24],[23,24],[16,31],[24,31]],nodes:{herb:2,ore:0,wood:2}};
-  const pass=/관$/.test(m.n),cave=/석굴|용문/.test(m.n),kind=pass?'hall':cave||m.n.includes('묘')?'temple':'pavilion';
-  return{...base,yard:[13,12,27,24],builds:[{x:19,y:14,w:3,h:2,kind}],lamps:[[16,18],[24,18],[16,22],[24,22]],nodes:{herb:4,ore:2,wood:2},cave}}
+    lamps:[[17,12],[23,12],[17,24],[23,24],[16,31],[24,31]],nodes:{herb:2,ore:0,wood:2}}}
+  const kind=st&&st.kind||'pavilion';
+  return{...base,yard:[13,12,27,24],builds:[{x:19,y:14,w:3,h:2,kind}],lamps:[[16,18],[24,18],[16,22],[24,22]],nodes:{herb:4,ore:2,wood:2},...(st||{}),th:st&&st.th||th}}
 // 산길 x (genStage와 같은 식)
 const lmRoadX=(c,y)=>ST_PATH(y,c.seed%7*.9,c.yard?c.yard[3]:12,(c.h||40)-2,(c.w||40)/2);
 const lmMidX=c=>(c.w||40)/2+.5;   // 아래 출입구 x (가로 가운데)
@@ -32,7 +35,7 @@ function lmGen(c,m){genStage(c);
     if(q.s)placeFlags(q.s,[[x-2,y-1],[x+2,y-1]])}
   if(c.cave)for(const[x,y]of[[17,13],[23,13],[17,15],[23,15]])if(!objs[y][x])objs[y][x]='rock'}
 function lmZone(c,m,x,y){const q=c.portals.find(q=>Math.hypot(q.x-x,q.y-y)<5);
-  return m.t==='m'?(y<=9?`${m.n} 정상`:q?`${m.n} 중턱 · ${q.label} 가는 길`:y>=30?`${m.n} 기슭`:`${m.n} 산길`):m.t==='c'?(y>=33?`${m.n} 성문 밖`:`${m.n} 성내`):m.n}
+  return m.t==='m'?(y<=9?`${m.n} 정상`:q?`${m.n} 중턱 · ${q.label} 가는 길`:y>=30?`${m.n} 기슭`:`${m.n} 산길`):m.t==='c'||m.town?(y>=33?`${m.n} 성문 밖`:`${m.n} 성내`):c.tag?`${m.n} ${c.tag}`:m.n}
 for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
   (F.marks||[]).forEach((m,i)=>{if(m.t==='t')return;
     const c=lmMapCfg(k,i,m,p),id=c.id;m.gate=id;

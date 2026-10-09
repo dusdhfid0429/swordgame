@@ -26,7 +26,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 가입: 본산 장문인에게 청하면 내 옷이 바뀐다
   await p.evaluate(()=>{travel({to:'hq_hwasan',tx:20.5,ty:10.5})});await p.waitForTimeout(1800);
   const before=await p.evaluate(()=>heroGarb());
-  await p.evaluate(()=>{const n=npcsHere().find(q=>q.id==='hq');P.x=n.x+.8;P.y=n.y+.6;P.path=null;openNpc(n)});await p.waitForTimeout(400);
+  await p.evaluate(()=>{const n=hqNpc(REG);P.x=n.x+.8;P.y=n.y+.6;P.path=null;openNpc(n)});await p.waitForTimeout(400);
   const hasPrev=await p.evaluate(()=>!!document.querySelector('.garbprev')&&document.querySelector('.garbprev').naturalWidth===680);
   ok('본산 문파 창에 마크와 직위별 의복 미리보기',hasPrev);
   await p.screenshot({path:shot('garb_panel')});

@@ -21,7 +21,7 @@ const GROUND={};let GAE_PLOTS=null;
 function loadRegion(id){
   {const c={id};runHooks('loadRegion',c);id=c.id}
   REG=id;const R=REGION();R.gen();
-  for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
+  for(const g of R.gates)if(!g.door)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
@@ -59,6 +59,8 @@ function drawGate(g){
   // 땅에 빛나는 길표시
   const a=.45+.25*Math.sin(time*3);ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=2;
   for(let k=0;k<3;k++){const s=1-k*.25;ctx.beginPath();ctx.ellipse(0,0,26*s,13*s,0,0,7);ctx.stroke()}
+  // 건물 문은 빛나는 자리와 이름만 (이정표 없이)
+  if(g.door){ctx.restore();ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,p.y-13);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,p.y-14);return}
   // 이정표
   ctx.fillStyle='#4a3420';ctx.fillRect(18,-34,4,36);ctx.fillStyle='#8a6a40';ctx.strokeStyle='#2a1a0e';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(6,-36);ctx.lineTo(40,-36);ctx.lineTo(46,-30);ctx.lineTo(40,-24);ctx.lineTo(6,-24);ctx.closePath();ctx.fill();ctx.stroke();

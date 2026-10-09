@@ -47,7 +47,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{P.x=20.5;P.y=7.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('lm_huashan_top')});
   // 북경 성내, 함곡관
   await p.evaluate(()=>{const m=REGIONS.pv_hebei.marks.find(q=>q.n==='북경');mobs=[];P.reg=m.gate;loadRegion(m.gate);P.x=20.5;P.y=22.5;spawnTick();const t=iso(P.x,P.y-3);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
-  ok('북경 성내에 하북팽가 포털',await p.evaluate(()=>REGION().gates.some(g=>g.portal&&g.label.includes('팽가'))&&regionAt(20,20).includes('성내')));
+  ok('북경 성내에 하북팽가 포털',await p.evaluate(()=>REGION().gates.some(g=>g.portal&&g.label.includes('팽가'))&&/성내|성도/.test(regionAt(20,20))));
   await p.screenshot({path:shot('lm_beijing')});
   await p.evaluate(()=>{const m=REGIONS.pv_henan.marks.find(q=>q.n==='함곡관');P.reg=m.gate;loadRegion(m.gate);P.x=20.5;P.y=20.5;const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
   await p.screenshot({path:shot('lm_hangu')});

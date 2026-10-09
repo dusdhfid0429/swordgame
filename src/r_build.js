@@ -36,7 +36,7 @@ function drawBuild(b,alpha){
     for(const[i,j]of[[x+.2,y+.2],[X1-.2,y+.2],[x+.2,Y1-.2],[X1-.2,Y1-.2]]){const q=scr(i,j,5);seg([q,up(q,WH-5)],4,'#7a2416')}
     const t=scr(x+w/2,y+h/2,5);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(t[0],t[1]-6,9,4.5,0,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.stroke()}
   else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.mg?'#2a2020':'#c3b69b',false,b)}
-  const RC=b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:['#2e343c','#2a3038','#3a414b','#4d5663'];
+  const RC=b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
   const H0=WH+(pav?0:4),RH=H0+10+8*Math.min(w,h);
   const Et=scr(x-o,y-o,H0),Er=scr(X1+o,y-o,H0),Eb=scr(X1+o,Y1+o,H0),El=scr(x-o,Y1+o,H0);
   let R1,R2;
@@ -64,6 +64,20 @@ function drawStall(i,j){
   quad([scr(x-.1,y-.1,32),scr(X1+.1,y-.1,32),scr(X1+.15,Y1+.15,27),scr(x-.15,Y1+.15,27)],c);
   ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;for(let k=1;k<4;k++){const t=k/4;ctx.beginPath();ctx.moveTo(...lerp2(scr(x-.1,y-.1,32),scr(X1+.1,y-.1,32),t));ctx.lineTo(...lerp2(scr(x-.15,Y1+.15,27),scr(X1+.15,Y1+.15,27),t));ctx.stroke()}
 }
+// 전각 안 소품 (g_hall.js): 담(wall) 한 칸짜리 벽, 기둥(pillar), 병풍(screen)
+function drawWall(i,j,mg){const x=i,y=j,X1=i+1,Y1=j+1,WH=30,top=mg?'#2a2222':'#b4ad9e',f=mg?'#3a2e2c':'#e4d9c0',sd=mg?'#2a2020':'#c3b69b';
+  const left=objs[j][i-1]==='wall',right=objs[j][i+1]==='wall',upW=objs[j-1]&&objs[j-1][i]==='wall',dn=objs[j+1]&&objs[j+1][i]==='wall';
+  // 앞면(남쪽)과 오른면(동쪽)만 보인다. 이웃 담과 이어지는 면은 붙여 그린다
+  quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,WH),scr(x,Y1,WH)],f);quad([scr(X1,Y1),scr(X1,y),scr(X1,y,WH),scr(X1,Y1,WH)],sd);
+  quad([scr(x,y,WH),scr(X1,y,WH),scr(X1,Y1,WH),scr(x,Y1,WH)],top);
+  ctx.strokeStyle='#5a2418';ctx.lineWidth=2;const b1=scr(x,Y1,5),b2=scr(X1,Y1,5);ctx.beginPath();ctx.moveTo(...b1);ctx.lineTo(...b2);ctx.stroke();
+  if(!left&&!upW){const q=scr(x,Y1);seg([q,up(q,WH)],2.5,'#5a2418')}if(!right&&!dn){const q=scr(X1,y);seg([q,up(q,WH)],2.5,'#5a2418')}}
+function drawPillar(i,j,mg){const p=scr(i+.5,j+.5),c=mg?'#5e2420':'#8a2a1a';ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(p[0],p[1],10,5,0,0,7);ctx.fill();
+  poly([[p[0]-9,p[1]],[p[0]+9,p[1]],[p[0]+8,p[1]-4],[p[0]-8,p[1]-4]],'#6e6a60');poly([[p[0]-5,p[1]-4],[p[0]+5,p[1]-4],[p[0]+5,p[1]-46],[p[0]-5,p[1]-46]],lg(p[0]-5,p[0]+5,c,'#3a1008'));
+  poly([[p[0]-8,p[1]-46],[p[0]+8,p[1]-46],[p[0]+8,p[1]-50],[p[0]-8,p[1]-50]],'#c9a14a')}
+function drawScreen(i,j,mg){const a=scr(i,j+.5),b=scr(i+1,j+.5),H=34;quad([a,b,up(b,H),up(a,H)],mg?'#2c1a18':'#f0e6cc');
+  ctx.strokeStyle=mg?'#8a2a1a':'#5a3a22';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...up(a,H));ctx.lineTo(...up(b,H));ctx.lineTo(...b);ctx.stroke();
+  const r=rng(i*13+j*7);ctx.strokeStyle=mg?'rgba(200,60,40,.5)':'rgba(60,70,50,.45)';ctx.lineWidth=1.5;for(let k=0;k<3;k++){const q=up(lerp2(a,b,.2+r()*.6),8+r()*18);ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.quadraticCurveTo(q[0]+6,q[1]-8,q[0]+2+r()*6,q[1]-16);ctx.stroke()}}
 function drawRail(rl){
   const gx=rl.x;for(const gy of[rl.y,rl.y+1]){const q=scr(gx,gy);seg([q,up(q,14)],2.6,'#6a4426')}
   const a=scr(gx,rl.y,11),b=scr(gx,rl.y+1,11);seg([a,b],2.4,'#8a5a34');const a2=scr(gx,rl.y,5),b2=scr(gx,rl.y+1,5);seg([a2,b2],1.8,'#8a5a34');
