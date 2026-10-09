@@ -6,6 +6,7 @@ const args=process.argv.slice(2),opt=(k,d)=>{const i=args.indexOf(k);if(i<0)retu
 const J=opt('-j',Math.max(1,Math.min(4,require('os').cpus().length))),T=opt('-t',300)*1000;
 const all=fs.readdirSync(__dirname).filter(f=>/^t\d+.*\.js$/.test(f)).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
 const files=args.length?all.filter(f=>args.some(a=>f.includes(a))):all;
+if(!files.length){console.error('맞는 테스트가 없습니다: '+args.join(' '));process.exit(1)}
 if(!fs.existsSync(path.join(__dirname,'../dist/gangho.html'))){console.error('dist/gangho.html 이 없습니다. 먼저 python3 build.py');process.exit(1)}
 fs.mkdirSync(path.join(__dirname,'shots'),{recursive:true});
 function run(f){return new Promise(res=>{const t0=Date.now();let out='',timedOut=false;
@@ -21,5 +22,8 @@ function run(f){return new Promise(res=>{const t0=Date.now();let out='',timedOut
     console.log(`${r.ok?'ok  ':'FAIL'} ${r.f} (${r.pass} 통과, ${r.s}초)${r.timedOut?' 시간 초과':''}${r.code&&!r.timedOut?' 종료 코드 '+r.code:''}`);
     if(!r.ok){for(const l of r.fails)console.log('     '+l);if(r.errs||r.code||r.timedOut)console.log(r.out.split('\n').slice(-15).map(l=>'     | '+l).join('\n'))}}}));
   const bad=res.filter(r=>!r.ok);
+  // GitHub Actions: 실패를 주석(annotation)으로 남겨 로그를 열지 않고도 보이게 한다
+  if(process.env.GITHUB_ACTIONS)for(const r of bad){const why=[...r.fails,...(r.errs||r.code||r.timedOut?r.out.split('\n').filter(l=>l.trim()).slice(-6):[])].join('%0A').slice(0,3000);
+    console.log(`::error file=tests/${r.f},title=${r.f} 실패::${why}`)}
   console.log(`\n${res.length}개 중 ${res.length-bad.length}개 통과${bad.length?', 실패: '+bad.map(r=>r.f).join(' '):''}`);
   process.exit(bad.length?1:0)})();
