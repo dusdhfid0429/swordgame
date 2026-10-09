@@ -21,17 +21,19 @@ const danName=()=>realmAt(5)?'상단전':realmAt(3)?'중단전':'하단전';
 const danMul=()=>realmAt(5)?1.3:realmAt(3)?1.15:1;
 function realmQiMul(){return realmAt(1)?1.3:1}
 
-// ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=마공) ----
-const SCHOOL_OF={불가:['shaolin','emei','bota','podal','daeroe'],
+// ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=사공) ----
+// 사용자 결정(2026-10-09): 사파(사천맹) 문파는 모두 사공, 마공은 마교(천마신교)만
+const SCHOOL_OF={불가:['shaolin','emei','bota'],
   도가:['mudang','hwasan','kunlun','kongtong','jeomchang','cheongseong','jongnam','hyeongsan','cheonsan','taesan','jeonjin','gomyo','seolsan','jangbaek','mosan','nabu'],
-  마공:['cheonma','mandok','hyeolrang','gwiyeong']};
+  마공:['cheonma']};
 const SCHOOL={불가:{d:'느리지만 안정되어 폐관 성공 +5%, 사파·마교 무인에게 받는 피해 -15%'},
   도가:{d:'정종 현문 심법. 폐관 성공 +5%, 주화입마가 덜 무겁고, 경지가 오를 때마다 수명 +2년'},
-  마공:{d:'내공이 25% 빨리 쌓이지만 수련마다 악업이 쌓이고, 폐관 성공 -10%, 주화입마가 무겁다'},
+  사공:{d:'사파의 심법. 내공이 15% 빨리 쌓이지만 폐관 성공 -5%, 주화입마가 조금 무겁다'},
+  마공:{d:'천마신교의 심법. 내공이 25% 빨리 쌓이지만 수련마다 악업이 쌓이고, 폐관 성공 -10%, 주화입마가 무겁다'},
   정종:{d:'세가·방파의 심법. 치우침이 없다'}};
 function school(){const s=P.sect&&P.sect!=='own'?P.sect:null;
-  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return'정종'}
-  return P.side==='사'?'마공':'불가'}
+  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return SECTS[s]&&SECTS[s].al==='sacheon'?'사공':'정종'}
+  return P.side==='사'?'사공':'불가'}
 
 // ---- 갑자: 120 내공 = 1갑자(60년 공력) ----
 const GAPJA=120;
@@ -109,14 +111,15 @@ function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.rando
 
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
 function qiTrained(){const s=school();
+  if(s==='사공'){P.qiX=(P.qiX||0)+Math.round(SIDES[P.side].gain*.15*10)/10;recalc()}
   if(s==='마공'){const x=Math.round(SIDES[P.side].gain*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
 // ---- 폐관·주화입마를 심법 계열에 맞춘다 ----
-{const _pc=pgChance;pgChance=function(pill){let c=_pc(pill);if(P.side==='사')c+=.05;const s=school();c+=s==='마공'?-.1:s==='도가'||s==='불가'?.05:0;return clamp(c,.05,.95)}}
+{const _pc=pgChance;pgChance=function(pill){let c=_pc(pill);if(P.side==='사')c+=.05;const s=school();c+=s==='마공'?-.1:s==='사공'?-.05:s==='도가'||s==='불가'?.05:0;return clamp(c,.05,.95)}}
 {const _qd=qiDeviation;qiDeviation=function(r){const s=school(),rnd=Math.random;
-  // 마공은 무겁게(45%), 도가는 가볍게(20%): 무거움 경계(0.3)에 맞춰 뽑은 값을 옮긴다
-  if(s==='마공'||s==='도가'){const f=s==='마공'?.45:.2;let first=true;Math.random=()=>{const v=rnd();if(!first)return v;first=false;
+  // 마공은 무겁게(45%), 사공은 조금 무겁게(35%), 도가는 가볍게(20%): 무거움 경계(0.3)에 맞춰 뽑은 값을 옮긴다
+  if(s==='마공'||s==='사공'||s==='도가'){const f=s==='마공'?.45:s==='사공'?.35:.2;let first=true;Math.random=()=>{const v=rnd();if(!first)return v;first=false;
       const death=r>=4?.05:0;if(v<death)return v;const u=(v-death)/(1-death),heavy=u<f;return death+(heavy?u/f*(.3-death):(.3+(u-f)/(1-f)*.7))};}
   try{_qd(r)}finally{Math.random=rnd}
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;recalc()}}

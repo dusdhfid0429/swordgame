@@ -30,7 +30,7 @@ function pgPlace(){
 const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
 const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
-// 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%, 사파(마공)는 -5%. 최대 95%
+// 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=[0,.85,.75,.65,.55,.45,.35];
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
   if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
