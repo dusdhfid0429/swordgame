@@ -40,7 +40,7 @@ const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
-const baseQi=()=>80+P.qiN*SIDES[P.side].gain+P.qiBonus;
+const baseQi=()=>Math.round(80+P.qiN*SIDES[P.side].gain+P.qiBonus+(P.qiX||0));
 // 윤회로 물려받은 활력은 다섯 몫으로 나눠 생일마다 한 몫씩 받는다
 function splitVit(v){if(!(v>0))return[];const a=Math.floor(v/5),r=v-a*5;return[0,1,2,3,4].map(i=>a+(i<r?1:0))}
 const maxVit=()=>150+P.st.end*25;
@@ -55,7 +55,7 @@ const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>RANKS[realmIdx()];
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul();
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul()*realmQiMul();
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -299,7 +299,7 @@ function trainQi(){
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
   const done=()=>{P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
     log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차, 다음 ${qiCost(P.side,P.qiN)})`,'xp');
-    wallCheck();renderOpen()};
+    qiTrained();renderOpen()};
   // 인물창에서 누르면 창을 닫지 않고 그 자리에서 잠깐 운기한 뒤 결과를 보여 준다 (창이 열려 있는 동안 시간은 멈춰 있다)
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};

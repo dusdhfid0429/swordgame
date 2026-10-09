@@ -75,7 +75,7 @@ function roofStep(b,dx,dy,push){
 function roofTap(cx,cy){const q=P.perch;if(!q||q.k!=='roof')return false;const g=toGrid(cx,cy+(P.z||0)*S);
   if(!onRoof(q.b,g.x,g.y,.05))return false;const M=.2;P.roofGoal={x:Math.max(q.b.x+M,Math.min(q.b.x+q.b.w-M,g.x)),y:Math.max(q.b.y+M,Math.min(q.b.y+q.b.h-M,g.y))};P.path=null;return true}
 // 높은 곳에서 경공이 닿는 거리: 높이만큼 더 멀리
-const leapRange=()=>(P.ride?4:3.6)+(P.perch?Math.min(1.6,(P.z||0)/60):0);
+const leapRange=()=>(P.ride?4:3.6)+(realmIdx()>=1?.6:0)+(P.perch?Math.min(1.6,(P.z||0)/60):0);
 // 높은 곳에서 조이스틱을 기울이면 경공으로 내려앉을 자리를 미리 보여 준다
 function leapAim(){if(!P.perch||!joy.on&&!P.aimKey)return null;return leapPerch(leapRange())}
 // 경공이 끝날 때
