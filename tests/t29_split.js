@@ -36,13 +36,13 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`가장자리 걸어 ${before.reg} → ${a.reg} (x ${a.x.toFixed(1)})`,!!before.w&&a.reg===before.w&&a.x>37&&a.walk&&a.e===before.reg);
   await p.evaluate(()=>{const t=iso(P.x-3,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(700);await p.screenshot({path:shot('split_henan')});
   // 신강: 천마신교 입구가 든 맵으로 들어가 본다
-  const xj=await p.evaluate(()=>{const W=Object.values(REGIONS).find(R=>R.win&&R.win.k==='xinjiang'&&R.gates.some(q=>q.to==='hq_cheonma_1'));const id=Object.keys(REGIONS).find(k=>REGIONS[k]===W);
-    const q=W.gates.find(q=>q.to==='hq_cheonma_1');travel({to:id,tx:q.x,ty:Math.min(38,q.y+2.4)});return id});await p.waitForTimeout(1200);
+  const xj=await p.evaluate(()=>{const W=Object.values(REGIONS).find(R=>R.win&&R.win.k==='xinjiang'&&R.gates.some(q=>q.to===REGIONS.hq_cheonma_1.lmVia));const id=Object.keys(REGIONS).find(k=>REGIONS[k]===W);
+    const q=W.gates.find(q=>q.to===REGIONS.hq_cheonma_1.lmVia);travel({to:id,tx:q.x,ty:Math.min(38,q.y+2.4)});return id});await p.waitForTimeout(1200);
   const x2=await p.evaluate(()=>({reg:REG,name:REGION().name,zone:regionAt(Math.floor(P.x),Math.floor(P.y))}));
   ok(`신강 ${x2.name}에 십만대산 입구 (${x2.zone})`,x2.reg===xj&&x2.zone.includes('십만대산'));
   await p.evaluate(()=>{const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(700);await p.screenshot({path:shot('split_xinjiang')});
-  // 본산에서 나오면 성 전체 좌표 → 맞는 맵
-  await p.evaluate(()=>travel(REGION().gates.find(q=>q.to==='hq_cheonma_1')));await p.waitForTimeout(1200);
+  // 십만대산 산 맵에서 나오면 성 전체 좌표 → 맞는 맵
+  await p.evaluate(()=>travel(REGION().gates.find(q=>q.to===REGIONS.hq_cheonma_1.lmVia)));await p.waitForTimeout(1200);
   await p.evaluate(()=>travel(REGION().gates.find(q=>q.to.startsWith('pv_'))));await p.waitForTimeout(1200);
   ok('십만대산에서 나오면 입구가 있는 신강 맵',await p.evaluate(x=>REG===x&&walkAt(P.x,P.y),xj));
   // 예전 저장: 성 전체 좌표
