@@ -228,7 +228,7 @@ function pNpc(n){
     const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${q.mob.join('·')} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
     return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><h4 style="margin:0">맡은 의뢰</h4><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
   if(n.id==='arena'){const o=DUELISTS[P.duel];
-    return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n}</h4><p>${CLASS[o.cls].n} · 오행 ${o.el} · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
+    return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 오행 ${o.el} · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
       <p class="note">${P.duel}/${DUELISTS.length} 꺾음</p>`}
   if(n.id==='land'){const h=G.house;
     if(!h)return `<p class="note">"서쪽 농지 아래에 집터 두 곳이 남았소. 집이 있으면 쉬고, 창고에 물건을 맡기고, 자식에게 물려줄 수 있지."</p><div class="row2">${B('lot:0','동쪽 집터 · 은자 300',{d:P.silver<300})}${B('lot:1','서쪽 집터 · 은자 300',{d:P.silver<300})}</div>`;

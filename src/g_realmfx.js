@@ -118,7 +118,7 @@ function senseTick(){const t=P.target;if(t===P.senseOf)return;P.senseOf=t;if(!t|
   const d=mobRealm(t)-realmIdx();addText(t.x,t.y-.8,senseText(t),d>=1?'#f0968a':d<=-2?'#9a8d72':'#e8d9a8')}
 
 // ---- 깨달음 계기: 비무, 고수 처치, 돈오, 기연 ----
-{const _de=duelEnd;duelEnd=function(win,e){const o=DUELISTS[P.duel],r=o?mobRealm({atk:o.atk,d:{}}):0,me=realmIdx();_de(win,e);
+{const _de=duelEnd;duelEnd=function(win,e){const o=DUELISTS[P.duel],r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0,me=realmIdx();_de(win,e);
   if(o&&r>me)gainEnl(win?1.5:1,win?`자기보다 높은 ${RANKS[r]}의 고수를 꺾으며`:`${RANKS[r]}의 고수와 겨루며 한 수 배웠다.`)}}
 {const _ok=onKill;onKill=function(e){const up=!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx();_ok(e);if(up)gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')}}
 {const _gm=gainMast;gainMast=function(id,v){const s=A(id),b=s?s.p:100;const r=_gm(id,v);if(s&&b<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`);return r}}
