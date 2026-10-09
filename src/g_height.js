@@ -10,7 +10,7 @@ const buildAt=(i,j)=>builds.find(b=>i>=b.x&&i<b.x+b.w&&j>=b.y&&j<b.y+b.h);
 function roofZ(b){const pav=b.kind==='pavilion',WH=pav?34:38,H0=WH+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h);return Math.round(pav?RH*.85:H0+(RH-H0)*.55)}
 function treeZ(ob,i,j){const set=SPRITES[ob],s=set[(i*7+j*3)%set.length];return Math.round(Math.max(28,(s.height-12)*.62))}
 // 그 자리의 높은 곳: 지붕이나 나무
-function perchAt(x,y){const i=Math.floor(x),j=Math.floor(y);if(i<0||j<0||i>=N||j>=N)return null;const o=objs[j][i];
+function perchAt(x,y){const i=Math.floor(x),j=Math.floor(y);if(i<0||j<0||i>=N||j>=NH)return null;const o=objs[j][i];
   if(o==='B'){const b=buildAt(i,j);return b?{k:'roof',b,z:roofZ(b)}:null}
   if(PERCH_TREE[o])return{k:'tree',i,j,z:treeZ(o,i,j),x:i+.5,y:j+.5};return null}
 const samePerch=(a,b)=>!!a&&!!b&&a.k===b.k&&(a.k==='roof'?a.b===b.b:a.i===b.i&&a.j===b.j);

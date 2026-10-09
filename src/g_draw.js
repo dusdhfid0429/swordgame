@@ -166,7 +166,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
-  const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-N*TW/2,o.y,N*TW,N*TH);
+  const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-NH*TW/2,o.y,(N+NH)*TW/2,(N+NH)*TH/2);
   const sea=P?season():'봄';
   if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -177,7 +177,7 @@ function draw(){
   if(P.target&&P.target.hp>0){const p=toScreen(P.target.x,P.target.y);ctx.strokeStyle=P.target.d.hostile||P.target.aggro?'rgba(220,60,40,.85)':'rgba(230,200,120,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,18,8,0,0,7);ctx.stroke()}
   const list=[],pp=toScreen(P.x,P.y),vis=(x,y,m=90)=>{const p=toScreen(x,y);return p.x>-m&&p.x<W+m&&p.y>-40&&p.y<H+200};
   // 큰 지역은 사람 둘레만 살핀다
-  const vr=Math.ceil(W/TW+H/TH)+4,j0=Math.max(0,Math.floor(P.y)-vr),j1=Math.min(N,Math.floor(P.y)+vr),i0=Math.max(0,Math.floor(P.x)-vr),i1=Math.min(N,Math.floor(P.x)+vr);
+  const vr=Math.ceil(W/TW+H/TH)+4,j0=Math.max(0,Math.floor(P.y)-vr),j1=Math.min(NH,Math.floor(P.y)+vr),i0=Math.max(0,Math.floor(P.x)-vr),i1=Math.min(N,Math.floor(P.x)+vr);
   for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
     const p=toScreen(i+.5,j+.5);if(p.x<-90||p.x>W+90||p.y<-20||p.y>H+190)continue;
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
@@ -254,8 +254,8 @@ function draw(){
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870'];
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=40/N;g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
-const miniXY=(x,y)=>[75+(x-y)*74/N,2+(x+y)*40/N];
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
   for(const g of REGION().gates){const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}

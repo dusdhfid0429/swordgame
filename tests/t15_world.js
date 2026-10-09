@@ -17,8 +17,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성');
   // 모든 지역: 도착 자리에서 모든 출입구까지 걸어서 간다 (지역 크기도 맞게)
   const bfs=await p.evaluate(()=>{const bad=[],cur=REG,sz={};
-    for(const[id,R]of Object.entries(REGIONS)){R.gen();sz[id]=N;if(N!==(R.size||40))bad.push(id+' 크기');
-      for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<N&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
+    for(const[id,R]of Object.entries(REGIONS)){R.gen();sz[id]=N;if(N!==(R.size||40)||NH!==(R.h||R.size||40))bad.push(id+' 크기');
+      for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
       let st=null;for(const o of Object.values(REGIONS))for(const q of o.gates)if(q.to===id&&!st)st={x:q.tx,y:q.ty};if(!st&&R.win)continue;
       const sx=Math.floor(st.x),sy=Math.floor(st.y),seen=new Set([sx+','+sy]),q=[[sx,sy]];if(!walk(sx,sy))bad.push(id+' 도착');
       while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=(x+dx)+','+(y+dy);if(!seen.has(k)&&walk(x+dx,y+dy)){seen.add(k);q.push([x+dx,y+dy])}}}

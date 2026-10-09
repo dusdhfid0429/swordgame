@@ -12,7 +12,7 @@ function update(dt){
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
   G.wT-=dt;if(G.wT<=0){G.wT=22+Math.random()*12;const tb=WEATHER[season()];let r=Math.random();for(const[w,p]of tb){if(r<p){if(w!==G.weather)log(`날씨가 ${w}(으)로 바뀌었습니다.`,'info');G.weather=w;break}r-=p}}
-  G.gT-=dt;if(G.gT<=0){if(G.giyeon){G.giyeon=null;G.gT=120+Math.random()*120}else{for(let t=0;t<40;t++){const x=2+Math.floor(Math.random()*(N-4)),y=2+Math.floor(Math.random()*(N-4));if(walk(x,y)&&!inTown(x,y)&&!inFarm(x,y)&&dist({x,y},P)>6){G.giyeon={x:x+.5,y:y+.5};G.gT=45;log('어딘가에서 기이한 빛이 일렁입니다.','info');break}}}}
+  G.gT-=dt;if(G.gT<=0){if(G.giyeon){G.giyeon=null;G.gT=120+Math.random()*120}else{for(let t=0;t<40;t++){const x=2+Math.floor(Math.random()*(N-4)),y=2+Math.floor(Math.random()*(NH-4));if(walk(x,y)&&!inTown(x,y)&&!inFarm(x,y)&&dist({x,y},P)>6){G.giyeon={x:x+.5,y:y+.5};G.gT=45;log('어딘가에서 기이한 빛이 일렁입니다.','info');break}}}}
   if(G.giyeon&&dist(G.giyeon,P)<.7){G.giyeon=null;G.gT=150+Math.random()*120;giyeon('spot')}
   spawnT-=dt;if(spawnT<=0){spawnT=2;spawnTick()}
   saveT-=dt;if(saveT<=0){saveT=30;saveGame()}
@@ -77,7 +77,7 @@ function autoAttack(e){
   basicStrike(e);
 }
 function moveEnt(e,dx,dy){const r=.22;if(walkAt(e.x+dx+Math.sign(dx)*r,e.y))e.x+=dx;if(walkAt(e.x,e.y+dy+Math.sign(dy)*r))e.y+=dy}
-function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*N/1600);
+function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*NH/1600);
   if(!walk(tx,ty)){let best=null,bd=9;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]])if(walk(tx+a,ty+b)){const d=Math.hypot(tx+a-sx,ty+b-sy);if(d<bd){bd=d;best=[tx+a,ty+b]}}if(!best)return null;[tx,ty]=best}
   const k=(x,y)=>y*N+x,g=new Map([[k(sx,sy),0]]),came=new Map,closed=new Set,open=[[sx,sy,0]];let it=0;
   while(open.length&&it++<lim){
@@ -182,7 +182,7 @@ function leap(){
   const LEAP=leapRange();let land=null,to=null;
   // 지붕·나무 위로 (말을 탔으면 못 오른다)
   if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
-  const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<N-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
+  const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
   for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
   const dur=heroSprite()?.6:.42;P.qi-=12;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=.6;P.satk=0}else{P.jump=.35}

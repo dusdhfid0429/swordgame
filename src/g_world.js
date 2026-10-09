@@ -19,13 +19,13 @@ function regionAt(x,y){
   if(inTown(x,y))return'개봉 성내';if(inCamp(x,y)||x>=29)return'옛 산채 터';if(x<=12&&y<=27)return'개봉 서쪽 농지';if(inBamboo(x,y))return'남쪽 대숲';return'남쪽 초원'}
 function genGaebong(){
   const r=rng(1987);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
+  for(let y=0;y<NH;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
     let g=isRiver(y)?2:0,o=null;
     if((x===MID&&!inCave(x,y))||(y===MID&&x>1&&x<N-2))g=g===2?3:1;
     if(y===24&&x>2&&x<TOWN.x0)g=1;
     if(inTown(x,y))g=4;if(inFarm(x,y))g=5;if(inCave(x,y))g=6;if(inCamp(x,y)&&g===0)g=7;
-    const edge=x<=1||y<=1||x>=N-2||y>=N-2;
-    if(x===0||y===0||x===N-1||y===N-1)o=r()<.5?'pine':'tree';
+    const edge=x<=1||y<=1||x>=N-2||y>=NH-2;
+    if(x===0||y===0||x===N-1||y===NH-1)o=r()<.5?'pine':'tree';
     else if(edge&&g!==2)o=r()<.7?(r()<.5?'pine':'tree'):null;
     else if(g===0&&!inLot(x,y)&&!(y>=RIV+2&&y<=RIV+3)){
       if(inBamboo(x,y)){if(r()<.42)o='bamboo'}
@@ -43,21 +43,21 @@ function genGaebong(){
   objs[18][21]='board';
   for(const[x,y]of[[19,13],[21,13],[13,19],[13,21],[19,28],[21,28],[28,19],[28,21],[19,8],[24,26],[16,26]]){objs[y][x]='lamp';if(map[y][x].g!==4)map[y][x].g=0;lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   for(const[x,y]of[[5,7],[9,2]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
-  for(let y=0;y<N;y++)if(map[y][MID].g===3){rails.push({x:MID,y});rails.push({x:MID+1,y})}
+  for(let y=0;y<NH;y++)if(map[y][MID].g===3){rails.push({x:MID,y});rails.push({x:MID+1,y})}
   // bandit tents
   for(const[x,y]of[[32,15],[35,16],[33,19],[36,23],[32,26],[35,28],[37,19]]){objs[y][x]='tent';tents.push({x,y})}
   for(let y=15;y<=22;y++)for(let x=3;x<=10;x++)if(map[y][x].g===5&&(x+y)%1===0)plots.push({x,y,crop:null,g:0,dead:0});
   // gathering spots (walkable; they regrow)
   const put=(t,x,y)=>{if(walk(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  for(let i=0;i<220&&nodes.filter(n=>n.t==='herb').length<16;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(!inTown(x,y)&&map[y][x].g===0&&!inFarm(x,y))put('herb',x,y)}
-  for(let i=0;i<220&&nodes.filter(n=>n.t==='ore').length<10;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if((y<RIV&&x<16)||inCave(x,y)||(y>30&&x>25))put('ore',x,y)}
-  for(let i=0;i<220&&nodes.filter(n=>n.t==='wood').length<10;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if((y<RIV||inBamboo(x,y))&&!inCave(x,y)&&map[y][x].g===0)put('wood',x,y)}
+  for(let i=0;i<220&&nodes.filter(n=>n.t==='herb').length<16;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if(!inTown(x,y)&&map[y][x].g===0&&!inFarm(x,y))put('herb',x,y)}
+  for(let i=0;i<220&&nodes.filter(n=>n.t==='ore').length<10;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if((y<RIV&&x<16)||inCave(x,y)||(y>30&&x>25))put('ore',x,y)}
+  for(let i=0;i<220&&nodes.filter(n=>n.t==='wood').length<10;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if((y<RIV||inBamboo(x,y))&&!inCave(x,y)&&map[y][x].g===0)put('wood',x,y)}
   for(const x of[6,13,27,33])put('fish',x,RIV+2);
   put('chest',5,2);
 }
-const walk=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&map[y][x].g!==2&&!objs[y][x];
+const walk=(x,y)=>x>=0&&y>=0&&x<N&&y<NH&&map[y][x].g!==2&&!objs[y][x];
 const walkAt=(fx,fy)=>walk(Math.floor(fx),Math.floor(fy));
-const tileG=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(N-1,Math.floor(y)));return map[y][x].g};
+const tileG=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return map[y][x].g};
 const iso=(gx,gy)=>({x:(gx-gy)*TW/2,y:(gx+gy)*TH/2});
 const toScreen=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2}};
 function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;const a=wx/(TW/2),b=wy/(TH/2);return{x:(a+b)/2,y:(b-a)/2}}
@@ -65,11 +65,11 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const frac=v=>v-Math.floor(v);
 
 function bakeGaebong(){
-  const gw=N*TW,gh=N*TH,c=document.createElement('canvas');c.width=gw;c.height=gh;
+  const gw=(N+NH)*TW/2,gh=(N+NH)*TH/2,c=document.createElement('canvas');c.width=gw;c.height=gh;
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data;
   for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
-    const a=(px-gw/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
-    if(gx<0||gy<0||gx>=N||gy>=N)continue;
+    const a=(px-NH*TW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
+    if(gx<0||gy<0||gx>=N||gy>=NH)continue;
     const hard=tileG(gx,gy),soft=hard===3||hard===4||hard===5;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.5,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.5;
     const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(px,py)*.16;
@@ -106,16 +106,16 @@ function bakeGaebong(){
       const dirt=fbm(gx*.45+20,gy*.45);
       if(dirt>.6){const k=Math.min(1,(dirt-.6)*5);R+=(128-R)*k;G+=(106-G)*k;B+=(72-B)*k}
     }
-    const fade=Math.min(1,Math.min(gx,gy,N-gx,N-gy)/1.6);
+    const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);
     const i=(py*gw+px)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
   const r=rng(77),sp=(gx,gy)=>[(gx-gy)*TW/2+gw/2,(gx+gy)*TH/2];
   g.lineCap='round';
-  for(let k=0;k<26000;k++){const gx=1+r()*(N-2),gy=1+r()*(N-2);if(tileG(gx,gy)!==0)continue;const[x,y]=sp(gx,gy),l=r();
+  for(let k=0;k<26000;k++){const gx=1+r()*(N-2),gy=1+r()*(NH-2);if(tileG(gx,gy)!==0)continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${80+r()*30},${35+r()*20}%,${l<.5?20+r()*12:42+r()*16}%,.7)`;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3,y-2-r()*4);g.stroke()}
   const FL=['#f2efe6','#f3d24a','#e98fb0','#a98be0','#f08a4b'];
-  for(let k=0;k<2400;k++){const gx=1+r()*(N-2),gy=1+r()*(N-2);if(tileG(gx,gy)!==0||vn(gx*.6+40,gy*.6)<.58)continue;const[x,y]=sp(gx,gy);
+  for(let k=0;k<2400;k++){const gx=1+r()*(N-2),gy=1+r()*(NH-2);if(tileG(gx,gy)!==0||vn(gx*.6+40,gy*.6)<.58)continue;const[x,y]=sp(gx,gy);
     g.fillStyle=FL[Math.floor(r()*FL.length)];g.beginPath();g.arc(x,y,1.1+r()*.8,0,7);g.fill()}
   for(let k=0;k<700;k++){const gx=r()*N,gy=RIV+(r()<.5?-.05+r()*.25:1.8+r()*.25);if(tileG(gx,gy)===3)continue;const[x,y]=sp(gx,gy),s=1.5+r()*3;
     g.fillStyle=`hsl(40,6%,${42+r()*25}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}

@@ -96,7 +96,7 @@ const hqId=s=>'hq_'+s.id;   // 소림사도 hq_shaolin (숭산은 산 맵, g_lmm
 const hqPlace=s=>HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT=GD.POST_AT;
-const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
+const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:10.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
 function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];
@@ -121,7 +121,7 @@ function genHQ(s,th){
   const r=rng(7000+s.i*131),sd=s.i*.7,o1=s.i*1.7,o2=s.i*.9;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const lakes=th==='lake'?[{x:8+r()*3,y:25+r()*4,rx:5.5,ry:4},{x:32+r()*2,y:27+r()*3,rx:4,ry:3.5},{x:6,y:9+r()*3,rx:3.5,ry:3}]:[];
   const tree=th==='peak'||th==='snow'||th==='dark'?'pine':'tree';
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
+  for(let y=0;y<NH;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
     const px=hqPath(y,sd),onPath=y>=16&&(x===px||x===px+1),comp=x>=13&&x<=27&&y>=4&&y<=16,hi=fbm(x*.17+o1,y*.17+o2),arrive=x>=18&&x<=24&&y>=34;
     let g=HQ_BASE[th];
     if(th==='peak'){if(hi>.62)g=6;if(y<=3)g=8}
@@ -133,8 +133,8 @@ function genHQ(s,th){
     else if(th==='canyon'){if(hi>.6)g=6}
     else if(th==='dark'){if(hi>.63)g=6;else if(hi<.28)g=8}
     if(comp)g=4;if(onPath)g=g===2?3:1;if(arrive&&g===2)g=1;
-    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=N-2;
-    if(x===0||y===0||x===N-1||y===N-1)o=r()<.6?tree:'rock';
+    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=NH-2;
+    if(x===0||y===0||x===N-1||y===NH-1)o=r()<.6?tree:'rock';
     else if(edge&&g!==2)o=r()<.75?(r()<.65?tree:'rock'):null;
     else if(!comp&&!onPath&&!arrive&&g!==2&&Math.abs(x-px)>1){const v=r(),cliff=fbm(x*.3+o2,y*.3+o1);
       if(th==='peak'||th==='snow')o=cliff>.67?'rock':v<.14?'pine':v<.18?'rock':null;
@@ -153,22 +153,22 @@ function genHQ(s,th){
   for(const[x,y]of[[16,6],[24,6],[14,14],[26,14]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   // 문파 깃발: 산문(산길이 마당에 닿는 곳) 양옆과 본전 앞
   {const q=hqPath(17,sd);placeFlags(s.id,[[q-1,17],[q+2,17],[17,11],[24,11]])}
-  for(let y=16;y<N;y++){const px=hqPath(y,sd);for(const x of[px,px+1])if(map[y][x].g===3)rails.push({x,y})}
+  for(let y=16;y<NH;y++){const px=hqPath(y,sd);for(const x of[px,px+1])if(map[y][x].g===3)rails.push({x,y})}
   const put=(t,x,y)=>{if(walk(x,y)&&!inHQ(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  const want=(t,n,ok)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(ok(map[y][x].g))put(t,x,y)}};
+  const want=(t,n,ok)=>{for(let i=0;i<400&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if(ok(map[y][x].g))put(t,x,y)}};
   want('herb',10,g=>g===0||g===7||g===9);want('ore',8,g=>g===6||g===8||g===10||g===11);want('wood',6,g=>g===0||g===9);
   if(th==='lake'||th==='swamp')want('fish',4,g=>g===0||g===9||g===1);
 }
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
 const HQ_GRASS=GD.HQ_GRASS;
 // k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
-// x0,y0,C: 큰 지역은 C×C칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모
-function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){
-  const GW=N*TW,X0=(x0-y0-C)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round(C*TW*k),gh=Math.round(C*TH*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+// x0,y0,C,CH: 큰 지역은 C×CH칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모. 맵 전체면 N×NH
+function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&!y0?NH:C){
+  const X0=(x0-y0-CH)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round((C+CH)*TW/2*k),gh=Math.round((C+CH)*TH/2*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
     const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
-    if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+C||gx>=N||gy>=N)continue;
+    if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+CH||gx>=N||gy>=NH)continue;
     const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
     const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
@@ -187,13 +187,13 @@ function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){
     else if(t===12){const k2=vn(gx*2,gy*2),dune=Math.sin(gx*1.3+gy*.7+k2*4)*.5+.5;R=196+n*26+dune*18;G=168+n*22+dune*14;B=112+n*16}
     else if(t===11){const k=vn(gx*3,gy*3);R=40+n*18+k*10;G=36+n*16+k*8;B=38+n*16+k*8;if(vn(gx*11,gy*11)>.82){R+=60;G+=14;B+=8}}
     else{const big=vn(gx*.2,gy*.2);R=gc[0]+n*34+big*16;G=gc[1]+n*40+big*14;B=gc[2]+n*20;const dirt=fbm(gx*.5+20,gy*.5);if(dirt>.64){const k=Math.min(1,(dirt-.64)*5);R+=(100-R)*k;G+=(94-G)*k;B+=(80-B)*k}}
-    const fade=Math.min(1,Math.min(gx,gy,N-gx,N-gy)/1.6);
+    const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);
     const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
   g.putImageData(img,0,0);
-  const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*C/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(N-1,y0+r()*C);g.lineCap='round';
+  const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*CH/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(NH-1,y0+r()*CH);g.lineCap='round';
   const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
-  for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>N-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
+  for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>NH-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
   for(let q=0;q<900*A;q++){const gx=rx(),gy=ry(),t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
     g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
@@ -203,12 +203,12 @@ function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){
 const CHUNK=12,CHUNK_K=.6,CHUNK_KEEP=64;
 const chunkGround=th=>({chunked:1,th,cache:new Map,n:0});
 function drawChunks(gr,o){
-  const C=CHUNK,n=Math.ceil(N/C),m=C*TW*.6;let budget=gr.cache.size?1:99;
-  for(let cy=0;cy<n;cy++)for(let cx=0;cx<n;cx++){
+  const C=CHUNK,n=Math.ceil(N/C),nh=Math.ceil(NH/C),m=C*TW*.6;let budget=gr.cache.size?1:99;
+  for(let cy=0;cy<nh;cy++)for(let cx=0;cx<n;cx++){
     const x=o.x+(cx-cy-1)*C*TW/2,y=o.y+(cx+cy)*C*TH/2,w=C*TW,h=C*TH;
     if(x+w<-m||x>W+m||y+h<-m||y>H+m)continue;const key=cx+','+cy,near=!(x+w<0||x>W||y+h<0||y>H);
     let c=gr.cache.get(key);
-    if(!c){if(budget<=0&&!near)continue;budget--;c=bakeHQ(gr.th,CHUNK_K,cx*C,cy*C,C);gr.n++}
+    if(!c){if(budget<=0&&!near)continue;budget--;c=bakeHQ(gr.th,CHUNK_K,cx*C,cy*C,C,C);gr.n++}
     else gr.cache.delete(key);gr.cache.set(key,c);
     if(near)ctx.drawImage(c,x,y,w,h)}
   while(gr.cache.size>CHUNK_KEEP)gr.cache.delete(gr.cache.keys().next().value)}
