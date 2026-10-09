@@ -73,7 +73,7 @@ function lmSectSpot(k,sid,S,taken){const s=LM_SECT[sid];if(!s)return null;const 
 // 땅이름 자리: 출입구·소굴·다른 땅이름과 겹치지 않게. 산·호수·사막은 둘레가 넓어 조금 더 띄운다
 function lmPlace(k,S,R){const taken=[...R.gates.filter(g=>g.inner),...(R.lairs||[]).map(l=>({x:l.x,y:l.y,gap:3}))],out=[];
   for(const[n,t,x,y]of LM_DATA[k]||[]){const p=lmTile(k,x,y,S),wide=t==='m'||t==='tl'||t==='td';const q=lmFree(p.x,p.y,S,taken,wide?6:5);
-    const m={n,t:t[0],sub:t[1]||'',x:q.x,y:q.y,r:t==='td'?6:wide?4:t==='t'?7:t==='c'?5:3};out.push(m);taken.push({x:q.x,y:q.y,gap:wide?1:0})}
+    const m={n,t:t[0],sub:t[1]||'',sx:x,sy:y,x:q.x,y:q.y,r:t==='td'?6:wide?4:t==='t'?7:t==='c'?5:3};out.push(m);taken.push({x:q.x,y:q.y,gap:wide?1:0})}
   return out}
 const lmNear=(R,x,y)=>{let b=null,bd=99;for(const m of R.marks||[]){const d=Math.hypot(m.x-x,m.y-y);if(d<m.r&&d<bd){bd=d;b=m}}return b};
 // 성 지도를 만들 때 땅이름을 그린다 (길과 출입구 둘레는 건드리지 않는다)
@@ -93,10 +93,10 @@ function lmPaint(R,S,T,road,r){
       for(let j=cy-6;j<=cy+6;j++)for(let i=cx-6;i<=cx+6;i++){if(!inside(i,j)||Math.hypot(i-cx,j-cy)>6+fbm(i*.4,j*.4)*1.5)continue;const t=map[j][i];if(t.g===2)continue;
         if(!road.has(i+','+j))t.g=12;if(objs[j][i]&&objs[j][i]!=='rock'&&objs[j][i]!=='B'&&!objs[j][i].startsWith('flag'))objs[j][i]=null}}
     else if(m.t==='c'||m.t==='s'){ // 도시·명소: 돌 마당과 전각
-      const w=m.t==='c'?3:2;for(let j=cy-w;j<=cy+w;j++)for(let i=cx-w-1;i<=cx+w+1;i++){if(!inside(i,j)||nearGate(i,j,2))continue;const t=map[j][i];if(t.g===2)continue;
+      const w=m.gate?1:m.t==='c'?3:2;for(let j=cy-w;j<=cy+w;j++)for(let i=cx-w-1;i<=cx+w+1;i++){if(!inside(i,j)||nearGate(i,j,2))continue;const t=map[j][i];if(t.g===2)continue;
         t.g=road.has(i+','+j)?1:4;if(objs[j][i]&&!String(objs[j][i]).startsWith('flag'))objs[j][i]=null}
       const pass=/관$/.test(m.n),cave=/석굴|용문/.test(m.n);
-      const list=m.t==='c'?[{x:cx-3,y:cy-3,w:2,h:2,kind:'house'},{x:cx+1,y:cy-3,w:3,h:2,kind:'hall'},{x:cx-3,y:cy+1,w:2,h:2,kind:'house'}]
+      const list=m.gate?[]:m.t==='c'?[{x:cx-3,y:cy-3,w:2,h:2,kind:'house'},{x:cx+1,y:cy-3,w:3,h:2,kind:'hall'},{x:cx-3,y:cy+1,w:2,h:2,kind:'house'}]
         :[{x:cx-1,y:cy-2,w:2,h:pass?1:2,kind:pass?'hall':cave?'temple':m.n.includes('묘')?'temple':'pavilion'}];
       for(const b of list){let ok=true;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)if(!inside(i,j)||road.has(i+','+j)||map[j][i].g===2||map[j][i].g===3||nearGate(i,j,2.2)||objs[j][i])ok=false;
         if(!ok)continue;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';map[j][i].g=4}builds.push({...b,lm:m.n})}
@@ -104,7 +104,7 @@ function lmPaint(R,S,T,road,r){
       if(cave)for(const[dx,dy]of[[-2,-2],[2,-2],[-2,-1],[2,-1]]){const x=cx+dx,y=cy+dy;if(inside(x,y)&&!road.has(x+','+y)&&!objs[y][x])objs[y][x]='rock'}}}}
 // 땅이름 글씨: 가까이 가면 그 자리 위에 이름을 띄운다 (종류마다 범례 색)
 const LM_COL={c:'#f2eee4',s:'#ffd27a',m:'#8fe08a',t:'#8cc8ff'};
-function lmHints(){const R=REGION();if(!R.marks||!P)return[];return R.marks.filter(m=>Math.hypot(m.x-P.x,m.y-P.y)<12)}
+function lmHints(){const R=REGION();if(!R.marks||!P)return[];return R.marks.filter(m=>!m.gate&&Math.hypot(m.x-P.x,m.y-P.y)<12)}
 function drawLmName(m){const p=toScreen(m.x,m.y),a=clamp(1.4-Math.hypot(m.x-P.x,m.y-P.y)/10,.25,1),s=(m.t==='m'?'▲ ':m.t==='c'?'◆ ':m.t==='s'?'● ':'')+m.n;
   ctx.save();ctx.globalAlpha=a;ctx.font=(m.t==='c'||m.t==='t'?'bold 14px':'13px')+' "Gowun Dodum",sans-serif';ctx.textAlign='center';const y=p.y-(m.t==='m'?70:m.t==='c'?84:m.t==='s'?62:20);
   ctx.fillStyle='#000';ctx.fillText(s,p.x+1,y+1);ctx.fillStyle=LM_COL[m.t];ctx.fillText(s,p.x,y);ctx.restore()}

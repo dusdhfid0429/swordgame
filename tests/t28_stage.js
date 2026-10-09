@@ -13,8 +13,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     return{bad,tiers}});
   ok(`맵 수: 대문파 4·중견 2·소문파 1·마교 8 (${JSON.stringify(cnt.tiers)}) 어긋남 ${cnt.bad.join(',')}`,cnt.bad.length===0&&cnt.tiers.mid===10);
   // 성 지도 출입구 → 첫 맵, 첫 맵 → 성
-  const pv=await p.evaluate(()=>{const bad=[];for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const ch=REGIONS[hqId(s)].chain||[hqId(s)],k=pvOfSect(s.id),pg=REGIONS['pv_'+k].gates.filter(g=>ch.includes(g.to));
-    if(pg.length!==1||pg[0].to!==ch[0]||!REGIONS[ch[0]].gates.some(g=>g.to==='pv_'+k))bad.push(s.n)}return bad});
+  const pv=await p.evaluate(()=>{const bad=[];for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const ch=REGIONS[hqId(s)].chain||[hqId(s)],k=pvOfSect(s.id),via=REGIONS[ch[0]].lmVia,O=via?REGIONS[via]:REGIONS['pv_'+k],pg=O.gates.filter(g=>ch.includes(g.to));
+    // 산·도시 맵 안 포털로 들어가는 문파는 그 장소 맵과 잇는다 (g_lmmap.js)
+    if(pg.length!==1||pg[0].to!==ch[0]||!REGIONS[ch[0]].gates.some(g=>g.to===(via||'pv_'+k)))bad.push(s.n)}return bad});
   ok(`성 지도와 첫 맵이 서로 이어짐 (어긋남 ${pv.length})`,pv.length===0);
   // 모든 맵을 열어 아래 출입구에서 위 출입구·NPC까지 걸어서 닿는가
   const walkAll=await p.evaluate(()=>{const bad=[];let n=0;const ids=new Set;for(const s of Object.values(SECTS))for(const id of REGIONS[hqId(s)].chain||[])ids.add(id);
@@ -30,8 +31,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
     const r=g&&[0,1,-1].some(d=>seen.has([Math.floor(g.x)+d,Math.floor(g.y)]+'')||seen.has([Math.floor(g.x)+d,Math.floor(g.y)+1]+''));loadRegion('gaebong');return r});
   ok('숭산 소림사 뒤로 나한당 가는 길',ss);
-  // 화산파: 성 → 산문 → 외원 → 본산 → 후산(제자만)
-  await p.evaluate(()=>{P.silver=999;const g=REGIONS['pv_'+pvOfSect('hwasan')].gates.find(q=>q.to==='hq_hwasan_gate');travel(g)});await p.waitForTimeout(1200);
+  // 화산파: 화산 맵 중턱 포털 → 산문 → 외원 → 본산 → 후산(제자만)
+  await p.evaluate(()=>{P.silver=999;const g=REGIONS[REGIONS.hq_hwasan_gate.lmVia].gates.find(q=>q.to==='hq_hwasan_gate');travel(g)});await p.waitForTimeout(1200);
   const z=await p.evaluate(()=>({reg:REG,zone:regionAt(Math.floor(P.x),Math.floor(P.y))}));
   ok(`성에서 들어가면 ${z.zone}`,z.reg==='hq_hwasan_gate');
   await p.evaluate(()=>{P.x=20.5;P.y=24.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_gate')});
