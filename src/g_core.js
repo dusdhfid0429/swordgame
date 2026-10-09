@@ -40,7 +40,7 @@ const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
-const baseQi=()=>Math.round(80+P.qiN*SIDES[P.side].gain+P.qiBonus+(P.qiX||0));
+const baseQi=(p=P)=>Math.round(80+p.qiN*SIDES[p.side].gain+p.qiBonus+(p.qiX||0));
 // 윤회로 물려받은 활력은 다섯 몫으로 나눠 생일마다 한 몫씩 받는다
 function splitVit(v){if(!(v>0))return[];const a=Math.floor(v/5),r=v-a*5;return[0,1,2,3,4].map(i=>a+(i<r?1:0))}
 const maxVit=()=>150+P.st.end*25;
@@ -48,7 +48,7 @@ const maxVit=()=>150+P.st.end*25;
 function gainVit(v){const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
 // 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
-const qiRealm=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
+const qiRealm=(p=P)=>{const q=baseQi(p);let i=0;REALM_QI.forEach((v,j)=>{if(q>=v)i=j});return i};
 const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;

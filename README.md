@@ -7,7 +7,7 @@
 
 ## 실행
 
-`dist/gangho.html` 을 브라우저로 열면 바로 플레이됩니다. 저장은 브라우저 localStorage(`ganghoyunhoe-save-v1`)에 됩니다.
+`dist/gangho.html` 을 브라우저로 열면 바로 플레이됩니다. 저장은 브라우저 localStorage(`ganghoyunhoe-save-v1`)에 됩니다. 저장에는 형식 번호 `v`가 붙고, 옛 저장은 불러올 때 `src/g_save.js`의 `MIGRATE`가 순서대로 옮깁니다. 저장 형식을 바꾸면 `SAVE_VER`를 올리고 옮기는 함수를 하나 더하세요.
 
 ## 수정 후 빌드
 

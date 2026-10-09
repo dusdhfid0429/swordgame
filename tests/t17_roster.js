@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`하오문은 광동, 천산파는 신강, 북해빙궁은 내몽고 (${r.hao}/${r.cs}/${r.bh})`,r.hao==='guangdong'&&r.cs==='xinjiang'&&r.bh==='mongol');
   // 예전 저장: 흑사방 제자, 흑사장(S21_0)·만천화우(S15_1)를 익히고 행낭에 칠살검 비급(S27_0)
   await p.evaluate(()=>{localStorage.clear()});await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForTimeout(400);
-  await p.evaluate(()=>{saveGame(true);playing=false;const d=JSON.parse(localStorage.getItem(SAVE_KEY));d.P.sect='heuksa';d.P.merit={heuksa:50};d.P.mtot={heuksa:200};
+  await p.evaluate(()=>{saveGame(true);playing=false;const d=JSON.parse(localStorage.getItem(SAVE_KEY));delete d.v;d.P.sect='heuksa';d.P.merit={heuksa:50};d.P.mtot={heuksa:200};
     let raw=JSON.stringify(d);raw=raw.replace('"P":{','"P":{"oldArts":["S21_0","S15_1"],"oldBook":{"art":"S27_0"},');localStorage.setItem(SAVE_KEY,raw)});
   await p.reload();await p.waitForTimeout(1200);await p.click('[data-s="cont"]');await p.waitForTimeout(1000);
   const m=await p.evaluate(()=>({sect:P.sect,merit:P.merit.sama,mtot:P.mtot.sama,old:P.merit.heuksa,arts:P.oldArts,book:P.oldBook.art,log:$('log').textContent}));

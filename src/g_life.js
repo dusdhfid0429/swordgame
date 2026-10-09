@@ -315,21 +315,20 @@ function saveGame(silent){
   if(!P)return;
   try{
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
-    const data={G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
+    const data={v:SAVE_VER,G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
       plots:(GAE_PLOTS||plots).map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
     const s=JSON.stringify(data);localStorage.setItem(SAVE_KEY,s);tossSave(s);if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
 function loadGame(){
-  let data=null;try{data=JSON.parse(migrateArtIds(localStorage.getItem(SAVE_KEY))||'null')}catch(e){}
+  let data=null;try{data=migrateSave(JSON.parse(localStorage.getItem(SAVE_KEY)||'null'))}catch(e){}
   return data;
 }
-function applySave(data){
+function applySave(data){data=migrateSave(data);
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
-  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.lifeQB=data.P.lifeQB||0;P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
-    migrateSect();
-    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
+  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();afterLoad(data);return true}
   return false;
 }

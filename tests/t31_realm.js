@@ -34,7 +34,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     return{w,r:realmIdx(),lost:q0-P.qiN,inj:P.inj>0,a0,a1:atk()}});
   ok(`주화입마: 경지 ${d.r} 유지, 내공 회차 -${d.lost}, 공격력 ${d.a0}→${d.a1}`,d.w&&d.r===1&&d.lost>=1&&d.inj&&d.a1<d.a0);
   // 예전 저장: P.realm 없으면 지금 내공 경지를 이어받는다
-  const m=await p.evaluate(()=>{saveGame(true);const data=JSON.parse(localStorage.getItem(SAVE_KEY));delete data.P.realm;data.P.qiN=30;applySave(data);return{r:P.realm,q:qiRealm()}});
+  const m=await p.evaluate(()=>{saveGame(true);const data=JSON.parse(localStorage.getItem(SAVE_KEY));delete data.v;delete data.P.realm;data.P.qiN=30;applySave(data);return{r:P.realm,q:qiRealm()}});
   ok(`예전 저장 옮김: 경지 ${m.r} = 내공 경지 ${m.q}`,m.r===m.q&&m.r>=2);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

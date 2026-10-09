@@ -86,4 +86,3 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
     <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div></div>`}
 // 새 생은 삼류부터, 예전 저장은 지금 내공의 경지를 그대로 이어받는다
 {const _nl=newLife;newLife=function(o){_nl(o);P.realm=0;P.inj=0;P.injS=0}}
-{const _as=applySave;applySave=function(d){const old=d&&d.P&&d.P.realm==null,r=_as(d);if(r&&P){if(old)P.realm=qiRealm();P.inj=(d.P.inj)||0;P.injS=(d.P.injS)||0;P.wallN=d.P.wallN??null}return r}}

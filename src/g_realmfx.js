@@ -157,9 +157,8 @@ function qiTrained(){const s=school();
 
 // ---- 매 프레임 ----
 {const _tt=trainTick;trainTick=function(dt){const r=_tt(dt);if(P&&playing&&P.hp>0){peakTick(dt);senseTick()}return r}}
-// 새 생과 예전 저장
+// 새 생 (예전 저장 옮기기는 g_save.js)
 {const _nl=newLife;newLife=function(o){_nl(o);P.enl=0;P.peaks={};P.rfx={};P.qiX=0;P.gcs=0;P.mss=0}}
-{const _as=applySave;applySave=function(d){const r=_as(d);if(r&&P){P.enl=P.enl||0;P.peaks=P.peaks||{};P.qiX=P.qiX||0;realmFxSync()}return r}}
 
 // ---- 인물창 경지 카드에 덧붙인다 ----
 {const _rcd=realmCard;realmCard=function(c){const h=_rcd(c),ri=realmIdx(),s=school();
