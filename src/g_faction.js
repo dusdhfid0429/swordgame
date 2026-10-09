@@ -37,7 +37,7 @@ function mkFac(fac,elite,x,y,sid){
   // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
   const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
   e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
-  return e}
+  runHooks('facMade',e);return e}
 // 0.5초마다 주변의 적 세력 무인을 찾아 노린다
 function facScan(e,dt){
   e.fscan=(e.fscan||0)-dt;if(e.fscan>0)return;e.fscan=.45+Math.random()*.2;
@@ -250,5 +250,5 @@ function postGo(id){
 function hqDlg(n){
   const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
-  return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
+  const c={n,html:`<p class="note">${hi}</p>${sectDetail(s,true)}`};runHooks('hqDlg',c);return c.html}
 

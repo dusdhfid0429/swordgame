@@ -645,7 +645,8 @@ function ownSectHtml(al){
   if(P.sect==='own')return `<div class="row2"><span class="note">${esc(P.sectName)}의 문주</span>${B('disciple',`제자 받기 · 은자 50 (${allies.filter(a=>a.kind==='disciple').length}/3)`,{pri:1,d:P.silver<50||allies.filter(a=>a.kind==='disciple').length>=3})}</div>`;
   const found=P.sect&&realmIdx()>=3&&P.fame>=150;
   return `<div class="row2"><span class="note">문파의 제자로 절정 이상, 명성 150이면 하산해 자기 문파를 세울 수 있다.</span>${B('found','문파 창설',{d:!found})}</div>`}
-function sectAct(a,x,y){
+function sectAct(a,x,y){const c={a,x,y,done:false,r:undefined};runHooks('sectAct',c);if(c.done)return c.r;c.r=sectActBase(a,x,y);runHooks('sectActDone',c);return c.r}
+function sectActBase(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
     case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const h=s.arts.find(q=>q.hi);
@@ -736,7 +737,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
@@ -793,6 +794,7 @@ function recalc(){
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
+  runHooks('recalc');
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
 const TIERS=['입문','소성','대성','극성'];
@@ -853,7 +855,7 @@ function setArt(id){if(!A(id))return;P.cur=id;P.fcd=[0,0,0,0,0,0];P.chain={last:
 function mkMob(kind,x,y,extra){
   const d=MOBS[kind]||extra,m={kind,d,name:kind,x,y,home:{x,y},hp:d.hp,maxHp:d.hp,atk:d.atk||0,def:d.def||0,hm:d.hm||0,sp:d.sp,el:d.el||null,reach:d.reach||(d.beast?1.1:1.2),
     cd:1+Math.random(),wind:0,swing:0,hit:0,kb:{x:0,y:0},fx:1,fy:1,bob:Math.random()*6,moving:false,aggro:false,flee:0,stun:0,slow:0,burn:0,psn:0,nohe:0,wt:Math.random()*3,goal:null,skT:4+Math.random()*3,isMob:1};
-  if(extra)Object.assign(m,extra.o||{});return m;
+  if(extra)Object.assign(m,extra.o||{});runHooks('mobMade',m,kind,extra);return m;
 }
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
 function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
@@ -878,6 +880,17 @@ function spawnTick(){
 //  hurt(c)       내가 맞을 때, 회피 판정 전. c={src,dm 피해,hm 상대 현묘도}
 //  hurtDone(c)   맞은 뒤. c.hp0 = 맞기 전 내 생명
 //  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}
+//  recalc()      능력치를 다시 셈한 뒤          mobMade(m,kind,extra) / facMade(e)  몹·세력 무인을 만든 뒤
+//  mobTick(e,dt) 몹 한 프레임 전                kill(e)        몹을 처치한 뒤(보상 뒤)
+//  mastDone(c)   숙련이 오른 뒤. c={id,s,before} trainTick(dt)  매 프레임 (수련 창)
+//  duelStart(o,e) / duelEnd(c)  비무 시작·끝. c={win,e,o,was 이전 단계,me 내 경지}
+//  loadRegion(c) 맵을 열기 전, c.id를 바꿀 수 있다   regionLoaded(id)  맵을 연 뒤
+//  travel(c)     출입구로 가기 전, c.g를 바꿀 수 있다
+//  gate(c)       출입구 검사 전, c.stop=true면 막는다   gateDone()  출입구 검사 뒤
+//  npcDlg(c) / hqDlg(c)  사람·본산 대화. c.html을 채우면 그것을 쓴다 / 덧붙인다
+//  sectAct(c) / sectActDone(c)  문파 행동. c.done=true면 기본 행동을 건너뛴다
+//  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
+//  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
@@ -908,6 +921,7 @@ function gainMast(id,v){
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
   if(a.base||a.gy)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
+  runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
   e.hp-=d;e.hit=.12;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
@@ -929,6 +943,7 @@ function onKill(e){
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
+  runHooks('kill',e);
   facKill(e);
   if(e.tomb){tombKill(e);return}
   // loot
@@ -1069,7 +1084,8 @@ function mkAlly(kind,k,x,y){
 function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp=a.maxHp;a.atk+=3;gainVit(15);P.fame+=1;log(`제자 ${a.name}이(가) ${a.lv}단계로 성장했습니다. 사부로서 활력 +15`,'xp')}}
 
 // ================= 기연 =================
-function giyeon(src){
+function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
+function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
   if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
@@ -1456,7 +1472,7 @@ function chase(e,tg,dt,spd){
     if(e.path&&e.path.length>1){tx=e.path[0].x;ty=e.path[0].y}}
   const dd=Math.hypot(tx-e.x,ty-e.y)||1,dx=(tx-e.x)/dd,dy=(ty-e.y)/dd;e.fx=dx;e.fy=dy;moveEnt(e,dx*spd*dt,dy*spd*dt);e.moving=true;
 }
-function updateMob(e,dt){
+function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(e.hp<=0)return;const d=e.d;
   e.hit=Math.max(0,e.hit-dt);e.swing=Math.max(0,e.swing-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
   if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
@@ -1591,7 +1607,8 @@ function craft(r){
   if(out.mat){addMat(out.mat,out.n);log(`${out.mat} ${out.n}개를 만들었습니다.`,'sys')}else{P.bag.push(out);log(`${itemLabel(out)}을(를) 만들었습니다.`,'xp')}
   const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);gainVit(1);renderOpen();
 }
-function useCon(k){
+function useCon(k){const c={k,done:false};runHooks('useCon',c);if(!c.done)useConBase(k)}
+function useConBase(k){
   if(!(P.mats[k]>0)){log(`${k}이(가) 없습니다.`,'info');return}if(P.hp<=0)return;
   if(k==='해독단'){if(!P.poison){log('중독되지 않았습니다.','info');return}P.poison=0}
   else if(k==='대환단'){if(P.dhw>=3){log('대환단은 한 생에 세 번까지만 효험이 있습니다.','info');return}P.dhw++;P.qiBonus+=15;recalc()}
@@ -1640,11 +1657,13 @@ function duelStart(){
   const e=mkMob(o.n,ARENA.x+1,ARENA.y,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:o.ranged?5:1.4,ranged:o.ranged,el:o.el,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
   e.duel=1;e.aggro=true;e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':o.cls==='궁'?'tang':'chief',ranged:o.ranged});e.el=o.el;e.wcls=o.cls;mobs.push(e);P.target=e;
   showBanner('비무',`${o.n}`);log(`비무 시작: ${o.n} (${CLASS[o.cls].n}·${o.el})`,'sys');
+  runHooks('duelStart',o,e);
 }
 function duelEnd(win,e){
-  const o=DUELISTS[P.duel];G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
+  const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);P.feats.push(`${Math.floor(P.age)}세에 비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}
+  runHooks('duelEnd',c);
 }
 const houseDoor=()=>{const l=LOTS[G.house.lot];return{x:l.x+l.w/2,y:l.y+l.h+.5}};
 const spousePos=()=>{const l=LOTS[G.house.lot];return{x:l.x+l.w+.6,y:l.y+l.h+.4}};
@@ -1885,7 +1904,8 @@ function buy(id,i){
   else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
-function pNpc(n){
+function pNpc(n){const c={n,html:null};runHooks('npcDlg',c);return c.html??pNpcBase(n)}
+function pNpcBase(n){
   if(n.hq)return hqDlg(n);if(n.id==='post')return postDlg();
   const sellB=B('sellmode','물건 팔기 (행낭)');
   if(n.id==='bank')return `<p class="note">"맡긴 물건은 목숨 걸고 지키겠소. 자식 대까지도 말이오."</p><p class="note">집에 있는 창고와 같은 창고다. 자식으로 윤회하면 그대로 이어진다.</p>${storageHtml()}`;
@@ -2659,6 +2679,7 @@ function renderTrain(){
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
 function startTrain(k){
+  if(k==='pg'||k==='pg2')return pgStart(k);   // 폐관수련 (g_realm.js)
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
   const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
   if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
@@ -2667,6 +2688,7 @@ function startTrain(k){
 }
 // 매 프레임: 쿨타임을 흘리고, 끝나면 능력치를 올린다
 function trainTick(dt){
+  runHooks('trainTick',dt);if(trnBusy&&trnBusy.k.startsWith('pg'))return;   // 폐관은 g_realm.js가 진행한다
   if(trnOpen&&(trainTick.r=(trainTick.r||0)-dt)<=0){trainTick.r=.5;if(!trnBusy)renderTrain()}
   if(!trnBusy)return;const b=trnBusy;b.t+=dt;
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
@@ -2754,7 +2776,7 @@ const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
 const PG_BASE=[0,.85,.75,.65,.55,.45,.35];
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
   if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
-  if(pill)c+=.1;if(P.side==='사')c-=.05;return clamp(c,.05,.95)}
+  if(pill)c+=.1;c+=PG_SCHOOL[school()]||0;return clamp(c,.05,.95)}
 // 할 수 없는 까닭 (없으면 '')
 function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
   if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
@@ -2763,33 +2785,34 @@ function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
     ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}</div>`}
-{const _st=startTrain;startTrain=function(k){if(k!=='pg'&&k!=='pg2')return _st(k);
+function pgStart(k){
   if(trnBusy||P.hp<=0)return;const why=pgWhy();if(why){log(`폐관수련을 할 수 없습니다: ${why}.`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
-  log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}}
+  log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}
 // 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
   P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
-    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();return}
+    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);return}
   qiDeviation(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
-function qiDeviation(r){const roll=Math.random();fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
-  if(r>=4&&roll<.05){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
-  const heavy=roll<.3,lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);
+function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
+  if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
+  // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
+  const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f,lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);
+  if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
   P.inj=YEAR_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
   recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
   const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${lost*SIDES[P.side].gain}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
   log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
-{const _tt=trainTick;trainTick=function(dt){
+hook('trainTick',dt=>{
   if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
   const b=trnBusy;if(b&&b.k.startsWith('pg')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
-    if(b.t>=b.dur){trnBusy=null;pgFinish(b.k==='pg2');renderTrain()}return _tt(0)}
-  return _tt(dt)}}
-{const _gm=gainMast;gainMast=function(id,v){const s=A(id),t=s?(s.p>=100?4:tierOf(s.p)):0;const r=_gm(id,v);if(s&&(s.p>=100?4:tierOf(s.p))!==t)wallCheck();return r}}
+    if(b.t>=b.dur){trnBusy=null;pgFinish(b.k==='pg2');renderTrain()}}});
+hook('mastDone',({s,before})=>{const t=p=>p>=100?4:tierOf(p);if(t(s.p)!==t(before))wallCheck()});
 // 인물창의 경지 카드
 function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall();
   const bars=PILLARS.map(({k,n,d})=>{const v=pillarVal(k),need=top?REALM_NEED[k][ri]:REALM_NEED[k][r],lo=REALM_NEED[k][ri],ok=v>=need;
@@ -2800,12 +2823,10 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
     :`${rk(r)}에 오르려면: ${lk.map(p=>`<span class="bad">${p.lack}</span>`).join(' · ')}`;
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 한쪽만 키우면 벽에 닿지 못한다.</p>
-    <div class="list">${bars}</div><p>${msg}</p>
+    ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>
     ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/YEAR_SEC*12)}달 남음)</p>`:''}
     <p>내공 심법 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain} · 다음 수련에 활력 ${c}</p>
     <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div></div>`}
-// 새 생은 삼류부터, 예전 저장은 지금 내공의 경지를 그대로 이어받는다
-{const _nl=newLife;newLife=function(o){_nl(o);P.realm=0;P.inj=0;P.injS=0}}
 
 // ================= 경지의 효과, 깨달음, 갑자·영약·심법 계열·단전 =================
 // 사용자 결정(2026-10-09): 경지 제안서(/mnt/project-files/docs/경지_내공_제안.md)의 2·4·5번. 윤회 때의 전승(내공 전수·생사경)은 지금대로 두었다.
@@ -2912,38 +2933,37 @@ hook('hurt',c=>{const r=realmIdx(),src=c.src;
   if(src.d&&school()==='사불'&&src.d.fac==='정')c.dm*=.85;
   if(sig('불가'))c.dm*=.9});
 hook('hurtDone',c=>{const src=c.src;if(sig('도가')&&src.isMob&&src.hp>0&&P.hp<c.hp0)damage(src,Math.max(1,Math.round((c.hp0-Math.max(0,P.hp))*.15)),0,0,P)});
-{const _rc=recalc;recalc=function(){_rc();if(!P)return;const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}}}
+hook('recalc',()=>{const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}});
 
 // ---- 경지 차이 체감: 두 단계 아래 하수는 겁먹고 달아난다 (정종의 화경 반박귀진만 기운이 숨어 덤빈다) ----
-{const _um=updateMob;updateMob=function(e,dt){
+hook('mobTick',e=>{
   if(e.hp>0&&!e.aggro&&!e.cowed&&e.d.hostile&&!e.d.boss&&!e.duel&&!e.tomb&&!e.tombGuard&&P.hp>0){const r=realmIdx();
     if(r>=2&&!sig('정종')&&mobRealm(e)<=r-2&&dist(e,P)<(e.d.aggro||6)){e.cowed=1;e.flee=5;e.fleeFrom=P;addText(e.x,e.y,'겁먹음','#c8c0a8');
-      if(time-(P.cowT||-99)>20){P.cowT=time;log(`${e.name}이(가) 기세에 눌려 달아납니다.`,'info')}}}
-  return _um(e,dt)}}
+      if(time-(P.cowT||-99)>20){P.cowT=time;log(`${e.name}이(가) 기세에 눌려 달아납니다.`,'info')}}}});
 // 노린 상대의 기도를 가늠한다
 function senseText(e){const d=mobRealm(e)-realmIdx();return d<=-2?'하수다':d<0?'한 수 아래':d===0?'만만치 않은 기도':d===1?'기도가 범상치 않다':'바닥이 보이지 않는다'}
 function senseTick(){const t=P.target;if(t===P.senseOf)return;P.senseOf=t;if(!t||t.hp<=0||t.d.villager||t.d.passive)return;
   const d=mobRealm(t)-realmIdx();addText(t.x,t.y-.8,senseText(t),d>=1?'#f0968a':d<=-2?'#9a8d72':'#e8d9a8')}
 
 // ---- 깨달음 계기: 비무, 고수 처치, 돈오, 기연 ----
-{const _de=duelEnd;duelEnd=function(win,e){const o=DUELISTS[P.duel],r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0,me=realmIdx();_de(win,e);
-  if(o&&r>me)gainEnl(win?1.5:1,win?`자기보다 높은 ${RANKS[r]}의 고수를 꺾으며`:`${RANKS[r]}의 고수와 겨루며 한 수 배웠다.`)}}
-{const _ok=onKill;onKill=function(e){const up=!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx();_ok(e);if(up)gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')}}
-{const _gm=gainMast;gainMast=function(id,v){const s=A(id),b=s?s.p:100;const r=_gm(id,v);if(s&&b<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`);return r}}
-{const _gy=giyeon;giyeon=function(src){const R=REGIONS[REG];
-  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
-  _gy(src);gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.')}}
+hook('duelEnd',({win,o,me})=>{const r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0;
+  if(o&&r>me)gainEnl(win?1.5:1,win?`자기보다 높은 ${RANKS[r]}의 고수를 꺾으며`:`${RANKS[r]}의 고수와 겨루며 한 수 배웠다.`)});
+hook('kill',e=>{if(!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx())gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')});
+hook('mastDone',({id,s,before})=>{if(before<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`)});
+hook('giyeon',c=>{const R=REGIONS[REG];
+  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6})}});
+hook('giyeonDone',()=>gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.'));
 
 // ---- 영약: 공청석유(1갑자, 한 생에 한 번), 만년설삼(반 갑자, 한 생에 두 번) ----
 Object.assign(CONSUME,{공청석유:{d:'내공 1갑자(+120). 한 생에 한 번'},만년설삼:{d:'내공 반 갑자(+60). 한 생에 두 번'}});
 Object.assign(MAT_PRICE,{공청석유:900,만년설삼:400});
-{const _uc=useCon;useCon=function(k){
-  if(k!=='공청석유'&&k!=='만년설삼')return _uc(k);
+hook('useCon',c=>{const k=c.k;
+  if(k!=='공청석유'&&k!=='만년설삼')return;c.done=true;
   if(!(P.mats[k]>0)){log(`${k}이(가) 없습니다.`,'info');return}if(P.hp<=0)return;
   if(k==='공청석유'){if(P.gcs){log('공청석유는 한 생에 한 번만 효험이 있습니다.','info');return}P.gcs=1;P.qiBonus+=120}
   else{if((P.mss||0)>=2){log('만년설삼은 한 생에 두 번까지만 효험이 있습니다.','info');return}P.mss=(P.mss||0)+1;P.qiBonus+=60}
   P.mats[k]--;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.4});addText(P.x,P.y,`내공 +${k==='공청석유'?'1갑자':'반 갑자'}`,'#9db8e0');
-  log(`${k}을(를) 먹고 운기하니 내공이 ${k==='공청석유'?'1갑자':'반 갑자'} 늘었습니다. (${gapja(baseQi())})`,'xp');wallCheck();renderOpen()}}
+  log(`${k}을(를) 먹고 운기하니 내공이 ${k==='공청석유'?'1갑자':'반 갑자'} 늘었습니다. (${gapja(baseQi())})`,'xp');wallCheck();renderOpen()});
 // 눈 덮인 산 맵의 약초밭에서 드물게 만년설삼
 function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.random()<.04){addMat('만년설삼',1);log('눈 속에서 만년설삼을 캤습니다!','xp');showBanner('만년설삼','내공 반 갑자')}}
 
@@ -2954,27 +2974,20 @@ function qiTrained(){const s=school();
   wallCheck()}
 
 // ---- 폐관·주화입마를 심법 계열에 맞춘다 ----
-{const _pc=pgChance;pgChance=function(pill){let c=_pc(pill);if(P.side==='사')c+=.05;const s=school();c+=s==='마공'?-.1:s==='사공'?-.05:s==='도가'||s==='불가'?.05:0;return clamp(c,.05,.95)}}
-{const _qd=qiDeviation;qiDeviation=function(r){const s=school(),rnd=Math.random;
-  // 마공은 무겁게(45%), 사공은 조금 무겁게(35%), 도가는 가볍게(20%): 무거움 경계(0.3)에 맞춰 뽑은 값을 옮긴다
-  if(s==='마공'||s==='사공'||s==='도가'){const f=s==='마공'?.45:s==='사공'?.35:.2;let first=true;Math.random=()=>{const v=rnd();if(!first)return v;first=false;
-      const death=r>=4?.05:0;if(v<death)return v;const u=(v-death)/(1-death),heavy=u<f;return death+(heavy?u/f*(.3-death):(.3+(u-f)/(1-f)*.7))};}
-  try{_qd(r)}finally{Math.random=rnd}
-  if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;recalc()}}
-{const _pf=pgFinish;pgFinish=function(pill){const r0=realmIdx();_pf(pill);if(P&&realmIdx()>r0)realmGain(realmIdx())}}
+// 폐관 성공률 보정 (예전 사파 -5%는 이 표가 대신한다)과 무거운 주화입마의 몫. g_realm.js의 pgChance·qiDeviation이 읽는다
+const PG_SCHOOL={마공:-.1,사공:-.05,도가:.05,불가:.05};
+const DEV_HEAVY={마공:.45,사공:.35,도가:.2};
 
 // ---- 매 프레임 ----
-{const _tt=trainTick;trainTick=function(dt){const r=_tt(dt);if(P&&playing&&P.hp>0){peakTick(dt);senseTick()}return r}}
-// 새 생 (예전 저장 옮기기는 g_save.js)
-{const _nl=newLife;newLife=function(o){_nl(o);P.enl=0;P.peaks={};P.rfx={};P.qiX=0;P.gcs=0;P.mss=0}}
+hook('trainTick',dt=>{if(P&&playing&&P.hp>0){peakTick(dt);senseTick()}});
 
 // ---- 인물창 경지 카드에 덧붙인다 ----
-{const _rcd=realmCard;realmCard=function(c){const h=_rcd(c),ri=realmIdx(),s=school();
+function realmCardExtra(){const ri=realmIdx(),s=school();
   const ladder=REALM_FX.map((_,i)=>fxOf(i)).map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${rk(i)} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
   const extra=`<p>내공 <b class="gold">${gapja(baseQi())}</b> (${baseQi()}) · ${danName()} · 심법 계열 <b class="gold">${s}</b> <small class="dim">${SCHOOL[s].d}</small></p>
     <p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>
     <details><summary>경지의 길</summary><div class="list">${ladder}</div></details>`;
-  return h.replace('<div class="list">',extra+'<div class="list">')}}
+  return extra}
 
 // ================= 저장 형식 번호와 옛 저장 옮기기 =================
 // 저장에는 형식 번호 v가 붙는다. 번호가 없는 저장은 v0(2026-10-09까지의 모든 저장)이다.
@@ -3100,16 +3113,19 @@ const REGION=()=>REGIONS[REG];
 const GROUND={};let GAE_PLOTS=null;
 // 지역을 불러온다: 격자를 만들고, 바닥 그림은 한 번만 굽고, 밭은 개봉에만 있고 계속 자란다
 function loadRegion(id){
+  {const c={id};runHooks('loadRegion',c);id=c.id}
   REG=id;const R=REGION();R.gen();
   for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<N&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
   NPCF=npcsHere().filter(n=>!n.board).map(npcFighter);
+  runHooks('regionLoaded',id);
 }
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다.
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);
 function travel(g){
+  {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
   setTimeout(()=>{
     try{
@@ -3123,7 +3139,8 @@ function travel(g){
       FADE.classList.remove('on');P.traveling=0;saveGame(true)}
   },320);
 }
-function gateTick(){
+function gateTick(){const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase();runHooks('gateDone')}
+function gateBase(){
   if(!P||P.hp<=0||G.duel)return;
   if((P.reg||'gaebong')!==REG){loadRegion(P.reg||'gaebong');return}
   const gs=REGION().gates;
@@ -3481,7 +3498,7 @@ function mkFac(fac,elite,x,y,sid){
   // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
   const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
   e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
-  return e}
+  runHooks('facMade',e);return e}
 // 0.5초마다 주변의 적 세력 무인을 찾아 노린다
 function facScan(e,dt){
   e.fscan=(e.fscan||0)-dt;if(e.fscan>0)return;e.fscan=.45+Math.random()*.2;
@@ -3694,7 +3711,7 @@ function postGo(id){
 function hqDlg(n){
   const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
-  return `<p class="note">${hi}</p>${sectDetail(s,true)}`}
+  const c={n,html:`<p class="note">${hi}</p>${sectDetail(s,true)}`};runHooks('hqDlg',c);return c.html}
 
 
 // ================= 무림전도의 도시·명소·산·지형을 성 맵 제자리에 =================
@@ -4211,14 +4228,13 @@ function stewardDlg(n){const s=SECTS[n.steward];return `<p class="note">"${P.sec
 function elderDlg(n){const s=SECTS[n.elder];
   if(P.sect!==s.id)return `<p class="note">"${s.n}의 제자가 아니면 가르칠 것이 없네."</p>`;
   return `<p class="note">"${rankName(s.id)}, 후산까지 올라왔으니 마음을 단단히 하게."</p>${pasSectHtml(s)}${bobSectHtml(s)}${s.id==='cheonma'?mgOrgHtml():''}`}
-{const _np=pNpc;pNpc=function(n){return n.steward?stewardDlg(n):n.elder?elderDlg(n):_np(n)}}
+hook('npcDlg',c=>{if(c.html==null)c.html=c.n.steward?stewardDlg(c.n):c.n.elder?elderDlg(c.n):null});
 // 출입구 조건: 막히면 한 걸음 물러난다
-{const _gt=gateTick;gateTick=function(){
+hook('gate',c=>{
   if(P&&P.hp>0&&!G.duel&&(P.reg||'gaebong')===REG&&!P.gateLock)for(const g of REGION().gates)if(g.need&&dist(g,P)<.8){const no=g.need();
-    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<N/2?1.3:-1.3;P.path=null;P.gateLock=1;return}}
-  _gt()}}
+    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<N/2?1.3:-1.3;P.path=null;P.gateLock=1;c.stop=true;return}}});
 // 맵이 바뀐 뒤의 예전 저장: 바위·건물 속이나 맵 밖에 서 있으면 아래 출입구 앞으로
-{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(P&&P.reg===id&&id.startsWith('hq_')&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.2}}}
+hook('regionLoaded',id=>{if(P&&P.reg===id&&id.startsWith('hq_')&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.2}});
 
 // ---- 문파마다 맵 잇기 (마교는 g_magyo.js) ----
 const MID_N=Object.values(SECTS).filter(s=>s.tier==='mid').length;
@@ -4277,14 +4293,12 @@ function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.d
   return `<p class="note">${hi}</p><div class="row2"><span class="note">${embImg('cheonma',22)} <b>${D.n}</b> · 천마신교 오당${mine?' · <span class="good">내 당</span>':''}</span></div><p class="note">${D.d}.</p>${join}
     <div class="list"><div class="it"><div style="color:rgb(${a.c})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
     <p class="note">비급은 천마신전의 교주에게서 공적으로 받는다.</p>${mgOrgHtml()}`}
-{const _hq=hqDlg;hqDlg=function(n){return n.hq==='cheonma'?_hq(n)+mgOrgHtml():_hq(n)}}
-{const _np=pNpc;pNpc=function(n){return n.dang?dangDlg(n):_np(n)}}
-{const _sa=sectAct;sectAct=function(a,x,y){
-  if(a==='mdang'){mgJoinDang(x);return true}
-  const r=_sa(a,x,y);
-  if(a==='sjoin'&&x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
-  if(P.sect!=='cheonma')P.dang=null;
-  return r}}
+hook('hqDlg',c=>{if(c.n.hq==='cheonma')c.html+=mgOrgHtml()});
+hook('npcDlg',c=>{if(c.html==null&&c.n.dang)c.html=dangDlg(c.n)});
+hook('sectAct',c=>{if(c.a==='mdang'){mgJoinDang(c.x);c.done=true;c.r=true}});
+hook('sectActDone',c=>{
+  if(c.a==='sjoin'&&c.x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
+  if(P.sect!=='cheonma')P.dang=null});
 
 // ---- 십만대산: 마교 여덟 맵 (g_stage.js 틀) ----
 // 오당 광장의 다섯 전각 자리 (왼쪽 셋, 오른쪽 둘. 오른쪽 아래는 오당 회의청)
@@ -4395,7 +4409,7 @@ for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(s
   R.gates=[{x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:3.2,label:'개봉'},{x,y,to:'hq_shaolin',tx:20.5,ty:36.2,label:S.n,portal:1}];
   REGIONS.hq_shaolin.gates.push({x:20.5,y:38.6,to:'sungsan',tx:x,ty:y+2,label:'숭산'});REGIONS.hq_shaolin.lmVia='sungsan';REGIONS.hq_shaolin.prov='henan'}
 // 예전 저장이 숭산 꼭대기(옛 소림사 자리)였으면 걸을 수 있는 곳으로
-{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.4}}}
+hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.4}});
 
 // ================= 성 지도 나누기: 성 하나 = 40×40 맵 여러 장 =================
 // 사용자 결정(2026-10-09): 무림전도를 비율대로 줄이고, 맵 하나는 40×40, 성은 실제 크기에 따라 여러 맵으로 만든다.
@@ -4440,12 +4454,11 @@ function pvDistribute(){for(const[k,p]of Object.entries(PROV)){const F=REGIONS[p
     W.marks=(F.marks||[]).filter(m=>inW(m.x,m.y)).map(m=>({...m,x:m.x-ox,y:m.y-oy}));
     W.bosses=F.bosses.filter(([,x,y])=>inW(x,y)).map(([kd,x,y,t])=>[kd,x-ox,y-oy,t])}}}
 pvDistribute();
-{const _tr=travel;travel=function(g){if(g&&isPvFull(g.to)){const s=pvSplitAt(g.to,g.tx,g.ty);g={...g,to:s.id,tx:s.x,ty:s.y}}return _tr(g)}}
+hook('travel',c=>{const g=c.g;if(g&&isPvFull(g.to)){const s=pvSplitAt(g.to,g.tx,g.ty);c.g={...g,to:s.id,tx:s.x,ty:s.y}}});
 // 예전 저장(성 전체 좌표)이나 테스트가 'pv_성'을 부르면 그 좌표가 든 맵을 연다
-{const _lr=loadRegion;loadRegion=function(id){
-  if(isPvFull(id)){const s=pvSplitAt(id,P?P.x:0,P?P.y:0);if(P&&P.reg===id){P.reg=s.id;P.x=s.x;P.y=s.y}id=s.id}
-  _lr(id);
-  if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}}}
+hook('loadRegion',c=>{const id=c.id;
+  if(isPvFull(id)){const s=pvSplitAt(id,P?P.x:0,P?P.y:0);if(P&&P.reg===id){P.reg=s.id;P.x=s.x;P.y=s.y}c.id=s.id}});
+hook('regionLoaded',id=>{if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}});
 function pvNearWalk(x,y){for(let d=0;d<8;d++)for(let j=-d;j<=d;j++)for(let i=-d;i<=d;i++){const a=Math.floor(x)+i,b=Math.floor(y)+j;if(walk(a,b))return{x:a+.5,y:b+.5}}return null}
 // 가장자리를 걸어 나가면 이웃 맵으로. 넘어가는 자리가 막혔으면 성 전체 그림에서 가까운 빈칸을 찾는다
 function pvEdgeTick(){
@@ -4457,7 +4470,7 @@ function pvEdgeTick(){
   if(!free(Math.floor(tx),Math.floor(ty))){let best=null;for(let d=1;d<6&&!best;d++)for(const s of[-d,d]){const a=side==='w'||side==='e'?Math.floor(tx):Math.floor(tx)+s,b=side==='n'||side==='s'?Math.floor(ty):Math.floor(ty)+s;if(free(a,b)){best={x:a+.5,y:b+.5};break}}
     if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,N-m-.1);return}tx=best.x;ty=best.y}
   P.path=null;P.target=null;travel({to:e[side],tx,ty,edge:1})}
-{const _gt=gateTick;gateTick=function(){_gt();if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()}}
+hook('gateDone',()=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()});
 // 이웃 맵이 있는 가장자리에 가까이 가면 경계에 빛줄과 이웃 맵 이름을 띄운다
 function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=v=>clamp(v,3,N-3);
   if(e.w&&P.x<near)out.push({x:.3,y:q(P.y),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y),dx:0,dy:1,to:e.e,ar:'→'});
@@ -4576,9 +4589,9 @@ function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm=
   const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'];
   e.maxHp=e.hp=Math.round(h*t.h);e.atk=Math.round(a*t.a);e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
   e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));return e}
-{const _mk=mkMob;mkMob=function(kind,x,y,extra){const e=_mk(kind,x,y,extra);if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}return e}}
+hook('mobMade',(e,kind,extra)=>{if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}});
 // 문파 무인: 직위(0 속가·졸개·교도, 1 정식·정예, 2 일대·조장·향주, 3 호법·당주)가 경지
-{const _mf=mkFac;mkFac=function(fac,elite,x,y,sid){const e=_mf(fac,elite,x,y,sid);e.realm=e.rank||0;return scaleMob(e)}}
+hook('facMade',e=>{e.realm=e.rank||0;scaleMob(e)});
 
 // 경지 차이: 한 단계마다 ±15% 피해, ±5% 명중 (세 단계까지)
 const rDiff=(a,b)=>clamp(a-b,-3,3);
@@ -4604,18 +4617,18 @@ function danger(id=REG){const R=REGIONS[id];if(!R||id==='gaebong')return[0,0];
 function regionRealm(e,base){const[lo,hi]=danger();return Math.max(base,Math.min(hi,base+lo))}
 function liftBeast(e){const lo=danger()[0],r0=e.realm??0;e.realm=r0;if(lo<=r0)return e;
   const fh=STD[lo][1]/STD[r0][1],fa=STD[lo][0]/STD[r0][0];e.maxHp=e.hp=Math.round(e.maxHp*fh);e.atk=Math.round(e.atk*fa);e.realm=lo;return e}
-{const _mk=mkMob;mkMob=function(kind,x,y,extra){const e=_mk(kind,x,y,extra);if(extra||!e.d||e.d.boss||e.d.villager||e.d.passive||e.realm==null||e.d.fac)return e;
-  if(e.d.beast)return liftBeast(e);const r=regionRealm(e,e.realm);if(r!==e.realm){e.realm=r;scaleMob(e)}return e}}
-{const _mf=mkFac;mkFac=function(fac,elite,x,y,sid){const e=_mf(fac,elite,x,y,sid),r=regionRealm(e,e.realm);
-  if(r!==e.realm){e.realm=r;if(e.sect){e.rank=Math.min(r,4);e.name=`${SECTS[e.sect].n} ${rankName(e.sect,e.rank)}`}  /* 초절정 이상은 장로 */scaleMob(e)}return e}}
+hook('mobMade',(e,kind,extra)=>{if(extra||!e.d||e.d.boss||e.d.villager||e.d.passive||e.realm==null||e.d.fac)return;
+  if(e.d.beast)return liftBeast(e);const r=regionRealm(e,e.realm);if(r!==e.realm){e.realm=r;scaleMob(e)}});
+hook('facMade',e=>{const r=regionRealm(e,e.realm);
+  if(r!==e.realm){e.realm=r;if(e.sect){e.rank=Math.min(r,4);e.name=`${SECTS[e.sect].n} ${rankName(e.sect,e.rank)}`}  /* 초절정 이상은 장로 */scaleMob(e)}});
 
 // ---- 5) 비무 사다리: 경지마다 한 명, 일곱 명 ----
 // 비무 상대는 같은 경지 한 사람 몫보다 질기다(생명 ×2.2, 공격력 ×0.6). 이기면 다음 경지 고수가 도전장을 보낸다.
 DUELISTS.push({n:'은거고수 청허자',cls:'검',el:'수',fame:120,silver:320},{n:'천하제일인 무영',cls:'도',el:'화',fame:200,silver:500});
 DUELISTS.forEach((o,i)=>{const[a,h,m]=STD[i];Object.assign(o,{realm:i,hp:Math.round(h*2.2),atk:Math.round(a*.6),hm:m,def:2+Math.round(i*1.5)})});
-{const _ds=duelStart;duelStart=function(){const o=DUELISTS[P.duel];_ds();const e=mobs.find(m=>m.duel);if(e&&o)e.realm=o.realm}}
-{const _de=duelEnd;duelEnd=function(win,e){const was=P.duel;_de(win,e);const nx=DUELISTS[P.duel];
-  if(win&&P.duel>was&&nx)log(`${nx.n}(${RANKS[nx.realm]})이(가) 비무대로 도전장을 보내왔습니다.`,'info')}}
+hook('duelStart',(o,e)=>{e.realm=o.realm});
+hook('duelEnd',({win,was})=>{const nx=DUELISTS[P.duel];
+  if(win&&P.duel>was&&nx)log(`${nx.n}(${RANKS[nx.realm]})이(가) 비무대로 도전장을 보내왔습니다.`,'info')});
 
 // ================= 소리: 배경음악과 효과음 =================
 // 바깥 음원 파일 없이 Web Audio로 그 자리에서 연주한다 (저작권 걱정 없음, 파일 크기 0).

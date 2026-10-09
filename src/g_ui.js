@@ -205,7 +205,8 @@ function buy(id,i){
   else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
-function pNpc(n){
+function pNpc(n){const c={n,html:null};runHooks('npcDlg',c);return c.html??pNpcBase(n)}
+function pNpcBase(n){
   if(n.hq)return hqDlg(n);if(n.id==='post')return postDlg();
   const sellB=B('sellmode','물건 팔기 (행낭)');
   if(n.id==='bank')return `<p class="note">"맡긴 물건은 목숨 걸고 지키겠소. 자식 대까지도 말이오."</p><p class="note">집에 있는 창고와 같은 창고다. 자식으로 윤회하면 그대로 이어진다.</p>${storageHtml()}`;

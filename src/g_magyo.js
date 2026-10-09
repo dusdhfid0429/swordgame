@@ -40,14 +40,12 @@ function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.d
   return `<p class="note">${hi}</p><div class="row2"><span class="note">${embImg('cheonma',22)} <b>${D.n}</b> · 천마신교 오당${mine?' · <span class="good">내 당</span>':''}</span></div><p class="note">${D.d}.</p>${join}
     <div class="list"><div class="it"><div style="color:rgb(${a.c})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
     <p class="note">비급은 천마신전의 교주에게서 공적으로 받는다.</p>${mgOrgHtml()}`}
-{const _hq=hqDlg;hqDlg=function(n){return n.hq==='cheonma'?_hq(n)+mgOrgHtml():_hq(n)}}
-{const _np=pNpc;pNpc=function(n){return n.dang?dangDlg(n):_np(n)}}
-{const _sa=sectAct;sectAct=function(a,x,y){
-  if(a==='mdang'){mgJoinDang(x);return true}
-  const r=_sa(a,x,y);
-  if(a==='sjoin'&&x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
-  if(P.sect!=='cheonma')P.dang=null;
-  return r}}
+hook('hqDlg',c=>{if(c.n.hq==='cheonma')c.html+=mgOrgHtml()});
+hook('npcDlg',c=>{if(c.html==null&&c.n.dang)c.html=dangDlg(c.n)});
+hook('sectAct',c=>{if(c.a==='mdang'){mgJoinDang(c.x);c.done=true;c.r=true}});
+hook('sectActDone',c=>{
+  if(c.a==='sjoin'&&c.x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
+  if(P.sect!=='cheonma')P.dang=null});
 
 // ---- 십만대산: 마교 여덟 맵 (g_stage.js 틀) ----
 // 오당 광장의 다섯 전각 자리 (왼쪽 셋, 오른쪽 둘. 오른쪽 아래는 오당 회의청)

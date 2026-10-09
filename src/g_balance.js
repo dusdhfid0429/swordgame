@@ -19,9 +19,9 @@ function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm=
   const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'];
   e.maxHp=e.hp=Math.round(h*t.h);e.atk=Math.round(a*t.a);e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
   e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));return e}
-{const _mk=mkMob;mkMob=function(kind,x,y,extra){const e=_mk(kind,x,y,extra);if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}return e}}
+hook('mobMade',(e,kind,extra)=>{if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}});
 // 문파 무인: 직위(0 속가·졸개·교도, 1 정식·정예, 2 일대·조장·향주, 3 호법·당주)가 경지
-{const _mf=mkFac;mkFac=function(fac,elite,x,y,sid){const e=_mf(fac,elite,x,y,sid);e.realm=e.rank||0;return scaleMob(e)}}
+hook('facMade',e=>{e.realm=e.rank||0;scaleMob(e)});
 
 // 경지 차이: 한 단계마다 ±15% 피해, ±5% 명중 (세 단계까지)
 const rDiff=(a,b)=>clamp(a-b,-3,3);
@@ -47,15 +47,15 @@ function danger(id=REG){const R=REGIONS[id];if(!R||id==='gaebong')return[0,0];
 function regionRealm(e,base){const[lo,hi]=danger();return Math.max(base,Math.min(hi,base+lo))}
 function liftBeast(e){const lo=danger()[0],r0=e.realm??0;e.realm=r0;if(lo<=r0)return e;
   const fh=STD[lo][1]/STD[r0][1],fa=STD[lo][0]/STD[r0][0];e.maxHp=e.hp=Math.round(e.maxHp*fh);e.atk=Math.round(e.atk*fa);e.realm=lo;return e}
-{const _mk=mkMob;mkMob=function(kind,x,y,extra){const e=_mk(kind,x,y,extra);if(extra||!e.d||e.d.boss||e.d.villager||e.d.passive||e.realm==null||e.d.fac)return e;
-  if(e.d.beast)return liftBeast(e);const r=regionRealm(e,e.realm);if(r!==e.realm){e.realm=r;scaleMob(e)}return e}}
-{const _mf=mkFac;mkFac=function(fac,elite,x,y,sid){const e=_mf(fac,elite,x,y,sid),r=regionRealm(e,e.realm);
-  if(r!==e.realm){e.realm=r;if(e.sect){e.rank=Math.min(r,4);e.name=`${SECTS[e.sect].n} ${rankName(e.sect,e.rank)}`}  /* 초절정 이상은 장로 */scaleMob(e)}return e}}
+hook('mobMade',(e,kind,extra)=>{if(extra||!e.d||e.d.boss||e.d.villager||e.d.passive||e.realm==null||e.d.fac)return;
+  if(e.d.beast)return liftBeast(e);const r=regionRealm(e,e.realm);if(r!==e.realm){e.realm=r;scaleMob(e)}});
+hook('facMade',e=>{const r=regionRealm(e,e.realm);
+  if(r!==e.realm){e.realm=r;if(e.sect){e.rank=Math.min(r,4);e.name=`${SECTS[e.sect].n} ${rankName(e.sect,e.rank)}`}  /* 초절정 이상은 장로 */scaleMob(e)}});
 
 // ---- 5) 비무 사다리: 경지마다 한 명, 일곱 명 ----
 // 비무 상대는 같은 경지 한 사람 몫보다 질기다(생명 ×2.2, 공격력 ×0.6). 이기면 다음 경지 고수가 도전장을 보낸다.
 DUELISTS.push({n:'은거고수 청허자',cls:'검',el:'수',fame:120,silver:320},{n:'천하제일인 무영',cls:'도',el:'화',fame:200,silver:500});
 DUELISTS.forEach((o,i)=>{const[a,h,m]=STD[i];Object.assign(o,{realm:i,hp:Math.round(h*2.2),atk:Math.round(a*.6),hm:m,def:2+Math.round(i*1.5)})});
-{const _ds=duelStart;duelStart=function(){const o=DUELISTS[P.duel];_ds();const e=mobs.find(m=>m.duel);if(e&&o)e.realm=o.realm}}
-{const _de=duelEnd;duelEnd=function(win,e){const was=P.duel;_de(win,e);const nx=DUELISTS[P.duel];
-  if(win&&P.duel>was&&nx)log(`${nx.n}(${RANKS[nx.realm]})이(가) 비무대로 도전장을 보내왔습니다.`,'info')}}
+hook('duelStart',(o,e)=>{e.realm=o.realm});
+hook('duelEnd',({win,was})=>{const nx=DUELISTS[P.duel];
+  if(win&&P.duel>was&&nx)log(`${nx.n}(${RANKS[nx.realm]})이(가) 비무대로 도전장을 보내왔습니다.`,'info')});

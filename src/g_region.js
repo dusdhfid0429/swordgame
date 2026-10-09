@@ -19,16 +19,19 @@ const REGION=()=>REGIONS[REG];
 const GROUND={};let GAE_PLOTS=null;
 // 지역을 불러온다: 격자를 만들고, 바닥 그림은 한 번만 굽고, 밭은 개봉에만 있고 계속 자란다
 function loadRegion(id){
+  {const c={id};runHooks('loadRegion',c);id=c.id}
   REG=id;const R=REGION();R.gen();
   for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<N&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
   NPCF=npcsHere().filter(n=>!n.board).map(npcFighter);
+  runHooks('regionLoaded',id);
 }
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다.
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);
 function travel(g){
+  {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
   setTimeout(()=>{
     try{
@@ -42,7 +45,8 @@ function travel(g){
       FADE.classList.remove('on');P.traveling=0;saveGame(true)}
   },320);
 }
-function gateTick(){
+function gateTick(){const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase();runHooks('gateDone')}
+function gateBase(){
   if(!P||P.hp<=0||G.duel)return;
   if((P.reg||'gaebong')!==REG){loadRegion(P.reg||'gaebong');return}
   const gs=REGION().gates;

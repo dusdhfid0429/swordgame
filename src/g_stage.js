@@ -93,14 +93,13 @@ function stewardDlg(n){const s=SECTS[n.steward];return `<p class="note">"${P.sec
 function elderDlg(n){const s=SECTS[n.elder];
   if(P.sect!==s.id)return `<p class="note">"${s.n}의 제자가 아니면 가르칠 것이 없네."</p>`;
   return `<p class="note">"${rankName(s.id)}, 후산까지 올라왔으니 마음을 단단히 하게."</p>${pasSectHtml(s)}${bobSectHtml(s)}${s.id==='cheonma'?mgOrgHtml():''}`}
-{const _np=pNpc;pNpc=function(n){return n.steward?stewardDlg(n):n.elder?elderDlg(n):_np(n)}}
+hook('npcDlg',c=>{if(c.html==null)c.html=c.n.steward?stewardDlg(c.n):c.n.elder?elderDlg(c.n):null});
 // 출입구 조건: 막히면 한 걸음 물러난다
-{const _gt=gateTick;gateTick=function(){
+hook('gate',c=>{
   if(P&&P.hp>0&&!G.duel&&(P.reg||'gaebong')===REG&&!P.gateLock)for(const g of REGION().gates)if(g.need&&dist(g,P)<.8){const no=g.need();
-    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<N/2?1.3:-1.3;P.path=null;P.gateLock=1;return}}
-  _gt()}}
+    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<N/2?1.3:-1.3;P.path=null;P.gateLock=1;c.stop=true;return}}});
 // 맵이 바뀐 뒤의 예전 저장: 바위·건물 속이나 맵 밖에 서 있으면 아래 출입구 앞으로
-{const _lr=loadRegion;loadRegion=function(id){_lr(id);if(P&&P.reg===id&&id.startsWith('hq_')&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.2}}}
+hook('regionLoaded',id=>{if(P&&P.reg===id&&id.startsWith('hq_')&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.2}});
 
 // ---- 문파마다 맵 잇기 (마교는 g_magyo.js) ----
 const MID_N=Object.values(SECTS).filter(s=>s.tier==='mid').length;

@@ -41,12 +41,11 @@ function pvDistribute(){for(const[k,p]of Object.entries(PROV)){const F=REGIONS[p
     W.marks=(F.marks||[]).filter(m=>inW(m.x,m.y)).map(m=>({...m,x:m.x-ox,y:m.y-oy}));
     W.bosses=F.bosses.filter(([,x,y])=>inW(x,y)).map(([kd,x,y,t])=>[kd,x-ox,y-oy,t])}}}
 pvDistribute();
-{const _tr=travel;travel=function(g){if(g&&isPvFull(g.to)){const s=pvSplitAt(g.to,g.tx,g.ty);g={...g,to:s.id,tx:s.x,ty:s.y}}return _tr(g)}}
+hook('travel',c=>{const g=c.g;if(g&&isPvFull(g.to)){const s=pvSplitAt(g.to,g.tx,g.ty);c.g={...g,to:s.id,tx:s.x,ty:s.y}}});
 // 예전 저장(성 전체 좌표)이나 테스트가 'pv_성'을 부르면 그 좌표가 든 맵을 연다
-{const _lr=loadRegion;loadRegion=function(id){
-  if(isPvFull(id)){const s=pvSplitAt(id,P?P.x:0,P?P.y:0);if(P&&P.reg===id){P.reg=s.id;P.x=s.x;P.y=s.y}id=s.id}
-  _lr(id);
-  if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}}}
+hook('loadRegion',c=>{const id=c.id;
+  if(isPvFull(id)){const s=pvSplitAt(id,P?P.x:0,P?P.y:0);if(P&&P.reg===id){P.reg=s.id;P.x=s.x;P.y=s.y}c.id=s.id}});
+hook('regionLoaded',id=>{if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}});
 function pvNearWalk(x,y){for(let d=0;d<8;d++)for(let j=-d;j<=d;j++)for(let i=-d;i<=d;i++){const a=Math.floor(x)+i,b=Math.floor(y)+j;if(walk(a,b))return{x:a+.5,y:b+.5}}return null}
 // 가장자리를 걸어 나가면 이웃 맵으로. 넘어가는 자리가 막혔으면 성 전체 그림에서 가까운 빈칸을 찾는다
 function pvEdgeTick(){
@@ -58,7 +57,7 @@ function pvEdgeTick(){
   if(!free(Math.floor(tx),Math.floor(ty))){let best=null;for(let d=1;d<6&&!best;d++)for(const s of[-d,d]){const a=side==='w'||side==='e'?Math.floor(tx):Math.floor(tx)+s,b=side==='n'||side==='s'?Math.floor(ty):Math.floor(ty)+s;if(free(a,b)){best={x:a+.5,y:b+.5};break}}
     if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,N-m-.1);return}tx=best.x;ty=best.y}
   P.path=null;P.target=null;travel({to:e[side],tx,ty,edge:1})}
-{const _gt=gateTick;gateTick=function(){_gt();if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()}}
+hook('gateDone',()=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()});
 // 이웃 맵이 있는 가장자리에 가까이 가면 경계에 빛줄과 이웃 맵 이름을 띄운다
 function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=v=>clamp(v,3,N-3);
   if(e.w&&P.x<near)out.push({x:.3,y:q(P.y),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y),dx:0,dy:1,to:e.e,ar:'→'});

@@ -25,7 +25,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`화산 정상에서 폐관 가능: ${row.place} 성공 ${Math.round(row.ch*100)}%`,row.place==='화산 정상'&&!row.why&&row.btn);
   await p.screenshot({path:shot('realm_train')});
   const age0=await p.evaluate(()=>{window._rnd=Math.random;Math.random=()=>.01;return P.age});
-  await p.tap('[data-tr="pg"]');await p.waitForTimeout(3300);
+  await p.tap('[data-tr="pg"]');await p.waitForFunction(()=>!trnBusy,null,{timeout:15000}).catch(()=>{});   // 시간 대신 폐관이 끝나기를 기다린다
   const s=await p.evaluate(()=>{Math.random=window._rnd;return{r:realmIdx(),n:realmName(),age:P.age,wall:atWall()}});
   ok(`벽을 깸: ${s.n}, 나이 +${(s.age-age0).toFixed(1)}`,s.r===1&&s.age-age0>=.45&&!s.wall);
   // 주화입마: 실패하면 내공을 잃고 경맥이 상한다

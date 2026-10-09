@@ -111,7 +111,7 @@ function chase(e,tg,dt,spd){
     if(e.path&&e.path.length>1){tx=e.path[0].x;ty=e.path[0].y}}
   const dd=Math.hypot(tx-e.x,ty-e.y)||1,dx=(tx-e.x)/dd,dy=(ty-e.y)/dd;e.fx=dx;e.fy=dy;moveEnt(e,dx*spd*dt,dy*spd*dt);e.moving=true;
 }
-function updateMob(e,dt){
+function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(e.hp<=0)return;const d=e.d;
   e.hit=Math.max(0,e.hit-dt);e.swing=Math.max(0,e.swing-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
   if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
@@ -246,7 +246,8 @@ function craft(r){
   if(out.mat){addMat(out.mat,out.n);log(`${out.mat} ${out.n}개를 만들었습니다.`,'sys')}else{P.bag.push(out);log(`${itemLabel(out)}을(를) 만들었습니다.`,'xp')}
   const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);gainVit(1);renderOpen();
 }
-function useCon(k){
+function useCon(k){const c={k,done:false};runHooks('useCon',c);if(!c.done)useConBase(k)}
+function useConBase(k){
   if(!(P.mats[k]>0)){log(`${k}이(가) 없습니다.`,'info');return}if(P.hp<=0)return;
   if(k==='해독단'){if(!P.poison){log('중독되지 않았습니다.','info');return}P.poison=0}
   else if(k==='대환단'){if(P.dhw>=3){log('대환단은 한 생에 세 번까지만 효험이 있습니다.','info');return}P.dhw++;P.qiBonus+=15;recalc()}
@@ -295,11 +296,13 @@ function duelStart(){
   const e=mkMob(o.n,ARENA.x+1,ARENA.y,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:o.ranged?5:1.4,ranged:o.ranged,el:o.el,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
   e.duel=1;e.aggro=true;e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':o.cls==='궁'?'tang':'chief',ranged:o.ranged});e.el=o.el;e.wcls=o.cls;mobs.push(e);P.target=e;
   showBanner('비무',`${o.n}`);log(`비무 시작: ${o.n} (${CLASS[o.cls].n}·${o.el})`,'sys');
+  runHooks('duelStart',o,e);
 }
 function duelEnd(win,e){
-  const o=DUELISTS[P.duel];G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
+  const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);P.feats.push(`${Math.floor(P.age)}세에 비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}
+  runHooks('duelEnd',c);
 }
 const houseDoor=()=>{const l=LOTS[G.house.lot];return{x:l.x+l.w/2,y:l.y+l.h+.5}};
 const spousePos=()=>{const l=LOTS[G.house.lot];return{x:l.x+l.w+.6,y:l.y+l.h+.4}};

@@ -26,6 +26,7 @@ function renderTrain(){
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
 function startTrain(k){
+  if(k==='pg'||k==='pg2')return pgStart(k);   // 폐관수련 (g_realm.js)
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
   const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
   if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
@@ -34,6 +35,7 @@ function startTrain(k){
 }
 // 매 프레임: 쿨타임을 흘리고, 끝나면 능력치를 올린다
 function trainTick(dt){
+  runHooks('trainTick',dt);if(trnBusy&&trnBusy.k.startsWith('pg'))return;   // 폐관은 g_realm.js가 진행한다
   if(trnOpen&&(trainTick.r=(trainTick.r||0)-dt)<=0){trainTick.r=.5;if(!trnBusy)renderTrain()}
   if(!trnBusy)return;const b=trnBusy;b.t+=dt;
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';

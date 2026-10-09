@@ -41,8 +41,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await setup(open);
   const s4=await p.evaluate(()=>{for(const[a,bb]of[[1,0],[-1,0],[0,1],[0,-1],[.7,.7]])mobs.push(mkMob('늑대',P.x+a*1.1,P.y+bb*1.1));
     const cnt=()=>mobs.filter(e=>dist(e,P)<1.7).length;const c0=cnt();bobeop();window._c0=c0;return c0});
-  await p.waitForTimeout(500);
-  const c1=await p.evaluate(()=>{for(const e of mobs){e.x=e.x;}return mobs.filter(e=>dist(e,P)<1.7).length});
+  await p.waitForFunction(()=>mobs.filter(e=>dist(e,P)<1.7).length<window._c0,null,{timeout:4000}).catch(()=>{});   // 시간 대신 결과를 기다린다 (바쁜 기계)
+  const c1=await p.evaluate(()=>mobs.filter(e=>dist(e,P)<1.7).length);
   ok(`둘러싸였을 때 (붙은 적 ${s4} → ${c1})`,c1<s4);
   // 등급이 높을수록 범위가 넓다
   const s5=await p.evaluate(()=>BG.rad.map((r,i)=>r).join('<')+' · '+BG.len.join('<'));
