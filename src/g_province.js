@@ -50,8 +50,10 @@ const pvOfSect=sid=>Object.keys(PROV).find(k=>PROV[k].sects.includes(sid));
 // 성 안 출입구(본산 입구·개봉) 자리: 가장자리에서 7칸 이상, 서로 9칸 이상 떨어뜨린다
 function pvInner(k,p){
   const S=p.size,r=rng(5300+k.length*97+k.charCodeAt(0)*13),pts=[];
-  if(k==='henan')pts.push({x:Math.floor(S*.8)+.5,y:Math.floor(S*.5)+.5,to:'gaebong'});
-  for(const sid of p.sects){let best=null;for(let t=0;t<200;t++){const x=7+Math.floor(r()*(S-14))+.5,y=7+Math.floor(r()*(S-14))+.5;
+  // 무림전도에 자리가 있는 문파와 개봉은 그 자리로 (g_landmark.js), 나머지는 예전처럼 떨어진 빈자리
+  if(k==='henan'){const q=lmSectSpot(k,'_gaebong',S,pts);pts.push({...q,to:'gaebong'})}
+  for(const sid of p.sects){const q=lmSectSpot(k,sid,S,pts);if(q)pts.push({...q,to:'hq_'+sid})}
+  for(const sid of p.sects){if(LM_SECT[sid])continue;let best=null;for(let t=0;t<200;t++){const x=7+Math.floor(r()*(S-14))+.5,y=7+Math.floor(r()*(S-14))+.5;
     if(Math.hypot(x-S/2,y-S/2)<6)continue;const d=Math.min(99,...pts.map(q=>Math.hypot(q.x-x,q.y-y)));if(d>=9){best={x,y};break}if(!best||d>best.d)best={x,y,d}}
     pts.push({x:best.x,y:best.y,to:'hq_'+sid})}
   return pts}
@@ -103,6 +105,7 @@ for(const[k,p]of Object.entries(PROV)){
   spawns.push(['산적',3,far],['산적궁수',1,far]);for(const[b,c]of PV_BEAST[p.th])spawns.push([b,c,far]);
   REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>N>48?chunkGround(PV_PAINT[p.th]||p.th):bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
     zone:(x,y)=>{let b=null,bd=6;for(const g of gates)if(g.inner){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}
+      const m=lmNear(REGIONS[id],x,y);if(m&&(!b||Math.hypot(m.x-x,m.y-y)<bd))return `${p.n} · ${m.n}`;
       return b?`${p.n} · ${b.label} 어귀`:Math.hypot(x-S/2,y-S/2)<5?`${p.n} 객잔 거리`:p.n}};
 }
 REGIONS.sungsan.prov='henan';REGIONS.gaebong.prov='henan';
@@ -111,7 +114,7 @@ function genProv(id,k,p){
   const R=REGIONS[id],S=N,T=PV_TH[p.th],r=rng(8800+k.length*131+k.charCodeAt(1)*7),o1=k.charCodeAt(0)*.05,C=Math.floor(S/2);
   map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const road=new Set(),mark=(x,y)=>{for(const[i,j]of[[x,y],[x+1,y],[x,y+1],[x+1,y+1]])if(i>=1&&j>=1&&i<S-1&&j<S-1)road.add(i+','+j)};
-  for(const g of[...R.gates,...(R.lairs||[])]){let x=Math.max(1,Math.min(S-3,Math.floor(g.x))),y=Math.max(1,Math.min(S-3,Math.floor(g.y)));
+  for(const g of[...R.gates,...(R.lairs||[]),...(R.marks||[]).filter(m=>m.t==='c'||m.t==='s')]){let x=Math.max(1,Math.min(S-3,Math.floor(g.x))),y=Math.max(1,Math.min(S-3,Math.floor(g.y)));
     for(let n=0;n<S*4&&(x!==C||y!==C);n++){mark(x,y);const dx=C-x,dy=C-y;if(dy===0||(dx!==0&&r()<Math.abs(dx)/(Math.abs(dx)+Math.abs(dy))))x+=Math.sign(dx);else y+=Math.sign(dy)}mark(C,C)}
   const water=(x,y)=>{
     if(T.river){const w=T.river.w||2,ry=Math.floor(T.river.y*S+2.5*Math.sin(x*.18+o1));if(y>=ry&&y<ry+w)return true}
@@ -126,6 +129,7 @@ function genProv(id,k,p){
     if(!rd&&!wt){if(x===0||y===0||x===S-1||y===S-1)o=r()<.6?T.tree:'rock';else if(edge)o=r()<.7?(r()<.6?T.tree:'rock'):null;
       else if(!near&&Math.hypot(x-C,y-C)>4){const v=r(),cliff=fbm(x*.3+o1,y*.3);o=g===6&&cliff>.64?'rock':v<T.tv?T.tree:v<T.tv+T.rv?'rock':v<T.tv+T.rv+(T.bamboo||0)?'bamboo':null}}
     map[y][x]={g,v:r()};objs[y][x]=o}}
+  lmPaint(R,S,T,road,r);
   for(let y=0;y<S;y++)for(let x=0;x<S;x++)if(map[y][x].g===3&&(map[y-1]&&map[y-1][x].g===2||map[y+1]&&map[y+1][x].g===2))rails.push({x,y});
   // 한가운데 객잔 거리
   const inn={x:C+2,y:C-4,w:3,h:2,kind:'inn'};let ok=true;for(let j=inn.y;j<inn.y+inn.h;j++)for(let i=inn.x;i<inn.x+inn.w;i++)if(road.has(i+','+j)||map[j][i].g===2)ok=false;
@@ -152,6 +156,8 @@ for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;
     const lr={...L,x:c.x,y:c.y};R.lairs.push(lr);R.bosses.push([L.boss[0],c.x,c.y+1,L.boss[1]]);
     for(const[kind,cap]of L.sp)R.spawns.push([kind,cap,(x,y)=>Math.hypot(x+.5-c.x,y+.5-c.y)<6.5&&Math.hypot(x+.5-c.x,y+.5-c.y)>1.5])}
   const z=R.zone;R.zone=(x,y)=>{const l=R.lairs.find(q=>Math.hypot(q.x-x,q.y-y)<7);return l?`${R.name} · ${l.n}`:z(x,y)}}
+// 무림전도의 도시·명소·산·지형 자리 (g_landmark.js). 출입구·소굴이 정해진 뒤에 놓는다
+for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)];R.marks=lmPlace(k,R.size,R)}
 // 지역마다 격자 크기(N)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
 for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()}}
 
@@ -188,6 +194,7 @@ function pvInfo(k){
     <h4 style="margin:6px 0 2px">문파 ${sects.length}곳</h4>${sects.length?`<p>${sl}</p>`:'<p class="note">이 성에는 문파 본산이 없다.</p>'}
     <p class="note">무인: ${fighters} · 산적</p><p class="note">짐승: ${beasts}</p>
     ${lairs?`<p class="note">소굴: ${lairs}</p>`:''}
+    ${lmInfo(R)}
     <p class="note">이웃 성: ${nb}</p></div>`}
 function pWorld(){
   const here=provOfReg(REG),cur0=REG==='gaebong'?'gaebong':here;

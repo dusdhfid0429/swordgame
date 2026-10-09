@@ -38,6 +38,7 @@ for(const[k,p]of Object.entries(PROV)){
 function pvDistribute(){for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
   for(let r=0;r<p.cols;r++)for(let c=0;c<p.cols;c++){const W=REGIONS[pvWin(k,c,r)],ox=c*PV_W,oy=r*PV_W,inW=(x,y)=>x>=ox&&y>=oy&&x<ox+PV_W&&y<oy+PV_W;
     W.gates=F.gates.filter(g=>inW(g.x,g.y)).map(g=>({...g,x:g.x-ox,y:g.y-oy}));
+    W.marks=(F.marks||[]).filter(m=>inW(m.x,m.y)).map(m=>({...m,x:m.x-ox,y:m.y-oy}));
     W.bosses=F.bosses.filter(([,x,y])=>inW(x,y)).map(([kd,x,y,t])=>[kd,x-ox,y-oy,t])}}}
 pvDistribute();
 {const _tr=travel;travel=function(g){if(g&&isPvFull(g.to)){const s=pvSplitAt(g.to,g.tx,g.ty);g={...g,to:s.id,tx:s.x,ty:s.y}}return _tr(g)}}
