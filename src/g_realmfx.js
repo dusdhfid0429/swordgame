@@ -15,10 +15,34 @@ const REALM_FX=[
   {n:'검강 · 호신강기',d:'피해 +25%, 두 단계 아래 하수의 공격은 강기에 막혀 1/5만 들어온다'},
   {n:'반박귀진 · 환골탈태',d:'기운이 안으로 숨어 하수도 겁먹지 않고 덤빈다. 상단전이 열려 최대 내공 +30%, 기본기 모두 +2, 수명 +10년'},
   {n:'반로환동 · 이기어검',d:'수명 +20년, 필살기 위력 +30%'}];
+// 화경·현경은 심법 계열마다 이름·수치·고유 특성이 다르다 (사용자 결정 2026-10-09: 계열의 특징은 살리되 비슷한 경지끼리 밸런스를 맞춘다)
+// 밸런스 점수: 최대 내공 10% = 1, 기본기 1 = 1, 수명 5년 = 1, 필살기 10% = 1. 화경은 모두 13점, 현경은 모두 7점에 고유 특성 하나.
+//  q: 상단전이 열려 늘어나는 최대 내공(중단전 15% 대신), st: 환골탈태로 오르는 기본기, l5/l6: 수명, ult: 현경 필살기 위력
+const SUMMIT={
+  정종:{q:.3,st:{str:2,end:2,agi:2,qi:2},l5:10,l6:20,ult:.3,
+    r:[{r:'화경',n:'반박귀진',d:'기운이 안으로 숨어 하수도 겁먹지 않고 덤빈다'},{r:'현경',n:'이기어검',d:'검을 날려 부린다'}]},
+  도가:{q:.4,st:{str:1,end:1,agi:2,qi:2},l5:15,l6:30,ult:.1,
+    r:[{r:'귀원경',n:'태극 반탄',d:'받은 피해의 15%를 상대에게 되돌린다'},{r:'등선경',n:'심검',d:'마음으로 검을 부린다'}]},
+  불가:{q:.3,st:{str:2,end:4,agi:1,qi:2},l5:5,l6:25,ult:.2,
+    r:[{r:'금강경',n:'금강불괴',d:'받는 피해 -10%'},{r:'보리경',n:'여래신장',d:'부처의 손바닥이 내려친다'}]},
+  사불:{q:.2,st:{str:3,end:3,agi:1,qi:2},l5:10,l6:20,ult:.3,
+    r:[{r:'혈불경',n:'혈불공',d:'준 피해의 6%만큼 생명을 빨아들인다'},{r:'명왕경',n:'명왕존',d:'분노한 명왕의 위세'}]},
+  사공:{q:.3,st:{str:3,end:1,agi:4,qi:1},l5:5,l6:15,ult:.4,
+    r:[{r:'사왕경',n:'사기침골',d:'맞은 적은 사기에 뼈가 저려 2초 동안 느려진다'},{r:'사신경',n:'사신강림',d:'사신의 그림자가 깃든다'}]},
+  마공:{q:.5,st:{str:4,end:1,agi:2,qi:1},l5:0,l6:5,ult:.6,
+    r:[{r:'마화경',n:'천마해체',d:'생명이 30% 아래로 떨어지면 피해 +25%'},{r:'천마경',n:'천마강림',d:'천마의 기운이 깃든다'}]}};
+const SC=()=>SUMMIT[school()];
+const summit=i=>SC().r[i-5];
+function rk(i){return i>=5&&i<=6&&P?summit(i).r:RANKS[i]}
+const stTxt=st=>STATS.map(({k,n})=>`${n} +${st[k]}`).join(', ');
+function fxOf(i){if(i<5)return REALM_FX[i];const c=SC(),s=summit(i);
+  return i===5?{n:`${s.n} · 환골탈태`,d:`${s.d}. 상단전이 열려 최대 내공 +${Math.round(c.q*100)}%, ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}`}
+    :{n:`반로환동 · ${s.n}`,d:`${s.d}: 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}`}}
+const sig=k=>realmIdx()>=5&&school()===k;
 const realmAt=r=>realmIdx()>=r;
 // 단전: 하단전 → 중단전(절정) → 상단전(화경)
 const danName=()=>realmAt(5)?'상단전':realmAt(3)?'중단전':'하단전';
-const danMul=()=>realmAt(5)?1.3:realmAt(3)?1.15:1;
+const danMul=()=>realmAt(5)?1+SC().q:realmAt(3)?1.15:1;
 function realmQiMul(){return realmAt(1)?1.3:1}
 
 // ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=사공) ----
@@ -58,16 +82,18 @@ function peakTick(dt){const R=REGIONS[REG];if(!P.medit||!R||!R.lm||R.lm.t!=='m'|
 // ---- 경지가 오를 때 한 번만 받는 것 (예전 저장은 불러올 때 채운다) ----
 function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;
   if(school()==='도가'&&r>0)P.life+=2;
-  if(r===5){P.life+=10;for(const{k}of STATS){P.st[k]+=2;P.base[k]+=2}P.inj=0;P.injS=0;log('환골탈태: 탁한 기운이 빠져나가고 뼈와 살이 새로 태어났습니다. 기본기 모두 +2, 수명 +10년.','xp')}
-  if(r===6){P.life+=20;log('반로환동: 늙은 몸이 다시 젊어집니다. 수명 +20년.','xp')}
-  if(r>0)log(`${RANKS[r]}: ${REALM_FX[r].n}. ${REALM_FX[r].d}`,'xp');recalc()}
+  if(r===5){const c=SC();P.life+=c.l5;for(const{k}of STATS){P.st[k]+=c.st[k];P.base[k]+=c.st[k]}P.inj=0;P.injS=0;log(`환골탈태: 탁한 기운이 빠져나가고 뼈와 살이 새로 태어났습니다. ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}.`,'xp')}
+  if(r===6){const c=SC();P.life+=c.l6;if(c.l6)log(`반로환동: 늙은 몸이 다시 젊어집니다. 수명 +${c.l6}년.`,'xp')}
+  if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');recalc()}
 function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r)}
 
 // ---- 전투: 검기·검강·검사, 호신강기, 이기어검 ----
 {const _h=hitE;hitE=function(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0||from!==P)return _h(X,e,m,kb,stun,from,echo);
-  const r=realmIdx();let mm=m;if(r>=4)mm*=1.25;else if(r>=2)mm*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)mm*=1.3;
+  const r=realmIdx();let mm=m;if(r>=4)mm*=1.25;else if(r>=2)mm*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)mm*=1+SC().ult;
+  if(sig('마공')&&P.hp<P.maxHp*.3)mm*=1.25;
   const d0=e.def;if(r>=2)e.def=Math.round(d0*.5);const hp0=e.hp;_h(X,e,mm,kb,stun,from,echo);e.def=d0;
+  if(e.hp<hp0){if(sig('사불'))P.hp=Math.min(P.maxHp,P.hp+(hp0-Math.max(0,e.hp))*.06);if(sig('사공'))e.slow=Math.max(e.slow||0,2)}
   if(r>=2&&e.hp<hp0)fParts(null,e,r>=4?'255,230,140':'150,210,255',r>=4?6:3,60,'dot',.35);
   if(r>=3&&e.hp<hp0&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
     if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);GL({t:'line',x:P.x,y:P.y,ex:o.x,ey:o.y,w:2,life:.25,col:'200,230,255'})}}}}
@@ -76,13 +102,14 @@ function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r
   if(src&&src.d&&r>=4&&mobRealm(src)<=r-2&&P.inv<=0&&P.hp>0){dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
   if(src&&src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))dm*=.85;
   if(src&&src.d&&school()==='사불'&&src.d.fac==='정')dm*=.85;
-  return _hp(dm,src)}}
+  if(sig('불가'))dm*=.9;
+  const h0=P.hp,r2=_hp(dm,src);if(sig('도가')&&src&&src.isMob&&src.hp>0&&P.hp<h0)damage(src,Math.max(1,Math.round((h0-Math.max(0,P.hp))*.15)),0,0,P);return r2}}
 {const _rc=recalc;recalc=function(){_rc();if(!P)return;const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}}}
 
-// ---- 경지 차이 체감: 두 단계 아래 하수는 겁먹고 달아난다 (반박귀진부터는 기운이 숨어 덤빈다) ----
+// ---- 경지 차이 체감: 두 단계 아래 하수는 겁먹고 달아난다 (정종의 화경 반박귀진만 기운이 숨어 덤빈다) ----
 {const _um=updateMob;updateMob=function(e,dt){
   if(e.hp>0&&!e.aggro&&!e.cowed&&e.d.hostile&&!e.d.boss&&!e.duel&&!e.tomb&&!e.tombGuard&&P.hp>0){const r=realmIdx();
-    if(r>=2&&r<5&&mobRealm(e)<=r-2&&dist(e,P)<(e.d.aggro||6)){e.cowed=1;e.flee=5;e.fleeFrom=P;addText(e.x,e.y,'겁먹음','#c8c0a8');
+    if(r>=2&&!sig('정종')&&mobRealm(e)<=r-2&&dist(e,P)<(e.d.aggro||6)){e.cowed=1;e.flee=5;e.fleeFrom=P;addText(e.x,e.y,'겁먹음','#c8c0a8');
       if(time-(P.cowT||-99)>20){P.cowT=time;log(`${e.name}이(가) 기세에 눌려 달아납니다.`,'info')}}}
   return _um(e,dt)}}
 // 노린 상대의 기도를 가늠한다
@@ -136,7 +163,7 @@ function qiTrained(){const s=school();
 
 // ---- 인물창 경지 카드에 덧붙인다 ----
 {const _rcd=realmCard;realmCard=function(c){const h=_rcd(c),ri=realmIdx(),s=school();
-  const ladder=REALM_FX.map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${RANKS[i]} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
+  const ladder=REALM_FX.map((_,i)=>fxOf(i)).map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${rk(i)} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
   const extra=`<p>내공 <b class="gold">${gapja(baseQi())}</b> (${baseQi()}) · ${danName()} · 심법 계열 <b class="gold">${s}</b> <small class="dim">${SCHOOL[s].d}</small></p>
     <p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>
     <details><summary>경지의 길</summary><div class="list">${ladder}</div></details>`;

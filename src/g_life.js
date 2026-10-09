@@ -278,7 +278,7 @@ function die(cause){
   let st=karma<-30?0:karma<30?1:karma<120?2:3;if(P.fame>=300&&st<3)st++;
   const bonus=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3);
   const wis=karma>=60?1:0;
-  const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:RANKS[realm],fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
+  const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:rk(realm),fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:sectName(),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
   makeTomb(cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
