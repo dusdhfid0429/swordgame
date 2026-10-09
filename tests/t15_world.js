@@ -27,13 +27,15 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     }
     loadRegion(cur);return{bad,n:Object.keys(sz).length}});
   ok(`지역 ${bfs.n}곳 모두 도착 자리에서 모든 출입구로 길이 이어진다 ${bfs.bad.join(', ')}`,!bfs.bad.length);
-  // 실제로 걸어서: 개봉 → 하남성 → 섬서성 → 화산 산문 → 외원 → 화산 본산 → 되돌아 개봉
+  // 실제로 걸어서: 개봉 → 하남성 → 섬서성 → 화산 → 화산파 산문 → 외원 → 화산 본산 → 되돌아 개봉
   const walkTo=async(to)=>{await p.evaluate(to=>{let g=REGION().gates.find(q=>q.to===to);
     // 성이 여러 맵이면 그 출입구가 든 맵으로 먼저 간다
     if(!g&&REGION().win){const k=REGION().win.k,id=Object.keys(REGIONS).find(i=>REGIONS[i].win&&REGIONS[i].win.k===k&&REGIONS[i].gates.some(q=>q.to===to));P.reg=id;loadRegion(id);g=REGION().gates.find(q=>q.to===to)}P.gateLock=0;const dx=g.x<5?1.6:g.x>N-5?-1.6:0,dy=g.y<5?1.6:g.y>N-5?-1.6:dx?0:1.6;P.x=g.x+dx;P.y=g.y+dy;P.path=[{x:g.x,y:g.y}]},to);
     await p.waitForFunction(to=>(REG===to||REGIONS[REG].win&&'pv_'+REGIONS[REG].win.k===to)&&!P.traveling,to,{timeout:9000}).catch(()=>{});await p.waitForTimeout(500);return p.evaluate(()=>({reg:REGIONS[REG].win?'pv_'+REGIONS[REG].win.k:REG,n:N,x:P.x.toFixed(1),y:P.y.toFixed(1),zone:$('zone').textContent,walk:walkAt(P.x,P.y)}))};
   await p.evaluate(()=>{P.maxHp*=60;P.hp=P.maxHp});
-  const route=['pv_henan','pv_shaanxi','hq_hwasan_gate','hq_hwasan_outer','hq_hwasan','hq_hwasan_outer','hq_hwasan_gate','pv_shaanxi','pv_henan','gaebong'];const got=[];
+  // 화산파 산문은 화산 맵(산 중턱 포털)을 거쳐 간다 (g_lmmap.js)
+  const hs=await p.evaluate(()=>REGIONS.hq_hwasan_gate.lmVia);
+  const route=['pv_henan','pv_shaanxi',hs,'hq_hwasan_gate','hq_hwasan_outer','hq_hwasan','hq_hwasan_outer','hq_hwasan_gate',hs,'pv_shaanxi','pv_henan','gaebong'];const got=[];
   for(const r of route){const s=await walkTo(r);got.push(`${s.zone}(${s.n})`);if(s.reg!==r||!s.walk){ok(`걸어서 ${r}`,false);break}}
   ok(`걸어서 ${got.join(' → ')}`,got.length===route.length);
   // 큰 지역 화면과 바닥 그림 크기

@@ -16,35 +16,46 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     return{bj:at('hebei','북경').y<at('hebei','석가장').y,ly:at('henan','낙양').x<at('henan','정주').x,dh:at('gansu','돈황').x<at('gansu','란주').x,
       gz:at('guangdong','광주').y>at('guangdong','단하산').y}});
   ok(`지도 순서 유지 ${JSON.stringify(ord)}`,Object.values(ord).every(Boolean));
-  // 문파 입구는 그 문파의 산 가까이
-  const sm=await p.evaluate(()=>{const out={};for(const[sid,k,mn]of[['hwasan','shaanxi','화산'],['emei','sichuan','아미산'],['mudang','hubei','무당산'],['kunlun','qinghai','곤륜산'],['taesan','shandong','태산'],['hyeongsan','hunan','형산']]){
-    const R=REGIONS[pvId(k)],g=R.gates.find(q=>q.to===(REGIONS['hq_'+sid].chain||['hq_'+sid])[0]),m=R.marks.find(q=>q.n===mn);out[mn]=+Math.hypot(g.x-m.x,g.y-m.y).toFixed(1)}return out});
-  ok(`문파 입구와 그 산 사이 칸 수 ${JSON.stringify(sm)}`,Object.values(sm).every(d=>d<13));
-  // 겹치지 않음: 땅이름끼리, 출입구와
-  const ov=await p.evaluate(()=>{const bad=[];for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)];
-    for(const m of R.marks){for(const g of R.gates)if(Math.hypot(g.x-m.x,g.y-m.y)<3)bad.push(m.n+'/'+g.label);for(const o of R.marks)if(o!==m&&Math.hypot(o.x-m.x,o.y-m.y)<3)bad.push(m.n+'/'+o.n)}}return bad});
-  ok(`땅이름이 출입구·서로와 겹치지 않음 ${ov.slice(0,6).join(' ')}`,ov.length===0);
-  // 걸어서 닿는가: 성 전체 그림에서 한가운데부터 길찾기
-  const reach=await p.evaluate(()=>{const bad=[];for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)],C=pvFull(k),S=C.S,m0=Math.floor(S/2),seen=new Set([m0+','+m0]),q=[[m0,m0]];
-      while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=x+dx,b2=y+dy;if(a>=0&&b2>=0&&a<S&&b2<S&&!seen.has(a+','+b2)&&C.map[b2][a].g!==2&&!C.objs[b2][a]){seen.add(a+','+b2);q.push([a,b2])}}}
-      for(const m of R.marks){if(m.t==='t'&&m.sub==='l')continue;let r=false;for(let j=-3;j<=3&&!r;j++)for(let i=-3;i<=3;i++)if(seen.has((Math.floor(m.x)+i)+','+(Math.floor(m.y)+j)))r=true;if(!r)bad.push(PROV[k].n+':'+m.n)}}
-    return bad});
-  ok(`모든 땅이름 곁까지 걸어서 닿음 ${reach.slice(0,6).join(' ')}`,reach.length===0);
-  // 도시엔 전각, 호수엔 물, 사막엔 모래
+  // 도시·명소·산은 각각 40×40 맵 한 장, 들판 맵에는 입구만 (2026-10-09 사용자 결정)
+  const lm=await p.evaluate(()=>{const bad=[];let n=0;for(const k of Object.keys(PROV))for(const m of REGIONS[pvId(k)].marks){if(m.t==='t'){if(m.gate)bad.push(m.n);continue}
+      n++;const L=REGIONS[m.gate];if(!L||L.size!==40)bad.push(m.n+'(맵없음)');
+      const w=Object.values(REGIONS).filter(R=>R.win&&R.win.k===k&&R.gates.some(g=>g.to===m.gate)).length;if(w!==1)bad.push(m.n+'(입구'+w+')')}
+    return{n,bad}});
+  ok(`장소 맵 ${lm.n}장, 들판 맵마다 입구 하나 ${lm.bad.slice(0,6).join(' ')}`,lm.n===119&&lm.bad.length===0);
+  // 문파는 짝 장소 맵 안 포털로: 화산 안 화산파, 아미산 안 아미파, 북경 안 하북팽가
+  const pr=await p.evaluate(()=>{const out={};for(const[sid,k,mn]of[['hwasan','shaanxi','화산'],['emei','sichuan','아미산'],['mudang','hubei','무당산'],['paeng','hebei','북경'],['kunlun','qinghai','곤륜산']]){
+    const F=REGIONS[pvId(k)],m=F.marks.find(q=>q.n===mn),L=REGIONS[m.gate],first=REGIONS['hq_'+sid].chain[0],back=REGIONS[first].gates.find(g=>g.to===m.gate);
+    out[mn]=!!L.gates.find(g=>g.to===first&&g.portal)&&!F.gates.some(g=>g.to===first)&&!!back}return out});
+  ok(`문파 포털이 장소 맵 안에 ${JSON.stringify(pr)}`,Object.values(pr).every(Boolean));
+  // 장소 맵마다 아래 출입구에서 포털·정상까지 걸어서 닿는가
+  const walkAll=await p.evaluate(()=>{const bad=[];for(const[id,R]of Object.entries(REGIONS)){if(!R.lm)continue;loadRegion(id);
+      const seen=new Set(['20,36']),q=[[20,36]];while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
+      const near=(px,py)=>{for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(seen.has([Math.floor(px)+dx,Math.floor(py)+dy]+''))return true;return false};
+      for(const g of R.gates)if(!near(g.x,g.y))bad.push(R.name+'→'+g.label);if(R.lm.t==='m'&&!near(20,6))bad.push(R.name+' 정상');if(builds.length<1)bad.push(R.name+' 전각')}
+    loadRegion('gaebong');return bad});
+  ok(`장소 맵 모두 포털·정상까지 걸어서 닿음 ${walkAll.slice(0,6).join(' / ')}`,walkAll.length===0);
+  // 섬서성 들판 → 화산 → 중턱 포털 → 화산파 산문 → 나오면 화산 중턱
+  await p.evaluate(()=>{const g=REGIONS.pv_shaanxi.gates.find(q=>q.label==='화산');travel(g)});await p.waitForTimeout(1200);
+  const h1=await p.evaluate(()=>({reg:REGION().name,zone:regionAt(Math.floor(P.x),Math.floor(P.y))}));
+  await p.evaluate(()=>{const g=REGION().gates.find(q=>q.portal);P.x=g.x-1.5;P.y=g.y+1.5;const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
+  const h2=await p.evaluate(()=>regionAt(Math.floor(P.x),Math.floor(P.y)));await p.screenshot({path:shot('lm_huashan')});
+  await p.evaluate(()=>{const g=REGION().gates.find(q=>q.portal);P.gateLock=0;P.x=g.x;P.y=g.y;gateTick()});await p.waitForTimeout(1200);
+  const h3=await p.evaluate(()=>REG);
+  await p.evaluate(()=>{P.gateLock=0;travel(REGION().gates.find(g=>g.y>30))});await p.waitForTimeout(1200);
+  const h4=await p.evaluate(()=>({name:REGION().name,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),walk:walkAt(P.x,P.y)}));
+  ok(`${h1.reg}(${h1.zone}) → '${h2}' → ${h3} → 나오면 ${h4.name}(${h4.zone})`,h1.reg==='화산'&&h2.includes('화산파')&&h3==='hq_hwasan_gate'&&h4.name==='화산'&&h4.zone.includes('중턱')&&h4.walk);
+  await p.evaluate(()=>{P.x=20.5;P.y=7.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('lm_huashan_top')});
+  // 북경 성내, 함곡관
+  await p.evaluate(()=>{const m=REGIONS.pv_hebei.marks.find(q=>q.n==='북경');mobs=[];P.reg=m.gate;loadRegion(m.gate);P.x=20.5;P.y=22.5;spawnTick();const t=iso(P.x,P.y-3);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
+  ok('북경 성내에 하북팽가 포털',await p.evaluate(()=>REGION().gates.some(g=>g.portal&&g.label.includes('팽가'))&&regionAt(20,20).includes('성내')));
+  await p.screenshot({path:shot('lm_beijing')});
+  await p.evaluate(()=>{const m=REGIONS.pv_henan.marks.find(q=>q.n==='함곡관');P.reg=m.gate;loadRegion(m.gate);P.x=20.5;P.y=20.5;const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
+  await p.screenshot({path:shot('lm_hangu')});
+  // 지형은 들판 맵에: 청해호 물, 대막 모래
   const look=await p.evaluate(()=>{const cntG=(C,m,f,r)=>{let n=0;for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++){const t=C.map[Math.floor(m.y)+j]&&C.map[Math.floor(m.y)+j][Math.floor(m.x)+i];if(t&&f(t.g))n++}return n};
-    const C=pvFull('henan'),city=C.builds.filter(b=>b.lm==='낙양').length,cities=REGIONS.pv_henan.marks.filter(m=>m.t==='c').every(m=>C.builds.some(b=>b.lm===m.n));
     const Q=pvFull('qinghai'),lake=cntG(Q,REGIONS.pv_qinghai.marks.find(m=>m.n==='청해호'),g=>g===2||g===3,4);
-    const X=pvFull('xinjiang'),sand=cntG(X,REGIONS.pv_xinjiang.marks.find(m=>m.n==='대막'),g=>g===12,5);return{city,cities,lake,sand}});
-  ok(`낙양 전각 ${look.city}채(하남 도시 모두 전각 ${look.cities}), 청해호 물 ${look.lake}칸, 대막 모래 ${look.sand}칸`,look.city>=1&&look.cities&&look.lake>=15&&look.sand>=40);
-  // 낙양에 가면 지역 이름과 머리 위 글씨
-  await p.evaluate(()=>{const F=REGIONS.pv_henan,m=F.marks.find(q=>q.n==='낙양');P.reg='pv_henan';P.x=m.x;P.y=m.y+2;loadRegion('pv_henan')});await p.waitForTimeout(900);
-  const z=await p.evaluate(()=>({reg:REG,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),hint:lmHints().map(m=>m.n)}));
-  ok(`${z.reg}에서 '${z.zone}', 이름 글씨 ${z.hint.join(',')}`,z.zone.includes('낙양')&&z.hint.includes('낙양'));
-  await p.evaluate(()=>{const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(600);await p.screenshot({path:shot('lm_luoyang')});
-  await p.evaluate(()=>{const m=REGIONS.pv_shaanxi.marks.find(q=>q.n==='화산');P.reg='pv_shaanxi';P.x=m.x+1;P.y=m.y+3;loadRegion('pv_shaanxi');const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
-  await p.screenshot({path:shot('lm_huashan')});
-  await p.evaluate(()=>{const m=REGIONS.pv_qinghai.marks.find(q=>q.n==='청해호');P.reg='pv_qinghai';P.x=m.x;P.y=m.y+4;loadRegion('pv_qinghai');const t=iso(P.x,P.y-3);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
-  await p.screenshot({path:shot('lm_qinghai')});
+    const X=pvFull('xinjiang'),sand=cntG(X,REGIONS.pv_xinjiang.marks.find(m=>m.n==='대막'),g=>g===12,5);PV_CACHE.k=null;return{lake,sand}});
+  ok(`들판 맵 지형: 청해호 물 ${look.lake}칸, 대막 모래 ${look.sand}칸`,look.lake>=15&&look.sand>=40);
   // 천하 지도 정보에 땅이름
   await p.evaluate(()=>{openPanel('world');wSel='hebei';renderOpen()});await p.waitForTimeout(300);
   ok('천하 지도 하북성 정보에 북경·오태산',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('북경')&&t.includes('오태산')&&t.includes('주요도시')}));

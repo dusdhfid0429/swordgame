@@ -22,7 +22,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`출입구가 모두 맵에 놓이고 길로 이어짐 ${g.slice(0,5).join(' / ')}`,g.length===0);
   // 문파 입구: 성의 맵 가운데 한 곳에만
   const se=await p.evaluate(()=>{const bad=[];for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const first=(REGIONS[hqId(s)].chain||[hqId(s)])[0],k=pvOfSect(s.id);
-    const n=Object.values(REGIONS).filter(R=>R.win&&R.win.k===k&&R.gates.some(q=>q.to===first)).length;if(n!==1)bad.push(s.n)}return bad});
+    const to=REGIONS[first].lmVia||first,n=Object.values(REGIONS).filter(R=>R.win&&R.win.k===k&&R.gates.some(q=>q.to===to)).length;if(n!==1)bad.push(s.n)}return bad});
   ok(`문파 입구가 성의 맵 한 곳에 (어긋남 ${se.join(',')})`,se.length===0);
   // 개봉 → 하남성: 개봉 출입구가 든 맵으로
   await p.evaluate(()=>travel(REGIONS.gaebong.gates.find(q=>q.to==='pv_henan')));await p.waitForTimeout(1200);
