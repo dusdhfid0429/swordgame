@@ -29,6 +29,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok('☰ 메뉴에 배경음악·효과음 버튼',await p.evaluate(()=>!!document.querySelector('#wbody [data-act="snd:m"]')&&!!document.querySelector('#wbody [data-act="snd:s"]')));
   await p.tap('#wbody [data-act="snd:m"]');await p.tap('#wbody [data-act="snd:s"]');await p.waitForTimeout(400);
   const off=await p.evaluate(()=>({m:SND.m,s:SND.s,saved:JSON.parse(localStorage.getItem(SND_KEY)),txt:$('wbody').textContent.includes('배경음악 끔')}));
+  // 소리는 0.15초 시간 상수로 줄어든다. 느린 기계에서는 남은 소리가 재는 구간에 걸리니, 음량이 다 내려간 뒤에 잰다
+  await p.waitForFunction(()=>AMus.gain.value<.001&&ASfx.gain.value<.001,null,{timeout:10000}).catch(()=>{});
   const pk=await peak(2500);
   ok(`끄면 조용하고(최대 ${pk.toFixed(4)}) 설정이 저장된다`,!off.m&&!off.s&&off.saved.m===0&&off.saved.s===0&&off.txt&&pk<.01);
   await p.tap('#wbody [data-act="snd:m"]');await p.tap('#wbody [data-act="snd:s"]');
