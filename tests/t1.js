@@ -18,7 +18,7 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
   await p.screenshot({path:__dirname+'/shots/s_fight.png'});
   const r2=await p.evaluate(()=>({hp:P.hp,vit:P.vit,kills:P.kills,mast:A(P.cur).p,log:[...document.querySelectorAll('#log p')].map(x=>x.textContent).slice(-8)}));
   console.log(JSON.stringify(r2));
-  for(const k of['KeyK','KeyB','KeyI','KeyP','KeyL','KeyH']){await p.keyboard.press(k);await p.waitForTimeout(200);await p.screenshot({path:'s_p_'+k+'.png'});await p.keyboard.press('Escape')}
-  console.log(errs.join('\n'));
+  for(const k of['KeyK','KeyB','KeyI','KeyP','KeyL','KeyH']){await p.keyboard.press(k);await p.waitForTimeout(200);await p.screenshot({path:__dirname+'/shots/s_p_'+k+'.png'});await p.keyboard.press('Escape')}
+  console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');
   await b.close();
 })();
