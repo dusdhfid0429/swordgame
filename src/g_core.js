@@ -64,7 +64,10 @@ const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
+// 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
+const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
+  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b}
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);

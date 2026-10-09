@@ -16,7 +16,7 @@ function trnRow(k,name,val,desc,cost,can,why){
 function renderTrain(){
   if(!trnOpen)return;const c=qiCost(P.side,P.qiN),fight=inCombat();
   const rows=STATS.map(({k,n})=>{const v=P.st[k],cost=statCost(k);
-    const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10}`;
+    const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10} · 수명 +${Math.floor(v*.5)}년`;
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>

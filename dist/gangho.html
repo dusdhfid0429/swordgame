@@ -786,7 +786,10 @@ const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const adult=()=>P.age>=18;
+// 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
+const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
+  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b}
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
@@ -1654,7 +1657,7 @@ function applySave(data){
   G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
-  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+  if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.lifeQB=data.P.lifeQB||0;P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     migrateSect();
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();return true}
   return false;
@@ -1747,7 +1750,7 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
   const c=qiCost(P.side,P.qiN);
-  const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초`;
+  const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
@@ -2631,7 +2634,7 @@ function trnRow(k,name,val,desc,cost,can,why){
 function renderTrain(){
   if(!trnOpen)return;const c=qiCost(P.side,P.qiN),fight=inCombat();
   const rows=STATS.map(({k,n})=>{const v=P.st[k],cost=statCost(k);
-    const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10}`;
+    const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10} · 수명 +${Math.floor(v*.5)}년`;
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
@@ -2732,7 +2735,7 @@ function pgPlace(){
 const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
 const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
-// 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%, 사파(마공)는 -5%. 최대 95%
+// 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=[0,.85,.75,.65,.55,.45,.35];
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
   if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
@@ -2813,17 +2816,19 @@ const danName=()=>realmAt(5)?'상단전':realmAt(3)?'중단전':'하단전';
 const danMul=()=>realmAt(5)?1.3:realmAt(3)?1.15:1;
 function realmQiMul(){return realmAt(1)?1.3:1}
 
-// ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=마공) ----
-const SCHOOL_OF={불가:['shaolin','emei','bota','podal','daeroe'],
+// ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=사공) ----
+// 사용자 결정(2026-10-09): 사파(사천맹) 문파는 모두 사공, 마공은 마교(천마신교)만
+const SCHOOL_OF={불가:['shaolin','emei','bota'],
   도가:['mudang','hwasan','kunlun','kongtong','jeomchang','cheongseong','jongnam','hyeongsan','cheonsan','taesan','jeonjin','gomyo','seolsan','jangbaek','mosan','nabu'],
-  마공:['cheonma','mandok','hyeolrang','gwiyeong']};
+  마공:['cheonma']};
 const SCHOOL={불가:{d:'느리지만 안정되어 폐관 성공 +5%, 사파·마교 무인에게 받는 피해 -15%'},
   도가:{d:'정종 현문 심법. 폐관 성공 +5%, 주화입마가 덜 무겁고, 경지가 오를 때마다 수명 +2년'},
-  마공:{d:'내공이 25% 빨리 쌓이지만 수련마다 악업이 쌓이고, 폐관 성공 -10%, 주화입마가 무겁다'},
+  사공:{d:'사파의 심법. 내공이 15% 빨리 쌓이지만 폐관 성공 -5%, 주화입마가 조금 무겁다'},
+  마공:{d:'천마신교의 심법. 내공이 25% 빨리 쌓이지만 수련마다 악업이 쌓이고, 폐관 성공 -10%, 주화입마가 무겁다'},
   정종:{d:'세가·방파의 심법. 치우침이 없다'}};
 function school(){const s=P.sect&&P.sect!=='own'?P.sect:null;
-  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return'정종'}
-  return P.side==='사'?'마공':'불가'}
+  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return SECTS[s]&&SECTS[s].al==='sacheon'?'사공':'정종'}
+  return P.side==='사'?'사공':'불가'}
 
 // ---- 갑자: 120 내공 = 1갑자(60년 공력) ----
 const GAPJA=120;
@@ -2901,14 +2906,15 @@ function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.rando
 
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
 function qiTrained(){const s=school();
+  if(s==='사공'){P.qiX=(P.qiX||0)+Math.round(SIDES[P.side].gain*.15*10)/10;recalc()}
   if(s==='마공'){const x=Math.round(SIDES[P.side].gain*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
 // ---- 폐관·주화입마를 심법 계열에 맞춘다 ----
-{const _pc=pgChance;pgChance=function(pill){let c=_pc(pill);if(P.side==='사')c+=.05;const s=school();c+=s==='마공'?-.1:s==='도가'||s==='불가'?.05:0;return clamp(c,.05,.95)}}
+{const _pc=pgChance;pgChance=function(pill){let c=_pc(pill);if(P.side==='사')c+=.05;const s=school();c+=s==='마공'?-.1:s==='사공'?-.05:s==='도가'||s==='불가'?.05:0;return clamp(c,.05,.95)}}
 {const _qd=qiDeviation;qiDeviation=function(r){const s=school(),rnd=Math.random;
-  // 마공은 무겁게(45%), 도가는 가볍게(20%): 무거움 경계(0.3)에 맞춰 뽑은 값을 옮긴다
-  if(s==='마공'||s==='도가'){const f=s==='마공'?.45:.2;let first=true;Math.random=()=>{const v=rnd();if(!first)return v;first=false;
+  // 마공은 무겁게(45%), 사공은 조금 무겁게(35%), 도가는 가볍게(20%): 무거움 경계(0.3)에 맞춰 뽑은 값을 옮긴다
+  if(s==='마공'||s==='사공'||s==='도가'){const f=s==='마공'?.45:s==='사공'?.35:.2;let first=true;Math.random=()=>{const v=rnd();if(!first)return v;first=false;
       const death=r>=4?.05:0;if(v<death)return v;const u=(v-death)/(1-death),heavy=u<f;return death+(heavy?u/f*(.3-death):(.3+(u-f)/(1-f)*.7))};}
   try{_qd(r)}finally{Math.random=rnd}
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;recalc()}}
