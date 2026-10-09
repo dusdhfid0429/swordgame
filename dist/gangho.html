@@ -2364,7 +2364,7 @@ function lightAt(x,y,r,a){const g=lx.createRadialGradient(x,y,0,x,y,r);g.addColo
 const scrEl=$('scr'),box=$('scrbox');
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;const sv=loadGame();
-  box.innerHTML=`<h1 class="title">강호윤회록</h1><p>신영웅문의 시스템을 옮긴 쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
+  box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
    <div class="center">${sv&&sv.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${sv&&sv.alive?'':' pri'}" data-s="new" type="button">${sv&&sv.G&&sv.G.lives?'다음 생 시작':'새 인생'}</button>${sv&&sv.G&&sv.G.history&&sv.G.history.length?'<button class="btn" data-s="hist" type="button">강호사</button>':''}</div>
    <div class="card">${pHelp()}</div>
    <p class="note" style="text-align:center">진행은 이 브라우저에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p>`;
