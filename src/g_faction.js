@@ -4,27 +4,17 @@
 // 문파마다 본산 지역맵(40×40)이 따로 있고, 개봉 역참에서 말을 타고 간다. 가입은 본산의 장문인에게만 청한다.
 // 설계: docs/세력_문파_설계.md 8~10장
 const alFac=al=>al==='magyo'?'마':ALLY[al].side;
-const FACN={정:'정파',사:'사파',마:'마교'};
+const FACN=GD.FACN;
 // 플레이어 편: 마교 제자면 '마', 문파가 있으면 그 세력, 없으면 타고난 성향
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
 const facFoe=(a,b)=>!!a&&!!b&&a!==b;
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
 const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac());
 const peaceful=m=>!!m.d.fac&&!mobFoeP(m);
-const FAC_KIND={정:['정파 무인','정파 고수'],사:['사파 무인','사파 고수'],마:['마교도','마교 고수']};
-Object.assign(MOBS,{
-  '정파 무인':{hp:95,atk:10,def:2,hm:14,sp:1.9,xp:18,silver:[3,9],fac:'정',hostile:1,aggro:6},
-  '정파 고수':{hp:260,atk:17,def:4,hm:24,sp:2,xp:55,silver:[10,24],fac:'정',hostile:1,aggro:7,elite:1,big:1.06},
-  '사파 무인':{hp:95,atk:11,def:2,hm:12,sp:1.9,xp:18,silver:[4,10],fac:'사',hostile:1,aggro:6,good:2},
-  '사파 고수':{hp:260,atk:18,def:4,hm:22,sp:2,xp:55,silver:[12,26],fac:'사',hostile:1,aggro:7,elite:1,big:1.06,good:4},
-  '마교도':{hp:110,atk:12,def:2,hm:16,sp:1.95,xp:22,silver:[4,11],fac:'마',hostile:1,aggro:6,good:3},
-  '마교 고수':{hp:300,atk:20,def:5,hm:26,sp:2.05,xp:65,silver:[12,28],fac:'마',hostile:1,aggro:7,elite:1,big:1.08,good:5}});
+const FAC_KIND=GD.FAC_KIND;
+/* MOBS에 덧붙이던 것은 data/mobs.json 으로 옮김 */
 // 옷 색: 정파 흰옷·청띠, 사파 갈색·자주띠, 마교 검은옷·붉은띠, 소림은 가사
-const FAC_ROBE={
-  정:{robe:['#e6e8ee','#8a96aa'],robeB:'#7a869a',inner:'#2b5a8b',sash:'#2b5a8b',hairband:'#2b5a8b',trim:'#c9a14a'},
-  사:{robe:['#4a3a2e','#1a120c'],robeB:'#2e2218',inner:'#6a2a7a',sash:'#6a2a7a',hairband:'#8a3a9a',trim:'#8a6a40'},
-  마:{robe:['#1a1414','#060404'],robeB:'#100a0a',inner:'#a01818',sash:'#a01818',hairband:'#c02020',trim:'#c9a14a',cape:'#4a0606'},
-  소림:{robe:['#d88a2e','#7a3a10'],robeB:'#8a4a18',inner:'#a3271c',sash:'#a3271c',hairband:null,trim:'#e0b050',tail:0}};
+const FAC_ROBE=GD.FAC_ROBE;
 function facPal(fac,cls,elite,sid){
   const look=sid==='shaolin'?'소림':fac,k=`fac_${look}_${cls}_${elite?1:0}`;
   if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[look],weapon:CLASS[cls].draw,anim:CLASS[cls].anim,jade:0,beard:elite?1:0,armor:elite&&fac!=='정'?1:0};
@@ -77,11 +67,11 @@ SMIS.magyo.push({n:'정파 척살',kind:'kill',mob:['정파 무인','정파 고�
 
 // ================= 문파 직위 =================
 // 문파에 있는 동안 얻은 공적을 따로 누적(P.mtot)해 직위가 오른다. 비급에 공적을 써도 직위는 내려가지 않는다.
-const SRANK={jeong:['속가제자','정식제자','일대제자','호법','장로'],sacheon:['졸개','정예','조장','당주','장로'],magyo:['교도','정예교도','향주','당주','장로','호법','부교주']};
+const SRANK=GD.SRANK;
 // 마교만 직위가 일곱 단(호법·부교주). 다른 세력은 다섯 단에서 멈춘다
-const RANK_PTS=[0,60,180,400,800,1400,2200];
+const RANK_PTS=GD.RANK_PTS;
 const rankTop=sid=>{const s=SECTS[sid];return s?SRANK[s.al].length-1:4};
-const HI_RANK=[0,1,2,2,3,4];   // 고급 무공 n번째 초식 비급에 필요한 직위
+const HI_RANK=GD.HI_RANK;   // 고급 무공 n번째 초식 비급에 필요한 직위
 function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
@@ -101,28 +91,16 @@ function rankHtml(s){
 
 // ================= 문파 본산 지역 =================
 // [지형, 지명]. 지형: peak 산봉우리, snow 설산, forest 숲, lake 호수, manor 장원, swamp 늪, canyon 붉은 협곡, dark 검은 땅
-const HQ_THEME={
-  mudang:['peak','무당산'],hwasan:['peak','화산'],emei:['peak','아미산'],kunlun:['snow','곤륜산'],kongtong:['canyon','공동산'],
-  jeomchang:['forest','점창산'],cheongseong:['forest','청성산'],jongnam:['peak','종남산'],gaebang:['manor','개방 총타'],
-  namgung:['manor','남궁세가'],moyong:['manor','모용세가'],paeng:['manor','하북팽가'],eon:['manor','진주언가'],jegal:['forest','융중산 와룡강'],
-  hwangbo:['manor','황보세가'],ak:['manor','산동악가'],dang:['manor','사천당가'],hyeongsan:['peak','형산'],cheonsan:['snow','천산'],
-  taesan:['peak','태산'],yangga:['manor','청주 양가장'],jeonjin:['peak','곤유산 전진교'],gomyo:['forest','종남산 고묘'],ungga:['peak','검각산 운가'],
-  seolsan:['snow','대설산'],jangbaek:['snow','장백산'],danri:['manor','봉양 단리세가'],sanggwan:['manor','항주 상관세가'],danmok:['manor','항주 단목세가'],
-  bota:['lake','보타산'],mosan:['peak','모산'],nabu:['forest','나부산'],haenam:['lake','해남도 해남파'],daeroe:['peak','천축 대뢰음사'],
-  noklim:['forest','녹림산 녹림채'],janggang:['lake','장강삼협 수채'],haomun:['manor','광주 하오문'],sama:['manor','낙양 사마세가'],
-  dongjeong:['lake','동정호 수채'],yasu:['forest','야수궁'],gwangpung:['canyon','객십 광풍사'],taeyang:['canyon','화염산 태양궁'],
-  bukhae:['snow','북해빙궁'],podal:['snow','포달랍궁'],mandok:['swamp','만독곡'],hyeolrang:['canyon','혈랑곡'],gwiyeong:['dark','귀영문 은신처'],
-  heukpung:['canyon','흑풍채 본채'],shaolin:['peak','숭산 소림사'],cheonma:['dark','십만대산 천마신교']};
+const HQ_THEME=GD.HQ_THEME;
 const hqId=s=>'hq_'+s.id;   // 소림사도 hq_shaolin (숭산은 산 맵, g_lmmap.js)
 const hqPlace=s=>HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
-const POST_FEE=20,POST_AT={x:16.5,y:20.6};
+const POST_FEE=20,POST_AT=GD.POST_AT;
 const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
 function masterPal(s){if(typeof sectPal==='function'&&LOOK[s.id])return sectPal(s.id,4,'검',{master:1});const f=alFac(s.al),k='master_'+f;if(!PAL[k])PAL[k]={...PAL.hero,...FAC_ROBE[f],hair:'#cfcac0',beard:1,jade:0,weapon:'none',cape:f==='정'?null:FAC_ROBE[f].cape||'#2a1a10'};return s.id==='shaolin'?'abbot':k}
 const hqNpcs=(s,mx,my)=>[{id:'hq',hq:s.id,n:`${s.n} ${masterTitle(s)}`,x:mx,y:my,pal:masterPal(s)},{id:'post',n:'역참 마부',x:22.6,y:36.4,pal:'keeper'}];
-const HQ_BEAST={peak:[['늑대',3],['호랑이',1]],snow:[['늑대',4],['호랑이',1]],forest:[['늑대',2],['곰',1],['사슴',3]],lake:[['사슴',2],['멧돼지',2]],
-  manor:[['토끼',3],['양',2]],swamp:[['늑대',2],['멧돼지',2]],canyon:[['늑대',3],['멧돼지',1]],dark:[['늑대',3],['호랑이',1]]};
+const HQ_BEAST=GD.HQ_BEAST;
 const inHQ=(x,y)=>x>=12&&x<=28&&y>=3&&y<=18;
 // 본산 몹: 제자 다섯과 고수 하나가 지키고, 아래 산길로 적 세력 무인이 쳐들어온다
 function hqSpawns(s,th){
@@ -138,7 +116,7 @@ for(const s of Object.values(SECTS)){const[th,place]=HQ_THEME[s.id];
 // 본산 산길: 아래 출입구(x=20)에서 굽이쳐 본산 앞마당(y=16)으로 오른다
 const hqPath=(y,sd)=>20+Math.round(3*Math.sin(y*.23+sd)*Math.min(1,(38-y)/4));
 // ground: 0 풀, 1 길, 2 물, 3 다리, 4 본산 마당, 6 바위, 7 흙, 8 눈, 9 늪 진흙, 10 붉은 바위, 11 검은 땅
-const HQ_BASE={peak:0,snow:8,forest:0,lake:0,manor:0,swamp:9,canyon:10,dark:11};
+const HQ_BASE=GD.HQ_BASE;
 function genHQ(s,th){
   const r=rng(7000+s.i*131),sd=s.i*.7,o1=s.i*1.7,o2=s.i*.9;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const lakes=th==='lake'?[{x:8+r()*3,y:25+r()*4,rx:5.5,ry:4},{x:32+r()*2,y:27+r()*3,rx:4,ry:3.5},{x:6,y:9+r()*3,rx:3.5,ry:3}]:[];
@@ -182,7 +160,7 @@ function genHQ(s,th){
   if(th==='lake'||th==='swamp')want('fish',4,g=>g===0||g===9||g===1);
 }
 // 바닥 그림: 지형마다 풀빛을 바꾸고, 새 바닥(늪·붉은 바위·검은 땅)을 칠한다
-const HQ_GRASS={peak:[44,80,46],snow:[58,76,60],forest:[32,64,32],lake:[52,88,52],manor:[60,86,46],swamp:[50,62,36],canyon:[86,80,46],dark:[38,44,38]};
+const HQ_GRASS=GD.HQ_GRASS;
 // k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
 // x0,y0,C: 큰 지역은 C×C칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모
 function bakeHQ(th,k=Math.min(1,40/N),x0=0,y0=0,C=N){

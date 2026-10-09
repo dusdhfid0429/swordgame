@@ -75,7 +75,7 @@ function plabel(f){
 
 // ================= windows =================
 let panel=null;
-const TITLES={char:'인물',arts:'무공',bag:'행낭',ally:'동료와 가족',life:'생활',hist:'강호사',npc:'',house:'내 집',help:'조작법',menu:'메뉴',world:'천하 지도'};
+const TITLES=GD.TITLES;
 let panelAt=0;
 function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
@@ -175,16 +175,10 @@ function pHelp(){
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
 // ================= NPC dialogs =================
-const TIPS=['흑풍채 깊숙한 곳에 채주가 산다더군. 3분쯤 지나면 다시 나타나지.','숭산 기슭 동굴에 혈교 놈들이 숨어 있소. 안쪽 상자엔 기연이 잠들어 있다던데.','사파 무공은 일찍 강해지지만 끝에 가서는 정파가 낫다는 말이 있지.','쌀은 비를 좋아하고, 목화는 볕을 좋아하오. 겨울엔 보리만 버티지.','황하 잉어로 끓인 잉어찜은 개봉에서만 맛볼 수 있는 별미요.','말을 길들이면 훨씬 빨리 달릴 수 있소. 남쪽 초원에 야생마가 있지.','오성이 높으면 더 많은 무공을 익히고 숙련도 빨리 오른다더군.','초식은 순서대로 이어 쳐야 추가 공력이 붙소. 끊기면 처음부터요.'];
+const TIPS=GD.TIPS;
 function openNpc(n){shopMode=null;sectView=null;if(n.board&&(!G.board||!G.board.length))G.board=[0,1,2].map(()=>({...pick(QUESTS)}));openPanel('npc',n)}
 function shopRow(label,desc,price,act,d){return `<div class="it"><div>${label}<span>${desc}</span></div><div class="ib">${B(act,`사기 · 은자 ${price}`,{d:d||P.silver<price})}</div></div>`}
-const SHOP={
-  inn:[['주먹밥','mat',8],['보리죽','mat',8],['고기볶음','mat',20],['tbook:요리','tbook',60]],
-  smith:[...CLS.filter(c=>c!=='권').map(c=>['weapon:'+c,'weapon',45]),['weapon:권','weapon',35],['비도','mat10',20],['tbook:대장','tbook',60]],
-  pharm:[['금창약','mat',15],['소환단','mat',20],['해독단','mat',10],['tbook:약재','tbook',60]],
-  cloth:[['armor','gear',40],['boots','gear',30],['목화씨','mat',5],['tbook:직물','tbook',60]],
-  gen:[['볍씨','mat',5],['보리씨','mat',5],['배추씨','mat',5],['목화씨','mat',5],['sbook:암기','sbook',100],['sbook:독공','sbook',100],['sbook:점혈','sbook',100],
-    ...['spd','hp','qi','atk','def','crit','hreg','qreg'].map(k=>['pbook:P_'+k,'pbook',60]),['bbook:b_seom','bbook',180],['bbook:b_chil','bbook',180]]};
+const SHOP=GD.SHOP;
 function shopList(id){
   return SHOP[id].map(([k,t,p],i)=>{
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?'비도 10자루':k;return shopRow(nm,CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}

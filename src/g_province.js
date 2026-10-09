@@ -5,45 +5,13 @@
 // - 개봉은 하남성 동쪽의 성 안 마을(지역 개봉), 숭산 소림사는 개봉 북쪽으로 그대로 잇는다.
 // map: 무림전도(2000×1333)에서의 자리, 천하 지도 창에 그린다
 // size: 실제 면적(만 ㎢)에 비례한 한 변 칸 수. 하남(16.7만 ㎢)=48칸 기준, 칸 수 = 48×√(면적/16.7만). 해남도만 본산 입구가 들어가도록 30칸으로 올렸다.
-const PROV={
-  henan:{n:'하남성',size:48,th:'plain',map:[1305,745],sects:['gaebang','sama','heukpung'],d:'중원의 한가운데. 황하가 흐르는 너른 들'},
-  hebei:{n:'하북성',size:54,th:'north',map:[1335,585],sects:['paeng','eon'],d:'북경을 품은 메마른 북방의 들'},
-  shandong:{n:'산동성',size:46,th:'coast',map:[1425,630],sects:['hwangbo','ak','taesan','yangga','jeonjin'],d:'태산과 동쪽 바다'},
-  liaoning:{n:'요녕성',size:46,th:'cold',map:[1560,465],sects:['moyong','jangbaek'],d:'산해관 너머 눈 덮인 동북'},
-  anhui:{n:'안휘성',size:44,th:'hills',map:[1405,770],sects:['namgung','danri'],d:'황산의 기암과 소나무'},
-  shaanxi:{n:'섬서성',size:54,th:'loess',map:[1180,705],sects:['hwasan','jongnam','gomyo','gwiyeong'],d:'황토 고원과 화산·종남산'},
-  gansu:{n:'감숙성',size:82,th:'desert',map:[1000,705],sects:['kongtong','hyeolrang'],d:'하서회랑의 모래와 바위'},
-  qinghai:{n:'청해성',size:100,th:'highland',map:[870,650],sects:['kunlun'],d:'청해호와 곤륜의 설산 고원'},
-  sichuan:{n:'사천성',size:88,th:'basin',map:[950,825],sects:['emei','cheongseong','dang','ungga','seolsan'],d:'숲이 짙은 천부지국. 아미산·청성산'},
-  yunnan:{n:'운남성',size:74,th:'jungle',map:[965,1090],sects:['jeomchang','yasu'],d:'붉은 흙과 밀림, 점창산'},
-  guizhou:{n:'귀주성',size:50,th:'miao',map:[1075,990],sects:['mandok'],d:'독충의 늪과 기암, 묘강'},
-  hubei:{n:'호북성',size:50,th:'river',map:[1240,830],sects:['mudang','jegal','noklim','janggang'],d:'장강이 가로지르는 무당산의 땅'},
-  hunan:{n:'호남성',size:54,th:'lake',map:[1240,955],sects:['dongjeong','hyeongsan'],d:'동정호 물길과 형산'},
-  guangxi:{n:'광서성',size:58,th:'karst',map:[1140,1125],sects:[],d:'봉우리가 숲처럼 솟은 남방의 카르스트'},
-  guangdong:{n:'광동성',size:50,th:'subtrop',map:[1320,1110],sects:['haomun','nabu'],d:'주강 하구의 광주와 남쪽 바다'},
-  xinjiang:{n:'신강',size:152,th:'gobi',map:[560,390],sects:['cheonma','cheonsan','gwangpung','taeyang'],d:'대막과 천산, 화염산, 마교의 십만대산이 있는 서역'},
-  tibet:{n:'서장',size:130,th:'plateau',map:[620,830],sects:['podal'],d:'하늘 아래 가장 높은 고원. 포달랍궁'},
-  mongol:{n:'내몽고',size:128,th:'steppe',map:[1240,470],sects:['bukhae'],d:'끝없는 초원 너머 북해까지'},
-  jiangsu:{n:'강소성',size:40,th:'canal',map:[1500,790],sects:['mosan'],d:'운하와 물길의 고장, 모산'},
-  zhejiang:{n:'절강성',size:38,th:'tea',map:[1480,915],sects:['sanggwan','danmok','bota'],d:'항주 서호와 동해의 보타산'},
-  hainan:{n:'해남도',size:30,th:'island',map:[1190,1275],sects:['haenam'],d:'남쪽 바다 끝의 섬'},
-  tianzhu:{n:'천축',size:90,th:'india',map:[350,915],sects:['daeroe'],d:'설산 너머 불법의 땅'}};
+const PROV=GD.PROV;
 // 성을 40×40 맵 여러 장으로 나눈다 (2026-10-09 사용자 결정, g_split.js): 한 변 맵 수 = round(실제 칸 수/32).
 // 무림전도를 80%로 줄인 셈이다. 성 전체는 (맵 수×40)칸으로 한 번에 만들고 40칸씩 잘라 보여 준다.
 for(const p of Object.values(PROV)){p.real=p.size;p.cols=Math.max(1,Math.round(p.size/32));p.size=p.cols*40}
 const pvId=k=>'pv_'+k;
 // 이웃: [성A, A쪽 가장자리, 자리(0~1), 성B, B쪽 가장자리, 자리]
-const PV_LINKS=[
-  ['henan','n',.5,'hebei','s',.5],['henan','e',.3,'shandong','w',.5],['henan','e',.75,'anhui','w',.3],['henan','w',.5,'shaanxi','e',.5],['henan','s',.5,'hubei','n',.6],
-  ['hebei','e',.7,'shandong','n',.4],['hebei','n',.7,'liaoning','s',.3],['shandong','s',.4,'anhui','n',.6],['anhui','w',.7,'hubei','e',.4],
-  ['shaanxi','w',.4,'gansu','e',.5],['shaanxi','s',.4,'sichuan','n',.6],['shaanxi','s',.8,'hubei','n',.2],['gansu','w',.6,'qinghai','e',.4],
-  ['qinghai','s',.7,'sichuan','w',.3],['sichuan','e',.4,'hubei','w',.5],['sichuan','s',.4,'yunnan','n',.5],['sichuan','s',.8,'guizhou','n',.4],
-  ['hubei','s',.5,'hunan','n',.5],['hunan','w',.5,'guizhou','e',.4],['hunan','s',.4,'guangxi','n',.7],['yunnan','e',.4,'guizhou','w',.5],
-  ['guizhou','s',.5,'guangxi','n',.3],['yunnan','e',.8,'guangxi','w',.5],
-  ['guangxi','e',.5,'guangdong','w',.5],['hunan','s',.75,'guangdong','n',.4],['xinjiang','e',.4,'gansu','w',.25],['xinjiang','s',.7,'tibet','n',.4],
-  ['tibet','e',.3,'qinghai','w',.5],['tibet','e',.75,'sichuan','w',.6],['mongol','s',.75,'hebei','n',.3],['mongol','s',.3,'shaanxi','n',.5],['mongol','w',.5,'gansu','n',.5],
-  ['anhui','e',.4,'jiangsu','w',.5],['shandong','s',.75,'jiangsu','n',.4],['jiangsu','s',.5,'zhejiang','n',.5],['anhui','s',.5,'zhejiang','w',.4],
-  ['guangdong','s',.3,'hainan','n',.5],['tibet','s',.5,'tianzhu','n',.5]];
+const PV_LINKS=GD.PV_LINKS;
 const pvEdge=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:1.2}:sd==='s'?{x:v,y:S-1.4}:sd==='w'?{x:1.2,y:v}:{x:S-1.4,y:v}};
 const pvIn=(S,sd,t)=>{const v=Math.floor(t*S)+.5;return sd==='n'?{x:v,y:3.6}:sd==='s'?{x:v,y:S-3.8}:sd==='w'?{x:3.6,y:v}:{x:S-3.8,y:v}};
 const pvOfSect=sid=>Object.keys(PROV).find(k=>PROV[k].sects.includes(sid));
@@ -58,37 +26,11 @@ function pvInner(k,p){
     pts.push({x:best.x,y:best.y,to:'hq_'+sid})}
   return pts}
 // 바닥 그림은 본산 그림을 같이 쓴다 (테마 이름이 다르면 풀빛만 고른다)
-const PV_PAINT={plain:'manor',north:'canyon',coast:'lake',cold:'snow',hills:'peak',loess:'canyon',desert:'canyon',highland:'snow',basin:'forest',jungle:'forest',miao:'miao',river:'lake',lake:'lake',karst:'forest',subtrop:'subtrop',gobi:'canyon',plateau:'plateau',steppe:'steppe',canal:'lake',tea:'peak',island:'subtrop',india:'india'};
+const PV_PAINT=GD.PV_PAINT;
 HQ_GRASS.miao=[48,66,40];HQ_GRASS.subtrop=[34,76,36];HQ_GRASS.plateau=[70,74,52];HQ_GRASS.steppe=[78,100,50];HQ_GRASS.india=[88,92,46];
-const PV_BEAST={plain:[['토끼',4],['양',3],['말',2]],north:[['늑대',3],['말',2]],coast:[['토끼',3],['멧돼지',2]],cold:[['늑대',4],['곰',1]],hills:[['사슴',3],['호랑이',1]],
-  loess:[['늑대',3],['멧돼지',2]],desert:[['늑대',3],['말',2]],highland:[['늑대',3],['곰',1],['양',2]],basin:[['사슴',3],['곰',1],['멧돼지',2]],
-  jungle:[['호랑이',2],['멧돼지',2]],miao:[['늑대',2],['멧돼지',3]],river:[['사슴',3],['멧돼지',2]],lake:[['사슴',2],['토끼',3]],karst:[['호랑이',1],['멧돼지',3]],
-  subtrop:[['멧돼지',3],['호랑이',1]],gobi:[['늑대',3],['말',3]],plateau:[['양',3],['곰',1],['늑대',2]],steppe:[['말',4],['양',3],['늑대',2]],
-  canal:[['사슴',2],['토끼',3]],tea:[['사슴',3],['멧돼지',1]],island:[['멧돼지',3],['토끼',2]],india:[['호랑이',2],['멧돼지',2],['양',2]]};
+const PV_BEAST=GD.PV_BEAST;
 // 지형 규칙: base 바닥, alt(높은 곳) 바닥, 나무·바위 밀도, 물(강·호수·바다)
-const PV_TH={
-  plain:{base:0,alt:5,altAt:.63,tree:'tree',tv:.04,rv:.01,river:{y:.22}},
-  north:{base:7,alt:0,altAt:.6,tree:'tree',tv:.05,rv:.03},
-  coast:{base:0,alt:6,altAt:.68,tree:'pine',tv:.05,rv:.03,sea:'e'},
-  cold:{base:0,alt:8,altAt:.5,tree:'pine',tv:.11,rv:.03},
-  hills:{base:0,alt:6,altAt:.6,tree:'pine',tv:.11,rv:.06,river:{y:.7}},
-  loess:{base:7,alt:6,altAt:.62,tree:'pine',tv:.04,rv:.05},
-  desert:{base:12,alt:6,altAt:.64,tree:'tree',tv:.008,rv:.04},
-  highland:{base:0,alt:8,altAt:.62,tree:'pine',tv:.03,rv:.06,lake:{x:.3,y:.32,rx:.14,ry:.1}},
-  basin:{base:0,alt:7,altAt:.66,tree:'tree',tv:.13,rv:.02,bamboo:.06,river:{y:.62}},
-  jungle:{base:0,alt:10,altAt:.6,tree:'tree',tv:.17,rv:.02,bamboo:.06},
-  miao:{base:9,alt:0,altAt:.35,low:true,tree:'tree',tv:.09,rv:.07,pools:.68},
-  river:{base:0,alt:7,altAt:.66,tree:'tree',tv:.08,rv:.02,bamboo:.03,river:{y:.7,w:3}},
-  lake:{base:0,alt:7,altAt:.68,tree:'tree',tv:.07,rv:.02,lake:{x:.5,y:.32,rx:.24,ry:.15}},
-  karst:{base:0,alt:6,altAt:.62,tree:'tree',tv:.07,rv:.13,river:{y:.4}},
-  subtrop:{base:0,alt:5,altAt:.66,tree:'tree',tv:.1,rv:.02,bamboo:.07,river:{y:.45,w:3},sea:'s'},
-  gobi:{base:12,alt:8,altAt:.7,tree:'pine',tv:.006,rv:.05,lake:{x:.62,y:.3,rx:.06,ry:.05}},
-  plateau:{base:7,alt:8,altAt:.55,tree:'pine',tv:.01,rv:.06,lake:{x:.7,y:.6,rx:.1,ry:.07}},
-  steppe:{base:0,alt:7,altAt:.7,tree:'tree',tv:.008,rv:.012},
-  canal:{base:0,alt:5,altAt:.6,tree:'tree',tv:.05,rv:.01,bamboo:.02,river:{y:.3,w:2},lake:{x:.7,y:.68,rx:.12,ry:.1}},
-  tea:{base:0,alt:6,altAt:.64,tree:'pine',tv:.08,rv:.04,bamboo:.06,lake:{x:.28,y:.3,rx:.12,ry:.09},sea:'e'},
-  island:{base:12,alt:0,altAt:.45,low:true,tree:'tree',tv:.1,rv:.02,bamboo:.03,sea:'s'},
-  india:{base:7,alt:0,altAt:.55,tree:'tree',tv:.05,rv:.03,river:{y:.62,w:3}}};
+const PV_TH=GD.PV_TH;
 // 성 지역 등록
 for(const[k,p]of Object.entries(PROV)){
   const id=pvId(k),S=p.size,gates=[];
@@ -146,9 +88,7 @@ function genProv(id,k,p){
   if(T.river||T.lake||T.sea){let n=0;for(let i=0;i<600&&n<4;i++){const x=2+Math.floor(r()*(S-4)),y=2+Math.floor(r()*(S-4));if(walk(x,y)&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>map[y+dy][x+dx].g===2)){put('fish',x,y);n++}}}
 }
 // 소굴: 성 안의 두목 자리와 그 둘레 몹. 개봉을 중립지대로 바꾸며 흑풍채 산채와 혈교 동굴을 하남성으로 옮겼다
-const PV_LAIRS={henan:[
-  {n:'흑풍채 산채',boss:['흑풍채주',150],sp:[['산적',6],['산적궁수',3],['산적두목',1]],g:7,tents:1},
-  {n:'혈교 동굴',boss:['혈교장로',240],sp:[['혈교무인',3],['강시',2]],g:6}]};
+const PV_LAIRS=GD.PV_LAIRS;
 for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;R.lairs=[];
   // 자리: 출입구·다른 소굴·한가운데 객잔에서 가장 먼 칸 (가장자리에서 7칸 안쪽)
   for(const L of list){let c=null,bd=-1;for(let y=7;y<S-7;y++)for(let x=7;x<S-7;x++){const q={x:x+.5,y:y+.5};

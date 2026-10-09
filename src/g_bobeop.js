@@ -7,18 +7,11 @@
 //               등 뒤를 잡으면 다음 일격이 치명타가 된다. 조이스틱을 기울이고 있으면 그쪽 자리를 더 쳐 준다.
 // - 등급(하승·중승·상승·절정)이 높을수록 미끄러지는 거리와 살피는 범위가 넓고, 다시 쓰는 시간이 짧다.
 // - 살피는 자리 수는 등급과 상관없이 최대 96곳, 견주는 적은 가까운 순으로 최대 24명이라 절정에서도 1ms 안팎이다.
-const BGRADE=['하승','중승','상승','절정'];
-const BG={len:[2.6,3.2,3.8,4.5],rad:[2.8,3.8,4.8,6.2],cd:[3.2,2.8,2.4,2],qi:[5,6,8,10],inv:[.3,.34,.38,.42]};
-const BOBS={
-  b_basic:{n:'기초보법',t:'line',g:0,d:'발을 엇갈려 한 걸음 비켜선다. 누구나 안다'},
-  b_seom:{n:'섬전보',t:'line',g:1,d:'번개처럼 곧게 내닫는다'},
-  b_chil:{n:'칠성보',t:'flank',g:1,d:'북두칠성 자리를 밟아 상대의 옆구리로 돈다'},
-  b_yuun:{n:'유운보',t:'line',g:2,d:'흐르는 구름처럼 적 사이를 미끄러져 빠진다'},
-  b_gugung:{n:'구궁팔괘보',t:'flank',g:2,d:'구궁의 방위로 상대의 빈 등 뒤를 잡는다'},
-  b_ilwi:{n:'일위도강',t:'line',g:3,d:'갈댓잎 하나로 강을 건너듯 길게 뻗어 나간다'},
-  b_neungpa:{n:'능파미보',t:'flank',g:3,d:'물결 위를 걷듯 어지러운 싸움 한가운데서도 가장 좋은 자리를 찾는다'}};
+const BGRADE=GD.BGRADE;
+const BG=GD.BG;
+const BOBS=GD.BOBS;
 // 얻는 곳: 하승·중승은 개봉 잡화점 비급, 상승은 문파 본산에서 정식제자 이상 공적 100, 절정은 호법(당주) 이상 공적 300
-const BCOST=[0,0,100,300],BRANK=[0,0,1,3],BPRICE=[0,180];
+const BCOST=GD.BCOST,BRANK=GD.BRANK,BPRICE=GD.BPRICE;
 const bobOf=()=>BOBS[P.bcur]||BOBS.b_basic;
 function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur='b_basic';if(P.bcd2==null)P.bcd2=0}
 function bobBlock(id,viaSect){const b=BOBS[id];bobInit();if(P.bob[id])return'이미 익혔다';
@@ -55,7 +48,7 @@ function bobFlank(b,jx,jy){
       s-=rad*.15;
       if(s>bs&&bobClear(P.x,P.y,x,y)){bs=s;best={x,y,T,back:T?-((x-T.x)*(T.fx||0)+(y-T.y)*(T.fy||0))/(Math.hypot(x-T.x,y-T.y)||1):0}}}}
   BOB_STAT.tried=tried;BOB_STAT.foes=fs.length;return best}
-const BOB_STAT={tried:0,foes:0,ms:0};
+const BOB_STAT=GD.BOB_STAT;
 function bobeop(){
   if(!P||P.hp<=0||P.leap)return false;bobInit();
   if(P.perch){perchDrop();return true}

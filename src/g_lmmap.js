@@ -10,7 +10,7 @@
 const LM_SNOW=/장백산|천산|곤륜산|매리설산|대설산|주목랑마|아니마경산|아할랍달택산|몽혁살리달격산|기련산|공알산/;
 const lmId=(k,i)=>`lm_${k}_${i}`;
 // 산 중턱 포털 자리 (문파가 여럿이면 길 양쪽·조금 아래로)
-const LM_PORTAL_M=[[5,20],[-5,20],[5,27]],LM_PORTAL_C=[[20,10],[14,10],[26,10]];
+const LM_PORTAL_M=GD.LM_PORTAL_M,LM_PORTAL_C=GD.LM_PORTAL_C;
 function lmMapCfg(k,i,m,p){
   const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor';
   const base={id,name:m.n,th,seed};

@@ -1,12 +1,5 @@
 // ================= town people =================
-const NPCS=[
-  {id:'inn',n:'객잔 주인 왕씨',x:16.5,y:17.6,pal:'keeper'},{id:'smith',n:'대장장이 철씨',x:23.5,y:17.6,pal:'smithy'},
-  {id:'sa',n:'사천맹 연락관',x:26,y:17.6,pal:'cultist'},{id:'pharm',n:'약방 의원 허씨',x:16,y:25.6,pal:'keeper'},
-  {id:'cloth',n:'포목점 주인 진씨',x:23,y:24.6,pal:'keeper'},{id:'jeong',n:'정의맹 연락관',x:26,y:25.6,pal:'taoist'},
-  {id:'gen',n:'잡화상 노씨',x:18.5,y:23.4,pal:'keeper'},{id:'mae',n:'매파 할멈',x:18.4,y:19.4,pal:'matron'},
-  {id:'board',n:'의뢰판',x:21.5,y:19.3,board:1},{id:'arena',n:'비무 관리인',x:22.2,y:21.2,pal:'judge'},{id:'land',n:'토지 관리인',x:14.6,y:21.4,pal:'keeper'},
-  {id:'bank',n:'창고지기 장씨',x:19.5,y:26.6,pal:'keeper'},{id:'magyo',n:'마교 밀사',x:26.5,y:20.4,pal:'cultist'},
-  {id:'post',n:'역참 마부',x:15.6,y:19.6,pal:'keeper'}];
+const NPCS=GD.NPCS;
 const npcAt=id=>NPCS.find(n=>n.id===id);
 // 지금 지역의 사람들: 개봉은 마을 사람, 본산은 장문인과 역참 마부 (REGIONS[..].npcs)
 const npcsHere=()=>REG==='gaebong'?NPCS:(REGION().npcs||[]);
@@ -318,13 +311,13 @@ function saveGame(silent){
   if(!P)return;
   try{
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
-    const data={v:SAVE_VER,G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
+    const data={v:SAVE_VER,t:Date.now(),G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
       plots:(GAE_PLOTS||plots).map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
-    const s=JSON.stringify(data);localStorage.setItem(SAVE_KEY,s);tossSave(s);if(!silent)log('기록했습니다.','info');
+    STORE.set(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
 function loadGame(){
-  let data=null;try{data=migrateSave(JSON.parse(localStorage.getItem(SAVE_KEY)||'null'))}catch(e){}
+  let data=null;try{data=migrateSave(JSON.parse(STORE.get(SAVE_KEY)||'null'))}catch(e){}
   return data;
 }
 function applySave(data){data=migrateSave(data);

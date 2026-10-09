@@ -4,10 +4,10 @@
 //   개봉(마을)은 밝고 느리게, 성·본산(들판)은 쓸쓸하게, 싸움이 붙으면 북이 빨라진다.
 // - 효과음: 칼바람, 타격, 치명타, 맞음, 쓰러뜨림, 초식, 필살기(징), 경공, 은자·물건 줍기, 창 열기, 깨달음, 지역 이동, 죽음 등.
 // - 브라우저는 사람이 화면을 한 번 눌러야 소리를 낼 수 있어서 첫 손길에 켠다. 앱이 뒤로 가면 음악을 멈춘다.
-// 설정: ☰ 메뉴(또는 조작법 창)의 배경음악·효과음 켬/끔. localStorage 'ganghoyunhoe-snd'.
+// 설정: ☰ 메뉴(또는 조작법 창)의 배경음악·효과음 켬/끔. 기기 안에만 둔다(STORE, 'ganghoyunhoe-snd').
 const SND_KEY='ganghoyunhoe-snd';
-const SND=(()=>{let o={m:1,s:1,mv:.5,sv:.7};try{Object.assign(o,JSON.parse(localStorage.getItem(SND_KEY)||'{}'))}catch(e){}return o})();
-const sndSave=()=>{try{localStorage.setItem(SND_KEY,JSON.stringify(SND))}catch(e){}};
+const SND=(()=>{let o={m:1,s:1,mv:.5,sv:.7};try{Object.assign(o,JSON.parse(STORE.get(SND_KEY)||'{}'))}catch(e){}return o})();
+const sndSave=()=>{try{STORE.set(SND_KEY,JSON.stringify(SND),1)}catch(e){}};
 let AC=null,AMaster=null,AMus=null,ASfx=null,ARev=null,ANoise=null;
 function audioInit(){
   if(AC){if(AC.state==='suspended'&&!document.hidden)AC.resume();return AC}

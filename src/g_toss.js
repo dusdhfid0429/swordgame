@@ -4,8 +4,9 @@
 // 주소 끝에 #toss 를 붙이면 토스 화면 배치(상단 버튼 자리, 세로 고정 안내)만 흉내 낸다.
 var INTOSS=false,tossKey=null,tossReady=false;
 const tossSaveKey=()=>SAVE_KEY+(tossKey?':'+tossKey:'');
-// 토스 저장소에도 같은 기록을 남긴다. 사용자 키에 묶여 있어 앱을 지웠다 깔아도 키는 같다.
-function tossSave(s){const sdk=window.AIT;if(!sdk||!sdk.Storage||!tossReady)return;sdk.Storage.setItem(tossSaveKey(),s).catch(()=>{})}
+// 토스 저장소를 바깥 저장소(g_store.js)로 붙인다. 사용자 키에 묶여 있어 앱을 지웠다 깔아도 키는 같다.
+const tossStore=()=>({name:'toss',pull:async k=>{const sdk=window.AIT;if(!sdk||!sdk.Storage||!tossReady)throw 0;return (await sdk.Storage.getItem(tossSaveKey()))??null},
+  push:async(k,s)=>{const sdk=window.AIT;if(!sdk||!sdk.Storage||!tossReady)throw 0;await sdk.Storage.setItem(tossSaveKey(),s)}});
 function tossLayout(){INTOSS=true;document.body.classList.add('toss');if(!TOUCH)setTouch(true);else resize()}
 // 종료 확인 창 (안드로이드 뒤로 가기)
 const EXITQ=document.createElement('div');EXITQ.className='exitq';EXITQ.hidden=true;EXITQ.setAttribute('role','dialog');EXITQ.setAttribute('aria-modal','true');
@@ -34,9 +35,9 @@ async function tossInit(){
     for(const k of['top','bottom','left','right'])r.setProperty('--sa'+k[0],(i[k]||0)+'px')}})}catch(e){}
   try{sdk.graniteEvent.addEventListener('backEvent',{onEvent:onBack,onError:()=>{}})}catch(e){}
   try{const r=await sdk.getUserKeyForGame();if(r&&r.type==='HASH')tossKey=r.hash}catch(e){}
-  // 토스 저장소의 기록이 있으면 그걸 쓴다 (아직 플레이를 시작하지 않았을 때만)
-  try{const s=await sdk.Storage.getItem(tossSaveKey());if(s&&!playing)localStorage.setItem(SAVE_KEY,s)}catch(e){}
-  tossReady=true;
+  tossReady=true;storeAdd(tossStore());
+  // 기기 안과 토스 저장소 중 더 새 기록을 쓴다 (아직 플레이를 시작하지 않았을 때만)
+  if(!playing)await storeSync(SAVE_KEY);
   if(!playing&&!scrEl.hidden&&box.querySelector('.title'))showTitle();
 }
 addEventListener('ait-ready',tossInit);
