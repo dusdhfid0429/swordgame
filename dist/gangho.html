@@ -2817,12 +2817,14 @@ const danMul=()=>realmAt(5)?1.3:realmAt(3)?1.15:1;
 function realmQiMul(){return realmAt(1)?1.3:1}
 
 // ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=사공) ----
-// 사용자 결정(2026-10-09): 사파(사천맹) 문파는 모두 사공, 마공은 마교(천마신교)만
-const SCHOOL_OF={불가:['shaolin','emei','bota'],
+// 사용자 결정(2026-10-09): 사파(사천맹) 문파는 모두 사공, 마공은 마교(천마신교)만.
+// 포달랍궁·대뢰음사는 불교로 두되 사공으로 변질된 불교(사불, 밀교 비술)로 따로 둔다
+const SCHOOL_OF={불가:['shaolin','emei','bota'],사불:['podal','daeroe'],
   도가:['mudang','hwasan','kunlun','kongtong','jeomchang','cheongseong','jongnam','hyeongsan','cheonsan','taesan','jeonjin','gomyo','seolsan','jangbaek','mosan','nabu'],
   마공:['cheonma']};
 const SCHOOL={불가:{d:'느리지만 안정되어 폐관 성공 +5%, 사파·마교 무인에게 받는 피해 -15%'},
   도가:{d:'정종 현문 심법. 폐관 성공 +5%, 주화입마가 덜 무겁고, 경지가 오를 때마다 수명 +2년'},
+  사불:{d:'사공으로 변질된 불교(밀교 비술). 내공이 15% 빨리 쌓이고, 금강의 몸으로 정파 무인에게 받는 피해 -15%. 폐관은 불가의 안정과 사공의 위험이 맞서 그대로'},
   사공:{d:'사파의 심법. 내공이 15% 빨리 쌓이지만 폐관 성공 -5%, 주화입마가 조금 무겁다'},
   마공:{d:'천마신교의 심법. 내공이 25% 빨리 쌓이지만 수련마다 악업이 쌓이고, 폐관 성공 -10%, 주화입마가 무겁다'},
   정종:{d:'세가·방파의 심법. 치우침이 없다'}};
@@ -2868,6 +2870,7 @@ function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r
 {const _hp=hurtP;hurtP=function(dm,src){const r=realmIdx();
   if(src&&src.d&&r>=4&&mobRealm(src)<=r-2&&P.inv<=0&&P.hp>0){dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
   if(src&&src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))dm*=.85;
+  if(src&&src.d&&school()==='사불'&&src.d.fac==='정')dm*=.85;
   return _hp(dm,src)}}
 {const _rc=recalc;recalc=function(){_rc();if(!P)return;const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}}}
 
@@ -2906,7 +2909,7 @@ function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.rando
 
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
 function qiTrained(){const s=school();
-  if(s==='사공'){P.qiX=(P.qiX||0)+Math.round(SIDES[P.side].gain*.15*10)/10;recalc()}
+  if(s==='사공'||s==='사불'){P.qiX=(P.qiX||0)+Math.round(SIDES[P.side].gain*.15*10)/10;recalc()}
   if(s==='마공'){const x=Math.round(SIDES[P.side].gain*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
