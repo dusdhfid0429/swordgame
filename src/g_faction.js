@@ -111,9 +111,9 @@ const HQ_THEME={
   noklim:['forest','녹림산 녹림채'],janggang:['lake','장강삼협 수채'],haomun:['manor','광주 하오문'],sama:['manor','낙양 사마세가'],
   dongjeong:['lake','동정호 수채'],yasu:['forest','야수궁'],gwangpung:['canyon','객십 광풍사'],taeyang:['canyon','화염산 태양궁'],
   bukhae:['snow','북해빙궁'],podal:['snow','포달랍궁'],mandok:['swamp','만독곡'],hyeolrang:['canyon','혈랑곡'],gwiyeong:['dark','귀영문 은신처'],
-  heukpung:['canyon','흑풍채 본채'],cheonma:['dark','십만대산 천마신교']};
-const hqId=s=>s.id==='shaolin'?'sungsan':'hq_'+s.id;
-const hqPlace=s=>s.id==='shaolin'?'숭산 소림사':HQ_THEME[s.id][1];
+  heukpung:['canyon','흑풍채 본채'],shaolin:['peak','숭산 소림사'],cheonma:['dark','십만대산 천마신교']};
+const hqId=s=>'hq_'+s.id;   // 소림사도 hq_shaolin (숭산은 산 맵, g_lmmap.js)
+const hqPlace=s=>HQ_THEME[s.id][1];
 function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT={x:16.5,y:20.6};
 const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:20.5,y:36.4}:{x:20.5,y:36.2};
@@ -130,15 +130,10 @@ function hqSpawns(s,th){
   for(const f of['정','사','마'])if(facFoe(f,own))sp.push([FAC_KIND[f][0],2,out,(x,y)=>mkFac(f,0,x,y)]);
   for(const[k,c]of HQ_BEAST[th])sp.push([k,c,(x,y)=>(y<20||x<10||x>30)&&!inHQ(x,y)]);
   return sp}
-for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const[th,place]=HQ_THEME[s.id];
+for(const s of Object.values(SECTS)){const[th,place]=HQ_THEME[s.id];
   REGIONS['hq_'+s.id]={name:place,hq:s.id,theme:th,gen:()=>genHQ(s,th),bake:()=>bakeHQ(th),
     zone:(x,y)=>inHQ(x,y)&&y<=16?`${s.n} 본산`:y>=31?`${place} 어귀`:`${place} 산길`,
     spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 본산이 있는 성(省) 지도와 잇는다 (g_province.js)
-// 소림사는 숭산 꼭대기 암자를 본산으로 쓴다
-Object.assign(REGIONS.sungsan,{name:'숭산 소림사',hq:'shaolin',npcs:hqNpcs(SECTS.shaolin,20.5,7.4),
-  zone:(x,y)=>y>=31?'숭산 산문':y<=9&&x>=14&&x<=26?'소림사':y<=13?'숭산 설봉':'숭산 산중'});
-REGIONS.sungsan.spawns.push(['정파 무인',4,(x,y)=>y>=3&&y<=10&&x>=15&&x<=25,(x,y)=>mkFac('정',0,x,y,'shaolin')],['정파 고수',1,(x,y)=>y>=3&&y<=10&&x>=15&&x<=25,(x,y)=>mkFac('정',1,x,y,'shaolin')],
-  ['사파 무인',2,(x,y)=>y>=14&&y<=22,(x,y)=>mkFac('사',0,x,y)],['마교도',2,(x,y)=>y<=12&&x>27,(x,y)=>mkFac('마',0,x,y)]);
 // 본산 산길: 아래 출입구(x=20)에서 굽이쳐 본산 앞마당(y=16)으로 오른다
 const hqPath=(y,sd)=>20+Math.round(3*Math.sin(y*.23+sd)*Math.min(1,(38-y)/4));
 // ground: 0 풀, 1 길, 2 물, 3 다리, 4 본산 마당, 6 바위, 7 흙, 8 눈, 9 늪 진흙, 10 붉은 바위, 11 검은 땅

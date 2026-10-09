@@ -79,9 +79,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{const m=REGION().npcs.find(n=>n.hq);P.x=m.x;P.y=m.y+3;P.hp=P.maxHp*50;P.maxHp*=50;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;
     const inv=mobs.filter(m=>m.d.fac&&m.d.fac!=='정');inv.forEach((e,i)=>{e.x=19+i;e.y=15;e.home={x:e.x,y:e.y}})});
   await p.waitForTimeout(3500);await p.screenshot({path:shot('faction_hq_fight')});
-  // 11) 숭산은 소림사 본산
-  const r12=await p.evaluate(()=>{const R=REGIONS.sungsan;return{name:R.name,m:R.npcs.find(n=>n.hq).n}});
-  ok(`숭산 = ${r12.name}, ${r12.m}`,r12.name==='숭산 소림사'&&r12.m==='소림사 방장');
+  // 11) 숭산은 산 맵, 중턱 포털로 소림사 본산
+  const r12=await p.evaluate(()=>{const R=REGIONS.hq_shaolin;return{name:R.name,m:R.npcs.find(n=>n.hq).n,via:REGIONS.sungsan.gates.some(g=>g.portal&&g.to==='hq_shaolin')}});
+  ok(`숭산 → ${r12.name}, ${r12.m}`,r12.name==='숭산 소림사'&&r12.m==='소림사 방장'&&r12.via);
   // 12) 개봉 남쪽: 정파·사파 순찰대가 실제 게임 루프에서 맞붙는다
   await p.evaluate(()=>{P.silver=50;const n=REGION().npcs.find(n=>n.id==='post');openNpc(n)});await p.waitForTimeout(100);
   await p.locator('[data-act="goto:gaebong"]').tap();await p.waitForTimeout(2000);

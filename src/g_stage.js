@@ -2,7 +2,7 @@
 // 사용자 결정(2026-10-08): 대문파 4맵, 중견문파 2맵, 소문파 1맵, 마교 8맵. 설계: docs/세력_문파_설계.md 18장
 // - 맵은 모두 40×40. 아래(남쪽) 출입구로 들어와 위(북쪽) 출입구로 더 깊이 간다.
 // - 대문파: 산문 → 외원 → 본산(장문인) → 후산.  중견문파: 산문 → 본산.  소문파: 본산 하나.
-//   소림사는 숭산(장문인)이 개봉과 이어진 첫 맵이라 그 뒤로 나한당 연무장 → 탑림 → 달마동이 붙는다.
+//   소림사는 숭산 맵 중턱 포털로 들어가는 본산(방장) 뒤로 나한당 연무장 → 탑림 → 달마동이 붙는다 (g_lmmap.js).
 //   마교 여덟 맵은 g_magyo.js에서 같은 틀로 만든다.
 // - 산문: 바위 벽과 망루 둘, 문지기 제자. 적 세력 무인은 산문 밖 어귀까지 쳐들어온다.
 // - 외원: 숙소와 연무장, 제자가 많다. 외원 총관에게서 임무와 비급(공적)을 받는다.
@@ -110,7 +110,7 @@ Object.values(SECTS).forEach((s,i)=>{
     const a=stageRegion(stOuter(s,th,pl,i,{id:'hq_shaolin_yard',name:'소림 나한당',yardName:'나한당 연무장'})),
       b=stageRegion(stBack(s,th,pl,i,{id:'hq_shaolin_tower',name:'소림 탑림',top:1,elderN:'소림 계율원 수좌'})),
       c=stageRegion(stBack(s,th,pl,i+1,{id:'hq_shaolin_cave',name:'달마동',elderN:'달마동 면벽승',chest:[23,8]}));
-    a.stage.need=null;carveTop('sungsan',17);linkChain(s,['sungsan',a.stage.id,b.stage.id,c.stage.id]);return}
+    a.stage.need=null;carveTop('hq_shaolin');linkChain(s,['hq_shaolin',a.stage.id,b.stage.id,c.stage.id]);return}
   const[th,place]=HQ_THEME[s.id],gate=stageRegion(stGate(s,th,place,i));
   if(s.tier==='mid'){linkChain(s,[gate.stage.id,hqId(s)]);return}
   const outer=stageRegion(stOuter(s,th,place,i)),back=stageRegion(stBack(s,th,place,i));
