@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{mobs=[]});
   // 갑자 표시, 심법 계열
   const g=await p.evaluate(()=>({a:gapja(60),b:gapja(120),c:gapja(300),d:gapja(1000),s:school(),sd:(P.side='사',school()),sh:(P.side='정',P.sect='hwasan',school()),sm:(P.sect='cheonma',school()),sx:(P.sect=null,school()),sp:(P.sect='mandok',school()),sk:(P.sect='podal',school()),z:(P.sect=null)}));
-  ok(`갑자 ${g.a} / ${g.b} / ${g.c} / ${g.d}, 계열 ${g.s}·${g.sd}·${g.sh}·${g.sm}·만독문 ${g.sp}·포달랍궁 ${g.sk}`,g.b==='1갑자'&&g.c==='2갑자 반'&&g.d==='8갑자'&&g.s==='불가'&&g.sd==='사공'&&g.sh==='도가'&&g.sm==='마공'&&g.sp==='사공'&&g.sk==='사공');
+  ok(`갑자 ${g.a} / ${g.b} / ${g.c} / ${g.d}, 계열 ${g.s}·${g.sd}·${g.sh}·${g.sm}·만독문 ${g.sp}·포달랍궁 ${g.sk}`,g.b==='1갑자'&&g.c==='2갑자 반'&&g.d==='8갑자'&&g.s==='불가'&&g.sd==='사공'&&g.sh==='도가'&&g.sm==='마공'&&g.sp==='사공'&&g.sk==='사불');
   // 이류 소주천: 내공 회복 +30%, 경공 거리
   const r1=await p.evaluate(()=>{const q0=qiRegen(),l0=leapRange();P.realm=1;realmFxSync();return{q:qiRegen()/q0,l:leapRange()-l0}});
   ok(`이류 소주천: 회복 ×${r1.q.toFixed(2)}, 경공 +${r1.l.toFixed(1)}`,Math.abs(r1.q-1.3)<.01&&Math.abs(r1.l-.6)<.01);
