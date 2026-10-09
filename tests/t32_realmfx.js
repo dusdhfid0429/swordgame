@@ -75,7 +75,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const lf=await p.evaluate(()=>{const l0=P.life;P.st.qi+=4;recalc();const l1=P.life;P.st.qi-=2;recalc();return{up:l1-l0,down:P.life-l1}});
   ok(`본원진기 +4 → 수명 +${lf.up}년, -2 → ${lf.down}년`,lf.up===2&&lf.down===-1);
   // 예전 저장(v42): 경지 효과를 불러올 때 채운다
-  const m=await p.evaluate(()=>{closePanels();P.realm=5;delete P.rfx;delete P.enl;saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));const l=P.life;applySave(d);return{rfx:Object.keys(P.rfx).length,enl:P.enl}});
+  const m=await p.evaluate(()=>{closePanels();P.realm=5;delete P.rfx;delete P.enl;saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));delete d.v;const l=P.life;applySave(d);return{rfx:Object.keys(P.rfx).length,enl:P.enl}});
   ok(`예전 저장: 경지 효과 ${m.rfx}개 채움, 깨달음 ${m.enl}`,m.rfx===5&&m.enl===0);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();
