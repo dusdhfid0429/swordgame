@@ -45,7 +45,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>closePanels());
   // 7) 본산 지역맵: 문파마다 하나씩, 겹치지 않음
   const r7=await p.evaluate(()=>{const ids=Object.values(SECTS).map(hqId);const names=ids.map(i=>REGIONS[i]&&REGIONS[i].name);
-    return{n:new Set(ids).size,all:ids.every(i=>REGIONS[i]&&REGIONS[i].npcs.some(n=>n.hq)),names:new Set(names).size}});
+    return{n:new Set(ids).size,all:ids.every(i=>!!hqNpc(i)),names:new Set(names).size}});
   ok(`문파 본산 ${r7.n}곳, 지명 ${r7.names}개, 모두 장문인이 있다`,r7.n===50&&r7.names===50&&r7.all);
   // 8) 모든 본산: 도착 자리 → 장문인·마부·출입구까지 길이 이어지고, 지형이 서로 다르다
   const r8=await p.evaluate(()=>{const bad=[],sig=new Set(),cur=REG;
@@ -64,23 +64,23 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r9=await p.evaluate(()=>{const n=npcAt('post');return{walk:walk(Math.floor(n.x),Math.floor(n.y)+1)||walk(Math.floor(n.x)+1,Math.floor(n.y)),at:walk(Math.floor(POST_AT.x),Math.floor(POST_AT.y))}});
   ok('개봉 역참 마부와 도착 자리가 막혀 있지 않다',r9.walk&&r9.at);
   await p.evaluate(()=>{P.sect=null;P.silver=200;const n=npcAt('post');P.x=n.x+.9;P.y=n.y+.4;P.path=null;openNpc(n)});await p.waitForTimeout(150);
-  ok('역참 창에 개봉과 50개 본산',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===50));
+  ok('역참 창에 개봉과 50개 본산, 성도 21곳',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===71));
   await p.screenshot({path:shot('faction_post')});
   await p.locator('[data-act="goto:hq_mandok"]').tap();await p.waitForTimeout(2500);
   const r10=await p.evaluate(()=>{for(let i=0;i<6;i++)spawnTick();const ds=mobs.filter(m=>m.sect==='mandok');return{reg:REG,name:REGION().name,silver:P.silver,ds:ds.length,nm:ds[0]&&ds[0].name,hostile:ds.every(m=>!peaceful(m)),zone:regionAt(10,10)}});
   ok(`만독곡 도착 (은자 ${r10.silver}), 만독문 제자 ${r10.ds}명 (${r10.nm}) 은 정파에게 적`,r10.reg==='hq_mandok'&&r10.silver===180&&r10.ds>=3&&r10.hostile);
-  await p.evaluate(()=>{const m=REGION().npcs.find(n=>n.hq);P.x=m.x;P.y=m.y+2;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;for(const e of mobs)if(dist(e,P)<7)e.x+=0});await p.waitForTimeout(500);
+  await p.evaluate(()=>{const m=REGION().halls[0];P.x=m.x;P.y=m.y+2;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;for(const e of mobs)if(dist(e,P)<7)e.x+=0});await p.waitForTimeout(500);
   await p.screenshot({path:shot('faction_hq_mandok')});
   // 10) 화산 본산: 정파 플레이어에게 화산파 제자는 동료, 아래 산길에서 사파·마교가 쳐들어온다
   await p.evaluate(()=>{P.silver=200;const n=REGION().npcs.find(n=>n.id==='post');openNpc(n)});await p.waitForTimeout(100);
   await p.locator('[data-act="goto:hq_hwasan"]').tap();await p.waitForTimeout(2500);
   const r11=await p.evaluate(()=>{for(let i=0;i<8;i++)spawnTick();const own=mobs.filter(m=>m.sect==='hwasan'),inv=mobs.filter(m=>m.d.fac&&m.d.fac!=='정');return{own:own.length,peace:own.every(peaceful),inv:inv.length,kinds:[...new Set(inv.map(m=>m.kind))].join('·')}});
   ok(`화산 본산: 화산파 제자 ${r11.own}명은 동료, 침입자 ${r11.inv}명 (${r11.kinds})`,r11.own>=4&&r11.peace&&r11.inv>=2);
-  await p.evaluate(()=>{const m=REGION().npcs.find(n=>n.hq);P.x=m.x;P.y=m.y+3;P.hp=P.maxHp*50;P.maxHp*=50;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;
+  await p.evaluate(()=>{const m=REGION().halls[0];P.x=m.x;P.y=m.y+3;P.hp=P.maxHp*50;P.maxHp*=50;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;
     const inv=mobs.filter(m=>m.d.fac&&m.d.fac!=='정');inv.forEach((e,i)=>{e.x=19+i;e.y=15;e.home={x:e.x,y:e.y}})});
   await p.waitForTimeout(3500);await p.screenshot({path:shot('faction_hq_fight')});
   // 11) 숭산은 산 맵, 중턱 포털로 소림사 본산
-  const r12=await p.evaluate(()=>{const R=REGIONS.hq_shaolin;return{name:R.name,m:R.npcs.find(n=>n.hq).n,via:REGIONS.sungsan.gates.some(g=>g.portal&&g.to==='hq_shaolin')}});
+  const r12=await p.evaluate(()=>{const R=REGIONS.hq_shaolin;return{name:R.name,m:hqNpc('hq_shaolin').n,via:REGIONS.sungsan.gates.some(g=>g.portal&&g.to==='hq_shaolin')}});
   ok(`숭산 → ${r12.name}, ${r12.m}`,r12.name==='숭산 소림사'&&r12.m==='소림사 방장'&&r12.via);
   // 12) 개봉 남쪽: 정파·사파 순찰대가 실제 게임 루프에서 맞붙는다
   await p.evaluate(()=>{P.silver=50;const n=REGION().npcs.find(n=>n.id==='post');openNpc(n)});await p.waitForTimeout(100);

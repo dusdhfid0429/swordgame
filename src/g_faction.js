@@ -115,7 +115,7 @@ for(const s of Object.values(SECTS)){const[th,place]=HQ_THEME[s.id];
     spawns:hqSpawns(s,th),bosses:[],gates:[],npcs:hqNpcs(s,20.5,8.7)}}   // 아래 출입구는 본산이 있는 성(省) 지도와 잇는다 (g_province.js)
 // 본산 산길: 아래 출입구(x=20)에서 굽이쳐 본산 앞마당(y=16)으로 오른다
 const hqPath=(y,sd)=>20+Math.round(3*Math.sin(y*.23+sd)*Math.min(1,(38-y)/4));
-// ground: 0 풀, 1 길, 2 물, 3 다리, 4 본산 마당, 6 바위, 7 흙, 8 눈, 9 늪 진흙, 10 붉은 바위, 11 검은 땅
+// ground: 0 풀, 1 길, 2 물, 3 다리, 4 본산 마당, 6 바위, 7 흙, 8 눈, 9 늪 진흙, 10 붉은 바위, 11 검은 땅, 12 모래, 13 나무 바닥(전각 안)
 const HQ_BASE=GD.HQ_BASE;
 function genHQ(s,th){
   const r=rng(7000+s.i*131),sd=s.i*.7,o1=s.i*1.7,o2=s.i*.9;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
@@ -185,6 +185,7 @@ function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&
     else if(t===9){const k=vn(gx*3,gy*3);R=64+n*24+k*10;G=60+n*22+k*8;B=38+n*12;if(vn(gx*8,gy*8)>.76){R*=.7;G*=.8;B*=.7}}
     else if(t===10){const k=vn(gx*2.5,gy*2.5),band=Math.sin((gx+gy)*1.6+k*3)*.5+.5;R=128+n*34+band*20;G=70+n*20+band*10;B=46+n*12}
     else if(t===12){const k2=vn(gx*2,gy*2),dune=Math.sin(gx*1.3+gy*.7+k2*4)*.5+.5;R=196+n*26+dune*18;G=168+n*22+dune*14;B=112+n*16}
+    else if(t===13){const pl=frac(gy*1.5)<.06||frac(gx*.5+Math.floor(gy*1.5)*.5)<.04,k=vn(gx*2,gy*7);R=(th==='dark'?74:150)+n*18+k*10;G=(th==='dark'?52:104)+n*14+k*8;B=(th==='dark'?44:66)+n*10;if(pl){R*=.55;G*=.55;B*=.55}}
     else if(t===11){const k=vn(gx*3,gy*3);R=40+n*18+k*10;G=36+n*16+k*8;B=38+n*16+k*8;if(vn(gx*11,gy*11)>.82){R+=60;G+=14;B+=8}}
     else{const big=vn(gx*.2,gy*.2);R=gc[0]+n*34+big*16;G=gc[1]+n*40+big*14;B=gc[2]+n*20;const dirt=fbm(gx*.5+20,gy*.5);if(dirt>.64){const k=Math.min(1,(dirt-.64)*5);R+=(100-R)*k;G+=(94-G)*k;B+=(80-B)*k}}
     const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);
@@ -220,7 +221,7 @@ function postDlg(){
     .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${ALLY[al].side!==P.side?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
   return h}
 function postGo(id){
-  if(!REGIONS[id]||REG===id)return;const fee=id==='gaebong'?10:POST_FEE;
+  if(!REGIONS[id]||REG===id)return;const fee=id==='gaebong'?10:REGIONS[id].city?CITY_FEE:POST_FEE;
   if(P.silver<fee){log('은자가 모자랍니다.','info');return}
   P.silver-=fee;const at=arriveAt(id);closePanels();log(`역참 말을 타고 ${REGIONS[id].name}(으)로 갑니다. (은자 -${fee})`,'sys');travel({to:id,tx:at.x,ty:at.y});
 }

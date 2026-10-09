@@ -19,7 +19,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('연락관 앞에서는 가입 대신 본산 가는 길을 알려 준다',await p.evaluate(()=>!document.querySelector('[data-act="sjoin:hwasan"]')&&!!document.querySelector('[data-act="goto:hq_hwasan"]')));
   await p.evaluate(()=>{P.silver=500;renderOpen()});await p.locator('[data-act="goto:hq_hwasan"]').tap();await p.waitForTimeout(2500);
   ok('역참 말로 화산 본산에 도착',await p.evaluate(()=>REG==='hq_hwasan'&&P.silver===480));
-  await p.evaluate(()=>openNpc(REGION().npcs.find(n=>n.hq)));await p.waitForTimeout(150);
+  await p.evaluate(()=>openNpc(hqNpc(REG)));await p.waitForTimeout(150);
   await p.screenshot({path:shot('sect_hwasan_hq')});
   await p.locator('[data-act="sjoin:hwasan"]').tap();await p.waitForTimeout(200);
   const j=await p.evaluate(()=>{const h=SECTS.hwasan.arts.find(a=>a.hi);return{sect:P.sect,learned:!!P.arts[h.id]&&P.arts[h.id].f[0],forms:ARTS[h.id].forms.length,n:h.n}});
@@ -44,7 +44,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 사파: 사천맹 대문파, 마교
   await p.evaluate(()=>{P.side='사';P.sect=null;P.fame=0;P.evil=0;P.age=25;sectView=null});
   ok('마교는 명성 100 또는 악업 80부터',await p.evaluate(()=>!!joinBlock(SECTS.cheonma)));
-  await p.evaluate(()=>{P.fame=120;openNpc(npcAt('magyo'))});await p.waitForTimeout(100);await p.locator('[data-act="sview:cheonma"]').tap();await p.evaluate(()=>openNpc(REGIONS.hq_cheonma.npcs[0]));await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
+  await p.evaluate(()=>{P.fame=120;openNpc(npcAt('magyo'))});await p.waitForTimeout(100);await p.locator('[data-act="sview:cheonma"]').tap();await p.evaluate(()=>openNpc(hqNpc('hq_cheonma')));await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
   ok('사파 명성 120 → 천마신교 가입, 고급 무공',await p.evaluate(()=>P.sect==='cheonma'&&!!P.arts[SECTS.cheonma.arts.find(a=>a.hi).id]));
   await p.screenshot({path:shot('sect_magyo')});
   // 예전 저장 이전

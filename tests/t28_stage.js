@@ -27,7 +27,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`맵 ${walkAll.n}개 모두 출입구·NPC까지 걸어서 닿음 ${walkAll.bad.slice(0,6).join(' / ')}`,walkAll.n>=60&&walkAll.bad.length===0);
   // 소림사 본산에서 위로 나한당까지
   const ss=await p.evaluate(()=>{loadRegion('hq_shaolin');const g=REGION().gates.find(q=>q.to==='hq_shaolin_yard');
-    const seen=new Set,st=REGION().npcs.find(n=>n.hq==='shaolin'),q=[[Math.floor(st.x),Math.floor(st.y)+1]];seen.add(q[0]+'');
+    const seen=new Set,st=REGION().halls[0],q=[[Math.floor(st.x),Math.floor(st.y)]];seen.add(q[0]+'');
     while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
     const r=g&&[0,1,-1].some(d=>seen.has([Math.floor(g.x)+d,Math.floor(g.y)]+'')||seen.has([Math.floor(g.x)+d,Math.floor(g.y)+1]+''));loadRegion('gaebong');return r});
   ok('숭산 소림사 뒤로 나한당 가는 길',ss);
@@ -38,14 +38,14 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{P.x=20.5;P.y=24.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_gate')});
   await p.evaluate(()=>{travel(REGION().gates.find(g=>g.to==='hq_hwasan_outer'))});await p.waitForTimeout(1200);
   await p.evaluate(()=>{P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_outer')});
-  await p.evaluate(()=>openNpc(npcsHere().find(n=>n.steward)));await p.waitForTimeout(200);
+  await p.evaluate(()=>openNpc(findNpc(REG,n=>n.steward)));await p.waitForTimeout(200);
   ok('외원 총관 창에 임무와 비급',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('임무')&&t.includes('고유 무공')}));
   await p.evaluate(()=>{closePanels();travel(REGION().gates.find(g=>g.to==='hq_hwasan'))});await p.waitForTimeout(1200);
   const bk=await p.evaluate(()=>{const g=REGION().gates.find(q=>q.to==='hq_hwasan_back');P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();const blocked=REG==='hq_hwasan';P.sect='hwasan';P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();return{blocked}});
   await p.waitForTimeout(1200);
   const bk2=await p.evaluate(()=>({reg:REG,elder:npcsHere().some(n=>n.elder==='hwasan')}));
   ok(`후산은 제자만: 막힘 ${bk.blocked}, 제자는 들어감 ${bk2.reg}`,bk.blocked&&bk2.reg==='hq_hwasan_back'&&bk2.elder);
-  await p.evaluate(()=>openNpc(npcsHere().find(n=>n.elder)));await p.waitForTimeout(200);
+  await p.evaluate(()=>openNpc(findNpc(REG,n=>n.elder)));await p.waitForTimeout(200);
   ok('후산 장로 창에 패시브·보법',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('패시브')||t.includes('보법')}));
   await p.evaluate(()=>{closePanels();P.x=20.5;P.y=12.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_back')});
   // 중견문파 남궁세가: 산문 → 본산
