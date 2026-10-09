@@ -1,5 +1,5 @@
 // ---------- pre-rendered props ----------
-function mkTree(seed){
+function mkTree(seed,hue=78,lb=0,sb=0){
   const c=document.createElement('canvas');c.width=120;c.height=150;const g=c.getContext('2d'),r=rng(seed);
   g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(60,138,40,13,0,0,7);g.fill();
   const tg=g.createLinearGradient(52,0,68,0);tg.addColorStop(0,'#8a6a4a');tg.addColorStop(1,'#3a2a1c');
@@ -7,10 +7,10 @@ function mkTree(seed){
   g.strokeStyle='#1e140c';g.lineWidth=1;g.stroke();
   const blobs=[];
   for(let i=0;i<95;i++){const a=r()*Math.PI*2,d=Math.sqrt(r());const x=60+Math.cos(a)*d*44,y=62+Math.sin(a)*d*36-r()*8;
-    blobs.push({x,y,rad:6+r()*8,l:Math.max(0,Math.min(1,.6-(x-60)/100-(y-62)/70+(r()-.5)*.35)),h:78+r()*28})}
+    blobs.push({x,y,rad:6+r()*8,l:Math.max(0,Math.min(1,.6-(x-60)/100-(y-62)/70+(r()-.5)*.35)),h:hue+r()*28})}
   blobs.sort((a,b)=>a.l-b.l);
   for(const o of blobs){const gr=g.createRadialGradient(o.x-o.rad*.35,o.y-o.rad*.35,1,o.x,o.y,o.rad);
-    gr.addColorStop(0,`hsl(${o.h},${36+o.l*18}%,${24+o.l*30}%)`);gr.addColorStop(1,`hsl(${o.h+8},34%,${12+o.l*8}%)`);
+    gr.addColorStop(0,`hsl(${o.h},${36+o.l*18+sb}%,${24+o.l*30+lb}%)`);gr.addColorStop(1,`hsl(${o.h+8},${34+sb}%,${12+o.l*8+lb*.6}%)`);
     g.fillStyle=gr;g.beginPath();g.arc(o.x,o.y,o.rad,0,7);g.fill()}
   return c;
 }
@@ -51,5 +51,16 @@ function mkRock(seed){
   g.fillStyle='rgba(100,130,60,.55)';g.beginPath();g.ellipse(22,18,7,3,-.3,0,7);g.fill();
   return c;
 }
-const TREES=[mkTree(11),mkTree(23),mkTree(47)],PINES=[mkPine(3),mkPine(19)],BAMBOO=[mkBamboo(2),mkBamboo(8),mkBamboo(31)],ROCKS=[mkRock(5),mkRock(9)];
-const SPRITES={tree:TREES,pine:PINES,bamboo:BAMBOO,rock:ROCKS};
+// 석탑: 불가 문파·석굴 마당의 돌탑
+function mkStupa(seed){
+  const c=document.createElement('canvas');c.width=60;c.height=120;const g=c.getContext('2d'),r=rng(seed);
+  g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(30,112,20,7,0,0,7);g.fill();
+  const tier=(y,w,h,top)=>{g.fillStyle='#8c877a';g.fillRect(30-w/2,y-h,w,h);g.fillStyle='#5e5a50';g.fillRect(30+w/2-4,y-h,4,h);g.fillStyle=top?'#4a463e':'#6e6a60';g.fillRect(30-w/2-3,y-h-3,w+6,3);
+    g.fillStyle='rgba(255,255,255,.12)';g.fillRect(30-w/2,y-h,2,h)};
+  tier(110,30,10);let y=100;const n=4+Math.floor(r()*2);for(let i=0;i<n;i++){const w=24-i*4,h=12-i*1.5;tier(y,w,h,i===n-1);y-=h+3}
+  g.fillStyle='#8c877a';g.beginPath();g.moveTo(30,y-14);g.lineTo(34,y);g.lineTo(26,y);g.closePath();g.fill();
+  for(let i=0;i<20;i++){g.fillStyle=`rgba(${r()<.5?0:255},${r()<.5?0:255},${r()<.5?0:255},.08)`;g.fillRect(18+r()*24,y+r()*(108-y),2,2)}
+  return c;
+}
+const TREES=[mkTree(11),mkTree(23),mkTree(47)],PLUMS=[mkTree(61,335,24,-6),mkTree(67,342,26,-4)],MAPLES=[mkTree(71,12,6,8),mkTree(73,22,8,10)],STUPAS=[mkStupa(3),mkStupa(8)],PINES=[mkPine(3),mkPine(19)],BAMBOO=[mkBamboo(2),mkBamboo(8),mkBamboo(31)],ROCKS=[mkRock(5),mkRock(9)];
+const SPRITES={tree:TREES,pine:PINES,bamboo:BAMBOO,rock:ROCKS,plum:PLUMS,maple:MAPLES,stupa:STUPAS};

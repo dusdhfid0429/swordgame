@@ -36,7 +36,7 @@ function drawBuild(b,alpha){
     for(const[i,j]of[[x+.2,y+.2],[X1-.2,y+.2],[x+.2,Y1-.2],[X1-.2,Y1-.2]]){const q=scr(i,j,5);seg([q,up(q,WH-5)],4,'#7a2416')}
     const t=scr(x+w/2,y+h/2,5);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(t[0],t[1]-6,9,4.5,0,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.stroke()}
   else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.mg?'#2a2020':'#c3b69b',false,b)}
-  const RC=b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:['#2e343c','#2a3038','#3a414b','#4d5663'];
+  const RC=b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
   const H0=WH+(pav?0:4),RH=H0+10+8*Math.min(w,h);
   const Et=scr(x-o,y-o,H0),Er=scr(X1+o,y-o,H0),Eb=scr(X1+o,Y1+o,H0),El=scr(x-o,Y1+o,H0);
   let R1,R2;

@@ -149,8 +149,12 @@ function genHQ(s,th){
   // 본산: 본전과 좌우 전각, 마당 등롱. 장원 지형은 산길 옆에 집이 더 있다
   const bs=[{x:19,y:5,w:3,h:2,kind:'temple'},{x:14,y:8,w:2,h:2},{x:25,y:8,w:2,h:2}];
   if(th==='manor')bs.push({x:10,y:22,w:3,h:2},{x:27,y:24,w:3,h:2});
-  for(const b of bs){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
+  const st=GD.SECT_STYLE[s.id]||{};
+  for(const b of bs){b.rc=st.roof;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of[[16,6],[24,6],[14,14],[26,14]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  // 문파 특색: 화산의 매화, 청성의 대숲, 불가의 석탑 (data/world.json SECT_STYLE)
+  if(st.tree)for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const o=objs[y][x];if((o==='tree'||o==='pine')&&r()<.6)objs[y][x]=st.tree}
+  if(st.props==='stupa')for(const[x,y]of[[12,5],[28,5],[12,13],[28,13]])if(!objs[y][x]&&map[y][x].g!==2)objs[y][x]='stupa';
   // 문파 깃발: 산문(산길이 마당에 닿는 곳) 양옆과 본전 앞
   {const q=hqPath(17,sd);placeFlags(s.id,[[q-1,17],[q+2,17],[17,11],[24,11]])}
   for(let y=16;y<NH;y++){const px=hqPath(y,sd);for(const x of[px,px+1])if(map[y][x].g===3)rails.push({x,y})}

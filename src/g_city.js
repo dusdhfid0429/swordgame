@@ -7,8 +7,8 @@
 // 설계: docs/맵이동_설계.md 17장. 테스트: tests/t36_hall.js
 const CITY_FEE=15;
 for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];if(!F||!F.marks)continue;
-  const cities=F.marks.filter(m=>m.t==='c'&&m.gate);if(!cities.length)continue;
-  p.cap=k==='henan'?null:cities[0].n;   // 하남성의 성도는 개봉 자체
+  const cities=F.marks.filter(m=>(m.t==='c'||m.town)&&m.gate);if(!cities.length)continue;
+  p.cap=k==='henan'?null:(cities.find(m=>m.t==='c')||cities[0]).n;   // 하남성의 성도는 개봉 자체
   for(const m of cities){const id=m.gate,R=REGIONS[id],c=R.stage,cap=m.n===p.cap,bs=c.builds;R.city=cap?'cap':'town';
     // 건물: 0 객잔(9,9) 1 관아(28,9) 2 집(9,15) 3 집(29,15) 4 대장간(9,21) 5 사당(29,21) 6 집(13,26) 7 집(25,26)
     const npc=(id,n,x,y,pal,o={})=>({id,n,x,y,pal,...o});

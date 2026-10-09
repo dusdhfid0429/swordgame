@@ -25,7 +25,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`숙련 오름: 절정 ${ms[0].toFixed(2)} < 중승 ${ms[1].toFixed(2)}`,ms[0]<ms[1]);
   // 화면: 문파 창과 연락관 목록에 등급
   await p.evaluate(()=>{travel({to:'hq_hwasan',tx:20.5,ty:10.5})});await p.waitForTimeout(1800);
-  await p.evaluate(()=>{const n=npcsHere().find(q=>q.id==='hq');openNpc(n)});await p.waitForTimeout(300);
+  await p.evaluate(()=>{const n=hqNpc(REG);openNpc(n)});await p.waitForTimeout(300);
   ok('본산 창에 무공 등급(상승·절정)',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('절정')&&t.includes('상승')}));
   await p.screenshot({path:shot('grade_sect')});
   await p.evaluate(()=>{closePanels();sectView=null;openNpc(npcAt('jeong'))});await p.waitForTimeout(300);

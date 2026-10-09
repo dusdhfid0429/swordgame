@@ -12,6 +12,21 @@
 const ST_PATH=(y,sd,y0,y1,cx=20)=>cx+Math.round(3*Math.sin(y*.23+sd)*Math.max(0,Math.min(1,(y1-y)/4,(y-y0)/4)));
 // c: {id, s(문파), th(지형), seed, mg(마교 전각), yard:[x0,y0,x1,y1](포장 마당), top(위로 더 갈 수 있나), topX,
 //     wall(바위 벽 y), builds, lamps, flags, nodes:{herb,ore,chest:[x,y]}}
+// 지역·문파·명소 특색 (2026-10-09 사용자: 무림전도의 지역별·문파별·명소별 특색). c.tree 나무 바꾸기, c.rocks 바위 숲, c.bamboo 대숲,
+// c.river [x0,x1] 강, c.sea x 부터 바다, c.tents 천막, c.stalls 좌판, c.props 'stupa' 마당 네 귀의 석탑, c.pines 마당 앞뒤 소나무 줄
+function stageFlavor(c,r,{road,onRoad,inYard,yd,yEnd}){
+  const free=(x,y)=>x>1&&y>1&&x<N-2&&y<NH-2&&!objs[y][x]&&!onRoad(x,y)&&!inYard(x,y)&&map[y][x].g!==2&&map[y][x].g!==4;
+  const offRoad=(x,y)=>Math.abs(x-road(Math.max(y,yEnd)))>2;
+  if(c.tree)for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const o=objs[y][x];if((o==='tree'||o==='pine')&&r()<.6)objs[y][x]=c.tree}
+  if(c.rocks)for(let y=2;y<NH-2;y++)for(let x=2;x<N-2;x++)if(free(x,y)&&offRoad(x,y)&&r()<c.rocks)objs[y][x]='rock';
+  if(c.bamboo)for(let y=2;y<NH-2;y++)for(let x=2;x<N-2;x++)if(free(x,y)&&offRoad(x,y)&&r()<c.bamboo)objs[y][x]='bamboo';
+  if(c.river){const[x0,x1]=c.river;for(let y=0;y<NH;y++)for(let x=x0;x<=x1;x++){if(onRoad(x,y)||inYard(x,y))continue;const e=x===x0||x===x1;if(e&&r()<.5){map[y][x].g=6;objs[y][x]=r()<.5?'rock':null}else{map[y][x].g=2;objs[y][x]=null}}}
+  if(c.sea!=null)for(let y=0;y<NH;y++)for(let x=c.sea;x<N;x++){if(onRoad(x,y)||inYard(x,y))continue;const d=x-c.sea+fbm(x*.3,y*.3)*3;if(d>1.5){map[y][x].g=2;objs[y][x]=null}else if(d>0){map[y][x].g=12;objs[y][x]=null}}
+  for(const[x,y]of c.tents||[])if(x>1&&y>1&&x<N-2&&y<NH-2&&!objs[y][x]&&!onRoad(x,y)&&map[y][x].g!==2){objs[y][x]='tent';tents.push({x,y})}
+  for(const[x,y,col]of c.stalls||[])if(x>1&&y>1&&x<N-2&&y<NH-2&&!objs[y][x]&&!onRoad(x,y)&&map[y][x].g!==2){objs[y][x]='stall';map[y][x].cloth=col}
+  if(c.props==='stupa'&&yd)for(const[x,y]of[[yd[0]-1,yd[1]+1],[yd[2]+1,yd[1]+1],[yd[0]-1,yd[3]-1],[yd[2]+1,yd[3]-1]])if(x>1&&x<N-2&&y>1&&y<NH-2&&!objs[y][x]&&!onRoad(x,y)&&map[y][x].g!==2)objs[y][x]='stupa';
+  if(c.pines&&yd)for(let x=yd[0];x<=yd[2];x+=3)for(const y of[yd[1]-2,yd[3]+2])if(y>1&&y<NH-2&&!objs[y][x]&&!onRoad(x,y)&&map[y][x].g!==2)objs[y][x]='pine';
+}
 function genStage(c){
   N=c.w||40;NH=c.h||40;const r=rng(c.seed),sd=c.seed%7*.9,o1=c.seed%13*.7,o2=c.seed%11*.6,th=c.th;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const yd=c.yard,topX=c.topX??N/2,yEnd=yd?yd[3]:c.top?0:12,road=y=>ST_PATH(y,sd,yEnd,NH-2,N/2);
@@ -23,7 +38,7 @@ function genStage(c){
     let g=HQ_BASE[th]??0;
     if(th==='peak'){if(hi>.62)g=6;if(y<=3)g=8}else if(th==='snow'){if(hi<.36)g=6}else if(th==='forest'){if(hi>.68)g=7}
     else if(th==='lake'){if(hi>.7&&!near)g=2}else if(th==='manor'){if(hi>.66)g=7}else if(th==='swamp'){if(hi>.66&&!near)g=2;else if(hi<.3)g=0}
-    else if(th==='canyon'){if(hi>.6)g=6}else if(th==='dark'){if(hi>.63)g=6;else if(hi<.28)g=10}
+    else if(th==='canyon'){if(hi>.6)g=6}else if(th==='dark'){if(hi>.63)g=6;else if(hi<.28)g=10}else if(th==='sand'){if(hi>.72)g=6}
     if(inYard(x,y))g=4;if(rd)g=g===2?3:1;
     let o=null;const edge=x<=1||y<=1||x>=N-2||y>=NH-2;
     if(x===0||y===0||x===N-1||y===NH-1)o=r()<.6?tree:'rock';
@@ -33,14 +48,16 @@ function genStage(c){
       else if(th==='forest')o=v<.16?'tree':v<.25?'pine':v<.3&&hi<.45?'bamboo':null;
       else if(th==='manor')o=v<.05?'tree':v<.06?'rock':null;
       else if(th==='canyon')o=cliff>.62?'rock':v<.08?'rock':v<.1?'tree':null;
+      else if(th==='sand')o=v<.05?'rock':v<.06?'tree':null;
       else o=v<.08?'tree':v<.1?'rock':null}
     map[y][x]={g,v:r()};objs[y][x]=o}}
   // 산문 벽: 길만 터 두고 가로로 막는다. 길 양옆에 망루
   for(const w of[].concat(c.wall||[])){const rx=road(w);for(let y=w;y<=w+1;y++)for(let x=1;x<N-1;x++)if(Math.abs(x-rx-.5)>1.5){objs[y][x]='rock';if(map[y][x].g===2)map[y][x].g=6}
     c.builds=[...(c.builds||[]),{x:rx-4,y:w-1,w:2,h:2},{x:rx+4,y:w-1,w:2,h:2}]}
-  for(const b0 of c.builds||[]){const b={...b0,mg:c.mg};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  for(const b0 of c.builds||[]){const b={...b0,mg:c.mg,rc:b0.rc||c.rc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of c.lamps||[])if(objs[y][x]==null&&!onRoad(x,y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   if(c.flags)placeFlags(c.s.id,c.flags);
+  stageFlavor(c,r,{road,onRoad,inYard,yd,yEnd});
   for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===3)rails.push({x,y});
   const put=(t,x,y)=>{if(walk(x,y)&&!onRoad(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
   const want=(t,n,ok)=>{for(let i=0;i<500&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if(!inYard(x,y)&&ok(map[y][x].g))put(t,x,y)}};
@@ -49,6 +66,7 @@ function genStage(c){
 }
 // 맵 하나를 지역으로 등록한다
 function stageRegion(c){
+  {const st=c.s&&GD.SECT_STYLE[c.s.id];if(st){c.rc=c.rc||st.roof;c.tree=c.tree||st.tree;c.props=c.props||st.props}}
   const R={name:c.name,hq:c.s.id,theme:c.th,size:c.w||40,h:c.h||40,stage:c,gen:()=>genStage(c),bake:()=>bakeHQ(c.th),zone:c.zone||(()=>c.name),
     spawns:c.spawns||[],bosses:[],gates:[],npcs:c.npcs||[]};
   REGIONS[c.id]=R;return R}

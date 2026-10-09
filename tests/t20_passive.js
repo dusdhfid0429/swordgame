@@ -35,7 +35,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('무공 창에 패시브 무공',await p.evaluate(()=>$('wbody').textContent.includes('패시브 무공')&&$('wbody').textContent.includes('암향표')));
   await p.evaluate(()=>{const c=[...document.querySelectorAll('#wbody .card')].find(e=>e.textContent.includes('패시브 무공'));c&&c.scrollIntoView()});await p.screenshot({path:shot('passive_arts')});
   await p.evaluate(()=>{closePanels();travel({to:'hq_hwasan',tx:20.5,ty:10.5})});await p.waitForTimeout(1800);
-  await p.evaluate(()=>{const n=npcsHere().find(q=>q.id==='hq');openNpc(n)});await p.waitForTimeout(300);
+  await p.evaluate(()=>{const n=hqNpc(REG);openNpc(n)});await p.waitForTimeout(300);
   ok('본산 문파 창에 문파 패시브 셋',await p.evaluate(()=>['암향표','자하신공','매화비영보'].every(n=>$('wbody').textContent.includes(n))));
   await p.evaluate(()=>{const h=[...document.querySelectorAll('#wbody h4')].find(e=>e.textContent.includes('문파 패시브'));h&&h.scrollIntoView()});await p.screenshot({path:shot('passive_sect')});
   // 운기조식으로도 숙련
