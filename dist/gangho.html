@@ -736,7 +736,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
@@ -758,7 +758,7 @@ const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]|
 const hasWeaponFor=c=>c==='권'||!!(P.eq.weapon&&P.eq.weapon.cls===c);
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
-const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk')));
+const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
@@ -769,11 +769,15 @@ const maxVit=()=>150+P.st.end*25;
 // 활력을 얻는다. 지구력이 정한 최대치까지만 찬다 (전생에서 넘겨받아 이미 넘친 활력은 깎지 않는다).
 function gainVit(v){const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
-const realmIdx=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
+// 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
+const qiRealm=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
+const realmIdx=()=>P.realm??qiRealm();
+// 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
+const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>RANKS[realmIdx()];
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'));
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul();
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -1015,9 +1019,9 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 function trainQi(){
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
-  const done=()=>{const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+  const done=()=>{P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
     log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차, 다음 ${qiCost(P.side,P.qiN)})`,'xp');
-    if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}renderOpen()};
+    wallCheck();renderOpen()};
   // 인물창에서 누르면 창을 닫지 않고 그 자리에서 잠깐 운기한 뒤 결과를 보여 준다 (창이 열려 있는 동안 시간은 멈춰 있다)
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
@@ -1742,18 +1746,15 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
-  const ri=realmIdx(),nx=REALM_QI[ri+1],c=qiCost(P.side,P.qiN);
+  const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${SIDES[P.side].base}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}</p></div>
+    ${realmCard(c)}
     <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (T)',{pri:1})}</div></div>
-    <div class="card"><div class="row2"><h4>내공 · 경지 ${realmName()}</h4><span class="num tag">내공 ${baseQi()}${nx?` / 다음 경지 ${nx}`:''}</span></div>
-      <div class="mbar"><i style="width:${nx?clamp((baseQi()-REALM_QI[ri])/(nx-REALM_QI[ri]),0,1)*100:100}%"></i></div>
-      <p>내공은 내공 심법 수련으로만 오른다. ${SIDES[P.side].d} 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain}</p>
-      <div class="row2"><span class="note">다음 수련에 활력 ${c} (정파 30부터 +3씩, 사파 3부터 +4씩)</span>${B('trainwin','수련 창에서 내공 수련')}</div></div>
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
@@ -2615,7 +2616,7 @@ setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:
 // ================= 수련 창: 화면 아래에 붙어 캐릭터를 가리지 않는다 =================
 // 시간은 멈추지 않는다. 한 번 수련하면 연출이 끝날 때까지(약간의 쿨타임) 다음 수련을 할 수 없다.
 // 기본기(근력·지구력·민첩력·본원진기)와 내공 심법 모두 나이와 상관없이 활력으로 수련한다.
-const TRN_DUR={str:1.3,end:1.4,agi:1.2,qi:1.4,neigong:1.6};
+const TRN_DUR={str:1.3,end:1.4,agi:1.2,qi:1.4,neigong:1.6,pg:2.6,pg2:2.6};
 const TRN_COL={str:'255,110,50',end:'230,180,90',agi:'110,230,170',qi:'150,255,170'};
 const TRN_FX={str:'근력',end:'지구력',agi:'민첩력',qi:'본원진기'};
 let trnOpen=false,trnBusy=null;   // trnBusy = {k,t,dur}
@@ -2634,7 +2635,7 @@ function renderTrain(){
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
-    <div class="tlist">${rows}${trnRow('neigong','내공 심법',baseQi(),`${realmName()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
+    <div class="tlist">${pgRow()}${rows}${trnRow('neigong','내공 심법',baseQi(),`${realmName()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
   if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
@@ -2653,10 +2654,10 @@ function trainTick(dt){
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
   if(b.t<b.dur)return;trnBusy=null;
   if(P.hp>0&&!inCombat()){
-    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
         addText(P.x,P.y,`내공 +${SIDES[P.side].gain}`,'#9db8e0');log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차)`,'xp');
-        if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}}}
-    else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys')}}
+        wallCheck()}}
+    else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys');wallCheck()}}
   }else{P.qiTraining=false;log('수련이 끊겼습니다.','info')}
   renderTrain();
 }
@@ -2698,6 +2699,95 @@ function drawTrainFx(front){
 }
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;
   if(e.code==='KeyT'){trnOpen?closeTrain():openTrain()}else if(e.code==='Escape'&&trnOpen)closeTrain()});
+
+// ================= 경지: 세 기둥과 벽, 폐관수련, 주화입마 =================
+// 사용자 결정(2026-10-09): 경지는 내공만으로 오르지 않는다. 활력으로 다진 스탯의 합(외공), 내공, 무공 숙련의 합(무리)이
+// 함께 다음 경지 문턱에 닿으면 "벽"에 막히고, 안전한 곳에서 폐관수련으로 벽을 깨야 오른다. 실패하면 주화입마.
+// 설계: docs/경지_설계.md
+const PILLARS=[{k:'oe',n:'외공',d:'근력·지구력·민첩력·본원진기의 합',lack:'몸이 기를 감당하지 못한다'},
+  {k:'ne',n:'내공',d:'단전에 쌓인 기',lack:'단전의 기가 얕다'},
+  {k:'mu',n:'무리',d:'익힌 무공의 경지 합',lack:'무리에 대한 깨달음이 부족하다'}];
+const REALM_NEED={oe:[0,42,54,68,84,102,122],ne:REALM_QI,mu:[0,3,7,12,18,26,36]};
+// 무공 하나의 깨달음: 입문 1·소성 2·대성 3·극성 4·돈오(숙련 100) 6, 등급(하승~천고)이 높을수록 무겁다. 기본 무공은 절반.
+const MU_W=[1,1.2,1.5,1.8,2];
+const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
+const pillarVal=k=>k==='oe'?STATS.reduce((a,{k})=>a+P.st[k],0):k==='ne'?baseQi():Math.round(Object.keys(P.arts).reduce((a,id)=>a+artMu(id),0)*10)/10;
+// 벽: 세 기둥이 모두 다음 경지 문턱에 닿았는데 경지가 아직 그대로인 상태
+const atWall=()=>realmIdx()<RANKS.length-1&&PILLARS.every(({k})=>pillarVal(k)>=REALM_NEED[k][realmIdx()+1]);
+const lacking=()=>{const r=realmIdx()+1;if(r>=RANKS.length)return[];return PILLARS.filter(({k})=>pillarVal(k)<REALM_NEED[k][r])};
+// 수련 뒤마다 부른다: 처음 벽에 닿으면 한 번 알린다
+function wallCheck(){if(!P||!atWall()||P.wallN===realmIdx())return;P.wallN=realmIdx();
+  const nx=RANKS[realmIdx()+1];log(`세 기둥이 ${nx}의 문턱에 닿았지만 벽에 막혔습니다. 안전한 곳에서 폐관수련으로 벽을 깨야 합니다.`,'xp');showBanner('벽에 막히다',`${nx}의 문턱`)}
+
+// ---- 폐관수련 ----
+// 자기 문파(본산 맵들), 개봉의 내 집 곁, 산 맵 정상에서만 할 수 있다
+function sectRegs(sid){const s=SECTS[sid];if(!s)return[];const id=hqId(s),R=REGIONS[id];return R?(R.chain||[id]).concat(id):[]}
+const inOwnSect=()=>!!(P.sect&&P.sect!=='own'&&sectRegs(P.sect).includes(REG));
+function pgPlace(){
+  if(inOwnSect())return SECTS[P.sect].n+' 후산';
+  if(REG==='gaebong'&&G.house&&G.house.built&&dist(houseDoor(),P)<6)return'내 집';
+  const R=REGIONS[REG];if(R&&R.lm&&R.lm.t==='m'&&P.y<=9.5)return R.name+' 정상';
+  return null}
+const pgCost=()=>40+30*realmIdx();
+const pgYears=()=>.5+.5*realmIdx();
+const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+// 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%, 사파(마공)는 -5%. 최대 95%
+const PG_BASE=[0,.85,.75,.65,.55,.45,.35];
+function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
+  if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
+  if(pill)c+=.1;if(P.side==='사')c-=.05;return clamp(c,.05,.95)}
+// 할 수 없는 까닭 (없으면 '')
+function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
+  if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
+  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;return''}
+function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
+  return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${RANKS[r]}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
+    <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
+    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}</div>`}
+{const _st=startTrain;startTrain=function(k){if(k!=='pg'&&k!=='pg2')return _st(k);
+  if(trnBusy||P.hp<=0)return;const why=pgWhy();if(why){log(`폐관수련을 할 수 없습니다: ${why}.`,'info');return}
+  P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
+  log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}}
+// 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
+function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
+  const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
+  P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
+  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,life:2});shake=Math.max(shake,.25);
+    log(`${yrs}년의 폐관 끝에 벽을 깨고 ${RANKS[r]}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${RANKS[r]}의 경지`);
+    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${RANKS[r]}의 경지에 올랐다`);wallCheck();return}
+  qiDeviation(r)}
+// 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
+function qiDeviation(r){const roll=Math.random();fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
+  if(r>=4&&roll<.05){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${RANKS[r]}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
+  const heavy=roll<.3,lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);
+  P.inj=YEAR_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;
+  let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
+  recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
+  const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${lost*SIDES[P.side].gain}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
+  log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');P.feats.push(`${Math.floor(P.age)}세에 ${RANKS[r]}의 벽 앞에서 주화입마에 빠졌다`)}
+{const _tt=trainTick;trainTick=function(dt){
+  if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
+  const b=trnBusy;if(b&&b.k.startsWith('pg')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
+    if(b.t>=b.dur){trnBusy=null;pgFinish(b.k==='pg2');renderTrain()}return _tt(0)}
+  return _tt(dt)}}
+{const _gm=gainMast;gainMast=function(id,v){const s=A(id),t=s?(s.p>=100?4:tierOf(s.p)):0;const r=_gm(id,v);if(s&&(s.p>=100?4:tierOf(s.p))!==t)wallCheck();return r}}
+// 인물창의 경지 카드
+function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall();
+  const bars=PILLARS.map(({k,n,d})=>{const v=pillarVal(k),need=top?REALM_NEED[k][ri]:REALM_NEED[k][r],lo=REALM_NEED[k][ri],ok=v>=need;
+    const w=top?100:clamp((v-lo)/Math.max(1,need-lo),0,1)*100;
+    return `<div class="it"><div>${n} <b class="num ${ok?'good':'gold'}">${v}</b>${top?'':` <small class="dim">/ ${need}</small>`}<span>${d}</span><div class="mbar"><i style="width:${w}%"></i></div></div><div class="ib"></div></div>`}).join('');
+  const lk=lacking();
+  const msg=top?'무학의 끝에 닿았다.':wall?`<b class="gold">벽에 막혔다.</b> 문파·내 집·산 정상에서 폐관수련으로 ${RANKS[r]}의 벽을 깨야 한다. 성공 ${Math.round(pgChance()*100)}%`
+    :`${RANKS[r]}에 오르려면: ${lk.map(p=>`<span class="bad">${p.lack}</span>`).join(' · ')}`;
+  return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${RANKS[r]}`}</span></div>
+    <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 한쪽만 키우면 벽에 닿지 못한다.</p>
+    <div class="list">${bars}</div><p>${msg}</p>
+    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/YEAR_SEC*12)}달 남음)</p>`:''}
+    <p>내공 심법 수련 ${P.qiN}회 · 1회 +${SIDES[P.side].gain} · 다음 수련에 활력 ${c}</p>
+    <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div></div>`}
+// 새 생은 삼류부터, 예전 저장은 지금 내공의 경지를 그대로 이어받는다
+{const _nl=newLife;newLife=function(o){_nl(o);P.realm=0;P.inj=0;P.injS=0}}
+{const _as=applySave;applySave=function(d){const old=d&&d.P&&d.P.realm==null,r=_as(d);if(r&&P){if(old)P.realm=qiRealm();P.inj=(d.P.inj)||0;P.injS=(d.P.injS)||0;P.wallN=d.P.wallN??null}return r}}
 
 // ================= 무덤 던전: 죽은 자리에 봉분이 남고, 그 생의 내가 망령 보스로 지킨다 =================
 // 가까이 가면 망령과 강시 둘이 깨어난다. 망령을 쓰러뜨리면 그 생이 지녔던 물건 중 일부를 등급별 확률로 떨어뜨리고 무덤은 사라진다.

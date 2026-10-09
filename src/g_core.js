@@ -14,7 +14,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiBonus:0,dhw:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
@@ -36,7 +36,7 @@ const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]|
 const hasWeaponFor=c=>c==='권'||!!(P.eq.weapon&&P.eq.weapon.cls===c);
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
-const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk')));
+const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
@@ -47,11 +47,15 @@ const maxVit=()=>150+P.st.end*25;
 // 활력을 얻는다. 지구력이 정한 최대치까지만 찬다 (전생에서 넘겨받아 이미 넘친 활력은 깎지 않는다).
 function gainVit(v){const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
-const realmIdx=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
+// 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
+const qiRealm=()=>{let i=0;REALM_QI.forEach((v,j)=>{if(baseQi()>=v)i=j});return i};
+const realmIdx=()=>P.realm??qiRealm();
+// 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
+const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>RANKS[realmIdx()];
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'));
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul();
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -293,9 +297,9 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 function trainQi(){
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
-  const done=()=>{const before=realmIdx();P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+  const done=()=>{P.vit-=c;P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
     log(`운기조식으로 내공이 ${SIDES[P.side].gain} 늘었습니다. (${P.qiN}회차, 다음 ${qiCost(P.side,P.qiN)})`,'xp');
-    if(realmIdx()>before){log(`경지가 ${realmName()}(으)로 올랐습니다.`,'xp');showBanner('경지 상승',realmName());P.feats.push(`${Math.floor(P.age)}세에 ${realmName()}의 경지에 올랐다`)}renderOpen()};
+    wallCheck();renderOpen()};
   // 인물창에서 누르면 창을 닫지 않고 그 자리에서 잠깐 운기한 뒤 결과를 보여 준다 (창이 열려 있는 동안 시간은 멈춰 있다)
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
