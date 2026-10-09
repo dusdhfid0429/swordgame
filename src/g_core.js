@@ -1,6 +1,6 @@
 // ================= state =================
 const TW=64,TH=32,MID=20;
-let N=40;   // 지금 지역의 격자 크기. 지역마다 다르다 (REGIONS[..].size, 기본 40)
+let N=40,NH=40;   // 지금 지역의 격자 가로(N)·세로(NH) 칸 수. 지역마다 다르다 (REGIONS[..].size, h; 기본 40×40). 산길처럼 길쭉한 맵은 N<NH
 let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],embers=[],drops=[],eprojs=[],S=1,W=0,H=0,cam={x:0,y:0},keys={},time=0,shake=0,tod=.3;
 let paused=true,playing=false;
 const ARTS=buildArts();
@@ -142,7 +142,7 @@ function spawnTick(){
   const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
   for(const[k,cap,test,mk]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
     for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
-      y=big?Math.max(1,Math.min(N-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2));
+      y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
       if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
   for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;

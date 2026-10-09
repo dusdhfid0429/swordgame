@@ -1,8 +1,8 @@
-// ================= 도시·명소·산은 각각 40×40 맵 한 장 =================
+// ================= 도시·명소·산은 각각 맵 한 장 (도시·명소 40×40, 산길 20×40) =================
 // 사용자 결정(2026-10-09): 성 맵 안에 구역으로 그리지 말고, 화산은 화산 맵 한 장으로 만들고 그 안(산 중턱)에서 화산파 맵으로 간다.
 // 설계: docs/맵이동_설계.md 15장
 // - 들판(성) 맵의 그 자리에는 입구(이정표)만 있다. 들어가면 그 장소의 40×40 맵: 아래 출입구로 들어와 위로 오른다.
-// - 산: 굽은 산길이 정상의 정자까지. 산 중턱 빈터에 그 산 문파의 포털(본산 첫 맵으로).
+// - 산: 20×40 길쭉한 맵. 굽은 산길이 정상의 정자까지. 산 중턱 빈터에 그 산 문파의 포털(본산 첫 맵으로). (2026-10-09 사용자: 맵 크기는 지형에 따라 다르게)
 // - 도시: 성벽과 성문, 안쪽 돌 마당에 객잔·대장간·관아·민가·사당. 곁에 있는 문파(북경 → 하북팽가 등)는 성 안 북쪽 포털.
 // - 명소: 마당 가운데 그 명소의 전각(관문·석굴 절·사당·정자).
 // - 호수·사막 같은 지형은 들판 맵에 그대로 둔다.
@@ -14,7 +14,7 @@ const LM_PORTAL_M=GD.LM_PORTAL_M,LM_PORTAL_C=GD.LM_PORTAL_C;
 function lmMapCfg(k,i,m,p){
   const seed=9100+i*53+k.charCodeAt(0)*7+k.length*31,id=lmId(k,i),th=m.t==='m'?(LM_SNOW.test(m.n)?'snow':m.n==='십만대산'?'dark':'peak'):PV_PAINT[p.th]||'manor';
   const base={id,name:m.n,th,seed};
-  if(m.t==='m')return{...base,yard:[16,3,24,8],builds:[{x:19,y:4,w:2,h:2,kind:'pavilion'}],lamps:[[18,7],[22,7]],nodes:{herb:7,ore:6,wood:2}};
+  if(m.t==='m')return{...base,w:20,h:40,yard:[6,3,14,8],builds:[{x:9,y:4,w:2,h:2,kind:'pavilion'}],lamps:[[8,7],[12,7]],nodes:{herb:5,ore:4,wood:2}};
   if(m.t==='c')return{...base,th:'manor',yard:[8,7,32,30],wall:33,
     builds:[{x:9,y:9,w:3,h:2,kind:'inn'},{x:28,y:9,w:3,h:2,kind:'hall'},{x:9,y:15,w:2,h:2,kind:'house'},{x:29,y:15,w:2,h:2,kind:'house'},
       {x:9,y:21,w:2,h:3,kind:'smith'},{x:29,y:21,w:2,h:2,kind:'temple'},{x:13,y:26,w:2,h:2,kind:'house'},{x:25,y:26,w:2,h:2,kind:'house'}],
@@ -22,7 +22,8 @@ function lmMapCfg(k,i,m,p){
   const pass=/관$/.test(m.n),cave=/석굴|용문/.test(m.n),kind=pass?'hall':cave||m.n.includes('묘')?'temple':'pavilion';
   return{...base,yard:[13,12,27,24],builds:[{x:19,y:14,w:3,h:2,kind}],lamps:[[16,18],[24,18],[16,22],[24,22]],nodes:{herb:4,ore:2,wood:2},cave}}
 // 산길 x (genStage와 같은 식)
-const lmRoadX=(c,y)=>ST_PATH(y,c.seed%7*.9,c.yard?c.yard[3]:12,38);
+const lmRoadX=(c,y)=>ST_PATH(y,c.seed%7*.9,c.yard?c.yard[3]:12,(c.h||40)-2,(c.w||40)/2);
+const lmMidX=c=>(c.w||40)/2+.5;   // 아래 출입구 x (가로 가운데)
 // 장소 맵 그리기: genStage 위에 포털 빈터와 산길에서 포털까지 디딤돌
 function lmGen(c,m){genStage(c);
   for(const q of c.portals){const x=Math.floor(q.x),y=Math.floor(q.y);
@@ -36,16 +37,16 @@ for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
   (F.marks||[]).forEach((m,i)=>{if(m.t==='t')return;
     const c=lmMapCfg(k,i,m,p),id=c.id;m.gate=id;
     c.portals=[];
-    const R={name:m.n,prov:k,lm:m,theme:c.th,size:40,stage:c,
+    const R={name:m.n,prov:k,lm:m,theme:c.th,size:c.w||40,h:c.h||40,stage:c,
       gen:()=>lmGen(c,m),
       bake:()=>bakeHQ(c.th),
       zone:(x,y)=>lmZone(c,m,x,y),
       spawns:m.t==='m'?[...(PV_BEAST[p.th]||[]).map(([b,n])=>[b,n,(x,y)=>y>10]),['산적',2,(x,y)=>y>12&&y<32]]
         :m.t==='c'?[['양민',4,(x,y)=>y>8&&y<31]]:(PV_BEAST[p.th]||[]).slice(0,1).map(([b,n])=>[b,n,(x,y)=>y>26||y<10]),
       bosses:[],npcs:[],
-      gates:[{x:20.5,y:38.6,to:pvId(k),tx:m.x,ty:m.y+2.4,label:p.n}]};
+      gates:[{x:lmMidX(c),y:38.6,to:pvId(k),tx:m.x,ty:m.y+2.4,label:p.n}]};
     REGIONS[id]=R;
-    F.gates.push({x:m.x,y:m.y,to:id,tx:20.5,ty:36.2,label:m.n,inner:1,lm:1})})}
+    F.gates.push({x:m.x,y:m.y,to:id,tx:lmMidX(c),ty:36.2,label:m.n,inner:1,lm:1})})}
 // 문파를 짝 장소 맵 안 포털로 옮긴다
 function lmPair(sid,k){const s=LM_SECT[sid];if(!s)return null;const F=REGIONS[pvId(k)];let best=null,bd=80;
   // 세가(가문)는 도시·명소를 먼저, 나머지는 산을 먼저 찾는다
@@ -64,14 +65,14 @@ for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(s
   REGIONS[first].lmVia=m.gate}
 // 숭산: 화산과 같이 산 맵 한 장. 중턱 포털로 소림사 본산(hq_shaolin)에 간다 (2026-10-09 사용자 요청)
 // 예전 숭산은 꼭대기 암자가 소림사 본산이었다. 지역 id 'sungsan'(개봉 북쪽 출입구)은 그대로 산 맵이 된다.
-{const R=REGIONS.sungsan,m={n:'숭산',t:'m'},c={id:'sungsan',name:'숭산',th:'peak',seed:9777,yard:[16,3,24,8],builds:[{x:19,y:4,w:2,h:2,kind:'pavilion'}],
-    lamps:[[18,7],[22,7]],nodes:{herb:7,ore:6,wood:2},portals:[]};
-  const x=lmRoadX(c,20)+5.5,y=20.5,S=SECTS.shaolin;c.portals.push({x,y,s:'shaolin',label:S.n});
-  Object.assign(R,{name:'숭산',hq:null,npcs:[],theme:'peak',size:40,stage:c,lm:m,gen:()=>lmGen(c,m),bake:()=>bakeHQ('peak'),zone:(x,y)=>lmZone(c,m,x,y),
+{const R=REGIONS.sungsan,m={n:'숭산',t:'m'},c={id:'sungsan',name:'숭산',th:'peak',seed:9777,w:20,h:40,yard:[6,3,14,8],builds:[{x:9,y:4,w:2,h:2,kind:'pavilion'}],
+    lamps:[[8,7],[12,7]],nodes:{herb:5,ore:4,wood:2},portals:[]};
+  const x=lmRoadX(c,20)+4.5,y=20.5,S=SECTS.shaolin;c.portals.push({x,y,s:'shaolin',label:S.n});
+  Object.assign(R,{name:'숭산',hq:null,npcs:[],theme:'peak',size:20,h:40,stage:c,lm:m,gen:()=>lmGen(c,m),bake:()=>bakeHQ('peak'),zone:(x,y)=>lmZone(c,m,x,y),
     spawns:[['늑대',4,(x,y)=>y<30&&y>10],['곰',1,(x,y)=>y<24&&y>10],['호랑이',1,(x,y)=>y<18&&y>9],['사슴',3,(x,y)=>y>18],
       ['산적',3,(x,y)=>y>=24&&y<=32],['사파 무인',2,(x,y)=>y>=12&&y<=26,(x,y)=>mkFac('사',0,x,y)]],
     bosses:[['산적두목',lmRoadX(c,28)+.5,28.5,120]]});
-  R.gates=[{x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:3.2,label:'개봉'},{x,y,to:'hq_shaolin',tx:20.5,ty:36.2,label:S.n,portal:1}];
+  R.gates=[{x:10.5,y:38.6,to:'gaebong',tx:20.5,ty:3.2,label:'개봉'},{x,y,to:'hq_shaolin',tx:20.5,ty:36.2,label:S.n,portal:1}];
   REGIONS.hq_shaolin.gates.push({x:20.5,y:38.6,to:'sungsan',tx:x,ty:y+2,label:'숭산'});REGIONS.hq_shaolin.lmVia='sungsan';REGIONS.hq_shaolin.prov='henan'}
 // 예전 저장이 숭산 꼭대기(옛 소림사 자리)였으면 걸을 수 있는 곳으로
-hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.4}});
+hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=10.5;P.y=36.4}});

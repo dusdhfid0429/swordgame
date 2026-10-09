@@ -98,8 +98,8 @@ for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;
   const z=R.zone;R.zone=(x,y)=>{const l=R.lairs.find(q=>Math.hypot(q.x-x,q.y-y)<7);return l?`${R.name} · ${l.n}`:z(x,y)}}
 // 무림전도의 도시·명소·산·지형 자리 (g_landmark.js). 출입구·소굴이 정해진 뒤에 놓는다
 for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)];R.marks=lmPlace(k,R.size,R)}
-// 지역마다 격자 크기(N)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
-for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;g()}}
+// 지역마다 격자 크기(N 가로, NH 세로)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
+for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;NH=R.h||N;g()}}
 
 // ================= 천하 지도 창 =================
 const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};

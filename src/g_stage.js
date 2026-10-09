@@ -1,6 +1,7 @@
 // ================= 본산 여러 맵: 문파 크기만큼 본산이 깊다 =================
 // 사용자 결정(2026-10-08): 대문파 4맵, 중견문파 2맵, 소문파 1맵, 마교 8맵. 설계: docs/세력_문파_설계.md 18장
-// - 맵은 모두 40×40. 아래(남쪽) 출입구로 들어와 위(북쪽) 출입구로 더 깊이 간다.
+// - 맵은 기본 40×40이고 c.w·c.h 로 다르게 할 수 있다(산길은 20×40, g_lmmap.js). 아래(남쪽) 출입구로 들어와 위(북쪽) 출입구로 더 깊이 간다.
+//   길은 가로 가운데(N/2)를 따라 굽이친다. 출입구·마당 좌표는 맵마다 c 에 있다.
 // - 대문파: 산문 → 외원 → 본산(장문인) → 후산.  중견문파: 산문 → 본산.  소문파: 본산 하나.
 //   소림사는 숭산 맵 중턱 포털로 들어가는 본산(방장) 뒤로 나한당 연무장 → 탑림 → 달마동이 붙는다 (g_lmmap.js).
 //   마교 여덟 맵은 g_magyo.js에서 같은 틀로 만든다.
@@ -8,24 +9,24 @@
 // - 외원: 숙소와 연무장, 제자가 많다. 외원 총관에게서 임무와 비급(공적)을 받는다.
 // - 후산: 제자만 들어간다. 장로에게 문파 패시브·보법을 배우고, 약초·광석이 많다.
 // - 역참 말은 본산(장문인 맵) 아래 출입구에 내린다.
-const ST_PATH=(y,sd,y0,y1)=>20+Math.round(3*Math.sin(y*.23+sd)*Math.max(0,Math.min(1,(y1-y)/4,(y-y0)/4)));
+const ST_PATH=(y,sd,y0,y1,cx=20)=>cx+Math.round(3*Math.sin(y*.23+sd)*Math.max(0,Math.min(1,(y1-y)/4,(y-y0)/4)));
 // c: {id, s(문파), th(지형), seed, mg(마교 전각), yard:[x0,y0,x1,y1](포장 마당), top(위로 더 갈 수 있나), topX,
 //     wall(바위 벽 y), builds, lamps, flags, nodes:{herb,ore,chest:[x,y]}}
 function genStage(c){
-  N=40;const r=rng(c.seed),sd=c.seed%7*.9,o1=c.seed%13*.7,o2=c.seed%11*.6,th=c.th;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
-  const yd=c.yard,topX=c.topX??20,yEnd=yd?yd[3]:c.top?0:12,road=y=>ST_PATH(y,sd,yEnd,38);
+  N=c.w||40;NH=c.h||40;const r=rng(c.seed),sd=c.seed%7*.9,o1=c.seed%13*.7,o2=c.seed%11*.6,th=c.th;map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
+  const yd=c.yard,topX=c.topX??N/2,yEnd=yd?yd[3]:c.top?0:12,road=y=>ST_PATH(y,sd,yEnd,NH-2,N/2);
   const onRoad=(x,y)=>(y>=yEnd&&(x===road(y)||x===road(y)+1))||(c.top&&yd&&y<=yd[1]&&(x===topX||x===topX+1));
   const inYard=(x,y)=>yd&&x>=yd[0]&&x<=yd[2]&&y>=yd[1]&&y<=yd[3];
   const tree=th==='peak'||th==='snow'||th==='dark'?'pine':'tree';
-  for(let y=0;y<N;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
+  for(let y=0;y<NH;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){
     const hi=fbm(x*.17+o1,y*.17+o2),rd=onRoad(x,y),near=Math.abs(x-road(Math.max(y,yEnd)))<=2;
     let g=HQ_BASE[th]??0;
     if(th==='peak'){if(hi>.62)g=6;if(y<=3)g=8}else if(th==='snow'){if(hi<.36)g=6}else if(th==='forest'){if(hi>.68)g=7}
     else if(th==='lake'){if(hi>.7&&!near)g=2}else if(th==='manor'){if(hi>.66)g=7}else if(th==='swamp'){if(hi>.66&&!near)g=2;else if(hi<.3)g=0}
     else if(th==='canyon'){if(hi>.6)g=6}else if(th==='dark'){if(hi>.63)g=6;else if(hi<.28)g=10}
     if(inYard(x,y))g=4;if(rd)g=g===2?3:1;
-    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=N-2;
-    if(x===0||y===0||x===N-1||y===N-1)o=r()<.6?tree:'rock';
+    let o=null;const edge=x<=1||y<=1||x>=N-2||y>=NH-2;
+    if(x===0||y===0||x===N-1||y===NH-1)o=r()<.6?tree:'rock';
     else if(edge&&g!==2)o=r()<.75?(r()<.65?tree:'rock'):null;
     else if(!rd&&!inYard(x,y)&&g!==2&&!near){const v=r(),cliff=fbm(x*.3+o2,y*.3+o1);
       if(th==='peak'||th==='snow'||th==='dark')o=cliff>.67?'rock':v<.14?'pine':v<.18?'rock':null;
@@ -40,15 +41,15 @@ function genStage(c){
   for(const b0 of c.builds||[]){const b={...b0,mg:c.mg};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of c.lamps||[])if(objs[y][x]==null&&!onRoad(x,y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   if(c.flags)placeFlags(c.s.id,c.flags);
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(map[y][x].g===3)rails.push({x,y});
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===3)rails.push({x,y});
   const put=(t,x,y)=>{if(walk(x,y)&&!onRoad(x,y)&&!nodes.some(n=>n.x===x+.5&&n.y===y+.5))nodes.push({t,x:x+.5,y:y+.5,cd:0})};
-  const want=(t,n,ok)=>{for(let i=0;i<500&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(N-4));if(!inYard(x,y)&&ok(map[y][x].g))put(t,x,y)}};
+  const want=(t,n,ok)=>{for(let i=0;i<500&&nodes.filter(q=>q.t===t).length<n;i++){const x=2+Math.floor(r()*(N-4)),y=2+Math.floor(r()*(NH-4));if(!inYard(x,y)&&ok(map[y][x].g))put(t,x,y)}};
   const nd=c.nodes||{};want('herb',nd.herb??5,g=>g===0||g===7||g===9||g===11);want('ore',nd.ore??4,g=>g===6||g===8||g===10||g===11);want('wood',nd.wood??3,g=>g===0||g===9);
   if(nd.chest){const[x,y]=nd.chest;objs[y][x]=null;nodes.push({t:'chest',x:x+.5,y:y+.5,cd:0})}
 }
 // 맵 하나를 지역으로 등록한다
 function stageRegion(c){
-  const R={name:c.name,hq:c.s.id,theme:c.th,size:40,stage:c,gen:()=>genStage(c),bake:()=>bakeHQ(c.th),zone:c.zone||(()=>c.name),
+  const R={name:c.name,hq:c.s.id,theme:c.th,size:c.w||40,h:c.h||40,stage:c,gen:()=>genStage(c),bake:()=>bakeHQ(c.th),zone:c.zone||(()=>c.name),
     spawns:c.spawns||[],bosses:[],gates:[],npcs:c.npcs||[]};
   REGIONS[c.id]=R;return R}
 const stTopX=id=>{const R=REGIONS[id];return R.stage?R.stage.topX??20:R.topX??17};
@@ -97,7 +98,7 @@ hook('npcDlg',c=>{if(c.html==null)c.html=c.n.steward?stewardDlg(c.n):c.n.elder?e
 // 출입구 조건: 막히면 한 걸음 물러난다
 hook('gate',c=>{
   if(P&&P.hp>0&&!G.duel&&(P.reg||'gaebong')===REG&&!P.gateLock)for(const g of REGION().gates)if(g.need&&dist(g,P)<.8){const no=g.need();
-    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<N/2?1.3:-1.3;P.path=null;P.gateLock=1;c.stop=true;return}}});
+    if(no){log(no,'info');addText(P.x,P.y,'출입 금지','#e07a5a');P.y+=g.y<NH/2?1.3:-1.3;P.path=null;P.gateLock=1;c.stop=true;return}}});
 // 맵이 바뀐 뒤의 예전 저장: 바위·건물 속이나 맵 밖에 서 있으면 아래 출입구 앞으로
 hook('regionLoaded',id=>{if(P&&P.reg===id&&id.startsWith('hq_')&&!walkAt(P.x,P.y)){P.x=20.5;P.y=36.2}});
 

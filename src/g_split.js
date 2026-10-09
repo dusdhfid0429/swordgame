@@ -20,7 +20,7 @@ function pvFull(k){
   Object.assign(PV_CACHE,{k,S:N,map,objs,lamps,builds,rails,nodes,tents,plots});return PV_CACHE}
 function pvSlice(k,c,r){
   const F=pvFull(k),ox=c*PV_W,oy=r*PV_W,inW=(x,y)=>x>=ox&&y>=oy&&x<ox+PV_W&&y<oy+PV_W,sh=o=>({...o,x:o.x-ox,y:o.y-oy});
-  N=PV_W;map=[];objs=[];for(let y=0;y<N;y++){map[y]=F.map[y+oy].slice(ox,ox+N);objs[y]=F.objs[y+oy].slice(ox,ox+N)}
+  N=NH=PV_W;map=[];objs=[];for(let y=0;y<N;y++){map[y]=F.map[y+oy].slice(ox,ox+N);objs[y]=F.objs[y+oy].slice(ox,ox+N)}
   lamps=F.lamps.filter(o=>inW(o.x,o.y)).map(sh);rails=F.rails.filter(o=>inW(o.x,o.y)).map(sh);tents=F.tents.filter(o=>inW(o.x,o.y)).map(sh);
   builds=F.builds.filter(b=>b.x<ox+N&&b.x+b.w>ox&&b.y<oy+N&&b.y+b.h>oy).map(sh);nodes=F.nodes.filter(o=>inW(o.x,o.y)).map(sh);plots=[]}
 for(const[k,p]of Object.entries(PROV)){
@@ -50,18 +50,18 @@ function pvNearWalk(x,y){for(let d=0;d<8;d++)for(let j=-d;j<=d;j++)for(let i=-d;
 // 가장자리를 걸어 나가면 이웃 맵으로. 넘어가는 자리가 막혔으면 성 전체 그림에서 가까운 빈칸을 찾는다
 function pvEdgeTick(){
   const R=REGION();if(!R||!R.edges||!P||P.hp<=0||P.traveling||P.leap||G.duel)return;
-  const e=R.edges,m=.55,side=P.x<m?'w':P.x>N-m?'e':P.y<m?'n':P.y>N-m?'s':null;if(!side||!e[side])return;
+  const e=R.edges,m=.55,side=P.x<m?'w':P.x>N-m?'e':P.y<m?'n':P.y>NH-m?'s':null;if(!side||!e[side])return;
   const T=REGIONS[e[side]].win,F=pvFull(T.k),fx=T.c*PV_W,fy=T.r*PV_W;
   let tx=side==='w'?PV_W-1.1:side==='e'?1.1:P.x,ty=side==='n'?PV_W-1.1:side==='s'?1.1:P.y;
   const free=(a,b)=>a>=0&&b>=0&&a<PV_W&&b<PV_W&&F.map[b+fy][a+fx].g!==2&&!F.objs[b+fy][a+fx];
   if(!free(Math.floor(tx),Math.floor(ty))){let best=null;for(let d=1;d<6&&!best;d++)for(const s of[-d,d]){const a=side==='w'||side==='e'?Math.floor(tx):Math.floor(tx)+s,b=side==='n'||side==='s'?Math.floor(ty):Math.floor(ty)+s;if(free(a,b)){best={x:a+.5,y:b+.5};break}}
-    if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,N-m-.1);return}tx=best.x;ty=best.y}
+    if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,NH-m-.1);return}tx=best.x;ty=best.y}
   P.path=null;P.target=null;travel({to:e[side],tx,ty,edge:1})}
 hook('gateDone',()=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()});
 // 이웃 맵이 있는 가장자리에 가까이 가면 경계에 빛줄과 이웃 맵 이름을 띄운다
-function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=v=>clamp(v,3,N-3);
-  if(e.w&&P.x<near)out.push({x:.3,y:q(P.y),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y),dx:0,dy:1,to:e.e,ar:'→'});
-  if(e.n&&P.y<near)out.push({x:q(P.x),y:.3,dx:1,dy:0,to:e.n,ar:'↑'});if(e.s&&P.y>N-near)out.push({x:q(P.x),y:N-.3,dx:1,dy:0,to:e.s,ar:'↓'});return out}
+function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=(v,n=N)=>clamp(v,3,n-3);
+  if(e.w&&P.x<near)out.push({x:.3,y:q(P.y,NH),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y,NH),dx:0,dy:1,to:e.e,ar:'→'});
+  if(e.n&&P.y<near)out.push({x:q(P.x),y:.3,dx:1,dy:0,to:e.n,ar:'↑'});if(e.s&&P.y>NH-near)out.push({x:q(P.x),y:NH-.3,dx:1,dy:0,to:e.s,ar:'↓'});return out}
 function drawEdgeHint(h){const a=.35+.2*Math.sin(time*3),p0=toScreen(h.x-h.dx*3,h.y-h.dy*3),p1=toScreen(h.x+h.dx*3,h.y+h.dy*3),pm=toScreen(h.x,h.y);
   ctx.save();ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();ctx.restore();
   ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=`${h.ar} ${REGIONS[h.to].name}`;ctx.fillStyle='#000';ctx.fillText(s,pm.x+1,pm.y-11);ctx.fillStyle='#ffe2a0';ctx.fillText(s,pm.x,pm.y-12)}

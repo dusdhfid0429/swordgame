@@ -16,9 +16,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     return{bj:at('hebei','북경').y<at('hebei','석가장').y,ly:at('henan','낙양').x<at('henan','정주').x,dh:at('gansu','돈황').x<at('gansu','란주').x,
       gz:at('guangdong','광주').y>at('guangdong','단하산').y}});
   ok(`지도 순서 유지 ${JSON.stringify(ord)}`,Object.values(ord).every(Boolean));
-  // 도시·명소·산은 각각 40×40 맵 한 장, 들판 맵에는 입구만 (2026-10-09 사용자 결정)
+  // 도시·명소는 40×40, 산은 20×40 맵 한 장, 들판 맵에는 입구만 (2026-10-09 사용자 결정)
   const lm=await p.evaluate(()=>{const bad=[];let n=0;for(const k of Object.keys(PROV))for(const m of REGIONS[pvId(k)].marks){if(m.t==='t'){if(m.gate)bad.push(m.n);continue}
-      n++;const L=REGIONS[m.gate];if(!L||L.size!==40)bad.push(m.n+'(맵없음)');
+      n++;const L=REGIONS[m.gate];if(!L||L.size!==(m.t==='m'?20:40)||(L.h||40)!==40)bad.push(m.n+'(맵 크기)');
       const w=Object.values(REGIONS).filter(R=>R.win&&R.win.k===k&&R.gates.some(g=>g.to===m.gate)).length;if(w!==1)bad.push(m.n+'(입구'+w+')')}
     return{n,bad}});
   ok(`장소 맵 ${lm.n}장, 들판 맵마다 입구 하나 ${lm.bad.slice(0,6).join(' ')}`,lm.n===120&&lm.bad.length===0);
@@ -29,9 +29,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`문파 포털이 장소 맵 안에 ${JSON.stringify(pr)}`,Object.values(pr).every(Boolean));
   // 장소 맵마다 아래 출입구에서 포털·정상까지 걸어서 닿는가
   const walkAll=await p.evaluate(()=>{const bad=[];for(const[id,R]of Object.entries(REGIONS)){if(!R.lm)continue;loadRegion(id);
-      const seen=new Set(['20,36']),q=[[20,36]];while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
+      const c=Math.floor(N/2),seen=new Set([c+',36']),q=[[c,36]];while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
       const near=(px,py)=>{for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(seen.has([Math.floor(px)+dx,Math.floor(py)+dy]+''))return true;return false};
-      for(const g of R.gates)if(!near(g.x,g.y))bad.push(R.name+'→'+g.label);if(R.lm.t==='m'&&!near(20,6))bad.push(R.name+' 정상');if(builds.length<1)bad.push(R.name+' 전각')}
+      for(const g of R.gates)if(!near(g.x,g.y))bad.push(R.name+'→'+g.label);if(R.lm.t==='m'&&!near(c,6))bad.push(R.name+' 정상');if(builds.length<1)bad.push(R.name+' 전각')}
     loadRegion('gaebong');return bad});
   ok(`장소 맵 모두 포털·정상까지 걸어서 닿음 ${walkAll.slice(0,6).join(' / ')}`,walkAll.length===0);
   // 섬서성 들판 → 화산 → 중턱 포털 → 화산파 산문 → 나오면 화산 중턱

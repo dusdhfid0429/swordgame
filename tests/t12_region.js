@@ -19,7 +19,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('도착하자마자 되돌아가지 않는다',await p.evaluate(()=>{const r=REG;return r==='sungsan'}));
   await p.screenshot({path:shot('region_sungsan_arrive')});
   // 산문에서 암자까지 걸어서 이어지는지 (막힌 길 없음)
-  const path=await p.evaluate(()=>{const seen=new Set(),q=[[20,37]];seen.add('20,37');while(q.length){const[x,y]=q.shift();if(y<=7&&x>=17&&x<=23)return true;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=(x+dx)+','+(y+dy);if(!seen.has(k)&&walk(x+dx,y+dy)){seen.add(k);q.push([x+dx,y+dy])}}}return false});
+  const path=await p.evaluate(()=>{const c=Math.floor(N/2),seen=new Set(),q=[[c,37]];seen.add(c+',37');while(q.length){const[x,y]=q.shift();if(y<=7&&x>=c-3&&x<=c+3)return true;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=(x+dx)+','+(y+dy);if(!seen.has(k)&&walk(x+dx,y+dy)){seen.add(k);q.push([x+dx,y+dy])}}}return false});
   ok('산문에서 산정 암자까지 걸어서 갈 수 있다',path);
   for(const[n,y]of[['mid',24],['top',8]]){await p.evaluate(y=>{P.x=lmRoadX(REGION().stage,y)+.5;P.y=y+.5;P.path=null;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y},y);await p.waitForTimeout(500);await p.screenshot({path:shot('region_sungsan_'+n)})}
   // 숭산은 산 맵: 중턱 포털로 소림사 (2026-10-09)
@@ -27,10 +27,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('숭산 중턱 소림사 포털 구역 이름',await p.evaluate(()=>$('zone').textContent.includes('소림사')&&REGION().gates.some(q=>q.portal&&q.to==='hq_shaolin')));
   await p.screenshot({path:shot('region_sungsan_portal')});
   // 숭산에서 죽으면 무덤은 숭산에만 있다
-  await p.evaluate(()=>{P.x=SS_PATH(20)+.5;P.y=20.5;const tb=G.tombs.length;P.hp=1;makeTomb('전투')});
+  await p.evaluate(()=>{P.x=lmRoadX(REGION().stage,20)+.5;P.y=20.5;const tb=G.tombs.length;P.hp=1;makeTomb('전투')});
   const tomb=await p.evaluate(()=>G.tombs.at(-1).reg);ok(`숭산 무덤은 숭산 소속 (${tomb})`,tomb==='sungsan');
   // 되돌아간다
-  await p.evaluate(()=>{P.x=20.5;P.y=37.4;P.path=[{x:20.5,y:38.6}];P.gateLock=0});
+  await p.evaluate(()=>{P.x=N/2+.5;P.y=37.4;P.path=[{x:N/2+.5,y:38.6}];P.gateLock=0});
   await p.waitForFunction(()=>REG==='gaebong',null,{timeout:6000}).catch(()=>{});await p.waitForTimeout(600);
   const g=await p.evaluate(()=>({reg:REG,y:P.y,crop:plots[0].crop,gr:plots[0].g,npc:REG==='gaebong'&&NPCS.length,tombHere:G.tombs.filter(t=>(t.reg||'gaebong')===REG).length}));
   ok(`남쪽 출입구로 개봉에 돌아온다 (y ${g.y.toFixed(1)})`,g.reg==='gaebong'&&g.y<5);
