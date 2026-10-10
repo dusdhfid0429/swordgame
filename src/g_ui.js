@@ -171,7 +171,7 @@ function pHelp(){
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·강호사와 질주·기록. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 플레이 90초가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
-  <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
+  ${INTOSS?'':`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
@@ -274,6 +274,7 @@ function act(s){
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
     case'ctl':closePanels();setTouch(x==='t');return;
+    case'exit':closePanels();askExit();return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}

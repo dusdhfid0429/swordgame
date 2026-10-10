@@ -27,6 +27,7 @@ python3 build.py
 node tests/run.js              # tests/t*.js 전부, 4개씩 나란히. 하나라도 실패하면 exit 1
 node tests/run.js realm touch  # 이름에 realm·touch가 든 것만
 node tests/run.js -j 1 -t 600  # 하나씩, 파일마다 600초 제한
+node tests/run.js toss         # 가짜 토스 SDK로 앱인토스 대응 확인 (t4_toss)
 ```
 
 각 테스트는 `PASS …`/`FAIL …` 줄과 마지막에 `no console errors` 또는 `ERRORS`를 찍습니다. 러너는 `FAIL` 줄, `ERRORS`, 0이 아닌 종료 코드, 시간 초과를 실패로 셉니다. 스크린샷은 `tests/shots/`(커밋하지 않음)에 남습니다.
@@ -44,6 +45,7 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 | `g_ui.js` | 로그, HUD, 스킬 바, 각종 창(K/B/I/P/L/H), 상점·NPC 대화 |
 | `g_screens.js` | 타이틀, 캐릭터 생성, 환생 화면, 입력 처리 |
 | `g_touch.js` | 모바일 터치 조작: 조이스틱, 버튼 여섯 개, 메뉴 |
+| `g_toss.js` | 앱인토스 대응: 세로 고정, 안전 영역, 뒤로 가기·종료 창, 토스 저장소 |
 | `g_draw.js` | 그리기(날씨·계절·동굴 어둠), NPC·짐승·말, 미니맵, 메인 루프 |
 | `r_*.js` | 이전 프로토타입 「흑풍채 토벌기」에서 가져와 고친 엔진 조각(초식 실행, 이펙트, 건물, 캐릭터 그리기) |
 
@@ -52,3 +54,7 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 휴대폰·태블릿에서는 터치 조작 화면이 자동으로 켜집니다. 왼쪽 아래를 끌어 이동하고, 오른쪽 아래의 공격·필살·경공·비기·약·상황 버튼과 ☰ 메뉴 하나로 모든 것을 합니다. 공격 버튼은 자동초식으로 익힌 초식을 차례로 잇습니다. 조작법 창에서 PC 조작과 서로 바꿀 수 있습니다 (`src/g_touch.js`).
 
 PC: 클릭 이동·공격 / 초식 Q A Z E D C (넘버패드 7 4 1 9 6 3) / 필살기 S / 특수무공 1~3 / 신공 V / 물약 4~5 / 경공 Space / 운기 X / 창 K B I P L H / Esc 닫기
+
+## 앱인토스 출시
+
+목표는 토스 앱 안의 게임(앱인토스)으로 출시하는 것입니다. 포장 방법은 `toss/README.md`, 출시 요건은 `docs/앱인토스_출시_점검.md` 에 있습니다.
