@@ -223,19 +223,7 @@ function onKill(e){
   runHooks('kill',e);
   facKill(e);
   if(e.tomb){tombKill(e);return}
-  // loot
-  const out=[];
-  // 은자가 0인 적(강시 등)은 빈 주머니를 떨어뜨리지 않는다. 0은 거짓이라 아이템으로 오인돼 화면이 멈췄었다.
-  if(d.silver){const s=R1(d.silver[0],d.silver[1]);if(s>0)out.push({silver:s})}
-  if(d.meat)out.push({mat:'고기',n:d.meat});if(d.hide)out.push({mat:'가죽',n:d.hide});
-  const bk=d.boss?1:d.elite?.3:e.kind==='혈교무인'?.3:e.kind==='강시'?.2:d.hostile&&!d.beast?.07:0;
-  if(Math.random()<bk)out.push({item:randomBook()});if(d.boss&&Math.random()<.6)out.push({item:randomBook()});
-  const gq=d.boss?1:d.elite?.25:d.hostile&&!d.beast?.07:0;
-  if(Math.random()<gq)out.push({item:randomGear(d.boss?1.2:.9)});
-  if(d.hostile&&!d.beast&&Math.random()<.12)out.push({mat:pick(['금창약','소환단','비도']),n:1});
-  if(d.boss&&realmIdx()>=5){const sg=P.sg.name||pick(Object.keys(SHINGONG));out.push({page:sg})}
-  if(d.boss&&Math.random()<.25)out.push({item:mkSBook(pick(['암기','독공','점혈']))});
-  out.forEach((it,i)=>drops.push({x:e.x+(i%3-1)*.3,y:e.y+Math.floor(i/3)*.3,it,t:Math.random()*6}));
+  mobLoot(e);   // 전리품: 은자는 바로 들어오고, 비급·장비는 그 적이 쓰던 것 중에서 (g_loot.js)
 }
 function randomBook(){
   const side=Math.random()<.8?P.side:(P.side==='정'?'사':'정'),c=Math.random()<.45?(art().base?P.startCls:curCls()):pick(CLS),e=pick(ELS),a=ARTS[side+c+ELS.indexOf(e)];
