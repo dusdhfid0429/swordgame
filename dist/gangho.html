@@ -686,7 +686,9 @@ const A=id=>P.arts[id];
 const curCls=()=>art().cls;
 const eqList=()=>Object.values(P.eq).filter(Boolean);
 const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]||0)),0);
-const hasWeaponFor=c=>c==='권'||!!(P.eq.weapon&&P.eq.weapon.cls===c);
+// 무공은 그 병기를 차야 펼친다. 권법은 맨손이거나 권갑(철권갑)을 찼을 때만: 검을 찬 채 권법은 못 쓴다
+const hasWeaponFor=c=>{const w=P.eq.weapon;return c==='권'?!w||w.cls==='권':!!(w&&w.cls===c)};
+const wpnNeed=c=>c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
@@ -916,7 +918,7 @@ function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&
 function useForm(i,silent){
   if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
   if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. 비급이 필요합니다.`,'info');return false}
-  if(!hasWeaponFor(a.cls)){if(!silent)log(`${CLASS[a.cls].n}을(를) 펼치려면 ${a.cls}이(가) 필요합니다.`,'info');return false}
+  if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;if(P.qi<f.qi){if(!silent)log('내공이 부족합니다.','info');return false}
   // 연속기: forms entered in order inside the window stack their 추가 공력
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
@@ -933,7 +935,7 @@ function basicStrike(e){
 function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(P.hp<=0)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
-  if(!hasWeaponFor(a.cls)){log(`${a.cls}이(가) 필요합니다.`,'info');return}
+  if(!hasWeaponFor(a.cls)){log(wpnNeed(a.cls),'info');return}
   const cost=Math.round((a.base?30:55)*(P.buff.ult>0?.3:1));if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
   const ch=P.chain,combo=time-ch.t<1.7?1+ch.sum/100:1;P.chain={last:-1,t:-9,sum:0,n:0};
   P.qi-=cost;P.ucd=8;heroAtk('ult');const X=mkX(a.id,combo),e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
@@ -1679,7 +1681,7 @@ function hud(){
   $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}`;
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   $('hpt').textContent=`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`;$('qit').textContent=`내공 ${Math.floor(P.qi)}/${P.maxQi}`;
-  $('mst').textContent=`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':' · 무기 없음'}`;
+  $('mst').textContent=`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`;
   $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
   $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
   questTrack();$('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
@@ -1734,7 +1736,7 @@ function pArts(){
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
     return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
-      <p>${a.d}${a.el?` ${EL[a.el].fx}.`:''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls}이(가) 있어야 펼칠 수 있다.</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
+      <p>${a.d}${a.el?` ${EL[a.el].fx}.`:''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
@@ -1884,7 +1886,7 @@ function act(s){
   if(sectAct(a,x,y)){renderOpen();return}
   switch(a){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
-    case'setart':if(!hasWeaponFor(ARTS[x].cls))log(`${ARTS[x].cls}을(를) 장착해야 펼칠 수 있습니다.`,'info');setArt(x);break;
+    case'setart':if(!hasWeaponFor(ARTS[x].cls))log(wpnNeed(ARTS[x].cls),'info');setArt(x);break;
     case'mode':toggleMode();break;
     case'trainwin':openTrain();return;
     case'open':openPanel(x);return;
