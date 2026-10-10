@@ -145,7 +145,7 @@ function pWorld(){
   const P0=PROV.henan.map,gx=X(P0[0])+18,gy=Y(P0[1]);
   const gae=`<g class="pv city${REG==='gaebong'?' me':''}${sel==='gaebong'?' sel':''}" data-act="wsel:gaebong"><circle class="hit" cx="${gx}" cy="${gy}" r="14"/>${sel==='gaebong'?`<circle class="ring" cx="${gx}" cy="${gy}" r="10"/>`:''}<rect x="${gx-4}" y="${gy-4}" width="8" height="8"/><text x="${gx+20}" y="${gy+16}">개봉</text></g>`;
   const cur=here?PROV[here]:null;
-  return `<svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg>
+  return `<div class="wmap"><svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg></div>
     <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''} · <span class="dim">지도에서 성을 누르면 그 지역 정보를 본다</span></p>
     ${pvInfo(sel)}
     <p class="note"><b class="wf-j">정파(정의맹)</b> · <b class="wf-s">사파(사천맹)</b> · <b class="wf-m">마교</b></p>
