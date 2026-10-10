@@ -33,7 +33,9 @@ const A=id=>P.arts[id];
 const curCls=()=>art().cls;
 const eqList=()=>Object.values(P.eq).filter(Boolean);
 const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]||0)),0);
-const hasWeaponFor=c=>c==='권'||!!(P.eq.weapon&&P.eq.weapon.cls===c);
+// 무공은 그 병기를 차야 펼친다. 권법은 맨손이거나 권갑(철권갑)을 찼을 때만: 검을 찬 채 권법은 못 쓴다
+const hasWeaponFor=c=>{const w=P.eq.weapon;return c==='권'?!w||w.cls==='권':!!(w&&w.cls===c)};
+const wpnNeed=c=>c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
@@ -263,7 +265,7 @@ function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&
 function useForm(i,silent){
   if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
   if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. 비급이 필요합니다.`,'info');return false}
-  if(!hasWeaponFor(a.cls)){if(!silent)log(`${CLASS[a.cls].n}을(를) 펼치려면 ${a.cls}이(가) 필요합니다.`,'info');return false}
+  if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;if(P.qi<f.qi){if(!silent)log('내공이 부족합니다.','info');return false}
   // 연속기: forms entered in order inside the window stack their 추가 공력
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
@@ -280,7 +282,7 @@ function basicStrike(e){
 function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(P.hp<=0)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
-  if(!hasWeaponFor(a.cls)){log(`${a.cls}이(가) 필요합니다.`,'info');return}
+  if(!hasWeaponFor(a.cls)){log(wpnNeed(a.cls),'info');return}
   const cost=Math.round((a.base?30:55)*(P.buff.ult>0?.3:1));if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
   const ch=P.chain,combo=time-ch.t<1.7?1+ch.sum/100:1;P.chain={last:-1,t:-9,sum:0,n:0};
   P.qi-=cost;P.ucd=8;heroAtk('ult');const X=mkX(a.id,combo),e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
