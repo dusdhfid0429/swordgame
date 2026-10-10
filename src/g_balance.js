@@ -2,7 +2,7 @@
 // 사용자 요청(2026-10-09): 경지에 따른 플레이어와 NPC 사이의 밸런스. 제안서 /mnt/project-files/docs/경지_밸런스_제안.md 1~3번.
 // 1) 모든 사람 몹·NPC에 경지를 붙인다 (문파 무인은 직위가 곧 경지)
 // 2) 경지 표준 능력치(그 경지에 갓 오른 플레이어의 맨몸 수치)에 졸개·정예·보스 배율을 곱해 능력치를 정한다
-// 3) 경지 한 단계 차이마다 주는 피해 ±15%, 명중·회피 ±5% (최대 세 단계). 플레이어와 NPC, NPC끼리 모두
+// 3) 경지 한 단계 차이마다 주는 피해 ±25%, 명중·회피 ±5% (최대 세 단계). 플레이어와 NPC, NPC끼리 모두
 // 설계: docs/경지_설계.md 3부
 
 // 경지 표준: 공격력·생명·현묘도 (tests로 뽑은 정파 검객의 문턱 수치)
@@ -14,16 +14,17 @@ const MOB_REALM=GD.MOB_REALM;
 // 혈교무인·강시는 졸개가 아니라 정예 몫
 const MOB_TIER=GD.MOB_TIER;
 function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm==null)return e;
-  const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'];
-  e.maxHp=e.hp=Math.round(h*t.h);e.atk=Math.round(a*t.a);e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
+  const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'],g=GD.GROW||{h:0,a:0};
+  // 경지가 오를수록 사람은 초식·연속기·필살기로 표준보다 훨씬 세지므로, 몹은 경지마다 체력·공격을 더 얹는다
+  e.maxHp=e.hp=Math.round(h*t.h*(1+g.h*r));e.atk=Math.round(a*t.a*(1+g.a*r));e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
   e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));return e}
 hook('mobMade',(e,kind,extra)=>{if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}});
 // 문파 무인: 직위(0 속가·졸개·교도, 1 정식·정예, 2 일대·조장·향주, 3 호법·당주)가 경지
 hook('facMade',e=>{e.realm=e.rank||0;scaleMob(e)});
 
-// 경지 차이: 한 단계마다 ±15% 피해, ±5% 명중 (세 단계까지)
+// 경지 차이: 한 단계마다 ±25% 피해, ±5% 명중 (세 단계까지)
 const rDiff=(a,b)=>clamp(a-b,-3,3);
-const rMul=dd=>1+.15*dd;
+const rMul=dd=>1+.25*dd;
 hook('hit',c=>{const dd=rDiff(realmIdx(),mobRealm(c.e));c.hm-=5.5*dd;c.m*=rMul(dd)});
 hook('hurt',c=>{if(!c.src.d)return;const dd=rDiff(mobRealm(c.src),realmIdx());c.hm+=10*dd;c.dm*=rMul(dd)});
 hook('mobHurt',c=>{if(c.src&&c.src.d&&c.t.d)c.dm*=rMul(rDiff(mobRealm(c.src),mobRealm(c.t)))});
