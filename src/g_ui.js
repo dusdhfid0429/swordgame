@@ -221,7 +221,7 @@ function pNpcBase(n){
   if(n.id==='pharm')return `<p class="note">"약초를 캐 오면 값을 쳐 주겠소."</p><div class="list">${shopList('pharm')}</div>${sellB}`;
   if(n.id==='cloth')return `<p class="note">"좋은 옷은 칼날도 비껴가게 하지."</p><div class="list">${shopList('cloth')}</div>${sellB}`;
   if(n.id==='gen')return `<p class="note">"씨앗부터 비급까지, 없는 것 빼고 다 있소."</p><div class="list">${shopList('gen')}</div>${sellB}`;
-  if(n.id==='jeong'||n.id==='sa'||n.id==='magyo')return allianceDlg(n.id==='jeong'?'jeong':n.id==='sa'?'sacheon':'magyo');
+  if(n.id==='jeong'||n.id==='sa'||n.id==='magyo'||n.id==='gunbu')return allianceDlg(n.id==='jeong'?'jeong':n.id==='sa'?'sacheon':n.id==='gunbu'?'gunbu':'magyo');
   if(n.id==='mae'){
     if(P.spouse)return `<p class="note">"${esc(P.spouse.name)}와(과) 금슬이 좋다고 소문이 자자하오. 자식 복도 있기를."</p>`;
     const ok=P.age>=18&&P.silver>=200&&P.fame>=20;

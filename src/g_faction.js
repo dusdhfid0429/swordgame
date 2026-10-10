@@ -3,13 +3,17 @@
 // 플레이어 편(문파의 세력, 없으면 정·사 성향)과 같은 무인은 먼저 덤비지 않는다.
 // 문파마다 본산 지역맵(40×40)이 따로 있고, 개봉 역참에서 말을 타고 간다. 가입은 본산의 장문인에게만 청한다.
 // 설계: docs/세력_문파_설계.md 8~10장
-const alFac=al=>al==='magyo'?'마':ALLY[al].side;
+const alFac=al=>al==='magyo'?'마':al==='gunbu'?'관':ALLY[al].side;
 const FACN=GD.FACN;
 // 플레이어 편: 마교 제자면 '마', 문파가 있으면 그 세력, 없으면 타고난 성향
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
-const facFoe=(a,b)=>!!a&&!!b&&a!==b;
+// 누가 누구와 싸우나: 정↔사, 마교는 모두와, 관군(군부)은 사파·마교와. 정파와 관군은 서로 건드리지 않는다 (2026-10-10 군부)
+const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사','관'],'관':['사','마']};
+const facFoe=(a,b)=>!!a&&!!b&&a!==b&&!!FAC_FOE[a]&&FAC_FOE[a].includes(b);
+// 업보가 -100 아래로 떨어진 사람은 조정이 쫓는 죄인: 관군이 편을 가리지 않고 덤빈다
+const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
-const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac());
+const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac())||(e.d.fac==='관'&&outlaw());
 const peaceful=m=>!!m.d.fac&&!mobFoeP(m);
 const FAC_KIND=GD.FAC_KIND;
 /* MOBS에 덧붙이던 것은 data/mobs.json 으로 옮김 */
@@ -93,7 +97,7 @@ function rankHtml(s){
 const HQ_THEME=GD.HQ_THEME;
 const hqId=s=>'hq_'+s.id;   // 소림사도 hq_shaolin (숭산은 산 맵, g_lmmap.js)
 const hqPlace=s=>HQ_THEME[s.id][1];
-function masterTitle(s){const n=s.n;return s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
+function masterTitle(s){const n=s.n;return s.id==='geumgun'?'대장군':s.id==='shaolin'||s.id==='daeroe'?'방장':/파$/.test(n)?'장문인':/방$/.test(n)?'방주':/가$/.test(n)?'가주':/곡$/.test(n)?'곡주':/궁$/.test(n)?'궁주':/사$/.test(n)?'사주':/채$/.test(n)?'채주':/교$/.test(n)?'교주':'문주'}
 const POST_FEE=20,POST_AT=GD.POST_AT;
 const arriveAt=id=>REGIONS[id]&&REGIONS[id].arrive?REGIONS[id].arrive:id==='gaebong'?POST_AT:id==='sungsan'?{x:10.5,y:36.4}:{x:20.5,y:36.2};
 PAL.abbot={...PAL.hero,...FAC_ROBE.소림,jade:0,hair:'#3a2a20',beard:1,weapon:'staff',anim:'swing'};
@@ -105,7 +109,7 @@ const inHQ=(x,y)=>x>=12&&x<=28&&y>=3&&y<=18;
 function hqSpawns(s,th){
   const own=alFac(s.al),[k0,k1]=FAC_KIND[own],out=(x,y)=>y>=21&&y<=34&&!inHQ(x,y);
   const sp=[[k0,5,inHQ,(x,y)=>mkFac(own,0,x,y,s.id)],[k1,1,inHQ,(x,y)=>mkFac(own,1,x,y,s.id)]];
-  for(const f of['정','사','마'])if(facFoe(f,own))sp.push([FAC_KIND[f][0],2,out,(x,y)=>mkFac(f,0,x,y)]);
+  for(const f of['정','사','마','관'])if(facFoe(f,own))sp.push([FAC_KIND[f][0],2,out,(x,y)=>mkFac(f,0,x,y)]);
   for(const[k,c]of HQ_BEAST[th])sp.push([k,c,(x,y)=>(y<20||x<10||x>30)&&!inHQ(x,y)]);
   return sp}
 for(const s of Object.values(SECTS)){const[th,place]=HQ_THEME[s.id];
@@ -220,7 +224,7 @@ function drawChunks(gr,o){
 function postDlg(){
   const row=(id,n,sub,fee)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${fee}`,{d:P.silver<fee})}</div></div>`;
   let h=`<p class="note">"어디로 모실까? 길은 멀어도 말은 빠르오."</p><div class="list">${row('gaebong','개봉','성내 역참',10)}</div>`;
-  for(const al of['jeong','sacheon','magyo'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+Object.values(SECTS).filter(s=>s.al===al)
+  for(const al of['jeong','sacheon','magyo','gunbu'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+Object.values(SECTS).filter(s=>s.al===al)
     .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${ALLY[al].side!==P.side?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
   return h}
 function postGo(id){

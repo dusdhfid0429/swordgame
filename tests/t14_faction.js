@@ -46,7 +46,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 7) 본산 지역맵: 문파마다 하나씩, 겹치지 않음
   const r7=await p.evaluate(()=>{const ids=Object.values(SECTS).map(hqId);const names=ids.map(i=>REGIONS[i]&&REGIONS[i].name);
     return{n:new Set(ids).size,all:ids.every(i=>!!hqNpc(i)),names:new Set(names).size}});
-  ok(`문파 본산 ${r7.n}곳, 지명 ${r7.names}개, 모두 장문인이 있다`,r7.n===50&&r7.names===50&&r7.all);
+  ok(`문파 본산 ${r7.n}곳, 지명 ${r7.names}개, 모두 장문인이 있다`,r7.n===51&&r7.names===51&&r7.all);
   // 8) 모든 본산: 도착 자리 → 장문인·마부·출입구까지 길이 이어지고, 지형이 서로 다르다
   const r8=await p.evaluate(()=>{const bad=[],sig=new Set(),cur=REG;
     for(const s of Object.values(SECTS)){const id=hqId(s),R=REGIONS[id];R.gen();
@@ -59,12 +59,12 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
       if(seen.size<350)bad.push(s.n+' 좁음 '+seen.size);
       sig.add(map.map(r=>r.map(t=>t.g).join('')).join('')+objs.map(r=>r.map(o=>o?1:0).join('')).join(''))}
     loadRegion(cur);return{bad,uniq:sig.size}});
-  ok(`모든 본산에서 장문인·역참·출입구로 길이 이어진다 ${r8.bad.join(', ')}`,!r8.bad.length);ok(`본산 지도 ${r8.uniq}장이 모두 다르다`,r8.uniq===50);
+  ok(`모든 본산에서 장문인·역참·출입구로 길이 이어진다 ${r8.bad.join(', ')}`,!r8.bad.length);ok(`본산 지도 ${r8.uniq}장이 모두 다르다`,r8.uniq===51);
   // 9) 개봉 역참 → 만독곡 (사파 본산): 정파 플레이어에게 제자들이 적
   const r9=await p.evaluate(()=>{const n=npcAt('post');return{walk:walk(Math.floor(n.x),Math.floor(n.y)+1)||walk(Math.floor(n.x)+1,Math.floor(n.y)),at:walk(Math.floor(POST_AT.x),Math.floor(POST_AT.y))}});
   ok('개봉 역참 마부와 도착 자리가 막혀 있지 않다',r9.walk&&r9.at);
   await p.evaluate(()=>{P.sect=null;P.silver=200;const n=npcAt('post');P.x=n.x+.9;P.y=n.y+.4;P.path=null;openNpc(n)});await p.waitForTimeout(150);
-  ok('역참 창에 개봉과 50개 본산, 성도 21곳',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===71));
+  ok('역참 창에 개봉과 51개 본산, 성도 21곳',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===72));
   await p.screenshot({path:shot('faction_post')});
   await p.locator('[data-act="goto:hq_mandok"]').tap();await p.waitForTimeout(2500);
   const r10=await p.evaluate(()=>{for(let i=0;i<6;i++)spawnTick();const ds=mobs.filter(m=>m.sect==='mandok');return{reg:REG,name:REGION().name,silver:P.silver,ds:ds.length,nm:ds[0]&&ds[0].name,hostile:ds.every(m=>!peaceful(m)),zone:regionAt(10,10)}});

@@ -134,6 +134,7 @@
   ]
  },
  "LM_SECT": {
+  "geumgun": [4108, 1575],
   "gaebang": [
    4000,
    2145
@@ -1289,8 +1290,7 @@
    ],
    "sects": [
     "paeng",
-    "eon"
-   ],
+    "eon", "geumgun"],
    "d": "북경을 품은 메마른 북방의 들"
   },
   "shandong": {
@@ -2455,6 +2455,7 @@
   ]
  },
  "ROOF_PAL": {
+  "gold": ["#b8861e","#a07418","#c89a2e","#d8ac3e"],
   "gray": [
    "#2e343c",
    "#2a3038",
@@ -2493,6 +2494,7 @@
   ]
  },
  "SECT_STYLE": {
+  "geumgun": {"roof":"gold","tree":"pine"},
   "shaolin": {
    "roof": "ochre",
    "props": "stupa"
