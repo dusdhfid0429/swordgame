@@ -132,7 +132,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     if(dd>1.6)chase(e,tg,dt,spd);else{e.moving=false;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}return}
   if(tg===P&&!P.perch)e.perchT=0;
   // telegraphed heavy move for bosses and duelists
-  if(d.boss||e.duel||d.elite){e.skT-=dt;if(e.skT<=0&&dd<6&&!e.wind){e.skT=5+Math.random()*3;
+  if(d.boss||e.duel||d.elite){e.skT-=dt;if(e.skT<=0&&dd<6&&!e.wind){e.skT=5+Math.random()*3;mobFormCall(e);
     if(d.ranged||(e.duel&&e.d.ranged)){for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:'255,200,140'})}}
     else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1})}}}
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35);

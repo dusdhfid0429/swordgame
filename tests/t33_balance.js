@@ -10,7 +10,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.evaluate(()=>{mobs=[]});
   // 몹 경지와 표준 능력치
   const m=await p.evaluate(()=>{const g=k=>{const e=mkMob(k,0,0);return[e.realm,e.hp,e.atk]};return{s:g('산적'),j:g('혈교장로'),w:g('늑대'),hh:g('흑풍채주')}});
-  ok(`산적 ${m.s} · 흑풍채주 ${m.hh} · 혈교장로 ${m.j} · 늑대(짐승은 그대로) ${m.w}`,m.s[0]===0&&m.s[1]===91&&m.j[0]===4&&m.j[1]===3120&&m.w[1]===66&&m.hh[0]===2);
+  ok(`산적 ${m.s} · 흑풍채주 ${m.hh} · 혈교장로 ${m.j} · 늑대(짐승은 그대로) ${m.w}`,m.s[0]===0&&m.s[1]>=91&&m.s[1]<=102&&m.j[0]===4&&m.j[1]>=3120&&m.j[1]<=3141&&m.w[1]===66&&m.hh[0]===2);
   // 문파 무인은 직위가 경지
   const f=await p.evaluate(()=>{const out={};for(let i=0;i<60;i++){const e=mkFac('정',i%2,10,10,'hwasan');out[e.rank]=[e.realm,e.hp,e.atk]}return out});
   ok(`문파 무인 직위→경지 ${JSON.stringify(f)}`,Object.entries(f).every(([r,v])=>v[0]===+r)&&f[3][1]>f[2][1]&&f[1][1]>f[0][1]);

@@ -23,7 +23,7 @@ function facPal(fac,cls,elite,sid){
 function mkFac(fac,elite,x,y,sid){
   const s=SECTS[sid]||pick(Object.values(SECTS).filter(q=>alFac(q.al)===fac)),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
   const e=mkMob(kind,x,y),bow=cls==='궁';
-  e.d={...e.d,el:a.el,ranged:bow?1:0};e.el=a.el;e.reach=bow?5:cls==='창'?1.8:cls==='봉'?1.6:1.3;
+  e.d={...e.d,el:a.el,ranged:bow?1:0};e.el=a.el;e.art=a.id;e.reach=bow?5:cls==='창'?1.8:cls==='봉'?1.6:1.3;
   // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
   const rank=elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;
   e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
@@ -37,15 +37,14 @@ function facScan(e,dt){
   for(const o of mobs)if(o!==e&&o.hp>0&&o.d.fac&&facFoe(o.d.fac,e.d.fac)){const q=dist(o,e);if(q<bd){bd=q;b=o}}
   if(b){e.tgt=b;e.aggro=true}
 }
-// 몹끼리의 타격. 쓰러져도 전리품은 없고, 가끔 은자 주머니가 떨어진다.
+// 몹끼리의 타격. 쓰러져도 전리품은 없다 (은자는 플레이어가 직접 잡았을 때만 들어온다).
 function mobHurt(t,dm,src){
   if(t.hp<=0)return;{const c={t,src,dm};runHooks('mobHurt',c);dm=c.dm}
   dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;
   if(dist(t,P)<14)addText(t.x,t.y,dm,'#c8b8a0');
   if(t.d.fac&&(!t.tgt||t.tgt.hp<=0||!t.tgt.isMob||Math.random()<.3)){t.tgt=src;t.aggro=true}
   if(t.hp<=0){t.hp=0;fx.push({t:'puff',x:t.x,y:t.y,life:.6});if(P.target===t)P.target=null;
-    if(dist(t,P)<12)log(`${src.name}이(가) ${t.name}을(를) 쓰러뜨렸습니다.`,'info');
-    if(Math.random()<.35)drops.push({x:t.x,y:t.y,it:{silver:R1(2,6)},t:Math.random()*6})}
+    if(dist(t,P)<12)log(`${src.name}이(가) ${t.name}을(를) 쓰러뜨렸습니다.`,'info')}
 }
 // 같은 편 무인을 친 대가: 악업, 그 무인과 주변 동도가 등을 돌린다
 function facBetray(e){
