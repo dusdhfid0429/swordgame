@@ -2198,6 +2198,60 @@ function drawRail(rl){
   const a=scr(gx,rl.y,11),b=scr(gx,rl.y+1,11);seg([a,b],2.4,'#8a5a34');const a2=scr(gx,rl.y,5),b2=scr(gx,rl.y+1,5);seg([a2,b2],1.8,'#8a5a34');
 }
 
+// ---------- 전각 안 가구: 용도에 맞게 (2026-10-10 사용자: 건물 안에 용도에 어울리는 가구) ----------
+// 한 칸짜리 물건을 그린다. 종류: table 탁자, jar 술독·약항아리, counter 계산대, forge 화로, anvil 모루, shelf 서가,
+// cabinet 약장, bolts 포목 선반, chest 궤짝, rack 병기 걸이, altar 제단·향로, bed 침상, desk 서탁, seat 의자, kettle 가마솥
+const FURN={table:1,jar:1,counter:1,forge:1,anvil:1,shelf:1,cabinet:1,bolts:1,chest:1,rack:1,altar:1,bed:1,desk:1,seat:1,kettle:1};
+// 칸 (i,j) 안의 작은 상자: x0..x1, y0..y1 은 칸 안 비율, h 높이
+function fbox(i,j,x0,y0,x1,y1,h,top,front,side){const a=scr(i+x0,j+y1),b=scr(i+x1,j+y1),c=scr(i+x1,j+y0),d=scr(i+x0,j+y0);
+  quad([a,b,up(b,h),up(a,h)],front);quad([b,c,up(c,h),up(b,h)],side);quad([up(d,h),up(c,h),up(b,h),up(a,h)],top)}
+function fshadow(i,j,rx=12,ry=6){const p=scr(i+.5,j+.5);ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(p[0],p[1],rx,ry,0,0,7);ctx.fill()}
+function drawFurn(kind,i,j,mg){const r=rng(i*31+j*17+kind.length),p=scr(i+.5,j+.5),dk=mg;
+  const wood=dk?['#4a3028','#3a2420','#2e1c18']:['#8a6a44','#6e5234','#4e3824'];   // 윗면·앞면·옆면
+  switch(kind){
+  case'table':fshadow(i,j);fbox(i,j,.15,.2,.85,.8,14,wood[0],wood[1],wood[2]);
+    for(const[dx,dy]of[[.1,.5],[.9,.5]]){const q=scr(i+dx,j+dy);ctx.fillStyle=wood[1];ctx.beginPath();ctx.ellipse(q[0],q[1]-4,5,2.5,0,0,7);ctx.fill();ctx.fillStyle=wood[0];ctx.beginPath();ctx.ellipse(q[0],q[1]-8,5,2.5,0,0,7);ctx.fill()}
+    {const t=scr(i+.5,j+.5,14);ctx.fillStyle='#d8d0b8';ctx.beginPath();ctx.ellipse(t[0]-3,t[1]-1,4,2,0,0,7);ctx.fill();ctx.fillStyle='#b8402a';ctx.beginPath();ctx.ellipse(t[0]+5,t[1]+1,3,1.6,0,0,7);ctx.fill()}break;
+  case'jar':{fshadow(i,j,9,4.5);const g=ctx.createLinearGradient(p[0]-9,0,p[0]+9,0);g.addColorStop(0,'#7a5a3a');g.addColorStop(.5,'#4e3420');g.addColorStop(1,'#2e1c10');
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(p[0]-6,p[1]);ctx.bezierCurveTo(p[0]-13,p[1]-8,p[0]-12,p[1]-20,p[0]-5,p[1]-24);ctx.lineTo(p[0]+5,p[1]-24);ctx.bezierCurveTo(p[0]+12,p[1]-20,p[0]+13,p[1]-8,p[0]+6,p[1]);ctx.closePath();ctx.fill();ctx.strokeStyle=OUT;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='#1e120a';ctx.beginPath();ctx.ellipse(p[0],p[1]-24,5,2.2,0,0,7);ctx.fill();ctx.fillStyle='rgba(255,230,200,.18)';ctx.fillRect(p[0]-7,p[1]-18,2,10);break}
+  case'counter':fshadow(i,j,16,7);fbox(i,j,0,.3,1,.75,22,dk?'#3a2824':'#a07a4c',wood[1],wood[2]);
+    {const a=scr(i+.1,j+.75,22),b=scr(i+.9,j+.75,22);ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a[0],a[1]+3);ctx.lineTo(b[0],b[1]+3);ctx.stroke()}
+    {const q=scr(i+.6,j+.5,22);ctx.fillStyle='#c9a14a';ctx.fillRect(q[0]-4,q[1]-6,8,5);ctx.fillStyle='#2a2a2a';ctx.fillRect(q[0]-10,q[1]-3,5,3)}break;
+  case'forge':{fshadow(i,j,15,7);fbox(i,j,.1,.1,.9,.9,20,'#5a5650','#6e6a60','#4e4a44');const t=scr(i+.5,j+.5,20),k=.6+.4*Math.sin(time*7+i);
+    ctx.fillStyle=`rgba(255,${120+k*80},30,.95)`;ctx.beginPath();ctx.ellipse(t[0],t[1],9,4.5,0,0,7);ctx.fill();ctx.fillStyle=`rgba(255,240,150,${.5+k*.4})`;ctx.beginPath();ctx.ellipse(t[0]-2,t[1]-1,4,2,0,0,7);ctx.fill();
+    ctx.fillStyle='rgba(60,60,60,.25)';for(let k2=0;k2<3;k2++){const q=t[1]-8-k2*8-((time*18+k2*5)%8);ctx.beginPath();ctx.ellipse(t[0]+Math.sin(time*2+k2)*3,q,4+k2,2.5,0,0,7);ctx.fill()}
+    {const q=scr(i+.85,j+.85);ctx.fillStyle='#6a4a2a';ctx.fillRect(q[0]-3,q[1]-10,6,10);ctx.fillStyle='#c0c0c0';ctx.fillRect(q[0]-6,q[1]-14,12,4)}break}
+  case'anvil':{fshadow(i,j,10,5);fbox(i,j,.25,.25,.75,.75,8,wood[0],wood[1],wood[2]);const t=scr(i+.5,j+.5,8);
+    ctx.fillStyle='#3a3c40';ctx.beginPath();ctx.moveTo(t[0]-12,t[1]-4);ctx.lineTo(t[0]+10,t[1]-4);ctx.lineTo(t[0]+14,t[1]-9);ctx.lineTo(t[0]+8,t[1]-12);ctx.lineTo(t[0]-8,t[1]-12);ctx.lineTo(t[0]-14,t[1]-8);ctx.closePath();ctx.fill();ctx.strokeStyle=OUT;ctx.stroke();
+    ctx.fillStyle='#8a8c90';ctx.fillRect(t[0]-8,t[1]-13,16,2);ctx.fillStyle='#2a2c30';ctx.fillRect(t[0]-6,t[1]-4,12,4);break}
+  case'shelf':case'cabinet':case'bolts':{fshadow(i,j,14,6);const H=kind==='cabinet'?36:40;fbox(i,j,.05,.3,.95,.8,H,wood[0],wood[1],wood[2]);
+    const a=scr(i+.05,j+.8),b=scr(i+.95,j+.8);
+    if(kind==='shelf'){for(let s=1;s<4;s++){const y=H*s/4;ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(a[0]+1,a[1]-y);ctx.lineTo(b[0]-1,b[1]-y);ctx.stroke();
+        for(let k=0;k<6;k++){const t=.08+k*.15,q=lerp2(a,b,t);ctx.fillStyle=['#8a3a2a','#2f5f8f','#c9a14a','#3f6f4f','#6a4a7a','#d8d0b8'][(k+s+i)%6];ctx.fillRect(q[0]-2,q[1]-y+1,4,H/4-3)}}}
+    else if(kind==='cabinet'){for(let s=0;s<4;s++)for(let k=0;k<3;k++){const q=lerp2(a,b,.17+k*.33),y=H*(s+.5)/4;ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.strokeRect(q[0]-6,q[1]-y-3,12,6);ctx.fillStyle='#c9a14a';ctx.fillRect(q[0]-1,q[1]-y-1,2,2)}}
+    else{for(let s=0;s<5;s++){const y=H*(s+.5)/5,col=['#a3271c','#2f5f8f','#c9a14a','#3f7f4f','#f0e6cc','#6a4a7a'][(s+i*2+j)%6];ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(a[0]+2,a[1]-y+3);ctx.lineTo(b[0]-2,b[1]-y+3);ctx.lineTo(b[0]-2,b[1]-y-3);ctx.lineTo(a[0]+2,a[1]-y-3);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(b[0]-2,b[1]-y,2,3,0,0,7);ctx.fill()}}
+    break}
+  case'chest':fshadow(i,j,12,6);fbox(i,j,.15,.25,.85,.8,14,'#5a3a22','#4a2e1a','#3a2212');
+    {const a=scr(i+.15,j+.8,7),b=scr(i+.85,j+.8,7);ctx.strokeStyle='#8a8c90';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();const q=lerp2(a,b,.5);ctx.fillStyle='#c9a14a';ctx.fillRect(q[0]-3,q[1]-3,6,6)}break;
+  case'rack':{fshadow(i,j,12,5);const a=scr(i+.15,j+.5),b=scr(i+.85,j+.5);seg([a,up(a,40)],3,wood[1]);seg([b,up(b,40)],3,wood[1]);seg([up(a,38),up(b,38)],3,wood[0]);seg([up(a,10),up(b,10)],2,wood[0]);
+    for(let k=0;k<4;k++){const q=lerp2(a,b,.2+k*.2),sw=k%2;ctx.strokeStyle=sw?'#c0c4c8':'#8a6a44';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(q[0],q[1]-6);ctx.lineTo(q[0]+(k-1.5)*1.5,q[1]-(sw?34:46));ctx.stroke();if(!sw){ctx.fillStyle='#c0c4c8';ctx.beginPath();ctx.moveTo(q[0]+(k-1.5)*1.5-2,q[1]-46);ctx.lineTo(q[0]+(k-1.5)*1.5+2,q[1]-46);ctx.lineTo(q[0]+(k-1.5)*1.5,q[1]-54);ctx.closePath();ctx.fill()}else{ctx.fillStyle='#c9a14a';ctx.fillRect(q[0]-3,q[1]-12,6,3)}}break}
+  case'altar':{fshadow(i,j,15,7);fbox(i,j,.05,.3,.95,.8,24,dk?'#3a1414':'#7a2a1c',dk?'#2a1010':'#5e2014',dk?'#1e0c0c':'#4a1810');const t=scr(i+.5,j+.55,24);
+    ctx.fillStyle='#c9a14a';ctx.beginPath();ctx.ellipse(t[0],t[1]-4,7,3.5,0,0,7);ctx.fill();ctx.fillStyle='#8a6a1e';ctx.beginPath();ctx.ellipse(t[0],t[1]-1,7,3.5,0,0,7);ctx.fill();ctx.fillStyle='#c9a14a';ctx.fillRect(t[0]-7,t[1]-4,14,3);
+    for(let k=-1;k<=1;k++){ctx.strokeStyle='#6a4a2a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(t[0]+k*3,t[1]-5);ctx.lineTo(t[0]+k*3,t[1]-16);ctx.stroke();ctx.fillStyle='rgba(255,120,60,.9)';ctx.fillRect(t[0]+k*3-.7,t[1]-17,1.4,1.4);
+      ctx.strokeStyle='rgba(220,220,220,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(t[0]+k*3,t[1]-17);ctx.quadraticCurveTo(t[0]+k*3+Math.sin(time*1.5+k)*4,t[1]-26,t[0]+k*3+Math.sin(time+k)*3,t[1]-34);ctx.stroke()}
+    for(const dx of[.2,.8]){const q=scr(i+dx,j+.3,24);ctx.fillStyle='#e8d8a0';ctx.fillRect(q[0]-1.5,q[1]-14,3,14);ctx.fillStyle='#ffb050';ctx.beginPath();ctx.ellipse(q[0],q[1]-16,2,3,0,0,7);ctx.fill()}break}
+  case'bed':fshadow(i,j,15,7);fbox(i,j,.05,.1,.95,.9,12,'#e8e0cc',wood[1],wood[2]);
+    {const a=scr(i+.15,j+.5,12);ctx.fillStyle='#d8c8a8';ctx.beginPath();ctx.ellipse(a[0]+2,a[1]-2,7,3.5,-.5,0,7);ctx.fill();const b=scr(i+.6,j+.55,13);ctx.fillStyle='#8a3a2a';ctx.beginPath();ctx.moveTo(b[0]-10,b[1]);ctx.lineTo(b[0]+10,b[1]-5);ctx.lineTo(b[0]+12,b[1]+1);ctx.lineTo(b[0]-8,b[1]+6);ctx.closePath();ctx.fill()}break;
+  case'desk':fshadow(i,j,13,6);fbox(i,j,.1,.3,.9,.7,16,wood[0],wood[1],wood[2]);
+    {const t=scr(i+.45,j+.5,16);ctx.fillStyle='#f0e8d0';ctx.beginPath();ctx.moveTo(t[0]-8,t[1]);ctx.lineTo(t[0]+2,t[1]-5);ctx.lineTo(t[0]+8,t[1]-2);ctx.lineTo(t[0]-2,t[1]+3);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=.8;for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(t[0]-5+k*2,t[1]+1-k);ctx.lineTo(t[0]+k*2,t[1]-2-k);ctx.stroke()}
+      const q=scr(i+.8,j+.4,16);ctx.fillStyle='#1a1a1a';ctx.beginPath();ctx.ellipse(q[0],q[1],3,1.8,0,0,7);ctx.fill();ctx.strokeStyle='#5a3a22';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(q[0]+1,q[1]-1);ctx.lineTo(q[0]+4,q[1]-9);ctx.stroke()}break;
+  case'seat':fshadow(i,j,10,5);fbox(i,j,.25,.35,.75,.7,18,dk?'#5e2420':'#8a3a2a',wood[1],wood[2]);
+    {const a=scr(i+.25,j+.35,18),b=scr(i+.75,j+.35,18);quad([a,b,up(b,22),up(a,22)],dk?'#4a1a18':'#6e2e22');const t=scr(i+.5,j+.5,18);ctx.fillStyle='#c9a14a';ctx.beginPath();ctx.ellipse(t[0],t[1]+1,6,3,0,0,7);ctx.fill()}break;
+  case'kettle':{fshadow(i,j,12,6);fbox(i,j,.15,.15,.85,.85,12,'#5a5650','#6e6a60','#4e4a44');const t=scr(i+.5,j+.5,12);ctx.fillStyle='#2a2c30';ctx.beginPath();ctx.ellipse(t[0],t[1]-2,10,5,0,0,7);ctx.fill();ctx.fillStyle='#3e4044';ctx.beginPath();ctx.ellipse(t[0],t[1]-8,11,5.5,0,0,7);ctx.fill();ctx.fillStyle='#1a1c20';ctx.beginPath();ctx.ellipse(t[0],t[1]-9,7,3.2,0,0,7);ctx.fill();
+    ctx.fillStyle='rgba(230,230,230,.3)';for(let k=0;k<3;k++){const y=t[1]-14-k*7-((time*14+k*4)%7);ctx.beginPath();ctx.ellipse(t[0]+Math.sin(time*2+k)*3,y,3+k,2,0,0,7);ctx.fill()}break}
+  }}
+
 function drawLamp(l){
   const p=toScreen(l.x,l.y);
   ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(p.x,p.y,13,6,0,0,7);ctx.fill();
@@ -4220,6 +4274,39 @@ function genHall(c){
   for(const[x,y]of[[2,2],[N-3,2],[2,NH-3],[N-3,NH-3]])objs[y][x]='pillar';
   for(let x=mid-1;x<=mid+1;x++)objs[1][x]='screen';
   for(const[x,y]of[[mid-3,2],[mid+3,2]])if(x>2&&x<N-3){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  hallFurnish(c,mid);
+}
+// 건물 용도(kit)에 맞는 가구. 문 앞 가운데 길과 NPC 자리는 비워 둔다 (r_furn.js 가 그린다)
+// kit: inn 객잔·객청 / smith 대장간·병기당 / shop 잡화점 / pharm 약방·약당·단방 / cloth 포목점 / store 창고·병기고 / office 관아·서재 /
+//      shrine 사당 / hall 본전 / library 장경각 / drill 연무청·당 / room 승방 / armory 검각
+function hallKit(name,ids){
+  if(/객잔|객청/.test(name)||ids.includes('inn'))return'inn';if(/대장간|병기당/.test(name)||ids.includes('smith'))return'smith';
+  if(/잡화/.test(name)||ids.includes('gen'))return'shop';if(/약|단방|의원/.test(name)||ids.includes('pharm'))return'pharm';if(/포목/.test(name)||ids.includes('cloth'))return'cloth';
+  if(/창고|선창/.test(name)||ids.includes('bank'))return'store';if(/병기고|검각|무기/.test(name))return'armory';if(/관아|총타|취의청/.test(name))return'office';if(/사당|사$/.test(name))return'shrine';
+  if(/장경각|서재|서각|문각|경각/.test(name))return'library';if(/연무/.test(name)||ids.some(i=>i.startsWith('dang_')))return'drill';if(/승방|침소/.test(name))return'room';
+  if(ids.includes('hq'))return'hall';if(ids.includes('elder'))return'library';if(ids.includes('steward'))return'office';return'hall'}
+function hallFurnish(c,mid){const kit=c.kit||'hall',W=N,H=NH;
+  const keep=(x,y)=>(x===mid&&y>=H-6)||(y===3&&Math.abs(x-mid)<=1)||(y===4&&(Math.abs(x-mid)===3||Math.abs(x-mid)<=1));
+  const put=(k,x,y)=>{if(x>0&&y>0&&x<W-1&&y<H-1&&!objs[y][x]&&!keep(x,y)){objs[y][x]=k;return true}return false};
+  const L=1,R=W-3,B=2,F=H-3;   // 왼쪽 벽 안쪽, 오른쪽 벽에서 한 칸 띄움(벽 앞면에 가려지지 않게), 뒷줄, 앞줄
+  const wallL=(k,n,y0=3)=>{for(let y=y0;y<y0+n&&y<=H-3;y++)put(k,L,y)},wallR=(k,n,y0=3)=>{for(let y=y0;y<y0+n&&y<=H-3;y++)put(k,R,y)};
+  const back=(k,n,side=1)=>{for(let i=0;i<n;i++)put(k,mid+side*(2+i),B)};
+  const floor=(k)=>{put(k,3,F-1);put(k,W-4,F-1);if(H>=12){put(k,3,6);put(k,W-4,6)}};
+  switch(kit){
+  case'inn':back('counter',2,1);wallL('jar',3);floor('table');wallR('bed',2);put('kettle',L,H-4);break;
+  case'smith':put('forge',R,3);put('anvil',R-1,4);wallL('rack',2);put('chest',L,H-3);put('jar',L,5);back('counter',1,-1);break;
+  case'shop':back('counter',2,1);wallL('shelf',3);wallR('chest',2);put('jar',R,5);put('bolts',L,H-3);break;
+  case'pharm':back('cabinet',2,-1);back('counter',1,1);wallL('cabinet',3);wallR('jar',3);put('kettle',R,H-3);break;
+  case'cloth':back('counter',2,1);wallL('bolts',3);wallR('bolts',3);put('chest',L,H-3);put('table',W-4,F-1);break;
+  case'store':wallL('chest',4);wallR('chest',4);back('chest',2,1);back('chest',2,-1);put('jar',3,F-1);put('jar',W-4,F-1);break;
+  case'armory':wallL('rack',3);wallR('rack',3);back('chest',2,1);back('chest',2,-1);put('anvil',W-4,F-1);break;
+  case'office':put('desk',mid,2);put('seat',mid,1)||put('seat',mid+1,2);wallL('shelf',2);wallR('cabinet',2);put('chest',L,H-3);put('table',W-4,F-1);break;
+  case'shrine':put('altar',mid,2);put('altar',mid-1,2);put('altar',mid+1,2);wallL('jar',2);wallR('jar',2);put('table',3,F-1);put('table',W-4,F-1);break;
+  case'hall':put('seat',mid,2);put('desk',mid-1,2);put('desk',mid+1,2);wallL('shelf',2);wallR('rack',2);floor('table');if(c.ochre){put('altar',mid-2,2);put('altar',mid+2,2)}break;
+  case'library':back('shelf',3,1);back('shelf',3,-1);wallL('shelf',4);wallR('shelf',4);put('desk',mid,2);put('table',3,F-1);put('table',W-4,F-1);break;
+  case'drill':wallL('rack',3);wallR('rack',3);back('rack',2,1);back('rack',2,-1);put('chest',L,H-3);put('chest',R,H-3);break;
+  case'room':wallL('bed',2);wallR('bed',2);put('bed',L,H-3);put('bed',R,H-3);put('table',mid,F-1);put('jar',3,F-1);break}
+  // 마교 전각은 검은 벽이라 가구도 어둡게 그린다 (drawFurn 의 mg)
 }
 // 내부 맵의 바닥 그림: 나무 바닥만이라 bakeHQ 로 굽되 가장자리 어둡게 하지 않는다
 const hallRegion=(id,name,c)=>{const R={name,in:1,hall:c,theme:c.mg?'dark':'hall',size:c.w,h:c.h,gen:()=>genHall(c),bake:()=>bakeHQ(c.mg?'dark':'hall'),
@@ -4232,7 +4319,7 @@ function hallAdd(reg,bi,b,name,ids=[],o={}){
   const inside=[],keep=[];for(const n of R.npcs||[]){if(ids.includes(n.id))inside.push(n);else keep.push(n)}
   R.npcs=keep;
   inside.forEach((n,i)=>{n.x=i===0?mid+.5:mid+.5+(i%2?-3:3);n.y=i===0?3.6:4.4});
-  const c={w,h,mg:o.mg||R.stage&&R.stage.mg,seed:reg.length*31+bi,npcs:inside,out:reg,tx:dx,ty:dy+1,outName:R.name};
+  const c={w,h,mg:o.mg||R.stage&&R.stage.mg,seed:reg.length*31+bi,npcs:inside,out:reg,tx:dx,ty:dy+1,outName:R.name,kit:o.kit||hallKit(name,ids),ochre:!!(R.hq&&GD.SECT_STYLE[R.hq]&&GD.SECT_STYLE[R.hq].roof==='ochre')};
   hallRegion(id,`${name}`,c);
   R.halls=R.halls||[];R.halls.push({id,bi,n:name,x:dx,y:dy});
   R.gates.push({x:dx,y:dy,to:id,tx:mid+.5,ty:h-2.5,label:name,door:1});
@@ -4806,6 +4893,7 @@ function draw(){
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
     if(ob==='wall'||ob==='pillar'||ob==='screen'){const mg=REGION().hall&&REGION().hall.mg,fn=ob==='wall'?drawWall:ob==='pillar'?drawPillar:drawScreen;list.push({d:i+j+1,f:()=>fn(i,j,mg)});continue}
+    if(FURN[ob]){const mg=REGION().hall&&REGION().hall.mg;list.push({d:i+j+1,f:()=>drawFurn(ob,i,j,mg)});continue}
     if(ob.startsWith('flag:')){list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
     const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
@@ -4877,7 +4965,7 @@ function draw(){
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
