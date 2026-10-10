@@ -39,7 +39,10 @@ function leapPerch(LEAP){
   if(P.perch){let best=null,bs=1e9;for(let d=1;d<=LEAP;d+=.25)for(const o of[0,.4,-.4]){const q=perchAt(P.x+P.fx*d-P.fy*o,P.y+P.fy*d+P.fx*o);
       if(q&&q.k==='tree'&&!samePerch(q,P.perch)){const s=Math.abs(d-2.6)+Math.abs(o)*.5;if(s<bs){bs=s;best={q,x:q.x,y:q.y}}}}
     if(best)return best}
+  // 건물 앞문 쪽으로 뛰면 지붕이 아니라 문 앞에 내려선다 (들어가려다 지붕에 오르지 않게)
+  const doors=REGION().gates.filter(g=>g.door);
   for(let d=.7;d<=LEAP;d+=.15)for(const o of[0,.35,-.35]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o,q=perchAt(nx,ny);
+    if(!P.perch){const g=doors.find(g=>Math.hypot(g.x-nx,g.y-ny)<.7);if(g)return{q:null,x:g.x,y:g.y}}
     if(!q||samePerch(q,P.perch))continue;
     if(q.k==='tree')return{q,x:q.x,y:q.y};
     const b=q.b;let x=nx,y=ny;for(let k=0;k<20&&!onRoof(b,x,y,.3);k++){x+=P.fx*.1;y+=P.fy*.1}
