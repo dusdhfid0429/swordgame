@@ -4853,7 +4853,7 @@ function draw(){
   const sea=P?season():'봄';
   if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
-  for(let j=RIV;j<=RIV+1;j++)for(let i=0;i<N;i++)if(map[j][i].g===2){for(let k=0;k<2;k++){const u=frac(time*.12+hash(i,j*3+k)),v=.2+hash(i*5+k,j)*.6,p=toScreen(i+u,j+v);if(p.x<-20||p.x>W+20||p.y<-20||p.y>H+20)continue;const a=Math.sin(u*Math.PI);
+  for(let j=RIV;j<=RIV+1&&j<NH;j++)for(let i=0;i<N;i++)if(map[j][i].g===2){for(let k=0;k<2;k++){const u=frac(time*.12+hash(i,j*3+k)),v=.2+hash(i*5+k,j)*.6,p=toScreen(i+u,j+v);if(p.x<-20||p.x>W+20||p.y<-20||p.y>H+20)continue;const a=Math.sin(u*Math.PI);
     ctx.strokeStyle=`rgba(225,240,245,${.35*a})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x-6,p.y-3);ctx.quadraticCurveTo(p.x,p.y-1,p.x+6,p.y+3);ctx.stroke()}}
   if(!P)return;
   if(P.path&&P.path.length){const l=P.path[P.path.length-1],p=toScreen(l.x,l.y),k=(time*2)%1;ctx.strokeStyle=`rgba(230,200,120,${1-k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,6+k*10,3+k*5,0,0,7);ctx.stroke()}

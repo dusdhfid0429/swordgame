@@ -56,6 +56,11 @@ const path=require('path');
   await p.locator(`[data-act="goto:${target}"]`).click();await p.waitForTimeout(2500);
   const r9=await p.evaluate(()=>({reg:REG,silver:P.silver,name:REGION().name}));
   ok(`역참 성도 목록 ${r8.caps}개(여기 ${r8.here}, 은자 15 ${r8.fee}) → ${r9.name} 은자 ${r9.silver}`,r8.caps===20&&r8.here&&r8.fee&&r9.reg===target&&r9.silver===85);
+  // 7-0) 작은 전각(10×9, 소림사 장경각)에서도 그리기 오류 없이 주인공이 보인다 (2026-10-10 버그)
+  errs.length=0;await go('hq_shaolin',15.5,12.5);await p.evaluate(()=>{const g=REGION().gates.find(g=>g.label==='장경각');P.path=[{x:g.x,y:g.y}]});
+  await p.waitForFunction(()=>REG==='in_hq_shaolin_1',null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(800);
+  const r9b=await p.evaluate(()=>({reg:REG,N,NH,walk:walkAt(P.x,P.y)}));
+  ok(`소림사 장경각 ${r9b.N}×${r9b.NH} 안: 그리기 오류 ${errs.length}건`,r9b.reg==='in_hq_shaolin_1'&&r9b.NH<11&&r9b.walk&&errs.length===0);
   // 7) 전각 안 벽 속 좌표로 들어오면(예전 저장) 문 앞으로 옮긴다
   const r10=await p.evaluate(()=>{mobs=[];P.reg='in_hq_hwasan_0';P.x=.5;P.y=.5;loadRegion('in_hq_hwasan_0');return{reg:REG,walk:walkAt(P.x,P.y),y:P.y,inn:REGION().in}});
   ok(`벽 속이면 문 앞으로: y=${r10.y}`,r10.reg==='in_hq_hwasan_0'&&r10.walk&&r10.inn===1&&r10.y>8);
