@@ -25,6 +25,9 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .zone .row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .zone button,.mini-b{font:12px var(--body);color:var(--paper);background:var(--stone);border:1px solid var(--bronze);padding:3px 8px;cursor:pointer}
 .zone button.on{border-color:var(--exp);color:var(--exp)}
+.qtrack{margin-top:6px;font:12px/1.45 var(--body);color:#e8d9a8;text-shadow:0 1px 2px #000,0 0 4px #000;max-width:260px}.qtrack div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qtrack b{color:#ffd98a;font-weight:normal}.qtrack .done{color:#a6d47f}.qtrack h5{margin:0 0 1px;font:12px var(--body);color:var(--paper-dim)}
+.log{cursor:pointer}.log:hover{border-color:var(--bronze-hi)}.sysmsg p{pointer-events:auto;cursor:pointer}
+.logs{display:grid;gap:3px;font-size:13px}.logs p{margin:0;padding:3px 6px;border-bottom:1px solid #2a2218}.logs p small{color:var(--paper-dim);margin-right:6px}.logs .xp{color:var(--good)}.logs .dmg{color:var(--bad)}.logs .info{color:#a9c4ea}.logs .sys{color:#e8d9a8}
 #mini{position:absolute;top:8px;right:10px;width:150px;height:84px;border:1px solid var(--bronze);background:#000a;image-rendering:pixelated}
 .chan{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:200px;background:#000c;border:1px solid var(--bronze);padding:4px 8px;font-size:12px;text-align:center}
 .chan i{display:block;height:4px;background:var(--exp);margin-top:3px}
@@ -61,9 +64,10 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .banner div{font-family:var(--display);font-size:clamp(28px,6vw,50px);color:var(--paper);text-shadow:0 2px 18px #000,0 0 2px #000;opacity:0;transition:opacity .4s;text-align:center}
 .banner div.on{opacity:1}
 .banner small{display:block;font-size:.4em;color:var(--exp);letter-spacing:.2em;margin-top:6px}
-.win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 24px));max-height:calc(100% - 20px);overflow:auto;
-  background:linear-gradient(#2c2419,#17120c);border:2px solid var(--bronze);box-shadow:0 10px 40px #000,inset 0 1px 0 var(--bronze-hi);padding:12px 14px;display:grid;gap:10px;align-content:start}
-.whead{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--display);font-size:20px;position:sticky;top:-12px;background:#271f16;margin:-12px -14px 0;padding:10px 14px;border-bottom:1px solid #4a3c27;z-index:1}
+.win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 24px));max-height:calc(100% - 20px);overflow:hidden;
+  background:linear-gradient(#2c2419,#17120c);border:2px solid var(--bronze);box-shadow:0 10px 40px #000,inset 0 1px 0 var(--bronze-hi);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+#wbody{overflow:auto;min-height:0;flex:1 1 auto;overscroll-behavior:contain}
+.whead{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--display);font-size:20px;position:static;flex:none;background:#271f16;margin:-12px -14px 0;padding:10px 14px;border-bottom:1px solid #4a3c27;z-index:1}
 .whead small{font-family:var(--body);font-size:12px;color:var(--paper-dim);margin-left:6px}
 .btn{font:13px var(--body);color:var(--paper);background:#3a2c1a;border:1px solid var(--bronze);padding:5px 10px;cursor:pointer;white-space:nowrap}
 .btn:hover:not([disabled]){border-color:var(--bronze-hi)}
@@ -75,7 +79,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .card h4{font-size:15px}
 .card p,.note{margin:0;font-size:12px;color:var(--paper-dim);line-height:1.5}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s;z-index:4}.fade.on{opacity:1}
-.wnote{position:sticky;top:34px;z-index:1;margin:0;padding:7px 10px;font-size:13px;background:#0b0a09f2;border:1px solid var(--bronze);color:#9db8e0}
+.wnote{position:static;flex:none;z-index:1;margin:0;padding:7px 10px;font-size:13px;background:#0b0a09f2;border:1px solid var(--bronze);color:#9db8e0}
 .wnote.xp{color:var(--good)}
 /* 천하 지도 */
 .world{width:100%;height:auto;max-height:60vh;display:block;background:#15110c;border:1px solid #4a3c27}
@@ -151,7 +155,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .touch .status .who{font-size:14px}.touch .status #res{font-size:10px;white-space:normal}
 .touch #log{position:absolute;left:8px;top:calc(124px + env(safe-area-inset-top,0px));width:min(300px,62vw);height:64px;background:none;border:0;box-shadow:none;padding:0;font-size:11px;line-height:1.45;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
 .touch .zone{top:calc(74px + env(safe-area-inset-top,0px));left:auto;right:10px;text-align:right;font-size:13px;max-width:44vw;pointer-events:none}
-.touch .zone small{font-size:11px}.touch .zone .row{display:none}
+.touch .zone small{font-size:11px}.touch .zone .row{display:none}.touch .qtrack{font-size:11px;max-width:44vw;pointer-events:none}.touch #log p{pointer-events:auto}
 .touch #mini{top:calc(6px + env(safe-area-inset-top,0px));width:110px;height:62px}
 #tmenu{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:126px;width:46px;height:46px;font-size:22px;line-height:1;color:var(--paper);background:var(--stone);border:1px solid var(--bronze-hi);pointer-events:auto}
 #joyz{position:absolute;left:0;bottom:0;width:48%;height:46%;pointer-events:auto;touch-action:none}
@@ -204,7 +208,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
     <canvas id="game"></canvas>
     <canvas id="mini" width="150" height="84" aria-label="지도"></canvas>
     <div class="zone"><span id="zone">개봉 성내</span><small id="cal">봄 · 맑음</small>
-      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div></div>
+      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
     <div class="chan" id="chan" hidden><span id="chant"></span><i id="chanb"></i></div>
     <div class="banner"><div id="banner"></div></div>
     <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><p class="wnote" id="wnote" hidden role="status"></p><div id="wbody" style="display:grid;gap:10px"></div></div>
