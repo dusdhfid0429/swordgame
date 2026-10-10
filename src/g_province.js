@@ -43,7 +43,7 @@ for(const[k,p]of Object.entries(PROV)){
       REGIONS[q.to].gates=[{x:20.5,y:38.6,to:id,tx:q.x,ty:q.y+2.4,label:p.n}];REGIONS[q.to].prov=k}}
   const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))],far=(x,y)=>Math.hypot(x-S/2,y-S/2)>6;
   const local=f=>{const l=p.sects.filter(sid=>alFac(SECTS[sid].al)===f);return l.length?pick(l):undefined};
-  const spawns=[];for(const f of['정','사','마'])spawns.push([FAC_KIND[f][0],facs.includes(f)?3:1,far,(x,y)=>mkFac(f,0,x,y,local(f))]);
+  const spawns=[];for(const f of['정','사','마','관'])spawns.push([FAC_KIND[f][0],facs.includes(f)?3:1,far,(x,y)=>mkFac(f,0,x,y,local(f))]);   // 관군 순찰은 어디나 조금, 하북에는 많다
   spawns.push(['산적',3,far],['산적궁수',1,far]);for(const[b,c]of PV_BEAST[p.th])spawns.push([b,c,far]);
   REGIONS[id]={name:p.n,prov:k,size:S,theme:p.th,gen:()=>genProv(id,k,p),bake:()=>N>48?chunkGround(PV_PAINT[p.th]||p.th):bakeHQ(PV_PAINT[p.th]||p.th),gates,bosses:[],npcs:[],spawns,
     zone:(x,y)=>{let b=null,bd=6;for(const g of gates)if(g.inner){const d=Math.hypot(g.x-x,g.y-y);if(d<bd){bd=d;b=g}}
@@ -111,7 +111,7 @@ function pvRoute(from,to){if(!from||from===to)return[from];const prev={[from]:nu
   while(q.length){const c=q.shift();if(c===to)break;for(const n of(c==='gaebong'?['henan']:PV_NB(c)))if(!(n in prev)){prev[n]=c;q.push(n)}}
   if(!(to in prev))return null;const r=[];for(let c=to;c!=null;c=prev[c])r.unshift(c);return r}
 const pvName=k=>k==='gaebong'?'개봉':PROV[k].n;
-const facCls=s=>'wf-'+(alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':'s');
+const facCls=s=>'wf-'+(alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':alFac(s.al)==='관'?'g':'s');
 function pvInfo(k){
   const here=REG==='gaebong'?'gaebong':provOfReg(REG),route=pvRoute(here,k);
   const way=!route?'':route.length<2?'<b class="gold">지금 여기 있다</b>':`가는 길: ${route.map(pvName).join(' → ')} <small class="dim">(성 ${route.length-1}곳 이동)</small>`;
@@ -123,10 +123,10 @@ function pvInfo(k){
       <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p><p class="note">이웃: ${nb}</p></div>`}
   const p=PROV[k],R=REGIONS[pvId(k)],sects=(k==='henan'?['shaolin',...p.sects]:p.sects).map(sid=>SECTS[sid]);
   const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))];
-  const fname={정:'<b class="wf-j">정파 무인</b>',사:'<b class="wf-s">사파 무인</b>',마:'<b class="wf-m">마교도</b>'};
-  const fighters=['정','사','마'].map(f=>fname[f]+(facs.includes(f)?' 많음':' 드묾')).join(' · ');
+  const fname={정:'<b class="wf-j">정파 무인</b>',사:'<b class="wf-s">사파 무인</b>',마:'<b class="wf-m">마교도</b>',관:'<b class="wf-g">관군</b>'};
+  const fighters=['정','사','마','관'].map(f=>fname[f]+(facs.includes(f)?' 많음':' 드묾')).join(' · ');
   const beasts=PV_BEAST[p.th].map(b=>b[0]).join(' · ');
-  const sl=sects.map(s=>`<b class="${facCls(s)}">${s.n}</b>${P.sect===s.id?' <small class="good">내 문파</small>':''} <small class="dim">${alFac(s.al)==='정'?'정의맹':alFac(s.al)==='마'?'마교':'사천맹'} · 본산 ${hqPlace(s)}</small>`).join('<br>');
+  const sl=sects.map(s=>`<b class="${facCls(s)}">${s.n}</b>${P.sect===s.id?' <small class="good">내 문파</small>':''} <small class="dim">${ALLY[s.al].n} · 본산 ${hqPlace(s)}</small>`).join('<br>');
   const lairs=(R.lairs||[]).map(l=>`<b class="bad">${l.n}</b>(두목 ${l.boss[0]})`).join(' · ');
   return `<div class="card"><h4>${p.n} <small class="dim">${p.d}</small></h4>
     <p>${way}</p>

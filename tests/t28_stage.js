@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const cnt=await p.evaluate(()=>{const want={big:4,mid:2,small:1,one:8},bad=[],tiers={};
     for(const s of Object.values(SECTS)){const ch=REGIONS[hqId(s)].chain||[hqId(s)];tiers[s.tier]=(tiers[s.tier]||0)+1;if(ch.length!==want[s.tier])bad.push(s.n+ch.length)}
     return{bad,tiers}});
-  ok(`맵 수: 대문파 4·중견 2·소문파 1·마교 8 (${JSON.stringify(cnt.tiers)}) 어긋남 ${cnt.bad.join(',')}`,cnt.bad.length===0&&cnt.tiers.mid===10);
+  ok(`맵 수: 대문파 4·중견 2·소문파 1·마교 8 (${JSON.stringify(cnt.tiers)}) 어긋남 ${cnt.bad.join(',')}`,cnt.bad.length===0&&cnt.tiers.mid===11);
   // 성 지도 출입구 → 첫 맵, 첫 맵 → 성
   const pv=await p.evaluate(()=>{const bad=[];for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const ch=REGIONS[hqId(s)].chain||[hqId(s)],k=pvOfSect(s.id),via=REGIONS[ch[0]].lmVia,O=via?REGIONS[via]:REGIONS['pv_'+k],pg=O.gates.filter(g=>ch.includes(g.to));
     // 산·도시 맵 안 포털로 들어가는 문파는 그 장소 맵과 잇는다 (g_lmmap.js)

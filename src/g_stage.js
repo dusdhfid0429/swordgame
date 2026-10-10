@@ -90,7 +90,7 @@ function carveTop(id,x0=17){const R=REGIONS[id],g0=R.gen;R.topX=x0;R.gen=()=>{g0
 // ---- 문파 맵 종류 ----
 const memberOnly=s=>()=>P.sect===s.id?null:`${s.n} 제자가 아니면 들어갈 수 없다.`;
 function ownSp(s,area,n0,n1){const f=alFac(s.al),[k0,k1]=FAC_KIND[f],sp=[];if(n0)sp.push([k0,n0,area,(x,y)=>mkFac(f,0,x,y,s.id)]);if(n1)sp.push([k1,n1,area,(x,y)=>mkFac(f,1,x,y,s.id)]);return sp}
-function foeSp(s,area,n){const own=alFac(s.al);return['정','사','마'].filter(f=>facFoe(f,own)).map(f=>[FAC_KIND[f][0],n,area,(x,y)=>mkFac(f,0,x,y)])}
+function foeSp(s,area,n){const own=alFac(s.al);return['정','사','마','관'].filter(f=>facFoe(f,own)).map(f=>[FAC_KIND[f][0],n,area,(x,y)=>mkFac(f,0,x,y)])}
 const beastSp=(th,area)=>(HQ_BEAST[th]||[]).map(([k,c])=>[k,c,area]);
 function stGate(s,th,place,i){return{id:`hq_${s.id}_gate`,name:`${place} 산문`,s,th,seed:8100+i*37,top:1,wall:20,
   flags:[[17,21],[23,21],[16,16],[24,16]],lamps:[[17,18],[23,18]],
@@ -129,6 +129,8 @@ Object.values(SECTS).forEach((s,i)=>{
       b=stageRegion(stBack(s,th,pl,i,{id:'hq_shaolin_tower',name:'소림 탑림',top:1,elderN:'소림 계율원 수좌'})),
       c=stageRegion(stBack(s,th,pl,i+1,{id:'hq_shaolin_cave',name:'달마동',elderN:'달마동 면벽승',chest:[23,8]}));
     a.stage.need=null;carveTop('hq_shaolin');linkChain(s,['hq_shaolin',a.stage.id,b.stage.id,c.stage.id]);return}
+  if(s.id==='geumgun'){   // 금군: 황성 금위영(교장·총관) → 황궁(황제·대장군). 산문 대신 성 안 군영이다 (g_gunbu.js)
+    const o=stageRegion(stOuter(s,'manor','황성',i,{id:'hq_geumgun_gate',name:'황성 금위영',yardName:'금군 교장'}));o.stage.flags=[[14,29],[26,29],[17,9],[23,9]];linkChain(s,[o.stage.id,hqId(s)]);return}
   const[th,place]=HQ_THEME[s.id],gate=stageRegion(stGate(s,th,place,i));
   if(s.tier==='mid'){linkChain(s,[gate.stage.id,hqId(s)]);return}
   const outer=stageRegion(stOuter(s,th,place,i)),back=stageRegion(stBack(s,th,place,i));

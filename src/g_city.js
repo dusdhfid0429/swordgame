@@ -17,7 +17,7 @@ for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];if(!F||!F.marks)
     hallAdd(id,0,bs[0],'객잔',['inn']);hallAdd(id,4,bs[4],'대장간',['smith']);hallAdd(id,2,bs[2],'잡화점',['gen']);
     if(cap){
       R.npcs.push(npc('pharm',`${m.n} 약방 의원`,0,0,'keeper'),npc('cloth',`${m.n} 포목점 주인`,0,0,'keeper'),npc('bank',`${m.n} 창고지기`,0,0,'keeper'),
-        npc('jeong','정의맹 연락관',18.5,13.6,'taoist'),npc('sa','사천맹 연락관',22.5,13.6,'cultist'));
+        npc('jeong','정의맹 연락관',18.5,13.6,'taoist'),npc('sa','사천맹 연락관',22.5,13.6,'cultist'),npc('gunbu','군부 연락관',26.5,13.6,'officer'));
       hallAdd(id,3,bs[3],'약방',['pharm']);hallAdd(id,6,bs[6],'포목점',['cloth']);hallAdd(id,7,bs[7],'창고',['bank']);hallAdd(id,1,bs[1],'관아',[]);hallAdd(id,5,bs[5],'사당',[]);
       R.spawns=[['양민',8,(x,y)=>y>8&&y<31]];
       R.name=m.n==='성도'?'성도부':`${m.n} 성도`}

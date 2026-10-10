@@ -53,7 +53,7 @@ for(const[k,p]of Object.entries(PROV)){const F=REGIONS[pvId(k)];
 // 문파를 짝 장소 맵 안 포털로 옮긴다
 function lmPair(sid,k){const s=LM_SECT[sid];if(!s)return null;const F=REGIONS[pvId(k)];let best=null,bd=80;
   // 세가(가문)는 도시·명소를 먼저, 나머지는 산을 먼저 찾는다
-  const fam=/세가$|가$|양가장/.test(SECTS[sid].n);
+  const fam=/세가$|가$|양가장/.test(SECTS[sid].n)||sid==='geumgun';   // 금군은 북경 성내에 포털
   // 세가가 산에 들어가는 것은 본산 이름에 그 산이 있을 때만 (융중산 와룡강·검각산 운가). 남궁세가처럼 아니면 들판에 둔다
   for(const pass of fam?['cs','m']:['m','cs']){for(const m of F.marks||[])if(m.gate&&pass.includes(m.t)&&!(fam&&m.t==='m'&&!hqPlace(SECTS[sid]).includes(m.n))){const d=Math.hypot(m.sx-s[0],m.sy-s[1]);if(d<bd){bd=d;best=m}}if(best)break}
   return best}

@@ -16,7 +16,7 @@ const path=require('path');
       const h=hqNpc(M);if(!h)bad.push(s.n+' 장문인 없음');else if(R.npcs.some(n=>n.hq))bad.push(s.n+' 장문인이 밖에');else inside++;
       if(s.id!=='cheonma'&&!R.stage&&(!R.halls||R.halls.length!==3||R.halls[0].n!==hallNames(s)[0]))bad.push(s.n+' 전각 '+(R.halls||[]).map(h=>h.n))}
     return{halls,inside,bad,hwasan:REGIONS.hq_hwasan.halls.map(h=>h.n),inN:Object.keys(REGIONS).filter(k=>k.startsWith('in_')).length}});
-  ok(`문파 전각 ${r1.halls}개, 내부 맵 ${r1.inN}개, 장문인 ${r1.inside}명 모두 전각 안 · 화산파 ${r1.hwasan.join('·')} ${r1.bad.slice(0,4).join(' / ')}`,r1.bad.length===0&&r1.inside===50&&r1.hwasan[0]==='자소궁'&&r1.inN>=200);
+  ok(`문파 전각 ${r1.halls}개, 내부 맵 ${r1.inN}개, 장문인 ${r1.inside}명 모두 전각 안 · 화산파 ${r1.hwasan.join('·')} ${r1.bad.slice(0,4).join(' / ')}`,r1.bad.length===0&&r1.inside===51&&r1.hwasan[0]==='자소궁'&&r1.inN>=200);
   // 2) 전각 문(door 출입구)은 건물 앞면 가운데 바로 아래, 걸어갈 수 있는 칸
   const r2=await p.evaluate(()=>{loadRegion('hq_hwasan');const bad=[];for(const g of REGION().gates.filter(g=>g.door)){if(!walk(Math.floor(g.x),Math.floor(g.y)))bad.push(g.label+' 문 앞이 막힘')}
     const h=REGIONS[REGION().halls[0].id];return{bad,w:h.size,h:h.h,theme:h.theme,gate:h.gates[0],npc:h.npcs.map(n=>n.n)}});
