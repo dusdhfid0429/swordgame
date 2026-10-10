@@ -23,6 +23,39 @@ function genHall(c){
   for(const[x,y]of[[2,2],[N-3,2],[2,NH-3],[N-3,NH-3]])objs[y][x]='pillar';
   for(let x=mid-1;x<=mid+1;x++)objs[1][x]='screen';
   for(const[x,y]of[[mid-3,2],[mid+3,2]])if(x>2&&x<N-3){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
+  hallFurnish(c,mid);
+}
+// 건물 용도(kit)에 맞는 가구. 문 앞 가운데 길과 NPC 자리는 비워 둔다 (r_furn.js 가 그린다)
+// kit: inn 객잔·객청 / smith 대장간·병기당 / shop 잡화점 / pharm 약방·약당·단방 / cloth 포목점 / store 창고·병기고 / office 관아·서재 /
+//      shrine 사당 / hall 본전 / library 장경각 / drill 연무청·당 / room 승방 / armory 검각
+function hallKit(name,ids){
+  if(/객잔|객청/.test(name)||ids.includes('inn'))return'inn';if(/대장간|병기당/.test(name)||ids.includes('smith'))return'smith';
+  if(/잡화/.test(name)||ids.includes('gen'))return'shop';if(/약|단방|의원/.test(name)||ids.includes('pharm'))return'pharm';if(/포목/.test(name)||ids.includes('cloth'))return'cloth';
+  if(/창고|선창/.test(name)||ids.includes('bank'))return'store';if(/병기고|검각|무기/.test(name))return'armory';if(/관아|총타|취의청/.test(name))return'office';if(/사당|사$/.test(name))return'shrine';
+  if(/장경각|서재|서각|문각|경각/.test(name))return'library';if(/연무/.test(name)||ids.some(i=>i.startsWith('dang_')))return'drill';if(/승방|침소/.test(name))return'room';
+  if(ids.includes('hq'))return'hall';if(ids.includes('elder'))return'library';if(ids.includes('steward'))return'office';return'hall'}
+function hallFurnish(c,mid){const kit=c.kit||'hall',W=N,H=NH;
+  const keep=(x,y)=>(x===mid&&y>=H-6)||(y===3&&Math.abs(x-mid)<=1)||(y===4&&(Math.abs(x-mid)===3||Math.abs(x-mid)<=1));
+  const put=(k,x,y)=>{if(x>0&&y>0&&x<W-1&&y<H-1&&!objs[y][x]&&!keep(x,y)){objs[y][x]=k;return true}return false};
+  const L=1,R=W-3,B=2,F=H-3;   // 왼쪽 벽 안쪽, 오른쪽 벽에서 한 칸 띄움(벽 앞면에 가려지지 않게), 뒷줄, 앞줄
+  const wallL=(k,n,y0=3)=>{for(let y=y0;y<y0+n&&y<=H-3;y++)put(k,L,y)},wallR=(k,n,y0=3)=>{for(let y=y0;y<y0+n&&y<=H-3;y++)put(k,R,y)};
+  const back=(k,n,side=1)=>{for(let i=0;i<n;i++)put(k,mid+side*(2+i),B)};
+  const floor=(k)=>{put(k,3,F-1);put(k,W-4,F-1);if(H>=12){put(k,3,6);put(k,W-4,6)}};
+  switch(kit){
+  case'inn':back('counter',2,1);wallL('jar',3);floor('table');wallR('bed',2);put('kettle',L,H-4);break;
+  case'smith':put('forge',R,3);put('anvil',R-1,4);wallL('rack',2);put('chest',L,H-3);put('jar',L,5);back('counter',1,-1);break;
+  case'shop':back('counter',2,1);wallL('shelf',3);wallR('chest',2);put('jar',R,5);put('bolts',L,H-3);break;
+  case'pharm':back('cabinet',2,-1);back('counter',1,1);wallL('cabinet',3);wallR('jar',3);put('kettle',R,H-3);break;
+  case'cloth':back('counter',2,1);wallL('bolts',3);wallR('bolts',3);put('chest',L,H-3);put('table',W-4,F-1);break;
+  case'store':wallL('chest',4);wallR('chest',4);back('chest',2,1);back('chest',2,-1);put('jar',3,F-1);put('jar',W-4,F-1);break;
+  case'armory':wallL('rack',3);wallR('rack',3);back('chest',2,1);back('chest',2,-1);put('anvil',W-4,F-1);break;
+  case'office':put('desk',mid,2);put('seat',mid,1)||put('seat',mid+1,2);wallL('shelf',2);wallR('cabinet',2);put('chest',L,H-3);put('table',W-4,F-1);break;
+  case'shrine':put('altar',mid,2);put('altar',mid-1,2);put('altar',mid+1,2);wallL('jar',2);wallR('jar',2);put('table',3,F-1);put('table',W-4,F-1);break;
+  case'hall':put('seat',mid,2);put('desk',mid-1,2);put('desk',mid+1,2);wallL('shelf',2);wallR('rack',2);floor('table');if(c.ochre){put('altar',mid-2,2);put('altar',mid+2,2)}break;
+  case'library':back('shelf',3,1);back('shelf',3,-1);wallL('shelf',4);wallR('shelf',4);put('desk',mid,2);put('table',3,F-1);put('table',W-4,F-1);break;
+  case'drill':wallL('rack',3);wallR('rack',3);back('rack',2,1);back('rack',2,-1);put('chest',L,H-3);put('chest',R,H-3);break;
+  case'room':wallL('bed',2);wallR('bed',2);put('bed',L,H-3);put('bed',R,H-3);put('table',mid,F-1);put('jar',3,F-1);break}
+  // 마교 전각은 검은 벽이라 가구도 어둡게 그린다 (drawFurn 의 mg)
 }
 // 내부 맵의 바닥 그림: 나무 바닥만이라 bakeHQ 로 굽되 가장자리 어둡게 하지 않는다
 const hallRegion=(id,name,c)=>{const R={name,in:1,hall:c,theme:c.mg?'dark':'hall',size:c.w,h:c.h,gen:()=>genHall(c),bake:()=>bakeHQ(c.mg?'dark':'hall'),
@@ -35,7 +68,7 @@ function hallAdd(reg,bi,b,name,ids=[],o={}){
   const inside=[],keep=[];for(const n of R.npcs||[]){if(ids.includes(n.id))inside.push(n);else keep.push(n)}
   R.npcs=keep;
   inside.forEach((n,i)=>{n.x=i===0?mid+.5:mid+.5+(i%2?-3:3);n.y=i===0?3.6:4.4});
-  const c={w,h,mg:o.mg||R.stage&&R.stage.mg,seed:reg.length*31+bi,npcs:inside,out:reg,tx:dx,ty:dy+1,outName:R.name};
+  const c={w,h,mg:o.mg||R.stage&&R.stage.mg,seed:reg.length*31+bi,npcs:inside,out:reg,tx:dx,ty:dy+1,outName:R.name,kit:o.kit||hallKit(name,ids),ochre:!!(R.hq&&GD.SECT_STYLE[R.hq]&&GD.SECT_STYLE[R.hq].roof==='ochre')};
   hallRegion(id,`${name}`,c);
   R.halls=R.halls||[];R.halls.push({id,bi,n:name,x:dx,y:dy});
   R.gates.push({x:dx,y:dy,to:id,tx:mid+.5,ty:h-2.5,label:name,door:1});

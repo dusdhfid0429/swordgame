@@ -61,6 +61,14 @@ const path=require('path');
   await p.waitForFunction(()=>REG==='in_hq_shaolin_1',null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(800);
   const r9b=await p.evaluate(()=>({reg:REG,N,NH,walk:walkAt(P.x,P.y)}));
   ok(`소림사 장경각 ${r9b.N}×${r9b.NH} 안: 그리기 오류 ${errs.length}건`,r9b.reg==='in_hq_shaolin_1'&&r9b.NH<11&&r9b.walk&&errs.length===0);
+  // 7-1) 가구: 전각마다 용도에 맞는 가구가 세 점 이상, 문에서 안의 사람까지 걸어서 닿는다 (2026-10-10)
+  const fr=await p.evaluate(()=>{const bad=[],kits={};let n=0;for(const id of Object.keys(REGIONS)){if(!id.startsWith('in_'))continue;const R=REGIONS[id];loadRegion(id);n++;kits[R.hall.kit]=1;
+      const g=R.gates[0],sx=Math.floor(g.x),sy=Math.floor(g.y),seen=new Set([sx+','+sy]),q=[[sx,sy]];
+      while(q.length){const[x,y]=q.shift();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=[x+dx,y+dy];if(!seen.has(k+'')&&walk(k[0],k[1])){seen.add(k+'');q.push(k)}}}
+      const miss=R.npcs.filter(np=>!seen.has(Math.floor(np.x)+','+Math.floor(np.y))).length,furn=objs.flat().filter(o=>FURN[o]).length;let free=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(walk(x,y))free++;
+      if(miss||furn<3||seen.size<free*.75)bad.push(id+' '+R.hall.kit+' '+furn+' '+miss+' '+seen.size+'/'+free)}
+    loadRegion('gaebong');const inn=REGIONS[REGIONS[pvId('shaanxi')].marks.find(q=>q.n==='서안').gate].halls[0].id;loadRegion(inn);const has=k=>objs.flat().includes(k);const r={n,kits:Object.keys(kits).length,bad:bad.slice(0,5),inn:has('jar')&&has('table')&&has('bed')&&has('counter')};loadRegion('gaebong');return r});
+  ok(`전각 ${fr.n}곳 가구 종류 ${fr.kits}가지, 객잔에 술독·탁자·침상·계산대 ${fr.inn} ${fr.bad.join(' / ')}`,fr.bad.length===0&&fr.kits>=10&&fr.inn);
   // 7) 전각 안 벽 속 좌표로 들어오면(예전 저장) 문 앞으로 옮긴다
   const r10=await p.evaluate(()=>{mobs=[];P.reg='in_hq_hwasan_0';P.x=.5;P.y=.5;loadRegion('in_hq_hwasan_0');return{reg:REG,walk:walkAt(P.x,P.y),y:P.y,inn:REGION().in}});
   ok(`벽 속이면 문 앞으로: y=${r10.y}`,r10.reg==='in_hq_hwasan_0'&&r10.walk&&r10.inn===1&&r10.y>8);
