@@ -4,7 +4,6 @@ const REALM_QI=GD.REALM_QI;        // 경지 by 내공 (갑자) total
 const SIJIN=GD.SIJIN;
 const DAY_SEC=150;                                    // 낮밤 한 바퀴 = 150초
 const YEAR_SEC=DAY_SEC;                               // 하루가 지나면 한 살을 먹는다 (사용자 결정 2026-10-11)
-const LIFE_MIN=60;                                    // 수명은 어떤 근골이라도 60세는 보장한다
 const SEASONS=GD.SEASONS;
 // 정파/사파: base 내공 and the opposite 내공 수련 curves (official 10/11 per session; 첫 수련 300→30 scaled, +3 / 3, +4)
 const SIDES=GD.SIDES;
