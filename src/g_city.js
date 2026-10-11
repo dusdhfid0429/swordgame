@@ -31,3 +31,18 @@ hook('npcDlg',c=>{if(c.html==null&&c.n.id==='post'){let h=postDlg();
   const caps=Object.entries(PROV).filter(([k,p])=>p.cap).map(([k,p])=>{const m=REGIONS[pvId(k)].marks.find(q=>q.n===p.cap);return[m.gate,p.cap,p.n]});
   const row=([id,n,pn])=>`<div class="it"><div>${n}<span>${pn} 성도</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${CITY_FEE}`,{d:P.silver<CITY_FEE})}</div></div>`;
   c.html=h.replace('</div><h4','</div><h4 style="margin:0">성도</h4><div class="list">'+caps.map(row).join('')+'</div><h4')}});
+// ---- 지역이 속한 성과 가장 가까운 성도 (이어하기 시작 자리, g_screens.js) ----
+function provOf(id){const R=REGIONS[id];if(!R)return null;if(R.prov)return R.prov;let m;
+  if(id==='gaebong'||id==='sungsan')return 'henan';
+  if((m=/^pv_([a-z]+)/.exec(id)))return m[1];if((m=/^lm_([a-z]+)_\d+$/.exec(id)))return m[1];
+  if(/^in_/.test(id))return provOf(id.replace(/^in_/,'').replace(/_\d+$/,''));
+  if(R.maeng&&typeof MAENG!=='undefined')return MAENG[R.maeng].prov;
+  if(R.hq){for(const[k,p]of Object.entries(PROV))if(p.sects.includes(R.hq))return k;if(R.lmVia)return provOf(R.lmVia)}
+  if(R.chain){for(const q of R.chain){const Q=REGIONS[q];if(Q&&Q.lmVia)return provOf(Q.lmVia)}}
+  return null}
+const capRegion=k=>{const p=PROV[k];if(!p||!p.cap)return null;const m=REGIONS[pvId(k)].marks.find(q=>q.n===p.cap);return m?m.gate:null};
+function nearestCapital(id){const k=provOf(id);if(!k||k==='henan')return 'gaebong';
+  const own=capRegion(k);if(own)return own;
+  const[x0,y0]=PROV[k].map;let best='gaebong',bd=Math.hypot(1305-x0,745-y0);
+  for(const[q,p]of Object.entries(PROV)){const r=capRegion(q);if(!r)continue;const d=Math.hypot(p.map[0]-x0,p.map[1]-y0);if(d<bd){bd=d;best=r}}
+  return best}

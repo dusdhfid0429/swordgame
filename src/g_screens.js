@@ -61,9 +61,11 @@ function startPlay(fresh){
     log(TOUCH?'☰ 메뉴 → 행낭에서 비급을 읽어 첫 초식을 익히세요. ☰ 메뉴 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(T) 창에서 기본기와 내공을 다질 수 있습니다.','info');
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 공격 버튼으로 싸움 · ☰ 메뉴의 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else log(`${P.name}의 생을 이어갑니다. ${Math.floor(P.age)}세.`,'sys');
-  // 새로 태어나거나 이어 할 때는 늘 개봉 성내에서 시작한다
-  if(REG!=='gaebong'){mobs=[];drops=[];loadRegion('gaebong')}P.reg='gaebong';P.gateLock=0;
-  P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();saveGame(true);
+  // 새로 태어나면 개봉 성내에서, 이어 할 때는 마지막에 있던 곳에서 가장 가까운 성도에서 시작한다 (사용자 결정 2026-10-11)
+  const start=fresh?'gaebong':nearestCapital(P.reg||'gaebong');
+  if(REG!==start){mobs=[];drops=[];loadRegion(start)}P.reg=start;P.gateLock=0;
+  const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
+  if(!fresh&&start!=='gaebong')log(`${REGIONS[start].name}에서 다시 길을 나섭니다.`,'sys');saveGame(true);
 }
 function showRebirth(e,cause){
   scrEl.hidden=false;const ns=STATUS[G.nextStatus];

@@ -64,7 +64,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r9=await p.evaluate(()=>{const n=npcAt('post');return{walk:walk(Math.floor(n.x),Math.floor(n.y)+1)||walk(Math.floor(n.x)+1,Math.floor(n.y)),at:walk(Math.floor(POST_AT.x),Math.floor(POST_AT.y))}});
   ok('개봉 역참 마부와 도착 자리가 막혀 있지 않다',r9.walk&&r9.at);
   await p.evaluate(()=>{P.sect=null;P.silver=200;const n=npcAt('post');P.x=n.x+.9;P.y=n.y+.4;P.path=null;openNpc(n)});await p.waitForTimeout(150);
-  ok('역참 창에 개봉과 51개 본산, 성도 21곳',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===72));
+  ok('역참 창에 개봉과 51개 본산, 성도 21곳, 맹 총단 2곳',await p.evaluate(()=>document.querySelectorAll('[data-act^="goto:"]').length===74));
   await p.screenshot({path:shot('faction_post')});
   await p.locator('[data-act="goto:hq_mandok"]').tap();await p.waitForTimeout(2500);
   const r10=await p.evaluate(()=>{for(let i=0;i<6;i++)spawnTick();const ds=mobs.filter(m=>m.sect==='mandok');return{reg:REG,name:REGION().name,silver:P.silver,ds:ds.length,nm:ds[0]&&ds[0].name,hostile:ds.every(m=>!peaceful(m)),zone:regionAt(10,10)}});
