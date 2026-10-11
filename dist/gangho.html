@@ -397,7 +397,9 @@ const PROTO={
 const RANKS=GD.RANKS;
 const REALM_QI=GD.REALM_QI;        // 경지 by 내공 (갑자) total
 const SIJIN=GD.SIJIN;
-const YEAR_SEC=90;                                    // one year of age per 90 s of play
+const DAY_SEC=150;                                    // 낮밤 한 바퀴 = 150초
+const YEAR_SEC=DAY_SEC;                               // 하루가 지나면 한 살을 먹는다 (사용자 결정 2026-10-11)
+const LIFE_MIN=60;                                    // 수명은 어떤 근골이라도 60세는 보장한다
 const SEASONS=GD.SEASONS;
 // 정파/사파: base 내공 and the opposite 내공 수련 curves (official 10/11 per session; 첫 수련 300→30 scaled, +3 / 3, +4)
 const SIDES=GD.SIDES;
@@ -673,7 +675,7 @@ function newLife(o){
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
-  P.life=Math.round(58+P.st.end*.7+Math.random()*8);
+  P.life=Math.max(LIFE_MIN,Math.round(58+P.st.end*.7+Math.random()*8));
   P.mats.비도=0;
   // the starting weapon and the first 비급 of that class's 화 무공
   const c=o.cls;if(c!=='권')P.eq.weapon=mkWeapon(c,o.status>=2?1.15:.85,0);
@@ -722,7 +724,7 @@ const adult=()=>P.age>=18;
 // 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
 const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
-  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b}
+  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b;if(P.life<LIFE_MIN)P.life=LIFE_MIN}
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
@@ -1301,7 +1303,7 @@ let spawnT=0,saveT=30,lastYear=13;
 function update(dt){
   time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick();
   // calendar, age, weather, day
-  G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/150)%1;
+  G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/DAY_SEC)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
   G.wT-=dt;if(G.wT<=0){G.wT=22+Math.random()*12;const tb=WEATHER[season()];let r=Math.random();for(const[w,p]of tb){if(r<p){if(w!==G.weather)log(`날씨가 ${w}(으)로 바뀌었습니다.`,'info');G.weather=w;break}r-=p}}
   G.gT-=dt;if(G.gT<=0){if(G.giyeon){G.giyeon=null;G.gT=120+Math.random()*120}else{for(let t=0;t<40;t++){const x=2+Math.floor(Math.random()*(N-4)),y=2+Math.floor(Math.random()*(NH-4));if(walk(x,y)&&!inTown(x,y)&&!inFarm(x,y)&&dist({x,y},P)>6){G.giyeon={x:x+.5,y:y+.5};G.gT=45;log('어딘가에서 기이한 빛이 일렁입니다.','info');break}}}}
@@ -1793,7 +1795,7 @@ function pHelp(){
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·강호사와 질주·기록. 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 플레이 90초가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
+  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   ${INTOSS?'':`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
@@ -1803,7 +1805,7 @@ function pHelp(){
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사. 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 플레이 90초가 1년. 13세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
+  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 13세에 태어나 적어도 60세까지는 살고, 늙으면 죽고, 업보에 따라 다시 태어난다. 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
   <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }

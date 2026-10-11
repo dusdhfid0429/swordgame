@@ -20,7 +20,7 @@ function newLife(o){
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
-  P.life=Math.round(58+P.st.end*.7+Math.random()*8);
+  P.life=Math.max(LIFE_MIN,Math.round(58+P.st.end*.7+Math.random()*8));
   P.mats.비도=0;
   // the starting weapon and the first 비급 of that class's 화 무공
   const c=o.cls;if(c!=='권')P.eq.weapon=mkWeapon(c,o.status>=2?1.15:.85,0);
@@ -69,7 +69,7 @@ const adult=()=>P.age>=18;
 // 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
 const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
-  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b}
+  {const b=qiLife();P.life+=b-(P.lifeQB||0);P.lifeQB=b;if(P.life<LIFE_MIN)P.life=LIFE_MIN}
   const oldAge=Math.max(0,P.age-50);
   P.maxHp=Math.round((60+P.st.qi*10+gear('hp'))*(1-Math.min(.4,oldAge*.012))*(1+pv('hp')));
   P.maxQi=Math.round((baseQi()+gear('qi'))*(1+pv('qi')));P.hp=Math.min(P.hp,P.maxHp);P.qi=Math.min(P.qi,P.maxQi);
