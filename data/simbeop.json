@@ -21,5 +21,37 @@
     "moyong": ["모용심법", "두전진기", "참합신공"],
     "jegal": ["와룡심법", "팔진진기", "와룡무상공"],
     "cheonma": ["천마심법", "천마진기", "천마신공", "천마무상대법"]
-  }
+  },
+  "SIM_TQ": [0, 1, 1.4, 1.8, 2.3],
+  "SIM_TK": {
+    "def":     {"n": "금강", "v": 6,  "fmt": "받는 피해 -{p}%"},
+    "reflect": {"n": "반탄", "v": 15, "fmt": "받은 피해의 {p}%를 되돌림"},
+    "atk":     {"n": "패도", "v": 5,  "fmt": "공격력 +{p}%"},
+    "rage":    {"n": "광폭", "v": 12, "fmt": "체력 절반 아래에서 공격력 +{p}%"},
+    "crit":    {"n": "예기", "v": 4,  "fmt": "치명타 +{p}%"},
+    "hm":      {"n": "현묘", "v": 6,  "fmt": "현묘도 +{p}"},
+    "hreg":    {"n": "회춘", "v": 30, "fmt": "생명 회복 +{p}%"},
+    "qreg":    {"n": "순환", "v": 25, "fmt": "내공 회복 +{p}%"},
+    "spd":     {"n": "질풍", "v": 6,  "fmt": "이동 +{p}%"},
+    "leap":    {"n": "비상", "v": 12, "fmt": "경공 거리 +{p}%"},
+    "qcost":   {"n": "절약", "v": 12, "fmt": "초식 내공 -{p}%"},
+    "poison":  {"n": "독기", "v": 15, "fmt": "적중 시 {p}% 중독"},
+    "slow":    {"n": "한기", "v": 15, "fmt": "적중 시 {p}% 둔화"},
+    "stun":    {"n": "벽력", "v": 10, "fmt": "적중 시 {p}% 경직"},
+    "drain":   {"n": "흡정", "v": 8,  "fmt": "피해의 {p}%만큼 내공 흡수"},
+    "vamp":    {"n": "흡혈", "v": 6,  "fmt": "피해의 {p}%만큼 생명 흡수"}
+  },
+  "SIM_TRAIT": {
+    "shaolin": "def", "mudang": "reflect", "hwasan": "crit", "emei": "hreg", "kunlun": "leap", "kongtong": "slow",
+    "jeomchang": "hm", "cheongseong": "spd", "jongnam": "qreg", "gaebang": "rage", "namgung": "atk", "dang": "poison",
+    "paeng": "stun", "moyong": "drain", "jegal": "qcost", "hwangbo": "def", "eon": "stun", "ak": "atk",
+    "hyeongsan": "crit", "cheonsan": "slow", "taesan": "def", "yangga": "stun", "jeonjin": "qreg", "gomyo": "leap",
+    "ungga": "stun", "seolsan": "slow", "jangbaek": "hreg", "danri": "crit", "sanggwan": "hm", "danmok": "hm",
+    "bota": "hreg", "mosan": "poison", "nabu": "spd", "haenam": "leap",
+    "noklim": "atk", "janggang": "spd", "haomun": "hm", "sama": "crit", "dongjeong": "leap", "yasu": "rage",
+    "gwangpung": "spd", "taeyang": "atk", "bukhae": "slow", "podal": "def", "daeroe": "hreg", "mandok": "poison",
+    "hyeolrang": "vamp", "gwiyeong": "spd", "heukpung": "atk", "geumgun": "def",
+    "cheonma": ["atk", "vamp"]
+  },
+  "SIM_TDEF": {"불가": "def", "도가": "qreg", "정종": "hm", "사공": "drain", "마공": "atk", "사불": "def"}
 }

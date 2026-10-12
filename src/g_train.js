@@ -20,7 +20,7 @@ function renderTrain(){
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
-    <div class="tlist">${pgRow()}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong',`내공 심법 · ${simCur().n} ${AGR[simCur().g]}`,baseQi(),`${gapja(baseQi())} · ${school()} · 1회 +${simGain()}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}${simRows()}</div>`;
+    <div class="tlist">${pgRow()}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong',`내공 심법 · ${simCur().n} ${AGR[simCur().g]}`,baseQi(),`${gapja(baseQi())} · ${school()} · 1회 +${simGain()}${simCur().tr&&simCur().tr.length?' · 특색 '+simTraitTxt(simCur()):''}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}${simRows()}</div>`;
   if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
