@@ -17,11 +17,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const buy=await p.evaluate(()=>{P.sect='hwasan';P.mtot={hwasan:1000};P.merit={hwasan:1000};const o={};o.blockLow=simBlock(SIM.N_hwasan_3);P.mtot.hwasan=1000;
     act('simbuy:N_hwasan_1');o.r1=P.sim;act('simbuy:N_hwasan_3');o.r3=P.sim;o.merit=P.merit.hwasan;o.gain=simGain();o.cost=qiCost(P.side,P.qiN);return o});
   await p.evaluate(()=>{openTrain();startTrain('neigong')});await p.waitForFunction(()=>!trnBusy,null,{timeout:30000});await p.waitForTimeout(100);
-  const q2=await p.evaluate(()=>({acc:P.qiAcc,n:P.qiN,qi:baseQi(),rows:TRN.innerText.includes('심법 바꾸기')}));
-  ok(`기초 수련 +${q1.acc} (내공 ${q1.qi}) → 자하심법·자하무극공 익힘(${buy.r1}→${buy.r3}, 공적 ${buy.merit}) · 절정 1회 +${buy.gain} 활력 ${buy.cost} → 쌓인 ${q2.acc} 내공 ${q2.qi} · 바꾸기 줄 ${q2.rows}`,
+  const q2=await p.evaluate(()=>({acc:P.qiAcc,n:P.qiN,qi:baseQi(),rows:!TRN.innerText.includes('심법 바꾸기')&&(closePanels(),openPanel('arts'),$('win').innerText.includes('운용하기')&&$('win').innerText.includes('자하심법'))}));
+  ok(`기초 수련 +${q1.acc} (내공 ${q1.qi}) → 자하심법·자하무극공 익힘(${buy.r1}→${buy.r3}, 공적 ${buy.merit}) · 절정 1회 +${buy.gain} 활력 ${buy.cost} → 쌓인 ${q2.acc} 내공 ${q2.qi} · 무공창 심법 카드 ${q2.rows}`,
     q1.acc===10&&q1.qi===90&&buy.r1==='N_hwasan_1'&&buy.r3==='N_hwasan_3'&&buy.merit===1000-40-160&&buy.gain===18&&q2.acc===28&&q2.qi===108&&q2.rows);
   // 3. 직위 제한과 심법 바꾸기, 잡화점 공용 심법
-  const g=await p.evaluate(()=>{P.mtot.hwasan=0;const o={low:simBlock(SIM.N_hwasan_2)};P.mtot.hwasan=1000;simSwitch('N_base_정');o.sw=simCur().n;o.g0=simGain();
+  const g=await p.evaluate(()=>{P.mtot.hwasan=0;const o={low:simBlock(SIM.N_hwasan_2)};P.mtot.hwasan=1000;act('simsel:N_base_정');o.sw=simCur().n;o.g0=simGain();
     P.silver=1000;act('simshop');o.shop=P.sim;o.silver=P.silver;o.gs=simGain();o.other=simBlock(SIM['N_shop_사']);openPanel('npc',NPCS.find(n=>n.id==='gen'));o.genDlg=document.body.innerText.includes('심법 비급');return o});
   ok(`직위 낮으면 "${g.low}" · 기초로 바꾸면 ${g.sw} +${g.g0} · 잡화점 ${g.shop} 은자 ${g.silver} +${g.gs} · 사파 것은 "${g.other}" · 잡화점 창 ${g.genDlg}`,
     /이상$/.test(g.low)&&g.sw==='대반야금강공'&&g.g0===10&&g.shop==='N_shop_정'&&g.silver===700&&g.gs===12.5&&g.other==='성향이 다르다'&&g.genDlg);

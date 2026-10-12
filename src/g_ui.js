@@ -118,6 +118,7 @@ function pArts(){
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
     ${gyNote()}
+    ${simArtsHtml()}
     ${ggArtsHtml()}
     ${bobArtsHtml()}
     ${pasArtsHtml()}
@@ -272,6 +273,7 @@ function act(s){
     case'wsel':wSel=x;break;
     case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;
     case'gsel':ggInit();if(P.gk[x])P.gkcur=x;break;
+    case'simsel':simSwitch(x);break;
     case'snd':sndToggle(x);break;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
