@@ -108,7 +108,8 @@ const inHQ=(x,y)=>x>=12&&x<=28&&y>=3&&y<=18;
 // 본산 몹: 제자 다섯과 고수 하나가 지키고, 아래 산길로 적 세력 무인이 쳐들어온다
 function hqSpawns(s,th){
   const own=alFac(s.al),[k0,k1]=FAC_KIND[own],out=(x,y)=>y>=21&&y<=34&&!inHQ(x,y);
-  const sp=[[k0,5,inHQ,(x,y)=>mkFac(own,0,x,y,s.id)],[k1,1,inHQ,(x,y)=>mkFac(own,1,x,y,s.id)]];
+  const[n0,n1]=s.tier==='big'||s.tier==='one'?[7,2]:s.tier==='mid'?[5,1]:[4,1];   // 인원: 대문파(오대세가 포함) 7+2, 중견 5+1, 소문파 4+1
+  const sp=[[k0,n0,inHQ,(x,y)=>mkFac(own,0,x,y,s.id)],[k1,n1,inHQ,(x,y)=>mkFac(own,1,x,y,s.id)]];
   for(const f of['정','사','마','관'])if(facFoe(f,own))sp.push([FAC_KIND[f][0],2,out,(x,y)=>mkFac(f,0,x,y)]);
   for(const[k,c]of HQ_BEAST[th])sp.push([k,c,(x,y)=>(y<20||x<10||x>30)&&!inHQ(x,y)]);
   return sp}

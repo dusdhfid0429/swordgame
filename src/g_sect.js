@@ -8,7 +8,8 @@ const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,
 const sectOf=id=>SECTS[id]||null;
 const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 // 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
-const TIERN=GD.TIERN;
+const TIERN=GD.TIERN,FIVE=GD.FIVE||[];   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
+const isFive=s=>FIVE.includes(s.id),tierName=s=>isFive(s)?'오대세가':TIERN[s.tier];
 // 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
 // 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
 // 4번 천고는 기연으로만 얻는 무공의 등급이다 (g_giyeon.js)
@@ -29,7 +30,7 @@ function addSectArts(arts,pool,ults,formName,ultName){
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];
     arts[a.id]={id:a.id,side,cls:a.cls,el:a.el,n:a.n,c:EC.c,pt:EC.pt,elc:a.el==='금',forms,sect:s.id,hi:a.hi,
       grade:g,ult:{n:ultName(),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
-      d:`${s.n}(${TIERN[s.tier]})의 ${AGR[g]} ${a.hi?'고급':'일반'} 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개와 필살기.`};
+      d:`${s.n}(${tierName(s)})의 ${AGR[g]} ${a.hi?'고급':'일반'} 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개와 필살기.`};
   }
 }
 // ---- 가입 조건 ----
@@ -55,11 +56,12 @@ function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
   const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
-  const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>s.tier==='big'||s.tier==='one'),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
+  const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
   return `${head}<p class="note">${al.d}</p>${mine?`<p class="note">지금 소속: <b>${mine.n}</b> (${ALLY[mine.al].n})</p>`:''}
     <h4 style="margin:0">${alId==='jeong'?'9파1방':alId==='sacheon'?'4대문파':alId==='gunbu'?'황성 금군':'본교'}</h4><div class="list">${big.map(row).join('')}</div>
+    ${five.length?`<h4 style="margin:0">오대세가</h4><div class="list">${five.map(row).join('')}</div>`:''}
     ${mid.length?`<h4 style="margin:0">중견문파</h4><div class="list">${mid.map(row).join('')}</div>`:''}
     ${small.length?`<h4 style="margin:0">소문파</h4><div class="list">${small.map(row).join('')}</div>`:''}${ownSectHtml(al)}`;
 }
@@ -80,7 +82,7 @@ function sectDetail(s,hq){
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 고급 무공 [${hi.n}]의 첫 초식을 바로 익힌다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
-  return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${TIERN[s.tier]} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
+  return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${pasSectHtml(s)}
     ${bobSectHtml(s)}

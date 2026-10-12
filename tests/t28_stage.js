@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const cnt=await p.evaluate(()=>{const want={big:4,mid:2,small:1,one:8},bad=[],tiers={};
     for(const s of Object.values(SECTS)){const ch=REGIONS[hqId(s)].chain||[hqId(s)];tiers[s.tier]=(tiers[s.tier]||0)+1;if(ch.length!==want[s.tier])bad.push(s.n+ch.length)}
     return{bad,tiers}});
-  ok(`맵 수: 대문파 4·중견 2·소문파 1·마교 8 (${JSON.stringify(cnt.tiers)}) 어긋남 ${cnt.bad.join(',')}`,cnt.bad.length===0&&cnt.tiers.mid===11);
+  ok(`맵 수: 대문파 4·중견 2·소문파 1·마교 8 (${JSON.stringify(cnt.tiers)}) 어긋남 ${cnt.bad.join(',')}`,cnt.bad.length===0&&cnt.tiers.mid===6);
   // 성 지도 출입구 → 첫 맵, 첫 맵 → 성
   const pv=await p.evaluate(()=>{const bad=[];for(const s of Object.values(SECTS)){if(s.id==='shaolin')continue;const ch=REGIONS[hqId(s)].chain||[hqId(s)],k=pvOfSect(s.id),via=REGIONS[ch[0]].lmVia,O=via?REGIONS[via]:REGIONS['pv_'+k],pg=O.gates.filter(g=>ch.includes(g.to));
     // 산·도시 맵 안 포털로 들어가는 문파는 그 장소 맵과 잇는다 (g_lmmap.js)
@@ -48,9 +48,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>openNpc(findNpc(REG,n=>n.elder)));await p.waitForTimeout(200);
   ok('후산 장로 창에 패시브·보법',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('패시브')||t.includes('보법')}));
   await p.evaluate(()=>{closePanels();P.x=20.5;P.y=12.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_back')});
-  // 중견문파 남궁세가: 산문 → 본산
-  const mid=await p.evaluate(()=>REGIONS.hq_namgung.chain.map(id=>REGIONS[id].name));
-  ok(`중견문파 남궁세가: ${mid.join(' → ')}`,mid.length===2);
+  // 중견문파 황보세가: 산문 → 본산
+  const mid=await p.evaluate(()=>REGIONS.hq_hwangbo.chain.map(id=>REGIONS[id].name));
+  ok(`중견문파 황보세가: ${mid.join(' → ')}`,mid.length===2);
   // 연락관 목록에 중견문파 묶음
   await p.evaluate(()=>{loadRegion('gaebong');P.reg='gaebong';P.sect=null;openNpc(npcAt('jeong'))});await p.waitForTimeout(200);
   ok('정의맹 목록에 중견문파',await p.evaluate(()=>$('wbody').textContent.includes('중견문파')));
