@@ -14,7 +14,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`재료 묶음 ${s0.g0.join(',')} (숙련 99면 ${s0.gLow}묶음) · 개봉에서도 창안 줄은 보이고(${s0.h0}) 단추만 막힌다 · ${s1.reg}(${s1.place}) 삼류면 "${s1.why0}", 초절정이면 "${s1.why4}", 화경이면 단추 활성 ${s1.btn}`,s0.g0.join()==='검0:5'&&s0.gLow===0&&s0.h0&&s1.place&&/경지 필요/.test(s1.why0)&&/경지 필요/.test(s1.why4)&&s1.row&&s1.btn&&!s1.why1);
   // 창안 (성공을 고정)
   const r=await p.evaluate(()=>{window.__noPrompt=1;const age=P.age,vit=P.vit,R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return{age,vit,busy:trnBusy&&trnBusy.k}});
-  await p.waitForTimeout(5000);
+  await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
   const d=await p.evaluate(()=>{window.__restore();const id=Object.keys(P.arts).find(k=>k.startsWith('mk_')),a=ARTS[id];
     return{id,n:a&&a.n,g:a&&a.grade,nf:a&&a.forms.length,open:P.arts[id]&&P.arts[id].f.every(Boolean),p:P.arts[id]&&P.arts[id].p,left:['정검0','정검1','정검2','정검3','정검4'].filter(k=>P.arts[k]).length,age:P.age,vit:P.vit,qi:P.qi,maxQi:P.maxQi,cur:P.cur,
       m0:a&&a.forms[0].m,ult:a&&a.ult.n,made:G.made&&Object.keys(G.made).length,log:logHist.slice(-1).map(l=>l.t||l)[0]}});
@@ -28,7 +28,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`불러오기 뒤 창안 무공 복원 ${sv.ok} 같은 정의 ${sv.same} 숙련 유지 ${sv.has}`,sv.ok&&sv.same&&sv.has);
   // 실패: 세월과 활력만 잃고 무공은 남는다
   const f=await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='사검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>.999;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return trnBusy&&trnBusy.k});
-  await p.waitForTimeout(5000);
+  await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
   const f2=await p.evaluate(()=>{window.__restore();return{left:['사검0','사검1','사검2','사검3','사검4'].filter(k=>P.arts[k]).length,inj:P.inj>0,made:Object.keys(G.made).length,log:logHist.slice(-1).map(l=>l.t||l)[0]}});
   ok(`실패: 무공 남음 ${f2.left} · 경맥 상함 ${f2.inj} · ${f2.log}`,f===`mk:검:0`&&f2.left===5&&f2.inj&&f2.made===1);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
