@@ -8,7 +8,10 @@ function drawFighter(e,isP){
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
   if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
-  if(isP&&heroSprite()){const[fi,useB,lk,a2]=heroFrame(),f=a2?HF2[fi]:HF[fi],k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
+  if(isP&&heroSprite()){let[fi,useB,lk,a2]=heroFrame(),f=a2?HF2[fi]:HF[fi];
+    // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
+    if(!f){if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
+    const k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
     const gb=heroGarb(),img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
     // 일대제자부터 문파 망토 (도트 몸이 코드 사람보다 1.2배 크다)
     if(gb&&gb.pal.cape&&!flash){const tr=e.moving?7:0,wv=Math.sin(time*8);ctx.save();ctx.translate(-2,-8);drawCape(gb.pal,tr,wv,1.2);ctx.restore()}
