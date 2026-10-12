@@ -1,28 +1,28 @@
 // ================= 무공 창안: 같은 병기·같은 등급의 대성 무공 다섯으로 한 등급 높은 무공을 만든다 =================
 // 사용자 요청(2026-10-12): "대성한 무공, 같은 무기 타입, 같은 등급 5개를 이용하여 한 단계 높은 무공을 창안하는 컨텐츠. 소비값은 무협스럽게."
-// - 재료: 같은 병기·같은 등급의 무공 다섯이 모두 대성(숙련 50) 이상. 기초권각·기연 무공은 재료가 못 된다. 창안한 무공은 다시 재료가 된다.
+// - 재료: 같은 병기·같은 등급의 무공 다섯이 모두 숙련 100(사용자 2026-10-12: 대성 50 → 100). 기초권각·기연 무공은 재료가 못 된다. 창안한 무공은 다시 재료가 된다.
 // - 값: 다섯 무공을 모두 잊고 심득만 남긴다. 폐관수련처럼 문파 본산·내 집·산 정상에서만, 세월(등급+2년)과 활력(100+등급×60)을 쓰고, 끝나면 내공이 바닥난다.
-//   경지도 있어야 한다(중승 창안 이류, 상승 일류, 절정 절정). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못한다(무공은 남는다).
+//   경지는 화경 이상(사용자 2026-10-12; 처음엔 등급마다 이류·일류·절정이었다). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못한다(무공은 남는다).
 // - 결과: 다섯 무공의 초식 가운데 가장 강한 여섯을 골라 새 이름을 붙이고 한 등급 높은 공력(GMUL)으로 올린다. 필살기는 가장 높은 재료의 것을 잇는다.
 //   초식 여섯을 모두 아는 채로 시작하고(내가 지은 무공이다) 숙련 30(심득). 오성 가짓수에는 든다. 절정 위(천고)는 기연으로만 얻으므로 절정이 끝이다.
 // - 저장: 정의는 G.made(여러 생에 남는다)에, 숙련은 P.arts에. 불러올 때 G.made 순서대로 다시 만든다(gLoaded 훅).
 // 설계: docs/세력_문파_설계.md 23장. 테스트: tests/t46_create.js
-const MK_N=5,MK_TOP=3,MK_MAST=2;   // 재료 수, 창안으로 닿는 최고 등급(절정), 재료 숙련 단계(대성)
+const MK_N=5,MK_TOP=3,MK_MAST=100,MK_REALM=5;   // 재료 수, 창안으로 닿는 최고 등급(절정), 재료 숙련(100), 경지(화경)
 const MK_PRE={금:['파천','벽력','금강','섬광'],목:['청풍','유성','송학','춘뢰'],수:['한월','유수','창해','빙백'],화:['열양','적염','화룡','삼매'],토:['태산','반석','후토','황룡']};
 const MK_SUF={검:'검법',도:'도법',창:'창법',봉:'봉법',권:'권법',궁:'궁술'};
 const mkMul=a=>a.sect||a.gy||a.made?GMUL[a.grade||0]:(a.forms.length<=3?1.25:1);   // 초식 m에 이미 곱해진 등급 보정
 const mkUltMul=a=>a.sect||a.gy||a.made?GULT[a.grade||0][1]:1;
 // 재료가 될 수 있는 무공 묶음: {cls,g,ids} (대성 이상 다섯 넘는 것만)
 function mkGroups(){const by={};
-  for(const id of learnedArts()){const a=ARTS[id],s=A(id);if(!a||a.base||a.gy||(a.grade||0)>=MK_TOP||tierOf(s.p)<MK_MAST)continue;
+  for(const id of learnedArts()){const a=ARTS[id],s=A(id);if(!a||a.base||a.gy||(a.grade||0)>=MK_TOP||s.p<MK_MAST)continue;
     const k=a.cls+':'+(a.grade||0);(by[k]=by[k]||[]).push(id)}
   return Object.entries(by).filter(([,ids])=>ids.length>=MK_N).map(([k,ids])=>{const[cls,g]=k.split(':');return{cls,g:+g,ids:ids.sort((x,y)=>A(y).p-A(x).p).slice(0,MK_N)}})}
-const mkCost=g=>100+60*g,mkYears=g=>2+g,mkRealm=g=>g+1;
+const mkCost=g=>100+60*g,mkYears=g=>2+g,mkRealm=g=>MK_REALM;
 function mkChance(g){let c=.85;if(hobeop())c+=.1;if(realmIdx()>mkRealm(g))c+=.05;return Math.min(.95,c)}
 function mkWhy(g){if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
   if(realmIdx()<mkRealm(g))return`${rk(mkRealm(g))}의 경지 필요`;if(P.vit<mkCost(g))return`활력 ${mkCost(g)} 필요`;return''}
 function mkRows(){return mkGroups().map(({cls,g,ids})=>{const k=`mk:${cls}:${g}`,why=mkWhy(g),busy=trnBusy&&trnBusy.k===k;
-  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>${CLASS[cls].n} 다섯을 잊고 심득을 모은다 · ${ids.map(i=>ARTS[i].n).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
+  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>숙련 100인 ${CLASS[cls].n} 다섯을 잊고 심득을 모은다 · ${ids.map(i=>ARTS[i].n).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="${k}"${why||trnBusy?' disabled':''}>${why||`창안 · 활력 ${mkCost(g)}`}<i class="tcd"></i></button></div>`}).join('')}
 function mkStart(k){const[,cls,g]=k.split(':'),grp=mkGroups().find(q=>q.cls===cls&&q.g===+g);
   if(trnBusy||P.hp<=0||!grp)return;const why=mkWhy(+g);if(why){log(`무공을 창안할 수 없습니다: ${why}.`,'info');return}
