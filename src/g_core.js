@@ -39,7 +39,7 @@ const wpnNeed=c=>c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 �
 const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
-const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0));
+const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0)+simTv('hm'));
 const guard=()=>Math.min(.65,(P.st.end*.008+gear('def')/100)*CLASS[curCls()].def+pv('def'));
 // 내공은 오직 내공 심법 수련(과 영약)으로 오른다. 본원진기는 생명, 지구력은 활력을 담을 그릇.
 const baseQi=(p=P)=>Math.round(80+(p.qiAcc??p.qiN*SIDES[p.side].gain)+p.qiBonus+(p.qiX||0));
@@ -58,9 +58,9 @@ const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
-const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd'))*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
+const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg'))*injMul()*realmQiMul();
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul();
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
@@ -187,7 +187,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
-  const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit');if(crit)d*=1.6;
+  const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
@@ -276,7 +276,7 @@ function useForm(i,silent){
   // 연속기: forms entered in order inside the window stack their 추가 공력
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
   const X=mkX(a.id,1+ch.sum/100),r=engage(f),e=P.target&&P.target.hp>0&&dist(P.target,P)<r?P.target:nearest(r);
-  P.qi-=f.qi;P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
+  P.qi-=Math.round(f.qi*(1-simTv('qcost')/100));P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
   texts.push({x:P.x,y:P.y,t:ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n,c:`rgb(${a.c})`,life:.9,call:1});exec(f,e,X);return true;
 }
 function basicStrike(e){

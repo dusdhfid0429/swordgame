@@ -6,14 +6,34 @@
 // - 문파 심법: 소문파 중승까지 1개, 중견 상승까지 2개, 대문파(오대세가 포함) 절정까지 3개, 마교 천고까지 4개. 이름은 SIM_NAMES, 없으면 문파 이름으로 짓는다.
 //   문파 창에서 공적으로 익힌다(등급마다 직위 SIM_RANK: 중승 2단계 직위, 상승 3단계, 절정 4단계, 천고 5단계).
 // - 수련 창에서 익힌 심법 가운데 하나를 운용한다(P.sim). 쌓인 내공은 P.qiAcc 에 적어(예전 저장은 횟수×증가량으로 옮김) 심법을 바꿔도 지난 수련분은 그대로다.
+// - 문파 심법 특색(사용자 요청 2026-10-12 "문파별 내공에 특색"): 문파 심법마다 SIM_TRAIT 에 적은 특색(SIM_TK: 금강·반탄·패도·광폭·예기·현묘·회춘·순환·질풍·비상·절약·독기·한기·벽력·흡정·흡혈)이
+//   그 심법을 운용하는 동안만 살아난다. 세기 = SIM_TK[k].v × SIM_TQ[등급] (중승 1 / 상승 1.4 / 절정 1.8 / 천고 2.3). 타고난·잡화점 심법은 특색이 없다. 천마신교는 둘(패도+흡혈).
 // - 주화입마로 잃는 내공은 지금 운용하는 심법의 증가량 × 잃는 회차. 설계: docs/경지_설계.md 4부. 테스트: tests/t48_simbeop.js
-const SIM_GQ=GD.SIM_GQ,SIM_TOP=GD.SIM_TOP,SIM_RANK=GD.SIM_RANK,SIM_COST=GD.SIM_COST,SIM_SHOP=GD.SIM_SHOP,SIM_NAMES=GD.SIM_NAMES;
+const SIM_GQ=GD.SIM_GQ,SIM_TQ=GD.SIM_TQ,SIM_TK=GD.SIM_TK,SIM_TRAIT=GD.SIM_TRAIT,SIM_TDEF=GD.SIM_TDEF,SIM_TOP=GD.SIM_TOP,SIM_RANK=GD.SIM_RANK,SIM_COST=GD.SIM_COST,SIM_SHOP=GD.SIM_SHOP,SIM_NAMES=GD.SIM_NAMES;
 const SIM={};
 for(const side of['정','사'])SIM['N_base_'+side]={id:'N_base_'+side,n:SIDES[side].base,g:0,side,d:`${SIDES[side].n} 사람이 타고나는 기초 심법.`};
 for(const side of['정','사'])SIM['N_shop_'+side]={id:'N_shop_'+side,n:SIM_SHOP[side],g:1,side,shop:1,d:'강호에 널리 퍼진 공용 심법. 개봉 잡화점에서 판다.'};
 const simPre=n=>n.replace(/(세가|파|가|문|교|사|궁|채|방|장|맹)$/,'')||n;
 for(const s of Object.values(SECTS)){const top=SIM_TOP[s.tier]||1,names=SIM_NAMES[s.id]||[],pre=simPre(s.n),auto=[`${pre}심법`,`${pre}진기`,`${pre}신공`,`${pre}무상공`];
-  for(let g=1;g<=top;g++){const id=`N_${s.id}_${g}`;SIM[id]={id,n:names[g-1]||auto[g-1],g,sect:s.id,side:ALLY[s.al].side,d:`${s.n}(${tierName(s)})의 ${AGR[g]} 심법.`}}}
+  const tr=[].concat(SIM_TRAIT[s.id]||SIM_TDEF[simSchoolOf(s.id)]||[]).filter(k=>SIM_TK[k]);
+  for(let g=1;g<=top;g++){const id=`N_${s.id}_${g}`;SIM[id]={id,n:names[g-1]||auto[g-1],g,sect:s.id,side:ALLY[s.al].side,tr,d:`${s.n}(${tierName(s)})의 ${AGR[g]} 심법.`}}}
+// 심법 특색: 운용 중인 심법의 특색 k 값(SIM_TK 단위: %p 또는 현묘도 점수). 없으면 0
+function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&SECTS[sid].al==='sacheon'?'사공':'정종'}
+const simTraitVal=(x,k)=>x&&x.tr&&x.tr.includes(k)?SIM_TK[k].v*SIM_TQ[x.g]:0;
+const simTv=k=>simTraitVal(simCur(),k);
+const simTraits=x=>(x&&x.tr||[]).map(k=>({k,n:SIM_TK[k].n,v:simTraitVal(x,k),txt:SIM_TK[k].fmt.replace('{p}',Math.round(simTraitVal(x,k)))}));
+const simTraitTxt=x=>simTraits(x).map(t=>`${t.n}(${t.txt})`).join(' · ');
+const simTraitHtml=x=>simTraits(x).map(t=>`<b class="gold">${t.n}</b> ${t.txt}`).join(' · ');
+// 전투 적용: 공격력·광폭·받는 피해·반탄·적중 효과(중독=독기, 둔화, 경직)·흡정·흡혈. 치명타·현묘도·회복·이동·경공·초식 내공은 각 공식에서 simTv 를 더한다
+hook('hit',c=>{if(c.from!==P)return;const a=simTv('atk'),r=P.hp<P.maxHp*.5?simTv('rage'):0;if(a||r)c.m*=1+(a+r)/100});
+hook('hurt',c=>{const v=simTv('def');if(v)c.dm*=1-v/100});
+hook('hitDone',c=>{const e=c.e,d=c.hp0-e.hp;if(!e||d<=0||!(simCur().tr||[]).length)return;
+  if(Math.random()*100<simTv('poison')){e.burn=Math.max(e.burn||0,4);e.burnD=Math.max(1,Math.round(d*.06));addText(e.x,e.y-.4,'중독','#9fd36a')}
+  if(Math.random()*100<simTv('slow')){e.slow=Math.max(e.slow||0,2.5);addText(e.x,e.y-.4,'둔화','#9fc8ff')}
+  if(Math.random()*100<simTv('stun')){e.stun=Math.max(e.stun||0,e.d&&e.d.boss?.25:.6);addText(e.x,e.y-.4,'경직','#ffd36a')}
+  const dr=simTv('drain');if(dr)P.qi=Math.min(P.maxQi,P.qi+d*dr/100);
+  const va=simTv('vamp');if(va&&P.hp>0)P.hp=Math.min(P.maxHp,P.hp+d*va/100)});
+hook('hurtDone',c=>{const v=simTv('reflect'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(v&&d>0&&src&&src.d&&src.hp>0&&src!==P)damage(src,Math.max(1,Math.round(d*v/100)),0,0,P)});
 const simOf=sid=>Object.values(SIM).filter(x=>x.sect===sid).sort((a,b)=>a.g-b.g);
 const simBase=()=>SIM['N_base_'+P.side];
 function simCur(){return(P.sim&&SIM[P.sim]&&simKnown(P.sim)?SIM[P.sim]:simBase())}
@@ -24,8 +44,8 @@ function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
   if(x.shop)return P.side!==x.side?'성향이 다르다':P.silver<SIM_SHOP.price?`은자 ${SIM_SHOP.price} 필요`:'';
   if(P.sect!==x.sect)return`${SECTS[x.sect].n} 제자만`;const r=rankIdx(x.sect);if(r<SIM_RANK[x.g])return`${rankName(x.sect,SIM_RANK[x.g])} 이상`;
   if((P.merit[x.sect]||0)<SIM_COST[x.g])return`공적 ${SIM_COST[x.g]} 필요`;return''}
-function simLearn(x){P.sims=P.sims||{};P.sims[x.id]=1;P.sim=x.id;log(`심법 [${x.n}](${AGR[x.g]})을(를) 익혀 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'xp');showBanner(x.n,`${AGR[x.g]} 심법`)}
-const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop)?' <small class="good">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}</span></div><div class="ib">${btn}</div></div>`;
+function simLearn(x){P.sims=P.sims||{};P.sims[x.id]=1;P.sim=x.id;log(`심법 [${x.n}](${AGR[x.g]})을(를) 익혀 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'xp');if(x.tr&&x.tr.length)log(`특색: ${simTraitTxt(x)} (운용 중에만)`,'xp');showBanner(x.n,`${AGR[x.g]} 심법`)}
+const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop)?' <small class="good">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}${x.tr&&x.tr.length?`<br>특색 ${simTraitHtml(x)}`:''}</span></div><div class="ib">${btn}</div></div>`;
 // 문파 창: 문파 심법 목록
 function simSectHtml(s){const list=simOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 심법 <small class="dim">${tierName(s)}는 ${AGR[SIM_TOP[s.tier]||1]}까지 · 직위가 오르면 더 익힌다</small></h4><div class="list">${list.map(x=>{const no=simBlock(x);
@@ -39,5 +59,5 @@ hook('sectAct',c=>{const{a,x}=c;
   if(a==='simshop'){c.done=true;c.r=true;const s=SIM['N_shop_'+P.side];if(simBlock(s))return;P.silver-=SIM_SHOP.price;simLearn(s);return}});
 // 수련 창: 익힌 심법 가운데 운용할 것을 고른다 (g_train.js renderTrain·startTrain 이 부른다)
 function simRows(){const mine=simMine();if(mine.length<2)return'';const cur=simCur();
-  return mine.filter(x=>x.id!==cur.id).map(x=>trnRow('sim:'+x.id,`심법 바꾸기 · ${x.n}`,AGR[x.g],`수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10}`,0,!trnBusy,'운용하기')).join('')}
-function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'sys');renderTrain()}
+  return mine.filter(x=>x.id!==cur.id).map(x=>trnRow('sim:'+x.id,`심법 바꾸기 · ${x.n}`,AGR[x.g],`수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10}${x.tr&&x.tr.length?' · '+simTraitTxt(x):''}`,0,!trnBusy,'운용하기')).join('')}
+function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');renderTrain()}
