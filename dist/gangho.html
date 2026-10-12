@@ -1754,6 +1754,7 @@ function pArts(){
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
     ${gyNote()}
+    ${simArtsHtml()}
     ${ggArtsHtml()}
     ${bobArtsHtml()}
     ${pasArtsHtml()}
@@ -1908,6 +1909,7 @@ function act(s){
     case'wsel':wSel=x;break;
     case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;
     case'gsel':ggInit();if(P.gk[x])P.gkcur=x;break;
+    case'simsel':simSwitch(x);break;
     case'snd':sndToggle(x);break;
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
@@ -3592,7 +3594,7 @@ function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
   if(P.sect!==x.sect)return`${SECTS[x.sect].n} 제자만`;const r=rankIdx(x.sect);if(r<SIM_RANK[x.g])return`${rankName(x.sect,SIM_RANK[x.g])} 이상`;
   if((P.merit[x.sect]||0)<SIM_COST[x.g])return`공적 ${SIM_COST[x.g]} 필요`;return''}
 function simLearn(x){P.sims=P.sims||{};P.sims[x.id]=1;P.sim=x.id;log(`심법 [${x.n}](${AGR[x.g]})을(를) 익혀 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'xp');if(x.tr&&x.tr.length)log(`특색: ${simTraitTxt(x)} (운용 중에만)`,'xp');showBanner(x.n,`${AGR[x.g]} 심법`)}
-const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop)?' <small class="good">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}${x.tr&&x.tr.length?`<br>특색 ${simTraitHtml(x)}`:''}</span></div><div class="ib">${btn}</div></div>`;
+const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop)?' <small class="gold">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}${x.tr&&x.tr.length?`<br>특색 ${simTraitHtml(x)}`:''}</span></div><div class="ib">${btn}</div></div>`;
 // 문파 창: 문파 심법 목록
 function simSectHtml(s){const list=simOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 심법 <small class="dim">${tierName(s)}는 ${AGR[SIM_TOP[s.tier]||1]}까지 · 직위가 오르면 더 익힌다</small></h4><div class="list">${list.map(x=>{const no=simBlock(x);
@@ -3604,10 +3606,12 @@ hook('npcDlg',c=>{if(c.html==null&&c.n.id==='gen'&&REG==='gaebong'){c.html=pNpcB
 hook('sectAct',c=>{const{a,x}=c;
   if(a==='simbuy'){c.done=true;c.r=true;const s=SIM[x];if(!s||s.shop||simBlock(s))return;P.merit[s.sect]-=SIM_COST[s.g];simLearn(s);return}
   if(a==='simshop'){c.done=true;c.r=true;const s=SIM['N_shop_'+P.side];if(simBlock(s))return;P.silver-=SIM_SHOP.price;simLearn(s);return}});
-// 수련 창: 익힌 심법 가운데 운용할 것을 고른다 (g_train.js renderTrain·startTrain 이 부른다)
-function simRows(){const mine=simMine();if(mine.length<2)return'';const cur=simCur();
-  return mine.filter(x=>x.id!==cur.id).map(x=>trnRow('sim:'+x.id,`심법 바꾸기 · ${x.n}`,AGR[x.g],`수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10}${x.tr&&x.tr.length?' · '+simTraitTxt(x):''}`,0,!trnBusy,'운용하기')).join('')}
-function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');renderTrain()}
+// 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
+const simRows=()=>'';
+function simArtsHtml(){const mine=simMine(),cur=simCur();
+  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.map(x=>simRowHtml(x,x.id===cur.id?'':B('simsel:'+x.id,'운용하기'))).join('')}</div>
+    <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다.</p></div>`}
+function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}
 
 // ================= 세력 무인, 문파 직위, 문파 본산 =================
 // 정파·사파·마교 무인 몹은 서로 적이다. 정파와 사파는 서로 싸우고, 마교는 정사 모두를 공격한다.
