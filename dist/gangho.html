@@ -1616,6 +1616,8 @@ function applySave(data){data=migrateSave(data);
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
+    // 시계(time)는 새로 시작하므로 지난 판의 시각이 적힌 연출 상태는 버린다. 안 버리면 회피 도트(P.dA)·보법 도트(P.bA)에 갇혀 이동 모션이 안 나오고 '장 번호 없음' 경고가 이어진다 (사용자 보고 2026-10-12)
+    P.dA=0;P.bA=null;P.ggc=null;P.ss2=0;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();afterLoad(data);return true}
   return false;
 }
@@ -2025,8 +2027,8 @@ function heroFrame(){
   // 경공 1단 (사용자 시트): 웅크림 -> 달림 -> 도약 -> 공중 -> 착지. 무기와 상관없이 같은 동작
   if(P.sj>0&&h2){const st=P.sjSt||1,s=st===3?A2.j3:st===2?A2.j2:A2.j,o=st===2?1:0,n=s[1]-o,u=1-P.sj/(P.sjMax||.6);return[s[0]+o+Math.min(n-1,Math.floor(u*n)),false,'',true]}
   // 보법: 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때. 피동 회피(측면 회피 줄)는 0.45초
-  if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
-  if(P.dA&&h2&&time-P.dA<.45&&P.satk<=0){const s=A2.sd;return[s[0]+Math.min(s[1]-1,Math.floor((time-P.dA)/.45*s[1])),false,'',true]}
+  if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u<0||u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
+  if(P.dA&&h2&&time>=P.dA&&time-P.dA<.45&&P.satk<=0){const s=A2.sd;return[s[0]+Math.min(s[1]-1,Math.floor((time-P.dA)/.45*s[1])),false,'',true]}
   // 달리기는 새 도트를 쓰지 않는다 (사용자 결정 2026-10-12): 아래 기존 몸통 아틀라스 41~48 + 코드 무기
   // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
@@ -4939,7 +4941,7 @@ const ggMast=id=>{ggInit();return P.ggm[id||P.gkcur]||0};
 // 지금 쓰는 경공으로 열린 최고 단계
 function ggMaxStage(){const g=ggOf(),m=ggMast();let n=1;for(let s=2;s<=GG_MAX[g.g];s++)if(m>=GG_OPEN[s-1])n=s;return n}
 // 다음에 나갈 단: 이어 누르는 중이면 다음 단, 아니면 1단
-function ggNext(){const c=P.ggc;if(c&&time<c.until&&c.n<ggMaxStage())return c.n+1;return 1}
+function ggNext(){const c=P.ggc;if(c&&time<c.until&&c.until-time<3&&c.n<ggMaxStage())return c.n+1;return 1}
 function ggBlock(id,viaSect){const g=GGS[id];ggInit();if(P.gk[id])return'이미 익혔다';
   if(g.g>=2){if(!viaSect)return'문파에서';if(!P.sect)return'문파 제자만';if(rankIdx(P.sect)<GG_RANK[g.g])return`${rankName(P.sect,GG_RANK[g.g])} 이상`;if((P.merit[P.sect]||0)<GG_COST[g.g])return`공적 ${GG_COST[g.g]} 필요`}
   return null}

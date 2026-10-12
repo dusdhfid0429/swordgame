@@ -11,7 +11,7 @@ const ggMast=id=>{ggInit();return P.ggm[id||P.gkcur]||0};
 // 지금 쓰는 경공으로 열린 최고 단계
 function ggMaxStage(){const g=ggOf(),m=ggMast();let n=1;for(let s=2;s<=GG_MAX[g.g];s++)if(m>=GG_OPEN[s-1])n=s;return n}
 // 다음에 나갈 단: 이어 누르는 중이면 다음 단, 아니면 1단
-function ggNext(){const c=P.ggc;if(c&&time<c.until&&c.n<ggMaxStage())return c.n+1;return 1}
+function ggNext(){const c=P.ggc;if(c&&time<c.until&&c.until-time<3&&c.n<ggMaxStage())return c.n+1;return 1}
 function ggBlock(id,viaSect){const g=GGS[id];ggInit();if(P.gk[id])return'이미 익혔다';
   if(g.g>=2){if(!viaSect)return'문파에서';if(!P.sect)return'문파 제자만';if(rankIdx(P.sect)<GG_RANK[g.g])return`${rankName(P.sect,GG_RANK[g.g])} 이상`;if((P.merit[P.sect]||0)<GG_COST[g.g])return`공적 ${GG_COST[g.g]} 필요`}
   return null}
