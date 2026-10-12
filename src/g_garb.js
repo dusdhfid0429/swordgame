@@ -75,7 +75,7 @@ function recolorAtlas(img,robe){
 function heroGarb(){
   if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
-  const imgs=HERO_GARB[key];if(!imgs)return null;
+  const imgs=HERO_GARB[key];if(!imgs)return null;if(!imgs.h2&&hero2Ok())imgs.h2=recolorAtlas(HERO2,rankRobe(L,rank));
   return{...imgs,rank,pal:{cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?P.sect:null}}}
 
 // ---- 직위별 옷 미리보기 (문파 창) ----

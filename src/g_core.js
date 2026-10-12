@@ -273,7 +273,7 @@ function useForm(i,silent){
   // 연속기: forms entered in order inside the window stack their 추가 공력
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
   const X=mkX(a.id,1+ch.sum/100),r=engage(f),e=P.target&&P.target.hp>0&&dist(P.target,P)<r?P.target:nearest(r);
-  P.qi-=f.qi;P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p]);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
+  P.qi-=f.qi;P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
   texts.push({x:P.x,y:P.y,t:ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n,c:`rgb(${a.c})`,life:.9,call:1});exec(f,e,X);return true;
 }
 function basicStrike(e){
