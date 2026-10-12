@@ -25,12 +25,12 @@ const WSET={
 const BIDLE=[0,1,2,3,5,1];
 // 사용자 시트(r_atlas2.js)의 무기별 공격 줄: 줄 안 번호. palm은 권 줄의 장타 두 장
 const W2SET={
-  도:{flat:[1,2,2,5],vert:[3,4,4,5],diag:[1,3,4,6],ult:[0,1,2,3,4,5,6,5]},
-  봉:{flat:[1,6,7,7],vert:[2,3,4,5],diag:[1,5,6,7],ult:[0,1,2,3,4,5,6,7]},
-  창:{flat:[1,2,2,3],vert:[7,3,4,5],diag:[1,4,5,6],ult:[0,1,2,3,4,5,6,7]},
-  권:{flat:[1,2,3],vert:[1,5,6],diag:[1,4,7],palm:[2,3],ult:[0,1,2,3,4,5,6,7]},
-  각:{flat:[1,2,3],vert:[1,3,4],diag:[5,6,6],palm:[2,3],ult:[0,1,2,3,4,5,6,7]},
-  궁:{flat:[0,1,2,3,4,5],vert:[0,1,2,3,4,5],diag:[0,1,2,3,4,5],ult:[0,1,2,3,4,5,4,5]}};
+  도:{flat:[1,2,2,5,0],vert:[3,4,4,5,0],diag:[1,3,4,6,0],ult:[0,1,2,3,4,5,6,5,0]},
+  봉:{flat:[1,6,7,7,0],vert:[2,3,4,5,0],diag:[1,5,6,7,0],ult:[0,1,2,3,4,5,6,7,0]},
+  창:{flat:[1,2,2,3,0],vert:[7,3,4,5,0],diag:[1,4,5,6,0],ult:[0,1,2,3,4,5,6,7,0]},
+  권:{flat:[1,2,3,0],vert:[1,5,6,0],diag:[1,4,7,0],palm:[2,3],ult:[0,1,2,3,4,5,6,7,0]},
+  각:{flat:[1,2,3,0],vert:[1,3,4,0],diag:[5,6,6,0],palm:[2,3],ult:[0,1,2,3,4,5,6,7,0]},
+  궁:{flat:[0,1,2,3,4,5,0],vert:[0,1,2,3,4,5,0],diag:[0,1,2,3,4,5,0],ult:[0,1,2,3,4,5,4,5,0]}};
 // 줄 안 번호 -> HF2 절대 번호
 const a2i=(row,i)=>A2[row][0]+Math.min(i,A2[row][1]-1);
 // f: 쓰는 초식. 권 계열인데 이름이 발차기면 각법 줄을 쓴다 (각법 무공은 권 풀에 섞여 있다)
@@ -50,11 +50,11 @@ function heroFrame(){
   if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
   if(P.dA&&h2&&time-P.dA<.45&&P.satk<=0){const s=A2.sd;return[s[0]+Math.min(s[1]-1,Math.floor((time-P.dA)/.45*s[1])),false,'',true]}
   // 달리기 (사용자 이동 시트): 0번은 서기, 1~8번이 한 걸음. 궁은 기본 이동 줄
-  if(P.runT>0&&h2&&P.satk<=0){const s=A2['r'+w]||A2.r권;return[s[0]+1+Math.floor(P.runPh*moveSpd()*3.6)%(s[1]-1),false,'',true]}
+  if(P.runT>0&&h2&&P.satk<=0){const s=A2['R'+w]||A2.R권;return[s[0]+Math.floor(P.runPh*moveSpd()*1.9)%s[1],false,'',true]}
   // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
   if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))],false,'',true]}
-  if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w];return[s[0]+Math.floor(time*4)%Math.min(8,s[1]),false,'',true]}
+  if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w],n=Math.min(8,s[1]),k=Math.floor(time*4)%(2*n-2);return[s[0]+(k<n?k:2*n-2-k),false,'',true]}
   if(P.sj>0){const uj=1-P.sj/(P.sjMax||.6);if(sw||w==='도'){const s=HSET.jump;return[s[Math.min(s.length-1,Math.floor(uj*s.length))],false,'']}
     const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor(uj*s.length))];return[i,true,pole?'s':'']}
   if(P.satk>0){const s=P.sset,i=s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))];
