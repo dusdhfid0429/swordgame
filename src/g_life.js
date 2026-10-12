@@ -321,7 +321,7 @@ function loadGame(){
   return data;
 }
 function applySave(data){data=migrateSave(data);
-  G=Object.assign(G,data.G);itemId=data.itemId||0;tod=data.tod||.3;
+  G=Object.assign(G,data.G);runHooks('gLoaded',data);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
