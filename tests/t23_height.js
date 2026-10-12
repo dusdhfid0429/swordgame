@@ -33,9 +33,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.waitForTimeout(5000);
   ok('6초 넘게 닿지 못하면 늑대가 포기한다',await p.evaluate(()=>!window._w.aggro));
   // 낙하 공격: 적을 고르면 그 위로 뛰어내린다
-  const s3=await p.evaluate(()=>{const e=mkMob('늑대',P.x+.5,P.y+3);e.aggro=false;mobs.push(e);window._v=e;P.target=e;return e.hp});
+  // 명중 굴림(hitE)의 운을 빼고 늑대가 움직이지 못하게 해서 결과를 고정한다 (CI에서 간헐적으로 빗나가 실패하던 것)
+  const s3=await p.evaluate(()=>{const e=mkMob('늑대',P.x+.5,P.y+3);e.aggro=false;e.sp=0;mobs.push(e);window._v=e;window._rnd=Math.random;Math.random=()=>.5;P.target=e;return e.hp});
   await p.waitForFunction(()=>!P.perch&&P.z===0,null,{timeout:4000}).catch(()=>{});await p.waitForTimeout(400);
-  const s4=await p.evaluate(()=>({hp:window._v.hp,perch:!!P.perch,z:P.z,walk:walkAt(P.x,P.y)}));
+  const s4=await p.evaluate(()=>{Math.random=window._rnd;return{hp:window._v.hp,perch:!!P.perch,z:P.z,walk:walkAt(P.x,P.y)}});
   ok(`지붕에서 적을 고르면 낙하 공격 (늑대 ${s3} → ${Math.round(s4.hp)}), 땅에 내려선다`,s4.hp<s3&&!s4.perch&&s4.z===0&&s4.walk);
   // 지붕에서 걸어 나가면 뛰어내린다
   await p.evaluate(()=>{mobs=[];const bd=builds.find(q=>q.kind==='temple');P.x=bd.x+.5;P.y=bd.y+bd.h+.6;P.fx=0;P.fy=-1;P.qi=P.maxQi;P.target=null;leap()});await p.waitForTimeout(900);
