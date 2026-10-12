@@ -106,7 +106,7 @@ function chase(e,tg,dt,spd){
 }
 function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(e.hp<=0)return;const d=e.d;
-  e.hit=Math.max(0,e.hit-dt);e.swing=Math.max(0,e.swing-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
+  e.hit=Math.max(0,e.hit-dt);if(e.swing>0&&e.swing<=dt)e.rec=.22;e.swing=Math.max(0,e.swing-dt);e.rec=Math.max(0,(e.rec||0)-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
   if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
   if(e.psn>0){e.psn-=dt;e.hp-=e.psnD*dt;if(Math.random()<dt*6)fParts(null,e,'120,220,90',2,30,'dot',.5);if(e.hp<=0){onKill(e);return}}
   e.x+=e.kb.x*dt*6;e.y+=e.kb.y*dt*6;if(!walkAt(e.x,e.y)){e.x-=e.kb.x*dt*6;e.y-=e.kb.y*dt*6}e.kb.x*=.8;e.kb.y*=.8;
@@ -158,7 +158,7 @@ function updateEprojs(dt){
 // ================= companions: tamed beasts and disciples =================
 function hurtAlly(a,dm){if(a.hp<=0||a===P.ride)return;a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1)}}
 function updateAlly(a,dt){
-  if(a.hp<=0||a===P.ride)return;a.hit=Math.max(0,a.hit-dt);a.swing=Math.max(0,(a.swing||0)-dt);a.cd-=dt;
+  if(a.hp<=0||a===P.ride)return;a.hit=Math.max(0,a.hit-dt);if(a.swing>0&&a.swing<=dt)a.rec=.22;a.swing=Math.max(0,(a.swing||0)-dt);a.rec=Math.max(0,(a.rec||0)-dt);a.cd-=dt;
   if(a.mode==='wait'){a.moving=false;a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.04*dt);return}
   a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.004*dt);
   let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
