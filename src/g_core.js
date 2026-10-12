@@ -252,7 +252,7 @@ function pickUp(d){
 function hurtP(dm,src){
   if(P.inv>0||P.hp<=0)return;
   const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
-  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');return}
+  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
