@@ -145,13 +145,22 @@ def with_weapon(src,w,up):
     elif w=='궁':bow(img,hand)
     a=np.asarray(img);ys,xs=np.where(a[...,3]>0);img=img.crop((xs.min(),ys.min(),xs.max()+1,ys.max()+1))
     return {'img':img,'ax':round(ax-xs.min(),1),'bottom':src['bottom']-up,'sc':src['sc']}
-_a=all[meta['rj'][0]+1];_b=all[meta['rj'][0]+2]
+# 교차 컷: 보폭 장의 하체를 다리 중심으로 가로 0.5배 오므려 두 다리가 몸 아래에서 스치게 하고, 몸은 3px 뜬다
+def crossing(src):
+    base=src['img'];h=base.height;sy=int(h*.58);low=base.crop((0,sy,base.width,h));a=np.asarray(low)[...,3]>0;ys,xs=np.where(a)
+    cx=(xs.min()+xs.max())/2;w2=max(8,int(round((xs.max()-xs.min()+1)*.5)))
+    sq=low.crop((xs.min(),0,xs.max()+1,low.height)).resize((w2,low.height),Image.NEAREST)
+    img=base.copy();img.paste(Image.new('RGBA',low.size,(0,0,0,0)),(0,sy));img.alpha_composite(sq,(int(round(cx-w2/2)),sy))
+    # 발이 몸 아래로 오도록 하체를 엉덩이 중심선(ax)에 맞춘다
+    ax=src['ax'];dx=int(round(ax-cx));tmp=Image.new('RGBA',(img.width+40,img.height),(0,0,0,0));tmp.alpha_composite(img.crop((0,0,img.width,sy)),(20,0));tmp.alpha_composite(img.crop((0,sy,img.width,img.height)),(20+dx,sy))
+    a2=np.asarray(tmp)[...,3]>0;ys,xs=np.where(a2);out=tmp.crop((xs.min(),ys.min(),xs.max()+1,ys.max()+1))
+    return {'img':out,'ax':round(ax+20-xs.min(),1),'bottom':src['bottom'],'sc':src['sc']}
+_a=all[meta['rj'][0]+1];_b=all[meta['rj'][0]+2];_am=crossing(_a);_bm=crossing(_b)
 for _w in ['검','도','봉','창','권','궁']:
-    _fr=[with_weapon(_a,_w,0),with_weapon(_a,_w,2),with_weapon(_b,_w,0),with_weapon(_b,_w,2)]
+    _fr=[with_weapon(_a,_w,0),with_weapon(_am,_w,3),with_weapon(_b,_w,0),with_weapon(_bm,_w,3)]
     _g=max(f['bottom'] for f in _fr);meta['R'+_w]=[len(all),len(_fr)]
     for f in _fr:f['yoff']=int(_g-f['bottom']);all.append(f)
     print('R'+_w,[(f['img'].width,f['img'].height,f['yoff']) for f in _fr])
-
 H=max(f['img'].height for f in all);W=sum(f['img'].width+2 for f in all)
 strip=Image.new('RGBA',(W,H));x=0;HF=[]
 for f in all:
