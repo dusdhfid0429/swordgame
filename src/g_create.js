@@ -6,8 +6,11 @@
 // - 결과: 다섯 무공의 초식 가운데 가장 강한 여섯을 골라 새 이름을 붙이고 한 등급 높은 공력(GMUL)으로 올린다. 필살기는 가장 높은 재료의 것을 잇는다.
 //   초식 여섯을 모두 아는 채로 시작하고(내가 지은 무공이다) 숙련 30(심득). 오성 가짓수에는 든다. 절정 위(천고)는 기연으로만 얻으므로 절정이 끝이다.
 // - 저장: 정의는 G.made(여러 생에 남는다)에, 숙련은 P.arts에. 불러올 때 G.made 순서대로 다시 만든다(gLoaded 훅).
+// - 등록(사용자 2026-10-12): 문파 제자가 창안하면 그 문파 무공 목록에 들어가(제자·무인이 쓰고 총관이 비급을 판다), 무소속이면 등급별 확률로 기연에서 만나는 무공이 된다.
+//   이름만 다르고 구성(초식 출처·필살기)이 같은 무공이 이미 등록돼 있으면 새것이 그 자리를 갈음한다(옛것은 익힌 사람에게만 남는다).
 // 설계: docs/세력_문파_설계.md 23장. 테스트: tests/t46_create.js
 const MK_N=5,MK_TOP=3,MK_MAST=100,MK_REALM=5;   // 재료 수, 창안으로 닿는 최고 등급(절정), 재료 숙련(100), 경지(화경)
+const MK_GYW=[0,1,.7,.45];   // 기연에서 만날 확률 = GY_P × 등급 가중(중승 1, 상승 .7, 절정 .45)
 const MK_PRE={금:['파천','벽력','금강','섬광'],목:['청풍','유성','송학','춘뢰'],수:['한월','유수','창해','빙백'],화:['열양','적염','화룡','삼매'],토:['태산','반석','후토','황룡']};
 const MK_SUF={검:'검법',도:'도법',창:'창법',봉:'봉법',권:'권법',궁:'궁술'};
 const mkMul=a=>a.sect||a.gy||a.made?GMUL[a.grade||0]:(a.forms.length<=3?1.25:1);   // 초식 m에 이미 곱해진 등급 보정
@@ -54,7 +57,21 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   const names=new Set();const nm=()=>{let s;do{s=NA[Math.floor(r()*NA.length)]+NB[Math.floor(r()*NB.length)]}while(names.has(s));names.add(s);return s};
   const ua=srcs.slice().sort((x,y)=>(y.grade||0)-(x.grade||0)||(y.hi?1:0)-(x.hi?1:0))[0];
   const def={id,n,cls:grp.cls,el,grade:g,src:grp.ids.slice(),srcN:srcs.map(a=>a.n),forms:picks.map(x=>({a:x.a,i:x.i,n:nm()})),ult:{a:ua.id,n:UA[Math.floor(r()*UA.length)]+UB[Math.floor(r()*UB.length)]},by:P.name,life:P.lifeNo};
-  G.made=G.made||{};G.made[id]=def;return mkBuild(def)}
+  def.sect=P.sect&&P.sect!=='own'&&SECTS[P.sect]?P.sect:null;def.key=mkKey(def);def.reg=1;
+  G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
+  G.made[id]=def;const a=mkBuild(def);mkRegister(def);return a}
+const mkKey=def=>def.forms.map(x=>x.a+':'+x.i).sort().join(',')+'|'+def.ult.a;
+// 문파 무공 목록에 넣거나(문파 제자) 기연 무공으로 둔다(무소속)
+function mkRegister(def){const a=ARTS[def.id];if(!a||!def.reg||a.reg)return;a.reg=1;
+  if(def.sect&&SECTS[def.sect]){a.sect=def.sect;const L=SECTS[def.sect].arts;if(!L.some(q=>q.id===def.id))L.push({id:def.id,n:def.n,cls:def.cls,el:def.el,hi:false,made:1});a.d+=` ${SECTS[def.sect].n}에 전해진다.`}
+  else{a.gyPool=1;a.d+=' 강호에 흘러 기연으로 만난다.'}}
+function mkUnregister(def){const a=ARTS[def.id];if(a){a.gyPool=0;a.reg=0}if(def.sect&&SECTS[def.sect]){const L=SECTS[def.sect].arts,i=L.findIndex(q=>q.id===def.id);if(i>=0)L.splice(i,1)}}
+// 기연: 무소속 창안 무공 가운데 아직 모르는 것 하나를 등급 가중 확률로
+function mkGyRoll(src){const pool=Object.values(G.made||{}).filter(d=>d.reg&&!d.sect&&ARTS[d.id]&&!P.arts[d.id]);if(!pool.length)return null;
+  const d=pick(pool);return Math.random()<(GY_P[src]||0)*(MK_GYW[d.grade]||0)?d.id:null}
+function mkGyLearn(id){const a=ARTS[id];P.arts[id]={p:0,f:a.forms.map((f,i)=>i===0)};
+  log(`기연: ${a.by}이(가) 창안한 ${AGR[a.grade]} 무공 [${a.n}]의 비급을 얻어 첫 초식 [${a.forms[0].n}]을(를) 깨쳤습니다. 나머지는 숙련이 차면 열립니다.`,'xp');if(hasWeaponFor(a.cls))setArt(id);return a}
+{const r0=gyRoll,l0=gyLearn;gyRoll=src=>r0(src)||mkGyRoll(src);gyLearn=id=>ARTS[id]&&ARTS[id].made?mkGyLearn(id):l0(id)}
 // 정의로 무공을 만든다 (창안할 때와 불러올 때). 재료 무공이 ARTS에 있어야 한다
 function mkBuild(def){const g=def.grade,EC=EL[def.el];
   const forms=def.forms.map((x,i)=>{const a=ARTS[x.a],f=a&&a.forms[x.i];if(!f)return{...F(x.n,'melee',{m:1,cd:.4}),req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:1*(1+.06*i)*GMUL[g]};
@@ -64,7 +81,7 @@ function mkBuild(def){const g=def.grade,EC=EL[def.el];
     ult:{n:def.ult.n,steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...steps]},
     d:`${def.by}이(가) ${def.srcN.join('·')}의 심득을 모아 창안한 ${AGR[g]} 무공 · ${CLASS[def.cls].n} · 오행 ${def.el}. 초식 ${forms.length}개와 필살기.`};
   return ARTS[def.id]}
-function mkRebuild(){for(const def of Object.values(G.made||{}))if(!ARTS[def.id])mkBuild(def)}
+function mkRebuild(){for(const def of Object.values(G.made||{})){if(!ARTS[def.id])mkBuild(def);mkRegister(def)}}
 hook('gLoaded',()=>mkRebuild());
 hook('trainTick',dt=>{const b=trnBusy;if(b&&b.k.startsWith('mk:')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
   if(b.t>=b.dur){trnBusy=null;mkFinish(b.k);renderTrain()}}});

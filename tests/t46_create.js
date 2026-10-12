@@ -26,10 +26,26 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 저장·불러오기: ARTS에서 지워도 G.made로 다시 만들어진다
   const sv=await p.evaluate(()=>{saveGame(true);const n=ARTS.mk_1.n,m=ARTS.mk_1.forms[2].m;delete ARTS.mk_1;applySave(loadGame());return{ok:!!ARTS.mk_1,same:ARTS.mk_1&&ARTS.mk_1.n===n&&Math.abs(ARTS.mk_1.forms[2].m-m)<1e-9,has:!!P.arts.mk_1}});
   ok(`불러오기 뒤 창안 무공 복원 ${sv.ok} 같은 정의 ${sv.same} 숙련 유지 ${sv.has}`,sv.ok&&sv.same&&sv.has);
+  // 문파 등록: 화산파 무공 목록에 들어가고 비급 값이 계산된다
+  const rg=await p.evaluate(()=>({inList:SECTS.hwasan.arts.some(q=>q.id==='mk_1'),sect:ARTS.mk_1.sect,cost:meritCost({id:'mk_1'},0),d:ARTS.mk_1.d}));
+  ok(`화산파 목록 등록 ${rg.inList} (sect ${rg.sect}, 비급 공적 ${rg.cost}) · ${rg.d.slice(-12)}`,rg.inList&&rg.sect==='hwasan'&&rg.cost>0&&/전해진다/.test(rg.d));
+  // 같은 구성으로 다시 창안하면 새것이 갈음한다
+  await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R}});
+  await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
+  const rp=await p.evaluate(()=>{window.__restore();return{k1:G.made.mk_1.key,k2:G.made.mk_2&&G.made.mk_2.key,r1:G.made.mk_1.reg,r2:G.made.mk_2&&G.made.mk_2.reg,l1:SECTS.hwasan.arts.some(q=>q.id==='mk_1'),l2:SECTS.hwasan.arts.some(q=>q.id==='mk_2'),keep:!!P.arts.mk_1}});
+  ok(`같은 구성(${rp.k1===rp.k2}) → mk_1 등록 ${rp.r1}·목록 ${rp.l1}, mk_2 등록 ${rp.r2}·목록 ${rp.l2}, 익힌 mk_1은 남음 ${rp.keep}`,rp.k1===rp.k2&&rp.r1===0&&rp.r2===1&&!rp.l1&&rp.l2&&rp.keep);
   // 실패: 세월과 활력만 잃고 무공은 남는다
   const f=await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='사검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>.999;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return trnBusy&&trnBusy.k});
   await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
   const f2=await p.evaluate(()=>{window.__restore();return{left:['사검0','사검1','사검2','사검3','사검4'].filter(k=>P.arts[k]).length,inj:P.inj>0,made:Object.keys(G.made).length,log:logHist.slice(-1).map(l=>l.t||l)[0]}});
-  ok(`실패: 무공 남음 ${f2.left} · 경맥 상함 ${f2.inj} · ${f2.log}`,f===`mk:검:0`&&f2.left===5&&f2.inj&&f2.made===1);
+  ok(`실패: 무공 남음 ${f2.left} · 경맥 상함 ${f2.inj} · ${f2.log}`,f===`mk:검:0`&&f2.left===5&&f2.inj&&f2.made===2);
+  // 무소속 창안 → 기연 무공. 숭산 정상에서
+  await p.evaluate(()=>{P.sect=null;mobs=[];loadRegion('sungsan');P.reg='sungsan';P.x=10.5;P.y=8;P.vit=800;P.inj=0;P.realm=5;const R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R}});
+  await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
+  const gy=await p.evaluate(()=>{const id=Object.keys(G.made).find(k=>G.made[k].sect==null&&G.made[k].reg),a=ARTS[id];const o={id,place:pgPlace(),pool:a&&a.gyPool,inAnySect:Object.values(SECTS).some(s=>s.arts.some(q=>q.id===id))};
+    delete P.arts[id];Math.random=()=>0;o.roll=gyRoll('chest');o.roll2=mkGyRoll('spot');Math.random=()=>.999;o.rollHi=mkGyRoll('chest');window.__restore();
+    const b=gyLearn(id);o.f=P.arts[id].f.slice();P.arts[id].p=49;gainMast(id,400);o.f2=P.arts[id].f.filter(Boolean).length;return o});
+  ok(`무소속 창안 ${gy.id} (${gy.place}) 기연 풀 ${gy.pool}, 문파 목록 아님 ${!gy.inAnySect} · 기연 굴림 ${gy.roll}/${gy.roll2}, 운 나쁘면 ${gy.rollHi} · 첫 초식만 ${gy.f.join('')}, 숙련 오르면 열림 ${gy.f2}`,
+    gy.id&&gy.place&&gy.pool===1&&!gy.inAnySect&&gy.roll!==gy.id&&gy.roll2===gy.id&&gy.rollHi===null&&gy.f.join()==='true,false,false,false,false,false'&&gy.f2>1);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();
