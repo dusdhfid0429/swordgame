@@ -49,8 +49,7 @@ function heroFrame(){
   // 보법: 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때. 피동 회피(측면 회피 줄)는 0.45초
   if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
   if(P.dA&&h2&&time-P.dA<.45&&P.satk<=0){const s=A2.sd;return[s[0]+Math.min(s[1]-1,Math.floor((time-P.dA)/.45*s[1])),false,'',true]}
-  // 달리기 (사용자 이동 시트): 0번은 서기, 1~8번이 한 걸음. 궁은 기본 이동 줄
-  if(P.runT>0&&h2&&P.satk<=0){const s=A2['R'+w]||A2.R권;return[s[0]+Math.floor(P.runPh*moveSpd()*1.9)%s[1],false,'',true]}
+  // 달리기는 새 도트를 쓰지 않는다 (사용자 결정 2026-10-12): 아래 기존 몸통 아틀라스 41~48 + 코드 무기
   // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
   if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))],false,'',true]}
