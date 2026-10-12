@@ -9,7 +9,8 @@ HBODY.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAFF8AAACbCAMAAAAtxAAsAAA
 // grip lines per frame in atlas pixels: s = scabbard (hand end first), b = blade (hand, tip)
 const WL={"s":{"0":[29.5,97.0,8.7,106.3],"1":[30.3,96.6,8.6,106.2],"2":[29.7,97.6,9.5,105.9],"3":[31.8,97.4,10.7,106.3],"4":[94,74,3,112],"5":[31.6,97.4,11.0,106.1],"6":[32.2,83.4,10.0,91.1],"7":[29.9,83.7,7.9,91.6],"8":[35.9,82.6,11.5,90.6],"9":[35.0,82.1,9.7,91.1],"10":[37.1,82.3,12.3,90.9],"11":[32.3,82.7,10.0,91.0],"12":[28.4,91.9,6.9,100.9],"13":[67.2,32.9,61.5,14.8],"14":[31.2,94.4,8.5,104.9],"15":[38.4,88.1,6.9,100.9],"16":[30.3,93.8,6.4,104.0],"17":[32.4,81.2,8.9,89.6],"18":[36.1,80.4,10.0,90.0],"19":[33.9,98.7,7.9,107.7],"20":[31.4,77.0,7.7,86.3],"21":[34.2,80.5,8.0,89.9],"22":[32.2,80.5,7.8,89.4],"23":[128.9,74.3,100.1,63.7],"24":[117.0,80.0,85.0,67.9],"25":[89.3,79.2,64.2,69.6],"27":[116.1,63.2,101.8,70.5],"30":[37.9,64.2,14.7,55.7],"31":[80,50,2,82],"32":[70,52,2,92],"34":[76.3,52.0,58.9,56.5],"35":[31.4,50.9,12.7,38.5],"37":[26.9,52.2,5.7,40.5],"38":[98,57,3,92],"39":[31.6,62.9,14.0,55.0],"40":[125.3,79.3,99.8,69.5],"41":[25.9,79.8,8.1,86.2],"42":[27.0,83.1,9.1,88.4],"43":[39.1,65.4,7.7,58.4],"44":[40.1,60.5,12.3,54.6],"45":[39.7,63.2,7.8,56.0],"46":[42.7,45.6,22.6,35.8],"47":[23.3,34.5,8.4,24.9],"48":[30.6,41.6,15.1,31.3]},"b":{"13":[45,24,3,9],"14":[99,52,182,49],"21":[82,73,127,32],"26":[81,41,135,40],"27":[42,18,95,3],"28":[110,48,152,18],"29":[70,82,124,48]}};
 const heroCls=()=>P&&hasWeaponFor(curCls())?curCls():'권';
-const heroSprite=()=>HERO.complete&&HERO.naturalWidth>0&&HBODY.complete&&HBODY.naturalWidth>0&&heroCls()!=='궁';
+const hero2Ok=()=>typeof HERO2!=='undefined'&&HERO2.complete&&HERO2.naturalWidth>0;
+const heroSprite=()=>HERO.complete&&HERO.naturalWidth>0&&HBODY.complete&&HBODY.naturalWidth>0&&(heroCls()!=='궁'||hero2Ok());
 // every attack set ends on a frame with the blade drawn, so the sword never blinks out mid-swing
 const HSET={flat:[13,14,14,16],vert:[18,19,20,21,22],diag:[26,27,28,29],palm:[30,30],ult:[23,24,25,26,27,28,29],jump:[32,33,34,35,36,37,38,39,40]};
 const HKIND={proj:'flat',line:'flat',dash:'flat',blink:'flat',blinkMulti:'flat',drop:'vert',rain:'vert',chain:'vert',pull:'vert',arc:'diag',circle:'diag',multi:'diag'};
@@ -22,11 +23,31 @@ const WSET={
   권:{flat:[12,15,15],vert:[12,30,30],diag:[12,28,28],palm:[30,30],ult:[12,15,15,30,30,28,28]},
   각:{flat:[31,32,32],vert:[31,32,32],diag:[12,31,32,32],palm:[30,30],ult:[31,32,32,31,32,32]}};
 const BIDLE=[0,1,2,3,5,1];
-function heroAtk(kind){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag'][P.hc]}
-  const w=heroCls();P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];P.satk=P.satkMax=kind==='ult'?.6:Math.max(.26,.1*P.sset.length)}
-// returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, '' none)]
+// 사용자 시트(r_atlas2.js)의 무기별 공격 줄: 줄 안 번호. palm은 권 줄의 장타 두 장
+const W2SET={
+  도:{flat:[1,2,2,5],vert:[3,4,4,5],diag:[1,3,4,6],ult:[0,1,2,3,4,5,6,5]},
+  봉:{flat:[1,6,7,7],vert:[2,3,4,5],diag:[1,5,6,7],ult:[0,1,2,3,4,5,6,7]},
+  창:{flat:[1,2,2,3],vert:[7,3,4,5],diag:[1,4,5,6],ult:[0,1,2,3,4,5,6,7]},
+  권:{flat:[1,2,3],vert:[1,5,6],diag:[1,4,7],palm:[2,3],ult:[0,1,2,3,4,5,6,7]},
+  각:{flat:[1,2,3],vert:[1,3,4],diag:[5,6,6],palm:[2,3],ult:[0,1,2,3,4,5,6,7]},
+  궁:{flat:[0,1,2,3,4,5],vert:[0,1,2,3,4,5],diag:[0,1,2,3,4,5],ult:[0,1,2,3,4,5,4,5]}};
+// 줄 안 번호 -> HF2 절대 번호
+const a2i=(row,i)=>A2[row][0]+Math.min(i,A2[row][1]-1);
+// f: 쓰는 초식. 권 계열인데 이름이 발차기면 각법 줄을 쓴다 (각법 무공은 권 풀에 섞여 있다)
+const isKick=f=>!!f&&/각|퇴|족|발/.test(f.n||'');
+function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag'][P.hc]}
+  const w=heroCls();P.ss2=0;const row=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w;
+  if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
+    if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}
+  if(!P.ss2)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];
+  P.satk=P.satkMax=kind==='ult'?.6:Math.max(.26,.1*P.sset.length)}
+// returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, '' none), use atlas 2 (HF2)]
 function heroFrame(){
-  const w=heroCls(),sw=w==='검',pole=w==='창'||w==='봉';
+  const w=heroCls(),sw=w==='검',pole=w==='창'||w==='봉',h2=hero2Ok();
+  // 경공 1단 (사용자 시트): 웅크림 -> 달림 -> 도약 -> 공중 -> 착지. 무기와 상관없이 같은 동작
+  if(P.sj>0&&h2){const s=A2.j;return[s[0]+Math.min(s[1]-1,Math.floor((1-P.sj/.6)*s[1])),false,'',true]}
+  if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))],false,'',true]}
+  if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w];return[s[0]+Math.floor(time*4)%Math.min(8,s[1]),false,'',true]}
   if(P.sj>0){if(sw||w==='도'){const s=HSET.jump;return[s[Math.min(s.length-1,Math.floor((1-P.sj/.6)*s.length))],false,'']}
     const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor((1-P.sj/.6)*s.length))];return[i,true,pole?'s':'']}
   if(P.satk>0){const s=P.sset,i=s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))];
@@ -46,6 +67,9 @@ function drawWeapon(kind,ln,lk,flash){
     ctx.fillStyle=W('#8d98a3');ctx.beginPath();ctx.moveTo(...hd);ctx.lineTo(tip[0]-n[0]*4,tip[1]-n[1]*4);ctx.lineTo(...tip);ctx.fill()}
   else if(kind==='봉'){const a=at(lk==='s'?-80:-62),b=at(lk==='s'?50:66);pxLine(a,b,5,W('#6b4423'));
     for(const d of[lk==='s'?-80:-62,lk==='s'?50:66]){const c=at(d),e=at(d+(d<0?8:-8));pxLine(c,e,5,W('#c9a14a'))}}
+  else if(kind==='궁'){const a=at(lk==='s'?-70:-60),b=at(lk==='s'?40:50),m=at(lk==='s'?-15:-5),bow=[m[0]-n[0]*14,m[1]-n[1]*14];
+    ctx.strokeStyle='#14100c';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(...a);ctx.quadraticCurveTo(bow[0],bow[1],...b);ctx.stroke();ctx.strokeStyle=W('#7b4a26');ctx.lineWidth=3;ctx.stroke();
+    pxLine(a,b,1,W('#e8e2d0'))}
   else if(kind==='도'){const g=at(3),tip=at(76),sp=k=>{const p=at(8+k*68);return[p[0]-n[0]*(1+k*1.5),p[1]-n[1]*(1+k*1.5)]},ed=k=>{const p=at(8+k*68),wd=4+k*6-(k>.85?(k-.85)*50:0);return[p[0]+n[0]*wd,p[1]+n[1]*wd]};
     ctx.fillStyle='#14100c';ctx.beginPath();for(let k=0;k<=1.001;k+=.1){const p=sp(k);ctx.lineTo(p[0]-n[0],p[1]-n[1])}ctx.lineTo(tip[0]+u[0]*2,tip[1]+u[1]*2);for(let k=1;k>=-.001;k-=.1){const p=ed(k);ctx.lineTo(p[0]+n[0],p[1]+n[1])}ctx.fill();
     ctx.fillStyle=W('#e4e9ec');ctx.beginPath();for(let k=0;k<=1.001;k+=.1)ctx.lineTo(...sp(k));ctx.lineTo(...tip);for(let k=1;k>=-.001;k-=.1)ctx.lineTo(...ed(k));ctx.fill();
