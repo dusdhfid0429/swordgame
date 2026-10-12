@@ -111,7 +111,7 @@ function stBack(s,th,place,i,o={}){return{id:o.id||`hq_${s.id}_back`,name:o.name
 function stewardDlg(n){const s=SECTS[n.steward];return `<p class="note">"${P.sect===s.id?`${rankName(s.id)}, 오늘도 수련인가.`:'외원에 온 손님이군. 일감과 비급은 여기서도 내준다.'}"</p>${sectDetail(s)}`}
 function elderDlg(n){const s=SECTS[n.elder];
   if(P.sect!==s.id)return `<p class="note">"${s.n}의 제자가 아니면 가르칠 것이 없네."</p>`;
-  return `<p class="note">"${rankName(s.id)}, 후산까지 올라왔으니 마음을 단단히 하게."</p>${pasSectHtml(s)}${bobSectHtml(s)}${s.id==='cheonma'?mgOrgHtml():''}`}
+  return `<p class="note">"${rankName(s.id)}, 후산까지 올라왔으니 마음을 단단히 하게."</p>${pasSectHtml(s)}${bobSectHtml(s)}${ggSectHtml(s)}${s.id==='cheonma'?mgOrgHtml():''}`}
 hook('npcDlg',c=>{if(c.html==null)c.html=c.n.steward?stewardDlg(c.n):c.n.elder?elderDlg(c.n):null});
 // 출입구 조건: 막히면 한 걸음 물러난다
 hook('gate',c=>{

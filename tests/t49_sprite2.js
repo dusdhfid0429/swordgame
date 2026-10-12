@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 아틀라스: 13줄 112장, 줄마다 시작+장수가 이어진다
   const a=await p.evaluate(()=>{const rows=Object.values(A2).sort((x,y)=>x[0]-y[0]);let okc=true;for(let i=1;i<rows.length;i++)if(rows[i][0]!==rows[i-1][0]+rows[i-1][1])okc=false;
     return{n:HF2.length,rows:rows.length,okc,last:rows[rows.length-1][0]+rows[rows.length-1][1],w:HERO2.naturalWidth}});
-  ok(`아틀라스 2(무기·경공·보법): ${a.rows}줄 ${a.n}장 (폭 ${a.w})`,a.rows===25&&a.n===206&&a.okc&&a.last===206&&a.w>19000);
+  ok(`아틀라스 2(무기·경공·보법): ${a.rows}줄 ${a.n}장 (폭 ${a.w})`,a.rows===27&&a.n===222&&a.okc&&a.last===222&&a.w>21000);
   // 2. 무기마다 대기·공격 프레임이 2번 아틀라스의 제 줄에서 나온다
   const r=await p.evaluate(()=>{const out={};const useCls=w=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===w);P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=w==='권'?null:mkWeapon(w,1,0);recalc()};window.useCls=useCls;
       for(const w of['도','봉','창','권','궁']){useCls(w);P.satk=0;P.sj=0;P.runT=0;
