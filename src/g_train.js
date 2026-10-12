@@ -20,13 +20,14 @@ function renderTrain(){
     return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
-    <div class="tlist">${pgRow()}${rows}${trnRow('neigong','내공 심법',baseQi(),`${gapja(baseQi())} · ${school()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
+    <div class="tlist">${pgRow()}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong','내공 심법',baseQi(),`${gapja(baseQi())} · ${school()} · 1회 +${SIDES[P.side].gain}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}</div>`;
   if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
 function startTrain(k){
   if(k==='pg'||k==='pg2')return pgStart(k);   // 폐관수련 (g_realm.js)
+  if(k.startsWith('mk:'))return mkStart(k);   // 무공 창안 (g_create.js)
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
   const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
   if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
@@ -35,7 +36,7 @@ function startTrain(k){
 }
 // 매 프레임: 쿨타임을 흘리고, 끝나면 능력치를 올린다
 function trainTick(dt){
-  runHooks('trainTick',dt);if(trnBusy&&trnBusy.k.startsWith('pg'))return;   // 폐관은 g_realm.js가 진행한다
+  runHooks('trainTick',dt);if(trnBusy&&/^(pg|mk)/.test(trnBusy.k))return;   // 폐관은 g_realm.js, 창안은 g_create.js가 진행한다
   if(trnOpen&&(trainTick.r=(trainTick.r||0)-dt)<=0){trainTick.r=.5;if(!trnBusy)renderTrain()}
   if(!trnBusy)return;const b=trnBusy;b.t+=dt;
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
