@@ -86,6 +86,6 @@
     "smith": [["weapon:검","weapon",45],["weapon:도","weapon",45],["weapon:창","weapon",45],["weapon:봉","weapon",45],["weapon:궁","weapon",45],["weapon:권","weapon",35],["비도","mat10",20],["tbook:대장","tbook",60]],
     "pharm": [["금창약","mat",15],["소환단","mat",20],["해독단","mat",10],["tbook:약재","tbook",60]],
     "cloth": [["armor","gear",40],["boots","gear",30],["목화씨","mat",5],["tbook:직물","tbook",60]],
-    "gen": [["볍씨","mat",5],["보리씨","mat",5],["배추씨","mat",5],["목화씨","mat",5],["sbook:암기","sbook",100],["sbook:독공","sbook",100],["sbook:점혈","sbook",100],["pbook:P_spd","pbook",60],["pbook:P_hp","pbook",60],["pbook:P_qi","pbook",60],["pbook:P_atk","pbook",60],["pbook:P_def","pbook",60],["pbook:P_crit","pbook",60],["pbook:P_hreg","pbook",60],["pbook:P_qreg","pbook",60],["bbook:b_seom","bbook",180],["bbook:b_chil","bbook",180]]
+    "gen": [["볍씨","mat",5],["보리씨","mat",5],["배추씨","mat",5],["목화씨","mat",5],["sbook:암기","sbook",100],["sbook:독공","sbook",100],["sbook:점혈","sbook",100],["pbook:P_spd","pbook",60],["pbook:P_hp","pbook",60],["pbook:P_qi","pbook",60],["pbook:P_atk","pbook",60],["pbook:P_def","pbook",60],["pbook:P_crit","pbook",60],["pbook:P_hreg","pbook",60],["pbook:P_qreg","pbook",60],["bbook:b_seom","bbook",180],["bbook:b_chil","bbook",180],["gbook:g_yeonun","gbook",180],["gbook:g_cheongpung","gbook",180]]
   }
 }

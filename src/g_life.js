@@ -176,17 +176,18 @@ function rideToggle(){
 }
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
-  if(P.hp<=0)return;if(P.qi<12){log('내공이 부족합니다.','info');return}if(P.leap)return;
+  if(P.hp<=0)return;const st=ggNext(),qi=GG_QI[st-1];if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
-  const LEAP=leapRange();let land=null,to=null;
+  const LEAP=leapRange()*GG_LEN[ggOf().g]*(st===2?1.4:st===3?2:1);let land=null,to=null;
   // 지붕·나무 위로 (말을 탔으면 못 오른다)
   if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
   for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
-  const dur=heroSprite()?.6:.42;P.qi-=12;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=.6;P.satk=0}else{P.jump=.35}
-  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur,z0:P.z||0,z1:to?to.z:0,to};P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
+  const dur=heroSprite()?[.6,.7,.5][st-1]:.42;P.qi-=qi;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=P.sjMax=dur;P.sjSt=st;P.satk=0}else{P.jump=.35}
+  P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur,z0:P.z||0,z1:to?to.z:0,to,st};ggUsed(st,dur);
+  if(st>=2){addText(P.x,P.y-.4,`경공 ${st}단`,st===3?'#8fd0ff':'#cfe3ff');for(let i=0;i<3;i++)fx.push({t:'ghost',x:P.x,y:P.y,life:.3+i*.1,col:st===3?'80,160,255':'190,220,255'})}P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
 }
 // ================= 생활: gathering, farming, crafting =================
 function interact(t){
