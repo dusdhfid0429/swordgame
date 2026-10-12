@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 아틀라스: 13줄 112장, 줄마다 시작+장수가 이어진다
   const a=await p.evaluate(()=>{const rows=Object.values(A2).sort((x,y)=>x[0]-y[0]);let okc=true;for(let i=1;i<rows.length;i++)if(rows[i][0]!==rows[i-1][0]+rows[i-1][1])okc=false;
     return{n:HF2.length,rows:rows.length,okc,last:rows[rows.length-1][0]+rows[rows.length-1][1],w:HERO2.naturalWidth}});
-  ok(`아틀라스 2: ${a.rows}줄 ${a.n}장 (폭 ${a.w})`,a.rows===13&&a.n===113&&a.okc&&a.last===113&&a.w>8000);
+  ok(`아틀라스 2(무기·경공·보법): ${a.rows}줄 ${a.n}장 (폭 ${a.w})`,a.rows===25&&a.n===206&&a.okc&&a.last===206&&a.w>19000);
   // 2. 무기마다 대기·공격 프레임이 2번 아틀라스의 제 줄에서 나온다
   const r=await p.evaluate(()=>{const out={};const useCls=w=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===w);P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=w==='권'?null:mkWeapon(w,1,0);recalc()};window.useCls=useCls;
       for(const w of['도','봉','창','권','궁']){useCls(w);P.satk=0;P.sj=0;P.runT=0;
@@ -28,6 +28,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const j=await p.evaluate(()=>{const seq=[];for(const t of[.6,.45,.3,.15,.01]){P.sj=t;seq.push(heroFrame())}P.sj=0;const s=A2.j;
     return{first:seq[0][0]-s[0],last:seq[4][0]-s[0],asc:seq.every((f,i)=>i===0||f[0]>=seq[i-1][0]),all2:seq.every(f=>f[3]),n:s[1]}});
   ok(`경공 1단: ${j.n}장, ${j.first}→${j.last}`,j.n===9&&j.first===0&&j.last===8&&j.asc&&j.all2);
+  // 3b. 보법: 직선은 대시 줄, 피동 회피는 측면 회피 줄, 맨손으로 마주 보면 위빙, 보법 줄은 배율이 따로
+  const bb=await p.evaluate(()=>{useCls('도');bobInit();P.bcur='b_basic';P.bcd2=0;P.qi=P.maxQi;mobs=[];const ok1=bobeop();const f1=heroFrame();const inRows=(f,rows)=>f[3]&&rows.some(r=>f[0]>=A2[r][0]&&f[0]<A2[r][0]+A2[r][1]);
+    const dash=inRows(f1,['bd1','bd3','bd4']),sc=HF2[f1[0]][5];P.bA=null;P.leap=null;P.dA=time;const f2=heroFrame();const side=inRows(f2,['sd']);P.dA=0;
+    useCls('권');const e=mkMob('산적',P.x+1.5,P.y);mobs.push(e);P.target=e;const f3=heroFrame();const wv=inRows(f3,['wv']);P.target=null;mobs=[];return{ok1,dash,sc,side,wv}});
+  ok(`보법 대시 줄 ${bb.dash} (배율 ${bb.sc}), 피동 회피 측면 줄 ${bb.side}, 맨손 위빙 ${bb.wv}`,bb.ok1&&bb.dash&&bb.sc>.6&&bb.sc<.7&&bb.side&&bb.wv);
+  // 3c. 달리기: 무기 줄의 1~8번을 돌고, 궁은 기본 이동 줄
+  const rn=await p.evaluate(()=>{const out={};for(const w of['검','도','봉','창','권','궁']){useCls(w);P.satk=0;P.runT=.14;const fs=new Set();for(let i=0;i<40;i++){P.runPh=i*.07;fs.add(heroFrame()[0])}
+      const s=A2['r'+w]||A2.r권;out[w]=[...fs].every(f=>f>s[0]&&f<s[0]+s[1])&&fs.size===s[1]-1}P.runT=0;return out});
+  ok(`달리기 줄: ${Object.entries(rn).map(([k,v])=>k+(v?'':'X')).join(' ')}`,Object.values(rn).every(Boolean));
   // 4. 공격 중 그리기: 각 무기로 한 번씩 휘두르며 오류 없이 그려진다
   await p.evaluate(()=>{useCls('창');heroAtk('ult');mobs=[]});await p.waitForTimeout(250);await p.screenshot({path:shot('t49_spear')});
   await p.evaluate(()=>{useCls('궁');heroAtk('flat')});await p.waitForTimeout(150);await p.screenshot({path:shot('t49_bow')});

@@ -65,7 +65,14 @@ function bobeop(){
   for(let i=0;i<4;i++)fx.push({t:'ghost',x:P.x+(dst.x-P.x)*i/4,y:P.y+(dst.y-P.y)*i/4,life:.3+i*.05,col:'190,220,255'});
   if(dst.T){P.target=dst.T;if(dst.back>.5){P.buff.crit=Math.max(P.buff.crit||0,1.4);addText(dst.x,dst.y,'배후','#ffd36a')}}
   if(typeof sfx==='function')sfx('dodge');
+  bobAnim(b,dst);
   return true}
+// 보법 도트 (r_atlas2.js): 직선은 쾌속 대시 줄, 간파는 등 뒤를 잡으면 사각 이동, 아니면 회전 회피. 미끄러지는 동안 + 0.3초 수습
+function bobAnim(b,dst){if(typeof hero2Ok!=='function'||!hero2Ok()||!P.leap)return;
+  const r=(row,is)=>is.map(i=>A2[row][0]+Math.min(i,A2[row][1]-1));let seq;
+  if(b.t==='flank'&&dst.T)seq=dst.back>.5?r('fk',[0,1,2,4,5]):r('sp',[0,1,2,3,4,5,6,7,8]);
+  else seq=[...r('bd1',[0,1,2]),...r('bd3',[0,1,2,3]),...r('bd4',[0,3,4])];
+  P.bA={seq,t0:time,dur:P.leap.dur+.3,move:P.leap.dur};P.satk=0}
 // 보법이 끝나면 상대를 바라본다
 function bobLand(L){if(L.step&&P.target&&P.target.hp>0)face(P.target.x,P.target.y)}
 
