@@ -6,12 +6,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
-  // 하승 검 무공 다섯을 대성시키고 화산파 본산으로 간다
-  const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:60,f:ARTS[id].forms.map(()=>true)}}P.cur='정검0';P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;
-    const g0=mkGroups();openTrain();const h0=TRN.innerText;postGo('hq_hwasan');return{g0:g0.map(g=>g.cls+g.g+':'+g.ids.length),h0:h0.includes('무공 창안')}});
+  // 하승 검 무공 다섯을 숙련 100으로 만들고 화산파 본산으로 간다
+  const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.arts['정검4'].p=99;const gLow=mkGroups().length;P.arts['정검4'].p=100;P.cur='정검0';P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;
+    const g0=mkGroups();openTrain();const h0=TRN.innerText;postGo('hq_hwasan');return{g0:g0.map(g=>g.cls+g.g+':'+g.ids.length),gLow,h0:h0.includes('무공 창안')}});
   await p.waitForTimeout(1500);
-  const s1=await p.evaluate(()=>{openTrain();renderTrain();const why0=mkWhy(0);P.realm=1;renderTrain();return{reg:REG,place:pgPlace(),why0,row:TRN.innerText.includes('무공 창안'),why1:mkWhy(0),btn:!!TRN.querySelector('[data-tr="mk:검:0"]:not([disabled])')}});
-  ok(`재료 묶음 ${s0.g0.join(',')} · 개봉에서도 창안 줄은 보이고(${s0.h0}) 단추만 막힌다 · ${s1.reg}(${s1.place}) 삼류면 "${s1.why0}", 이류면 단추 활성 ${s1.btn}`,s0.g0.join()==='검0:5'&&s0.h0&&s1.place&&/이류/.test(s1.why0)&&s1.row&&s1.btn&&!s1.why1);
+  const s1=await p.evaluate(()=>{openTrain();renderTrain();const why0=mkWhy(0);P.realm=4;const why4=mkWhy(0);P.realm=5;renderTrain();return{reg:REG,place:pgPlace(),why0,why4,row:TRN.innerText.includes('무공 창안'),why1:mkWhy(0),btn:!!TRN.querySelector('[data-tr="mk:검:0"]:not([disabled])')}});
+  ok(`재료 묶음 ${s0.g0.join(',')} (숙련 99면 ${s0.gLow}묶음) · 개봉에서도 창안 줄은 보이고(${s0.h0}) 단추만 막힌다 · ${s1.reg}(${s1.place}) 삼류면 "${s1.why0}", 초절정이면 "${s1.why4}", 화경이면 단추 활성 ${s1.btn}`,s0.g0.join()==='검0:5'&&s0.gLow===0&&s0.h0&&s1.place&&/경지 필요/.test(s1.why0)&&/경지 필요/.test(s1.why4)&&s1.row&&s1.btn&&!s1.why1);
   // 창안 (성공을 고정)
   const r=await p.evaluate(()=>{window.__noPrompt=1;const age=P.age,vit=P.vit,R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return{age,vit,busy:trnBusy&&trnBusy.k}});
   await p.waitForTimeout(5000);
@@ -27,7 +27,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const sv=await p.evaluate(()=>{saveGame(true);const n=ARTS.mk_1.n,m=ARTS.mk_1.forms[2].m;delete ARTS.mk_1;applySave(loadGame());return{ok:!!ARTS.mk_1,same:ARTS.mk_1&&ARTS.mk_1.n===n&&Math.abs(ARTS.mk_1.forms[2].m-m)<1e-9,has:!!P.arts.mk_1}});
   ok(`불러오기 뒤 창안 무공 복원 ${sv.ok} 같은 정의 ${sv.same} 숙련 유지 ${sv.has}`,sv.ok&&sv.same&&sv.has);
   // 실패: 세월과 활력만 잃고 무공은 남는다
-  const f=await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='사검'+i;P.arts[id]={p:60,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>.999;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return trnBusy&&trnBusy.k});
+  const f=await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='사검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>.999;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return trnBusy&&trnBusy.k});
   await p.waitForTimeout(5000);
   const f2=await p.evaluate(()=>{window.__restore();return{left:['사검0','사검1','사검2','사검3','사검4'].filter(k=>P.arts[k]).length,inj:P.inj>0,made:Object.keys(G.made).length,log:logHist.slice(-1).map(l=>l.t||l)[0]}});
   ok(`실패: 무공 남음 ${f2.left} · 경맥 상함 ${f2.inj} · ${f2.log}`,f===`mk:검:0`&&f2.left===5&&f2.inj&&f2.made===1);
