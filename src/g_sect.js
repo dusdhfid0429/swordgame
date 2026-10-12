@@ -6,7 +6,7 @@ const ALLY=GD.ALLY;
 const SECT_DATA=GD.SECT_DATA;
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
-const artSect=artId=>{const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
+const artSect=artId=>{const a=typeof ARTS!=='undefined'&&ARTS[artId];if(a&&a.made)return(a.sect&&SECTS[a.sect])||null;const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 // 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
 const TIERN=GD.TIERN,FIVE=GD.FIVE||[];   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
 const isFive=s=>FIVE.includes(s.id),tierName=s=>isFive(s)?'오대세가':TIERN[s.tier];

@@ -198,7 +198,7 @@ function gainMast(id,v){
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
-  if(a.base||a.gy)a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
+  if(a.base||a.gy||(a.made&&!a.sect))a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
   runHooks('mastDone',{id,s,before});
 }
@@ -354,7 +354,7 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
 function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
-  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
+  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
