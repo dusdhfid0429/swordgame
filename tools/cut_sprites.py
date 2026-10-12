@@ -1,4 +1,4 @@
-# 사용자 시트 -> src/r_atlas2.js 프레임 자르기·달리기 합성 (2026-10-12). 입력 시트는 세션 업로드 경로(U)에 있어야 한다. 사용: python3 -I tools/cut_sprites.py <출력폴더> 뒤에 hero2.png/json을 base64로 r_atlas2.js에 넣는다 (docs/세력_문파_설계.md 25장)
+# 사용자 시트 -> src/r_atlas2.js 프레임 자르기 (2026-10-12). 입력 시트는 세션 업로드 경로(U)에 있어야 한다. 사용: python3 -I tools/cut_sprites.py <출력폴더> 뒤에 hero2.png/json을 base64로 r_atlas2.js에 넣는다 (docs/세력_문파_설계.md 25장)
 import sys,json
 from PIL import Image
 import numpy as np
@@ -89,7 +89,7 @@ all=[];meta={}
 B1=U+'fa306127-image.png';B2=U+'e31ba2a0-image.png'
 SPEC+=[('bd1',B1,0,4,0,200),('bd3',B1,2,4,0,200),('bd4',B1,3,4,0,200),('sd',B2,0,5,12,125),('fk',B2,1,5,0,125),('sp',B2,2,5,9,125),('wv',B2,3,5,9,125)]
 B3=U+'5af20d99-image.png'
-SPEC+=[('rj',U+'3d1e1a3a-image.png',0,3,9)]
+
 SPEC+=[('j2',U+'3d1e1a3a-image.png',1,3,9),('j3',U+'3d1e1a3a-image.png',2,3,7)]
 SCALE={B1:round(102/156,3),B2:round(102/110,3),B3:None}
 for sp in SPEC:
@@ -102,65 +102,7 @@ for sp in SPEC:
     if sc is None:sc=SCALE[path]=round(102/fr[0]['img'].height,3);print('scale',name,sc)
     for f in fr: f['yoff']=int(ground-f['bottom']);f['sc']=sc;all.append(f)
     print(name,len(fr),[(f['img'].width,f['img'].height,f['yoff']) for f in fr])
-# ---- 달리기 합성: 경공 1단의 질주 두 장(반대 보폭)을 번갈아 쓰고 무기를 붙인다 (먼지는 뺀 rj 줄) ----
-from PIL import ImageDraw
-import math
-def skin_hand(img):
-    a=np.asarray(img).astype(int);al=a[...,3]>0;r,g,b=a[...,0],a[...,1],a[...,2]
-    sk=al&(r>170)&(g>120)&(b>90)&(r>g+15)&(g>b+5);h=img.height;sk[:int(h*.38)]=False
-    ys,xs=np.where(sk)
-    if len(xs)<10:return (img.width*.7,h*.5)
-    xm=xs.max();sel=xs>xm-14;return (float(xs[sel].mean()),float(ys[sel].mean()))
-DK=(20,16,12)
-def L(d,p,q,wd,col):d.line([p,q],fill=DK,width=wd+2);d.line([p,q],fill=col,width=wd)
-def sheath_under(img,w,ax,sy):pass
-def sheath_over(img,w,ax,sy):
-    # 허리띠에 찬 집: 엉덩이에서 뒤로 비스듬히, 손잡이는 앞 위로. 몸 위에 그려 잘 보이게 한다
-    d=ImageDraw.Draw(img);hip=(ax-1,sy-6);tip=(ax-46,sy+14);col=(36,32,50) if w=='검' else (86,54,30)
-    L(d,hip,tip,6,col);d.line([(hip[0]-4,hip[1]+1),(tip[0]+4,tip[1]-1)],fill=(96,92,120) if w=='검' else (128,90,54),width=1)
-    d.line([(tip[0]+6,tip[1]-3),tip],fill=(200,160,70),width=5)
-    g=(ax+10,sy-16);L(d,hip,g,3,(62,42,28));d.line([(hip[0]-3,hip[1]+4),(hip[0]+3,hip[1]-4)],fill=(200,160,70),width=3);d.ellipse([g[0]-2,g[1]-2,g[0]+2,g[1]+2],fill=(200,160,70))
-def pole(img,w,hand):
-    d=ImageDraw.Draw(img);hx,hy=hand;ang=math.radians(-10);ux,uy=math.cos(ang),-math.sin(ang);hy+=5
-    back=(hx-ux*78,hy-uy*78);fwd=(hx+ux*(44 if w=='창' else 56),hy+uy*(44 if w=='창' else 56))
-    L(d,back,fwd,4,(108,70,38) if w=='봉' else (120,78,40))
-    if w=='봉':
-        d.line([back,(back[0]+ux*7,back[1]+uy*7)],fill=(200,160,70),width=4);d.line([fwd,(fwd[0]-ux*7,fwd[1]-uy*7)],fill=(200,160,70),width=4)
-    else:
-        tip=(fwd[0]+ux*24,fwd[1]+uy*24);nx,ny=-uy,ux
-        d.polygon([(fwd[0]+nx*5,fwd[1]+ny*5),(fwd[0]-nx*5,fwd[1]-ny*5),tip],fill=DK)
-        d.polygon([(fwd[0]+nx*3,fwd[1]+ny*3),(fwd[0]-nx*3,fwd[1]-ny*3),(tip[0]-ux*2,tip[1]-uy*2)],fill=(225,230,236))
-        d.polygon([(fwd[0]-ux*2+nx*4,fwd[1]-uy*2+ny*4),(fwd[0]-ux*10+nx*7,fwd[1]-uy*10+ny*7),(fwd[0]-ux*12-nx*2,fwd[1]-uy*12-ny*2),(fwd[0]-ux*2-nx*3,fwd[1]-uy*2-ny*3)],fill=(180,40,30))
-def bow(img,hand):
-    d=ImageDraw.Draw(img);hx,hy=hand;top=(hx+1,hy-32);bot=(hx-1,hy+32);mid=(hx+8,hy)
-    d.line([top,bot],fill=(230,225,205),width=1)
-    pts=[(top[0]+(mid[0]-top[0])*t*2 if t<.5 else mid[0]+(bot[0]-mid[0])*(t-.5)*2, top[1]+(bot[1]-top[1])*t) for t in[i/16 for i in range(17)]]
-    d.line(pts,fill=DK,width=4);d.line(pts,fill=(120,78,40),width=2)
-def with_weapon(src,w,up):
-    base=src['img'];pad=36;img=Image.new('RGBA',(base.width+pad*2,base.height+8),(0,0,0,0));img.alpha_composite(base,(pad,4+up))
-    ax=src['ax']+pad;hand=skin_hand(base);hand=(hand[0]+pad,hand[1]+4+up);sy=int(base.height*.62)+4+up
-    if w in('검','도'):
-        under=Image.new('RGBA',img.size,(0,0,0,0));sheath_under(under,w,ax,sy);img=Image.alpha_composite(under,img);sheath_over(img,w,ax,sy)
-    elif w in('봉','창'):pole(img,w,hand)
-    elif w=='궁':bow(img,hand)
-    a=np.asarray(img);ys,xs=np.where(a[...,3]>0);img=img.crop((xs.min(),ys.min(),xs.max()+1,ys.max()+1))
-    return {'img':img,'ax':round(ax-xs.min(),1),'bottom':src['bottom']-up,'sc':src['sc']}
-# 교차 컷: 보폭 장의 하체를 다리 중심으로 가로 0.5배 오므려 두 다리가 몸 아래에서 스치게 하고, 몸은 3px 뜬다
-def crossing(src):
-    base=src['img'];h=base.height;sy=int(h*.58);low=base.crop((0,sy,base.width,h));a=np.asarray(low)[...,3]>0;ys,xs=np.where(a)
-    cx=(xs.min()+xs.max())/2;w2=max(8,int(round((xs.max()-xs.min()+1)*.5)))
-    sq=low.crop((xs.min(),0,xs.max()+1,low.height)).resize((w2,low.height),Image.NEAREST)
-    img=base.copy();img.paste(Image.new('RGBA',low.size,(0,0,0,0)),(0,sy));img.alpha_composite(sq,(int(round(cx-w2/2)),sy))
-    # 발이 몸 아래로 오도록 하체를 엉덩이 중심선(ax)에 맞춘다
-    ax=src['ax'];dx=int(round(ax-cx));tmp=Image.new('RGBA',(img.width+40,img.height),(0,0,0,0));tmp.alpha_composite(img.crop((0,0,img.width,sy)),(20,0));tmp.alpha_composite(img.crop((0,sy,img.width,img.height)),(20+dx,sy))
-    a2=np.asarray(tmp)[...,3]>0;ys,xs=np.where(a2);out=tmp.crop((xs.min(),ys.min(),xs.max()+1,ys.max()+1))
-    return {'img':out,'ax':round(ax+20-xs.min(),1),'bottom':src['bottom'],'sc':src['sc']}
-_a=all[meta['rj'][0]+1];_b=all[meta['rj'][0]+2];_am=crossing(_a);_bm=crossing(_b)
-for _w in ['검','도','봉','창','권','궁']:
-    _fr=[with_weapon(_a,_w,0),with_weapon(_am,_w,3),with_weapon(_b,_w,0),with_weapon(_bm,_w,3)]
-    _g=max(f['bottom'] for f in _fr);meta['R'+_w]=[len(all),len(_fr)]
-    for f in _fr:f['yoff']=int(_g-f['bottom']);all.append(f)
-    print('R'+_w,[(f['img'].width,f['img'].height,f['yoff']) for f in _fr])
+# 달리기 합성(R줄)은 사용자 요청으로 뺐다 (2026-10-12): 달리기는 기존 몸통 도트 + 코드 무기
 H=max(f['img'].height for f in all);W=sum(f['img'].width+2 for f in all)
 strip=Image.new('RGBA',(W,H));x=0;HF=[]
 for f in all:
