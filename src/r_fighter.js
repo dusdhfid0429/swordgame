@@ -28,16 +28,22 @@ function drawFighter(e,isP){
   const attacking=sw>0||wind,wk=isP?dc:'';
   // combat stances after martial-arts silhouettes: wide low base, overhead chamber -> diagonal cut, lunges, chambered fists, high kicks
   let st=null,lean=mv?.15:0,twoH=false,bArm=null;
+  // 회복: 휘두른 뒤 0.22초 동안 팔이 낮은 마무리 자세에서 돌아온다 (r_anim.js)
+  const rec=!isP&&!attacking&&(e.rec||0)>0?e.rec/.22:0;
+  if(rec){if(mode==='swing'){ang=-.45*rec+ang*(1-rec);lean=.3*rec}else if(mode==='thrust'){ang=1.5*rec+ang*(1-rec);reach=5*rec;lean=.2*rec}else if(mode==='punch'){ang=1.55*rec+ang*(1-rec);reach=3*rec;lean=.15*rec}else lean=-.1*rec}
+  else if(!mv&&!attacking)lean=.04*Math.sin(time*.7+(e.bob||0));   // 가만히 서면 무게중심이 천천히 옮겨 간다
   if(attacking){
     if(mode==='swing'){if(sw>0){const w0=prog<.22;ang=w0?2.5+prog/.22*.8:3.3-(prog-.22)/.78*3.7;lean=w0?-.14:.34*Math.sin(Math.min(1,(prog-.22)/.45)*Math.PI/2)}
       else{ang=2.7+Math.sin(time*20)*.08;lean=-.12}
       st=[[.66,.02],[-.62,-.55]];twoH=isP||(e.d&&e.d.boss)}
-    else if(mode==='thrust'){st=[[.95,.22],[-.88,-.78]];lean=.32;twoH=true}
-    else if(mode==='punch'){st=[[.78,.08],[-.72,-.62]];lean=.24;bArm=-.75}
-    else{st=[[kick*1.95,kick*1.8],[-.12,-.18]];lean=-.32*kick;bArm=1.3}
+    else if(mode==='thrust'){st=[[.95,.22],[-.88,-.78]];lean=.32;twoH=true;if(wind&&sw<=0){ang=.7;reach=-5;lean=-.12}}   // 예비: 창을 뒤로 당긴다
+    else if(mode==='punch'){st=[[.78,.08],[-.72,-.62]];lean=.24;bArm=-.75;if(wind&&sw<=0){ang=.5;reach=-4;lean=-.1;bArm=-.3}}   // 예비: 주먹을 허리로
+    else{st=[[kick*1.95,kick*1.8],[-.12,-.18]];lean=-.32*kick;bArm=1.3;if(wind&&sw<=0){lean=-.18;st=[[.3,.1],[-.5,-.4]]}}
   }else if(isP&&!mv&&mobs.some(o=>o.hp>0&&o.aggro&&dist(o,P)<3.5)){
     st=[[.42,0],[-.38,-.36]];ang=mode==='thrust'?1.25:mode==='swing'?1.1:1.35;lean=.05;
     if(mode==='punch'||mode==='kick')bArm=1.15;else twoH=true}
+  // 피격: 맞은 쪽 반대로 젖혀지고 머리가 들린다. 치명·강타는 더 크게
+  const hitT=isP?P.hit/.2:e.hit/.12;if(hitT>0)lean+=-.32*Math.sin(Math.min(1,hitT)*Math.PI/2)*(e.hitK||1);
   const trail=mv?7:0,wv=Math.sin(time*8+(e.bob||0));
   // legs: thigh/shin angles from the run cycle, knee folds back as the leg lifts
   const legs=off=>{if(!mv)return[0,-.05];const a=ph+off,t=Math.sin(a)*.7;return[t,t-(Math.max(0,Math.cos(a))*1.0+.12)]};
@@ -101,8 +107,8 @@ function drawFighter(e,isP){
   if(isP&&P.palm>0){const k=P.palm/.35;const g=ctx.createRadialGradient(16,-40,1,16,-40,18);g.addColorStop(0,`rgba(190,220,255,${k})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(16,-40,18,0,7);ctx.fill()}
   ctx.restore();
   if(!isP&&e.stun>0&&!e.npc){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(sc>1.2?88:68)+Math.sin(a)*3,2,0,7);ctx.fill()}}
-  if(!isP&&!e.npc){const w=30*sc,y=p.y-(sc>1.2?94:74);
+  if(!isP&&!e.npc&&!e.dead){const w=30*sc,y=p.y-(sc>1.2?94:74);
     ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-w/2-1,y-1,w+2,5);ctx.fillStyle='#c0261b';ctx.fillRect(p.x-w/2,y,w*Math.max(0,e.hp/e.maxHp),3);
     if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?'#9cc8f0':'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
-  if(e.npc){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
+  if(e.npc&&!e.dead){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
 }

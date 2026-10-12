@@ -40,6 +40,9 @@ function drawBeast(e){
   ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,0,b.rx*s*1.1,5*s,0,0,7);ctx.fill();
   if(e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*s,TH/2*s,0,0,7);ctx.stroke()}
   ctx.scale(side*s,s);
+  // 공격: 예비에 움츠렸다가 휘두를 때 앞으로 덮친다. 피격은 눌린다 (r_anim.js)
+  {const sw=e.swing||0,pr=sw>0?1-sw/.24:0,lunge=sw>0?Math.sin(pr*Math.PI):0,crouch=e.wind>0&&sw<=0?.5+.5*Math.sin(time*18):0;
+    ctx.translate(lunge*12-crouch*3,0);ctx.scale(1+lunge*.08-crouch*.05+(fl?-.08:0),1-lunge*.1+crouch*.08+(fl?.1:0))}
   const hop=d.beast==='rabbit'?(mv?Math.abs(Math.sin(ph*.8))*7:0):(mv?Math.abs(Math.sin(ph))*1.4:Math.sin(time*2+(e.bob||0))*.4);
   ctx.translate(0,-hop);
   const by=-b.L-b.ry*.5,leg=(x,o,col)=>{const a=mv?Math.sin(ph+o)*.55:0,f=[x+Math.sin(a)*b.L,-Math.cos(a)*b.L*.08];seg([[x,by+b.ry*.3],f],d.beast==='bear'?6:d.beast==='rabbit'?2.5:3.4,col)};
@@ -68,7 +71,7 @@ function drawBeast(e){
   leg(-b.rx*.35,Math.PI*.5,c0);leg(b.rx*.75,Math.PI*1.5,c0);
   ctx.restore();
   if(e.stun>0){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(b.L+b.ry)*s*2-6+Math.sin(a)*3,2,0,7);ctx.fill()}}
-  const y=p.y-(b.L+b.ry*2+(b.neck?16:6))*s-6;
+  const y=p.y-(b.L+b.ry*2+(b.neck?16:6))*s-6;if(e.dead)return;
   if(e.hp<e.maxHp||P.target===e||e.ally){const w=26;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-w/2-1,y-1,w+2,5);ctx.fillStyle=e.ally?'#6abf5a':'#c0261b';ctx.fillRect(p.x-w/2,y,w*Math.max(0,e.hp/e.maxHp),3)}
   if(P.target===e||e.ally){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.ally?'#a6d47f':d.hostile?'#f0a080':'#f0e4c8';ctx.fillText(e.name,p.x,y-5)
     if(e.art&&P.target===e){const t=mobKitLabel(e);ctx.font='10px "Gowun Dodum",sans-serif';ctx.fillStyle='#000';ctx.fillText(t,p.x+1,y-16);ctx.fillStyle='#d8c8a0';ctx.fillText(t,p.x,y-17)}}
@@ -204,6 +207,7 @@ function draw(){
   if(REGION().edges)for(const h of pvEdgeHints())list.push({d:h.x+h.y-.4,f:()=>drawEdgeHint(h)});
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
+  for(const c of corpses)if(vis(c.x,c.y))list.push({d:c.x+c.y-.05,f:()=>drawCorpse(c)});
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
