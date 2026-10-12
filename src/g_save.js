@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=1;
+const SAVE_VER=2;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -14,6 +14,8 @@ const MIGRATE=[
     const def={inj:0,injS:0,wallN:null,lifeQB:0,enl:0,peaks:{},qiX:0,gcs:0,mss:0,pas:{}};
     for(const k in def)if(p[k]===undefined)p[k]=def[k];
     return d},
+  // v1 → v2: 심법 등급 (g_simbeop.js). 쌓인 내공을 횟수×타고난 증가량으로 옮긴다
+  d=>{const p=d.P;if(!p)return d;if(p.qiAcc===undefined)p.qiAcc=(p.qiN||0)*SIDES[p.side].gain;if(p.sim===undefined)p.sim=null;if(!p.sims)p.sims={};return d},
 ];
 // 저장 자료를 지금 형식으로 옮긴다. 이미 지금 형식이면 그대로 돌려준다(여러 번 불러도 같다).
 function migrateSave(d){if(!d||typeof d!=='object')return d;

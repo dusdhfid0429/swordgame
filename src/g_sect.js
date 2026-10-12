@@ -85,6 +85,7 @@ function sectDetail(s,hq){
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
     ${pasSectHtml(s)}
+    ${simSectHtml(s)}
     ${bobSectHtml(s)}
     ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}${old}</div>`:''}${member?teachHtml():''}`;
 }

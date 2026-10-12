@@ -113,8 +113,8 @@ function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.rando
 
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
 function qiTrained(){const s=school();
-  if(s==='사공'||s==='사불'){P.qiX=(P.qiX||0)+Math.round(SIDES[P.side].gain*.15*10)/10;recalc()}
-  if(s==='마공'){const x=Math.round(SIDES[P.side].gain*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
+  if(s==='사공'||s==='사불'){P.qiX=(P.qiX||0)+Math.round(qiGain()*.15*10)/10;recalc()}
+  if(s==='마공'){const x=Math.round(qiGain()*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
 // ---- 폐관·주화입마를 심법 계열에 맞춘다 ----

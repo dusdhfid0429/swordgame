@@ -64,7 +64,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r9=await p.evaluate(()=>{P.mats.공청석유=2;const q=baseQi();useCon('공청석유');const q1=baseQi();useCon('공청석유');return{d:q1-q,again:baseQi()-q1,left:P.mats.공청석유}});
   ok(`공청석유 +${r9.d}, 두 번째는 효험 없음 +${r9.again}`,r9.d===120&&r9.again===0&&r9.left===1);
   // 마공: 수련마다 내공 더, 악업
-  const r10=await p.evaluate(()=>{P.sect='cheonma';const q=baseQi(),ev=P.evil;P.qiN++;qiTrained();const d=baseQi()-q;P.sect=null;return{d,ev:P.evil-ev}});
+  const r10=await p.evaluate(()=>{P.sect='cheonma';const q=baseQi(),ev=P.evil;qiAccAdd(qiGain());P.qiN++;qiTrained();const d=baseQi()-q;P.sect=null;return{d,ev:P.evil-ev}});
   ok(`마공 수련 1회 내공 +${r10.d}, 악업 +${r10.ev}`,r10.d>=12&&r10.ev===1);
   // 인물창: 갑자·단전·계열·깨달음·경지의 길
   await p.evaluate(()=>{P.realm=3;openPanel('char')});await p.waitForTimeout(300);

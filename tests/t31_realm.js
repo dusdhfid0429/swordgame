@@ -10,7 +10,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   await p.evaluate(()=>{mobs=[]});
   // 내공만 키우면 경지가 오르지 않는다
-  const r1=await p.evaluate(()=>{P.qiN=50;recalc();return{q:baseQi(),r:realmIdx(),wall:atWall(),lack:lacking().map(x=>x.n)}});
+  const r1=await p.evaluate(()=>{P.qiN=50;P.qiAcc=50*SIDES[P.side].gain;recalc();return{q:baseQi(),r:realmIdx(),wall:atWall(),lack:lacking().map(x=>x.n)}});
   ok(`내공만 ${r1.q}: 경지 ${r1.r}, 벽 ${r1.wall}, 모자람 ${r1.lack}`,r1.r===0&&!r1.wall&&r1.lack.includes('외공')&&r1.lack.includes('무리'));
   // 세 기둥을 채우면 벽
   const r2=await p.evaluate(()=>{for(const k of['str','end','agi','qi'])P.st[k]+=3;P.arts.base.p=60;P.arts[Object.keys(ARTS)[0]]={p:30,f:[true,false,false]};P.vit=999;wallCheck();return{oe:pillarVal('oe'),mu:pillarVal('mu'),wall:atWall(),r:realmIdx(),why:pgWhy()}});
@@ -29,12 +29,12 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const s=await p.evaluate(()=>{Math.random=window._rnd;return{r:realmIdx(),n:realmName(),age:P.age,wall:atWall()}});
   ok(`벽을 깸: ${s.n}, 나이 +${(s.age-age0).toFixed(1)}`,s.r===1&&s.age-age0>=.45&&!s.wall);
   // 주화입마: 실패하면 내공을 잃고 경맥이 상한다
-  const d=await p.evaluate(()=>{P.qiN=200;for(const k of['str','end','agi','qi'])P.st[k]+=6;P.arts.base.p=100;for(const id of Object.keys(ARTS).slice(0,3))P.arts[id]={p:60,f:[true,true,true]};recalc();
+  const d=await p.evaluate(()=>{P.qiN=200;P.qiAcc=200*SIDES[P.side].gain;for(const k of['str','end','agi','qi'])P.st[k]+=6;P.arts.base.p=100;for(const id of Object.keys(ARTS).slice(0,3))P.arts[id]={p:60,f:[true,true,true]};recalc();
     const w=atWall(),q0=P.qiN,a0=atk();window._rnd=Math.random;let i=0;Math.random=()=>[.99,.5][i++]??.5;pgFinish(false);Math.random=window._rnd;
     return{w,r:realmIdx(),lost:q0-P.qiN,inj:P.inj>0,a0,a1:atk()}});
   ok(`주화입마: 경지 ${d.r} 유지, 내공 회차 -${d.lost}, 공격력 ${d.a0}→${d.a1}`,d.w&&d.r===1&&d.lost>=1&&d.inj&&d.a1<d.a0);
   // 예전 저장: P.realm 없으면 지금 내공 경지를 이어받는다
-  const m=await p.evaluate(()=>{saveGame(true);const data=JSON.parse(localStorage.getItem(SAVE_KEY));delete data.v;delete data.P.realm;data.P.qiN=30;applySave(data);return{r:P.realm,q:qiRealm()}});
+  const m=await p.evaluate(()=>{saveGame(true);const data=JSON.parse(localStorage.getItem(SAVE_KEY));delete data.v;delete data.P.realm;data.P.qiN=30;delete data.P.qiAcc;applySave(data);return{r:P.realm,q:qiRealm()}});
   ok(`예전 저장 옮김: 경지 ${m.r} = 내공 경지 ${m.q}`,m.r===m.q&&m.r>=2);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();
