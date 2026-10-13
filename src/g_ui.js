@@ -97,7 +97,7 @@ function pChar(){
   const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
-  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${simCur().n}${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
+  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
@@ -112,8 +112,8 @@ function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n}${a.el?` · ${a.el}`:''} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
-      <p>${a.d}${a.el?` ${EL[a.el].fx}.`:''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.c})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
+      <p>${a.d}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
@@ -123,7 +123,7 @@ function pArts(){
     ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
-    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">오행 상극</b> 화→금→목→토→수→화, 이기는 쪽 1.3배. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
+    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
 }
 let shopMode=null;
 function pBag(){
@@ -236,7 +236,7 @@ function pNpcBase(n){
     const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${q.mob.join('·')} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
     return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><h4 style="margin:0">맡은 의뢰</h4><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
   if(n.id==='arena'){const o=DUELISTS[P.duel];
-    return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 오행 ${o.el} · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
+    return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 내공 ${o.el}속성 · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
       <p class="note">${P.duel}/${DUELISTS.length} 꺾음</p>`}
   if(n.id==='land'){const h=G.house;
     if(!h)return `<p class="note">"서쪽 농지 아래에 집터 두 곳이 남았소. 집이 있으면 쉬고, 창고에 물건을 맡기고, 자식에게 물려줄 수 있지."</p><div class="row2">${B('lot:0','동쪽 집터 · 은자 300',{d:P.silver<300})}${B('lot:1','서쪽 집터 · 은자 300',{d:P.silver<300})}</div>`;

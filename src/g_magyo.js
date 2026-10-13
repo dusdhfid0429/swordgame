@@ -33,7 +33,7 @@ function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.d
   const st=A(a.id),blk=mgArtBlock({id:a.id});
   const join=P.sect==='cheonma'&&!P.dang?`<div class="row2"><span class="note">당은 한 번 고르면 바꿀 수 없다. 들면 [${a.n}]의 첫 초식을 바로 익힌다.</span>${B('mdang:'+n.dang,`${D.n} 입당`,{pri:1})}</div>`:'';
   return `<p class="note">${hi}</p><div class="row2"><span class="note">${embImg('cheonma',22)} <b>${D.n}</b> · 천마신교 오당${mine?' · <span class="good">내 당</span>':''}</span></div><p class="note">${D.d}.</p>${join}
-    <div class="list"><div class="it"><div style="color:rgb(${a.c})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n}·${a.el} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
+    <div class="list"><div class="it"><div style="color:rgb(${a.c})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
     <p class="note">비급은 천마신전의 교주에게서 공적으로 받는다.</p>${mgOrgHtml()}`}
 hook('hqDlg',c=>{if(c.n.hq==='cheonma')c.html+=mgOrgHtml()});
 hook('npcDlg',c=>{if(c.html==null&&c.n.dang)c.html=dangDlg(c.n)});

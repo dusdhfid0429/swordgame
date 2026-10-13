@@ -155,7 +155,7 @@ const sndNear=e=>!e||!P||Math.hypot(e.x-P.x,e.y-P.y)<10;
   wrap('hitE',(o,a)=>{const e=a[1],hp=e&&e.hp,r=o(...a);if(e&&e.hp===hp&&e.hp>0&&sndNear(e))sfx('miss');return r});
   wrap('hurtP',(o,a)=>{const hp=P.hp,r=o(...a);if(P.hp<hp&&P.hp>0)sfx('hurt');else if(P.hp===hp&&P.inv<=0)sfx('dodge');return r});
   wrap('basicStrike',(o,a)=>{const b=P.bcd,r=o(...a);if(P.bcd>b){const c=curCls();sfx(c==='궁'&&hasWeaponFor('궁')?'bow':'swing',{cls:c})}return r});
-  wrap('useForm',(o,a)=>{const r=o(...a);if(r){const el=art().el,f={금:880,목:660,수:587,화:784,토:523}[el]||660;sfx('swing',{cls:art().cls});sfx('form',{f})}return r});
+  wrap('useForm',(o,a)=>{const r=o(...a);if(r){const el=pEl(),f={금:880,목:660,수:587,화:784,토:523,양:830,음:494,뇌:988}[el]||660;sfx('swing',{cls:art().cls});sfx('form',{f})}return r});
   wrap('ultimate',(o,a)=>{const u=P.ucd,r=o(...a);if(P.ucd>u)sfx('ult');return r});
   wrap('special',(o,a)=>{const r=o(...a);sfx('swing',{cls:'궁',v:.6});return r});
   wrap('leap',(o,a)=>{const q=P.qi,r=o(...a);if(P.qi<q)sfx('leap');return r});

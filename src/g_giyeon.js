@@ -17,9 +17,9 @@ function addGiyeonArts(arts,pool,ults){
     const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,a.forms.length-1).sort((x,y)=>x.cd-y.cd)];
     const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][ai%ults[a.cls].length],EC=EL[a.el];
-    arts[id]={id,side:null,cls:a.cls,el:a.el,n:a.n,c:EC.c,pt:EC.pt,elc:a.el==='금',forms,gy:1,grade:g,
+    arts[id]=artFx({id,side:null,cls:a.cls,el:a.el,n:a.n,forms,gy:1,grade:g,
       ult:{n:a.ult,steps:[F('','circle',{rad:3,m:GULT[g][0],stun:.4}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
-      d:`${a.d}. 천고 기연 무공 · ${CLASS[a.cls].n} · 오행 ${a.el}. 초식 ${forms.length}개는 숙련이 차면 저절로 열린다.`};
+      d:`${a.d}. 천고 기연 무공 · ${CLASS[a.cls].n}. 초식 ${forms.length}개는 숙련이 차면 저절로 열린다.`});
   });
 }
 const gyMine=()=>Object.keys(GY_ARTS).filter(id=>P.arts[id]);

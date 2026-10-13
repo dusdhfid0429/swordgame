@@ -92,7 +92,7 @@ function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비�
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
 const SLOTN=GD.SLOTN;
 function itemDesc(it){
-  if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n}·${a.el} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
@@ -186,14 +186,18 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=a.el;let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
+  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*elMul(el,e.el)*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
-  d=Math.max(1,Math.round(d-(el==='금'?0:c.def)));
+  d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
   if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07);
   if(el==='수')e.slow=Math.max(e.slow,2);
   if(el==='목'&&P.hp>0)P.hp=Math.min(P.maxHp,P.hp+d*.1);
+  // 음양·뇌기 (심법 속성, 2026-10-13)
+  if(el==='양'){e.burn=Math.max(e.burn,3);e.burnD=Math.max(1,d*.09);if(!e.d.boss&&from===P){const l=Math.hypot(e.x-P.x,e.y-P.y)||1;e.kb={x:(e.x-P.x)/l*.2,y:(e.y-P.y)/l*.2}}}
+  if(el==='음'){e.slow=Math.max(e.slow,2);if(from===P)P.qi=Math.min(P.maxQi,P.qi+d*.08)}
+  if(el==='뇌'&&Math.random()<.2){e.stun=Math.max(e.stun||0,e.d.boss?.15:.35);addText(e.x,e.y-.4,'뇌격','#cfe8ff')}
   gainMast(X.key,1);
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
