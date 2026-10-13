@@ -103,7 +103,7 @@ C.addEventListener('pointerdown',ev=>{
   if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
-  if(h.kind==='npc'){if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
+  if(h.kind==='npc'){if(forceAtk&&h.o.hq){const e=masterOut(h.o);if(e){P.target=e;P.repath=0;P.path=null;return}}if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
   if(h.kind==='node'){const t={node:h.o};if(dist(h.o,P)<1.3)interact(t);else{P.goal={x:h.o.x,y:h.o.y,...t};go(h.o.x,h.o.y)}return}
   if(h.kind==='plot'){const c={x:h.o.x+.5,y:h.o.y+.5},t={plot:h.o};if(dist(c,P)<1.3)interact(t);else{P.goal={...c,...t};go(c.x,c.y)}return}
   if(h.kind==='house'){const d=houseDoor();if(dist(d,P)<1.4)openHouse();else{P.goal={x:d.x,y:d.y,house:1};go(d.x,d.y)}return}

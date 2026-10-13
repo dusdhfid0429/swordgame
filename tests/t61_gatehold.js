@@ -7,13 +7,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 출입구에 서서: 1.5초까지는 그대로, 2초가 차면 이동
-  const g1=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;P.path=null;const r0=REG;gateTick(.5);gateTick(.5);gateTick(.5);const t=P.gateT,trav=!!P.traveling;gateTick(.6);return{r0,t,trav,trav2:!!P.traveling,to:g.to}});
-  ok(`출입구 1.5초 머묾 → 아직 (${g1.t.toFixed(1)}초, 이동 ${g1.trav}), 2초 차면 이동 ${g1.trav2}`,Math.abs(g1.t-1.5)<.01&&!g1.trav&&g1.trav2);
+  const g1=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;P.path=null;const r0=REG;gateTick(.3);gateTick(.3);gateTick(.3);const t=P.gateT,trav=!!P.traveling;gateTick(.2);return{r0,t,trav,trav2:!!P.traveling,to:g.to}});
+  ok(`출입구 0.9초 머묾 → 아직 (${g1.t.toFixed(1)}초, 이동 ${g1.trav}), 1초 차면 이동 ${g1.trav2}`,Math.abs(g1.t-.9)<.01&&!g1.trav&&g1.trav2);
   await p.waitForFunction(to=>REG===to&&!P.traveling,g1.to,{timeout:4000}).catch(()=>{});
   ok(`도착 ${g1.r0} → ${await p.evaluate(()=>REG)}`,await p.evaluate(to=>REG===to&&P.gateT===0,g1.to));
   // 벗어나면 0부터 다시, 경공 중엔 세지 않는다
-  const g2=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(1);const a=P.gateT;P.x=g.x+3;gateTick(.1);const b=P.gateT||0;P.x=g.x;P.leap={sx:P.x,sy:P.y,ex:P.x,ey:P.y,t:0,dur:.6,z0:0,z1:0,to:null};gateTick(1);gateTick(1);const c=P.gateT||0,trav=!!P.traveling;P.leap=null;P.x=g.x+3;gateTick(.1);return{a,b,c,trav}});
-  ok(`벗어나면 초기화 (${g2.a}→${g2.b}), 경공 중 2초 지나도 안 넘어감 (${g2.c}, 이동 ${g2.trav})`,g2.a===1&&g2.b===0&&g2.c===0&&!g2.trav);
+  const g2=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(.5);const a=P.gateT;P.x=g.x+3;gateTick(.1);const b=P.gateT||0;P.x=g.x;P.leap={sx:P.x,sy:P.y,ex:P.x,ey:P.y,t:0,dur:.6,z0:0,z1:0,to:null};gateTick(1);gateTick(1);const c=P.gateT||0,trav=!!P.traveling;P.leap=null;P.x=g.x+3;gateTick(.1);return{a,b,c,trav}});
+  ok(`벗어나면 초기화 (${g2.a}→${g2.b}), 경공 중 2초 지나도 안 넘어감 (${g2.c}, 이동 ${g2.trav})`,g2.a===.5&&g2.b===0&&g2.c===0&&!g2.trav);
   // 강제공격: 같은 편 무인은 평소엔 공격 대상이 아니다
   const f1=await p.evaluate(()=>{mobs=[];P.target=null;const e=mkFac(pfac(),0,P.x+1.5,P.y);mobs.push(e);const a={peace:peaceful(e),near:nearest(5)===e,foe:foes().includes(e)};
     toggleForce();const b={on:forceAtk,peace:peaceful(e),near:nearest(5)===e,foe:foes().includes(e),hud:$('forceb').classList.contains('on'),t:$('t_force').classList.contains('on')};
@@ -24,6 +24,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`강제 켜면: 평화 ${f1.b.peace}, 가까운 적 ${f1.b.near}, 범위 포함 ${f1.b.foe}, HUD 단추 켜짐 ${f1.b.hud}/${f1.b.t}`,f1.b.on&&!f1.b.peace&&f1.b.near&&f1.b.foe&&f1.b.hud&&f1.b.t);
   ok(`치면 배신 (등 돌림 ${f1.c.angry}, 악업 +${f1.c.evil}); 끄면 대상 해제 ${!f1.d.target} (등 돌린 상대는 여전히 적 ${!f1.d.peace})`,f1.c.angry&&f1.c.evil>0&&!f1.d.on&&f1.d.target&&!f1.d.peace);
   ok(`양민은 강제를 켜도 범위 초식·자동 대상에서 제외 (${f1.vv.villFoe}/${f1.vv.villNear})`,!f1.vv.villFoe&&!f1.vv.villNear);
+  // 강제공격으로 장문인 끌어내기 + 제자가 죽으면 첫해에도 쇠퇴
+  const m1=await p.evaluate(()=>{toggleForce(false);const s=SECTS.nabu,ids=[hqId(s),...((REGIONS[hqId(s)]||{}).halls||[]).map(h=>h.id)],mr=ids.find(id=>(REGIONS[id].npcs||[]).some(n=>n.hq===s.id));
+    mobs=[];loadRegion(mr);P.reg=mr;const n=(REGION().npcs||[]).find(x=>x.hq);const p0=sectPop('nabu');const off=masterOut(n);toggleForce(true);const e=masterOut(n);const npcGone=!(REGION().npcs||[]).some(x=>x.hq);
+    const same=masterOut(n)===e;const d=mkFac(alFac(s.al),0,P.x+1,P.y,'nabu');mobs.push(d);damage(d,9999,0,0,P);const weak=sectWeak(s);mobs=[];loadRegion(mr);P.reg=mr;const boss2=mobs.some(m=>m.master==='nabu');toggleForce(false);return{off:off===null,e:!!(e&&e.master==='nabu'),npcGone,same,p0,p1:sectPop('nabu'),weak,boss2}});
+  ok(`강제 꺼진 채 ${m1.off?'안 나옴':'나옴'}, 켜면 장문인 출전 ${m1.e}·NPC 숨김 ${m1.npcGone}·같은 우두머리 ${m1.same}`,m1.off&&m1.e&&m1.npcGone&&m1.same);
+  ok(`제자 1명 죽으면 첫해에도 쇠퇴 (${m1.p0}→${m1.p1}, 쇠퇴 ${m1.weak}, 다시 들어가면 장문인 출전 ${m1.boss2})`,m1.p1===m1.p0-1&&m1.weak&&m1.boss2);
   // PC 키 T, 터치 단추
   await p.keyboard.press('KeyT');const k1=await p.evaluate(()=>forceAtk);await p.keyboard.press('KeyT');const k2=await p.evaluate(()=>forceAtk);
   ok(`T 키로 켜고 끔 (${k1}→${k2})`,k1===true&&k2===false);
