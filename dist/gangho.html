@@ -159,28 +159,35 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .touch #mini{top:calc(6px + env(safe-area-inset-top,0px));width:110px;height:62px}
 #tmenu{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:126px;width:46px;height:46px;font-size:22px;line-height:1;color:var(--paper);background:var(--stone);border:1px solid var(--bronze-hi);pointer-events:auto}
 #joyz{position:absolute;left:0;bottom:0;width:48%;height:46%;pointer-events:auto;touch-action:none}
-#joy{position:absolute;left:84px;top:calc(100% - 96px);width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;border:2px solid #a88a5566;background:radial-gradient(circle,#0006,#0000 70%);opacity:.55;pointer-events:none}
+#joy{position:absolute;left:84px;top:calc(100% - 112px);width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;border:2px solid #a88a5566;background:radial-gradient(circle,#0006,#0000 70%);opacity:.55;pointer-events:none}
 #joy.on{opacity:1}
 #joyk{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6b5636,#2a2015);border:1px solid var(--bronze-hi)}
-#tbtns{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));width:236px;height:236px;pointer-events:none}
-#tquick{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(258px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;justify-content:flex-end;pointer-events:none}
-.tq{pointer-events:auto;min-width:54px;height:32px;padding:0 10px;border-radius:16px;border:1px solid var(--bronze-hi);background:#120e0add;color:var(--paper);font:13px var(--display);touch-action:none}
-.tq.on{background:#3a3024ee;box-shadow:0 0 0 1px var(--exp);color:#ffe9a8}.tq.press{filter:brightness(1.5)}
+#tbtns{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:236px;height:240px;pointer-events:none}
+/* 켜고 끄는 것: 오른쪽 가장자리 세로 열 (아래부터 질주·운기·승마). 네모라서 공격 부채꼴의 둥근 단추와 구별된다 */
+#tquick{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(232px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none}
+.tq{pointer-events:auto;width:42px;height:42px;padding:0;border-radius:9px;border:1px solid var(--bronze-hi);background:#120e0add;color:var(--paper);font:12px var(--display);touch-action:none;line-height:1.1;word-break:keep-all}
+.tq.on{background:#3a3024ee;box-shadow:0 0 0 2px var(--exp);color:#ffe9a8}.tq.press{filter:brightness(1.5)}
+/* 퀵슬롯: 금창약·소환단·비도. 세로 화면은 왼쪽 아래 모퉁이(왼손 엄지), 가로 화면은 아래 가운데(두 엄지 사이) */
+#tslots{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));display:flex;gap:5px;pointer-events:none}
+.ts{position:relative;overflow:hidden;pointer-events:auto;width:48px;height:40px;padding:0 0 8px;border-radius:7px;border:1px solid #9fd38a88;background:#121a10dd;color:var(--paper);font:11px var(--display);touch-action:none;line-height:1}
+.ts span{position:relative;z-index:1}.ts em{position:absolute;right:3px;bottom:1px;font:10px var(--body);font-style:normal;color:#9fd38a;z-index:1}
+.ts .cd{position:absolute;inset:auto 0 0 0;height:0;background:#000b}
+.ts.off{opacity:.38}.ts.press{filter:brightness(1.5)}
 .tb{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid var(--bronze-hi);background:radial-gradient(circle at 35% 30%,#3a3024ee,#120e0aee);color:var(--paper);font:13px var(--display);
+
   display:grid;place-items:center;overflow:hidden;padding:0;pointer-events:auto;touch-action:none;box-shadow:0 2px 8px #000a;word-break:keep-all;line-height:1.05}
 .tb span{position:relative;z-index:1;padding:0 4px}
 .tb em{position:absolute;bottom:6px;right:0;left:0;text-align:center;font:10px var(--body);font-style:normal;color:#9fd38a;z-index:1}
 .tb .cd{position:absolute;inset:auto 0 0 0;height:0;background:#000b}
 .tb.press{filter:brightness(1.5);transform:scale(.94)}
 .tb.off{opacity:.38}
-.tb.big{width:88px;height:88px;right:0;bottom:0;font-size:19px;border-color:var(--exp)}
+.tb.big{width:88px;height:88px;right:0;bottom:2px;font-size:19px;border-color:var(--exp)}
 .tb.big.on{box-shadow:0 0 0 2px var(--exp),0 2px 10px #000a}
-#t_ult{right:100px;bottom:2px;border-color:#c58bff}
-#t_leap{right:14px;bottom:100px}
-#t_step{right:148px;bottom:84px;width:52px;height:52px;font-size:12px;border-color:#8fc8ff}
-#t_spec{right:84px;bottom:76px;width:52px;height:52px;font-size:12px}
-#t_pot{right:168px;bottom:8px;width:52px;height:52px;font-size:11px}
-#t_ctx{right:6px;bottom:172px;width:auto;min-width:64px;height:44px;border-radius:22px;padding:0 12px;border-color:var(--exp);color:#f6e7b8;font-size:14px}
+#t_ult{right:102px;bottom:68px;border-color:#c58bff}
+#t_leap{right:18px;bottom:102px}
+#t_step{right:102px;bottom:0;border-color:#8fc8ff}
+#t_spec{right:52px;bottom:170px;width:52px;height:52px;font-size:12px}
+#t_ctx{right:118px;bottom:134px;width:auto;min-width:72px;height:42px;border-radius:21px;padding:0 12px;border-color:var(--exp);color:#f6e7b8;font-size:14px}
 .touch .chan{bottom:auto;top:46%}
 .touch .btn{font-size:14px;padding:8px 12px}
 .touch .ib .btn{font-size:13px;padding:6px 10px}
@@ -189,9 +196,10 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .mbtn{display:grid;gap:2px;text-align:center;padding:12px 6px!important;min-height:64px}
 .mbtn b{font:400 17px var(--display)}.mbtn small{font-size:11px;color:var(--paper-dim);white-space:normal;word-break:keep-all}
 @media (max-height:520px){ /* phone held sideways */
-  .touch #log{top:auto;bottom:10px;left:50%;transform:translateX(-50%);width:min(320px,38vw);height:48px;text-align:center}
-  #tbtns{transform:scale(.82);transform-origin:100% 100%}
-  #tquick{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+  .touch #log{top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(340px,40vw);height:48px;text-align:center}
+  #tbtns,#tquick{transform:scale(.82);transform-origin:100% 100%}
+  #tquick{bottom:calc(196px + env(safe-area-inset-bottom,0px))}
+  #tslots{left:50%;transform:translateX(-50%)}
   #joyz{height:60%}
 }
 /* ---- 수련 창: 화면 아래쪽에 붙고 시간은 흐른다. 캐릭터(화면 가운데)를 가리지 않게 높이를 제한 ---- */
@@ -204,7 +212,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .tname{font-size:13px}.tname b{font-family:var(--display);font-weight:400;font-size:15px}.tname small{display:block;font-size:11px;color:var(--paper-dim)}
 .tbtn{position:relative;overflow:hidden;min-width:118px}.tbtn .tcd{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--exp)}
 .tbtn.busy{border-color:var(--exp);color:#f6e7b8}
-.trn-on #tbtns,.trn-on #joyz,.trn-on #tquick{display:none}
+.trn-on #tbtns,.trn-on #joyz,.trn-on #tquick,.trn-on #tslots{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">
@@ -1823,7 +1831,7 @@ function pHelp(){
   <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
-  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·승마·운기는 공격 버튼 위의 작은 버튼. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
@@ -2689,7 +2697,8 @@ addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 addEventListener('blur',()=>keys={});
 
 // ================= 터치 조작 (모바일) =================
-// 왼쪽 아래를 끌면 이동, 오른쪽 아래 버튼 여섯 개로 싸우고, ☰ 하나에 창을 모두 모았다.
+// 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
+// 켜고 끄는 것(질주·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
 var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
 const TUI=document.createElement('div');TUI.id='tui';
@@ -2701,13 +2710,17 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
     <button type="button" class="tb" id="t_leap"><span>경공</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_step"><span>보법</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_spec"><span>비기</span><i class="cd"></i></button>
-    <button type="button" class="tb" id="t_pot"><span>약</span><em></em></button>
     <button type="button" class="tb ctx" id="t_ctx"><span></span></button>
   </div>
   <div id="tquick">
     <button type="button" class="tq" id="t_run">질주</button>
-    <button type="button" class="tq" id="t_ride" hidden>승마</button>
     <button type="button" class="tq" id="t_med" hidden>운기</button>
+    <button type="button" class="tq" id="t_ride" hidden>승마</button>
+  </div>
+  <div id="tslots">
+    <button type="button" class="ts" id="ts_gc"><span>금창약</span><em></em></button>
+    <button type="button" class="ts" id="ts_sh"><span>소환단</span><em></em></button>
+    <button type="button" class="ts" id="ts_bd" hidden><span>비도</span><em></em><i class="cd"></i></button>
   </div>`;
 $('stage').insertBefore(TUI,$('win'));
 const statusEl=document.querySelector('.status'),panelEl=document.querySelector('.panel');
@@ -2740,7 +2753,9 @@ hold('t_ult',()=>ultimate());
 hold('t_leap',()=>leap());
 hold('t_step',()=>bobeop());
 hold('t_spec',()=>{const k=specPick();if(k==='신공')shingong();else if(k)special(k);else log(specMsg(),'info')});
-hold('t_pot',()=>{const k=potPick();if(k)useCon(k);else log('금창약도 소환단도 없습니다.','info')});
+hold('ts_gc',()=>{if(P.mats.금창약>0)useCon('금창약');else log('금창약이 없습니다. 약방에서 사거나 만드세요.','info')});
+hold('ts_sh',()=>{if(P.mats.소환단>0)useCon('소환단');else log('소환단이 없습니다. 약방에서 사거나 만드세요.','info')});
+hold('ts_bd',()=>special('암기'));
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
 // 빠른 버튼 (사용자 요청 2026-10-13 "질주·탈것 등은 HUD 버튼으로"): 질주 켜고 끄기, 말 타고 내리기(말이 곁에 있거나 탔을 때만), 운기조식(싸움 중이 아닐 때만)
 hold('t_run',()=>toggleRun());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
@@ -2752,9 +2767,8 @@ function specPick(){
   const e=P.target&&P.target.hp>0?P.target:nearest(7);
   if(P.sp.점혈&&P.scd.점혈<=0&&P.qi>=SPEC.점혈.qi&&e&&dist(e,P)<2.6)return'점혈';
   if(P.sp.독공&&P.scd.독공<=0&&P.qi>=SPEC.독공.qi&&e)return'독공';
-  if(P.sp.암기&&P.scd.암기<=0&&P.mats.비도>0&&e)return'암기';
-  return null}
-function specMsg(){return P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
+  return null}   // 암기(비도)는 퀵슬롯 칸이 따로 있어 여기서는 고르지 않는다
+function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
 function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)return null;if(a&&b)return P.hp/P.maxHp<=P.qi/P.maxQi?'금창약':'소환단';return a?'금창약':'소환단'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기'};
@@ -2774,14 +2788,16 @@ function touchHud(){
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
   {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
-  const hasSp=P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
+  const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
   $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
-  const pk=potPick()||'금창약';$('t_pot').querySelector('span').textContent=pk==='금창약'?'금창약':'소환단';$('t_pot').querySelector('em').textContent=P.mats[pk]||0;$('t_pot').classList.toggle('off',!potPick());
+  // 퀵슬롯: 금창약·소환단은 수량, 비도는 암기를 익혔을 때만 (수량·식는 시간)
+  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('off',!(P.mats[k]>0))}
+  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
   {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
-    $('t_run').classList.toggle('on',!!P.run);$('t_run').textContent=P.run?'질주 중':'질주';
+    $('t_run').classList.toggle('on',!!P.run);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
-    const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').textContent=P.medit?'운기 중':'운기';$('t_med').classList.toggle('on',!!P.medit)}}
+    const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;

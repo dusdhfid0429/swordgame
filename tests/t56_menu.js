@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`빠른 버튼 처음: 질주 보임, 승마 숨김(${q0.ride}), 운기 숨김(${q0.med})`,!q0.run&&q0.ride&&q0.med);
   await p.tap('#t_run');await p.waitForTimeout(200);
   const q1=await p.evaluate(()=>{ctxT=0;touchHud();return{run:P.run,txt:$('t_run').textContent,on:$('t_run').classList.contains('on')}});
-  ok(`질주 버튼 → 질주 ${q1.run} '${q1.txt}'`,q1.run&&q1.txt==='질주 중'&&q1.on);
+  ok(`질주 버튼 → 질주 ${q1.run} '${q1.txt}'`,q1.run&&q1.txt==='질주'&&q1.on);
   await p.tap('#t_run');await p.waitForTimeout(100);
   const q2=await p.evaluate(()=>{const h=mkAlly('pet','말',P.x+.8,P.y);allies.push(h);P.qi=P.maxQi-20;ctxT=0;touchHud();return{ride:$('t_ride').hidden,rt:$('t_ride').textContent,med:$('t_med').hidden,ctx:$('t_ctx').hidden?'':$('t_ctx').textContent}});
   ok(`말 곁 + 내공 부족: 승마 '${q2.rt}' 보임, 운기 보임, 상황 버튼은 승마·운기가 아님('${q2.ctx}')`,!q2.ride&&q2.rt==='승마'&&!q2.med&&q2.ctx!=='승마'&&q2.ctx!=='운기');
@@ -27,7 +27,18 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.tap('#t_ride');await p.waitForTimeout(150);
   await p.tap('#t_med');await p.waitForTimeout(150);
   const q4=await p.evaluate(()=>{ctxT=0;touchHud();return{med:P.medit,txt:$('t_med').textContent,ride:!!P.ride}});
-  ok(`하마 뒤 운기 버튼 → 운기 ${q4.med} '${q4.txt}'`,!q4.ride&&q4.med&&q4.txt==='운기 중');
+  ok(`하마 뒤 운기 버튼 → 운기 ${q4.med} '${q4.txt}'`,!q4.ride&&q4.med&&q4.txt==='운기');
+  // 5. 퀵슬롯 (B안, 2026-10-13): 금창약·소환단 칸은 수량을 보이고 누르면 쓴다. 비도 칸은 암기를 익혀야 보인다
+  const s1=await p.evaluate(()=>{P.medit=false;P.mats.금창약=2;P.mats.소환단=0;P.sp.암기=0;P.hp=P.maxHp-30;touchHud();return{gc:$('ts_gc').querySelector('em').textContent,gcOff:$('ts_gc').classList.contains('off'),shOff:$('ts_sh').classList.contains('off'),bd:$('ts_bd').hidden,pot:!!$('t_pot')}});
+  ok(`퀵슬롯: 금창약 ${s1.gc}(off ${s1.gcOff}), 소환단 없음 off ${s1.shOff}, 비도 숨김 ${s1.bd}, 옛 약 버튼 없음 ${!s1.pot}`,s1.gc==='2'&&!s1.gcOff&&s1.shOff&&s1.bd&&!s1.pot);
+  await p.tap('#ts_gc');await p.waitForTimeout(150);
+  const s2=await p.evaluate(()=>{P.sp.암기=1;P.mats.비도=3;touchHud();return{gc:P.mats.금창약,bd:$('ts_bd').hidden,bdn:$('ts_bd').querySelector('em').textContent}});
+  ok(`금창약 칸 누름 → 남은 금창약 ${s2.gc}, 암기 익히면 비도 칸 보임(${s2.bdn}자루)`,s2.gc===1&&!s2.bd&&s2.bdn==='3');
+  // 6. 자리: 공격 부채꼴·토글 열·퀵슬롯이 서로 겹치지 않는다 (세로 화면)
+  const ov=await p.evaluate(()=>{const ids=['t_atk','t_ult','t_leap','t_step','t_spec','t_ctx','t_run','t_med','t_ride','ts_gc','ts_sh','ts_bd'].filter(i=>!$(i).hidden);const R=ids.map(i=>[i,$(i).getBoundingClientRect()]);const bad=[];
+    for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){const a=R[i][1],b=R[j][1];if(a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)bad.push(R[i][0]+'×'+R[j][0])}
+    const w=innerWidth,h=innerHeight;for(const[i,r]of R)if(r.left<0||r.right>w||r.top<0||r.bottom>h)bad.push(i+' 화면 밖');return{n:ids.length,bad}});
+  ok(`HUD 단추 ${ov.n}개 서로 안 겹치고 화면 안 (${ov.bad.join(', ')||'문제 없음'})`,!ov.bad.length);
   ok('오류 없음: '+errs.join(' | ').slice(0,200),errs.length===0);
   await b.close();
 })();

@@ -1,5 +1,6 @@
 // ================= 터치 조작 (모바일) =================
-// 왼쪽 아래를 끌면 이동, 오른쪽 아래 버튼 여섯 개로 싸우고, ☰ 하나에 창을 모두 모았다.
+// 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
+// 켜고 끄는 것(질주·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
 var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
 const TUI=document.createElement('div');TUI.id='tui';
@@ -11,13 +12,17 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
     <button type="button" class="tb" id="t_leap"><span>경공</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_step"><span>보법</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_spec"><span>비기</span><i class="cd"></i></button>
-    <button type="button" class="tb" id="t_pot"><span>약</span><em></em></button>
     <button type="button" class="tb ctx" id="t_ctx"><span></span></button>
   </div>
   <div id="tquick">
     <button type="button" class="tq" id="t_run">질주</button>
-    <button type="button" class="tq" id="t_ride" hidden>승마</button>
     <button type="button" class="tq" id="t_med" hidden>운기</button>
+    <button type="button" class="tq" id="t_ride" hidden>승마</button>
+  </div>
+  <div id="tslots">
+    <button type="button" class="ts" id="ts_gc"><span>금창약</span><em></em></button>
+    <button type="button" class="ts" id="ts_sh"><span>소환단</span><em></em></button>
+    <button type="button" class="ts" id="ts_bd" hidden><span>비도</span><em></em><i class="cd"></i></button>
   </div>`;
 $('stage').insertBefore(TUI,$('win'));
 const statusEl=document.querySelector('.status'),panelEl=document.querySelector('.panel');
@@ -50,7 +55,9 @@ hold('t_ult',()=>ultimate());
 hold('t_leap',()=>leap());
 hold('t_step',()=>bobeop());
 hold('t_spec',()=>{const k=specPick();if(k==='신공')shingong();else if(k)special(k);else log(specMsg(),'info')});
-hold('t_pot',()=>{const k=potPick();if(k)useCon(k);else log('금창약도 소환단도 없습니다.','info')});
+hold('ts_gc',()=>{if(P.mats.금창약>0)useCon('금창약');else log('금창약이 없습니다. 약방에서 사거나 만드세요.','info')});
+hold('ts_sh',()=>{if(P.mats.소환단>0)useCon('소환단');else log('소환단이 없습니다. 약방에서 사거나 만드세요.','info')});
+hold('ts_bd',()=>special('암기'));
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
 // 빠른 버튼 (사용자 요청 2026-10-13 "질주·탈것 등은 HUD 버튼으로"): 질주 켜고 끄기, 말 타고 내리기(말이 곁에 있거나 탔을 때만), 운기조식(싸움 중이 아닐 때만)
 hold('t_run',()=>toggleRun());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
@@ -62,9 +69,8 @@ function specPick(){
   const e=P.target&&P.target.hp>0?P.target:nearest(7);
   if(P.sp.점혈&&P.scd.점혈<=0&&P.qi>=SPEC.점혈.qi&&e&&dist(e,P)<2.6)return'점혈';
   if(P.sp.독공&&P.scd.독공<=0&&P.qi>=SPEC.독공.qi&&e)return'독공';
-  if(P.sp.암기&&P.scd.암기<=0&&P.mats.비도>0&&e)return'암기';
-  return null}
-function specMsg(){return P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
+  return null}   // 암기(비도)는 퀵슬롯 칸이 따로 있어 여기서는 고르지 않는다
+function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
 function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)return null;if(a&&b)return P.hp/P.maxHp<=P.qi/P.maxQi?'금창약':'소환단';return a?'금창약':'소환단'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기'};
@@ -84,14 +90,16 @@ function touchHud(){
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
   {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
-  const hasSp=P.sg.name||P.sp.암기||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
+  const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
   $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
-  const pk=potPick()||'금창약';$('t_pot').querySelector('span').textContent=pk==='금창약'?'금창약':'소환단';$('t_pot').querySelector('em').textContent=P.mats[pk]||0;$('t_pot').classList.toggle('off',!potPick());
+  // 퀵슬롯: 금창약·소환단은 수량, 비도는 암기를 익혔을 때만 (수량·식는 시간)
+  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('off',!(P.mats[k]>0))}
+  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
   {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
-    $('t_run').classList.toggle('on',!!P.run);$('t_run').textContent=P.run?'질주 중':'질주';
+    $('t_run').classList.toggle('on',!!P.run);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
-    const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').textContent=P.medit?'운기 중':'운기';$('t_med').classList.toggle('on',!!P.medit)}}
+    const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
