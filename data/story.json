@@ -37,9 +37,6 @@
     "정관": 20
    }
   },
-  "DRIFT": {
-   "마": 2
-  },
   "RULES": {
    "gunJoin": 30,
    "gunPunish": 70,
@@ -729,6 +726,44 @@
      }
     ]
    }
-  ]
+  ],
+  "POP": {
+   "base": {
+    "big": 300,
+    "mid": 150,
+    "small": 60,
+    "one": 400,
+    "geumgun": 200
+   },
+   "grow": 0.03,
+   "growHi": 0.01,
+   "growMagyo": 0.06,
+   "max": 2.5,
+   "sealMul": 1.5,
+   "kill": 1,
+   "npcKill": 0.2,
+   "roundLoss": 0.08,
+   "warLoss": 0.1,
+   "live": [
+    [
+     0.5,
+     1
+    ],
+    [
+     0.27,
+     0.75
+    ],
+    [
+     0.1,
+     0.5
+    ],
+    [
+     0.0001,
+     0.25
+    ]
+   ],
+   "initFill": 0.6,
+   "reinSec": 5
+  }
  }
 }

@@ -6,10 +6,10 @@
 const STORY=GD.STORY,SEV=STORY.EV,ST=STORY.T;
 const FAC4=['정','사','마','관'],FAC4N={정:'정파',사:'사파',마:'마교',관:'관군'};
 const clone=o=>JSON.parse(JSON.stringify(o));
-const wld=()=>{if(!G.W)G.W=clone(STORY.INIT);if(!G.seal)G.seal={};if(!G.occ)G.occ={};if(!G.wars)G.wars=[];return G.W};
+const wld=()=>{if(!G.W){G.W=clone(STORY.INIT);if(typeof popSync==='function')popSync()}if(!G.seal)G.seal={};if(!G.occ)G.occ={};if(!G.wars)G.wars=[];return G.W};
 const PS=()=>{if(!P.story)P.story={pick:{},open:null,done:{},flag:{}};return P.story};
 const wClamp=()=>{const w=wld();for(const k in w.pow)w.pow[k]=clamp(Math.round(w.pow[k]*10)/10,0,100);for(const k in w.rel)w.rel[k]=clamp(Math.round(w.rel[k]*10)/10,-100,100)};
-function powAdd(f,v){const w=wld();if(w.pow[f]==null)return;w.pow[f]+=v;wClamp()}
+function powAdd(f,v){const w=wld();if(w.pow[f]==null)return;if(typeof popScale==='function'){popScale(f,1+v/Math.max(10,w.pow[f]));return}w.pow[f]+=v;wClamp()}
 function relAdd(k,v){const w=wld();if(w.rel[k]==null)return;w.rel[k]+=v;wClamp()}
 // 플레이어 편의 세력 (문파 없으면 타고난 성향). 관군은 금군 제자
 const myFac=()=>pfac();
@@ -76,10 +76,8 @@ hook('tick',()=>{if(!P||!playing)return;wld();const s=PS();
   if(!G.war&&!s.flag.warDone&&P.age>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
 });
 // ---- 해마다: 마교는 저절로 세를 불린다. 지난 대전의 패자는 서서히 힘을 되찾는다 ----
-hook('newYear',()=>{const w=wld();for(const k in STORY.DRIFT)powAdd(k,STORY.DRIFT[k]);
-  const last=G.wars[G.wars.length-1];if(last&&last.lost)for(const f of last.lost)powAdd(f,STORY.WIN.loserDrift)});
+hook('newYear',()=>{const last=G.wars[G.wars.length-1];if(last&&last.lost)for(const f of last.lost)powAdd(f,STORY.WIN.loserDrift)});
 // ---- 처치와 임무가 세력의 힘을 움직인다 ----
-hook('kill',e=>{const f=e.d&&e.d.fac;if(!f)return;powAdd(f,e.d.elite?-1:-.3)});
 hook('questDone',q=>{if(q.sect&&SECTS[q.sect])powAdd(alFac(SECTS[q.sect].al),1);else if(q.maeng&&typeof MAENG!=='undefined')powAdd(alFac(q.maeng),1.5)});
 // ---- 죽음: 이번 생의 선택과 대전을 강호사에 남긴다. 세상 상태(G.W 등)는 그대로 다음 생으로 ----
 hook('died',entry=>{const s=PS();if(warOn())warEnd(true);const last=G.wars[G.wars.length-1];entry.story={pick:{...s.pick},war:last&&last.life===P.lifeNo?last.n:null,me:last&&last.life===P.lifeNo?last.me:null};G.war=null});
@@ -99,7 +97,7 @@ function evCard(e){const s=PS(),st=evState(e),pk=s.pick[e.id],past=pastPicks(e);
     <div class="list">${e.ch.map((c,i)=>{const ok=condOk(c.req);return `<div class="it"><div>${c.n}${c.req?` <small class="${ok?'good':'bad'}">${condTxt(c.req)}</small>`:''}<span>${c.d}${c.quest?` <small class="dim">임무: ${c.quest.mob.join('·')} ${c.quest.cnt}</small>`:''}</span></div><div class="ib">${B('spick:'+e.id+':'+i,'고르기',{pri:ok,d:!ok})}</div></div>`}).join('')}</div>
     ${past.length?`<p class="note">전생의 흔적: ${past.join(' · ')}</p>`:'<p class="note">마지막 선택은 고르지 않아도 다음 사건이 오면 저절로 흘러간다.</p>'}</div>`}
 function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.lifeNo;
-  const pow=FAC4.map(f=>`<p style="margin:6px 0 2px">${FAC4N[f]} <b class="num" style="color:${FACC[f]}">${Math.round(w.pow[f])}</b> <small class="dim">${f==='마'?'해마다 저절로 +'+STORY.DRIFT.마:f==='관'?`정관 관계 ${w.rel.정관} (${STORY.RULES.gunJoin} 이상이면 정파 편, 힘 ${STORY.RULES.gunPunish} 이상이면 무림 토벌)`:f==='정'?'정의맹':'사천맹'}</small></p>${sBar(w.pow[f],FACC[f])}`).join('');
+  const pow=FAC4.map(f=>`<p style="margin:6px 0 2px">${FAC4N[f]} <b class="num" style="color:${FACC[f]}">${Math.round(w.pow[f])}</b> <small class="dim">${f==='마'?'천마신교 · 인원이 빨리 는다':f==='관'?`정관 관계 ${w.rel.정관} (${STORY.RULES.gunJoin} 이상이면 정파 편, 힘 ${STORY.RULES.gunPunish} 이상이면 무림 토벌)`:f==='정'?'정의맹':'사천맹'}</small></p>${sBar(w.pow[f],FACC[f])}`).join('');
   const rel=Object.keys(w.rel).map(k=>`${k} <b class="num ${w.rel[k]>=20?'good':w.rel[k]<=-20?'bad':''}">${w.rel[k]>0?'+':''}${Math.round(w.rel[k])}</b>`).join(' · ');
   const seal=Object.keys(G.seal).filter(id=>SECTS[id]).map(id=>SECTS[id].n),occ=Object.keys(G.occ).filter(id=>SECTS[id]).map(id=>`${SECTS[id].n}(${FAC4N[G.occ[id].by]||G.occ[id].by})`);
   const wars=G.wars.slice(-3).reverse().map(x=>`제${x.life}생 ${x.n}${x.won?` · ${sideName(x.won)} 승`:''}`);
@@ -109,7 +107,7 @@ function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.
     <div class="card"><h4>세력의 힘</h4>${pow}<p>관계 ${rel} <small class="dim">(+20 이상이면 손을 잡고, -20 아래면 등을 돌린다)</small></p>
     ${seal.length?`<p>봉문 <b class="bad">${seal.join(' · ')}</b> <small class="dim">제자를 받지 않는다</small></p>`:''}${occ.length?`<p>점령 ${occ.join(' · ')}</p>`:''}${wars.length?`<p class="note">지난 대전: ${wars.join(' · ')}</p>`:''}</div>
     ${SEV.map(evCard).join('')}
-    <p class="note">세력의 힘은 사건의 선택, 문파·맹 임무(+1), 세력 무인 처치(고수 -1, 무인 -0.3)로 움직인다. 구도 규칙: 정사 +20 이상이고 마교 ${STORY.WAR[0].cond[1].split('>=')[1]} 이상이면 정사연합, 사마 +20 이상이고 정사 -20 이하면 사마연합, 정사 -40 이하이고 사파 60 이상이면 정마밀약, 아니면 삼파전.</p>`}
+    <p class="note">세력의 힘은 그 세력 문파들의 인원과 경지에서 나온다(아래 문파 인원). 사건의 선택, 문파·맹 임무, 세력 무인의 죽음이 인원을 움직인다. 구도 규칙: 정사 +20 이상이고 마교 ${STORY.WAR[0].cond[1].split('>=')[1]} 이상이면 정사연합, 사마 +20 이상이고 정사 -20 이하면 사마연합, 정사 -40 이하이고 사파 60 이상이면 정마밀약, 아니면 삼파전.</p>`}
 hook('sectAct',c=>{if(c.a!=='spick')return;c.done=true;c.r=true;const e=evOf(c.x);if(e)pickChoice(e,+c.y,false)});
 {const pc=pChar;pChar=function(){return pc()+storyCard()}}
 
@@ -146,7 +144,7 @@ hook('questDone',q=>{if(!q.war||!warOn())return;G.war.cur.done=true;G.war.cur.q=
 // 한 차례의 승패를 가린다
 function warTally(){const w=G.war,me=mySide();const sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+Math.random()*15);
   let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0?(w.cur&&w.cur.done?'공':'무'):'-'});
-  const wn=w.plan.sides[best];for(const f of wn)powAdd(f,2);w.plan.sides.forEach((s,i)=>{if(i!==best)for(const f of s)powAdd(f,-2)});
+  const wn=w.plan.sides[best];for(const f of wn)powAdd(f,2);popWarLoss(w.plan.sides.filter((s,i)=>i!==best).flat(),STORY.POP.roundLoss);
   log(`제${w.round}차 결전: ${sideName(wn)}이(가) 이겼다${me===best?' (내 편)':me>=0?' (내 편이 밀렸다)':''}.`,best===me?'xp':'dmg');
   for(const q of P.quests.slice())if(q.war&&q.war===w.round&&!(w.cur&&w.cur.done))P.quests.splice(P.quests.indexOf(q),1);
   mobs=mobs.filter(m=>!m.raid||m.hp<=0)}
@@ -159,14 +157,14 @@ function warEnd(silent){const w=G.war;if(!w)return;const n=w.plan.sides.length;
   const wins=w.plan.sides.map((s,i)=>w.rounds.filter(r=>r.win===i).length);let best=0;wins.forEach((v,i)=>{if(v>wins[best]||(v===wins[best]&&sidePow(w.plan.sides[i])>sidePow(w.plan.sides[best])))best=i});
   const won=n>=2?w.plan.sides[best]:null,lost=won?w.plan.sides.filter((s,i)=>i!==best).flat():[],me=mySide();
   const rec={life:P.lifeNo,y:w.y,n:w.plan.n,won,lost,sides:w.plan.sides,rounds:w.rounds.map(r=>r.win),me:won?(me===best?'승':me>=0?'패':'-'):'-'};
-  if(won){for(const f of won)powAdd(f,10);for(const f of lost)powAdd(f,-15);
+  if(won){for(const f of won)powAdd(f,10);popWarLoss(lost,STORY.POP.warLoss);
     const wl=wld();for(const k in wl.rel){const[a,b]=[k[0],k[1]];if(won.includes(a)&&won.includes(b))relAdd(k,10);else if((won.includes(a)&&lost.includes(b))||(won.includes(b)&&lost.includes(a)))relAdd(k,-15)}
     rec.occ=applyWin(won,lost,me===best?myFac():won[0]);
     showBanner('천하대전 끝',`${sideName(won)}의 천하`);log(`천하대전이 끝났다. ${sideName(won)}이(가) 천하를 쥐었다.${rec.me==='승'?' 당신은 이긴 편에 섰다: 명성 +50, 은자 +300.':rec.me==='패'?' 당신의 편은 졌다. 명성 +10.':''}`,rec.me==='패'?'dmg':'xp');
     if(rec.me==='승'){P.fame+=50;P.silver+=300}else if(rec.me==='패')P.fame+=10;P.feats.push(`${Math.floor(P.age)}세 천하대전: ${sideName(won)}의 승리${rec.me!=='-'?' ('+rec.me+')':''}`)}
   G.wars.push(rec);G.war=null;PS().flag.warDone=true;if(!silent)renderOpen()}
 // 승자의 힘: 점령 WIN.occ곳 + 봉문 (대문파 WIN.seal.big곳, 사파가 이기면 소문파 WIN.seal.small곳)
-function applyWin(won,lost,by){const cand=t=>Object.values(SECTS).filter(s=>lost.includes(alFac(s.al))&&(t==='big'?s.tier==='big':s.tier!=='big'&&s.tier!=='one')&&!G.seal[s.id]&&!G.occ[s.id]&&s.id!=='geumgun');
+function applyWin(won,lost,by){const cand=t=>Object.values(SECTS).filter(s=>lost.includes(alFac(s.al))&&(t==='big'?s.tier==='big':s.tier==='small')&&!G.seal[s.id]&&!G.occ[s.id]&&s.id!=='geumgun');
   const take=(list,n)=>{const out=[];const byFac={};for(let i=0;i<n&&list.length;i++){list.sort((a,b)=>(byFac[alFac(a.al)]||0)-(byFac[alFac(b.al)]||0)||Math.random()-.5);const s=list.shift();byFac[alFac(s.al)]=(byFac[alFac(s.al)]||0)+1;out.push(s)}return out};
   const occ=take(cand('big'),STORY.WIN.occ),y=Math.floor(G.cal);for(const s of occ)G.occ[s.id]={by,y,life:P.lifeNo};
   const sacheon=won[0]==='사',seal=take(cand(sacheon?'small':'big'),sacheon?STORY.WIN.seal.small:STORY.WIN.seal.big);for(const s of seal)G.seal[s.id]={by,y,life:P.lifeNo};
