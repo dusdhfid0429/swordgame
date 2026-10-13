@@ -581,11 +581,11 @@ function sectDetail(s,hq){
     return `<div class="it"><div style="color:rgb(${A2.c})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   const mis=same?sectMissions(s).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
-    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${q.mob.join('·')} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 공적 ${q.merit} · 은자 ${q.silver}</span></div>
+    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 공적 ${q.merit} · 은자 ${q.silver}</span></div>
       <div class="ib">${on?B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done}):B('stake:'+s.id+':'+qi,'맡기',{d:P.quests.length>=4})}</div></div>`}).join(''):'';
   // 지난해에 맡아 아직 들고 있는 임무도 보고할 수 있다 (해가 바뀌어도 임무는 사라지지 않는다)
   const cur=same?sectMissions(s).map(q=>q.key):[],old=same?P.quests.map((q,i)=>[q,i]).filter(([q])=>q.sect===s.id&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
-    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${on.mob.join('·')} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join(''):'';
+    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join(''):'';
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
@@ -1894,8 +1894,8 @@ function pNpcBase(n){
       <p class="note">혼인하면 가족 유대로 활력을 10% 더 얻고, 해마다 자식이 생길 수 있다. 자식은 다음 생으로 이어 살 몸이 된다.</p>
       <div class="row2"><span class="note">${P.age<18?'아직 어리다':''}</span>${B('marry','혼례 올리기 · 은자 200',{pri:1,d:!ok})}</div>`}
   if(n.id==='board'){
-    const act=P.quests.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${q.mob.join('·')} 처치 ${q.have}/${q.cnt}`:`${q.mat} ${P.mats[q.mat]||0}/${q.cnt} 납품`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame}</span></div><div class="ib">${B('qdone:'+i,'보상 받기',{pri:1,d:q.kind==='kill'?q.have<q.cnt:(P.mats[q.mat]||0)<q.cnt})}${B('qdrop:'+i,'포기')}</div></div>`).join('');
-    const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${q.mob.join('·')} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
+    const act=P.quests.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} 처치 ${q.have}/${q.cnt}`:`${q.mat} ${P.mats[q.mat]||0}/${q.cnt} 납품`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame}</span></div><div class="ib">${B('qdone:'+i,'보상 받기',{pri:1,d:q.kind==='kill'?q.have<q.cnt:(P.mats[q.mat]||0)<q.cnt})}${B('qdrop:'+i,'포기')}</div></div>`).join('');
+    const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
     return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><h4 style="margin:0">맡은 의뢰</h4><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
   if(n.id==='arena'){const o=DUELISTS[P.duel];
     return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 내공 ${o.el}속성 · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
@@ -4059,6 +4059,18 @@ for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;
     const lr={...L,x:c.x,y:c.y};R.lairs.push(lr);R.bosses.push([L.boss[0],c.x,c.y+1,L.boss[1]]);
     for(const[kind,cap]of L.sp)R.spawns.push([kind,cap,(x,y)=>Math.hypot(x+.5-c.x,y+.5-c.y)<6.5&&Math.hypot(x+.5-c.x,y+.5-c.y)>1.5])}
   const z=R.zone;R.zone=(x,y)=>{const l=R.lairs.find(q=>Math.hypot(q.x-x,q.y-y)<7);return l?`${R.name} · ${l.n}`:z(x,y)}}
+// 사냥 임무의 적이 어디에 나오는지 (사용자 질문 2026-10-13 "혈교가 있어?": 혈교 동굴은 하남성 남동부 맵의 소굴이라 임무 글만 봐서는 찾기 어려웠다)
+// 모든 지역의 spawns·bosses에서 그 종류를 찾아 지역 이름 두 곳까지. 문파 본산 안쪽 맵보다 들판·소굴을 먼저.
+const MOB_WHERE={};
+function mobWhere(kind){if(MOB_WHERE[kind]!==undefined)return MOB_WHERE[kind];const names=[],hq=[];
+  for(const[id,R]of Object.entries(REGIONS)){if(typeof isPvFull==='function'&&isPvFull(id))continue;   // 성 전체(조각 내기 전)는 사람이 가는 맵이 아니다
+    // 조각 맵은 성 전체의 spawns를 그대로 물려받으므로, 이 맵 안에서 실제로 나올 자리가 있는지 띄엄띄엄 재 본다
+    const S=R.size||40,H=R.h||S,sp=(R.spawns||[]).filter(s=>s[0]===kind),at=t=>{for(let y=1;y<H-1;y+=2)for(let x=1;x<S-1;x+=2){try{if(t(x,y))return{x,y}}catch(e){return{x,y}}}return null};
+    let hit=null;for(const s of sp){hit=at(s[2]);if(hit)break}const boss=(R.bosses||[]).find(b=>b[0]===kind);if(!hit&&!boss)continue;
+    const w=R.win,F=w?REGIONS[pvId(w.k)]:R,px=hit?hit.x+.5:boss[1],py=hit?hit.y+.5:boss[2],fx=px+(w?w.c*PV_W:0),fy=py+(w?w.r*PV_W:0);
+    const lair=(F.lairs||[]).find(l=>Math.hypot(l.x-fx,l.y-fy)<7.5),n=R.name+(lair?' '+lair.n:'');(id.startsWith('hq_')||id.startsWith('in_')?hq:names).push(n)}
+  const all=[...new Set(names.concat(hq))];return MOB_WHERE[kind]=all.length?all.slice(0,2).join('·')+(all.length>2?' 등':''):''}
+const mobTxt=list=>{const w=[...new Set(list.map(mobWhere).filter(Boolean))];return list.join('·')+(w.length?` <small class="dim">(${w.join(' / ')})</small>`:'')};
 // 무림전도의 도시·명소·산·지형 자리 (g_landmark.js). 출입구·소굴이 정해진 뒤에 놓는다
 for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)];R.marks=lmPlace(k,R.size,R)}
 // 지역마다 격자 크기(N 가로, NH 세로)를 정하고 만든다. 테스트에서 gen()을 바로 불러도 크기가 맞도록 모든 지역에 씌운다.
@@ -4867,10 +4879,10 @@ function maengSeatsHtml(al){const M=MAENG[al],mine=mySectIn(al);
 function maengMisHtml(al){const M=MAENG[al];if(P.side!==ALLY[al].side)return '';
   const can=maengOf()===al;
   const mis=maengMissions(al).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
-    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${q.mob.join('·')} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 맹 공적 ${q.merit} · 은자 ${q.silver}</span></div>
+    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 맹 공적 ${q.merit} · 은자 ${q.silver}</span></div>
       <div class="ib">${on?B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done}):B('mtake:'+al+':'+qi,'맡기',{d:!can||P.quests.length>=4,t:can?'':'맹 소속이어야 맡는다'})}</div></div>`}).join('');
   const cur=maengMissions(al).map(q=>q.key),old=P.quests.map((q,i)=>[q,i]).filter(([q])=>q.maeng===al&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
-    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${on.mob.join('·')} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 맹 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join('');
+    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 맹 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join('');
   return `<h4 style="margin:0">${M.short} 임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}${old}</div>`}
 function maengJoinHtml(al){const M=MAENG[al],jb=maengJoinBlock(al);
   if(P.side!==ALLY[al].side)return '';
