@@ -1409,10 +1409,10 @@ function updateP(dt){
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
   a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=f.qi)r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
-// 자동초식: chain the learned forms in order, falling back to a plain strike
+// 자동초식: chain the learned forms in order, falling back to a plain strike.
+// 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){
   if(P.gcd>0)return;const a=art(),s=A(a.id),ch=P.chain,live=time-ch.t<1.7;
-  if(allLearned(a.id)&&live&&ch.n>=2&&P.ucd<=0&&P.qi>=60&&hasWeaponFor(a.cls)){ultimate();return}
   for(let i=0;i<a.forms.length;i++){if(live&&i<=ch.last)continue;if(s.f[i]&&formReady(i)&&dist(e,P)<engage(a.forms[i])+.2){useForm(i,true);return}}
   basicStrike(e);
 }
@@ -1797,7 +1797,7 @@ function pArts(){
     ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
-    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇고, <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
+    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇되 필살기는 쓰지 않고(직접 S·필살 버튼), <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
 }
 let shopMode=null;
 function pBag(){

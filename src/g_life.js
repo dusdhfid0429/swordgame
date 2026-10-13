@@ -70,10 +70,10 @@ function updateP(dt){
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
   a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=f.qi)r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
-// 자동초식: chain the learned forms in order, falling back to a plain strike
+// 자동초식: chain the learned forms in order, falling back to a plain strike.
+// 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){
   if(P.gcd>0)return;const a=art(),s=A(a.id),ch=P.chain,live=time-ch.t<1.7;
-  if(allLearned(a.id)&&live&&ch.n>=2&&P.ucd<=0&&P.qi>=60&&hasWeaponFor(a.cls)){ultimate();return}
   for(let i=0;i<a.forms.length;i++){if(live&&i<=ch.last)continue;if(s.f[i]&&formReady(i)&&dist(e,P)<engage(a.forms[i])+.2){useForm(i,true);return}}
   basicStrike(e);
 }

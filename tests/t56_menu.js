@@ -39,6 +39,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){const a=R[i][1],b=R[j][1];if(a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)bad.push(R[i][0]+'×'+R[j][0])}
     const w=innerWidth,h=innerHeight;for(const[i,r]of R)if(r.left<0||r.right>w||r.top<0||r.bottom>h)bad.push(i+' 화면 밖');return{n:ids.length,bad}});
   ok(`HUD 단추 ${ov.n}개 서로 안 겹치고 화면 안 (${ov.bad.join(', ')||'문제 없음'})`,!ov.bad.length);
+  // 7. 자동초식은 필살기를 안 쓴다 (2026-10-13): 모든 초식을 익히고 연속기를 2번 이은 뒤 autoAttack을 불러도 ucd가 0
+  const au=await p.evaluate(()=>{const a=art(),s=A(a.id);s.f=s.f.map(()=>true);s.p=100;P.qi=P.maxQi;P.ucd=0;P.gcd=0;P.chain={t:time,n:3,last:-1};const e=mkMob('늑대',P.x+.6,P.y);mobs.push(e);P.target=e;const cut=[];for(let i=0;i<a.forms.length;i++)P.fcd[i]=9;autoAttack(e);const r={ucd:P.ucd,all:allLearned(a.id)};mobs=[];P.target=null;for(let i=0;i<a.forms.length;i++)P.fcd[i]=0;return r});
+  ok(`자동초식: 초식 다 익힘 ${au.all}, 연속기 중 autoAttack 뒤 필살 안 씀 (ucd ${au.ucd})`,au.all&&au.ucd===0);
   ok('오류 없음: '+errs.join(' | ').slice(0,200),errs.length===0);
   await b.close();
 })();
