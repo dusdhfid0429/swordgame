@@ -163,6 +163,9 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 #joy.on{opacity:1}
 #joyk{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6b5636,#2a2015);border:1px solid var(--bronze-hi)}
 #tbtns{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));width:236px;height:236px;pointer-events:none}
+#tquick{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(258px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;justify-content:flex-end;pointer-events:none}
+.tq{pointer-events:auto;min-width:54px;height:32px;padding:0 10px;border-radius:16px;border:1px solid var(--bronze-hi);background:#120e0add;color:var(--paper);font:13px var(--display);touch-action:none}
+.tq.on{background:#3a3024ee;box-shadow:0 0 0 1px var(--exp);color:#ffe9a8}.tq.press{filter:brightness(1.5)}
 .tb{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid var(--bronze-hi);background:radial-gradient(circle at 35% 30%,#3a3024ee,#120e0aee);color:var(--paper);font:13px var(--display);
   display:grid;place-items:center;overflow:hidden;padding:0;pointer-events:auto;touch-action:none;box-shadow:0 2px 8px #000a;word-break:keep-all;line-height:1.05}
 .tb span{position:relative;z-index:1;padding:0 4px}
@@ -188,6 +191,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 @media (max-height:520px){ /* phone held sideways */
   .touch #log{top:auto;bottom:10px;left:50%;transform:translateX(-50%);width:min(320px,38vw);height:48px;text-align:center}
   #tbtns{transform:scale(.82);transform-origin:100% 100%}
+  #tquick{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
   #joyz{height:60%}
 }
 /* ---- 앱인토스: 토스가 오른쪽 위에 ··· 와 X 를 띄우므로 그 줄을 비우고, 안전 영역을 지키고, 세로만 쓴다 ---- */
@@ -214,7 +218,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .tname{font-size:13px}.tname b{font-family:var(--display);font-weight:400;font-size:15px}.tname small{display:block;font-size:11px;color:var(--paper-dim)}
 .tbtn{position:relative;overflow:hidden;min-width:118px}.tbtn .tcd{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--exp)}
 .tbtn.busy{border-color:var(--exp);color:#f6e7b8}
-.trn-on #tbtns,.trn-on #joyz{display:none}
+.trn-on #tbtns,.trn-on #joyz,.trn-on #tquick{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 </style></head><body>
 <div id="app">
