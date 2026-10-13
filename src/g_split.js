@@ -48,16 +48,17 @@ hook('loadRegion',c=>{const id=c.id;
 hook('regionLoaded',id=>{if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}});
 function pvNearWalk(x,y){for(let d=0;d<8;d++)for(let j=-d;j<=d;j++)for(let i=-d;i<=d;i++){const a=Math.floor(x)+i,b=Math.floor(y)+j;if(walk(a,b))return{x:a+.5,y:b+.5}}return null}
 // 가장자리를 걸어 나가면 이웃 맵으로. 넘어가는 자리가 막혔으면 성 전체 그림에서 가까운 빈칸을 찾는다
-function pvEdgeTick(){
-  const R=REGION();if(!R||!R.edges||!P||P.hp<=0||P.traveling||P.leap||G.duel)return;
+function pvEdgeTick(dt){
+  const R=REGION();if(!R||!R.edges||!P||P.hp<=0||P.traveling||P.leap||G.duel||gateSeen)return;   // gateSeen: 이 틱에 출입구가 먼저 세고 있다 (가장자리에 놓인 성 출입구)
   const e=R.edges,m=.55,side=P.x<m?'w':P.x>N-m?'e':P.y<m?'n':P.y>NH-m?'s':null;if(!side||!e[side])return;
   const T=REGIONS[e[side]].win,F=pvFull(T.k),fx=T.c*PV_W,fy=T.r*PV_W;
   let tx=side==='w'?PV_W-1.1:side==='e'?1.1:P.x,ty=side==='n'?PV_W-1.1:side==='s'?1.1:P.y;
   const free=(a,b)=>a>=0&&b>=0&&a<PV_W&&b<PV_W&&F.map[b+fy][a+fx].g!==2&&!F.objs[b+fy][a+fx];
   if(!free(Math.floor(tx),Math.floor(ty))){let best=null;for(let d=1;d<6&&!best;d++)for(const s of[-d,d]){const a=side==='w'||side==='e'?Math.floor(tx):Math.floor(tx)+s,b=side==='n'||side==='s'?Math.floor(ty):Math.floor(ty)+s;if(free(a,b)){best={x:a+.5,y:b+.5};break}}
     if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,NH-m-.1);return}tx=best.x;ty=best.y}
+  if(!gateHold(dt,'e:'+side))return;   // 가장자리에도 GATE_HOLD초 머물러야 넘어간다 (g_region.js)
   P.path=null;P.target=null;travel({to:e[side],tx,ty,edge:1})}
-hook('gateDone',()=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()});
+hook('gateDone',dt=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick(dt)});
 // 이웃 맵이 있는 가장자리에 가까이 가면 경계에 빛줄과 이웃 맵 이름을 띄운다
 function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=(v,n=N)=>clamp(v,3,n-3);
   if(e.w&&P.x<near)out.push({x:.3,y:q(P.y,NH),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y,NH),dx:0,dy:1,to:e.e,ar:'→'});

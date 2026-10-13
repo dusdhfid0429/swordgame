@@ -1,6 +1,6 @@
 // ================= 터치 조작 (모바일) =================
 // 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
-// 켜고 끄는 것(질주·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
+// 켜고 끄는 것(질주·강제공격·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
 var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
 const TUI=document.createElement('div');TUI.id='tui';
@@ -16,6 +16,7 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
   </div>
   <div id="tquick">
     <button type="button" class="tq" id="t_run">질주</button>
+    <button type="button" class="tq" id="t_force">강제</button>
     <button type="button" class="tq" id="t_med" hidden>운기</button>
     <button type="button" class="tq" id="t_ride" hidden>승마</button>
   </div>
@@ -60,7 +61,7 @@ hold('ts_sh',()=>{if(P.mats.소환단>0)useCon('소환단');else log('소환단�
 hold('ts_bd',()=>special('암기'));
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
 // 빠른 버튼 (사용자 요청 2026-10-13 "질주·탈것 등은 HUD 버튼으로"): 질주 켜고 끄기, 말 타고 내리기(말이 곁에 있거나 탔을 때만), 운기조식(싸움 중이 아닐 때만)
-hold('t_run',()=>toggleRun());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
+hold('t_run',()=>toggleRun());hold('t_force',()=>toggleForce());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
 $('tmenu').addEventListener('click',()=>{if(playing)openPanel('menu')});
 // 비기: 지금 쓸 수 있는 특수무공·신공 중 하나를 알아서 고른다
 function sgReady(){return P.sg.name&&realmIdx()>=5&&P.fame>=200&&P.scd.신공<=0}
@@ -97,7 +98,7 @@ function touchHud(){
   {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
   {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
-    $('t_run').classList.toggle('on',!!P.run);
+    $('t_run').classList.toggle('on',!!P.run);$('t_force').classList.toggle('on',forceAtk);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
     const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }

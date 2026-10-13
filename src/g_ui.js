@@ -62,7 +62,7 @@ function hud(){
   $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
   $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
   questTrack();$('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
-  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);
+  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
   const ch=P.chain,live=time-ch.t<1.7;
   a.forms.forEach((f,i)=>{});
   for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');b.querySelector('.nm').textContent='';b.querySelector('em').textContent='';b.querySelector('.cd').style.height='0';b.title='';continue}
@@ -171,13 +171,15 @@ function pHelp(){
   <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
-  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   ${INTOSS?'':`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
   <p><b>경공</b> Space 도약(강·지붕·성벽도 넘는다), R 질주(내공 소모).</p>
+  <p><b>강제공격</b> T (HUD '강제' 단추). 켜면 같은 편과 양민도 공격 대상이 되고, 치면 배신이 되어 악업이 쌓인다.</p>
+  <p><b>맵 이동</b> 출입구나 맵 가장자리에 2초 머물면 넘어간다. 지나가거나 경공으로 날면 넘어가지 않는다.</p>
   <p><b>특수무공</b> 1 암기 · 2 독공 · 3 점혈. <b>절세신공</b> V.</p>
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
@@ -323,6 +325,7 @@ $('wx').addEventListener('click',closePanels);
 logEl.addEventListener('click',()=>{if(playing)openPanel('logs')});const sysEl=document.querySelector('.sysmsg');if(sysEl)sysEl.addEventListener('click',()=>{if(playing)openPanel('logs')});
 $('modeb').addEventListener('click',()=>{if(P)toggleMode()});
 $('runb').addEventListener('click',()=>{if(P)toggleRun()});
+$('forceb').addEventListener('click',()=>{if(P)toggleForce()});
 $('saveb').addEventListener('click',()=>{if(P&&playing)saveGame()});
 $('helpb').addEventListener('click',()=>{if(playing)openPanel('help');else{}});
 function toggleRun(){P.run=!P.run;if(P.run&&P.qi<5){P.run=false;log('내공이 부족합니다.','info')}}

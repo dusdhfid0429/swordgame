@@ -35,7 +35,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const s2=await p.evaluate(()=>{P.sp.암기=1;P.mats.비도=3;touchHud();return{gc:P.mats.금창약,bd:$('ts_bd').hidden,bdn:$('ts_bd').querySelector('em').textContent}});
   ok(`금창약 칸 누름 → 남은 금창약 ${s2.gc}, 암기 익히면 비도 칸 보임(${s2.bdn}자루)`,s2.gc===1&&!s2.bd&&s2.bdn==='3');
   // 6. 자리: 공격 부채꼴·토글 열·퀵슬롯이 서로 겹치지 않는다 (세로 화면)
-  const ov=await p.evaluate(()=>{const ids=['t_atk','t_ult','t_leap','t_step','t_spec','t_ctx','t_run','t_med','t_ride','ts_gc','ts_sh','ts_bd'].filter(i=>!$(i).hidden);const R=ids.map(i=>[i,$(i).getBoundingClientRect()]);const bad=[];
+  const ov=await p.evaluate(()=>{const ids=['t_atk','t_ult','t_leap','t_step','t_spec','t_ctx','t_run','t_force','t_med','t_ride','ts_gc','ts_sh','ts_bd'].filter(i=>!$(i).hidden);const R=ids.map(i=>[i,$(i).getBoundingClientRect()]);const bad=[];
     for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){const a=R[i][1],b=R[j][1];if(a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)bad.push(R[i][0]+'×'+R[j][0])}
     const w=innerWidth,h=innerHeight;for(const[i,r]of R)if(r.left<0||r.right>w||r.top<0||r.bottom>h)bad.push(i+' 화면 밖');return{n:ids.length,bad}});
   ok(`HUD 단추 ${ov.n}개 서로 안 겹치고 화면 안 (${ov.bad.join(', ')||'문제 없음'})`,!ov.bad.length);

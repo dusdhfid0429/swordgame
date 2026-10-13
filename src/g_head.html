@@ -163,7 +163,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 #joy.on{opacity:1}
 #joyk{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6b5636,#2a2015);border:1px solid var(--bronze-hi)}
 #tbtns{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:236px;height:240px;pointer-events:none}
-/* 켜고 끄는 것: 오른쪽 가장자리 세로 열 (아래부터 질주·운기·승마). 네모라서 공격 부채꼴의 둥근 단추와 구별된다 */
+/* 켜고 끄는 것: 오른쪽 가장자리 세로 열 (아래부터 질주·강제공격·운기·승마). 네모라서 공격 부채꼴의 둥근 단추와 구별된다 */
 #tquick{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(232px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none}
 .tq{pointer-events:auto;width:42px;height:42px;padding:0;border-radius:9px;border:1px solid var(--bronze-hi);background:#120e0add;color:var(--paper);font:12px var(--display);touch-action:none;line-height:1.1;word-break:keep-all}
 .tq.on{background:#3a3024ee;box-shadow:0 0 0 2px var(--exp);color:#ffe9a8}.tq.press{filter:brightness(1.5)}
@@ -234,7 +234,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
     <canvas id="game"></canvas>
     <canvas id="mini" width="150" height="84" aria-label="지도"></canvas>
     <div class="zone"><span id="zone">개봉 성내</span><small id="cal">봄 · 맑음</small>
-      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
+      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="forceb" type="button" title="T">강제</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
     <div class="chan" id="chan" hidden><span id="chant"></span><i id="chanb"></i></div>
     <div class="banner"><div id="banner"></div></div>
     <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><p class="wnote" id="wnote" hidden role="status"></p><div id="wbody" style="display:grid;gap:10px"></div></div>

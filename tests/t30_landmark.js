@@ -39,7 +39,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const h1=await p.evaluate(()=>({reg:REGION().name,zone:regionAt(Math.floor(P.x),Math.floor(P.y))}));
   await p.evaluate(()=>{const g=REGION().gates.find(q=>q.portal);P.x=g.x-1.5;P.y=g.y+1.5;const t=iso(P.x,P.y-2);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(900);
   const h2=await p.evaluate(()=>regionAt(Math.floor(P.x),Math.floor(P.y)));await p.screenshot({path:shot('lm_huashan')});
-  await p.evaluate(()=>{const g=REGION().gates.find(q=>q.portal);P.gateLock=0;P.x=g.x;P.y=g.y;gateTick()});await p.waitForTimeout(1200);
+  await p.evaluate(()=>{const g=REGION().gates.find(q=>q.portal);P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(9)});await p.waitForTimeout(1200);
   const h3=await p.evaluate(()=>REG);
   await p.evaluate(()=>{P.gateLock=0;travel(REGION().gates.find(g=>g.y>30))});await p.waitForTimeout(1200);
   const h4=await p.evaluate(()=>({name:REGION().name,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),walk:walkAt(P.x,P.y)}));
