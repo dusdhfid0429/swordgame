@@ -151,6 +151,7 @@ const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
   const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
   for(const[k,cap,test,mk]of REGION().spawns||SPAWNS){const n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;
+    if(typeof facSpawn==='function'&&facSpawn(k,cap,test,mk,n))continue;   // 세력 무인: 60%만 먼저 세우고, 죽으면 출입구에서 충원 (g_pop.js)
     for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
       y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
       if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}

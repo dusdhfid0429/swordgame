@@ -52,6 +52,7 @@ function joinBlock(s){
   const al=ALLY[s.al];
   if(P.side!==al.side)return `${SIDES[al.side].n}만 받는다.`;
   if(G.seal&&G.seal[s.id])return `${s.n}은(는) 봉문 중이라 제자를 받지 않는다.`;
+  if(typeof sectPop==='function'&&sectPop(s.id)<=0)return `${s.n}은(는) 멸문해 폐허만 남았다.`;
   if(G.occ&&G.occ[s.id])return `${s.n} 본산은 점령당해 ${masterTitle(s)}이 없다. 먼저 되찾아야 한다.`;
   if(P.sect===s.id)return '이미 이 문파의 제자다.';
   if(P.sect&&P.sect!=='own'&&SECTS[P.sect])return `이미 ${SECTS[P.sect].n}의 제자다. 먼저 하산(탈퇴)해야 한다.`;
