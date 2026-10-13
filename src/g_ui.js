@@ -90,7 +90,7 @@ let panelAt=0;
 function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
-function renderOpen(){if(!panel||$('win').hidden)return;const f={char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs}[panel];
+function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
@@ -181,7 +181,7 @@ function pHelp(){
   <p><b>특수무공</b> 1 암기 · 2 독공 · 3 점혈. <b>절세신공</b> V.</p>
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
-  <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사 · J 임무(왼쪽 '맡은 임무' 글을 눌러도 된다). 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 13세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
   <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
@@ -234,7 +234,7 @@ function pNpcBase(n){
   if(n.id==='board'){
     const act=P.quests.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} 처치 ${q.have}/${q.cnt}`:`${q.mat} ${P.mats[q.mat]||0}/${q.cnt} 납품`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame}</span></div><div class="ib">${B('qdone:'+i,'보상 받기',{pri:1,d:q.kind==='kill'?q.have<q.cnt:(P.mats[q.mat]||0)<q.cnt})}${B('qdrop:'+i,'포기')}</div></div>`).join('');
     const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
-    return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><h4 style="margin:0">맡은 의뢰</h4><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
+    return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><div class="row2"><h4 style="margin:0">맡은 의뢰</h4>${B('open:quest','임무창 · 상세')}</div><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
   if(n.id==='arena'){const o=DUELISTS[P.duel];
     return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 내공 ${o.el}속성 · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
       <p class="note">${P.duel}/${DUELISTS.length} 꺾음</p>`}

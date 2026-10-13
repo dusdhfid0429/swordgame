@@ -54,7 +54,7 @@ function maengMisHtml(al){const M=MAENG[al];if(P.side!==ALLY[al].side)return '';
       <div class="ib">${on?B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done}):B('mtake:'+al+':'+qi,'맡기',{d:!can||P.quests.length>=4,t:can?'':'맹 소속이어야 맡는다'})}</div></div>`}).join('');
   const cur=maengMissions(al).map(q=>q.key),old=P.quests.map((q,i)=>[q,i]).filter(([q])=>q.maeng===al&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
     return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 맹 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join('');
-  return `<h4 style="margin:0">${M.short} 임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}${old}</div>`}
+  return `<div class="row2"><h4 style="margin:0">${M.short} 임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4>${B('open:quest','임무창')}</div><div class="list">${mis}${old}</div>`}
 function maengJoinHtml(al){const M=MAENG[al],jb=maengJoinBlock(al);
   if(P.side!==ALLY[al].side)return '';
   if(P.maeng===al)return `<div class="row2"><span class="note">${M.short}의 ${maengRankName(al)}다.</span>${B('mleave','맹에서 나가기')}</div>`;

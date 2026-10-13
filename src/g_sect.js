@@ -102,7 +102,7 @@ function sectDetail(s,hq){
     ${simSectHtml(s)}
     ${bobSectHtml(s)}
     ${ggSectHtml(s)}
-    ${same?`<h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4><div class="list">${mis}${old}</div>`:''}${member?teachHtml():''}`;
+    ${same?`<div class="row2"><h4 style="margin:0">임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4>${B('open:quest','임무창')}</div><div class="list">${mis}${old}</div>`:''}${member?teachHtml():''}`;
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
 function teachHtml(){
