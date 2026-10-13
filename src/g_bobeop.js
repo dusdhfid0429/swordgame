@@ -53,14 +53,14 @@ function bobeop(){
   if(!P||P.hp<=0||P.leap)return false;bobInit();
   if(P.perch){perchDrop();return true}
   const b=bobOf(),q=BG.qi[b.g];
-  if((P.bcd2||0)>0)return false;if(P.qi<q){log('내공이 부족합니다.','info');return false}
+  if(P.qi<q){log('내공이 부족합니다.','info');return false}   // 쿨타임 없음: 내공이 있는 한 연달아 쓴다 (사용자 결정 2026-10-13)
   const t0=performance.now(),jx=joy.on?joy.gx:0,jy=joy.on?joy.gy:0;
   let dst=null;
   if(b.t==='flank')dst=bobFlank(b,jx,jy);
   if(!dst){const dx=jx||jy?jx:P.fx,dy=jx||jy?jy:P.fy;dst=bobLine(b,dx,dy)}
   BOB_STAT.ms=performance.now()-t0;
   if(!dst){addText(P.x,P.y,'막혔다','#9a8d72');return false}
-  P.qi-=q;P.bcd2=BG.cd[b.g];P.bmax=BG.cd[b.g];P.inv=Math.max(P.inv,BG.inv[b.g]);P.path=null;P.chan=null;P.medit=false;
+  P.qi-=q;P.bcd2=0;P.inv=Math.max(P.inv,BG.inv[b.g]);P.path=null;P.chan=null;P.medit=false;
   P.leap={sx:P.x,sy:P.y,ex:dst.x,ey:dst.y,t:0,dur:.2+Math.hypot(dst.x-P.x,dst.y-P.y)*.025,z0:0,z1:0,to:null,step:1};
   for(let i=0;i<4;i++)fx.push({t:'ghost',x:P.x+(dst.x-P.x)*i/4,y:P.y+(dst.y-P.y)*i/4,life:.3+i*.05,col:'190,220,255'});
   if(dst.T){P.target=dst.T;if(dst.back>.5){P.buff.crit=Math.max(P.buff.crit||0,1.4);addText(dst.x,dst.y,'배후','#ffd36a')}}
@@ -78,7 +78,7 @@ function bobLand(L){if(L.step&&P.target&&P.target.hp>0)face(P.target.x,P.target.
 
 // ---- 화면 ----
 function bobRow(id,btn){const b=BOBS[id],on=P.bcur===id;
-  return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${BG.len[b.g]}칸 미끄러짐`:`둘레 ${BG.rad[b.g]}칸을 살핌`} · 내공 ${BG.qi[b.g]} · ${BG.cd[b.g]}초</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
+  return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${BG.len[b.g]}칸 미끄러짐`:`둘레 ${BG.rad[b.g]}칸을 살핌`} · 내공 ${BG.qi[b.g]}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function bobArtsHtml(){bobInit();const mine=Object.keys(BOBS).filter(id=>P.bob[id]);
   return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 버튼':'Shift 또는 W'}</small></h4><div class="list">${mine.map(id=>bobRow(id,P.bcur===id?'':B('bsel:'+id,'쓰기'))).join('')}</div>
     <p class="note">직선 보법은 조이스틱(또는 바라보는) 방향으로 곧게 빠지고, 간파 보법은 상대 등 뒤나 덜 둘러싸인 자리를 찾아 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타. 경공은 멀리·높이 뛰는 이동기로 따로 쓴다.</p>
