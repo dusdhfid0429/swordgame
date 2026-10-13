@@ -90,7 +90,7 @@ let panelAt=0;
 function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
-function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs}[panel];
+function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs,story:pStory}[panel];
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');$('wbody').innerHTML=josa(f(panelArg))}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
@@ -182,7 +182,7 @@ function pHelp(){
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사 · J 임무(왼쪽 '맡은 임무' 글을 눌러도 된다). 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 13세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
+  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
   <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
@@ -302,7 +302,7 @@ function act(s){
       log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;runHooks('questDone',q);P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
     case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;

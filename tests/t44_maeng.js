@@ -15,11 +15,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 2. 가장 가까운 성도
   const nc=await p.evaluate(()=>({kunlun:nearestCapital('hq_kunlun'),gae:nearestCapital('gaebong'),shaolin:nearestCapital('hq_shaolin'),pv:nearestCapital('pv_sichuan@0,0'),mj:nearestCapital('maeng_jeong')}));
   ok(`가장 가까운 성도: 곤륜→${nc.kunlun} 개봉→${nc.gae} 소림→${nc.shaolin} 사천 들판→${nc.pv} 정의맹 총단→${nc.mj}`,nc.kunlun==='lm_qinghai_2'&&nc.gae==='gaebong'&&nc.shaolin==='gaebong'&&nc.pv==='lm_sichuan_0'&&nc.mj==='lm_hubei_4');
-  // 3. 역참으로 총단에 가서 총관에게 입맹·임무, 보고하면 맹 공적, 직위가 오르고 당에 들고 맹주의 하사를 받는다
+  // 3. 역참으로 총단에 가서 총관에게 입맹·임무, 보고하면 맹 공적, 직위가 오르고 당에 들고 맹주의 하사를 받는다 (임무 목록은 나이에 따라 바뀌므로 13세로 맞춘다; 시작 나이는 8세)
   await p.evaluate(()=>{P.silver=1000;P.fame=50;postGo('maeng_jeong')});await p.waitForTimeout(1500);
   const m=await p.evaluate(()=>{const a={reg:REG,zone:REGION().zone(P.x,P.y)};
     const st=npcsOf('maeng_jeong').find(n=>n.id==='msteward');openPanel('npc',st);a.btns=[...document.querySelectorAll('[data-act]')].map(b=>b.dataset.act).filter(x=>/^m/.test(x));
-    act('mjoin:jeong');a.maeng=P.maeng;act('mtake:jeong:0');const q=P.quests[0];a.q=q&&q.n;q.cnt=q.need;q.done=1;act('qdone:0');a.mpt=P.mpt.jeong;a.r0=maengRankName('jeong');
+    act('mjoin:jeong');a.maeng=P.maeng;P.age=13;act('mtake:jeong:0');const q=P.quests[0];a.q=q&&q.n;q.cnt=q.need;q.done=1;act('qdone:0');a.mpt=P.mpt.jeong;a.r0=maengRankName('jeong');
     P.mpt.jeong=300;a.r1=maengRankName('jeong');act('mdang:jeong:1');a.dang=P.mdang&&P.mdang.k;a.pae=P.bag.some(i=>/당패/.test(i.name));
     P.mpt.jeong=1300;a.r2=maengRankName('jeong');const s0=P.silver;act('mgift:jeong');a.gift=P.silver-s0;
     openPanel('char');a.char=/정의맹 장로/.test(document.body.innerText);a.blk=maengJoinBlock('sacheon');return a});

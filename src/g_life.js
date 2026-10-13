@@ -5,12 +5,13 @@ const npcAt=id=>NPCS.find(n=>n.id===id);
 const npcsHere=()=>REG==='gaebong'?NPCS:(REGION().npcs||[]);
 let dlg=null;
 // ================= update =================
-let spawnT=0,saveT=30,lastYear=13;
+let spawnT=0,saveT=30,lastYear=8;
 function update(dt){
   time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick();
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/DAY_SEC)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
+  runHooks('tick',dt);
   G.wT-=dt;if(G.wT<=0){G.wT=22+Math.random()*12;const tb=WEATHER[season()];let r=Math.random();for(const[w,p]of tb){if(r<p){if(w!==G.weather)log(`날씨가 ${w}(으)로 바뀌었습니다.`,'info');G.weather=w;break}r-=p}}
   G.gT-=dt;if(G.gT<=0){if(G.giyeon){G.giyeon=null;G.gT=120+Math.random()*120}else{for(let t=0;t<40;t++){const x=2+Math.floor(Math.random()*(N-4)),y=2+Math.floor(Math.random()*(NH-4));if(walk(x,y)&&!inTown(x,y)&&!inFarm(x,y)&&dist({x,y},P)>6){G.giyeon={x:x+.5,y:y+.5};G.gT=45;log('어딘가에서 기이한 빛이 일렁입니다.','info');break}}}}
   if(G.giyeon&&dist(G.giyeon,P)<.7){G.giyeon=null;G.gT=150+Math.random()*120;giyeon('spot')}
@@ -276,7 +277,7 @@ function die(cause){
   const wis=karma>=60?1:0;
   const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:rk(realm),fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:sectName(),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
-  makeTomb(cause);
+  makeTomb(cause);runHooks('died',entry,cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
   G.heir=P.children.length?{children:P.children.map(c=>({...c})),silver:Math.floor(P.silver/2),side:P.side}:null;
   if(!G.heir){G.house=null;G.storage={mats:{},bag:[]}}

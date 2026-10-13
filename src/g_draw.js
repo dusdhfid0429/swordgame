@@ -288,7 +288,7 @@ function recoverFromError(err){
   drops=drops.filter(e=>!bad(e));fx=fx.filter(e=>!bad(e));texts=texts.filter(e=>!bad(e));
   P.path=null;P.leap=null;P.target=null;P.chan=null;P.goal=null;P.talk=null;P.roofGoal=null;P.perch=null;P.z=0;P.ride=null;P.traveling=0;
   if(bad(P)||n%30===0){const at=typeof arriveAt==='function'?arriveAt(REG):{x:20.5,y:20.5};P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y}
-  if(!okN(P.fx)||!okN(P.fy)){P.fx=1;P.fy=1}if(!okN(P.age))P.age=13;if(!okN(G.cal))G.cal=0;if(!okN(tod))tod=.3;
+  if(!okN(P.fx)||!okN(P.fy)){P.fx=1;P.fy=1}if(!okN(P.age))P.age=8;if(!okN(G.cal))G.cal=0;if(!okN(tod))tod=.3;
 }
 loadRegion('gaebong');embers=Array.from({length:30},()=>({x:Math.random(),y:Math.random(),s:.4+Math.random(),p:Math.random()*6}));
 buildBar();resize();{const t=iso(20.5,20.5);cam.x=t.x;cam.y=t.y}
