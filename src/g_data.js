@@ -17,12 +17,18 @@ const STATUS=GD.STATUS;
 const CLS=GD.CLS;
 const CLASS=GD.CLASS;
 const WEAP=CLASS;
-// 오행: each 무공 belongs to one element; 상극 hits 1.3x
+// 오행·음양·뇌기: 속성은 무공이 아니라 운용 중인 심법(내공)의 것이다 (사용자 결정 2026-10-13). 무공의 el 은 생성 씨앗(초식 수·이름·id)으로만 남고, 전투·색·입자는 심법 속성과 계열을 따른다.
+// 상극 우선순위는 그대로: 화>금>목>토>수>화, 여기에 양>음>뇌>양 삼각을 더했다. 1.3x / 0.8x
 const ELS=GD.ELS;
 const EL=GD.EL;
 const BEATS=GD.BEATS;
 const elMul=(a,b)=>!a||!b?1:BEATS[a]===b?1.3:BEATS[b]===a?.8:1;
 const FORMN=GD.FORMN;
+// 무공 객체의 c(색)·pt(입자)·elc(뇌기)는 저장되지 않는 getter 로, 그때그때 심법에서 읽는다 (g_simbeop.js artEl/fxCol)
+function artFx(a){delete a.c;delete a.pt;delete a.elc;
+  Object.defineProperty(a,'c',{get(){return fxCol(a)},enumerable:false,configurable:true});
+  Object.defineProperty(a,'pt',{get(){return EL[artEl(a)].pt},enumerable:false,configurable:true});
+  Object.defineProperty(a,'elc',{get(){return artEl(a)==='뇌'},enumerable:false,configurable:true});return a}
 const REQ=GD.REQ,COST=GD.COST,BONUS=GD.BONUS;
 const ART_NAMES=GD.ART_NAMES;
 const OFFICIAL=GD.OFFICIAL;
@@ -51,15 +57,15 @@ function buildArts(){
     const forms=pick.map((f,i)=>({...f,n:off?off.forms[i]:combos[ci++%combos.length],req:REQ[i],cost:COST[i],bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*(k<=3?1.25:1)}));
     const u=ults[c][(ei+(side==='사'?1:0))%ults[c].length];
     const id=side+c+ei;
-    arts[id]={id,side,cls:c,el,n,c:EL[el].c,pt:EL[el].pt,elc:el==='금',forms,
+    arts[id]=artFx({id,side,cls:c,el,n,forms,
       ult:{n:off?off.ult:uc[ui++%uc.length],steps:[F('','circle',{rad:2.8,m:1.5,stun:.3}),...u.steps.map(s=>({...s,delay:(s.delay||0)+.18}))]},
-      d:`${SIDES[side].base} 계열 ${CLASS[c].n} · 오행 ${el}. 초식 ${forms.length}개와 필살기.`};
+      d:`${SIDES[side].base} 계열 ${CLASS[c].n}. 초식 ${forms.length}개와 필살기.`});
   }));
   addSectArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);
   addGiyeonArts(arts,pool,ults);
-  arts.base={id:'base',side:null,cls:'권',el:null,n:'기초권각',c:'235,225,200',pt:'dot',base:1,
+  arts.base=artFx({id:'base',side:null,cls:'권',el:null,n:'기초권각',base:1,
     forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qi:0},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qi:4},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qi:8}],
-    ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'};
+    ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'});
   return arts;
 }
 

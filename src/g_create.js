@@ -77,9 +77,9 @@ function mkBuild(def){const g=def.grade,EC=EL[def.el];
   const forms=def.forms.map((x,i)=>{const a=ARTS[x.a],f=a&&a.forms[x.i];if(!f)return{...F(x.n,'melee',{m:1,cd:.4}),req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:1*(1+.06*i)*GMUL[g]};
     return{...f,n:x.n,req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m/((1+.06*x.i)*mkMul(a))*(1+.06*i)*GMUL[g]}});
   const ua=ARTS[def.ult.a],steps=ua?ua.ult.steps.slice(1).map(x=>({...x,m:(x.m||1)/mkUltMul(ua)*GULT[g][1]})):[];
-  ARTS[def.id]={id:def.id,side:null,cls:def.cls,el:def.el,n:def.n,c:EC.c,pt:EC.pt,elc:def.el==='금',forms,made:1,grade:g,
+  ARTS[def.id]=artFx({id:def.id,side:null,cls:def.cls,el:def.el,n:def.n,forms,made:1,grade:g,
     ult:{n:def.ult.n,steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...steps]},
-    d:`${def.by}이(가) ${def.srcN.join('·')}의 심득을 모아 창안한 ${AGR[g]} 무공 · ${CLASS[def.cls].n} · 오행 ${def.el}. 초식 ${forms.length}개와 필살기.`};
+    d:`${def.by}이(가) ${def.srcN.join('·')}의 심득을 모아 창안한 ${AGR[g]} 무공 · ${CLASS[def.cls].n}. 초식 ${forms.length}개와 필살기.`});
   return ARTS[def.id]}
 function mkRebuild(){for(const def of Object.values(G.made||{})){if(!ARTS[def.id])mkBuild(def);mkRegister(def)}}
 hook('gLoaded',()=>mkRebuild());
