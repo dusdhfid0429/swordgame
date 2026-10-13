@@ -22,8 +22,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>openNpc(hqNpc(REG)));await p.waitForTimeout(150);
   await p.screenshot({path:shot('sect_hwasan_hq')});
   await p.locator('[data-act="sjoin:hwasan"]').tap();await p.waitForTimeout(200);
-  const j=await p.evaluate(()=>{const h=SECTS.hwasan.arts.find(a=>a.hi);return{sect:P.sect,learned:!!P.arts[h.id]&&P.arts[h.id].f[0],forms:ARTS[h.id].forms.length,n:h.n}});
-  ok(`화산파 가입 → 고급 무공 [${j.n}] 첫 초식 (초식 ${j.forms}개)`,j.sect==='hwasan'&&j.learned&&j.forms===6);
+  const j=await p.evaluate(()=>{const h=SECTS.hwasan.arts.find(a=>a.hi),k=startSet(SECTS.hwasan);return{sect:P.sect,learned:!!P.arts[k.art.id]&&P.arts[k.art.id].f[0],hi:!!P.arts[h.id],n:k.art.n,bob:P.bcur,gg:P.gkcur,sim:P.sim}});
+  ok(`화산파 가입 → 입문공 [${j.n}] 첫 초식 + ${j.bob} + ${j.gg} + ${j.sim} (고급 무공은 공적으로)`,j.sect==='hwasan'&&j.learned&&!j.hi&&j.bob==='b_seom'&&j.gg==='g_cheongpung'&&j.sim==='N_hwasan_1');
   ok('다른 문파는 하산 전에 못 들어간다',await p.evaluate(()=>!!joinBlock(SECTS.mudang)));
   // 임무 → 공적 → 일반 무공 비급
   await p.locator('[data-act^="stake:hwasan:"]').first().tap();await p.waitForTimeout(100);
@@ -45,7 +45,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{P.side='사';P.sect=null;P.fame=0;P.evil=0;P.age=25;sectView=null});
   ok('마교는 명성 100 또는 악업 80부터',await p.evaluate(()=>!!joinBlock(SECTS.cheonma)));
   await p.evaluate(()=>{P.fame=120;openNpc(npcAt('magyo'))});await p.waitForTimeout(100);await p.locator('[data-act="sview:cheonma"]').tap();await p.evaluate(()=>openNpc(hqNpc('hq_cheonma')));await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
-  ok('사파 명성 120 → 천마신교 가입, 고급 무공',await p.evaluate(()=>P.sect==='cheonma'&&!!P.arts[SECTS.cheonma.arts.find(a=>a.hi).id]));
+  ok('사파 명성 120 → 천마신교 가입, 입문공 혈마장',await p.evaluate(()=>P.sect==='cheonma'&&!!P.arts[startSet(SECTS.cheonma).art.id]&&!P.arts[SECTS.cheonma.arts.find(a=>a.hi).id]));
   await p.screenshot({path:shot('sect_magyo')});
   // 예전 저장 이전
   ok('예전 무당파 제자 저장은 무당파로 옮겨진다',await p.evaluate(()=>{P.sect='정';migrateSect();return P.sect==='mudang'}));

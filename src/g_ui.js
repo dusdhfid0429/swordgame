@@ -198,7 +198,7 @@ function shopList(id){
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
     if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
-    if(t==='gbook'){ggInit();const gid=k.split(':')[1],g=GGS[gid],has=!!P.gk[gid];return shopRow(`경공 비급 · ${g.n} <small class="dim">${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>`,has?'이미 익혔다':g.d,p,`buy:${id}:${i}`,has)}
+    if(t==='gbook'){ggInit();const gid=k.split(':')[1],g=GGS[gid],has=!!P.gk[gid];return shopRow(`경공 비급 · ${g.n} <small class="dim">${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>`,has?'이미 익혔다':g.d+(g.tr&&g.tr.length?' · '+ggTraitTxt(g):''),p,`buy:${id}:${i}`,has)}
     if(t==='pbook'){const q=PAS[k.split(':')[1]],has=P.pas&&P.pas[q.id];return shopRow(`패시브 비급 · ${q.n} <small class="dim">${PTYPE[q.type].n}</small>`,has?'이미 익혔다':`${PTYPE[q.type].f(pasVal(q,0))}~${PTYPE[q.type].f(pasVal(q,100)).replace(/^[^+-]*/,'')} · ${q.d}`,p,`buy:${id}:${i}`,has)}
     if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?60:p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
   }).join('');

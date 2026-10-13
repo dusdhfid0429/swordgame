@@ -58,7 +58,7 @@ const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
-const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
+const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
 const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul();
 const wisMul=()=>.5+P.wis*.1;
@@ -94,7 +94,7 @@ const SLOTN=GD.SLOTN;
 function itemDesc(it){
   if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
-  if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}`}
+  if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
