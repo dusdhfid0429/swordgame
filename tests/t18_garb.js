@@ -31,15 +31,15 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok('본산 문파 창에 마크와 직위별 의복 미리보기',hasPrev);
   await p.screenshot({path:shot('garb_panel')});
   await p.waitForSelector('[data-act="sjoin:hwasan"]',{timeout:5000}).catch(()=>{});await p.evaluate(()=>{const b=document.querySelector('[data-act="sjoin:hwasan"]');b&&b.click()});await p.waitForTimeout(400);
-  const g0=await p.evaluate(()=>{closePanels();const g=heroGarb();return{sect:P.sect,ok:!!g,rank:g&&g.rank,cape:g&&g.pal.capeLen,log:$('log').textContent.includes('수련복')}});
+  const g0=await p.evaluate(()=>{closePanels();const g=heroGarb();return{sect:P.sect,ok:!!g,rank:g&&g.rank,cape:g&&(g.pal.cape?1:0),log:$('log').textContent.includes('수련복')}});
   ok(`가입 전엔 기본 옷(${before===null}), 가입하면 화산파 ${g0.rank}단계 옷`,before===null&&g0.sect==='hwasan'&&g0.ok&&g0.rank===0&&g0.cape===0&&g0.log);
   const pix=await p.evaluate(()=>{const g=heroGarb(),c=g.hero.getContext('2d').getImageData(0,0,95,155).data,h=document.createElement('canvas');h.width=95;h.height=155;const x=h.getContext('2d');x.drawImage(HERO,0,0);const o=x.getImageData(0,0,95,155).data;let d=0,same=0;for(let i=0;i<o.length;i+=4){if(o[i+3]<20)continue;if(o[i]!==c[i]||o[i+2]!==c[i+2])d++;else same++}return{d,same}});
   ok(`내 캐릭터 도트 그림의 겉옷 픽셀 ${pix.d}개가 문파 색, ${pix.same}개(얼굴·머리·흰 속옷)는 그대로`,pix.d>1500&&pix.same>1500);
   const shots=[];for(const[mt,nm]of[[0,'속가'],[60,'정식'],[180,'일대'],[400,'호법'],[800,'장로']]){
     await p.evaluate(mt=>{P.mtot.hwasan=mt;P.x=20.5;P.y=13.5;P.fx=1;P.fy=0;P.path=null;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y},mt);await p.waitForTimeout(250);
-    const st=await p.evaluate(()=>{const g=heroGarb();return g.rank+':'+g.pal.capeLen});shots.push(st);
+    const st=await p.evaluate(()=>{const g=heroGarb();return g.rank+':'+(g.pal.cape?'c':g.mark?`m${g.mark.pips}${g.mark.gold?'g':''}`:'-')});shots.push(st);
     await p.screenshot({path:shot('garb_hero_'+nm),clip:{x:120,y:250,width:150,height:260}})}
-  ok(`직위가 오르면 내 옷도 바뀐다 (직위:망토) ${shots.join(' ')}`,shots.join(' ')==='0:0 1:0 2:1 3:2 4:3');
+  ok(`직위가 오르면 내 옷과 머리 위 표식이 바뀐다, 망토는 없다 (직위:표식) ${shots.join(' ')}`,shots.join(' ')==='0:- 1:m0 2:m1 3:m2 4:m3g');
   const fl=await p.evaluate(()=>{let n=0;for(const r of objs)for(const o of r)if(o==='flag:hwasan')n++;return n});
   ok(`화산파 본산에 깃발 ${fl}개`,fl>=3);
   await p.evaluate(()=>{P.x=20.5;P.y=19.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;for(let i=0;i<3;i++)spawnTick()});await p.waitForTimeout(600);await p.screenshot({path:shot('garb_hq')});

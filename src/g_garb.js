@@ -76,7 +76,14 @@ function heroGarb(){
   if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
   const imgs=HERO_GARB[key];if(!imgs)return null;if(!imgs.h2&&hero2Ok())imgs.h2=recolorAtlas(HERO2,rankRobe(L,rank));
-  return{...imgs,rank,pal:{cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?P.sect:null}}}
+  // 내 캐릭터는 망토를 두르지 않는다 (사용자 2026-10-13 "플레이어의 직위 망토가 어색해"): 직위는 머리 위 문장 표식(mark)으로 보인다
+  return{...imgs,rank,pal:{cape:null,capeLen:0,capeEdge:null,emb:null},mark:rank>=1?{sid:P.sect,pips:rank-1,gold:rank>=4,trim:L.trim,accent:L.accent}:null}}
+// 머리 위 직위 표식: 정식제자부터 작은 문장, 일대제자부터 문장 아래 점(직위−1개), 장로는 금테. 도트가 좌우 뒤집혀도 문장은 바로 보인다
+function drawRankMark(m,side,y=-88){if(!m)return;ctx.save();ctx.scale(side,1);const bob=Math.sin(time*2.2)*1.2,s=12;
+  ctx.globalAlpha=.92;if(m.gold){ctx.strokeStyle='#e0b050';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(0,y+bob,s*.72,0,7);ctx.stroke()}
+  drawEmblem(ctx,m.sid,0,y+bob,s);
+  if(m.pips>0){const w=(m.pips-1)*5;for(let i=0;i<m.pips;i++){ctx.fillStyle=m.trim;ctx.beginPath();ctx.arc(-w/2+i*5,y+bob+s*.72+3,1.7,0,7);ctx.fill()}}
+  ctx.restore()}
 
 // ---- 직위별 옷 미리보기 (문파 창) ----
 const GARB_PREV={};
@@ -96,7 +103,7 @@ function garbHtml(s){
   if(!LOOK[s.id])return'';const L=lookOf(s.id),names=SRANK[s.al];
   return `<div class="card garb"><h4>${embImg(s.id,34)} ${s.n}의 상징과 의복</h4>
     <img class="garbprev" src="${garbPreview(s.id)}" alt="${s.n} 직위별 의복: ${names.join(', ')}">
-    <p class="dim">상징 '${L.glyph}'. 가입하면 이 옷을 입고, 직위가 오르면 옷이 바뀐다: 속가제자 수련복 → 정식제자 띠 → 일대제자 금테·어깨 망토 → ${names[3]} 허리 망토 → 장로 긴 망토.</p></div>`}
+    <p class="dim">상징 '${L.glyph}'. 가입하면 이 옷을 입고, 직위가 오르면 옷이 바뀐다(내 캐릭터는 망토 대신 머리 위 문장 표식: 정식제자 문장 → 일대제자부터 점이 늘고 → 장로 금테). 무인·장문인은 속가제자 수련복 → 정식제자 띠 → 일대제자 금테·어깨 망토 → ${names[3]} 허리 망토 → 장로 긴 망토.</p></div>`}
 
 // ---- 본산 깃발: 'flag:문파' 물체 ----
 function drawFlag(i,j,sid){
