@@ -19,9 +19,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 직선: 바라보는 쪽으로, 늑대 사이를 빠져나간다
   const s1=await p.evaluate(()=>{const w1=mkMob('늑대',P.x+1.2,P.y-.4),w2=mkMob('늑대',P.x+1.2,P.y+.4);mobs.push(w1,w2);const x0=P.x,q0=P.qi;const r=bobeop();return{r,x0,q0,qi:P.qi,inv:P.inv}});
   await p.waitForTimeout(500);
-  const s1b=await p.evaluate(()=>({x:P.x,again:bobeop(),cd:P.bcd2}));
-  ok(`직선 보법: 늑대 둘 사이를 빠져 ${(s1b.x-s1.x0).toFixed(1)}칸, 무적 ${s1.inv}초, 내공 ${s1.q0-s1.qi}`,s1.r&&s1b.x-s1.x0>2&&s1.inv>0&&s1.q0-s1.qi===5);
-  ok(`다시 쓰려면 기다린다 (${s1b.cd.toFixed(1)}초)`,!s1b.again&&s1b.cd>0);
+  const s1b=await p.evaluate(()=>{P.leap=null;const q=P.qi;return{x:P.x,again:bobeop(),cd:P.bcd2||0,q:q-P.qi}});
+  ok(`직선 보법: 늑대 둘 사이를 빠져 ${(s1b.x-s1.x0).toFixed(1)}칸, 무적 ${s1.inv}초, 내공 ${s1.q0-s1.qi}`,s1.r&&s1b.x-s1.x0>2&&s1.inv>0&&s1.q0-s1.qi===6);
+  ok(`쿨타임 없이 바로 또 쓰고 내공 ${s1b.q}이 든다 (대기 ${s1b.cd})`,s1b.again&&s1b.cd===0&&s1b.q===6);
   // 조이스틱 방향
   await setup(open);
   const s2=await p.evaluate(()=>{joy.on=true;joy.gx=0;joy.gy=1;const y0=P.y;bobeop();return y0});await p.waitForTimeout(500);
