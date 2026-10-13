@@ -763,7 +763,12 @@
     ]
    ],
    "initFill": 0.6,
-   "reinSec": 5
+   "reinSec": 5,
+   "weak": 0.5,
+   "masterLoss": 0.1,
+   "masterBack": 3,
+   "masterHp": 3,
+   "masterAtk": 1.3
   }
  }
 }

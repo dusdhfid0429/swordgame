@@ -5,7 +5,7 @@
 // 인원이 줄면 본산 맵이 닫힌다(황폐): 기준 인원의 50% 밑이면 가장 깊은 맵부터, 0이면 멸문. 설계: docs/스토리_설계.md
 const POP=STORY.POP;
 const popBase=s=>POP.base[s.id]||POP.base[s.tier]||60;
-function popInit(){if(G.pop)return;G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s)}
+function popInit(){if(!G.mdead)G.mdead={};if(G.pop)return;G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s)}
 const sectPop=sid=>{popInit();return G.pop[sid]||0};
 // 무학의 질: 고급 무공 수와 무공 수. 0~1
 const sectQ=s=>Math.min(1,(s.arts.filter(a=>a.hi).length*.4+s.arts.length*.1+(s.tier==='big'||s.tier==='one'?.2:s.tier==='mid'?.1:0)));
@@ -28,7 +28,7 @@ hook('gLoaded',()=>{popInit();popSync()});
 // 결전·대전에서 진 편
 function popWarLoss(facs,rate){popInit();for(const s of Object.values(SECTS))if(facs.includes(alFac(s.al))&&G.pop[s.id]>0)G.pop[s.id]=Math.round(G.pop[s.id]*(1-rate)*10)/10;popSync()}
 // ---- 무인의 직위(=경지) 분포: 질이 높을수록 윗직위가 많고, 인원이 바닥나면 고수가 드물다 ----
-function popRank(s,elite){const q=sectQ(s),f=Math.min(1,sectPop(s.id)/popBase(s)),r=Math.random();
+function popRank(s,elite){const q=Math.max(0,sectQ(s)-(G.mdead&&G.mdead[s.id]?.3:0)),f=Math.min(1,sectPop(s.id)/popBase(s)),r=Math.random();
   if(!elite)return r<.3+.3*q?1:0;
   const p4=f>.6?.05+.15*q:0,p3=.25+.35*q*f;return r<p4?4:r<p4+p3?3:2}
 // ---- 본산 맵: 인원이 줄면 깊은 맵부터 닫힌다 ----
@@ -49,7 +49,7 @@ const popTrend=sid=>{const a=G.popPrev&&G.popPrev[sid];if(a==null)return '';cons
 function popCard(){popInit();const list=Object.values(SECTS).map(s=>({s,p:sectPop(s.id),b:popBase(s)})).sort((a,b)=>b.p-a.p);
   const mine=P.sect&&SECTS[P.sect]?list.find(x=>x.s.id===P.sect):null;const top=list.slice(0,12);if(mine&&!top.includes(mine))top.push(mine);
   const row=x=>{const f=alFac(x.s.al),live=liveMaps(x.s),n=(REGIONS[hqId(x.s)]||{}).chain?REGIONS[hqId(x.s)].chain.length:1,q=sectQ(x.s);
-    return `<div class="it"><div>${x.s.n} <small class="dim">${FAC4N[f]}</small> <b class="num ${x.p<=0?'bad':''}">${Math.round(x.p)}</b> ${popTrend(x.s.id)}<span>${x.p<=0?'멸문':`기준 ${x.b} · 본산 ${live}/${n}장${G.seal[x.s.id]?' · 봉문':''}${G.occ[x.s.id]?' · 점령':''} · 고수 비율 ${Math.round((.25+.35*q)*100)}%`}</span></div></div>`};
+    return `<div class="it"><div>${x.s.n} <small class="dim">${FAC4N[f]}</small> <b class="num ${x.p<=0?'bad':''}">${Math.round(x.p)}</b> ${popTrend(x.s.id)}<span>${x.p<=0?'멸문':`기준 ${x.b} · 본산 ${live}/${n}장${G.seal[x.s.id]?' · 봉문':''}${G.occ[x.s.id]?' · 점령':''}${G.mdead[x.s.id]?` · <span class="bad">${masterTitle(x.s)} 공석</span>`:sectWeak(x.s)?` · <span class="bad">쇠퇴 · ${masterTitle(x.s)} 출전</span>`:''} · 고수 비율 ${Math.round((.25+.35*q)*100)}%`}</span></div></div>`};
   return `<div class="card"><h4>문파 인원 <small class="dim">상위 12${mine?' + 내 문파':''} · 해마다 늘고 무인이 죽으면 준다</small></h4><div class="list">${top.map(row).join('')}</div>
     <p class="note">기준 인원: 대문파 ${POP.base.big} · 중견 ${POP.base.mid} · 소문파 ${POP.base.small} · 천마신교 ${POP.base.one}. 해마다 ${Math.round(POP.grow*100)}%(고급 무공마다 +${Math.round(POP.growHi*100)}%, 마교 ${Math.round(POP.growMagyo*100)}%) 늘고, 플레이어가 죽인 무인은 ${POP.kill}명, 무인끼리 죽으면 ${POP.npcKill}명 준다. 결전에서 지면 ${Math.round(POP.roundLoss*100)}%, 대전에서 지면 ${Math.round(POP.warLoss*100)}% 잃는다. 기준의 반 밑이면 깊은 본산 맵부터 닫히고 0이면 멸문.</p></div>`}
 {const ps=pStory;pStory=function(){const h=ps();const i=h.indexOf('<p class="note">세력의 힘은');return i<0?h+popCard():h.slice(0,i)+popCard()+h.slice(i)}}
@@ -69,3 +69,18 @@ hook('regionLoaded',id=>{const R=REGIONS[id];if(R)R._fs={}});
 // 세력의 힘을 바로 맞춘다(인원을 비율로 바꿔서). 테스트·디버그용
 function setPow(f,v){const w=wld();if(!(w.pow[f]>0)){for(const s of Object.values(SECTS))if(alFac(s.al)===f&&!(G.pop[s.id]>0))G.pop[s.id]=popBase(s);popSync()}popScale(f,v/Math.max(.1,w.pow[f]))}
 function popReset(){G.pop=null;popInit();popSync()}
+
+// ---- 쇠퇴한 문파의 장문인은 싸울 수 있다 (사용자 요청 2026-10-13) ----
+// 인원이 기준의 50% 이하이거나 지난해보다 줄었으면(사망이 증가보다 많음) 쇠퇴. 그때 장문인 NPC 자리에 싸우는 우두머리가 선다(생명 3배, 공격 1.3배, 장로급 직위).
+// 쓰러뜨리면 그 문파 인원 10%가 흩어지고(G.mdead) 고수 비율이 떨어지며 가입이 막힌다. 쇠퇴에서 벗어나 3년이 지나면 새 장문인이 선다.
+const sectWeak=s=>{const p=sectPop(s.id);if(p<=0)return false;if(p<=popBase(s)*POP.weak)return true;const a=G.popPrev&&G.popPrev[s.id];return a!=null&&p<a};
+hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||R.ruin)return;const base=R._npcsM||R.npcs||[];const n=base.find(x=>x.hq);if(!n)return;const s=SECTS[n.hq];if(!s)return;if(!R._npcsM)R._npcsM=R.npcs;popInit();
+  const dead=!!G.mdead[s.id],weak=sectWeak(s);
+  if(dead||weak){R.npcs=R._npcsM.filter(x=>x!==n);
+    if(!dead&&REG===id&&!mobs.some(m=>m.master===s.id)){const e=mkFac(alFac(s.al),1,n.x,n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
+      e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);log(`${s.n}이(가) 쇠퇴해 ${masterTitle(s)}이 몸소 칼을 잡고 섰다.`,'info')}}
+  else R.npcs=R._npcsM;
+  NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)});
+hook('kill',e=>{if(!e.master)return;const s=SECTS[e.master];if(!s)return;G.mdead[s.id]={y:Math.floor(G.cal),life:P.lifeNo};popLose(s.id,Math.round(sectPop(s.id)*POP.masterLoss),`${masterTitle(s)} 사망`);
+  P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
+hook('newYear',()=>{popInit();for(const sid in G.mdead){const s=SECTS[sid];if(!s)continue;if(!sectWeak(s)&&Math.floor(G.cal)-G.mdead[sid].y>=POP.masterBack){delete G.mdead[sid];log(`${s.n}에 새 ${masterTitle(s)}이 섰다.`,'sys')}}});
