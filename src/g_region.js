@@ -47,7 +47,7 @@ function travel(g){
 }
 // 출입구·가장자리에는 GATE_HOLD초 머물러야 넘어간다 (사용자 요청 2026-10-13: 지나가는 길에, 또는 경공으로 날다가 저절로 넘어가지 않게).
 // gateHold(dt,key)는 같은 자리(key)에 머문 시간을 P.gateT에 쌓고 다 찼으면 true. 그 틱에 아무도 부르지 않으면 gateTick 끝에서 0으로 돌아간다.
-const GATE_HOLD=2;let gateSeen=false;
+const GATE_HOLD=1;   // 2초는 길다고 해서 1초 (사용자 2026-10-13)let gateSeen=false;
 function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key){P.gateAt=key;P.gateT=0}P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
 function gateTick(dt=0){gateSeen=false;const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase(dt);runHooks('gateDone',dt);if(!gateSeen&&P){P.gateT=0;P.gateAt=null}}
 function gateBase(dt){

@@ -1847,7 +1847,7 @@ function pHelp(){
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
   <p><b>경공</b> Space 도약(강·지붕·성벽도 넘는다), R 질주(내공 소모).</p>
   <p><b>강제공격</b> T (HUD '강제' 단추). 켜면 같은 편과 양민도 공격 대상이 되고, 치면 배신이 되어 악업이 쌓인다.</p>
-  <p><b>맵 이동</b> 출입구나 맵 가장자리에 2초 머물면 넘어간다. 지나가거나 경공으로 날면 넘어가지 않는다.</p>
+  <p><b>맵 이동</b> 출입구나 맵 가장자리에 1초 머물면 넘어간다. 지나가거나 경공으로 날면 넘어가지 않는다.</p>
   <p><b>특수무공</b> 1 암기 · 2 독공 · 3 점혈. <b>절세신공</b> V.</p>
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
@@ -2249,7 +2249,7 @@ function hqCard(){const qs=P.quests.filter(q=>q.sq);if(!qs.length)return '';
 // 인원이 줄면 본산 맵이 닫힌다(황폐): 기준 인원의 50% 밑이면 가장 깊은 맵부터, 0이면 멸문. 설계: docs/스토리_설계.md
 const POP=STORY.POP;
 const popBase=s=>POP.base[s.id]||POP.base[s.tier]||60;
-function popInit(){if(!G.mdead)G.mdead={};if(G.pop)return;G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s)}
+function popInit(){if(!G.mdead)G.mdead={};if(G.pop){if(!G.popPrev)G.popPrev=JSON.parse(JSON.stringify(G.pop));return}G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s);G.popPrev=JSON.parse(JSON.stringify(G.pop))}   // popPrev: 올해 첫날 인원. 첫해에도 '사망이 추가보다 많다'를 셀 수 있게 처음부터 둔다
 const sectPop=sid=>{popInit();return G.pop[sid]||0};
 // 무학의 질: 고급 무공 수와 무공 수. 0~1
 const sectQ=s=>Math.min(1,(s.arts.filter(a=>a.hi).length*.4+s.arts.length*.1+(s.tier==='big'||s.tier==='one'?.2:s.tier==='mid'?.1:0)));
@@ -2318,13 +2318,21 @@ function popReset(){G.pop=null;popInit();popSync()}
 // 인원이 기준의 50% 이하이거나 지난해보다 줄었으면(사망이 증가보다 많음) 쇠퇴. 그때 장문인 NPC 자리에 싸우는 우두머리가 선다(생명 3배, 공격 1.3배, 장로급 직위).
 // 쓰러뜨리면 그 문파 인원 10%가 흩어지고(G.mdead) 고수 비율이 떨어지며 가입이 막힌다. 쇠퇴에서 벗어나 3년이 지나면 새 장문인이 선다.
 const sectWeak=s=>{const p=sectPop(s.id);if(p<=0)return false;if(p<=popBase(s)*POP.weak)return true;const a=G.popPrev&&G.popPrev[s.id];return a!=null&&p<a};
-hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||R.ruin)return;const base=R._npcsM||R.npcs||[];const n=base.find(x=>x.hq);if(!n)return;const s=SECTS[n.hq];if(!s)return;if(!R._npcsM)R._npcsM=R.npcs;popInit();
-  const dead=!!G.mdead[s.id],weak=sectWeak(s);
+// 장문인 NPC를 싸우는 우두머리로 바꿔 세운다 (쇠퇴했을 때, 또는 강제공격으로 장문인을 쳤을 때)
+function masterBoss(R,n,s,why){R.npcs=(R._npcsM||R.npcs).filter(x=>x!==n);const e=mkFac(alFac(s.al),1,n.x,n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
+  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(why,'info');return e}
+// 지금 맵(id)의 장문인 상태를 인원에 맞춘다: 쇠퇴·공석이면 NPC를 숨기고(쇠퇴면 우두머리를 세우고), 아니면 NPC로 돌린다. 맵에 들어올 때와 이 맵에서 제자가 죽을 때마다
+function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;const base=R._npcsM||R.npcs||[];const n=base.find(x=>x.hq);if(!n)return;const s=SECTS[n.hq];if(!s)return;if(!R._npcsM)R._npcsM=R.npcs;popInit();
+  const dead=!!G.mdead[s.id],weak=sectWeak(s),boss=mobs.some(m=>m.master===s.id&&m.hp>0);
   if(dead||weak){R.npcs=R._npcsM.filter(x=>x!==n);
-    if(!dead&&REG===id&&!mobs.some(m=>m.master===s.id)){const e=mkFac(alFac(s.al),1,n.x,n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
-      e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);log(`${s.n}이(가) 쇠퇴해 ${masterTitle(s)}이 몸소 칼을 잡고 섰다.`,'info')}}
-  else R.npcs=R._npcsM;
-  NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)});
+    if(!dead&&REG===id&&!boss)masterBoss(R,n,s,`${s.n}이(가) 쇠퇴해 ${masterTitle(s)}이 몸소 칼을 잡고 섰다.`)}
+  else if(!boss)R.npcs=R._npcsM;   // 강제공격으로 끌어낸 장문인은 싸움이 끝날 때까지 그대로
+  NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+hook('regionLoaded',masterCheck);
+hook('kill',e=>{if(e.sect&&e.d&&e.d.fac&&!e.master&&P&&REG)masterCheck(REG)});
+// 강제공격을 켜고 장문인 NPC를 치면 쇠퇴하지 않았어도 우두머리로 나선다 (사용자 2026-10-13 "왜 장문인을 죽일 수 없지"). 돌아온다: 맵을 나갔다 오면 다시 NPC
+function masterOut(n){if(!n||!n.hq||!forceAtk)return null;const s=SECTS[n.hq];if(!s||G.mdead[s.id])return null;const R=REGION();const live=mobs.find(m=>m.master===s.id&&m.hp>0);if(live)return live;
+  if(!R._npcsM)R._npcsM=R.npcs;return masterBoss(R,n,s,`${masterTitle(s)} ${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`)}
 hook('kill',e=>{if(!e.master)return;const s=SECTS[e.master];if(!s)return;G.mdead[s.id]={y:Math.floor(G.cal),life:P.lifeNo};popLose(s.id,Math.round(sectPop(s.id)*POP.masterLoss),`${masterTitle(s)} 사망`);
   P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
 hook('newYear',()=>{popInit();for(const sid in G.mdead){const s=SECTS[sid];if(!s)continue;if(!sectWeak(s)&&Math.floor(G.cal)-G.mdead[sid].y>=POP.masterBack){delete G.mdead[sid];log(`${s.n}에 새 ${masterTitle(s)}이 섰다.`,'sys')}}});
@@ -2983,7 +2991,7 @@ C.addEventListener('pointerdown',ev=>{
   if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
-  if(h.kind==='npc'){if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
+  if(h.kind==='npc'){if(forceAtk&&h.o.hq){const e=masterOut(h.o);if(e){P.target=e;P.repath=0;P.path=null;return}}if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
   if(h.kind==='node'){const t={node:h.o};if(dist(h.o,P)<1.3)interact(t);else{P.goal={x:h.o.x,y:h.o.y,...t};go(h.o.x,h.o.y)}return}
   if(h.kind==='plot'){const c={x:h.o.x+.5,y:h.o.y+.5},t={plot:h.o};if(dist(c,P)<1.3)interact(t);else{P.goal={...c,...t};go(c.x,c.y)}return}
   if(h.kind==='house'){const d=houseDoor();if(dist(d,P)<1.4)openHouse();else{P.goal={x:d.x,y:d.y,house:1};go(d.x,d.y)}return}
@@ -3058,7 +3066,7 @@ function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||
     if(e.type==='pointerup'&&moved<10&&performance.now()-t0<300)C.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0,bubbles:true}))};
   z.addEventListener('pointerup',up);z.addEventListener('pointercancel',up);}
 // 공격: 누르면 가장 가까운 적을 잡아 자동초식으로 싸운다. 누르고 있으면 쓰러뜨린 뒤 다음 적으로 넘어간다.
-function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;const e=nearest(8);if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
+function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;let e=nearest(8);if(!e&&forceAtk){const t=nearestThing(6);if(t&&t.npc&&t.npc.hq)e=masterOut(t.npc)}if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
 function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!playing||paused)return;b.classList.add('press');down()});
   const u=()=>{b.classList.remove('press');if(upf)upf()};b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u);b.addEventListener('pointerleave',u)}
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
@@ -3680,7 +3688,7 @@ function travel(g){
 }
 // 출입구·가장자리에는 GATE_HOLD초 머물러야 넘어간다 (사용자 요청 2026-10-13: 지나가는 길에, 또는 경공으로 날다가 저절로 넘어가지 않게).
 // gateHold(dt,key)는 같은 자리(key)에 머문 시간을 P.gateT에 쌓고 다 찼으면 true. 그 틱에 아무도 부르지 않으면 gateTick 끝에서 0으로 돌아간다.
-const GATE_HOLD=2;let gateSeen=false;
+const GATE_HOLD=1;   // 2초는 길다고 해서 1초 (사용자 2026-10-13)let gateSeen=false;
 function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key){P.gateAt=key;P.gateT=0}P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
 function gateTick(dt=0){gateSeen=false;const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase(dt);runHooks('gateDone',dt);if(!gateSeen&&P){P.gateT=0;P.gateAt=null}}
 function gateBase(dt){

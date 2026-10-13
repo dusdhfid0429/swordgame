@@ -48,7 +48,7 @@ function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||
     if(e.type==='pointerup'&&moved<10&&performance.now()-t0<300)C.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0,bubbles:true}))};
   z.addEventListener('pointerup',up);z.addEventListener('pointercancel',up);}
 // 공격: 누르면 가장 가까운 적을 잡아 자동초식으로 싸운다. 누르고 있으면 쓰러뜨린 뒤 다음 적으로 넘어간다.
-function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;const e=nearest(8);if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
+function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;let e=nearest(8);if(!e&&forceAtk){const t=nearestThing(6);if(t&&t.npc&&t.npc.hq)e=masterOut(t.npc)}if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
 function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!playing||paused)return;b.classList.add('press');down()});
   const u=()=>{b.classList.remove('press');if(upf)upf()};b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u);b.addEventListener('pointerleave',u)}
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
