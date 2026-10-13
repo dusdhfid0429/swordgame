@@ -100,7 +100,7 @@ C.addEventListener('pointerdown',ev=>{
   if(!playing||paused||P.hp<=0)return;const h=pickAt(ev);P.medit=false;P.goal=null;P.talk=null;
   if(ev.button===2){if(h.kind==='mob'&&h.o.d.beast)tame(h.o);return}
   if(h.kind==='mob'){P.target=h.o;P.repath=0;P.path=null;return}
-  if(h.kind==='vil'){if(ev.shiftKey){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
+  if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
   if(h.kind==='npc'){if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
@@ -122,7 +122,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyS'||e.code==='Numpad5'){ultimate();return}
   if(e.code==='Digit1')special('암기');else if(e.code==='Digit2')special('독공');else if(e.code==='Digit3')special('점혈');
   else if(e.code==='Digit4')useCon('금창약');else if(e.code==='Digit5')useCon('소환단');
-  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
+  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyT')toggleForce();else if(e.code==='KeyX')meditate();
   else if(e.code==='KeyM')rideToggle();else if(e.code==='KeyF')useNearest();else if(e.code==='Tab')toggleMode();
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);

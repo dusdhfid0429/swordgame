@@ -163,7 +163,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 #joy.on{opacity:1}
 #joyk{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6b5636,#2a2015);border:1px solid var(--bronze-hi)}
 #tbtns{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:236px;height:240px;pointer-events:none}
-/* 켜고 끄는 것: 오른쪽 가장자리 세로 열 (아래부터 질주·운기·승마). 네모라서 공격 부채꼴의 둥근 단추와 구별된다 */
+/* 켜고 끄는 것: 오른쪽 가장자리 세로 열 (아래부터 질주·강제공격·운기·승마). 네모라서 공격 부채꼴의 둥근 단추와 구별된다 */
 #tquick{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(232px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none}
 .tq{pointer-events:auto;width:42px;height:42px;padding:0;border-radius:9px;border:1px solid var(--bronze-hi);background:#120e0add;color:var(--paper);font:12px var(--display);touch-action:none;line-height:1.1;word-break:keep-all}
 .tq.on{background:#3a3024ee;box-shadow:0 0 0 2px var(--exp);color:#ffe9a8}.tq.press{filter:brightness(1.5)}
@@ -220,7 +220,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
     <canvas id="game"></canvas>
     <canvas id="mini" width="150" height="84" aria-label="지도"></canvas>
     <div class="zone"><span id="zone">개봉 성내</span><small id="cal">봄 · 맑음</small>
-      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
+      <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="forceb" type="button" title="T">강제</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
     <div class="chan" id="chan" hidden><span id="chant"></span><i id="chanb"></i></div>
     <div class="banner"><div id="banner"></div></div>
     <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><p class="wnote" id="wnote" hidden role="status"></p><div id="wbody" style="display:grid;gap:10px"></div></div>
@@ -1339,7 +1339,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=8;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick();
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick(dt);
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/DAY_SEC)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
@@ -1730,7 +1730,7 @@ function hud(){
   $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
   $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
   questTrack();$('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
-  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);
+  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
   const ch=P.chain,live=time-ch.t<1.7;
   a.forms.forEach((f,i)=>{});
   for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');b.querySelector('.nm').textContent='';b.querySelector('em').textContent='';b.querySelector('.cd').style.height='0';b.title='';continue}
@@ -1839,13 +1839,15 @@ function pHelp(){
   <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
-  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
   <p><b>경공</b> Space 도약(강·지붕·성벽도 넘는다), R 질주(내공 소모).</p>
+  <p><b>강제공격</b> T (HUD '강제' 단추). 켜면 같은 편과 양민도 공격 대상이 되고, 치면 배신이 되어 악업이 쌓인다.</p>
+  <p><b>맵 이동</b> 출입구나 맵 가장자리에 2초 머물면 넘어간다. 지나가거나 경공으로 날면 넘어가지 않는다.</p>
   <p><b>특수무공</b> 1 암기 · 2 독공 · 3 점혈. <b>절세신공</b> V.</p>
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
@@ -1990,6 +1992,7 @@ $('wx').addEventListener('click',closePanels);
 logEl.addEventListener('click',()=>{if(playing)openPanel('logs')});const sysEl=document.querySelector('.sysmsg');if(sysEl)sysEl.addEventListener('click',()=>{if(playing)openPanel('logs')});
 $('modeb').addEventListener('click',()=>{if(P)toggleMode()});
 $('runb').addEventListener('click',()=>{if(P)toggleRun()});
+$('forceb').addEventListener('click',()=>{if(P)toggleForce()});
 $('saveb').addEventListener('click',()=>{if(P&&playing)saveGame()});
 $('helpb').addEventListener('click',()=>{if(playing)openPanel('help');else{}});
 function toggleRun(){P.run=!P.run;if(P.run&&P.qi<5){P.run=false;log('내공이 부족합니다.','info')}}
@@ -2977,7 +2980,7 @@ C.addEventListener('pointerdown',ev=>{
   if(!playing||paused||P.hp<=0)return;const h=pickAt(ev);P.medit=false;P.goal=null;P.talk=null;
   if(ev.button===2){if(h.kind==='mob'&&h.o.d.beast)tame(h.o);return}
   if(h.kind==='mob'){P.target=h.o;P.repath=0;P.path=null;return}
-  if(h.kind==='vil'){if(ev.shiftKey){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
+  if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
   if(h.kind==='npc'){if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}
@@ -2999,7 +3002,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyS'||e.code==='Numpad5'){ultimate();return}
   if(e.code==='Digit1')special('암기');else if(e.code==='Digit2')special('독공');else if(e.code==='Digit3')special('점혈');
   else if(e.code==='Digit4')useCon('금창약');else if(e.code==='Digit5')useCon('소환단');
-  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyX')meditate();
+  else if(e.code==='KeyV')shingong();else if(e.code==='Space')leap();else if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyW')bobeop();else if(e.code==='KeyR')toggleRun();else if(e.code==='KeyT')toggleForce();else if(e.code==='KeyX')meditate();
   else if(e.code==='KeyM')rideToggle();else if(e.code==='KeyF')useNearest();else if(e.code==='Tab')toggleMode();
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
@@ -3007,7 +3010,7 @@ addEventListener('blur',()=>keys={});
 
 // ================= 터치 조작 (모바일) =================
 // 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
-// 켜고 끄는 것(질주·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
+// 켜고 끄는 것(질주·강제공격·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
 var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
 const TUI=document.createElement('div');TUI.id='tui';
@@ -3023,6 +3026,7 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
   </div>
   <div id="tquick">
     <button type="button" class="tq" id="t_run">질주</button>
+    <button type="button" class="tq" id="t_force">강제</button>
     <button type="button" class="tq" id="t_med" hidden>운기</button>
     <button type="button" class="tq" id="t_ride" hidden>승마</button>
   </div>
@@ -3067,7 +3071,7 @@ hold('ts_sh',()=>{if(P.mats.소환단>0)useCon('소환단');else log('소환단�
 hold('ts_bd',()=>special('암기'));
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
 // 빠른 버튼 (사용자 요청 2026-10-13 "질주·탈것 등은 HUD 버튼으로"): 질주 켜고 끄기, 말 타고 내리기(말이 곁에 있거나 탔을 때만), 운기조식(싸움 중이 아닐 때만)
-hold('t_run',()=>toggleRun());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
+hold('t_run',()=>toggleRun());hold('t_force',()=>toggleForce());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
 $('tmenu').addEventListener('click',()=>{if(playing)openPanel('menu')});
 // 비기: 지금 쓸 수 있는 특수무공·신공 중 하나를 알아서 고른다
 function sgReady(){return P.sg.name&&realmIdx()>=5&&P.fame>=200&&P.scd.신공<=0}
@@ -3104,7 +3108,7 @@ function touchHud(){
   {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
   {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
-    $('t_run').classList.toggle('on',!!P.run);
+    $('t_run').classList.toggle('on',!!P.run);$('t_force').classList.toggle('on',forceAtk);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
     const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp));$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }
@@ -3665,7 +3669,7 @@ function travel(g){
   setTimeout(()=>{
     try{
       mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
+      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
       allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
       const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
@@ -3674,14 +3678,27 @@ function travel(g){
       FADE.classList.remove('on');P.traveling=0;saveGame(true)}
   },320);
 }
-function gateTick(){const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase();runHooks('gateDone')}
-function gateBase(){
+// 출입구·가장자리에는 GATE_HOLD초 머물러야 넘어간다 (사용자 요청 2026-10-13: 지나가는 길에, 또는 경공으로 날다가 저절로 넘어가지 않게).
+// gateHold(dt,key)는 같은 자리(key)에 머문 시간을 P.gateT에 쌓고 다 찼으면 true. 그 틱에 아무도 부르지 않으면 gateTick 끝에서 0으로 돌아간다.
+const GATE_HOLD=2;let gateSeen=false;
+function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key){P.gateAt=key;P.gateT=0}P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
+function gateTick(dt=0){gateSeen=false;const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase(dt);runHooks('gateDone',dt);if(!gateSeen&&P){P.gateT=0;P.gateAt=null}}
+function gateBase(dt){
   if(!P||P.hp<=0||G.duel)return;
   if((P.reg||'gaebong')!==REG){loadRegion(P.reg||'gaebong');return}
   const gs=REGION().gates;
   // 도착한 출입구에서 한 번 벗어나야 다시 쓸 수 있다 (오자마자 되돌아가지 않게)
   if(P.gateLock){if(gs.every(g=>dist(g,P)>1.8))P.gateLock=0;return}
-  for(const g of gs)if(dist(g,P)<.8){travel(g);return}
+  if(P.leap||P.traveling)return;   // 경공으로 지나는 중에는 세지 않는다
+  for(const g of gs)if(dist(g,P)<.8){if(gateHold(dt,'g:'+g.to))travel(g);return}
+}
+// 머무는 동안 발밑에 차오르는 고리와 남은 시간
+function drawGateHold(){
+  if(!P||!P.gateAt||!(P.gateT>0)||P.traveling)return;const p=toScreen(P.x,P.y),r=clamp(P.gateT/GATE_HOLD,0,1);
+  ctx.save();ctx.translate(p.x,p.y);ctx.lineWidth=3;ctx.strokeStyle='rgba(255,220,140,.35)';ctx.beginPath();ctx.ellipse(0,0,22,11,0,0,7);ctx.stroke();
+  ctx.strokeStyle='#ffe2a0';ctx.beginPath();ctx.ellipse(0,0,22,11,0,-Math.PI/2,-Math.PI/2+r*Math.PI*2);ctx.stroke();ctx.restore();
+  ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=`이동 ${Math.max(0,GATE_HOLD-P.gateT).toFixed(1)}초`;
+  ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y+25);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y+24);
 }
 function drawGate(g){
   const p=toScreen(g.x,g.y);ctx.save();ctx.translate(p.x,p.y);
@@ -4028,7 +4045,14 @@ const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='func
 const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
 const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac())||(e.d.fac==='관'&&outlaw());
-const peaceful=m=>!!m.d.fac&&!mobFoeP(m);
+// 강제공격 (사용자 요청 2026-10-13, 리니지식 토글): 켜면 같은 편 무인도 공격 대상이 되고 범위 초식에도 맞는다 (치면 그대로 배신·악업). 양민은 켜고 직접 눌러야 맞는다.
+// PC는 T 키·HUD '강제' 단추, 터치는 오른쪽 세로 열의 네모 단추. 불러오기·새 생에서는 꺼져 있다.
+let forceAtk=false;
+const peaceful=m=>!!m.d.fac&&!mobFoeP(m)&&!forceAtk;
+function toggleForce(v){forceAtk=v==null?!forceAtk:!!v;
+  if(!forceAtk&&P&&P.target&&P.target.hp>0&&(peaceful(P.target)||(P.target.d.villager&&!P.target.angry)))P.target=null;
+  if(P)log(forceAtk?'강제공격을 켰습니다. 같은 편과 양민도 공격합니다. 치면 배신이 되어 악업이 쌓입니다.':'강제공격을 껐습니다.','info');
+  for(const id of['forceb','t_force']){const b=$(id);if(b)b.classList.toggle('on',forceAtk)}}
 const FAC_KIND=GD.FAC_KIND;
 /* MOBS에 덧붙이던 것은 data/mobs.json 으로 옮김 */
 // 옷 색: 정파 흰옷·청띠, 사파 갈색·자주띠, 마교 검은옷·붉은띠, 소림은 가사
@@ -4924,16 +4948,17 @@ hook('loadRegion',c=>{const id=c.id;
 hook('regionLoaded',id=>{if(P&&P.reg===id&&REGIONS[id].win&&!walkAt(P.x,P.y)){const q=pvNearWalk(P.x,P.y);if(q){P.x=q.x;P.y=q.y}}});
 function pvNearWalk(x,y){for(let d=0;d<8;d++)for(let j=-d;j<=d;j++)for(let i=-d;i<=d;i++){const a=Math.floor(x)+i,b=Math.floor(y)+j;if(walk(a,b))return{x:a+.5,y:b+.5}}return null}
 // 가장자리를 걸어 나가면 이웃 맵으로. 넘어가는 자리가 막혔으면 성 전체 그림에서 가까운 빈칸을 찾는다
-function pvEdgeTick(){
-  const R=REGION();if(!R||!R.edges||!P||P.hp<=0||P.traveling||P.leap||G.duel)return;
+function pvEdgeTick(dt){
+  const R=REGION();if(!R||!R.edges||!P||P.hp<=0||P.traveling||P.leap||G.duel||gateSeen)return;   // gateSeen: 이 틱에 출입구가 먼저 세고 있다 (가장자리에 놓인 성 출입구)
   const e=R.edges,m=.55,side=P.x<m?'w':P.x>N-m?'e':P.y<m?'n':P.y>NH-m?'s':null;if(!side||!e[side])return;
   const T=REGIONS[e[side]].win,F=pvFull(T.k),fx=T.c*PV_W,fy=T.r*PV_W;
   let tx=side==='w'?PV_W-1.1:side==='e'?1.1:P.x,ty=side==='n'?PV_W-1.1:side==='s'?1.1:P.y;
   const free=(a,b)=>a>=0&&b>=0&&a<PV_W&&b<PV_W&&F.map[b+fy][a+fx].g!==2&&!F.objs[b+fy][a+fx];
   if(!free(Math.floor(tx),Math.floor(ty))){let best=null;for(let d=1;d<6&&!best;d++)for(const s of[-d,d]){const a=side==='w'||side==='e'?Math.floor(tx):Math.floor(tx)+s,b=side==='n'||side==='s'?Math.floor(ty):Math.floor(ty)+s;if(free(a,b)){best={x:a+.5,y:b+.5};break}}
     if(!best){P.x=clamp(P.x,m+.1,N-m-.1);P.y=clamp(P.y,m+.1,NH-m-.1);return}tx=best.x;ty=best.y}
+  if(!gateHold(dt,'e:'+side))return;   // 가장자리에도 GATE_HOLD초 머물러야 넘어간다 (g_region.js)
   P.path=null;P.target=null;travel({to:e[side],tx,ty,edge:1})}
-hook('gateDone',()=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick()});
+hook('gateDone',dt=>{if(!P||P.traveling)return;if(!P.gateLock)pvEdgeTick(dt)});
 // 이웃 맵이 있는 가장자리에 가까이 가면 경계에 빛줄과 이웃 맵 이름을 띄운다
 function pvEdgeHints(){const e=REGION().edges,out=[];if(!P)return out;const near=6,q=(v,n=N)=>clamp(v,3,n-3);
   if(e.w&&P.x<near)out.push({x:.3,y:q(P.y,NH),dx:0,dy:1,to:e.w,ar:'←'});if(e.e&&P.x>N-near)out.push({x:N-.3,y:q(P.y,NH),dx:0,dy:1,to:e.e,ar:'→'});
@@ -5947,6 +5972,7 @@ function draw(){
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center';
+  drawGateHold();
   for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;ctx.globalAlpha=Math.min(1,t.life*2);
     const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
   ctx.globalAlpha=1;

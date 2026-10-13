@@ -7,7 +7,7 @@ let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=8;
 function update(dt){
-  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick();
+  time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick(dt);
   // calendar, age, weather, day
   G.cal+=dt/YEAR_SEC;P.age+=dt/YEAR_SEC;tod=(tod+dt/DAY_SEC)%1;
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}

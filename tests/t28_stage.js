@@ -41,7 +41,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>openNpc(findNpc(REG,n=>n.steward)));await p.waitForTimeout(200);
   ok('외원 총관 창에 임무와 비급',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('임무')&&t.includes('고유 무공')}));
   await p.evaluate(()=>{closePanels();travel(REGION().gates.find(g=>g.to==='hq_hwasan'))});await p.waitForTimeout(1200);
-  const bk=await p.evaluate(()=>{const g=REGION().gates.find(q=>q.to==='hq_hwasan_back');P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();const blocked=REG==='hq_hwasan';P.sect='hwasan';P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();return{blocked}});
+  const bk=await p.evaluate(()=>{const g=REGION().gates.find(q=>q.to==='hq_hwasan_back');P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();const blocked=REG==='hq_hwasan';P.sect='hwasan';P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(9);return{blocked}});
   await p.waitForTimeout(1200);
   const bk2=await p.evaluate(()=>({reg:REG,elder:npcsHere().some(n=>n.elder==='hwasan')}));
   ok(`후산은 제자만: 막힘 ${bk.blocked}, 제자는 들어감 ${bk2.reg}`,bk.blocked&&bk2.reg==='hq_hwasan_back'&&bk2.elder);

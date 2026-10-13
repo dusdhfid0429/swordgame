@@ -15,7 +15,14 @@ const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='func
 const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
 const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac())||(e.d.fac==='관'&&outlaw());
-const peaceful=m=>!!m.d.fac&&!mobFoeP(m);
+// 강제공격 (사용자 요청 2026-10-13, 리니지식 토글): 켜면 같은 편 무인도 공격 대상이 되고 범위 초식에도 맞는다 (치면 그대로 배신·악업). 양민은 켜고 직접 눌러야 맞는다.
+// PC는 T 키·HUD '강제' 단추, 터치는 오른쪽 세로 열의 네모 단추. 불러오기·새 생에서는 꺼져 있다.
+let forceAtk=false;
+const peaceful=m=>!!m.d.fac&&!mobFoeP(m)&&!forceAtk;
+function toggleForce(v){forceAtk=v==null?!forceAtk:!!v;
+  if(!forceAtk&&P&&P.target&&P.target.hp>0&&(peaceful(P.target)||(P.target.d.villager&&!P.target.angry)))P.target=null;
+  if(P)log(forceAtk?'강제공격을 켰습니다. 같은 편과 양민도 공격합니다. 치면 배신이 되어 악업이 쌓입니다.':'강제공격을 껐습니다.','info');
+  for(const id of['forceb','t_force']){const b=$(id);if(b)b.classList.toggle('on',forceAtk)}}
 const FAC_KIND=GD.FAC_KIND;
 /* MOBS에 덧붙이던 것은 data/mobs.json 으로 옮김 */
 // 옷 색: 정파 흰옷·청띠, 사파 갈색·자주띠, 마교 검은옷·붉은띠, 소림은 가사

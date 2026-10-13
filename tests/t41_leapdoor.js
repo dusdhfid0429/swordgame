@@ -9,7 +9,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 문 2.2칸 아래에서 문 쪽으로 경공: 문 앞에 내려선 뒤 안으로 들어간다
   const r1=await p.evaluate(()=>{mobs=[];loadRegion('hq_shaolin');P.reg='hq_shaolin';const g=REGION().gates.find(g=>g.door);if(!g)return{nog:1};P.gateLock=0;P.x=g.x;P.y=g.y+2.2;P.fx=0;P.fy=-1;P.qi=P.maxQi=999;P.perch=null;P.leap=null;texts.length=0;
     const pc=leapPerch(leapRange());leap();return{from:REG,door:g.label,pc:pc&&{q:pc.q&&pc.q.k,x:+pc.x.toFixed(1),y:+pc.y.toFixed(1)},gx:g.x,gy:g.y,leapTo:P.leap&&P.leap.to}});
-  await p.waitForTimeout(1400);
+  await p.waitForTimeout(3600);   // 내려선 뒤 문에 2초 머물러야 들어간다 (2026-10-13)
   const s1=await p.evaluate(()=>({reg:REG,hall:!!REGION().gates.find(g=>g.door&&g.to!==REG)&&REG.startsWith('in_'),perch:P.perch,leap:P.leap,z:P.z,roofMsg:texts.some(t=>/지붕 위|나무 위/.test(t.t)),zone:$('zone').textContent}));
   ok(`${r1.door} 문 쪽으로 경공: 착지점 (${r1.pc&&r1.pc.x},${r1.pc&&r1.pc.y}) = 문 (${r1.gx},${r1.gy}), 지붕 아님(${r1.pc&&r1.pc.q})`,!r1.nog&&r1.pc&&!r1.pc.q&&r1.pc.x===r1.gx&&r1.pc.y===r1.gy&&!r1.leapTo);
   ok(`들어가서 ${s1.zone}: 지붕 판정 없음 (perch ${s1.perch}, z ${s1.z}, 알림 ${s1.roofMsg})`,s1.reg!==r1.from&&s1.reg.startsWith('in_')&&!s1.perch&&!s1.leap&&!s1.z&&!s1.roofMsg);

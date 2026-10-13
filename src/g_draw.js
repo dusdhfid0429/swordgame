@@ -250,6 +250,7 @@ function draw(){
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center';
+  drawGateHold();
   for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;ctx.globalAlpha=Math.min(1,t.life*2);
     const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
   ctx.globalAlpha=1;

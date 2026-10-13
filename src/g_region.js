@@ -36,7 +36,7 @@ function travel(g){
   setTimeout(()=>{
     try{
       mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
+      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
       allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
       const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
@@ -45,14 +45,27 @@ function travel(g){
       FADE.classList.remove('on');P.traveling=0;saveGame(true)}
   },320);
 }
-function gateTick(){const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase();runHooks('gateDone')}
-function gateBase(){
+// 출입구·가장자리에는 GATE_HOLD초 머물러야 넘어간다 (사용자 요청 2026-10-13: 지나가는 길에, 또는 경공으로 날다가 저절로 넘어가지 않게).
+// gateHold(dt,key)는 같은 자리(key)에 머문 시간을 P.gateT에 쌓고 다 찼으면 true. 그 틱에 아무도 부르지 않으면 gateTick 끝에서 0으로 돌아간다.
+const GATE_HOLD=2;let gateSeen=false;
+function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key){P.gateAt=key;P.gateT=0}P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
+function gateTick(dt=0){gateSeen=false;const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase(dt);runHooks('gateDone',dt);if(!gateSeen&&P){P.gateT=0;P.gateAt=null}}
+function gateBase(dt){
   if(!P||P.hp<=0||G.duel)return;
   if((P.reg||'gaebong')!==REG){loadRegion(P.reg||'gaebong');return}
   const gs=REGION().gates;
   // 도착한 출입구에서 한 번 벗어나야 다시 쓸 수 있다 (오자마자 되돌아가지 않게)
   if(P.gateLock){if(gs.every(g=>dist(g,P)>1.8))P.gateLock=0;return}
-  for(const g of gs)if(dist(g,P)<.8){travel(g);return}
+  if(P.leap||P.traveling)return;   // 경공으로 지나는 중에는 세지 않는다
+  for(const g of gs)if(dist(g,P)<.8){if(gateHold(dt,'g:'+g.to))travel(g);return}
+}
+// 머무는 동안 발밑에 차오르는 고리와 남은 시간
+function drawGateHold(){
+  if(!P||!P.gateAt||!(P.gateT>0)||P.traveling)return;const p=toScreen(P.x,P.y),r=clamp(P.gateT/GATE_HOLD,0,1);
+  ctx.save();ctx.translate(p.x,p.y);ctx.lineWidth=3;ctx.strokeStyle='rgba(255,220,140,.35)';ctx.beginPath();ctx.ellipse(0,0,22,11,0,0,7);ctx.stroke();
+  ctx.strokeStyle='#ffe2a0';ctx.beginPath();ctx.ellipse(0,0,22,11,0,-Math.PI/2,-Math.PI/2+r*Math.PI*2);ctx.stroke();ctx.restore();
+  ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=`이동 ${Math.max(0,GATE_HOLD-P.gateT).toFixed(1)}초`;
+  ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y+25);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y+24);
 }
 function drawGate(g){
   const p=toScreen(g.x,g.y);ctx.save();ctx.translate(p.x,p.y);
