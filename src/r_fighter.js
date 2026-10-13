@@ -13,9 +13,9 @@ function drawFighter(e,isP){
     if(!f){if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
     const k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
     const gb=heroGarb(),img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
-    // 일대제자부터 문파 망토 (도트 몸이 코드 사람보다 1.2배 크다)
-    if(gb&&gb.pal.cape&&!flash){const tr=e.moving?7:0,wv=Math.sin(time*8);ctx.save();ctx.translate(-2,-8);drawCape(gb.pal,tr,wv,1.2);ctx.restore()}
     ctx.drawImage(img,f[0],0,f[1],f[2],-f[3]*k,-f[2]*k+3-f[4]*k,f[1]*k,f[2]*k);
+    // 직위 표식 (망토 대신, 사용자 결정 2026-10-13): 머리 위 문장 + 점
+    if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,-f[2]*k+3-f[4]*k-10);
     if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
     if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
     ctx.restore();return}
