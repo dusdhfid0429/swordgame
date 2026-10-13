@@ -3,7 +3,7 @@ const scrEl=$('scr'),box=$('scrbox');
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;const sv=loadGame();
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
-   <div class="center">${sv&&sv.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${sv&&sv.alive?'':' pri'}" data-s="new" type="button">${sv&&sv.G&&sv.G.lives?'다음 생 시작':'새 인생'}</button>${sv&&sv.G&&sv.G.history&&sv.G.history.length?'<button class="btn" data-s="hist" type="button">강호사</button>':''}</div>
+   <div class="center">${sv&&sv.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${sv&&sv.alive?'':' pri'}" data-s="new" type="button">${sv&&sv.G&&sv.G.lives?'다음 생 시작':'새 인생'}</button>${sv&&sv.G&&sv.G.history&&sv.G.history.length?'<button class="btn" data-s="hist" type="button">강호사</button>':''}${sv&&sv.G?'<button class="btn" data-s="reset" type="button" title="세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button>':''}</div>
    <div class="card">${pHelp()}</div>
    <p class="note" style="text-align:center">진행은 이 브라우저에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p>`;
 }
@@ -12,6 +12,7 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='new'){const sv=loadGame();if(sv&&sv.G){G=Object.assign(G,sv.G);if(sv.alive){G.nextStatus=G.nextStatus??1}}showCreate()}
   else if(s==='hist'){const sv=loadGame();if(sv)G=Object.assign(G,sv.G);box.innerHTML=`<h2 class="title" style="font-size:40px">강호사</h2>${pHist()}<div class="center"><button class="btn" data-s="back" type="button">돌아가기</button></div>`}
   else if(s==='back')showTitle();
+  else if(s==='reset'){if(!confirm('세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작합니다. 되돌릴 수 없습니다.'))return;STORE.del(SAVE_KEY);G=G0();showCreate()}
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s.startsWith('gg:')){CR.gg=+s.slice(3);renderCreate()}
   else if(s.startsWith('cls:')){CR.cls=s.slice(4);renderCreate()}
@@ -42,7 +43,7 @@ function renderCreate(){
       <div class="choice">${CR.opts.map(i=>{const g=gl[i];return `<button type="button" class="opt" data-s="gg:${i}" aria-pressed="${CR.gg===i}"><b>${g[0]}</b><span class="num">${g[1]} / ${g[2]} / ${g[3]} / ${g[4]}</span>${g[5]?'':'<span class="dim">창작 근골</span>'}</button>`}).join('')}</div></div>
     <div class="card"><h4>처음 잡을 무기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급을 받는다</small></h4>
       <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>
-    <div class="center"><button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">13세, 강호에 태어나다</button></div>`);
+    <div class="center"><button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">8세, 강호에 태어나다</button></div>`);
   const ni=$('nmi');if(ni)ni.addEventListener('input',()=>CR.name=ni.value);
 }
 function beginLife(){
@@ -114,7 +115,7 @@ addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
   if(k==='escape'){closePanels();return}
   if(!playing)return;keys[k]=true;if(k.startsWith('arrow')||k===' '||k==='tab')e.preventDefault();
-  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist',KeyG:'world'}[e.code];
+  const menu={KeyK:'char',KeyB:'arts',KeyI:'bag',KeyP:'ally',KeyL:'life',KeyH:'hist',KeyG:'world',KeyN:'story'}[e.code];
   if(menu){openPanel(menu);return}
   if(paused)return;
   if(e.code in KEYF){useForm(KEYF[e.code]);return}

@@ -5,7 +5,9 @@ let map,objs,lamps,builds,rails,ground,P=null,mobs=[],allies=[],fx=[],texts=[],e
 let paused=true,playing=false;
 const ARTS=buildArts();
 // G: what outlives a single life (lineage, house, history)
-let G={lives:0,history:[],tombs:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null};
+// G.W(세력 힘·관계)·G.seal(봉문)·G.occ(점령)·G.wars(지난 대전)는 생을 넘어 남는 세상 상태 (g_story.js). '처음부터 새로'만 G0()로 되돌린다
+const G0=()=>({lives:0,history:[],tombs:[],house:null,storage:{mats:{},bag:[]},cal:0,weather:'맑음',wT:20,bossT:{},giyeon:null,gT:120,wisCarry:0,nextStatus:1,bonusVit:0,heir:null,family:null,W:null,seal:{},occ:{},wars:[]});
+let G=G0();
 let itemId=0;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -13,7 +15,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
-  P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:13,life:0,vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
+  P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiAcc:0,sim:null,sims:{},qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],

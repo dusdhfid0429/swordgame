@@ -9,7 +9,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 메뉴: 창 아홉 + 설정 줄, 질주·말·운기 단추 없음, 중복 없음
   await p.tap('#tmenu');await p.waitForTimeout(150);
   const m=await p.evaluate(()=>{const acts=[...document.querySelectorAll('#wbody [data-act]')].map(b=>b.dataset.act);const grid=[...document.querySelectorAll('#wbody .mbtn')].map(b=>b.querySelector('b').textContent);return{acts,grid,dup:acts.length!==new Set(acts).size}});
-  ok(`메뉴 창 목록 ${m.grid.join('·')}`,m.grid.join()==='인물,무공,행낭,동료,생활,임무,강호사,천하 지도,수련');
+  ok(`메뉴 창 목록 ${m.grid.join('·')}`,m.grid.join()==='인물,무공,행낭,동료,생활,임무,정세,강호사,천하 지도,수련');
   ok('메뉴에 질주·말·운기 없음, 설정 줄에 기록·조작법·PC 조작, 중복 없음',!m.acts.includes('run')&&!m.acts.includes('ride')&&!m.acts.includes('medit')&&m.acts.includes('save')&&m.acts.includes('open:help')&&m.acts.includes('ctl:k')&&!m.dup);
   await p.evaluate(()=>closePanels());
   // 2. 빠른 버튼: 질주 토글, 말이 곁에 있을 때만 승마, 내공이 비면 운기
