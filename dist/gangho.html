@@ -1479,7 +1479,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
-      if(d.ranged)eprojs.push({x:e.x,y:e.y,vx:(tg.x-e.x)/dd*10,vy:(tg.y-e.y)/dd*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'});
+      if(d.ranged){const ux=dd>1e-3?(tg.x-e.x)/dd:(e.fx||1),uy=dd>1e-3?(tg.y-e.y)/dd:(e.fy||0);eprojs.push({x:e.x,y:e.y,vx:ux*10,vy:uy*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'})}   // 겹쳐 선 상대(dd 0)는 바라보는 쪽으로: NaN 화살 방지
       else if(dist(e,tg)<reach+.3){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
     return}
   e.cd-=dt;e.moving=false;
@@ -1488,7 +1488,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   for(const o of mobs)if(o!==e&&o.hp>0){const q=dist(o,e);if(q<.6&&q>0)moveEnt(e,(e.x-o.x)/q*.02,(e.y-o.y)/q*.02)}
 }
 function updateEprojs(dt){
-  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y)&&!(P.perch&&dist(q,P)<2.2))q.left=0;
+  for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;if(!isFinite(q.x)||!isFinite(q.y)){q.left=0;continue}q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y)&&!(P.perch&&dist(q,P)<2.2))q.left=0;
     const sf=q.src&&q.src.d&&q.src.d.fac,hp=!sf||mobFoeP(q.src);
     if(hp&&q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
     if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}
