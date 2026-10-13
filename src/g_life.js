@@ -48,7 +48,7 @@ function updateP(dt){
   P.moving=false;const sp=moveSpd()*dt;P.runT=Math.max(0,(P.runT||0)-dt);
   if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e;
     if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:'170,200,255'});
-    if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L)}}
+    if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L);ggLand(L)}}
   else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
   else{
@@ -122,7 +122,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   const hostP=d.fac?mobFoeP(e):d.hostile;
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
   if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
-  if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
+  if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)&&!(e.lost>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
   if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
@@ -177,10 +177,10 @@ function rideToggle(){
 }
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
-  if(P.hp<=0)return;const st=ggNext(),qi=GG_QI[st-1];if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
+  if(P.hp<=0)return;const st=ggNext(),qi=ggQi(st);if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
-  const LEAP=leapRange()*GG_LEN[ggOf().g]*(st===2?1.4:st===3?2:1);let land=null,to=null;
+  const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;
   // 지붕·나무 위로 (말을 탔으면 못 오른다)
   if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
@@ -328,7 +328,7 @@ function applySave(data){data=migrateSave(data);
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     // 시계(time)는 새로 시작하므로 지난 판의 시각이 적힌 연출 상태는 버린다. 안 버리면 회피 도트(P.dA)·보법 도트(P.bA)에 갇혀 이동 모션이 안 나오고 '장 번호 없음' 경고가 이어진다 (사용자 보고 2026-10-12)
-    P.dA=0;P.bA=null;P.ggc=null;P.ss2=0;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
+    P.dA=0;P.bA=null;P.ggc=null;P.ggSpd=null;P.ss2=0;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();afterLoad(data);return true}
   return false;
 }

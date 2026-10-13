@@ -6,6 +6,20 @@ const ALLY=GD.ALLY;
 const SECT_DATA=GD.SECT_DATA;
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
+// 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
+// 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
+const START=GD.START||{};
+function startSet(s){const st=START[s.id]||{};const art=s.arts.find(a=>a.n===st.art&&!a.hi)||s.arts.find(a=>!a.hi)||s.arts[0];
+  return{w:st.w||art.cls,art,bob:st.bob&&typeof BOBS!=='undefined'&&BOBS[st.bob]?st.bob:null,gg:st.gg&&typeof GGS!=='undefined'&&GGS[st.gg]?st.gg:null,sim:typeof SIM!=='undefined'&&SIM[`N_${s.id}_1`]?`N_${s.id}_1`:null}}
+function startSetTxt(s){const k=startSet(s),n=[`[${k.art.n}]`];if(k.bob)n.push(`보법 [${BOBS[k.bob].n}]`);if(k.gg)n.push(`경공 [${GGS[k.gg].n}]`);if(k.sim)n.push(`심법 [${SIM[k.sim].n}]`);return n.join(' · ')}
+function giveStartSet(s){const k=startSet(s),got=[];
+  if(!P.arts[k.art.id]){P.arts[k.art.id]={p:0,f:ARTS[k.art.id].forms.map((f,i)=>i===0)};got.push(`${k.art.n} · ${ARTS[k.art.id].forms[0].n}`)}
+  if(k.bob&&learnBob(k.bob,1))got.push(BOBS[k.bob].n);
+  if(k.gg&&learnGg(k.gg,1))got.push(GGS[k.gg].n);
+  if(k.sim&&!simKnown(k.sim)){simLearn(SIM[k.sim]);got.push(SIM[k.sim].n)}
+  // 주력 무기가 없으면 수련용 병기 하나 (권은 맨손)
+  if(k.w!=='권'&&!(P.eq.weapon&&P.eq.weapon.cls===k.w)&&!P.bag.some(it=>it.slot==='weapon'&&it.cls===k.w)&&P.bag.length<24){const w=mkWeapon(k.w,.85,0);P.bag.push(w);got.push(w.name)}
+  return got}
 const artSect=artId=>{const a=typeof ARTS!=='undefined'&&ARTS[artId];if(a&&a.made)return(a.sect&&SECTS[a.sect])||null;const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 // 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
 const TIERN=GD.TIERN,FIVE=GD.FIVE||[];   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
@@ -55,7 +69,7 @@ let sectView=null;
 function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
-  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
+  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
@@ -80,7 +94,7 @@ function sectDetail(s,hq){
   const cur=same?sectMissions(s).map(q=>q.key):[],old=same?P.quests.map((q,i)=>[q,i]).filter(([q])=>q.sect===s.id&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
     return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${on.mob.join('·')} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join(''):'';
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
-    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 고급 무공 [${hi.n}]의 첫 초식을 바로 익힌다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
+    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
@@ -103,9 +117,8 @@ function sectAct(a,x,y){const c={a,x,y,done:false,r:undefined};runHooks('sectAct
 function sectActBase(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
-    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const h=s.arts.find(q=>q.hi);
-      if(!P.arts[h.id])P.arts[h.id]={p:0,f:ARTS[h.id].forms.map((f,i)=>i===0)};
-      log(`${s.n}에 입문했습니다. 고급 무공 [${h.n}]의 첫 초식 [${ARTS[h.id].forms[0].n}]을(를) 익혔습니다.`,'xp');showBanner(`${s.n} 입문`,h.n);
+    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const k=startSet(s),got=giveStartSet(s);
+      log(`${s.n}에 입문했습니다. 입문공으로 ${got.map(n=>`[${n}]`).join(' · ')}을(를) 받았습니다.`,'xp');showBanner(`${s.n} 입문`,`입문공 · ${k.art.n}`);
       P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
     case'sleave':{const s=SECTS[P.sect];if(!s)return true;if(!confirm(`${s.n}에서 하산할까요? 익힌 무공은 남지만 고급 무공의 다음 초식은 더 받을 수 없습니다.`))return true;
       P.sect=null;log(`${s.n}에서 하산했습니다.`,'info');return true}

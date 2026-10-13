@@ -2946,5 +2946,313 @@
     "paeng",
     "moyong",
     "jegal"
-  ]
+  ],
+  "START": {
+    "shaolin": {
+      "w": "권",
+      "art": "나한권",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "mudang": {
+      "w": "검",
+      "art": "양의검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "hwasan": {
+      "w": "검",
+      "art": "매화검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "emei": {
+      "w": "검",
+      "art": "금정검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "kunlun": {
+      "w": "검",
+      "art": "곤륜검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "kongtong": {
+      "w": "검",
+      "art": "복호검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "jeomchang": {
+      "w": "검",
+      "art": "사일검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "cheongseong": {
+      "w": "검",
+      "art": "송풍검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "jongnam": {
+      "w": "검",
+      "art": "종남검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "gaebang": {
+      "w": "권",
+      "art": "연환장",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "namgung": {
+      "w": "검",
+      "art": "창궁검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "moyong": {
+      "w": "검",
+      "art": "연환쾌검",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "paeng": {
+      "w": "도",
+      "art": "오호단문도",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "eon": {
+      "w": "권",
+      "art": "언가권",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "jegal": {
+      "w": "궁",
+      "art": "팔진궁술",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "hwangbo": {
+      "w": "권",
+      "art": "황보권",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "ak": {
+      "w": "창",
+      "art": "악가창법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "dang": {
+      "w": "궁",
+      "art": "당가비전궁",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "hyeongsan": {
+      "w": "검",
+      "art": "형산검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "cheonsan": {
+      "w": "검",
+      "art": "천산검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "taesan": {
+      "w": "검",
+      "art": "태산검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "yangga": {
+      "w": "창",
+      "art": "양가창법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "jeonjin": {
+      "w": "검",
+      "art": "전진검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "gomyo": {
+      "w": "검",
+      "art": "옥녀검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "ungga": {
+      "w": "검",
+      "art": "운가검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "seolsan": {
+      "w": "검",
+      "art": "설산검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "jangbaek": {
+      "w": "검",
+      "art": "장백검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "danri": {
+      "w": "도",
+      "art": "단리도법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "sanggwan": {
+      "w": "검",
+      "art": "상관검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "danmok": {
+      "w": "창",
+      "art": "단목창법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "bota": {
+      "w": "권",
+      "art": "보타장",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "mosan": {
+      "w": "검",
+      "art": "모산검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "nabu": {
+      "w": "권",
+      "art": "나부권",
+      "bob": "b_chil",
+      "gg": "g_cheongpung"
+    },
+    "haenam": {
+      "w": "검",
+      "art": "해남검법",
+      "bob": "b_seom",
+      "gg": "g_cheongpung"
+    },
+    "noklim": {
+      "w": "도",
+      "art": "녹림도법",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "janggang": {
+      "w": "창",
+      "art": "수로창법",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "haomun": {
+      "w": "권",
+      "art": "하오권",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "sama": {
+      "w": "검",
+      "art": "사마검법",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "dongjeong": {
+      "w": "봉",
+      "art": "동정곤법",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "yasu": {
+      "w": "권",
+      "art": "야수권",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "gwangpung": {
+      "w": "도",
+      "art": "광풍도",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "taeyang": {
+      "w": "창",
+      "art": "태양창",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "bukhae": {
+      "w": "권",
+      "art": "빙백장",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "podal": {
+      "w": "권",
+      "art": "밀종대수인",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "daeroe": {
+      "w": "권",
+      "art": "대력금강장",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "mandok": {
+      "w": "권",
+      "art": "오독장",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "hyeolrang": {
+      "w": "도",
+      "art": "혈랑참",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "gwiyeong": {
+      "w": "검",
+      "art": "귀영검법",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "heukpung": {
+      "w": "도",
+      "art": "흑풍도",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    },
+    "cheonma": {
+      "w": "권",
+      "art": "혈마장",
+      "bob": "b_chil",
+      "gg": "g_yeonun"
+    },
+    "geumgun": {
+      "w": "창",
+      "art": "금군창법",
+      "bob": "b_seom",
+      "gg": "g_yeonun"
+    }
+  }
 }
