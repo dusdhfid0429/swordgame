@@ -9,7 +9,8 @@ const FACN=GD.FACN;
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
 // 누가 누구와 싸우나: 정↔사, 마교는 모두와, 관군(군부)은 사파·마교와. 정파와 관군은 서로 건드리지 않는다 (2026-10-10 군부)
 const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사','관'],'관':['사','마']};
-const facFoe=(a,b)=>!!a&&!!b&&a!==b&&!!FAC_FOE[a]&&FAC_FOE[a].includes(b);
+// 천하대전 중에는 구도(G.war.plan)가 적·아군을 정한다 (g_story.js warFoe). 구도에 없는 세력은 평소 표를 따른다
+const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='function'?warFoe(a,b):null;return w!=null?w:!!FAC_FOE[a]&&FAC_FOE[a].includes(b)};
 // 업보가 -100 아래로 떨어진 사람은 조정이 쫓는 죄인: 관군이 편을 가리지 않고 덤빈다
 const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적

@@ -7,6 +7,8 @@ function questFrom(q){
   if(q.sect&&SECTS[q.sect]){const s=SECTS[q.sect];return{n:s.n,at:`본산 ${hqPlace(s)}의 ${masterTitle(s)}, 또는 성도의 ${s.n} 연락관`,merit:`${s.n} 공적 +${q.merit}`}}
   if(q.maeng&&typeof MAENG!=='undefined'&&MAENG[q.maeng]){const M=MAENG[q.maeng];return{n:M.n,at:`${PROV[M.prov].n} ${M.city} 성내 북쪽 ${M.n}`,merit:`${M.short} 공적 +${q.merit}`}}
   if(q.story)return{n:'강호 정세',at:'정세 창(N)의 사건 카드에서 바로 보고',merit:''};
+  if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
+  if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}
 function questProg(q){const kill=q.kind==='kill',have=kill?q.have||0:Math.min(q.cnt,P.mats[q.mat]||0);return{kill,have,done:have>=q.cnt,pct:Math.min(100,Math.round(have/q.cnt*100))}}
 // 대상이 나오는 곳 / 재료를 얻는 곳

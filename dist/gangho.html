@@ -557,6 +557,7 @@ function joinBlock(s){
   const al=ALLY[s.al];
   if(P.side!==al.side)return `${SIDES[al.side].n}만 받는다.`;
   if(G.seal&&G.seal[s.id])return `${s.n}은(는) 봉문 중이라 제자를 받지 않는다.`;
+  if(G.occ&&G.occ[s.id])return `${s.n} 본산은 점령당해 ${masterTitle(s)}이 없다. 먼저 되찾아야 한다.`;
   if(P.sect===s.id)return '이미 이 문파의 제자다.';
   if(P.sect&&P.sect!=='own'&&SECTS[P.sect])return `이미 ${SECTS[P.sect].n}의 제자다. 먼저 하산(탈퇴)해야 한다.`;
   if(P.sect==='own')return '스스로 세운 문파의 문주다.';
@@ -2014,6 +2015,8 @@ function questFrom(q){
   if(q.sect&&SECTS[q.sect]){const s=SECTS[q.sect];return{n:s.n,at:`본산 ${hqPlace(s)}의 ${masterTitle(s)}, 또는 성도의 ${s.n} 연락관`,merit:`${s.n} 공적 +${q.merit}`}}
   if(q.maeng&&typeof MAENG!=='undefined'&&MAENG[q.maeng]){const M=MAENG[q.maeng];return{n:M.n,at:`${PROV[M.prov].n} ${M.city} 성내 북쪽 ${M.n}`,merit:`${M.short} 공적 +${q.merit}`}}
   if(q.story)return{n:'강호 정세',at:'정세 창(N)의 사건 카드에서 바로 보고',merit:''};
+  if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
+  if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}
 function questProg(q){const kill=q.kind==='kill',have=kill?q.have||0:Math.min(q.cnt,P.mats[q.mat]||0);return{kill,have,done:have>=q.cnt,pct:Math.min(100,Math.round(have/q.cnt*100))}}
 // 대상이 나오는 곳 / 재료를 얻는 곳
@@ -2113,11 +2116,8 @@ hook('tick',()=>{if(!P||!playing)return;wld();const s=PS();
   const due=SEV.filter(e=>s.pick[e.id]==null&&P.age>=e.age);
   if(due.length){const e=due[due.length-1];for(const o of due.slice(0,-1))pickChoice(o,o.ch.length-1,true);if(s.open!==e.id)openEvent(e)}
   if(s.open===SEV[SEV.length-1].id&&P.age>=ST.war)pickChoice(SEV[SEV.length-1],SEV[SEV.length-1].ch.length-1,true);
-  if(!G.war&&P.age>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
+  if(!G.war&&!s.flag.warDone&&P.age>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
 });
-// ---- 천하대전 발발 (전투·점령은 다음 단계. 지금은 구도를 정해 알리고 기록한다) ----
-function warStart(){if(G.war&&G.war.life===P.lifeNo)return;const plan=warPlan();G.war={life:P.lifeNo,y:Math.floor(G.cal),plan,round:0,won:null};
-  showBanner('천하대전',plan.n);log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`)}
 // ---- 해마다: 마교는 저절로 세를 불린다. 지난 대전의 패자는 서서히 힘을 되찾는다 ----
 hook('newYear',()=>{const w=wld();for(const k in STORY.DRIFT)powAdd(k,STORY.DRIFT[k]);
   const last=G.wars[G.wars.length-1];if(last&&last.lost)for(const f of last.lost)powAdd(f,STORY.WIN.loserDrift)});
@@ -2125,8 +2125,7 @@ hook('newYear',()=>{const w=wld();for(const k in STORY.DRIFT)powAdd(k,STORY.DRIF
 hook('kill',e=>{const f=e.d&&e.d.fac;if(!f)return;powAdd(f,e.d.elite?-1:-.3)});
 hook('questDone',q=>{if(q.sect&&SECTS[q.sect])powAdd(alFac(SECTS[q.sect].al),1);else if(q.maeng&&typeof MAENG!=='undefined')powAdd(alFac(q.maeng),1.5)});
 // ---- 죽음: 이번 생의 선택과 대전을 강호사에 남긴다. 세상 상태(G.W 등)는 그대로 다음 생으로 ----
-hook('died',entry=>{const s=PS();entry.story={pick:{...s.pick},war:G.war&&G.war.life===P.lifeNo?G.war.plan.n:null};
-  if(G.war&&G.war.life===P.lifeNo&&!G.wars.some(x=>x.life===P.lifeNo))G.wars.push({life:P.lifeNo,y:G.war.y,n:G.war.plan.n,won:G.war.won,lost:G.war.lost||null});G.war=null});
+hook('died',entry=>{const s=PS();if(warOn())warEnd(true);const last=G.wars[G.wars.length-1];entry.story={pick:{...s.pick},war:last&&last.life===P.lifeNo?last.n:null,me:last&&last.life===P.lifeNo?last.me:null};G.war=null});
 hook('gLoaded',()=>{wld();if(G.war&&(!P||G.war.life!==G.lives+1))G.war=null});
 // ---- 전생의 흔적: 같은 사건을 지난 생들이 어떻게 풀었나 ----
 function pastPicks(e){return G.history.map(h=>{const p=h.story&&h.story.pick&&h.story.pick[e.id];return p==null||p<0?null:`제${h.life}생 ${esc(h.name)}: ${e.ch[p]?e.ch[p].n:'?'}`}).filter(Boolean)}
@@ -2156,6 +2155,103 @@ function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.
     <p class="note">세력의 힘은 사건의 선택, 문파·맹 임무(+1), 세력 무인 처치(고수 -1, 무인 -0.3)로 움직인다. 구도 규칙: 정사 +20 이상이고 마교 ${STORY.WAR[0].cond[1].split('>=')[1]} 이상이면 정사연합, 사마 +20 이상이고 정사 -20 이하면 사마연합, 정사 -40 이하이고 사파 60 이상이면 정마밀약, 아니면 삼파전.</p>`}
 hook('sectAct',c=>{if(c.a!=='spick')return;c.done=true;c.r=true;const e=evOf(c.x);if(e)pickChoice(e,+c.y,false)});
 {const pc=pChar;pChar=function(){return pc()+storyCard()}}
+
+// ================= 3단계: 천하대전 전투 =================
+// 26세에 터져 세 해(26·27·28세) 동안 해마다 한 차례씩 결전이 난다. 차례마다 적 세력의 무인이 밀려오고(습격) 결전 임무가 걸린다.
+// 차례의 승패는 편의 힘 합계 + 플레이어가 결전 임무를 끝냈으면 +25 + 운. 세 차례 뒤 더 많이 이긴 편이 천하를 쥔다 (warEnd → applyWin).
+// 전쟁 중엔 구도가 적·아군을 정한다 (warFoe → g_faction.js facFoe). 「결전 전야」에서 중재를 골랐으면 싸움 없이 끝난다.
+const warOn=()=>!!(G.war&&P&&G.war.life===P.lifeNo);
+function warSideOf(f){if(!warOn())return-1;return G.war.plan.sides.findIndex(s=>s.includes(f))}
+function warFoe(a,b){if(!warOn())return null;const sa=warSideOf(a),sb=warSideOf(b);if(sa<0||sb<0)return null;return sa!==sb}
+const mySide=()=>warSideOf(myFac());
+const sidePow=s=>s.reduce((a,f)=>a+(wld().pow[f]||0),0);
+function warStart(){if(G.war&&G.war.life===P.lifeNo)return;const plan=warPlan();G.war={life:P.lifeNo,y:Math.floor(G.cal),plan,round:0,rounds:[],won:null};
+  showBanner('천하대전',plan.n);log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`);
+  if(PS().flag.mediate){mediate();return}
+  if(plan.sides.length<2){log('맞설 상대가 없어 대전은 흐지부지 끝났다.','info');warEnd();return}
+  warRound()}
+function mediate(){const w=wld();for(const f of FAC4)powAdd(f,-5);for(const k in w.rel)relAdd(k,15);P.fame+=40;P.good+=10;
+  showBanner('중재',`${P.name}의 이름으로 칼을 거두다`);log(`${P.name}의 중재로 세력들이 칼을 거뒀다. 명성 +40, 선업 +10. 모든 세력의 관계 +15.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 천하대전을 중재로 막았다`);
+  G.wars.push({life:P.lifeNo,y:G.war.y,n:'중재',won:null,lost:null,me:'중재'});G.war=null;PS().flag.warDone=true}
+const ENEMY_KINDS=()=>{const me=mySide(),out=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)for(const f of s)out.push(...FAC_KIND[f])});return out};
+function warRound(){const w=G.war,n=w.round+1;if(n>ST.rounds)return warEnd();w.round=n;w.cur={done:false};
+  const me=mySide(),enemy=ENEMY_KINDS();
+  if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
+    log(`제${n}차 결전이 벌어진다. 임무 [${q.n}]: ${enemy.filter((k,i)=>i%2===0).join('·')} 6명을 꺾고 정세 창에서 보고하라.`,'sys');if(playing)raid(n)}
+  else log(`제${n}차 결전이 벌어진다. ${me<0?'당신의 편은 이 싸움에 끼지 않았다.':''}`,'sys');
+  showBanner(`제${n}차 결전`,G.war.plan.n)}
+// 습격: 적 세력 무인이 플레이어 둘레에 나타난다 (무인 넷 + 고수 하나). 비무·무덤 중엔 안 온다
+function raid(n){if(G.duel||!REGION())return;const me=mySide(),facs=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)facs.push(...s)});if(!facs.length)return;
+  let made=0;for(let t=0;t<60&&made<5;t++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;
+    const f=facs[made%facs.length],e=mkFac(f,made===4?1:0,x,y);e.aggro=true;e.raid=n;mobs.push(e);made++}
+  if(made){showBanner('습격',`${facs.map(f=>FAC4N[f]).join('·')}의 무인이 덮쳐 온다`);log(`${facs.map(f=>FAC4N[f]).join('·')}의 무인 ${made}명이 덮쳐 옵니다!`,'dmg')}}
+hook('questDone',q=>{if(!q.war||!warOn())return;G.war.cur.done=true;G.war.cur.q=q.n;log(`제${q.war}차 결전에서 공을 세웠다. 이번 차례에 내 편의 힘 +25.`,'xp')});
+// 한 차례의 승패를 가린다
+function warTally(){const w=G.war,me=mySide();const sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+Math.random()*15);
+  let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0?(w.cur&&w.cur.done?'공':'무'):'-'});
+  const wn=w.plan.sides[best];for(const f of wn)powAdd(f,2);w.plan.sides.forEach((s,i)=>{if(i!==best)for(const f of s)powAdd(f,-2)});
+  log(`제${w.round}차 결전: ${sideName(wn)}이(가) 이겼다${me===best?' (내 편)':me>=0?' (내 편이 밀렸다)':''}.`,best===me?'xp':'dmg');
+  for(const q of P.quests.slice())if(q.war&&q.war===w.round&&!(w.cur&&w.cur.done))P.quests.splice(P.quests.indexOf(q),1);
+  mobs=mobs.filter(m=>!m.raid||m.hp<=0)}
+hook('newYear',()=>{if(!warOn()||G.war.round<1)return;warTally();if(G.war.round>=ST.rounds)warEnd();else warRound()});
+// ================= 4단계: 승자의 힘 =================
+// 가장 많이 이긴 편이 천하를 쥔다. 진 편의 대문파 본산 둘을 점령하고(G.occ, 장문인 대신 점령군 대장), 둘을 봉문시킨다(사파가 이기면 소문파 넷).
+// 점령당한 본산엔 점령군이 주둔하고 가입·임무가 막힌다. 탈환·개문 임무는 그 본산의 대화에서 맡아 정세 창에서 보고한다.
+function warEnd(silent){const w=G.war;if(!w)return;const n=w.plan.sides.length;
+  while(w.rounds.length<ST.rounds&&n>=2){w.round=w.rounds.length+1;w.cur=w.cur||{done:false};warTally()}
+  const wins=w.plan.sides.map((s,i)=>w.rounds.filter(r=>r.win===i).length);let best=0;wins.forEach((v,i)=>{if(v>wins[best]||(v===wins[best]&&sidePow(w.plan.sides[i])>sidePow(w.plan.sides[best])))best=i});
+  const won=n>=2?w.plan.sides[best]:null,lost=won?w.plan.sides.filter((s,i)=>i!==best).flat():[],me=mySide();
+  const rec={life:P.lifeNo,y:w.y,n:w.plan.n,won,lost,sides:w.plan.sides,rounds:w.rounds.map(r=>r.win),me:won?(me===best?'승':me>=0?'패':'-'):'-'};
+  if(won){for(const f of won)powAdd(f,10);for(const f of lost)powAdd(f,-15);
+    const wl=wld();for(const k in wl.rel){const[a,b]=[k[0],k[1]];if(won.includes(a)&&won.includes(b))relAdd(k,10);else if((won.includes(a)&&lost.includes(b))||(won.includes(b)&&lost.includes(a)))relAdd(k,-15)}
+    rec.occ=applyWin(won,lost,me===best?myFac():won[0]);
+    showBanner('천하대전 끝',`${sideName(won)}의 천하`);log(`천하대전이 끝났다. ${sideName(won)}이(가) 천하를 쥐었다.${rec.me==='승'?' 당신은 이긴 편에 섰다: 명성 +50, 은자 +300.':rec.me==='패'?' 당신의 편은 졌다. 명성 +10.':''}`,rec.me==='패'?'dmg':'xp');
+    if(rec.me==='승'){P.fame+=50;P.silver+=300}else if(rec.me==='패')P.fame+=10;P.feats.push(`${Math.floor(P.age)}세 천하대전: ${sideName(won)}의 승리${rec.me!=='-'?' ('+rec.me+')':''}`)}
+  G.wars.push(rec);G.war=null;PS().flag.warDone=true;if(!silent)renderOpen()}
+// 승자의 힘: 점령 WIN.occ곳 + 봉문 (대문파 WIN.seal.big곳, 사파가 이기면 소문파 WIN.seal.small곳)
+function applyWin(won,lost,by){const cand=t=>Object.values(SECTS).filter(s=>lost.includes(alFac(s.al))&&(t==='big'?s.tier==='big':s.tier!=='big'&&s.tier!=='one')&&!G.seal[s.id]&&!G.occ[s.id]&&s.id!=='geumgun');
+  const take=(list,n)=>{const out=[];const byFac={};for(let i=0;i<n&&list.length;i++){list.sort((a,b)=>(byFac[alFac(a.al)]||0)-(byFac[alFac(b.al)]||0)||Math.random()-.5);const s=list.shift();byFac[alFac(s.al)]=(byFac[alFac(s.al)]||0)+1;out.push(s)}return out};
+  const occ=take(cand('big'),STORY.WIN.occ),y=Math.floor(G.cal);for(const s of occ)G.occ[s.id]={by,y,life:P.lifeNo};
+  const sacheon=won[0]==='사',seal=take(cand(sacheon?'small':'big'),sacheon?STORY.WIN.seal.small:STORY.WIN.seal.big);for(const s of seal)G.seal[s.id]={by,y,life:P.lifeNo};
+  if(occ.length)log(`${FAC4N[by]}이(가) ${occ.map(s=>s.n).join('·')} 본산을 점령했다. 점령군이 주둔하고 ${occ.map(s=>masterTitle(s)).join('·')}은 쫓겨났다.`,'dmg');
+  if(seal.length)log(`${seal.map(s=>s.n).join('·')}이(가) 산문을 닫고 봉문했다.`,'dmg');
+  if(P.sect&&(G.occ[P.sect]||G.seal[P.sect]))log(`당신의 문파 ${SECTS[P.sect].n}이(가) ${G.occ[P.sect]?'점령당했다. 본산에서 탈환 임무를 맡을 수 있다':'봉문했다. 본산에서 개문 임무를 맡을 수 있다'}.`,'dmg');
+  return{occ:occ.map(s=>s.id),seal:seal.map(s=>s.id)}}
+// 점령당한 본산: 주둔군이 제 문파 무인 대신 서고 점령군 대장이 지킨다
+hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.hq||!SECTS[R.hq])return;const o=G.occ&&G.occ[R.hq];
+  if(!R._sp)R._sp=R.spawns||[];
+  const m=hqNpc(id);if(m){if(!m._n)m._n=m.n;m.n=o?`${FAC4N[o.by]} 점령군 대장`:G.seal[R.hq]?`${SECTS[R.hq].n} 문지기`:m._n}   // 장문인 자리에 점령군 대장·문지기
+  if(!o){R.spawns=R._sp;return}
+  const[k0,k1]=FAC_KIND[o.by];R.spawns=[[k0,6,inHQ,(x,y)=>mkFac(o.by,0,x,y)],[k1,2,inHQ,(x,y)=>mkFac(o.by,1,x,y)],...R._sp.filter(([k])=>!FAC_KIND[alFac(SECTS[R.hq].al)].includes(k))];
+  if(P&&REG===id&&!mobs.some(m=>m.chief)){let x=20.5,y=8.5;for(let t=0;t<40&&!walkAt(x,y);t++){x=13+Math.random()*14;y=4+Math.random()*13}const e=mkFac(o.by,1,x,y);e.chief=1;e.name=`${FAC4N[o.by]} 점령군 대장`;e.maxHp=Math.round(e.maxHp*1.8);e.hp=e.maxHp;mobs.push(e)}});
+// 본산 대화: 점령·봉문이면 장문인 대신 안내와 임무
+hook('hqDlg',c=>{const s=SECTS[c.n.hq],o=G.occ[s.id],sl=G.seal[s.id];if(!o&&!sl)return;
+  const by=(o||sl).by||'마',key=(o?'recl:':'open:')+s.id,q=P.quests.find(q=>q.key===key),mine=P.sect===s.id,foe=facFoe(by,myFac())||mine;
+  if(o)c.html=`<p class="note">${FAC4N[by]} 점령군 대장: "${foe?`${FACN[myFac()]||''} 놈이 여길 어디라고. 썩 꺼져라!`:`${s.n}은(는) 이제 우리 땅이다. 볼일 없으면 가라.`}"</p>
+    <p>${s.n} 본산은 ${o.y}년 ${FAC4N[by]}에 점령당해 ${masterTitle(s)}이 쫓겨났다. 가입·임무·비급을 쓸 수 없다.</p>
+    ${q?`<p>탈환 임무 [${esc(q.n)}] ${q.have}/${q.cnt} · 정세 창(N)에서 보고</p>`:foe?`<div class="ib">${B('srecl:'+s.id,'탈환 임무 맡기 (주둔군 6명)',{pri:1})}</div>`:'<p class="note">점령군과 싸울 편이 아니면 탈환은 맡을 수 없다.</p>'}`;
+  else c.html=`<p class="note">산문이 닫혀 있다. 문지기: "${mine?`${rankName(s.id)}, 문파는 봉문 중입니다. ${FAC4N[by]}의 눈이 거두어져야 문을 엽니다.`:'봉문 중이라 손님을 받지 않습니다.'}"</p>
+    <p>${s.n}은(는) ${sl.y}년부터 봉문 중이다. 제자를 받지 않고 임무·비급도 없다.</p>
+    ${q?`<p>개문 임무 [${esc(q.n)}] ${q.have}/${q.cnt} · 정세 창(N)에서 보고</p>`:facFoe(by,myFac())||mine?`<div class="ib">${B('sopen:'+s.id,`개문 임무 맡기 (${FAC4N[by]} 무인 5명)`,{pri:1})}</div>`:''}`});
+hook('sectAct',c=>{if(c.a!=='srecl'&&c.a!=='sopen')return;c.done=true;c.r=true;const s=SECTS[c.x];if(!s)return;const recl=c.a==='srecl',rec=recl?G.occ[s.id]:G.seal[s.id];if(!rec)return;
+  const by=rec.by||'마',key=(recl?'recl:':'open:')+s.id;if(P.quests.some(q=>q.key===key))return;
+  const q=recl?{n:`${s.n} 탈환`,kind:'kill',mob:FAC_KIND[by],cnt:6,silver:200,vit:120,fame:25,good:0,have:0,key,sq:{t:'recl',sid:s.id,by}}:{n:`${s.n} 개문`,kind:'kill',mob:FAC_KIND[by],cnt:5,silver:120,vit:80,fame:15,good:0,have:0,key,sq:{t:'open',sid:s.id,by}};
+  P.quests.push(q);log(`임무 [${q.n}]을(를) 맡았습니다. ${FAC4N[by]} 무인을 꺾고 정세 창에서 보고하라.`,'sys')});
+hook('questDone',q=>{if(!q.sq)return;const s=SECTS[q.sq.sid],by=q.sq.by;if(!s)return;
+  if(q.sq.t==='recl'){delete G.occ[s.id];powAdd(by,-5);powAdd(alFac(s.al),5);if(P.sect===s.id)addMerit(s.id,60);mobs=mobs.filter(m=>!m.chief);log(`${s.n} 본산을 되찾았다. ${masterTitle(s)}이 돌아온다.`,'xp');showBanner('탈환',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 본산을 되찾았다`);if(P.reg===`hq_${s.id}`||REGIONS[P.reg]&&REGIONS[P.reg].hq===s.id)runHooks('regionLoaded',P.reg)}
+  else{unsealSects([s.id]);powAdd(alFac(s.al),3);if(P.sect===s.id)addMerit(s.id,40);showBanner('개문',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 산문을 열었다`)}});
+// 정세 창의 천하대전·본산 카드
+function warCard(){const w=G.war;if(!warOn()){const last=G.wars[G.wars.length-1];if(!last||last.life!==P.lifeNo)return '';
+    return `<div class="card"><h4>이번 생의 천하대전 <small class="dim">${last.n}</small></h4><p>${last.won?`${sideName(last.won)}의 승리 (${last.rounds.map((r,i)=>`${i+1}차 ${sideName(last.sides[r])}`).join(' · ')})`:last.n==='중재'?'중재로 칼을 거뒀다':'흐지부지 끝났다'}${last.me&&last.me!=='-'?` · 당신: ${last.me}`:''}</p></div>`}
+  const me=mySide(),q=P.quests.find(q=>q.war===w.round),qi=P.quests.indexOf(q);
+  return `<div class="card"><div class="row2"><h3>천하대전 <small class="dim">${w.plan.n}</small></h3><span class="tag">제${w.round}차 / ${ST.rounds}차</span></div>
+    <p>${w.plan.sides.map((s,i)=>`${sideName(s)} <b class="num">${Math.round(sidePow(s))}</b>${i===me?' <small class="good">내 편</small>':''}`).join(' 대 ')}</p>
+    ${w.rounds.map((r,i)=>`<p class="note">제${i+1}차: ${sideName(w.plan.sides[r.win])} 승 (${r.sc.join(' : ')})</p>`).join('')}
+    ${q?`<p>임무 [${esc(q.n)}] <b class="num ${q.have>=q.cnt?'good':''}">${q.have}/${q.cnt}</b></p><div class="ib">${B('qdone:'+qi,'보고하기',{pri:q.have>=q.cnt,d:q.have<q.cnt})}</div>`:w.cur&&w.cur.done?'<p class="good">이번 차례의 공을 세웠다 (+25). 해가 바뀌면 승패가 갈린다.</p>':me<0?'<p class="note">당신의 편은 이 싸움에 끼지 않았다.</p>':'<p class="note">이번 차례의 임무를 놓쳤다.</p>'}
+    <p class="note">해마다 한 차례씩. 차례의 승패는 편의 힘 합계와 당신의 공(+25), 운으로 갈린다. 세 차례 뒤 더 많이 이긴 편이 천하를 쥐고 진 편의 본산 ${STORY.WIN.occ}곳을 점령하고 ${STORY.WIN.seal.big}곳을 봉문시킨다.</p></div>`}
+function hqCard(){const qs=P.quests.filter(q=>q.sq);if(!qs.length)return '';
+  return `<div class="card"><h4>본산 임무</h4>${qs.map(q=>{const i=P.quests.indexOf(q);return `<p>[${esc(q.n)}] <b class="num ${q.have>=q.cnt?'good':''}">${q.have}/${q.cnt}</b> ${B('qdone:'+i,'보고하기',{pri:q.have>=q.cnt,d:q.have<q.cnt})}</p>`}).join('')}</div>`}
+{const ps=pStory;pStory=function(){const h=ps();const i=h.indexOf('<div class="card"><h4>세력의 힘</h4>');return h.slice(0,i)+warCard()+hqCard()+h.slice(i)}}
 
 // ---------- drawing ----------
 const OUT='rgba(10,7,5,.9)';
@@ -3853,7 +3949,8 @@ const FACN=GD.FACN;
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
 // 누가 누구와 싸우나: 정↔사, 마교는 모두와, 관군(군부)은 사파·마교와. 정파와 관군은 서로 건드리지 않는다 (2026-10-10 군부)
 const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사','관'],'관':['사','마']};
-const facFoe=(a,b)=>!!a&&!!b&&a!==b&&!!FAC_FOE[a]&&FAC_FOE[a].includes(b);
+// 천하대전 중에는 구도(G.war.plan)가 적·아군을 정한다 (g_story.js warFoe). 구도에 없는 세력은 평소 표를 따른다
+const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='function'?warFoe(a,b):null;return w!=null?w:!!FAC_FOE[a]&&FAC_FOE[a].includes(b)};
 // 업보가 -100 아래로 떨어진 사람은 조정이 쫓는 죄인: 관군이 편을 가리지 않고 덤빈다
 const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적

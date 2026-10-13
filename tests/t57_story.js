@@ -34,7 +34,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const t7=await p.evaluate(()=>{for(const e of STORY.EV)if(P.story.pick[e.id]==null&&e.id!=='ev10')P.story.pick[e.id]=2;P.age=25.6;update(.1);const o=P.story.open;P.age=26.01;update(.1);return{o,war:G.war&&G.war.plan.n,pick:P.story.pick.ev10,log:$('log').textContent.includes('천하대전이 터졌다')}});
   ok(`결전 전야 열림(${t7.o}) → 26세 천하대전 ${t7.war}`,t7.o==='ev10'&&!!t7.war&&t7.pick===2&&t7.log);
   // 9. 죽으면 선택이 강호사에 남고, 다음 생도 세상 상태(봉문·힘)를 잇는다. 사건 창에 전생의 흔적
-  const t8=await p.evaluate(()=>{G.W.pow.마=77;const seal=Object.keys(G.seal)[0];die('싸움');return{seal,hist:G.history[G.history.length-1].story,wars:G.wars.length}});
+  const t8=await p.evaluate(()=>{warEnd(true);G.W.pow.마=77;const seal=Object.keys(G.seal)[0];die('싸움');return{seal,hist:G.history[G.history.length-1].story,wars:G.wars.length}});
   await p.waitForTimeout(1200);await p.click('[data-s="rebirth"]');await p.waitForTimeout(200);await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   const t9=await p.evaluate(()=>({age:P.age,ma:G.W.pow.마,seal:Object.keys(G.seal),lives:G.lives,st:P.story.open,hint:(P.age=20,lastYear=19,update(.1),$('wbody').textContent)}));
   ok(`강호사에 선택 ${JSON.stringify(t8.hist.pick).slice(0,40)}…, 대전 기록 ${t8.wars}`,t8.hist&&t8.hist.pick.ev1===0&&t8.wars===1);
