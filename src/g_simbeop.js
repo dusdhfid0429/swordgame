@@ -22,6 +22,9 @@ for(const s of Object.values(SECTS)){const top=SIM_TOP[s.tier]||1,names=SIM_NAME
 // - artEl/fxCol(a): 내 무공(문파 무공 포함)은 내 심법을, 다른 문파의 무공(그 문파 무인이 쓰는)은 그 문파 심법을 따른다.
 const pEl=()=>(P&&simCur().el)||'금';
 const pSchool=()=>(P&&simCur().sc)||'정종';
+// 상극 판정용: 내 쪽은 운용 중 심법, 무인은 문파 심법 속성·계열, 짐승은 없음 (v101 마기 상극)
+const elOf=x=>x===P?pEl():(x&&x.el)||null;
+const scOf=x=>x===P?pSchool():x&&x.sect&&SECTS[x.sect]?simSchoolOf(x.sect):null;
 const simSectEl=sid=>{const l=simOf(sid);return l.length?l[0].el:'금'};
 function artEl(a){if(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))))return simSectEl(a.sect);return pEl()}
 function fxCol(a){const sc=a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id])))?simSchoolOf(a.sect):pSchool();return SCHOOL_FX[sc]||SCHOOL_FX['정종']}
