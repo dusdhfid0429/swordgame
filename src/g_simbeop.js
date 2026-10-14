@@ -25,7 +25,7 @@ const pSchool=()=>(P&&simCur().sc)||'정종';
 const simSectEl=sid=>{const l=simOf(sid);return l.length?l[0].el:'금'};
 function artEl(a){if(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))))return simSectEl(a.sect);return pEl()}
 function fxCol(a){const sc=a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id])))?simSchoolOf(a.sect):pSchool();return SCHOOL_FX[sc]||SCHOOL_FX['정종']}
-const simElHtml=x=>`<b style="color:rgb(${SCHOOL_FX[x.sc]||'235,240,250'})">${x.sc}</b> · <b>${x.el}</b> ${EL[x.el]?EL[x.el].fx:''}`;
+const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${x.el}</b> ${EL[x.el]?EL[x.el].fx:''}`;
 // 심법 특색: 운용 중인 심법의 특색 k 값(SIM_TK 단위: %p 또는 현묘도 점수). 없으면 0
 function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&SECTS[sid].al==='sacheon'?'사공':'정종'}
 const simTraitVal=(x,k)=>x&&x.tr&&x.tr.includes(k)?SIM_TK[k].v*SIM_TQ[x.g]:0;

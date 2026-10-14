@@ -25,8 +25,13 @@ const BEATS=GD.BEATS;
 const elMul=(a,b)=>!a||!b?1:BEATS[a]===b?1.3:BEATS[b]===a?.8:1;
 const FORMN=GD.FORMN;
 // 무공 객체의 c(색)·pt(입자)·elc(뇌기)는 저장되지 않는 getter 로, 그때그때 심법에서 읽는다 (g_simbeop.js artEl/fxCol)
-function artFx(a){delete a.c;delete a.pt;delete a.elc;
+// 어두운 색(마기): 이펙트는 더하기 합성 대신 보통 합성으로 검게 그리고, 글자에는 보랏빛 테두리색(ct)을 쓴다 (사용자 요청 2026-10-14 "마교 무공은 검은색 계열")
+const isDark=c=>{const v=String(c).split(',').map(Number);return v.length===3&&v[0]*.3+v[1]*.6+v[2]*.1<70};
+const HI_DARK='150,40,190';
+const textCol=c=>isDark(c)?HI_DARK:c;
+function artFx(a){delete a.c;delete a.pt;delete a.elc;delete a.ct;
   Object.defineProperty(a,'c',{get(){return fxCol(a)},enumerable:false,configurable:true});
+  Object.defineProperty(a,'ct',{get(){return textCol(fxCol(a))},enumerable:false,configurable:true});
   Object.defineProperty(a,'pt',{get(){return EL[artEl(a)].pt},enumerable:false,configurable:true});
   Object.defineProperty(a,'elc',{get(){return artEl(a)==='뇌'},enumerable:false,configurable:true});return a}
 const REQ=GD.REQ,COST=GD.COST,BONUS=GD.BONUS;

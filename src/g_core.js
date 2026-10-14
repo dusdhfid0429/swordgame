@@ -200,6 +200,8 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   // 음양·뇌기 (심법 속성, 2026-10-13)
   if(el==='양'){e.burn=Math.max(e.burn,3);e.burnD=Math.max(1,d*.09);if(!e.d.boss&&from===P){const l=Math.hypot(e.x-P.x,e.y-P.y)||1;e.kb={x:(e.x-P.x)/l*.2,y:(e.y-P.y)/l*.2}}}
   if(el==='음'){e.slow=Math.max(e.slow,2);if(from===P)P.qi=Math.min(P.maxQi,P.qi+d*.08)}
+  // 마기 (마교 심법, 2026-10-14): 오행·음양 대신 검은 기운. 느려지고 생명·내공을 빨아들인다
+  if(el==='마'){e.slow=Math.max(e.slow||0,1.5);if(from===P&&P.hp>0){P.hp=Math.min(P.maxHp,P.hp+d*.08);P.qi=Math.min(P.maxQi,P.qi+d*.08)}}
   if(el==='뇌'&&Math.random()<.2){e.stun=Math.max(e.stun||0,e.d.boss?.15:.35);addText(e.x,e.y-.4,'뇌격','#cfe8ff')}
   gainMast(X.key,1);
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
@@ -284,7 +286,7 @@ function useForm(i,silent){
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
   const X=mkX(a.id,1+ch.sum/100),r=engage(f),e=P.target&&P.target.hp>0&&dist(P.target,P)<r?P.target:nearest(r);
   P.qi-=Math.round(f.qi*(1-simTv('qcost')/100));P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
-  texts.push({x:P.x,y:P.y,t:ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n,c:`rgb(${a.c})`,life:.9,call:1});exec(f,e,X);return true;
+  texts.push({x:P.x,y:P.y,t:ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n,c:`rgb(${a.ct})`,life:.9,call:1});exec(f,e,X);return true;
 }
 function basicStrike(e){
   if(P.bcd>0||P.gcd>0||!e)return;const useArt=hasWeaponFor(curCls())?P.cur:'base',a=ARTS[useArt];const X=mkX(useArt);X.pj=CLASS[a.cls].pj;
