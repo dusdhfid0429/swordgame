@@ -16,7 +16,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 그리기: 초식·운기조식이 오류 없이 어두운 합성으로 그려진다
   const d=await p.evaluate(()=>{const e=mkMob('늑대',P.x+1,P.y);mobs.push(e);P.target=e;P.hp=P.maxHp;P.qi=P.maxQi;P.inv=9;const X=mkX(P.cur);fArc(X,1.05,1.4,ARTS[P.cur].c,2.5,.5);fx.push({t:'bolt',x:P.x,y:P.y,life:.5,max:.5,col:ARTS[P.cur].c,glow:true});
     let modes=[];const o=ctx.drawImage.bind(ctx);const orig=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'globalCompositeOperation');
-    P.medit=true;for(let i=0;i<6;i++){update(.05);draw()}const dk=fx.filter(f=>f.glow&&isDark(f.col)).length;P.medit=false;return{dk,medK:MED.k>0}});
+    mobs=[];P.target=null;P.path=null;P.hp=P.maxHp;P.medit=true;for(let i=0;i<6;i++){update(.05);draw()}const dk=fx.filter(f=>f.glow&&isDark(f.col)).length;P.medit=false;return{dk,medK:MED.k>0}});
   ok(`어두운 글로우 이펙트 ${d.dk}개, 운기조식 그려짐 ${d.medK}, 오류 ${errs.length}`,d.dk>0&&d.medK&&errs.length===0);
   await p.evaluate(()=>{const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;P.medit=true});await p.waitForTimeout(600);await p.screenshot({path:__dirname+'/shots/magi_medit.png'});
   await p.evaluate(()=>{P.medit=false;P.qi=P.maxQi;const X=mkX(P.cur);fx.push({t:'spin',x:P.x,y:P.y,r:1.6,w:3,life:.6,max:.6,col:ARTS[P.cur].c,glow:true});fx.push({t:'bolt',x:P.x+1,y:P.y,life:.6,max:.6,col:ARTS[P.cur].c,glow:true,s:1})});await p.waitForTimeout(120);await p.screenshot({path:__dirname+'/shots/magi_fx.png'});
