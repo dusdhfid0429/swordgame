@@ -309,7 +309,13 @@ function buildHouse(){
 function familyTalk(){P.hp=P.maxHp;P.qi=P.maxQi;log(`${P.spouse.name}와(과) 시간을 보냈습니다. 몸과 마음이 회복됩니다.`,'sys');addText(P.x,P.y,'가족','#e98fb0')}
 
 // ================= save / load =================
-const SAVE_KEY='ganghoyunhoe-save-v1';
+// 저장 칸 5개 (사용자 요청 2026-10-14): 1번 칸은 예전 키 그대로라 옛 기록이 그대로 1번 칸이 된다. 마지막에 쓴 칸을 기억해 다음에 제목 화면에서 고른 채로 연다.
+const SAVE_BASE='ganghoyunhoe-save-v1',SLOT_N=5,SLOT_KEY='ganghoyunhoe-slot';
+const saveKeyOf=i=>i?`${SAVE_BASE}-${i}`:SAVE_BASE;
+let SLOT=0;try{SLOT=Math.min(SLOT_N-1,Math.max(0,Math.floor(+(STORE.get(SLOT_KEY)||0))||0))}catch(e){}
+let SAVE_KEY=saveKeyOf(SLOT);
+function setSlot(i){SLOT=Math.min(SLOT_N-1,Math.max(0,i|0));SAVE_KEY=saveKeyOf(SLOT);STORE.set(SLOT_KEY,String(SLOT),1)}
+function loadSlot(i){let d=null;try{d=migrateSave(JSON.parse(STORE.get(saveKeyOf(i))||'null'))}catch(e){}return d}
 function saveGame(silent){
   if(!P)return;
   try{
@@ -319,10 +325,7 @@ function saveGame(silent){
     STORE.set(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
   }catch(e){}
 }
-function loadGame(){
-  let data=null;try{data=migrateSave(JSON.parse(STORE.get(SAVE_KEY)||'null'))}catch(e){}
-  return data;
-}
+function loadGame(){return loadSlot(SLOT)}
 function applySave(data){data=migrateSave(data);
   G=Object.assign(G,data.G);runHooks('gLoaded',data);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();

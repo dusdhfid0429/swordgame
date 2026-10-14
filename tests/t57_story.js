@@ -45,7 +45,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`v2 → v3: 지난 사건 ${Object.keys(t10.pick).length}개 지나감, 봉문 ${JSON.stringify(t10.seal)}`,t10.v===3&&Object.keys(t10.pick).length===7&&t10.pick.ev7===-1&&t10.pick.ev8==null&&JSON.stringify(t10.seal)==='{}'&&t10.W===null);
   // 11. 타이틀 '처음부터 새로' → 세상과 강호사가 지워진다
   await p.evaluate(()=>{saveGame(true);showTitle()});await p.waitForTimeout(200);
-  const hasReset=await p.$('[data-s="reset"]');await p.click('[data-s="reset"]');await p.waitForTimeout(300);
+  const hasReset=await p.$('[data-s="reset"]');await p.click('[data-s="reset"]');await p.waitForTimeout(150);await p.click('[data-s="reset2"]');await p.waitForTimeout(300);   // 화면 안 확인 두 단계 (2026-10-14)
   const t11=await p.evaluate(()=>({lives:G.lives,W:G.W,seal:Object.keys(G.seal).length,hist:G.history.length,sv:localStorage.getItem(SAVE_KEY),create:!!document.querySelector('[data-s="start"]')}));
   ok(`처음부터 새로: 생 ${t11.lives}, 봉문 ${t11.seal}, 강호사 ${t11.hist}, 저장 지움`,!!hasReset&&t11.lives===0&&t11.W===null&&t11.seal===0&&t11.hist===0&&t11.sv===null&&t11.create);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();

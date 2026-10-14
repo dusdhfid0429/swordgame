@@ -7,7 +7,7 @@
 
 ## 실행
 
-`dist/gangho.html` 을 브라우저로 열면 바로 플레이됩니다. 저장은 브라우저 localStorage(`ganghoyunhoe-save-v1`)에 됩니다. 저장에는 형식 번호 `v`가 붙고, 옛 저장은 불러올 때 `src/g_save.js`의 `MIGRATE`가 순서대로 옮깁니다. 저장 형식을 바꾸면 `SAVE_VER`를 올리고 옮기는 함수를 하나 더하세요.
+`dist/gangho.html` 을 브라우저로 열면 바로 플레이됩니다. 저장은 브라우저 localStorage에 저장 칸 5개로 됩니다 (2026-10-14: 1번 칸은 `ganghoyunhoe-save-v1`, 2~5번은 `-1`…`-4`를 붙인 키, 마지막에 쓴 칸은 `ganghoyunhoe-slot`). 제목 화면 목록에서 칸을 고르면 이름·회차·나이·경지·문파·기록 시각과 이어하기·새 생·강호사·처음부터 새로 단추가 나오고, 지우기는 confirm() 대신 화면 안에서 한 번 더 묻습니다 (아티팩트·웹뷰에서 confirm이 막혀 안 눌리던 문제). 코드는 `src/g_life.js`(SLOT·setSlot·loadSlot)와 `src/g_screens.js`(showTitle·slotPanel), 테스트 `tests/t62_slots.js`. 저장에는 형식 번호 `v`가 붙고, 옛 저장은 불러올 때 `src/g_save.js`의 `MIGRATE`가 순서대로 옮깁니다. 저장 형식을 바꾸면 `SAVE_VER`를 올리고 옮기는 함수를 하나 더하세요.
 
 ## 수정 후 빌드
 
