@@ -1,18 +1,38 @@
 // ================= title, 캐릭터 생성, 윤회 =================
 const scrEl=$('scr'),box=$('scrbox');
+// 제목 화면: 저장 칸 5개 목록. 칸을 고르면 그 칸의 이름·회차·나이·경지·문파·저장 시각과 단추(이어하기·새 생·강호사·지우기)가 나온다. 지우기는 confirm() 대신 화면 안에서 한 번 더 묻는다 (아티팩트·웹뷰에서 confirm이 막혀 '처음부터 새로'가 안 눌리던 문제, 사용자 보고 2026-10-14)
+let slotAsk=false;
+function slotInfo(i){const sv=loadSlot(i);if(!sv||!sv.G)return null;const p=sv.P||{},h=sv.G.history||[],last=h[h.length-1],alive=!!(sv.alive&&sv.P);
+  const name=alive?p.name:last?last.name:'',life=alive?(p.lifeNo||(sv.G.lives||0)+1):(sv.G.lives||0);
+  const sect=alive?(p.sect==='own'?p.sectName:p.sect&&SECTS[p.sect]?SECTS[p.sect].n:''):last&&last.sect||'';
+  const realm=alive?(RANKS[p.realm|0]||''):last?last.realm:'';
+  let when='';try{when=new Date(sv.t||0).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){}
+  return{sv,alive,name:name||'이름 없음',life,age:Math.floor(p.age||0),sect,realm,when:sv.t?when:'',lives:sv.G.lives||0,hist:h.length}}
+function slotRow(i,sel){const s=slotInfo(i);const t=s?`<b>${i+1}번 · ${esc(s.name)}</b><span>${s.alive?`${s.life}회차 · ${s.age}세 · ${esc(s.realm)}${s.sect?' · '+esc(s.sect):''}`:`${s.lives}회차 마침 · 다음 생 대기`}${s.when?` · <span class="dim">${s.when}</span>`:''}</span>`:`<b>${i+1}번 · 빈 칸</b><span class="dim">새로 시작할 수 있다</span>`;
+  return `<button type="button" class="opt slot" data-s="slot:${i}" aria-pressed="${sel}">${t}</button>`}
+function slotPanel(){const i=SLOT,s=slotInfo(i);
+  if(!s)return `<div class="card"><p>${i+1}번 칸은 비어 있다. 새 인생을 시작하면 이 칸에 기록된다.</p><div class="center"><button class="btn pri" data-s="new" type="button">새 인생</button></div></div>`;
+  const body=s.alive?`<p><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · 경지 ${esc(s.realm)} · 문파 ${s.sect?esc(s.sect):'없음'}${s.when?` · 기록 ${s.when}`:''}</p>`:`<p>${s.lives}번의 생을 마쳤다. 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` · 기록 ${s.when}`:''}</p>`;
+  const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
+    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
+  return `<div class="card" id="slotinfo">${body}${btns}</div>`}
 function showTitle(){
-  playing=false;paused=true;scrEl.hidden=false;const sv=loadGame();
+  playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
-   <div class="center">${sv&&sv.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${sv&&sv.alive?'':' pri'}" data-s="new" type="button">${sv&&sv.G&&sv.G.lives?'다음 생 시작':'새 인생'}</button>${sv&&sv.G&&sv.G.history&&sv.G.history.length?'<button class="btn" data-s="hist" type="button">강호사</button>':''}${sv&&sv.G?'<button class="btn" data-s="reset" type="button" title="세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button>':''}</div>
+   <div class="slots">${Array.from({length:SLOT_N},(_,i)=>slotRow(i,i===SLOT)).join('')}</div>${slotPanel()}
    <div class="card">${pHelp()}</div>
-   <p class="note" style="text-align:center">진행은 이 브라우저에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p>`;
+   <p class="note" style="text-align:center">진행은 고른 칸에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p>`;
 }
+function refreshSlots(){const l=box.querySelector('.slots');if(l){l.innerHTML=Array.from({length:SLOT_N},(_,i)=>slotRow(i,i===SLOT)).join('');const p=$('slotinfo')||box.querySelector('.slots+.card');if(p)p.outerHTML=slotPanel()}}
 box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.disabled)return;const s=b.dataset.s;
+  if(s.startsWith('slot:')){setSlot(+s.slice(5));G=G0();slotAsk=false;refreshSlots();return}
   if(s==='cont'){const sv=loadGame();if(applySave(sv)){startPlay(false)}else showCreate()}
   else if(s==='new'){const sv=loadGame();if(sv&&sv.G){G=Object.assign(G,sv.G);if(sv.alive){G.nextStatus=G.nextStatus??1}}showCreate()}
   else if(s==='hist'){const sv=loadGame();if(sv)G=Object.assign(G,sv.G);box.innerHTML=`<h2 class="title" style="font-size:40px">강호사</h2>${pHist()}<div class="center"><button class="btn" data-s="back" type="button">돌아가기</button></div>`}
   else if(s==='back')showTitle();
-  else if(s==='reset'){if(!confirm('세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작합니다. 되돌릴 수 없습니다.'))return;STORE.del(SAVE_KEY);G=G0();showCreate()}
+  else if(s==='reset'){slotAsk=true;refreshSlots()}
+  else if(s==='noreset'){slotAsk=false;refreshSlots()}
+  else if(s==='reset2'){STORE.del(SAVE_KEY);G=G0();slotAsk=false;showCreate()}
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s.startsWith('gg:')){CR.gg=+s.slice(3);renderCreate()}
   else if(s.startsWith('cls:')){CR.cls=s.slice(4);renderCreate()}
