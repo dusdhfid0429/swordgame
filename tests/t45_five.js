@@ -13,7 +13,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   console.log(r.map(x=>`${x.n} ${x.name} 무공${x.arts}(고급 ${AGRN(x.hiG)}·일반 ${x.loG.join('/')}) 맵${x.maps} 인원${x.own}`).join('\n'));
   function AGRN(g){return g}
   ok('오대세가 다섯은 대문파 등급으로 표시된다',r.length===5&&r.every(x=>x.tier==='big'&&x.name==='오대세가'));
-  ok('무공 셋(일반 둘 상승·고급 절정), 맵 4장(산문·외원·본산·후산), 본산 인원 9, 입지 기본 300',r.every(x=>x.arts===3&&x.hiG===3&&x.loG.every(g=>g===2)&&x.maps===4&&x.own===9&&x.base));
+  ok('무공 셋(입문공 하승·일반 상승·고급 절정), 맵 4장(산문·외원·본산·후산), 본산 인원 9, 입지 기본 300',r.every(x=>x.arts===3&&x.hiG===3&&x.loG.slice().sort().join()==='0,2'&&x.maps===4&&x.own===9&&x.base));
   const mid=await p.evaluate(()=>{const s=SECTS.hwangbo;return {tier:s.tier,own:REGIONS.hq_hwangbo.spawns.filter(sp=>/무인|고수/.test(sp[0])&&sp[2]===inHQ).reduce((t,sp)=>t+sp[1],0),maps:['_gate',''].map(k=>REGIONS['hq_hwangbo'+k]).filter(Boolean).length}});
   ok(`황보세가는 그대로 중견: 인원 ${mid.own}, 맵 ${mid.maps}`,mid.tier==='mid'&&mid.own===6&&mid.maps===2);
   const dlg=await p.evaluate(()=>{openPanel('npc',NPCS.find(n=>n.id==='jeong'));const t=document.body.innerText;const i=t.indexOf('9파1방'),j=t.indexOf('오대세가'),k=t.indexOf('중견문파');return {i,j,k,nam:t.indexOf('남궁세가')}});

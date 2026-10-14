@@ -22,7 +22,9 @@ const WEAP=CLASS;
 const ELS=GD.ELS;
 const EL=GD.EL;
 const BEATS=GD.BEATS;
-const elMul=(a,b)=>!a||!b?1:BEATS[a]===b?1.3:BEATS[b]===a?.8:1;
+// 마기(사용자 2026-10-14 v101): 마는 다른 모든 속성에 우위(1.3)이고, 다른 속성은 마에 열세(0.8)다. 다만 불가 계열(소림·아미·보타) 심법을 운용하는 상대에게는 거꾸로 취약하다.
+// sa·sb는 공격자·방어자의 심법 계열(pSchool / 문파 simSchoolOf). 속성이 없는 상대(짐승 등)와는 배율 1.
+const elMul=(a,b,sa,sb)=>{if(!a||!b)return 1;if(a==='마'&&b!=='마')return sb==='불가'?.8:1.3;if(b==='마'&&a!=='마')return sa==='불가'?1.3:.8;return BEATS[a]===b?1.3:BEATS[b]===a?.8:1};
 const FORMN=GD.FORMN;
 // 무공 객체의 c(색)·pt(입자)·elc(뇌기)는 저장되지 않는 getter 로, 그때그때 심법에서 읽는다 (g_simbeop.js artEl/fxCol)
 // 어두운 색(마기): 이펙트는 더하기 합성 대신 보통 합성으로 검게 그리고, 글자에는 보랏빛 테두리색(ct)을 쓴다 (사용자 요청 2026-10-14 "마교 무공은 검은색 계열")

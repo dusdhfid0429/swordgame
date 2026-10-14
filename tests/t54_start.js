@@ -10,7 +10,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const d=await p.evaluate(()=>{const bad=[];for(const[id,g]of Object.entries(GGS)){if(id!=='g_basic'&&!(g.tr&&g.tr.length))bad.push(id+' 특징 없음');for(const t of g.tr||[])if(!GG_TK[t.k])bad.push(id+' '+t.k)}
     let n=0;for(const s of Object.values(SECTS)){const st=START[s.id];if(!st){bad.push(s.id+' START 없음');continue}n++;const a=s.arts.find(a=>a.n===st.art);if(!a||a.hi)bad.push(s.id+' 무공 '+st.art);if(a&&a.cls!==st.w)bad.push(s.id+' 무기 '+st.w);
       if(!BOBS[st.bob]||BOBS[st.bob].g!==1)bad.push(s.id+' 보법 '+st.bob);if(!GGS[st.gg]||GGS[st.gg].g!==1)bad.push(s.id+' 경공 '+st.gg);if(!SIM['N_'+s.id+'_1'])bad.push(s.id+' 심법');
-      const k=startSet(s);if(k.art.id!==a.id||ARTS[k.art.id].grade!==sectGrade(s,0))bad.push(s.id+' 등급')}
+      const k=startSet(s);if(k.art.id!==a.id||ARTS[k.art.id].grade!==0)bad.push(s.id+' 등급')}
     return{n,bad}});
   ok(`데이터: 경공 특징 모두 있음, 입문공 세트 ${d.n}문파 (${d.bad.join(', ')||'문제 없음'})`,d.n===51&&!d.bad.length);
   // 2. 절감: 청풍답월은 내공 25% 덜 든다 (12 → 9). 비거리: 제운종은 15% 더 멀리

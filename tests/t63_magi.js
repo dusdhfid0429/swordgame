@@ -7,8 +7,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   const t=await p.evaluate(()=>{const cm=Object.values(SIM).filter(x=>x.sect==='cheonma');P.sims={N_cheonma_1:1,N_cheonma_4:1};P.sim='N_cheonma_4';const a=ARTS[P.cur];
-    return{n:cm.length,allMa:cm.every(x=>x.el==='마'&&x.sc==='마공'),el:pEl(),sc:pSchool(),c:a.c,dark:isDark(a.c),ct:a.ct,elc:a.elc,fx:EL['마'].fx,beats:[elMul('마','양'),elMul('양','마'),elMul('마','금')],html:simElHtml(simCur())}});
-  ok(`천마 심법 ${t.n}개 모두 마공·마 ${t.allMa}, 운용 중 ${t.sc}/${t.el}, 무공 색 ${t.c} (어두움 ${t.dark}), 글자색 ${t.ct}, 뇌기 ${t.elc}`,t.allMa&&t.el==='마'&&t.sc==='마공'&&t.c==='28,6,40'&&t.dark&&t.ct==='150,40,190'&&t.elc===false&&t.beats.join()==='1,1,1'&&t.html.includes('150,40,190'));
+    return{n:cm.length,allMa:cm.every(x=>x.el==='마'&&x.sc==='마공'),el:pEl(),sc:pSchool(),c:a.c,dark:isDark(a.c),ct:a.ct,elc:a.elc,fx:EL['마'].fx,beats:[elMul('마','양'),elMul('양','마'),elMul('마','금'),elMul('마','마'),elMul('마',null),elMul('마','금','마공','불가'),elMul('금','마','불가','마공'),elMul('마','금','마공','도가')],html:simElHtml(simCur())}});
+  ok(`천마 심법 ${t.n}개 모두 마공·마 ${t.allMa}, 운용 중 ${t.sc}/${t.el}, 무공 색 ${t.c} (어두움 ${t.dark}), 글자색 ${t.ct}, 뇌기 ${t.elc}, 상극 ${t.beats.join(',')}`,t.allMa&&t.el==='마'&&t.sc==='마공'&&t.c==='28,6,40'&&t.dark&&t.ct==='150,40,190'&&t.elc===false&&t.beats.join()==='1.3,0.8,1.3,1,1,0.8,1.3,1.3'&&t.html.includes('150,40,190'));
   // 적중: 느려짐 + 생명·내공 흡수
   const h=await p.evaluate(()=>{const e={x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:0,hm:0,el:null,burn:0,slow:0,d:{},isMob:true};P.hp=10;P.qi=10;P.maxHp=200;P.maxQi=200;const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;hitE(X,e,1,0,0);Math.random=window._rnd;
     return{slow:e.slow,d:5000-e.hp,hp:P.hp,qi:P.qi}});

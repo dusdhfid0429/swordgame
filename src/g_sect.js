@@ -6,7 +6,7 @@ const ALLY=GD.ALLY;
 const SECT_DATA=GD.SECT_DATA;
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
 const sectOf=id=>SECTS[id]||null;
-// 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
+// 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식, 등급은 항상 하승 · addSectArts) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
 // 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
 const START=GD.START||{};
 function startSet(s){const st=START[s.id]||{};const art=s.arts.find(a=>a.n===st.art&&!a.hi)||s.arts.find(a=>!a.hi)||s.arts[0];
@@ -39,7 +39,8 @@ function addSectArts(arts,pool,ults,formName,ultName){
     const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
     const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
     const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((x,y)=>x.cd-y.cd)];
-    const g=sectGrade(s,a.hi),mul=GMUL[g];
+    // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
+    const st=START[s.id],g=!a.hi&&st&&st.art===a.n?0:sectGrade(s,a.hi),mul=GMUL[g];
     const forms=pick.map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];
     arts[a.id]=artFx({id:a.id,side,cls:a.cls,el:a.el,n:a.n,forms,sect:s.id,hi:a.hi,
@@ -73,7 +74,7 @@ let sectView=null;
 function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
-  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[sectGrade(s,0)]}~${AGR[sectGrade(s,1)]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
+  const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[Math.min(...s.arts.map(a=>artGrade(a.id)))]}~${AGR[Math.max(...s.arts.map(a=>artGrade(a.id)))]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
   const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
