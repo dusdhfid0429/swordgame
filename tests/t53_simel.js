@@ -12,18 +12,18 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       json:JSON.stringify(a).includes('"c"'),c:a.c,el:pEl(),beats:[elMul('양','음'),elMul('음','뇌'),elMul('뇌','양'),elMul('양','뇌'),elMul('화','금'),elMul('금','화')]}});
   console.log(JSON.stringify(t));
   ok(`심법 ${t.n}개 모두 계열·속성(없는 것 ${t.bad.length}) · 타고난 ${t.base} 잡화점 사 ${t.shop} 소림 ${t.sl} 천마 ${t.cm} · 색 getter(JSON에 없음 ${!t.json}) · 상극 ${t.beats.join(',')}`,
-    t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공뇌'&&!t.json&&t.c==='255,214,120'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
+    t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공마'&&!t.json&&t.c==='255,214,120'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
   // 2. 심법을 바꾸면 같은 무공의 색·속성·뇌기가 바뀐다 (무당 양=도가 파랑, 천마 뇌=마공 보라+뇌기)
   const sw=await p.evaluate(()=>{P.sims={N_mudang_2:1,N_cheonma_4:1,N_hwasan_1:1};const a=ARTS[P.cur],o={};P.sim='N_mudang_2';o.mu=[a.c,pEl(),a.elc,a.pt];P.sim='N_cheonma_4';o.cm=[a.c,pEl(),a.elc];
     P.sim='N_hwasan_1';o.hw=[a.c,pEl(),SCHOOL_FX[simSchoolOf('hwasan')]];const s=ARTS[SECTS.shaolin.arts[0].id];o.other=[s.c,artEl(s)];return o});
   ok(`무당 ${sw.mu.join('/')} · 천마 ${sw.cm.join('/')} · 화산 ${sw.hw.join('/')} · 남의 소림 무공은 소림 심법 색 ${sw.other.join('/')}`,
-    sw.mu[0]==='150,220,255'&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='190,70,255'&&sw.cm[1]==='뇌'&&sw.cm[2]===true&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,214,120'&&sw.other[1]==='금');
-  // 3. 적중 효과는 심법 속성: 무당(양)이면 화상+밀침, 천마(뇌)면 방어 무시, 화산(화)이면 화상, 금(기초)이면 치명타 가산
+    sw.mu[0]==='150,220,255'&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='28,6,40'&&sw.cm[1]==='마'&&sw.cm[2]===false&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,214,120'&&sw.other[1]==='금');
+  // 3. 적중 효과는 심법 속성: 무당(양)이면 화상+밀침, 천마(마)면 느려짐·흡수, 화산(화)이면 화상, 금(기초)이면 치명타 가산
   const h=await p.evaluate(()=>{const mk=()=>({x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:30,hm:0,el:null,burn:0,slow:0,d:{},isMob:true});const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;
-    const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=5000-e.hp;P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;
+    const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=[e.slow,5000-e.hp];P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;
     P.sim='N_hwasan_1';e=mk();hitE(X,e,1,0,0);o.hwa=[e.burn,5000-e.hp];Math.random=window._rnd;return o});
-  ok(`양: 화상 ${h.yang[0]} 밀침 ${h.yang[1]} 피해 ${h.yang[2]} · 뇌(방어 무시) ${h.noe} · 금(방어 무시) ${h.geum} · 화: 화상 ${h.hwa[0]} 피해 ${h.hwa[1]}(방어 30 적용)`,
-    h.yang[0]===3&&h.yang[1]&&h.noe>h.hwa[1]+20&&h.geum>h.hwa[1]+20&&h.hwa[0]===3);
+  ok(`양: 화상 ${h.yang[0]} 밀침 ${h.yang[1]} 피해 ${h.yang[2]} · 마(느려짐 ${h.noe[0]}, 방어 적용) ${h.noe[1]} · 금(방어 무시) ${h.geum} · 화: 화상 ${h.hwa[0]} 피해 ${h.hwa[1]}(방어 30 적용)`,
+    h.yang[0]===3&&h.yang[1]&&h.noe[0]===1.5&&Math.abs(h.noe[1]-h.hwa[1])<=1&&h.geum>h.hwa[1]+20&&h.hwa[0]===3);
   // 4. 무공 창·문파 창에 오행 표시가 없고, 심법 창에는 계열·속성이 보인다
   const v=await p.evaluate(()=>{P.sim='N_mudang_2';closePanels();openPanel('arts');const w=$('win').innerText;closePanels();sectView='mudang';const s=allianceDlg('jeong');
     return{noEl:!/오행 [화수목금토]/.test(w)&&!/검법 · [화수목금토]/.test(w)&&!/권법 · [화수목금토]/.test(w),sim:w.includes('도가')&&w.includes('열양'),sect:!/오행/.test(s)}});

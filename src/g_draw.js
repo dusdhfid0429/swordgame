@@ -136,7 +136,8 @@ function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
 function medPos(q,r,a,c){return[c.x+Math.cos(a)*r,c.y+Math.sin(a)*r*.48+q.h*(r/q.r0)]}
 function drawMedit(front){
   if(!front)medTick();if(MED.k<=0)return;
-  const p=toScreen(P.x,P.y),k=MED.k,col=P.side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255'],c={x:p.x,y:p.y-30};
+  const dk=typeof pSchool==='function'&&pSchool()==='마공';   // 마교 심법: 검은 마기 (사용자 요청 2026-10-14)
+  const p=toScreen(P.x,P.y),k=MED.k,col=dk?['28,6,40','110,20,150']:P.side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255'],c={x:p.x,y:p.y-30};
   ctx.save();
   if(!front){
     // 발밑: 천천히 도는 두 겹의 기운 고리
@@ -152,12 +153,12 @@ function drawMedit(front){
       const pts=[];for(let j=0;j<7;j++)pts.push(medPos(q,q.r+q.v*.035*j,q.a-sw*.035*j,c));
       const[hx,hy]=pts[0],[ex,ey]=pts[6],gr=ctx.createLinearGradient(ex,ey,hx,hy);gr.addColorStop(0,`rgba(${cc},0)`);gr.addColorStop(1,`rgba(${cc},${al})`);
       ctx.strokeStyle=gr;ctx.lineWidth=q.s;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(ex,ey);for(let j=5;j>=0;j--)ctx.lineTo(pts[j][0],pts[j][1]);ctx.stroke()}
-    ctx.globalCompositeOperation='lighter';
+    ctx.globalCompositeOperation=dk?'source-over':'lighter';
     for(const q of MED.parts){const near=1-q.r/q.r0,al=Math.min(1,q.life*3)*k*(.3+.7*near),[x,y]=medPos(q,q.r,q.a,c);
       ctx.fillStyle=`rgba(${col[q.c]},${al*.5})`;ctx.beginPath();ctx.arc(x,y,q.s*.9,0,7);ctx.fill()}
     // 단전의 빛: 기운이 닿을수록 밝아진다
-    ctx.globalCompositeOperation='lighter';const pr=18+12*MED.pulse+2*Math.sin(time*5),g=ctx.createRadialGradient(c.x,c.y+6,0,c.x,c.y+6,pr*1.8);
-    g.addColorStop(0,`rgba(255,250,230,${(.25+.35*MED.pulse)*k})`);g.addColorStop(.4,`rgba(${col[0]},${(.18+.25*MED.pulse)*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
+    ctx.globalCompositeOperation=dk?'source-over':'lighter';const pr=18+12*MED.pulse+2*Math.sin(time*5),g=ctx.createRadialGradient(c.x,c.y+6,0,c.x,c.y+6,pr*1.8);
+    g.addColorStop(0,`rgba(${dk?'10,0,18':'255,250,230'},${(.25+.35*MED.pulse)*k})`);g.addColorStop(.4,`rgba(${col[0]},${(.18+.25*MED.pulse)*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
     ctx.fillStyle=g;ctx.fillRect(c.x-pr*1.8,c.y+6-pr*1.8,pr*3.6,pr*3.6);
   }
   ctx.restore();
@@ -237,15 +238,17 @@ function draw(){
     for(const d of drops)if(d.it.item||d.it.page){const p=toScreen(d.x,d.y);lightAt(p.x,p.y-10,60,.8)}
     if(G.giyeon){const p=toScreen(G.giyeon.x,G.giyeon.y);lightAt(p.x,p.y-20,120,.9)}
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y,220,.8*f.life/(f.max||1.2))}
-    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20,f.t==='bolt'?200:120,.6*f.life/f.max)}
-    for(const q of projs){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
+    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20,f.t==='bolt'?200:120,.6*f.life/f.max)}
+    for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
     ctx.globalCompositeOperation='lighter';
     for(const l of lamps){const p=toScreen(l.x,l.y),g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,120);g.addColorStop(0,`rgba(255,150,60,${.22*dark})`);g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.fillRect(p.x-120,p.y-150,240,240)}
     ctx.globalCompositeOperation='source-over';
   }
   for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r,r*2,r*2)}ctx.globalAlpha=1;
-  ctx.globalCompositeOperation='lighter';for(const f of fx)if(f.glow)drawGlow2(f);for(const q of projs)drawProj(q);
+  // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
+  const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
+  for(const f of fx)if(f.glow){fxMode(f.col);drawGlow2(f)}for(const q of projs){fxMode(q.c);drawProj(q)}ctx.globalCompositeOperation='lighter';HI=WH;
   for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
