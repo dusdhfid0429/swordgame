@@ -769,6 +769,151 @@
    "masterBack": 3,
    "masterHp": 3,
    "masterAtk": 1.3
+  },
+  "AT": {
+   "ev1": {
+    "at": [
+     {
+      "id": "board"
+     },
+     {
+      "id": "jeong"
+     }
+    ],
+    "where": "개봉 의뢰판, 정의맹 연락관",
+    "foe": "혈교 사자"
+   },
+   "ev2": {
+    "at": [
+     {
+      "id": "magyo"
+     },
+     {
+      "id": "sa"
+     }
+    ],
+    "where": "개봉의 마교 밀사, 사천맹 연락관",
+    "foe": "사신의 길목"
+   },
+   "ev3": {
+    "at": [
+     {
+      "id": "arena"
+     }
+    ],
+    "where": "개봉 비무 관리인",
+    "foe": "비무대회 예선"
+   },
+   "ev4": {
+    "at": [
+     {
+      "id": "jeong"
+     },
+     {
+      "hqFac": "정"
+     }
+    ],
+    "where": "정의맹 연락관, 정파 본산 장문인",
+    "foe": "본산을 노리는 자"
+   },
+   "ev5": {
+    "at": [
+     {
+      "id": "sa"
+     },
+     {
+      "maeng": "sacheon",
+      "role": "leader"
+     }
+    ],
+    "where": "사천맹 연락관, 사천맹주",
+    "foe": "사천맹 내분"
+   },
+   "ev6": {
+    "at": [
+     {
+      "id": "jeong"
+     },
+     {
+      "id": "sa"
+     },
+     {
+      "role": "leader"
+     }
+    ],
+    "where": "정의맹·사천맹 연락관, 양 맹주",
+    "foe": ""
+   },
+   "ev7": {
+    "at": [
+     {
+      "id": "post"
+     },
+     {
+      "emperor": 1
+     }
+    ],
+    "where": "역참 마부, 황궁의 황제",
+    "foe": "칙령의 칼날"
+   },
+   "ev8": {
+    "at": [
+     {
+      "id": "jeong"
+     },
+     {
+      "hqFac": "정"
+     },
+     {
+      "id": "magyo"
+     }
+    ],
+    "where": "정의맹 연락관, 정파 본산 장문인, 마교 밀사",
+    "foe": "본산 침공"
+   },
+   "ev9": {
+    "at": [
+     {
+      "id": "inn"
+     },
+     {
+      "role": "elder"
+     }
+    ],
+    "where": "개봉 객잔 주인, 맹의 장로",
+    "foe": "이간의 배후"
+   },
+   "ev10": {
+    "at": [
+     {
+      "id": "jeong"
+     },
+     {
+      "id": "sa"
+     },
+     {
+      "id": "magyo"
+     },
+     {
+      "role": "leader"
+     }
+    ],
+    "where": "연락관·밀사, 양 맹주",
+    "foe": ""
+   }
+  },
+  "FIELD": {
+   "id": "war_field",
+   "ally": 5,
+   "foe": 8,
+   "elite": 2,
+   "chiefHp": 2.5,
+   "chiefAtk": 1.4,
+   "chiefFame": 15,
+   "sneak": 4,
+   "sneakPow": 3,
+   "gunRel": -20,
+   "gunLose": -10
   }
  }
 }
