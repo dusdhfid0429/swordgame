@@ -766,6 +766,7 @@
    ],
    "initFill": 0.6,
    "reinSec": 5,
+   "rush": {"cap": 1, "rein": 0.75, "n": 2},
    "weak": 0.5,
    "masterLoss": 0.1,
    "masterBack": 3,

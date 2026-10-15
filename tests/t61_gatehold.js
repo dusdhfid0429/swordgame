@@ -24,10 +24,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`강제 켜면: 평화 ${f1.b.peace}, 가까운 적 ${f1.b.near}, 범위 포함 ${f1.b.foe}, HUD 단추 켜짐 ${f1.b.hud}/${f1.b.t}`,f1.b.on&&!f1.b.peace&&f1.b.near&&f1.b.foe&&f1.b.hud&&f1.b.t);
   ok(`치면 배신 (등 돌림 ${f1.c.angry}, 악업 +${f1.c.evil}); 끄면 대상 해제 ${!f1.d.target} (등 돌린 상대는 여전히 적 ${!f1.d.peace})`,f1.c.angry&&f1.c.evil>0&&!f1.d.on&&f1.d.target&&!f1.d.peace);
   ok(`양민은 강제를 켜도 범위 초식·자동 대상에서 제외 (${f1.vv.villFoe}/${f1.vv.villNear})`,!f1.vv.villFoe&&!f1.vv.villNear);
-  // 강제공격으로 장문인 끌어내기 + 제자가 죽으면 첫해에도 쇠퇴
+  // 강제공격으로 장문인 끌어내기 + 제자가 죽으면 첫해에도 쇠퇴 (v112: 직위별 손실이라 졸개로 고정)
   const m1=await p.evaluate(()=>{toggleForce(false);const s=SECTS.nabu,ids=[hqId(s),...((REGIONS[hqId(s)]||{}).halls||[]).map(h=>h.id)],mr=ids.find(id=>(REGIONS[id].npcs||[]).some(n=>n.hq===s.id));
     mobs=[];loadRegion(mr);P.reg=mr;const n=(REGION().npcs||[]).find(x=>x.hq);const p0=sectPop('nabu');const off=masterOut(n);toggleForce(true);const e=masterOut(n);const npcGone=!(REGION().npcs||[]).some(x=>x.hq);
-    const same=masterOut(n)===e;const d=mkFac(alFac(s.al),0,P.x+1,P.y,'nabu');mobs.push(d);damage(d,9999,0,0,P);const weak=sectWeak(s);mobs=[];loadRegion(mr);P.reg=mr;const boss2=mobs.some(m=>m.master==='nabu');toggleForce(false);return{off:off===null,e:!!(e&&e.master==='nabu'),npcGone,same,p0,p1:sectPop('nabu'),weak,boss2}});
+    const same=masterOut(n)===e;const d=mkFac(alFac(s.al),0,P.x+1,P.y,'nabu');d.rank=0;mobs.push(d);damage(d,9999,0,0,P);const weak=sectWeak(s);mobs=[];loadRegion(mr);P.reg=mr;const boss2=mobs.some(m=>m.master==='nabu');toggleForce(false);return{off:off===null,e:!!(e&&e.master==='nabu'),npcGone,same,p0,p1:sectPop('nabu'),weak,boss2}});
   ok(`강제 꺼진 채 ${m1.off?'안 나옴':'나옴'}, 켜면 장문인 출전 ${m1.e}·NPC 숨김 ${m1.npcGone}·같은 우두머리 ${m1.same}`,m1.off&&m1.e&&m1.npcGone&&m1.same);
   ok(`제자 1명 죽으면 첫해에도 쇠퇴 (${m1.p0}→${m1.p1}, 쇠퇴 ${m1.weak}, 다시 들어가면 장문인 출전 ${m1.boss2})`,m1.p1===m1.p0-1&&m1.weak&&m1.boss2);
   // PC 키 T, 터치 단추
