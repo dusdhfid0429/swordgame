@@ -1,0 +1,22 @@
+{
+  "RUIN": {
+    "blood": [26, 40], "bodies": [6, 9], "hallBlood": [4, 7], "hallBodies": [1, 3],
+    "rubble": [3, 5], "hallRubble": [1, 2],
+    "dur": {"corpse": 1.4, "rubble": 2.0},
+    "bodyLoot": [
+      {"w": 30, "t": "silver", "n": [15, 60]},
+      {"w": 25, "t": "gear"},
+      {"w": 18, "t": "book"},
+      {"w": 15, "t": "potion", "n": [1, 2]},
+      {"w": 12, "t": "relic"}
+    ],
+    "rubbleLoot": [
+      {"w": 28, "t": "silver", "n": [30, 120]},
+      {"w": 26, "t": "relic"},
+      {"w": 16, "t": "hibook"},
+      {"w": 30, "t": "ash"}
+    ],
+    "relic": {"names": ["옥패", "인장", "향로", "비녀", "검집", "염주", "옥피리"], "hm": 8, "qi": 20, "price": 160},
+    "gearQ": {"big": 1.4, "mid": 1.2, "small": 1.0, "one": 1.5}
+  }
+}
