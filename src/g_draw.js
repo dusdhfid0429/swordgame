@@ -90,6 +90,8 @@ function drawNode(n){
   else if(n.t==='corpse'){if(ready){const gl=ctx.createRadialGradient(0,-4,1,0,-4,22);gl.addColorStop(0,`rgba(255,235,170,${.25+.15*Math.sin(time*3+n.x)})`);gl.addColorStop(1,'rgba(255,220,120,0)');ctx.fillStyle=gl;ctx.fillRect(-24,-28,48,48)}}
   else if(n.t==='rubble'){poly([[-13,2],[-6,-6],[2,-4],[9,-9],[14,1]],lg(-13,14,'#6a635a','#2a2622'));poly([[-9,-1],[-2,-8],[5,-2]],'#3a3330');seg([[-11,-3],[4,-12]],3,'#2a2018');seg([[-2,1],[12,-6]],2.5,'#3a2a1c');
     if(ready){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4+n.y)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-5);ctx.lineTo(1,-9);ctx.lineTo(5,-4);ctx.stroke()}}
+  else if(n.t==='vault'){poly([[-14,-2],[12,-2],[14,-18],[-12,-18]],lg(-14,14,'#4a4a52','#1e1e24'));poly([[-12,-18],[14,-18],[12,-24],[-10,-24]],'#5a5a64');ctx.fillStyle='#c9a14a';ctx.fillRect(-3,-14,6,5);ctx.strokeStyle='#8a7a40';ctx.lineWidth=1;ctx.strokeRect(-11,-16,22,12);
+    if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
   else if(n.t==='chest'){if(!P.chest){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
     poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],P.chest?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
   ctx.restore();
