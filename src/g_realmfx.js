@@ -41,7 +41,7 @@ function gapja(q){const y=Math.round(q/GAPJA*60);if(q<GAPJA*.5)return`${y}년 �
   return n?`${n}갑자${h?' 반':''}`:'반 갑자'}
 
 // ---- 깨달음: 무리 기둥에 더해진다 ----
-function gainEnl(v,why){v=Math.round(v*100)/100;if(!(v>0))return;P.enl=Math.round(((P.enl||0)+v)*100)/100;addText(P.x,P.y-.6,`깨달음 +${v}`,'#e8d08a');if(why)log(`${why} 깨달음 +${v}`,'xp');wallCheck()}
+function gainEnl(v,why){if(typeof enlMul==='function')v*=enlMul();v=Math.round(v*100)/100;if(!(v>0))return;P.enl=Math.round(((P.enl||0)+v)*100)/100;addText(P.x,P.y-.6,`깨달음 +${v}`,'#e8d08a');if(why)log(`${why} 깨달음 +${v}`,'xp');wallCheck()}
 
 // 명산 정상에서 운기조식: 8초마다 깨달음, 일출이면 두 배. 산마다 한도가 있고 이름난 산은 더 크다
 const FAMOUS_PEAK=/^(태산|화산|아미산|숭산|황산|무당산|곤륜산|천산|형산|청성산|종남산)$/;
@@ -114,7 +114,7 @@ function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.rando
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
 function qiTrained(){const s=school();
   if(s==='사공'||s==='사불'){P.qiX=(P.qiX||0)+Math.round(qiGain()*.15*10)/10;recalc()}
-  if(s==='마공'){const x=Math.round(qiGain()*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
+  if(s==='마공'){const x=Math.round(qiGain()*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(typeof maraAdd==='function')maraAdd(MARA.train,'수련');if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
 // ---- 폐관·주화입마를 심법 계열에 맞춘다 ----

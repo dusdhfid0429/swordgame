@@ -16,7 +16,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiAcc:0,sim:null,sims:{},qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiAcc:0,sim:null,sims:{},mara:0,burst:null,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
