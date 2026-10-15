@@ -741,6 +741,8 @@
    "max": 2.5,
    "sealMul": 1.5,
    "kill": 1,
+   "killRank": [1, 2, 4, 8, 15],
+   "hqMul": 2,
    "npcKill": 0.2,
    "roundLoss": 0.08,
    "warLoss": 0.1,

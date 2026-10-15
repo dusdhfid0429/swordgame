@@ -15,14 +15,17 @@ function popSync(){popInit();const w=G.W;if(!w)return;for(const f of FAC4){const
 // 한 세력의 문파 인원을 비율로 늘리거나 줄인다 (사건·전쟁의 효과)
 function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)G.pop[s.id]=Math.max(0,Math.round(G.pop[s.id]*m*10)/10);popSync()}
 function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;const was=G.pop[sid];G.pop[sid]=Math.max(0,Math.round((was-n)*10)/10);popSync();
-  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)P.feats.push(`${Math.floor(P.age)}세에 ${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}}
+  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)P.feats.push(`${Math.floor(P.age)}세에 ${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
+  else{const b=popBase(SECTS[sid]);if(Math.floor(was/b*10)!==Math.floor(G.pop[sid]/b*10))log(`${SECTS[sid].n} 인원 ${Math.round(G.pop[sid])}명 (기준의 ${Math.round(G.pop[sid]/b*100)}%).`,'info')}}   // v112: 10%씩 줄 때마다 알린다
 // 해마다: 자연 증가. 봉문 중이면 수련만 하니 더 늘고, 점령당했으면 늘지 않는다. 멸문(0)은 되살아나지 않는다
 hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
-  for(const s of Object.values(SECTS)){const p=G.pop[s.id];if(!(p>0))continue;if(G.occ&&G.occ[s.id])continue;
+  for(const s of Object.values(SECTS)){const p=G.pop[s.id];if(!(p>0))continue;if(G.occ&&G.occ[s.id])continue;if(G.mdead&&G.mdead[s.id])continue;   // v112: 장문인이 죽어 있으면 제자를 받지 못한다
     let r=(s.tier==='one'?POP.growMagyo:POP.grow)+POP.growHi*s.arts.filter(a=>a.hi).length;if(G.seal&&G.seal[s.id])r*=POP.sealMul;
     G.pop[s.id]=Math.min(popBase(s)*POP.max,Math.round((p+Math.max(1,p*r))*10)/10)}
   popSync()});
-hook('kill',e=>{if(e.sect&&e.d&&e.d.fac)popLose(e.sect,POP.kill,'')});
+// v112 (사용자: 장문인을 죽인 뒤 아무리 베어도 멸문이 안 된다): 직위가 높을수록 크게 줄고(killRank), 본산 안에서 베면 두 배(hqMul)
+const killLoss=e=>{const t=POP.killRank||[POP.kill],n=t[Math.min(t.length-1,Math.max(0,e.rank||0))]||POP.kill,R=REG&&REGIONS[REG];return n*(R&&R.hq===e.sect?POP.hqMul||1:1)};
+hook('kill',e=>{if(e.sect&&e.d&&e.d.fac)popLose(e.sect,killLoss(e),'')});
 hook('mobKilled',t=>{if(t.sect&&t.d&&t.d.fac)popLose(t.sect,POP.npcKill,'')});
 hook('gLoaded',()=>{popInit();popSync()});
 // 결전·대전에서 진 편

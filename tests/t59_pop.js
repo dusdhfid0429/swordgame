@@ -14,7 +14,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const r={h:sectPop('hwasan')-a.h,e:sectPop('emei')-a.e,c:sectPop('cheonma')-a.c,s:sectPop('shaolin')-a.s,ma:G.W.pow.마};G.seal={};G.occ={};return r});
   ok(`한 해: 점령 화산 +${t2.h}, 봉문 아미 +${t2.e}, 소림 +${t2.s}, 천마신교 +${t2.c} → 마교 힘 ${t2.ma}`,t2.h===0&&t2.e>t2.s&&t2.s>=12&&t2.c>=28&&t2.ma>30);
   // 3. 죽음: 플레이어가 죽이면 1명, 무인끼리면 0.2명. 힘이 따라 준다
-  const t3=await p.evaluate(()=>{const p0=sectPop('cheonma'),w0=G.W.pow.마;const e=mkFac('마',0,P.x+2,P.y,'cheonma');mobs.push(e);e.hp=1;damage(e,99,0,0,P);const p1=sectPop('cheonma');
+  const t3=await p.evaluate(()=>{const p0=sectPop('cheonma'),w0=G.W.pow.마;const e=mkFac('마',0,P.x+2,P.y,'cheonma');e.rank=0;mobs.push(e);e.hp=1;damage(e,99,0,0,P);const p1=sectPop('cheonma');
     const e2=mkFac('마',0,P.x+2,P.y,'cheonma'),k=mkFac('정',1,P.x+3,P.y,'hwasan');mobs.push(e2,k);e2.hp=1;mobHurt(e2,99,k);return{d1:p0-p1,d2:p1-sectPop('cheonma'),w:w0-G.W.pow.마}});
   ok(`처치 -${t3.d1}, 무인끼리 -${t3.d2}, 마교 힘 -${t3.w}`,t3.d1===1&&Math.abs(t3.d2-.2)<.01&&t3.w>0);
   // 4. 사건 효과(powAdd)는 인원 비율로, 직위 분포는 무학·인원을 따른다

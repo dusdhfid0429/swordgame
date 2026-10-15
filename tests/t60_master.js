@@ -13,10 +13,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{mr,a:[a.npc,!!a.boss],b:[bb.npc,!!bb.boss],name:boss&&boss.name,rank:boss&&boss.rank,hp:boss&&boss.maxHp,c:[c.npc,!!c.boss],d:[d.npc,!!d.boss],peace:boss&&peaceful(boss)}});
   ok(`장문인 맵 ${t1.mr}: 인원 300 → NPC ${t1.a[0]} 우두머리 ${t1.a[1]} / 150(50%) → NPC ${t1.b[0]} 우두머리 ${t1.b[1]} [${t1.name}, 직위 ${t1.rank}, 생명 ${t1.hp}]`,t1.a[0]&&!t1.a[1]&&!t1.b[0]&&t1.b[1]&&t1.name==='화산파 장문인'&&t1.rank===4&&t1.hp>400);
   ok(`쇠퇴 추세: 지난해 310→300이면 출전 ${t1.c[1]}, 290→300이면 NPC ${t1.d[0]} · 같은 편이라 먼저 덤비지 않음 ${t1.peace}`,t1.c[1]&&!t1.c[0]&&t1.d[0]&&!t1.d[1]&&t1.peace===true);
-  // 쓰러뜨리면
+  // 쓰러뜨리면 (v112: 장로급 처치 −15 뒤 10% → 121)
   const t2=await p.evaluate(()=>{G.pop.hwasan=150;G.popPrev=null;mobs=[];loadRegion(MR);P.reg=MR;const e=mobs.find(m=>m.master);const f0=P.fame,p0=sectPop('hwasan');e.hp=1;damage(e,999,0,0,P);
     return{dead:!!G.mdead.hwasan,pop:sectPop('hwasan'),p0,fame:P.fame-f0,join:joinBlock(SECTS.hwasan),log:$('log').textContent.includes('장문인을 쓰러뜨렸다'),rank4:(()=>{let c=0;for(let i=0;i<200;i++)if(popRank(SECTS.hwasan,true)===4)c++;return c})()}});
-  ok(`격살: 공석 ${t2.dead}, 인원 ${t2.p0}→${t2.pop}, 명성 +${t2.fame}, 가입 "${t2.join}", 장로급 출현 ${t2.rank4}/200`,t2.dead&&t2.pop===134&&t2.fame===30&&/공석|비어/.test(t2.join)&&t2.log&&t2.rank4===0);
+  ok(`격살: 공석 ${t2.dead}, 인원 ${t2.p0}→${t2.pop}, 명성 +${t2.fame}, 가입 "${t2.join}", 장로급 출현 ${t2.rank4}/200`,t2.dead&&t2.pop===121&&t2.fame===30&&/공석|비어/.test(t2.join)&&t2.log&&t2.rank4===0);
   // 회복: 인원이 돌아오고 3년 지나면 새 장문인, NPC 복귀
   const t3=await p.evaluate(()=>{G.pop.hwasan=300;G.popPrev=null;for(let i=0;i<2;i++){P.age=9+i;G.cal=i+1;lastYear=8+i;update(.1)}const still=!!G.mdead.hwasan;P.age=11;G.cal=3;lastYear=10;update(.1);const back=!G.mdead.hwasan;mobs=[];loadRegion(MR);return{still,back,npc:!!(REGION().npcs||[]).find(n=>n.hq),log:$('log').textContent.includes('새 장문인')}});
   ok(`2년 뒤 공석 ${t3.still} → 3년 뒤 새 장문인 ${t3.back}, NPC 복귀 ${t3.npc}`,t3.still&&t3.back&&t3.npc&&t3.log);
