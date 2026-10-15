@@ -59,15 +59,19 @@ function popCard(){popInit();const list=Object.values(SECTS).map(s=>({s,p:sectPo
 
 // ---- 세력 무인의 출현: 맵에 들어서면 상한의 60%만 서 있고, 죽어 빈 자리는 문파 인원이 남아 있는 동안 출입구에서 걸어 들어와 채운다 (사용자 요청 2026-10-13) ----
 let FACK=null;   // FAC_KIND는 뒤 파일(g_faction.js)에 있어 처음 쓸 때 만든다
+// v113 (사용자 2026-10-15 "인원이 감소할수록 맵에 리젠되는 적의 수가 점점 증가해서 멸문 속도가 빨라지게"): 본산 맵의 문파가 줄어든 만큼(1-인원/기준) 상한 ×(1+rush.cap·d), 보강 간격 ×(1-rush.rein·d), 한 번에 1+floor(rush.n·d)명
+const rushD=R=>{const s=R&&R.hq&&SECTS[R.hq];if(!s)return 0;const p=sectPop(s.id);if(!(p>0))return 0;return Math.max(0,Math.min(1,1-p/popBase(s)))};
+function facCap(k,cap){if(!FACK)FACK=new Set(Object.values(FAC_KIND).flat());if(!FACK.has(k))return cap;const d=rushD(REGION()),r=POP.rush||{cap:0};return Math.round(cap*(1+(r.cap||0)*d))}
 function facSpawn(k,cap,test,mk,n){if(!FACK)FACK=new Set(Object.values(FAC_KIND).flat());if(!FACK.has(k)||!mk)return false;const R=REGION();R._fs=R._fs||{};const st=R._fs[k]||(R._fs[k]={init:false,at:-99});
   const spot=()=>{const big=N>BIG_N;for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
     if(test(x,y)&&walk(x,y)&&Math.hypot(x+.5-P.x,y+.5-P.y)>=8)return{x:x+.5,y:y+.5}}return null};
   if(!st.init){const want=Math.max(1,Math.round(cap*POP.initFill));for(let i=n;i<want;i++){const s=spot();if(!s)break;mobs.push(mk(s.x,s.y))}st.init=true;st.at=time;return true}   // 처음엔 60%를 한꺼번에
-  if(time-st.at<POP.reinSec)return true;st.at=time;
+  const d=rushD(R),ru=POP.rush||{};if(time-st.at<POP.reinSec*(1-(ru.rein||0)*d))return true;st.at=time;
+  for(let i=0,cnt=1+Math.floor((ru.n||0)*d);i<cnt&&mobs.filter(m=>m.kind===k&&m.hp>0).length<cap;i++){
   const s=spot();if(!s)return true;const e=mk(s.x,s.y);if(!(sectPop(e.sect)>0))return true;   // 그 문파에 남은 사람이 없으면 못 온다
   const gates=(R.gates||[]).filter(g=>g.to&&!g.door);const g=gates.length?gates[Math.floor(Math.random()*gates.length)]:null;
   if(g){let gx=g.x,gy=g.y;for(let t=0;t<8&&!walkAt(gx,gy);t++){gx=g.x+(Math.random()*2-1);gy=g.y+(Math.random()*2-1)}if(walkAt(gx,gy)){e.x=gx;e.y=gy;e.home={x:s.x,y:s.y};e.goal={x:s.x,y:s.y};e.rein=1}}
-  mobs.push(e);return true}
+  mobs.push(e)}return true}
 hook('regionLoaded',id=>{const R=REGIONS[id];if(R)R._fs={}});
 // 세력의 힘을 바로 맞춘다(인원을 비율로 바꿔서). 테스트·디버그용
 function setPow(f,v){const w=wld();if(!(w.pow[f]>0)){for(const s of Object.values(SECTS))if(alFac(s.al)===f&&!(G.pop[s.id]>0))G.pop[s.id]=popBase(s);popSync()}popScale(f,v/Math.max(.1,w.pow[f]))}

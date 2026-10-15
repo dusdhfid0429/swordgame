@@ -31,8 +31,11 @@ function setTouch(on){
   TOUCH=on;document.body.classList.toggle('touch',on);
   if(on){TUI.prepend(logEl);TUI.prepend(statusEl)}else{panelEl.prepend(logEl);panelEl.prepend(statusEl)}
   try{STORE.set('ganghoyunhoe-ctl',on?'t':'k',1)}catch(e){}
-  joy.on=false;joy.m=0;touchAtk=false;resize();
+  joy.on=false;joy.m=0;touchAtk=false;resize();logTop();
 }
+// v113 (사용자: 로그 창이 플레이어 정보창을 덮는다): 상태 상자(마성 게이지·두 줄 자원)가 커져도 로그는 늘 그 아래에
+function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$('stage').getBoundingClientRect();document.documentElement.style.setProperty('--log-top',Math.round(b.bottom-st.top+5)+'px')}
+if(window.ResizeObserver)new ResizeObserver(()=>logTop()).observe(statusEl);
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
 function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||1;joy.gx=gx/l;joy.gy=gy/l}
 {const z=$('joyz'),base=$('joy'),knob=$('joyk'),R=50;let id=null,sx=0,sy=0,t0=0,moved=0;
