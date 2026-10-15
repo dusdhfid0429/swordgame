@@ -67,7 +67,7 @@ function facSpawn(k,cap,test,mk,n){if(!FACK)FACK=new Set(Object.values(FAC_KIND)
     if(test(x,y)&&walk(x,y)&&Math.hypot(x+.5-P.x,y+.5-P.y)>=8)return{x:x+.5,y:y+.5}}return null};
   if(!st.init){const want=Math.max(1,Math.round(cap*POP.initFill));for(let i=n;i<want;i++){const s=spot();if(!s)break;mobs.push(mk(s.x,s.y))}st.init=true;st.at=time;return true}   // 처음엔 60%를 한꺼번에
   const d=rushD(R),ru=POP.rush||{};if(time-st.at<POP.reinSec*(1-(ru.rein||0)*d))return true;st.at=time;
-  for(let i=0,cnt=1+Math.floor((ru.n||0)*d);i<cnt&&mobs.filter(m=>m.kind===k&&m.hp>0).length<cap;i++){
+  for(let i=0,cnt=1+Math.floor((ru.n||0)*d);i<cnt&&mobs.filter(m=>m.kind===k&&m.hp>0&&!m.fixed).length<cap;i++){
   const s=spot();if(!s)continue;const e=mk(s.x,s.y);if(!(sectPop(e.sect)>0))return true;   // 그 문파에 남은 사람이 없으면 못 온다
   const gates=(R.gates||[]).filter(g=>g.to&&!g.door);const g=gates.length?gates[Math.floor(Math.random()*gates.length)]:null;
   if(g){let gx=g.x,gy=g.y;for(let t=0;t<8&&!walkAt(gx,gy);t++){gx=g.x+(Math.random()*2-1);gy=g.y+(Math.random()*2-1)}if(walkAt(gx,gy)){e.x=gx;e.y=gy;e.home={x:s.x,y:s.y};e.goal={x:s.x,y:s.y};e.rein=1}}

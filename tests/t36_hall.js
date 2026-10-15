@@ -24,7 +24,7 @@ const path=require('path');
   // 3) 문 앞에 서면 들어가고, 안에서 아래 문으로 나오면 앞마당
   await go('hq_hwasan',20.5,9.5);
   await p.evaluate(()=>{P.path=[{x:20.5,y:7.5}]});await p.waitForFunction(()=>REG.startsWith('in_'),null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(600);
-  const r3=await p.evaluate(()=>({reg:REG,walk:walkAt(P.x,P.y),zone:$('zone').textContent,npcs:npcsHere().map(n=>n.n),floor:map[Math.floor(P.y)][Math.floor(P.x)].g,wallN:objs.flat().filter(o=>o==='wall').length,mobs:mobs.length}));
+  const r3=await p.evaluate(()=>({reg:REG,walk:walkAt(P.x,P.y),zone:$('zone').textContent,npcs:npcsHere().map(n=>n.n),floor:map[Math.floor(P.y)][Math.floor(P.x)].g,wallN:objs.flat().filter(o=>o==='wall').length,mobs:mobs.filter(m=>!m.fixed).length}));   // v118: 전각 안 당원·시종(fixed)은 제외
   ok(`문으로 들어감: ${r3.reg} (${r3.zone}) 바닥 ${r3.floor} 담 ${r3.wallN} ${r3.npcs.join(',')}`,r3.reg==='in_hq_hwasan_0'&&r3.walk&&r3.floor===13&&r3.wallN>30&&r3.npcs.some(n=>n.includes('장문인'))&&r3.mobs===0);
   await p.screenshot({path:shot('hall_inside')});
   await p.evaluate(()=>openNpc(npcsHere().find(n=>n.hq)));await p.waitForTimeout(150);

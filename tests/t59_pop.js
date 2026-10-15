@@ -33,7 +33,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`결전 패배 천마신교 400→${t6.c}, 인원 카드 ${t6.body.includes('문파 인원')}`,t6.c===368&&t6.body.includes('문파 인원')&&t6.body.includes('기준 300'));
   // 7. 출현: 본산에 들어서면 제 문파 무인은 상한의 60%만, 죽은 자리는 5초 뒤 출입구에서 걸어와 채운다. 인원 0이면 안 온다
   const t7=await p.evaluate(()=>{closePanels();G.pop.hwasan=300;mobs=[];loadRegion('hq_hwasan');P.reg='hq_hwasan';P.x=20.5;P.y=30;for(let i=0;i<6;i++)spawnTick();
-    const own=()=>mobs.filter(m=>m.kind==='정파 무인'&&m.hp>0),cap=REGION().spawns.find(s=>s[0]==='정파 무인')[1],n0=own().length;
+    const own=()=>mobs.filter(m=>m.kind==='정파 무인'&&m.hp>0&&!m.fixed),cap=REGION().spawns.find(s=>s[0]==='정파 무인')[1],n0=own().length;
     for(const m of own().slice(0,2)){m.hp=0}const n1=own().length;time+=10;spawnTick();const r1=mobs.filter(m=>m.rein&&m.kind==='정파 무인');const g=REGION().gates.find(g=>!g.door);
     const nearGate=r1.length&&REGION().gates.some(g=>Math.hypot(g.x-r1[0].x,g.y-r1[0].y)<2.5);for(let t=0;t<6&&own().length<n0;t++){time+=10;spawnTick()}const n2=own().length;   // 자리 찾기(무작위 30번)가 빗나갈 수 있어 몇 번 더 기다린다
     G.pop.hwasan=0;for(const m of own())m.hp=0;time+=10;spawnTick();const n3=own().length;G.pop.hwasan=300;return{cap,n0,n1,r1:r1.length,nearGate,n2,n3,goal:r1.length&&!!r1[0].goal}});

@@ -53,26 +53,40 @@ function heroFrame(){
   // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
   if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))],false,'',true]}
+  // 창·봉 대기 (사용자 요청 2026-10-15): 시트의 세로 들기 장 가운데 자루가 보이는 장만 쓰고, 자루는 잘라낸 뒤 양손으로 비스듬히 잡은 자세를 코드로 그린다 (POLEI)
+  if(pole&&h2&&P.satk<=0&&P.runT<=0&&POLEI[w]){const s=POLEI[w].f,n=s.length,k=Math.floor(time*4)%(2*n-2);return[s[k<n?k:2*n-2-k],false,'p',true]}
   if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w],n=Math.min(8,s[1]),k=Math.floor(time*4)%(2*n-2);return[s[0]+(k<n?k:2*n-2-k),false,'',true]}
   if(P.sj>0){const uj=1-P.sj/(P.sjMax||.6);if(sw||w==='도'){const s=HSET.jump;return[s[Math.min(s.length-1,Math.floor(uj*s.length))],false,'']}
-    const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor(uj*s.length))];return[i,true,pole?'s':'']}
+    const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor(uj*s.length))];return[i,true,pole?'p':'']}
   if(P.satk>0){const s=P.sset,i=s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))];
-    if(sw)return[i,false,''];return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):(pole?'s':'')]}
+    if(sw)return[i,false,''];return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):(pole?'p':'')]}
   const i=P.runT>0?41+Math.floor(P.runPh*moveSpd()*3.6)%8:sw||w==='도'?Math.floor(time*5)%6:BIDLE[Math.floor(time*5)%6];
-  if(sw||w==='도')return[i,false,''];return[i,true,pole?'s':'']}
+  if(sw||w==='도')return[i,false,''];return[i,true,pole?'p':'']}
+// 창·봉 비스듬 양손 자세 (v119). f: 자루가 그려진 대기 장(아틀라스2), cut[frame]=[그릴 폭, 앞손 x, 앞손 y] — 폭 밖의 세로 자루·창날은 잘라낸다
+const POLEI={'창':{f:[69,70,71,72,73],cut:{69:[57,52,47],70:[66,61,47],71:[70,66,46],72:[65,61,47],73:[65,61,48]}},
+  '봉':{f:[60,61,62],cut:{60:[55,50,46],61:[64,59,46],62:[62,57,46]}}};
+const POLE_U=[Math.cos(.96),-Math.sin(.96)];  // 자루 방향: 앞·위 55도 (창끝이 앞 위, 물미가 뒤 아래)
+// h: 스프라이트의 손 위치(아틀라스 px). other=-1이면 뒷손을 자루 아래쪽에, +1이면 앞손을 자루 위쪽에 코드로 더 그린다
+function drawPole(kind,h,other,flash){
+  const u=POLE_U;
+  drawWeapon(kind,[h[0],h[1],h[0]+u[0]*10,h[1]+u[1]*10],'p',flash);
+  const W=c=>flash?'#ffffff':c,o=[h[0]+u[0]*24*other,h[1]+u[1]*24*other];
+  // 소매: 몸통 쪽에서 둘째 손까지 (가로로 짧게)
+  pxLine([o[0]-16*other,o[1]+(other<0?-6:4)],o,7,W('#2b3242'));
+  for(const q of[h,o]){ctx.fillStyle='#14100c';ctx.beginPath();ctx.ellipse(q[0],q[1],5,4.2,-.96,0,7);ctx.fill();ctx.fillStyle=W('#e7b48b');ctx.beginPath();ctx.ellipse(q[0],q[1],3.6,2.9,-.96,0,7);ctx.fill()}}
 // weapons painted in atlas pixels on top of the body frame, flat colours with a dark outline like the sprite
 function pxLine(a,b,w,col){ctx.lineCap='butt';ctx.strokeStyle='#14100c';ctx.lineWidth=w+2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
 function drawWeapon(kind,ln,lk,flash){
   if(!ln)return;let h=[ln[0],ln[1]],t=[ln[2],ln[3]];const dx=t[0]-h[0],dy=t[1]-h[1],L=Math.hypot(dx,dy)||1,u=[dx/L,dy/L],n=[-u[1],u[0]];
   if(lk==='s'){u[0]=-u[0];u[1]=-u[1]}  // scabbard line runs hand -> back; weapons point forward from the hand
   const at=d=>[h[0]+u[0]*d,h[1]+u[1]*d],W=c=>flash?'#ffffff':c;
-  if(kind==='창'){const back=lk==='s'?-95:-55,fwd=lk==='s'?40:88,tip=at(fwd);pxLine(at(back),tip,4,W('#7b4a26'));
+  if(kind==='창'){const back=lk==='s'?-95:lk==='p'?-64:-55,fwd=lk==='s'?40:lk==='p'?50:88,tip=at(fwd);pxLine(at(back),tip,4,W('#7b4a26'));
     ctx.fillStyle=W('#b3261e');ctx.beginPath();ctx.moveTo(...at(fwd-2));ctx.lineTo(tip[0]-u[0]*12+n[0]*5,tip[1]-u[1]*12+n[1]*5);ctx.lineTo(tip[0]-u[0]*12-n[0]*5,tip[1]-u[1]*12-n[1]*5);ctx.fill();
     const hd=at(fwd+22);ctx.fillStyle='#14100c';ctx.beginPath();ctx.moveTo(hd[0]+u[0]*2,hd[1]+u[1]*2);ctx.lineTo(tip[0]+n[0]*6,tip[1]+n[1]*6);ctx.lineTo(tip[0]-n[0]*6,tip[1]-n[1]*6);ctx.fill();
     ctx.fillStyle=W('#dfe6ea');ctx.beginPath();ctx.moveTo(...hd);ctx.lineTo(tip[0]+n[0]*4,tip[1]+n[1]*4);ctx.lineTo(tip[0]-n[0]*4,tip[1]-n[1]*4);ctx.fill();
     ctx.fillStyle=W('#8d98a3');ctx.beginPath();ctx.moveTo(...hd);ctx.lineTo(tip[0]-n[0]*4,tip[1]-n[1]*4);ctx.lineTo(...tip);ctx.fill()}
-  else if(kind==='봉'){const a=at(lk==='s'?-80:-62),b=at(lk==='s'?50:66);pxLine(a,b,5,W('#6b4423'));
-    for(const d of[lk==='s'?-80:-62,lk==='s'?50:66]){const c=at(d),e=at(d+(d<0?8:-8));pxLine(c,e,5,W('#c9a14a'))}}
+  else if(kind==='봉'){const ds=lk==='s'?[-80,50]:lk==='p'?[-56,58]:[-62,66],a=at(ds[0]),b=at(ds[1]);pxLine(a,b,5,W('#6b4423'));
+    for(const d of ds){const c=at(d),e=at(d+(d<0?8:-8));pxLine(c,e,5,W('#c9a14a'))}}
   else if(kind==='궁'){const a=at(lk==='s'?-70:-60),b=at(lk==='s'?40:50),m=at(lk==='s'?-15:-5),bow=[m[0]-n[0]*14,m[1]-n[1]*14];
     ctx.strokeStyle='#14100c';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(...a);ctx.quadraticCurveTo(bow[0],bow[1],...b);ctx.stroke();ctx.strokeStyle=W('#7b4a26');ctx.lineWidth=3;ctx.stroke();
     pxLine(a,b,1,W('#e8e2d0'))}

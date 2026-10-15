@@ -1439,9 +1439,9 @@
   },
   "FIELD": {
    "id": "war_field",
-   "ally": 5,
-   "foe": 8,
-   "elite": 2,
+   "ally": 16,
+   "foe": 20,
+   "elite": 5,
    "chiefHp": 1.5,
    "chiefAtk": 1.4,
    "chiefFame": 15,
