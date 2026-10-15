@@ -235,7 +235,7 @@ function postDlg(){
   const row=(id,n,sub,fee)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${fee}`,{d:P.silver<fee})}</div></div>`;
   let h=`<p class="note">"어디로 모실까? 길은 멀어도 말은 빠르오."</p><div class="list">${row('gaebong','개봉','성내 역참',10)}</div>`;
   for(const al of['jeong','sacheon','magyo','gunbu'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+Object.values(SECTS).filter(s=>s.al===al)
-    .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${ALLY[al].side!==P.side?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
+    .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${!sideOk(al)?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
   return h}
 function postGo(id){
   if(!REGIONS[id]||REG===id)return;const fee=id==='gaebong'?10:REGIONS[id].city?CITY_FEE:POST_FEE;
@@ -244,7 +244,7 @@ function postGo(id){
 }
 // 본산 장문인: 가입·직위·임무·비급을 모두 여기서 본다
 function hqDlg(n){
-  const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
+  const s=SECTS[n.hq],same=sideOk(s.al),member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
   const c={n,html:`<p class="note">${hi}</p>${sectDetail(s,true)}`};runHooks('hqDlg',c);return c.html}
 

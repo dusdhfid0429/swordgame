@@ -38,9 +38,12 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const bk=await p.evaluate(nid=>{const it=P.bag.find(i=>i.art===nid);if(!it)return null;P.vit+=500;readBook(it);return{n:it.name,learned:!!(P.arts[nid]&&P.arts[nid].f[0])}},nid);
   ok(`공적으로 일반 무공 비급을 받아 익힌다 (${bk&&bk.n})`,bk&&bk.learned);
   await p.screenshot({path:shot('sect_hwasan_member')});
-  // 정파는 마교 밀사에게 거절당한다
+  // 정파도 마교 밀사가 받는다 (v102). 다만 명성 100·악업 80 조건은 그대로이고, 화산 제자인 동안은 못 든다
   await p.evaluate(()=>openNpc(npcAt('magyo')));await p.waitForTimeout(150);
-  ok('정파는 마교에 못 들어간다',await p.evaluate(()=>$('wbody').textContent.includes('열려 있지 않다')&&!document.querySelector('[data-act="sjoin:cheonma"]')));
+  ok('정파도 마교 밀사가 문을 열어 준다',await p.evaluate(()=>!$('wbody').textContent.includes('열려 있지 않다')&&!!document.querySelector('[data-act="sview:cheonma"]')));
+  ok('정파 화산 제자는 하산 전엔 마교에 못 든다',await p.evaluate(()=>/하산/.test(joinBlock(SECTS.cheonma)||'')));
+  await p.evaluate(()=>{P.sect=null;P.fame=120;P.evil=0;P.age=25;openNpc(hqNpc('hq_cheonma'))});await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
+  ok('정파 명성 120 → 천마신교 가입, 마교 비급 읽기 허용',await p.evaluate(()=>P.sect==='cheonma'&&!!P.arts[startSet(SECTS.cheonma).art.id]&&artSideOk(ARTS[startSet(SECTS.cheonma).art.id])&&!artSideOk(ARTS['사검0'])));
   // 사파: 사천맹 대문파, 마교
   await p.evaluate(()=>{P.side='사';P.sect=null;P.fame=0;P.evil=0;P.age=25;sectView=null});
   ok('마교는 명성 100 또는 악업 80부터',await p.evaluate(()=>!!joinBlock(SECTS.cheonma)));
