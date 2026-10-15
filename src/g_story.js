@@ -59,7 +59,7 @@ const evOf=id=>SEV.find(e=>e.id===id);
 function evState(e){const s=PS();return s.pick[e.id]!=null?'done':s.open===e.id?'open':'wait'}
 function openEvent(e){const s=PS();s.open=e.id;showBanner(e.n,'강호의 사건 · 정세 창(N)에서 선택');log(`[사건] ${e.n}: ${e.t}`,'sys');P.feats.push(`${Math.floor(P.age)}세에 ${e.n}을(를) 마주했다`);
   if(playing&&!trnOpen&&(!panel||panel==='story')){if(panel==='story'&&!$('win').hidden)renderOpen();else{panel=null;openPanel('story')}}}
-function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null)return false;if(!auto&&!condOk(ch.req)){log(`아직 할 수 없다: ${condTxt(ch.req)}`,'info');return false}
+function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null)return false;if(!auto&&ch.fac&&ch.fac!==myFac()){log(`${FAC4N[ch.fac]}의 길이다. ${FAC4N[myFac()]}인 당신은 고를 수 없다.`,'info');return false}if(!auto&&!condOk(ch.req)){log(`아직 할 수 없다: ${condTxt(ch.req)}`,'info');return false}
   s.pick[e.id]=i;if(s.open===e.id)s.open=null;
   log(auto?`[${e.n}] 손쓰지 못한 채 흘러갔다: ${ch.n}`:`[${e.n}] ${ch.n}`,auto?'info':'xp');
   applyFx(ch.fx,e.n);
@@ -93,8 +93,9 @@ function evCard(e){const s=PS(),st=evState(e),pk=s.pick[e.id],past=pastPicks(e);
   if(st==='wait')return `<div class="card dim"><div class="row2"><h4>${e.n}</h4><span class="tag">${Number.isInteger(e.age)?e.age+'세':Math.floor(e.age)+'세 하반기'}</span></div><p class="note">아직 오지 않았다.</p></div>`;
   if(st==='done'){const ch=e.ch[pk],q=P.quests.find(q=>q.story===e.id),qi=P.quests.indexOf(q);
     return `<div class="card"><div class="row2"><h4>${e.n}</h4><span class="tag">${pk<0?'지나감':ch.n}</span></div>${q?`<p>임무 [${esc(q.n)}] ${q.have}/${q.cnt}${q.have>=q.cnt?' <span class="good">완료</span>':''}</p><div class="ib">${B('qdone:'+qi,'보고하기',{pri:q.have>=q.cnt,d:q.have<q.cnt})}</div>`:pk>=0&&!s.done[e.id]?'<p class="note">임무를 포기해 끝맺지 못했다.</p>':''}</div>`}
-  return `<div class="card"><div class="row2"><h3>${e.n}</h3><span class="tag">열린 사건</span></div><p>${e.t}</p>
-    <div class="list">${e.ch.map((c,i)=>{const ok=condOk(c.req);return `<div class="it"><div>${c.n}${c.req?` <small class="${ok?'good':'bad'}">${condTxt(c.req)}</small>`:''}<span>${c.d}${c.quest?` <small class="dim">임무: ${c.quest.mob.join('·')} ${c.quest.cnt}</small>`:''}</span></div><div class="ib">${B('spick:'+e.id+':'+i,'고르기',{pri:ok,d:!ok})}</div></div>`}).join('')}</div>
+  const my=myFac(),pov=e.pov&&e.pov[my];
+  return `<div class="card"><div class="row2"><h3>${e.n}</h3><span class="tag">열린 사건</span></div><p>${e.t}</p>${pov?`<p><b style="color:${FACC[my]}">${FAC4N[my]}의 눈</b> <small>${pov}</small></p>`:''}
+    <div class="list">${e.ch.map((c,i)=>{if(c.fac&&c.fac!==my)return '';const ok=condOk(c.req);return `<div class="it"><div>${c.n}${c.req?` <small class="${ok?'good':'bad'}">${condTxt(c.req)}</small>`:''}<span>${c.d}${c.quest?` <small class="dim">임무: ${c.quest.mob.join('·')} ${c.quest.cnt}</small>`:''}</span></div><div class="ib">${B('spick:'+e.id+':'+i,'고르기',{pri:ok,d:!ok})}</div></div>`}).join('')}</div>
     ${past.length?`<p class="note">전생의 흔적: ${past.join(' · ')}</p>`:'<p class="note">마지막 선택은 고르지 않아도 다음 사건이 오면 저절로 흘러간다.</p>'}</div>`}
 function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.lifeNo;
   const pow=FAC4.map(f=>`<p style="margin:6px 0 2px">${FAC4N[f]} <b class="num" style="color:${FACC[f]}">${Math.round(w.pow[f])}</b> <small class="dim">${f==='마'?'천마신교 · 인원이 빨리 는다':f==='관'?`정관 관계 ${w.rel.정관} (${STORY.RULES.gunJoin} 이상이면 정파 편, 힘 ${STORY.RULES.gunPunish} 이상이면 무림 토벌)`:f==='정'?'정의맹':'사천맹'}</small></p>${sBar(w.pow[f],FACC[f])}`).join('');

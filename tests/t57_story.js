@@ -14,25 +14,25 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.keyboard.press('KeyN');await p.waitForTimeout(150);
   const t1=await p.evaluate(()=>{const r={panel,title:$('wtitle').textContent,body:$('wbody').textContent};closePanels();for(let i=0;i<40;i++)update(1);r.open=P.story.open;r.age=P.age;return r});
   ok(`N 키 → '${t1.title}', 성장 구간(${t1.age.toFixed(1)}세) 사건 없음`,t1.panel==='story'&&t1.title==='강호 정세'&&t1.body.includes('삼파전')&&t1.open===null);
-  // 3. 20세가 되면 첫 사건이 열리고 창이 뜬다. 조건이 안 맞는 선택은 잠긴다
+  // 3. 20세가 되면 첫 사건이 열리고 창이 뜬다. 정파에겐 정파의 길과 중립 선택만 보인다 (v114)
   const t2=await p.evaluate(()=>{P.age=20;lastYear=19;update(.1);return{open:P.story.open,panel,btns:[...document.querySelectorAll('[data-act^="spick:"]')].map(b=>b.disabled),log:$('log').textContent}});
-  ok(`20세: ${t2.open} 열림, 정세 창 자동, 선택 잠김 ${JSON.stringify(t2.btns)}`,t2.open==='ev1'&&t2.panel==='story'&&t2.btns.length===3&&t2.btns[0]===false&&t2.btns[1]===true&&t2.btns[2]===false&&t2.log.includes('혈교의 그림자'));
+  ok(`20세: ${t2.open} 열림, 정세 창 자동, 선택 잠김 ${JSON.stringify(t2.btns)}`,t2.open==='ev1'&&t2.panel==='story'&&t2.btns.length===2&&t2.btns[0]===false&&t2.btns[1]===false&&t2.log.includes('혈교의 그림자'));
   // 4. 임무 선택: 임무가 들어오고, 적을 잡아 정세 창에서 보고하면 끝맺음 효과
   const t3=await p.evaluate(()=>{act('spick:ev1:0');const q=P.quests.find(q=>q.story==='ev1');const pw=G.W.pow.정;q.have=q.cnt;closePanels();openPanel('story');const btn=document.querySelector('[data-act^="qdone:"]');const good=P.good;act(btn.dataset.act);
     return{pick:P.story.pick.ev1,q:!!q,open:P.story.open,btn:!!btn&&!btn.disabled,done:P.story.done.ev1,pw0:pw,pw1:G.W.pow.정,good:P.good-good,left:P.quests.some(q=>q.story==='ev1')}});
   ok(`토벌 선택 → 임무, 보고 → 정파 힘 ${t3.pw0}→${t3.pw1}, 선업 +${t3.good}`,t3.pick===0&&t3.q&&t3.open===null&&t3.btn&&t3.done===true&&t3.pw1===t3.pw0+3&&t3.good===6+4&&!t3.left);
   // 5. 미루면 다음 사건이 올 때 기본 선택으로 흘러간다. 즉시 효과 선택(세력 관계)도 적용
   const t4=await p.evaluate(()=>{closePanels();P.age=20.5;update(.1);const o1=P.story.open;const r0=G.W.rel.사마;P.age=21;update(.1);return{o1,pick2:P.story.pick.ev2,o2:P.story.open,r1:G.W.rel.사마-r0}});
-  ok(`ev2 열림(${t4.o1}) → 미루면 기본 선택(${t4.pick2}, 사마 ${t4.r1}) 뒤 ev3 열림(${t4.o2})`,t4.o1==='ev2'&&t4.pick2===2&&t4.r1===-10&&t4.o2==='ev3');
+  ok(`ev2 열림(${t4.o1}) → 미루면 기본 선택(${t4.pick2}, 사마 ${t4.r1}) 뒤 ev3 열림(${t4.o2})`,t4.o1==='ev2'&&t4.pick2===4&&t4.r1===-10&&t4.o2==='ev3');
   // 6. 봉문: 사건 4 기본 선택이 정파 대문파 하나를 닫고, 가입이 막힌다
-  const t5=await p.evaluate(()=>{closePanels();for(const id of['ev3','ev4'])if(P.story.open!==id){P.age=STORY.EV.find(e=>e.id===id).age;update(.1)}act('spick:ev4:2');const id=Object.keys(G.seal)[0];const s=SECTS[id];P.age=21.6;P.fame=200;return{id,tier:s&&s.tier,fac:s&&alFac(s.al),block:joinBlock(s),ok3:P.story.pick.ev3}});
+  const t5=await p.evaluate(()=>{closePanels();for(const id of['ev3','ev4'])if(P.story.open!==id){P.age=STORY.EV.find(e=>e.id===id).age;update(.1)}act('spick:ev4:4');const id=Object.keys(G.seal)[0];const s=SECTS[id];P.age=21.6;P.fame=200;return{id,tier:s&&s.tier,fac:s&&alFac(s.al),block:joinBlock(s),ok3:P.story.pick.ev3}});
   ok(`봉문: ${t5.id} (${t5.tier}·${t5.fac}) → 가입 거절 "${t5.block}"`,t5.tier==='big'&&t5.fac==='정'&&/봉문/.test(t5.block));
   // 7. 구도 규칙: 정사 +20 & 마교 45 → 정사연합, 관군 합류, 마교 탈락
   const t6=await p.evaluate(()=>{G.W.rel.정사=25;setPow('마',50);const a=warPlan();G.W.rel.정관=40;const b=warPlan();setPow('마',10);const c=warPlan();G.W.rel.정사=-30;G.W.rel.사마=30;setPow('마',50);const d=warPlan();G.W=JSON.parse(JSON.stringify(STORY.INIT));popReset();return{a:a.n,b:b.n,bs:JSON.stringify(b.sides),c:c.n,d:d.n}});
   ok(`구도: ${t6.a} / ${t6.b} ${t6.bs} / ${t6.c} / ${t6.d}`,t6.a==='정파·사파 대 마교'&&t6.bs==='[["정","사","관"],["마"]]'&&t6.c==='정파·관군 대 사파'&&t6.d==='사파·마교 대 정파·관군');
   // 8. 26세 천하대전 발발 (마지막 사건을 미뤄도 터진다)
   const t7=await p.evaluate(()=>{for(const e of STORY.EV)if(P.story.pick[e.id]==null&&e.id!=='ev10')P.story.pick[e.id]=2;P.age=25.6;update(.1);const o=P.story.open;P.age=26.01;update(.1);return{o,war:G.war&&G.war.plan.n,pick:P.story.pick.ev10,log:$('log').textContent.includes('천하대전이 터졌다')}});
-  ok(`결전 전야 열림(${t7.o}) → 26세 천하대전 ${t7.war}`,t7.o==='ev10'&&!!t7.war&&t7.pick===2&&t7.log);
+  ok(`결전 전야 열림(${t7.o}) → 26세 천하대전 ${t7.war}`,t7.o==='ev10'&&!!t7.war&&t7.pick===5&&t7.log);
   // 9. 죽으면 선택이 강호사에 남고, 다음 생도 세상 상태(봉문·힘)를 잇는다. 사건 창에 전생의 흔적
   const t8=await p.evaluate(()=>{warEnd(true);setPow('마',77);const seal=Object.keys(G.seal)[0];die('싸움');return{seal,hist:G.history[G.history.length-1].story,wars:G.wars.length}});
   await p.waitForTimeout(1200);await p.click('[data-s="rebirth"]');await p.waitForTimeout(200);await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);

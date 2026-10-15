@@ -21,10 +21,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     loadRegion('pv_henan');P.reg='pv_henan';P.x=30;P.y=30;runHooks('regionLoaded','pv_henan');await new Promise(r=>setTimeout(r,1500));o.again=mobs.filter(x=>x.story==='ev1').length;
     q.have=q.cnt;mobs=[];runHooks('regionLoaded','pv_henan');await new Promise(r=>setTimeout(r,1500));o.none=mobs.filter(x=>x.story==='ev1').length;return o});
   ok(`둘 처치 → ${r.have}/3 · 하남성 진입 시 다시 ${r.again}명 (남은 1+1) · 임무 끝나면 ${r.none}명`,r.have===2&&r.again===2&&r.none===0);
-  // 4. 세력 무인 종류도 나온다: ev2 호위 → 사파 무인·고수. 규칙 hqFac·role 매칭
+  // 4. 세력 무인 종류도 나온다: ev2 정파의 길 '사신을 벤다' → 마교도·마교 고수 (v114). 규칙 hqFac·role 매칭
   const s=await p.evaluate(()=>{const o={};P.quests=[];P.story.pick.ev1=0;P.age=20.5;update(.1);closePanels();o.open=P.story.open;pickChoice(evOf('ev2'),0,false);
-    const q=P.quests.find(q=>q.story==='ev2');evFoes(evOf('ev2'),q);const m=mobs.filter(x=>x.story==='ev2');o.n=m.length;o.kinds=[...new Set(m.map(x=>x.kind))].join('·');o.fac=m.every(x=>x.d.fac==='사'&&x.angry);
+    const q=P.quests.find(q=>q.story==='ev2');evFoes(evOf('ev2'),q);const m=mobs.filter(x=>x.story==='ev2');o.n=m.length;o.kinds=[...new Set(m.map(x=>x.kind))].join('·');o.fac=m.every(x=>x.d.fac==='마'&&x.angry);
     o.hq=evNpcOk({hqFac:'정'},{hq:'hwasan'})&&!evNpcOk({hqFac:'정'},{hq:'cheonma'});o.role=evNpcOk({maeng:'sacheon',role:'leader'},{maeng:'sacheon',role:'leader'})&&!evNpcOk({maeng:'sacheon',role:'leader'},{maeng:'jeong',role:'leader'});return o});
-  ok(`ev2(${s.open}) 호위 → 사파 ${s.n}명 (${s.kinds}) 적대 ${s.fac} · 규칙 본산 ${s.hq} 맹 ${s.role}`,s.open==='ev2'&&s.n===3&&/사파 무인/.test(s.kinds)&&s.fac&&s.hq&&s.role);
+  ok(`ev2(${s.open}) 사신을 벤다 → 마교 ${s.n}명 (${s.kinds}) 적대 ${s.fac} · 규칙 본산 ${s.hq} 맹 ${s.role}`,s.open==='ev2'&&s.n===4&&/마교도/.test(s.kinds)&&s.fac&&s.hq&&s.role);
   if(errs.length){console.log('ERRORS');errs.forEach(e=>console.log(' ',e))}
   await b.close();process.exit(errs.length?1:0)})();
