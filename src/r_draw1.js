@@ -13,6 +13,13 @@ function seg(pts,w,col){
   ctx.strokeStyle=OUT;ctx.lineWidth=w+2;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke();
 }
 const joint=(p,a,l)=>[p[0]+Math.sin(a)*l,p[1]+Math.cos(a)*l];
+// 창·봉을 손잡이 가운데(0,0) 기준으로 그린다: +y 가 날 끝 쪽, -y 가 물미 쪽 (r_fighter.js 양손 자세, v119)
+function polearm(kind){
+  if(kind==='spear'){poly([[-1.3,-30],[1.3,-30],[1.3,46],[-1.3,46]],lg(-1,1,'#8a6440','#3d2a18'));ctx.fillStyle='#5a4a3a';ctx.fillRect(-1.8,-30,3.6,3);
+    ctx.fillStyle='#a3271c';ctx.fillRect(-3.2,42,6.4,4);for(const[dx,dy]of[[-4,6],[-1,9],[3,7]])seg([[0,44],[dx*1.3,44+dy]],1.4,'#c0301c');
+    poly([[-3.4,46],[3.4,46],[0,64]],lg(-3,3,'#f2f2ee','#7f8794'));ctx.strokeStyle=OUT;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,46);ctx.lineTo(0,62);ctx.stroke();return}
+  poly([[-1.8,-38],[1.8,-38],[1.8,38],[-1.8,38]],lg(-2,2,'#7a5532','#2e1e10'));ctx.fillStyle='#c9a14a';ctx.fillRect(-2.2,-38,4.4,4);ctx.fillRect(-2.2,34,4.4,4);
+  ctx.fillStyle='#a3271c';ctx.fillRect(-2.6,28,5.2,2.4);for(const[dx,dy]of[[-3,-7],[1,-9]])seg([[0,29],[dx,29+dy]],1.2,'#c0301c')}
 function weapon(kind){
   if(kind==='fist'){ctx.fillStyle='#e8e0cc';ctx.beginPath();ctx.arc(0,13,3.6,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.lineWidth=1;ctx.stroke();return}
   if(kind==='none')return;

@@ -1,0 +1,9 @@
+{
+  "GUARD": {
+    "gate": 2,
+    "patrol": {"n": 3, "squads": {"big": 2, "one": 2, "mid": 1, "small": 1}, "route": 4},
+    "drill": 4, "attend": 2,
+    "names": {"gate": "문지기", "patrol": "순찰", "drill": "당원", "attend": "시종"},
+    "wave": {"sec": 10, "n": 3, "max": 6}
+  }
+}

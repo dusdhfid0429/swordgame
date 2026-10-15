@@ -13,10 +13,12 @@ function drawFighter(e,isP){
     if(!f){if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
     const k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
     const gb=heroGarb(),img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
-    ctx.drawImage(img,f[0],0,f[1],f[2],-f[3]*k,-f[2]*k+3-f[4]*k,f[1]*k,f[2]*k);
+    const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
+    ctx.drawImage(img,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
     // 직위 표식 (망토 대신, 사용자 결정 2026-10-13): 머리 위 문장 + 점
     if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,-f[2]*k+3-f[4]*k-10);
-    if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
+    if(lk==='p'){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);if(pc)drawPole(dc,[pc[1],pc[2]],-1,flash);else if(WL.s[fi])drawPole(dc,[WL.s[fi][0],WL.s[fi][1]],1,flash);ctx.restore()}
+    else if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
     if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
     ctx.restore();return}
   ctx.scale(sc*side,sc);
@@ -30,7 +32,7 @@ function drawFighter(e,isP){
   else if(mode==='kick'&&sw>0)kick=Math.sin(prog*Math.PI);
   const attacking=sw>0||wind,wk=isP?dc:'';
   // combat stances after martial-arts silhouettes: wide low base, overhead chamber -> diagonal cut, lunges, chambered fists, high kicks
-  let st=null,lean=mv?.15:0,twoH=false,bArm=null;
+  let st=null,lean=mv?.15:0,twoH=false,bArm=null,guardPose=false;
   // 회복: 휘두른 뒤 0.22초 동안 팔이 낮은 마무리 자세에서 돌아온다 (r_anim.js)
   const rec=!isP&&!attacking&&(e.rec||0)>0?e.rec/.22:0;
   if(rec){if(mode==='swing'){ang=-.45*rec+ang*(1-rec);lean=.3*rec}else if(mode==='thrust'){ang=1.5*rec+ang*(1-rec);reach=5*rec;lean=.2*rec}else if(mode==='punch'){ang=1.55*rec+ang*(1-rec);reach=3*rec;lean=.15*rec}else lean=-.1*rec}
@@ -42,11 +44,18 @@ function drawFighter(e,isP){
     else if(mode==='thrust'){st=[[.95,.22],[-.88,-.78]];lean=.32;twoH=true;if(wind&&sw<=0){ang=.7;reach=-5;lean=-.12}}   // 예비: 창을 뒤로 당긴다
     else if(mode==='punch'){st=[[.78,.08],[-.72,-.62]];lean=.24;bArm=-.75;if(wind&&sw<=0){ang=.5;reach=-4;lean=-.1;bArm=-.3}}   // 예비: 주먹을 허리로
     else{st=[[kick*1.95,kick*1.8],[-.12,-.18]];lean=-.32*kick;bArm=1.3;if(wind&&sw<=0){lean=-.18;st=[[.3,.1],[-.5,-.4]]}}
-  }else if(isP&&!mv&&mobs.some(o=>o.hp>0&&o.aggro&&dist(o,P)<3.5)){
+  }else if(isP&&!mv&&mobs.some(o=>o.hp>0&&o.aggro&&dist(o,P)<3.5)){guardPose=true;
     st=[[.42,0],[-.38,-.36]];ang=mode==='thrust'?1.25:mode==='swing'?1.1:1.35;lean=.05;
     if(mode==='punch'||mode==='kick')bArm=1.15;else twoH=true}
   // 피격: 맞은 쪽 반대로 젖혀지고 머리가 들린다. 치명·강타는 더 크게
   const hitT=isP?P.hit/.2:e.hit/.12;if(hitT>0)lean+=-.32*Math.sin(Math.min(1,hitT)*Math.PI/2)*(e.hitK||1);
+  // 창·봉 (v119, 사용자 요청: 양손으로 비스듬히 길게 잡는 자세): 날 끝이 앞·위를 향하고 뒷손은 아래. 찌르기는 앞으로 미끄러지고, 봉 휘두르기는 머리 위에서 앞·아래로 쓸어 내린다
+  const pole=pal.weapon==='spear'||pal.weapon==='staff';let th=0,gp=null;
+  if(pole){th=mv?1.02+s1*.1:.92+Math.sin(time*.7+(e.bob||0))*.03;gp=[3,-36+(mv?0:Math.sin(time*2.2+(e.bob||0))*.3)];
+    if(rec)th=(mode==='thrust'?1.4:1.75)*rec+th*(1-rec);
+    else if(attacking){if(mode==='thrust'){if(sw>0){th=1.52;gp=[1+reach*1.1,-39]}else{th=1.38;gp=[-4,-38]}}
+      else if(sw>0){const w0=prog<.22;th=w0?-.4+prog/.22*.25:-.15+(prog-.22)/.78*2.15;gp=[4,-40]}else{th=-.35+Math.sin(time*20)*.05;gp=[2,-41]}}
+    else if(guardPose){th=1.22;gp=[4,-38]}}
   const trail=mv?7:0,wv=Math.sin(time*8+(e.bob||0));
   // legs: thigh/shin angles from the run cycle, knee folds back as the leg lifts
   const legs=off=>{if(!mv)return[0,-.05];const a=ph+off,t=Math.sin(a)*.7;return[t,t-(Math.max(0,Math.cos(a))*1.0+.12)]};
@@ -63,6 +72,8 @@ function drawFighter(e,isP){
   if(!back)tail();
   // back arm with wide sleeve
   withLean(()=>{const sh2=[-4,-44];
+    if(pole){const t=[Math.sin(th),-Math.cos(th)],bh=[gp[0]-t[0]*9,gp[1]-t[1]*9],el=[(sh2[0]+bh[0])/2-2,(sh2[1]+bh[1])/2+4];
+      seg([sh2,el,bh],6,Fc(pal.robeB));ctx.fillStyle=pal.skin[1];ctx.beginPath();ctx.arc(bh[0],bh[1],2.2,0,7);ctx.fill();return}
     if(twoH&&mode!=='kick'){const hp=[4+reach+12*Math.sin(ang),-44+12*Math.cos(ang)],el=[(sh2[0]+hp[0])/2-1,(sh2[1]+hp[1])/2+5];
       seg([sh2,el,hp],6,Fc(pal.robeB));ctx.fillStyle=pal.skin[1];ctx.beginPath();ctx.arc(hp[0],hp[1],2.1,0,7);ctx.fill();return}
     const sa=bArm??(attacking?.35:(mv?s1*.6:.12)),el=joint(sh2,sa,7.5),hd=joint(el,sa+(bArm!==null&&bArm<0?-.9:.55),7);
@@ -102,7 +113,10 @@ function drawFighter(e,isP){
   });
   if(back)tail();
   // weapon arm: sleeve, cuff, hand, weapon
-  withLean(()=>{ctx.save();ctx.translate(4+reach,-44);ctx.rotate(-ang);
+  if(pole){withLean(()=>{const t=[Math.sin(th),-Math.cos(th)],fh=[gp[0]+t[0]*9,gp[1]+t[1]*9],sh=[4,-44],el=[(sh[0]+fh[0])/2+1,(sh[1]+fh[1])/2+4];
+      ctx.save();ctx.translate(gp[0],gp[1]);ctx.rotate(th+Math.PI);if(!(isP&&P.palm>0))polearm(pal.weapon);ctx.restore();
+      seg([sh,el,fh],6,Fc(pal.robe[0]));seg([joint(fh,0,-1.2),joint(fh,0,.2)],7.4,Fc(pal.trim));ctx.fillStyle=pal.skin[0];ctx.beginPath();ctx.arc(fh[0],fh[1],2.4,0,7);ctx.fill()})}
+  else withLean(()=>{ctx.save();ctx.translate(4+reach,-44);ctx.rotate(-ang);
     seg([[0,0],[0,7],[0,12]],6,Fc(pal.robe[0]));seg([[0,11.2],[0,12.4]],7.6,Fc(pal.trim));
     ctx.fillStyle=pal.skin[0];ctx.beginPath();ctx.arc(0,13.5,2.4,0,7);ctx.fill();
     if(!(isP&&P.palm>0))weapon(pal.weapon);

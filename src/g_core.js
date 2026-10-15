@@ -150,7 +150,7 @@ function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.v
 const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
   const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
-  for(const[k,cap0,test,mk]of REGION().spawns||SPAWNS){const cap=typeof facCap==='function'?facCap(k,cap0):cap0,n=mobs.filter(m=>m.kind===k&&m.hp>0).length;if(n>=cap)continue;   // facCap: 궁지 몰린 문파는 더 많이 낸다 (g_pop.js v113)
+  for(const[k,cap0,test,mk]of REGION().spawns||SPAWNS){const cap=typeof facCap==='function'?facCap(k,cap0):cap0,n=mobs.filter(m=>m.kind===k&&m.hp>0&&!m.fixed).length;if(n>=cap)continue;   // facCap: 궁지 몰린 문파는 더 많이 낸다 (g_pop.js v113)
     if(typeof facSpawn==='function'&&facSpawn(k,cap,test,mk,n))continue;   // 세력 무인: 60%만 먼저 세우고, 죽으면 출입구에서 충원 (g_pop.js)
     for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
       y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
