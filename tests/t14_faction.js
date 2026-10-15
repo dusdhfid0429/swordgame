@@ -11,8 +11,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 시뮬레이션: 게임 루프를 멈추고 몹 AI만 직접 돌린다
   await p.evaluate(()=>{window.sim=(sec)=>{for(let t=0;t<sec*30;t++){for(const e of mobs)updateMob(e,1/30);updateEprojs(1/30);mobs=mobs.filter(e=>e.hp>0)}};
     window.place=(fac,x,y,el,sid)=>{const e=mkFac(fac,el?1:0,x,y,sid);mobs.push(e);return e}});
-  // 1) 정파와 사파 무인이 서로 싸운다 (플레이어와 멀리)
-  const r1=await p.evaluate(()=>{paused=true;mobs=[];P.x=20.5;P.y=20.5;const a=place('정',22.5,33.5),b=place('사',25.5,33.5);sim(25);return{a:a.hp,b:b.hp,am:a.maxHp,bm:b.maxHp,left:mobs.length}});
+  // 1) 정파와 사파 무인이 서로 싸운다 (플레이어와 멀리). v110부터 정식 제자(이류) 생명이 커져 둘 다 이류면 25초로는 모자라 60초
+  const r1=await p.evaluate(()=>{paused=true;mobs=[];P.x=20.5;P.y=20.5;const a=place('정',22.5,33.5),b=place('사',25.5,33.5);sim(60);return{a:a.hp,b:b.hp,am:a.maxHp,bm:b.maxHp,left:mobs.length}});
   ok(`정파·사파 무인이 맞붙어 한쪽이 쓰러진다 (남은 수 ${r1.left})`,r1.left<=1&&(r1.a<r1.am||r1.b<r1.bm));   // 화살이 날아가는 중에 둘 다 쓰러지는 수도 있어(CI 2026-10-13) 0도 허용
   // 2) 마교는 정파와 사파 모두를 노린다
   const r2=await p.evaluate(()=>{mobs=[];const m=place('마',22.5,33.5),j=place('정',25,33.5);sim(.6);const t1=m.tgt===j;
