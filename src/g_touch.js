@@ -51,7 +51,7 @@ function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||
     if(e.type==='pointerup'&&moved<10&&performance.now()-t0<300)C.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0,bubbles:true}))};
   z.addEventListener('pointerup',up);z.addEventListener('pointercancel',up);}
 // 공격: 누르면 가장 가까운 적을 잡아 자동초식으로 싸운다. 누르고 있으면 쓰러뜨린 뒤 다음 적으로 넘어간다.
-function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;let e=nearest(8);if(!e&&forceAtk){const t=nearestThing(6);if(t&&t.npc&&t.npc.hq)e=masterOut(t.npc)}if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
+function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return true;let e=nearest(8);if(!e&&forceAtk){const t=nearestThing(6);if(t&&t.npc&&(typeof npcCanOut==='function'?npcCanOut(t.npc):t.npc.hq))e=typeof npcOut==='function'?npcOut(t.npc):masterOut(t.npc)}if(e){P.target=e;P.repath=0;P.path=null;P.medit=false;return true}return false}
 function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!playing||paused)return;b.classList.add('press');down()});
   const u=()=>{b.classList.remove('press');if(upf)upf()};b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u);b.addEventListener('pointerleave',u)}
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
@@ -77,7 +77,7 @@ function specPick(){
 function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
 function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)return null;if(a&&b)return P.hp/P.maxHp<=P.qi/P.maxQi?'금창약':'소환단';return a?'금창약':'소환단'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
-const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기'};
+const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기',vault:'금고'};
 function ctxPick(){
   if(P.perch)return{l:'내려가기',fn:()=>perchDrop()};
   const t=nearestThing();

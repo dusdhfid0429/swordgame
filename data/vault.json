@@ -1,0 +1,15 @@
+{
+  "VAULT": {
+    "income": {"big": 400, "mid": 200, "small": 80, "one": 500, "geumgun": 300},
+    "start": 3, "cap": 20, "sealMul": 0.5,
+    "steal": {"frac": 0.3, "dur": 3.0, "base": 0.25, "perNpc": 0.08, "weak": -0.1, "realm": 0.04, "min": 0.05, "max": 0.85, "guards": 4, "evil": 8, "fame": -5},
+    "ruinDur": 2.0,
+    "npc": {
+      "elder":   {"rank": 4, "hp": 2.0, "atk": 1.2, "fame": 15, "title": "장로"},
+      "steward": {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 8,  "title": "집사"},
+      "dang":    {"rank": 3, "hp": 2.0, "atk": 1.2, "fame": 12, "title": "당주"},
+      "disc":    {"rank": 1, "hp": 1.0, "atk": 1.0, "fame": 3,  "title": "제자"}
+    },
+    "revive": 3
+  }
+}
