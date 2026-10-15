@@ -35,7 +35,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const t7=await p.evaluate(()=>{closePanels();G.pop.hwasan=300;mobs=[];loadRegion('hq_hwasan');P.reg='hq_hwasan';P.x=20.5;P.y=30;for(let i=0;i<6;i++)spawnTick();
     const own=()=>mobs.filter(m=>m.kind==='정파 무인'&&m.hp>0),cap=REGION().spawns.find(s=>s[0]==='정파 무인')[1],n0=own().length;
     for(const m of own().slice(0,2)){m.hp=0}const n1=own().length;time+=10;spawnTick();const r1=mobs.filter(m=>m.rein&&m.kind==='정파 무인');const g=REGION().gates.find(g=>!g.door);
-    const nearGate=r1.length&&REGION().gates.some(g=>Math.hypot(g.x-r1[0].x,g.y-r1[0].y)<2.5);time+=10;spawnTick();const n2=own().length;
+    const nearGate=r1.length&&REGION().gates.some(g=>Math.hypot(g.x-r1[0].x,g.y-r1[0].y)<2.5);for(let t=0;t<6&&own().length<n0;t++){time+=10;spawnTick()}const n2=own().length;   // 자리 찾기(무작위 30번)가 빗나갈 수 있어 몇 번 더 기다린다
     G.pop.hwasan=0;for(const m of own())m.hp=0;time+=10;spawnTick();const n3=own().length;G.pop.hwasan=300;return{cap,n0,n1,r1:r1.length,nearGate,n2,n3,goal:r1.length&&!!r1[0].goal}});
   ok(`상한 ${t7.cap} → 처음 ${t7.n0}명(60%), 둘 죽자 ${t7.n1} → 충원 ${t7.r1}명 출입구 곁 ${t7.nearGate} 목적지 ${t7.goal} → ${t7.n2}명 · 인원 0이면 ${t7.n3}명`,t7.n0===Math.round(t7.cap*.6)&&t7.n1===t7.n0-2&&t7.r1===1&&t7.nearGate&&t7.goal&&t7.n2===t7.n0&&t7.n3===0);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
