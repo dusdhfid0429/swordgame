@@ -42,7 +42,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>openNpc(npcAt('magyo')));await p.waitForTimeout(150);
   ok('정파도 마교 밀사가 문을 열어 준다',await p.evaluate(()=>!$('wbody').textContent.includes('열려 있지 않다')&&!!document.querySelector('[data-act="sview:cheonma"]')));
   ok('정파 화산 제자는 하산 전엔 마교에 못 든다',await p.evaluate(()=>/하산/.test(joinBlock(SECTS.cheonma)||'')));
-  await p.evaluate(()=>{P.sect=null;P.fame=120;P.evil=0;P.age=25;openNpc(hqNpc('hq_cheonma'))});await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
+  await p.evaluate(()=>{P.sect=null;P.fame=120;P.evil=0;P.age=25;P.qiAcc=100;P.qiN=10;openNpc(hqNpc('hq_cheonma'))});
+  ok('마교 가입 줄에 산공 경고',await p.evaluate(()=>$('wbody').textContent.includes('산공')));await p.waitForTimeout(100);await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(150);
+  ok('입교 산공: 화산 심법을 잊고 내공 절반, 기초 심법 봉인, 마공 운용',await p.evaluate(()=>!P.sims.N_hwasan_1&&!!P.sims.N_cheonma_1&&P.qiAcc===50&&simBaseSealed()&&!simKnown('N_base_정')&&simCur().sc==='마공'&&!!simBlock(SIM.N_shop_정)&&simBlock(SIM.N_shop_정).includes('상극')));
   ok('정파 명성 120 → 천마신교 가입, 마교 비급 읽기 허용',await p.evaluate(()=>P.sect==='cheonma'&&!!P.arts[startSet(SECTS.cheonma).art.id]&&artSideOk(ARTS[startSet(SECTS.cheonma).art.id])&&!artSideOk(ARTS['사검0'])));
   // 사파: 사천맹 대문파, 마교
   await p.evaluate(()=>{P.side='사';P.sect=null;P.fame=0;P.evil=0;P.age=25;sectView=null});

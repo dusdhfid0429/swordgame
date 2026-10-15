@@ -20,7 +20,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     sw.mu[0]==='150,220,255'&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='28,6,40'&&sw.cm[1]==='마'&&sw.cm[2]===false&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,214,120'&&sw.other[1]==='금');
   // 3. 적중 효과는 심법 속성: 무당(양)이면 화상+밀침, 천마(마)면 느려짐·흡수, 화산(화)이면 화상, 금(기초)이면 치명타 가산
   const h=await p.evaluate(()=>{const mk=()=>({x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:30,hm:0,el:null,burn:0,slow:0,d:{},isMob:true});const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;
-    const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=[e.slow,5000-e.hp];P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;
+    const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=[e.slow,5000-e.hp];delete P.sims.N_cheonma_4;P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;
     P.sim='N_hwasan_1';e=mk();hitE(X,e,1,0,0);o.hwa=[e.burn,5000-e.hp];Math.random=window._rnd;return o});
   ok(`양: 화상 ${h.yang[0]} 밀침 ${h.yang[1]} 피해 ${h.yang[2]} · 마(느려짐 ${h.noe[0]}, 방어 적용) ${h.noe[1]} · 금(방어 무시) ${h.geum} · 화: 화상 ${h.hwa[0]} 피해 ${h.hwa[1]}(방어 30 적용)`,
     h.yang[0]===3&&h.yang[1]&&h.noe[0]===1.5&&Math.abs(h.noe[1]-h.hwa[1])<=1&&h.geum>h.hwa[1]+20&&h.hwa[0]===3);

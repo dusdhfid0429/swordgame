@@ -515,7 +515,7 @@ function giveStartSet(s){const k=startSet(s),got=[];
   if(!P.arts[k.art.id]){P.arts[k.art.id]={p:0,f:ARTS[k.art.id].forms.map((f,i)=>i===0)};got.push(`${k.art.n} · ${ARTS[k.art.id].forms[0].n}`)}
   if(k.bob&&learnBob(k.bob,1))got.push(BOBS[k.bob].n);
   if(k.gg&&learnGg(k.gg,1))got.push(GGS[k.gg].n);
-  if(k.sim&&!simKnown(k.sim)){simLearn(SIM[k.sim]);got.push(SIM[k.sim].n)}
+  if(k.sim&&!simKnown(k.sim)){if(typeof sangong==='function')sangong(SIM[k.sim].sc);simLearn(SIM[k.sim]);got.push(SIM[k.sim].n)}
   // 주력 무기가 없으면 수련용 병기 하나 (권은 맨손)
   if(k.w!=='권'&&!(P.eq.weapon&&P.eq.weapon.cls===k.w)&&!P.bag.some(it=>it.slot==='weapon'&&it.cls===k.w)&&P.bag.length<24){const w=mkWeapon(k.w,.85,0);P.bag.push(w);got.push(w.name)}
   return got}
@@ -602,7 +602,7 @@ function sectDetail(s,hq){
   const cur=same?sectMissions(s).map(q=>q.key):[],old=same?P.quests.map((q,i)=>[q,i]).filter(([q])=>q.sect===s.id&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
     return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join(''):'';
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
-    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
+    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}${!jb&&typeof sangongTxt==='function'&&startSet(s).sim?` <b class="bad">${sangongTxt(SIM[startSet(s).sim].sc)}</b>`:''}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
@@ -4049,11 +4049,26 @@ hook('hitDone',c=>{const e=c.e,d=c.hp0-e.hp;if(!e||d<=0||!(simCur().tr||[]).leng
 hook('hurtDone',c=>{const v=simTv('reflect'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(v&&d>0&&src&&src.d&&src.hp>0&&src!==P)damage(src,Math.max(1,Math.round(d*v/100)),0,0,P)});
 const simOf=sid=>Object.values(SIM).filter(x=>x.sect===sid).sort((a,b)=>a.g-b.g);
 const simBase=()=>SIM['N_base_'+P.side];
-function simCur(){return(P.sim&&SIM[P.sim]&&simKnown(P.sim)?SIM[P.sim]:simBase())}
-const simKnown=id=>id===('N_base_'+P.side)||!!(P.sims&&P.sims[id]);
+// 상극 심법 (사용자 2026-10-15 v103 "마교 심법과 정파 심법을 같이 쓰는 건 기괴"): 마공은 정파 계열(불가·도가·정종)과 한 몸에 둘 수 없다. 사공·사불은 마공과 어울린다.
+const SIM_FOE={마공:['불가','도가','정종'],불가:['마공'],도가:['마공'],정종:['마공']};
+const simClash=(a,b)=>!!a&&!!b&&(SIM_FOE[a]||[]).includes(b);
+const simHeld=()=>Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean);
+// 타고난 기초 심법은 상극 심법(마공)을 지니는 동안 봉인된다: 목록엔 남지만 운용할 수 없다
+const simBaseSealed=()=>simHeld().some(x=>simClash(x.sc,simBase().sc));
+function simCur(){if(P.sim&&SIM[P.sim]&&simKnown(P.sim))return SIM[P.sim];if(simBaseSealed()){const alt=simHeld().find(x=>!simClash(x.sc,simBase().sc)&&x.sc!==simBase().sc)||simHeld()[0];if(alt)return alt}return simBase()}
+const simKnown=id=>(id===('N_base_'+P.side)&&!simBaseSealed())||!!(P.sims&&P.sims[id]);
+// 산공: 익히려는 심법 계열과 상극인 심법을 모두 잊고, 쌓은 내공의 절반이 흩어진다. 잃는 것이 없으면 아무 일도 없다.
+function sangongLoss(sc){const gone=simHeld().filter(x=>simClash(x.sc,sc));return{gone,base:simClash(simBase().sc,sc)&&!simBaseSealed()}}
+function sangong(sc){const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return false;
+  for(const x of gone)delete P.sims[x.id];if(P.sim&&!P.sims[P.sim])P.sim=null;
+  const lost=Math.floor((P.qiAcc||0)/2);P.qiAcc=(P.qiAcc||0)-lost;P.qiN=Math.max(0,P.qiN-Math.ceil(P.qiN/2));if(typeof recalc==='function')recalc();P.qi=Math.min(P.qi,P.maxQi);
+  log(`${sc} 심법을 받아들이려 ${[...gone.map(x=>x.n),...(base?[simBase().n+'(봉인)']:[])].join('·')}을(를) 버리고 산공했습니다. 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('산공',`${sc}과 상극인 심법을 버렸다`);
+  P.feats.push(`${Math.floor(P.age)}세에 ${sc}에 들려 산공했다`);return true}
+const sangongTxt=sc=>{const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return'';return`${sc}은 ${[...gone.map(x=>x.n),...(base?[simBase().n]:[])].join('·')}과 상극이라 입문하면 그 심법을 버리고(산공) 쌓은 내공 절반이 흩어진다.`};
 const simGain=()=>Math.round(SIDES[P.side].gain*SIM_GQ[simCur().g]*10)/10;
 const simMine=()=>[simBase(),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);
 function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
+  if(simHeld().some(h=>simClash(h.sc,x.sc)))return`상극 심법(${simHeld().find(h=>simClash(h.sc,x.sc)).sc})을 지녀 못 익힌다`;
   if(x.shop)return P.side!==x.side?'성향이 다르다':P.silver<SIM_SHOP.price?`은자 ${SIM_SHOP.price} 필요`:'';
   if(P.sect!==x.sect)return`${SECTS[x.sect].n} 제자만`;const r=rankIdx(x.sect);if(r<SIM_RANK[x.g])return`${rankName(x.sect,SIM_RANK[x.g])} 이상`;
   if((P.merit[x.sect]||0)<SIM_COST[x.g])return`공적 ${SIM_COST[x.g]} 필요`;return''}
@@ -4073,8 +4088,8 @@ hook('sectAct',c=>{const{a,x}=c;
 // 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
 const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
-  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.map(x=>simRowHtml(x,x.id===cur.id?'':B('simsel:'+x.id,'운용하기'))).join('')}</div>
-    <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다.</p></div>`}
+  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
+    <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다. 마공과 정파 계열(불가·도가·정종) 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다.</p></div>`}
 function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${x.el}속성 · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}
 
 // ================= 세력 무인, 문파 직위, 문파 본산 =================
