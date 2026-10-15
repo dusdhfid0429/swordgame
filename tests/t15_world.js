@@ -14,7 +14,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===22&&g.mn<g.mx&&g.themes>=12);
   const sz=await p.evaluate(()=>['xinjiang','tibet','qinghai','sichuan','henan','zhejiang','hainan'].map(k=>PROV[k].size));
   ok(`실제 면적 비례 크기: 신강 ${sz[0]} > 서장 ${sz[1]} > 청해 ${sz[2]} > 사천 ${sz[3]} > 하남 ${sz[4]} > 절강 ${sz[5]} > 해남 ${sz[6]}`,sz.every((v,i)=>!i||v<=sz[i-1])&&sz[0]>sz[2]&&sz[2]>sz[4]&&sz[4]>sz[6]);
-  ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성');
+  ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성·결전장');
   // 모든 지역: 도착 자리에서 모든 출입구까지 걸어서 간다 (지역 크기도 맞게)
   const bfs=await p.evaluate(()=>{const bad=[],cur=REG,sz={};
     for(const[id,R]of Object.entries(REGIONS)){R.gen();sz[id]=N;if(N!==(R.size||40)||NH!==(R.h||R.size||40))bad.push(id+' 크기');
