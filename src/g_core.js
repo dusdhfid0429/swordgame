@@ -218,7 +218,7 @@ function gainMast(id,v){
   runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
-  e.hp-=d;e.hit=.12;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
+  e.hp-=d;e.hit=.12;e.hurtAt=time;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
   if(e.d.fac&&!e.angry&&!facFoe(e.d.fac,pfac()))facBetray(e);
