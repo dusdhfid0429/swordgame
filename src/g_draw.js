@@ -87,6 +87,9 @@ function drawNode(n){
   else if(n.t==='wood'){if(ready)for(let i=0;i<3;i++){const y=-3-i*4,x=(i%2)*3-1;poly([[-10+x,y+2],[8+x,y-2],[9+x,y+1],[-9+x,y+5]],'#7a5232');ctx.fillStyle='#c9a070';ctx.beginPath();ctx.ellipse(8.5+x,y-.5,2,2.6,0,0,7);ctx.fill()}else{ctx.fillStyle='#5a3a22';ctx.fillRect(-4,-2,8,2)}}
   else if(n.t==='fish'){const k=frac(time*.6+n.x);ctx.strokeStyle=`rgba(220,240,250,${(1-k)*.7})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(0,-8,4+k*12,2+k*5,0,0,7);ctx.stroke();
     ctx.fillStyle='#e04030';ctx.beginPath();ctx.arc(0,-9+Math.sin(time*3)*1,2.2,0,7);ctx.fill()}
+  else if(n.t==='corpse'){if(ready){const gl=ctx.createRadialGradient(0,-4,1,0,-4,22);gl.addColorStop(0,`rgba(255,235,170,${.25+.15*Math.sin(time*3+n.x)})`);gl.addColorStop(1,'rgba(255,220,120,0)');ctx.fillStyle=gl;ctx.fillRect(-24,-28,48,48)}}
+  else if(n.t==='rubble'){poly([[-13,2],[-6,-6],[2,-4],[9,-9],[14,1]],lg(-13,14,'#6a635a','#2a2622'));poly([[-9,-1],[-2,-8],[5,-2]],'#3a3330');seg([[-11,-3],[4,-12]],3,'#2a2018');seg([[-2,1],[12,-6]],2.5,'#3a2a1c');
+    if(ready){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4+n.y)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-5);ctx.lineTo(1,-9);ctx.lineTo(5,-4);ctx.stroke()}}
   else if(n.t==='chest'){if(!P.chest){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
     poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],P.chest?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
   ctx.restore();
