@@ -29,14 +29,16 @@ function roofFace(eave0,eave1,r0,r1,fill,lines){
 }
 function curl(p,dx){ctx.strokeStyle='#22262c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...p);ctx.quadraticCurveTo(p[0]+dx*.6,p[1],p[0]+dx,p[1]-8);ctx.stroke()}
 function drawBuild(b,alpha){
-  const{x,y,w,h}=b,X1=x+w,Y1=y+h,pav=b.kind==='pavilion',WH=pav?34:38,o=.38;
+  const{x,y,w,h}=b,X1=x+w,Y1=y+h,pav=b.kind==='pavilion',ru=!!REGION().dead,WH=pav?(ru?22:34):(ru?26:38),o=.38;   // ru: 멸문 폐허 (g_ruin.js) - 낮고 그을린 담, 꺼진 지붕
   ctx.save();ctx.globalAlpha=alpha;
   quad([scr(x+.3,Y1+.25),scr(X1+.3,Y1+.25),scr(X1+.3,y+.25),scr(X1,y),scr(X1,Y1),scr(x,Y1)],'rgba(0,0,0,.22)',null);
   if(pav){quad([scr(x,y,5),scr(X1,y,5),scr(X1,Y1,5),scr(x,Y1,5)],'#b4ad9e');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,5),scr(x,Y1,5)],'#8f897c');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,5),scr(X1,Y1,5)],'#77716a');
     for(const[i,j]of[[x+.2,y+.2],[X1-.2,y+.2],[x+.2,Y1-.2],[X1-.2,Y1-.2]]){const q=scr(i,j,5);seg([q,up(q,WH-5)],4,'#7a2416')}
     const t=scr(x+w/2,y+h/2,5);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(t[0],t[1]-6,9,4.5,0,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.stroke()}
   else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.mg?'#2a2020':'#c3b69b',false,b)}
-  const RC=b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
+  const RC=ru?['#2c2724','#242120','#332c28','#3b322c']:b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
+  if(ru&&!pav){ctx.fillStyle='rgba(20,14,10,.45)';quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,WH),scr(x,Y1,WH)],'rgba(20,14,10,.42)',null);quad([scr(X1,Y1),scr(X1,y),scr(X1,y,WH),scr(X1,Y1,WH)],'rgba(20,14,10,.5)',null);
+    ctx.strokeStyle='#1a1512';ctx.lineWidth=1.5;for(const t of[.22,.58,.8]){const q=up(lerp2(scr(x,Y1),scr(X1,Y1),t),WH);ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+3,q[1]+WH*.35);ctx.lineTo(q[0]-2,q[1]+WH*.6);ctx.lineTo(q[0]+2,q[1]+WH*.85);ctx.stroke()}}
   const H0=WH+(pav?0:4),RH=H0+10+8*Math.min(w,h);
   const Et=scr(x-o,y-o,H0),Er=scr(X1+o,y-o,H0),Eb=scr(X1+o,Y1+o,H0),El=scr(x-o,Y1+o,H0);
   let R1,R2;
@@ -44,6 +46,10 @@ function drawBuild(b,alpha){
     roofFace(Et,Er,R1,R2,RC[0],10);roofFace(Et,El,R1,null,RC[1],6);roofFace(Er,Eb,R2,null,RC[2],6);roofFace(El,Eb,R1,R2,RC[3],Math.round(w*5))}
   else{const d=(w+2*o)/2,cx=(x+X1)/2;R1=scr(cx,y-o+d,RH);R2=scr(cx,Y1+o-d,RH);
     roofFace(Et,El,R1,R2,RC[1],10);roofFace(Et,Er,R1,null,RC[0],6);roofFace(El,Eb,R2,null,RC[3],6);roofFace(Er,Eb,R1,R2,RC[2],Math.round(h*5))}
+  if(ru){const m=lerp2(R1,R2,.5),hole=[lerp2(R1,R2,.3),up(lerp2(Eb,El,.45),(RH-H0)*.45),lerp2(Eb,El,.6),up(lerp2(Eb,El,.25),(RH-H0)*.3)];quad(hole,'rgba(8,6,6,.92)','#1a1512');
+    ctx.strokeStyle='#15110f';ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(...R1);ctx.lineTo(m[0],m[1]+3);ctx.stroke();ctx.beginPath();ctx.moveTo(m[0]+6,m[1]+9);ctx.lineTo(...R2);ctx.stroke();
+    for(const[t,sz]of[[.1,5],[.3,3.5],[.75,4.5],[.92,3]]){const q=lerp2(scr(x-.4,Y1+.5),scr(X1+.4,Y1+.5),t);ctx.fillStyle='#5a544c';ctx.beginPath();ctx.ellipse(q[0],q[1],sz*1.6,sz,0,0,7);ctx.fill();ctx.strokeStyle='#1a1512';ctx.lineWidth=1;ctx.stroke()}
+    ctx.restore();return}
   curl(El,-9);curl(Eb,0);curl(Er,9);
   ctx.strokeStyle='#22262c';ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(...R1);ctx.lineTo(...R2);ctx.stroke();
   if(pav){ctx.fillStyle='#c9a14a';ctx.beginPath();ctx.arc(R1[0],R1[1]-4,3,0,7);ctx.fill()}

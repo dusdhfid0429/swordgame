@@ -40,8 +40,8 @@ const liveMaps=s=>{const n=(REGIONS[hqId(s)]||{}).chain?REGIONS[hqId(s)].chain.l
 function closedMaps(s){const M=REGIONS[hqId(s)];if(!M||!M.chain)return sectPop(s.id)<=0?[hqId(s)]:[];const ch=M.chain,i=ch.indexOf(hqId(s)),live=liveMaps(s);if(live>=ch.length)return[];
   const order=[...ch.slice(i+1).reverse(),...ch.slice(0,i),hqId(s)];return order.slice(0,ch.length-live)};
 const mapClosed=id=>{const R=REGIONS[id];if(!R||!R.hq||!SECTS[R.hq])return false;return closedMaps(SECTS[R.hq]).includes(id)};
-// 출입구: 닫힌 맵으로는 못 들어간다 (linkChain이 단 need 앞에 끼운다)
-hook('gate',c=>{if(!P||c.stop||!REGION().gates)return;for(const g of REGION().gates)if(g.to&&dist(g,P)<.8&&mapClosed(g.to)&&!(P.gateLock)){const s=SECTS[REGIONS[g.to].hq];
+// 출입구: 닫힌 맵으로는 못 들어간다 (linkChain이 단 need 앞에 끼운다). 멸문(인원 0)이면 폐허로 들어간다 (g_ruin.js)
+hook('gate',c=>{if(!P||c.stop||!REGION().gates)return;for(const g of REGION().gates)if(g.to&&dist(g,P)<.8&&mapClosed(g.to)&&!(P.gateLock)&&!(sectPop(REGIONS[g.to].hq)<=0)){const s=SECTS[REGIONS[g.to].hq];
   log(sectPop(s.id)<=0?`${REGIONS[g.to].name}은(는) 폐허가 되어 길이 막혔다. ${s.n}은(는) 멸문했다.`:`${REGIONS[g.to].name}은(는) 인원이 줄어 닫혔다. ${s.n}의 세가 회복되어야 다시 연다.`,'info');addText(P.x,P.y,'폐문','#e07a5a');P.y+=g.y<NH/2?1.3:-1.3;P.path=null;P.gateLock=1;c.stop=true;return}});
 // 닫힌 맵에 서 있게 되면(옛 저장) 황폐: NPC 없음, 제 문파 무인 없음
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.hq||!SECTS[R.hq])return;if(!R._npcs)R._npcs=R.npcs||[];if(!R._sp2)R._sp2=R._sp||R.spawns||[];
