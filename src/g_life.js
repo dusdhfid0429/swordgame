@@ -124,7 +124,9 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
   if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
   if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)&&!(e.lost>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
-  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
+  // 줄(leash): 집에서 15칸 넘게 끌려가면 돌아간다. v111: 방금 맞은 몹(5초 안)은 제자리를 새 집으로 삼아 싸우고, 돌아갈 때의 회복은 한 번만 (리젠돼 걸어오는 몹이 맞을 때마다 30% 차던 '무적' 버그)
+  if(e.aggro&&Math.hypot(e.x-e.home.x,e.y-e.home.y)>15&&time-(e.hurtAt||-9)<5)e.home={x:e.x,y:e.y};
+  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};if(time-(e.healAt||-99)>20){e.healAt=time;e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;

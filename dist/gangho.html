@@ -928,7 +928,7 @@ function gainMast(id,v){
   runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
-  e.hp-=d;e.hit=.12;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
+  e.hp-=d;e.hit=.12;e.hurtAt=time;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
   if(e.d.fac&&!e.angry&&!facFoe(e.d.fac,pfac()))facBetray(e);
@@ -1488,7 +1488,9 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   let tg=e.tgt&&e.tgt.hp>0?e.tgt:P;
   if(tg===P&&!hostP&&e.aggro){e.aggro=false;e.tgt=null}
   if(!e.aggro&&hostP&&P.hp>0&&!(P.perch&&e.giveUp>time)&&!(e.lost>time)){if(dist(e,P)<(d.aggro||6)*(P.perch&&P.perch.k==='tree'?.5:1)&&!inTown(Math.floor(P.x),Math.floor(P.y)))e.aggro=true;else for(const a of allies)if(a.hp>0&&a!==P.ride&&dist(e,a)<(d.aggro||6)*.7){e.aggro=true;e.tgt=a;tg=a;break}}
-  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}
+  // 줄(leash): 집에서 15칸 넘게 끌려가면 돌아간다. v111: 방금 맞은 몹(5초 안)은 제자리를 새 집으로 삼아 싸우고, 돌아갈 때의 회복은 한 번만 (리젠돼 걸어오는 몹이 맞을 때마다 30% 차던 '무적' 버그)
+  if(e.aggro&&Math.hypot(e.x-e.home.x,e.y-e.home.y)>15&&time-(e.hurtAt||-9)<5)e.home={x:e.x,y:e.y};
+  if(e.aggro&&(Math.hypot(e.x-e.home.x,e.y-e.home.y)>15||P.hp<=0&&!tg.isMob||inTown(Math.floor(tg.x),Math.floor(tg.y))&&!e.duel)){e.aggro=false;e.tgt=null;e.goal={x:e.home.x,y:e.home.y};if(time-(e.healAt||-99)>20){e.healAt=time;e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.3)}}
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
@@ -4179,7 +4181,7 @@ function facScan(e,dt){
 // 몹끼리의 타격. 쓰러져도 전리품은 없다 (은자는 플레이어가 직접 잡았을 때만 들어온다).
 function mobHurt(t,dm,src){
   if(t.hp<=0)return;{const c={t,src,dm};runHooks('mobHurt',c);dm=c.dm}
-  dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;
+  dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;t.hurtAt=time;
   if(dist(t,P)<14)addText(t.x,t.y,dm,'#c8b8a0');
   if(t.d.fac&&(!t.tgt||t.tgt.hp<=0||!t.tgt.isMob||Math.random()<.3)){t.tgt=src;t.aggro=true}
   if(t.hp<=0){t.hp=0;fx.push({t:'puff',x:t.x,y:t.y,life:.6});if(P.target===t)P.target=null;runHooks('mobKilled',t,src);
