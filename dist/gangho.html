@@ -2333,12 +2333,12 @@ let FACK=null;   // FAC_KIND는 뒤 파일(g_faction.js)에 있어 처음 쓸 �
 const rushD=R=>{const s=R&&R.hq&&SECTS[R.hq];if(!s)return 0;const p=sectPop(s.id);if(!(p>0))return 0;return Math.max(0,Math.min(1,1-p/popBase(s)))};
 function facCap(k,cap){if(!FACK)FACK=new Set(Object.values(FAC_KIND).flat());if(!FACK.has(k))return cap;const d=rushD(REGION()),r=POP.rush||{cap:0};return Math.round(cap*(1+(r.cap||0)*d))}
 function facSpawn(k,cap,test,mk,n){if(!FACK)FACK=new Set(Object.values(FAC_KIND).flat());if(!FACK.has(k)||!mk)return false;const R=REGION();R._fs=R._fs||{};const st=R._fs[k]||(R._fs[k]={init:false,at:-99});
-  const spot=()=>{const big=N>BIG_N;for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
+  const spot=()=>{const big=N>BIG_N;for(let t=0;t<80;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
     if(test(x,y)&&walk(x,y)&&Math.hypot(x+.5-P.x,y+.5-P.y)>=8)return{x:x+.5,y:y+.5}}return null};
   if(!st.init){const want=Math.max(1,Math.round(cap*POP.initFill));for(let i=n;i<want;i++){const s=spot();if(!s)break;mobs.push(mk(s.x,s.y))}st.init=true;st.at=time;return true}   // 처음엔 60%를 한꺼번에
   const d=rushD(R),ru=POP.rush||{};if(time-st.at<POP.reinSec*(1-(ru.rein||0)*d))return true;st.at=time;
   for(let i=0,cnt=1+Math.floor((ru.n||0)*d);i<cnt&&mobs.filter(m=>m.kind===k&&m.hp>0).length<cap;i++){
-  const s=spot();if(!s)return true;const e=mk(s.x,s.y);if(!(sectPop(e.sect)>0))return true;   // 그 문파에 남은 사람이 없으면 못 온다
+  const s=spot();if(!s)continue;const e=mk(s.x,s.y);if(!(sectPop(e.sect)>0))return true;   // 그 문파에 남은 사람이 없으면 못 온다
   const gates=(R.gates||[]).filter(g=>g.to&&!g.door);const g=gates.length?gates[Math.floor(Math.random()*gates.length)]:null;
   if(g){let gx=g.x,gy=g.y;for(let t=0;t<8&&!walkAt(gx,gy);t++){gx=g.x+(Math.random()*2-1);gy=g.y+(Math.random()*2-1)}if(walkAt(gx,gy)){e.x=gx;e.y=gy;e.home={x:s.x,y:s.y};e.goal={x:s.x,y:s.y};e.rein=1}}
   mobs.push(e)}return true}
