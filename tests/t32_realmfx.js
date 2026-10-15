@@ -38,7 +38,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     P.sect='mandok';const e3=mkMob('강시',P.x+1,P.y);e3.hp=99999;e3.slow=0;hitE(X,e3,1,0,0);const slow=e3.slow;
     P.sect='cheonma';P.hp=P.maxHp;const e4=mkMob('강시',P.x+1,P.y);e4.hp=99999;hitE(X,e4,1,0,0);const full=99999-e4.hp;P.hp=P.maxHp*.2;const e5=mkMob('강시',P.x+1,P.y);e5.hp=99999;hitE(X,e5,1,0,0);const low=99999-e5.hp;
     Math.random=R;P.sect=null;mobs=[];return{names,jj,bg,dg,leech,slow,full,low}});
-  ok(`계열별 이름 ${JSON.stringify(sm.names)}`,sm.names.정종==='화경/현경'&&sm.names.도가==='귀원경/등선경'&&sm.names.불가==='금강경/보리경'&&sm.names.사불==='혈불경/명왕경'&&sm.names.사공==='사왕경/사신경'&&sm.names.마공==='마화경/천마경');
+  ok(`계열별 이름 ${JSON.stringify(sm.names)}`,sm.names.정종==='화경/현경'&&sm.names.도가==='귀원경/등선경'&&sm.names.불가==='금강경/보리경'&&sm.names.사불==='혈불경/명왕경'&&sm.names.사공==='사왕경/사신경'&&sm.names.마공==='극마/탈마');
   ok(`고유 특성: 금강불괴 ${sm.bg.took}<${sm.jj.took}, 태극 반탄 ${sm.dg.refl}, 혈불공 +${Math.round(sm.leech)}, 사기 둔화 ${sm.slow}, 천마해체 ${sm.full}→${sm.low}`,sm.bg.took<sm.jj.took&&sm.dg.refl>0&&sm.jj.refl===0&&sm.leech>0&&sm.slow>=2&&sm.low>sm.full*1.2);
   // 수치는 계열마다 다르되 밸런스 점수는 같다 (내공 10%=1, 기본기 1=1, 수명 5년=1, 필살기 10%=1)
   const bal=await p.evaluate(()=>{const o={};for(const[k,c]of Object.entries(SUMMIT)){const st=Object.values(c.st).reduce((a,b)=>a+b,0);o[k]=[Math.round(c.q*10+st+c.l5/5),Math.round(c.l6/5+c.ult*10)]}
@@ -64,7 +64,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r9=await p.evaluate(()=>{P.mats.공청석유=2;const q=baseQi();useCon('공청석유');const q1=baseQi();useCon('공청석유');return{d:q1-q,again:baseQi()-q1,left:P.mats.공청석유}});
   ok(`공청석유 +${r9.d}, 두 번째는 효험 없음 +${r9.again}`,r9.d===120&&r9.again===0&&r9.left===1);
   // 마공: 수련마다 내공 더, 악업
-  const r10=await p.evaluate(()=>{P.sect='cheonma';const q=baseQi(),ev=P.evil;qiAccAdd(qiGain());P.qiN++;qiTrained();const d=baseQi()-q;P.sect=null;return{d,ev:P.evil-ev}});
+  const r10=await p.evaluate(()=>{P.sect='cheonma';P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';const q=baseQi(),ev=P.evil;qiAccAdd(qiGain());P.qiN++;qiTrained();const d=baseQi()-q;P.sect=null;P.sims={};P.sim=null;return{d,ev:P.evil-ev}});   // v105: 수련 계열은 운용 중 심법을 따른다
   ok(`마공 수련 1회 내공 +${r10.d}, 악업 +${r10.ev}`,r10.d>=12&&r10.ev===1);
   // 인물창: 갑자·단전·계열·깨달음·경지의 길
   await p.evaluate(()=>{P.realm=3;openPanel('char')});await p.waitForTimeout(300);

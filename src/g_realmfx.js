@@ -112,8 +112,9 @@ hook('useCon',c=>{const k=c.k;
 function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.random()<.04){addMat('만년설삼',1);log('눈 속에서 만년설삼을 캤습니다!','xp');showBanner('만년설삼','내공 반 갑자')}}
 
 // ---- 내공 수련 한 번: 심법 계열을 탄다 ----
-function qiTrained(){const s=school();
-  if(s==='사공'||s==='사불'){P.qiX=(P.qiX||0)+Math.round(qiGain()*.15*10)/10;recalc()}
+function qiTrained(){const s=typeof pSchool==='function'?pSchool():school();   // 운용 중인 심법의 계열 (사공→정종 전향이 되게)
+  if(s==='사공'||s==='사불'){const f=qiWallMul(s),x=Math.round(qiGain()*f*10)/10;P.qiX=(P.qiX||0)+x;recalc();
+    if(f<0&&(!P.qwT||time-P.qwT>30)){P.qwT=time;log(`${s}의 한계: ${RANKS[QI_WALL.hiR]}부터는 수련마다 내공이 ${Math.abs(x)} 덜 쌓입니다. 정종 심법으로 바꾸거나 대문파의 상승 심법을 받아야 길이 넓어집니다.`,'info')}}
   if(s==='마공'){const x=Math.round(qiGain()*.25*10)/10;P.qiX=(P.qiX||0)+x;P.evil+=1;recalc();if(typeof maraAdd==='function')maraAdd(MARA.train,'수련');if(!P.mgT||time-P.mgT>30){P.mgT=time;log(`마공의 기운이 거칠게 몰아쳐 내공이 ${x} 더 쌓였지만 악업도 쌓입니다.`,'info')}}
   wallCheck()}
 
@@ -121,6 +122,13 @@ function qiTrained(){const s=school();
 // 폐관 성공률 보정 (예전 사파 -5%는 이 표가 대신한다)과 무거운 주화입마의 몫. g_realm.js의 pgChance·qiDeviation이 읽는다
 const PG_SCHOOL=GD.PG_SCHOOL;
 const DEV_HEAVY=GD.DEV_HEAVY;
+// ---- 사공의 한계 (2026-10-15 v105, docs/마교_심화_기획.md §5) ----
+// 무협 관례 "사파는 절정 직전까지 빠르고 그 뒤는 애매하다": 사공은 일류까지 수련 내공 +30%, 초절정부터 -30% (대문파 상승 심법 운용 중 -15%), 절정 벽 -5%·초절정 이후 벽 -20%.
+// 사불은 불가의 안정이 절반을 상쇄(+15% / -15%, 초절정 이후 벽 -10%). 표는 data/realm.json QI_WALL·PG_SCHOOL_R. 경지 색인은 다음 경지(r)로 읽는다
+const PG_SCHOOL_R=GD.PG_SCHOOL_R||{},QI_WALL=GD.QI_WALL||{hiR:4};
+const saBig=()=>{const s=P&&P.sim&&SIM[P.sim];return !!(s&&s.sect&&SECTS[s.sect]&&SECTS[s.sect].tier==='big'&&s.g>=2)};
+function pgSchoolAdj(r){const s=typeof pSchool==='function'?pSchool():school(),t=PG_SCHOOL_R[s];let v=t?(t[r]??0):(PG_SCHOOL[s]||0);if(s==='사공'&&saBig())v/=2;return v}
+function qiWallMul(s){const w=QI_WALL[s];if(!w)return 0;if(realmIdx()<QI_WALL.hiR)return w.lo;return s==='사공'&&saBig()?w.big:w.hi}
 
 // ---- 매 프레임 ----
 hook('trainTick',dt=>{if(P&&playing&&P.hp>0){peakTick(dt);senseTick()}});

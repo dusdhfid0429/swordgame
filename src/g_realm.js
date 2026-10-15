@@ -32,11 +32,11 @@ const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
 const PG_BASE=GD.PG_BASE;
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
   if(hobeop())c+=.1;for(const{k}of PILLARS)if(pillarVal(k)>=REALM_NEED[k][r]*1.2&&REALM_NEED[k][r]>0)c+=.05;
-  if(pill)c+=.1;c+=PG_SCHOOL[school()]||0;return clamp(c,.05,.95)}
+  if(pill)c+=.1;c+=pgSchoolAdj(r);if(typeof talmaBonus==='function')c+=talmaBonus(r);return clamp(c,.05,.95)}
 // 할 수 없는 까닭 (없으면 '')
 function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
   if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
-  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;return''}
+  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
@@ -51,8 +51,8 @@ function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관
   P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
-    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);return}
-  qiDeviation(r)}
+    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
+  qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
 function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
   if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
