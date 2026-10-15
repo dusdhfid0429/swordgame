@@ -38,7 +38,7 @@ function talmaWhy(r){if(!talmaWall(r))return'';const T=TALMA();
   if(talmaHold()<T.hold)return`마성 ${T.low} 미만을 ${T.hold}년 유지해야 (${Math.floor(talmaHold()*12)}/${T.hold*12}달)`;
   if(REG!=='hq_cheonma_8')return'천마동에서만';return''}
 const talmaBonus=r=>{if(!talmaWall(r)||talmaWhy(r))return 0;const T=TALMA();return Math.min(T.max,Math.floor(talmaHold()-T.hold)*T.bonus)};
-function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 마기를 다스려 탈마에 이르렀다`)}
+function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;P.addict=null;P.thirst=0;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 마기를 다스려 탈마에 이르렀다`)}
 function talmaFail(r){if(!talmaWall(r)||!P||P.hp<=0)return;P.maraLow=null;P.mara=Math.max(P.mara||0,MARA.dev.back);log(`마기가 역류해 마성이 ${Math.round(P.mara)}으로 치솟았습니다. 유지 기간은 처음부터입니다.`,'dmg')}
 hook('tick',dt=>{if(!P||!playing||!isMa())return;burstTick(dt);
   if(!isTalma()){if((P.mara||0)<TALMA().low){if(P.maraLow==null)P.maraLow=G.cal}else P.maraLow=null}

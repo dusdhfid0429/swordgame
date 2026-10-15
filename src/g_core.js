@@ -60,9 +60,9 @@ const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
-const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1);
+const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1)*(P.weakT>0?.8:1);   // 혈마단 뒤 30초 둔화 (g_magyo2.js)
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
-const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul();
+const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul()*(P.thirst?.5:1);   // 마교 영약 중독의 갈증 (g_magyo2.js)
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
 const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
