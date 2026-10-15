@@ -1,4 +1,4 @@
-// 마성(魔性) (2026-10-15 v104): 마공 운용 중 수련·살생으로 오르고 운기조식·마기 정련으로 내린다. 입마·극마·광마 단계, 폭주, 100이면 주화입마, 깨달음 절반, 추살조
+// 마성(魔性) (2026-10-15 v104): 마공 운용 중 수련·살생으로 오르고 운기조식·마기 정련으로 내린다. 입마·심마·광마 단계, 폭주, 100이면 주화입마, 깨달음 절반, 추살조
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
@@ -20,7 +20,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     o.h0=hurtAt(0);o.h1=hurtAt(45);Math.random=R;
     P.mara=50;P.medit=true;mobs=[];P.target=null;P.path=null;for(let i=0;i<40;i++)update(.1);o.medit=P.mara;P.medit=false;o.tier=[MARA_N[(P.mara=0,maraTier())],MARA_N[(P.mara=40,maraTier())],MARA_N[(P.mara=70,maraTier())],MARA_N[(P.mara=90,maraTier())]].join('·');P.mara=0;return o});
   ok(`공격 배율 평정 ${t.d0} → 입마 ${t.d1} → 광마 ${t.d3} · 받는 피해 ${t.h0} → ${t.h1} · 운기조식 4초 뒤 마성 50 → ${t.medit} · 단계 ${t.tier}`,
-    t.d1>t.d0*1.05&&t.d3>t.d1*1.05&&t.h1>t.h0*1.05&&t.medit<50&&t.medit>40&&t.tier==='평정·입마·극마·광마');
+    t.d1>t.d0*1.05&&t.d3>t.d1*1.05&&t.h1>t.h0*1.05&&t.medit<50&&t.medit>40&&t.tier==='평정·입마·심마·광마');
   // 3. 폭주: 같은 편 마교도도 친다. 끝나면 강제공격이 원래대로
   const bu=await p.evaluate(()=>{const o={};mobs=[];const ally=mkFac('마',0,P.x+2,P.y,'cheonma');mobs.push(ally);o.peace=peaceful(ally);toggleForce(false);maraBurst();o.on=!!P.burst&&forceAtk;update(.2);update(.2);o.target=P.target===ally;
     for(let i=0;i<25;i++)update(.2);o.off=!P.burst&&!forceAtk;mobs=[];P.target=null;return o});

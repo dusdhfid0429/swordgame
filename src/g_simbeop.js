@@ -69,7 +69,7 @@ const simGain=()=>Math.round(SIDES[P.side].gain*SIM_GQ[simCur().g]*10)/10;
 const simMine=()=>[simBase(),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);
 function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
   if(simHeld().some(h=>simClash(h.sc,x.sc)))return`상극 심법(${simHeld().find(h=>simClash(h.sc,x.sc)).sc})을 지녀 못 익힌다`;
-  if(x.shop)return P.side!==x.side?'성향이 다르다':P.silver<SIM_SHOP.price?`은자 ${SIM_SHOP.price} 필요`:'';
+  if(x.shop)return x.side==='사'&&P.side!=='사'?'성향이 다르다':P.silver<SIM_SHOP.price?`은자 ${SIM_SHOP.price} 필요`:'';
   if(P.sect!==x.sect)return`${SECTS[x.sect].n} 제자만`;const r=rankIdx(x.sect);if(r<SIM_RANK[x.g])return`${rankName(x.sect,SIM_RANK[x.g])} 이상`;
   if((P.merit[x.sect]||0)<SIM_COST[x.g])return`공적 ${SIM_COST[x.g]} 필요`;return''}
 function simLearn(x){P.sims=P.sims||{};P.sims[x.id]=1;P.sim=x.id;log(`심법 [${x.n}](${AGR[x.g]})을(를) 익혀 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'xp');if(x.tr&&x.tr.length)log(`특색: ${simTraitTxt(x)} (운용 중에만)`,'xp');showBanner(x.n,`${AGR[x.g]} 심법`)}
@@ -79,12 +79,13 @@ function simSectHtml(s){const list=simOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 심법 <small class="dim">${tierName(s)}는 ${AGR[SIM_TOP[s.tier]||1]}까지 · 직위가 오르면 더 익힌다</small></h4><div class="list">${list.map(x=>{const no=simBlock(x);
     return simRowHtml(x,simKnown(x.id)?'<small class="good">익힘</small>':member?B('simbuy:'+x.id,no||`익히기 · 공적 ${SIM_COST[x.g]}`,{d:!!no,pri:!no}):`<small class="dim">${no||`${rankName(s.id,SIM_RANK[x.g])} 이상`}</small>`)}).join('')}</div>`}
 // 잡화점: 공용 중승 심법
-function simShopHtml(){const x=SIM['N_shop_'+P.side],no=simBlock(x);
-  return `<h4 style="margin:0">심법 비급</h4><div class="list">${simRowHtml(x,simKnown(x.id)?'<small class="good">익힘</small>':B('simshop',no||`사기 · 은자 ${SIM_SHOP.price}`,{d:!!no,pri:!no}))}</div>`}
+// 사파에게는 정종 공용 심법(소주천심법)도 판다: 초절정부터 느려지는 사공을 버리고 정종으로 갈아탈 길 (사공↔정종은 상극이 아니다)
+function simShopHtml(){const xs=P.side==='사'?[SIM['N_shop_사'],SIM['N_shop_정']]:[SIM['N_shop_'+P.side]];
+  return `<h4 style="margin:0">심법 비급</h4><div class="list">${xs.map(x=>{const no=simBlock(x);return simRowHtml(x,simKnown(x.id)?'<small class="good">익힘</small>':B('simshop:'+x.id,no||`사기 · 은자 ${SIM_SHOP.price}`,{d:!!no,pri:!no}))}).join('')}</div>`}
 hook('npcDlg',c=>{if(c.html==null&&c.n.id==='gen'&&REG==='gaebong'){c.html=pNpcBase(c.n)+simShopHtml()}});
 hook('sectAct',c=>{const{a,x}=c;
   if(a==='simbuy'){c.done=true;c.r=true;const s=SIM[x];if(!s||s.shop||simBlock(s))return;P.merit[s.sect]-=SIM_COST[s.g];simLearn(s);return}
-  if(a==='simshop'){c.done=true;c.r=true;const s=SIM['N_shop_'+P.side];if(simBlock(s))return;P.silver-=SIM_SHOP.price;simLearn(s);return}});
+  if(a==='simshop'){c.done=true;c.r=true;const s=SIM[x]||SIM['N_shop_'+P.side];if(!s||!s.shop||simBlock(s))return;P.silver-=SIM_SHOP.price;simLearn(s);return}});
 // 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
 const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
