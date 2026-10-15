@@ -172,6 +172,7 @@ function draw(){
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
   const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-NH*TW/2,o.y,(N+NH)*TW/2,(N+NH)*TH/2);
+  if(typeof drawGore==='function')drawGore();   // 멸문 폐허의 핏자국 (g_ruin.js)
   const sea=P?season():'봄';
   if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -190,7 +191,7 @@ function draw(){
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
     if(ob==='wall'||ob==='pillar'||ob==='screen'){const mg=REGION().hall&&REGION().hall.mg,fn=ob==='wall'?drawWall:ob==='pillar'?drawPillar:drawScreen;list.push({d:i+j+1,f:()=>fn(i,j,mg)});continue}
     if(FURN[ob]){const mg=REGION().hall&&REGION().hall.mg;list.push({d:i+j+1,f:()=>drawFurn(ob,i,j,mg)});continue}
-    if(ob.startsWith('flag:')){list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
+    if(ob.startsWith('flag:')){if(REGION().dead)continue;list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
     const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
     list.push({d:i+j+1,f:()=>{if(fade)ctx.globalAlpha=.4;ctx.drawImage(spr,p.x-spr.width/2,p.y-spr.height+(tall?12:10));ctx.globalAlpha=1}})}
@@ -209,6 +210,7 @@ function draw(){
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
   for(const c of corpses)if(vis(c.x,c.y))list.push({d:c.x+c.y-.05,f:()=>drawCorpse(c)});
+  if(REGION().dead&&REGION().gore)for(const b of REGION().gore)if(b.k==='body'&&vis(b.x,b.y))list.push({d:b.x+b.y-.05,f:()=>drawBody(b)});
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
