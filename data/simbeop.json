@@ -4,6 +4,7 @@
   "SIM_RANK": [0, 1, 2, 3, 4],
   "SIM_COST": [0, 40, 90, 160, 260],
   "SIM_SHOP": {"정": "소주천심법", "사": "현음공", "price": 300},
+  "MAGYO3": {"leader": {"hp": 4, "atk": 1.5, "challenge": 0.2, "income": 500, "fame": 200, "jail": 3, "mara": 30, "rage": 0.5, "rageV": 0.25, "blast": 0.25, "blastEvery": 5, "blastR": 3, "popMin": 0.5, "heirFame": 50, "chalHp": 2.5, "chalAtk": 1.3, "raidElite": 2}},
   "MAGYO2": {"blood": {"rate": 0.35}, "addictN": 3, "elixir": {"혈마단": {"dur": 60, "atk": 0.3, "mara": 25, "weak": 30, "weakV": 0.2, "merit": 15, "blood": 3}, "흡정환": {"n": 5, "mara": 15, "evil": 10, "merit": 10}, "천마혈정": {"mara": 40, "hp": 0.4, "burst": 5, "merit": 100}}, "jail": {"cap": 30, "perYear": 10, "pardon": 5, "ally": 10, "flee": 5, "resist": 10, "rejoin": 30, "escape": 50, "squad": 4}},
   "MARA": {"train": 3, "kill": 1, "sangong": 20, "medit": 1.2, "tiers": [40, 70, 90], "atk": [0, 0.08, 0.15, 0.2], "dmg": [0, 0.08, 0.15, 0.2], "burst": [0, 0, 0.04, 0.1], "burstDur": 4, "refine": {"merit": 20, "v": 30}, "enl": {"마공": 0.5, "사공": 0.7, "사불": 0.7}, "huntFame": 50, "talma": {"low": 20, "hold": 1, "bonus": 0.05, "max": 0.15}, "huntN": 4, "dev": {"qi": 0.1, "back": 60}},
   "SIM_NAMES": {
