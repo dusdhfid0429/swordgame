@@ -12,7 +12,7 @@ const MARA_N=['평정','입마','심마','광마'];
 const isMa=()=>!!P&&typeof pSchool==='function'&&pSchool()==='마공';
 const isTalma=()=>isMa()&&realmIdx()>=6;   // 탈마: 마공의 현경
 const maraTier=()=>{if(!isMa()||isTalma())return 0;const m=P.mara||0;return m>=MARA.tiers[2]?3:m>=MARA.tiers[1]?2:m>=MARA.tiers[0]?1:0};
-function maraAdd(v,why){if(!P||!isMa()&&v>0||v>0&&isTalma())return;const t0=maraTier();P.mara=clamp((P.mara||0)+v,0,100);const t1=maraTier();
+function maraAdd(v,why){if(!P||!isMa()&&v>0||v>0&&isTalma())return;if(v>0&&typeof diffMul==='function')v*=diffMul('mara');const t0=maraTier();P.mara=clamp((P.mara||0)+v,0,100);const t1=maraTier();
   if(v>0&&P.mara>=100){maraDev();return}
   if(t1>t0)log(`마기가 심맥에 스며 ${MARA_N[t1]}에 이르렀습니다. 공격 +${Math.round(MARA.atk[t1]*100)}%, 받는 피해 +${Math.round(MARA.dmg[t1]*100)}%${t1>=2?', 싸움 중 폭주할 수 있다':''}.`,'dmg');
   else if(t1<t0)log(`마기가 가라앉아 ${MARA_N[t1]}으로 돌아왔습니다.`,'info')}
@@ -49,8 +49,8 @@ hook('tick',dt=>{if(!P||!playing||!isMa())return;burstTick(dt);
 const enlMul=()=>{if(isTalma())return 1;const s=typeof pSchool==='function'&&P?pSchool():'정종';return MARA.enl[s]||1};
 // 추살: 마교도가 명성을 얻으면 해마다 정의맹·사천맹의 추살조가 덮친다 (마교는 정·사 공통의 적)
 function maraHunt(){if(!P||P.sect!=='cheonma'||P.fame<MARA.huntFame||G.duel||!REGION()||(REGIONS[REG]&&(REGIONS[REG].hq==='cheonma'||/^hq_cheonma/.test(REG))))return false;
-  let made=0;const facs=['정','사'];for(let i=0;i<60&&made<MARA.huntN;i++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;
-    const e=mkFac(facs[made%2],made===MARA.huntN-1?1:0,x,y);e.aggro=true;e.hunt=1;mobs.push(e);made++}
+  let made=0;const facs=['정','사'];const huntN=typeof diffSquad==='function'?diffSquad(MARA.huntN):MARA.huntN;for(let i=0;i<60&&made<huntN;i++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;
+    const e=mkFac(facs[made%2],made===huntN-1?1:0,x,y);e.aggro=true;e.hunt=1;mobs.push(e);made++}
   if(made){showBanner('추살',`정·사가 마교도의 목에 현상금을 걸었다`);log(`정의맹·사천맹의 추살조 ${made}명이 덮쳐 옵니다! 마교도는 강호의 공적이다.`,'dmg')}return made>0}
 hook('newYear',()=>{if(P&&P.sect==='cheonma'&&P.fame>=MARA.huntFame)setTimeout(()=>{if(playing)maraHunt()},1500)});
 // 천마신전: 마기 정련 (공적으로 마성을 내린다)

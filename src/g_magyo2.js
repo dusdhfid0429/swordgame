@@ -61,9 +61,9 @@ hook('newYear',()=>{if(!P)return;if(P.sin>0&&!P.jail)P.sin=Math.max(0,P.sin-J2.p
   else if(P.escaped&&!/^hq_cheonma/.test(REG)&&!G.duel&&P.sect!=='cheonma')setTimeout(()=>{if(playing&&P.escaped)arrestSquad(1)},2500)});
 hook('regionLoaded',id=>{if(jailDue()&&/^hq_cheonma/.test(id)&&id!==JAIL_ID)setTimeout(()=>{if(playing&&jailDue()&&REG===id)jailEnter('호법 둘이 다가와 양팔을 잡았다')},600)});
 // 연행조: 마교 무인 넷. 제압당하면 흑혈옥 (탈옥자에게는 추살조)
-function arrestSquad(hunt){if(!P||!REGION()||G.duel)return false;let made=0;
-  for(let i=0;i<60&&made<J2.squad;i++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;
-    const e=mkFac('마',made===J2.squad-1?1:0,x,y,'cheonma');e.angry=1;e.aggro=true;e.tgt=null;if(hunt)e.hunt=1;else e.arrest=1;mobs.push(e);made++}
+function arrestSquad(hunt){if(!P||!REGION()||G.duel)return false;let made=0;const sq=typeof diffSquad==='function'?diffSquad(J2.squad):J2.squad;
+  for(let i=0;i<60&&made<sq;i++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;
+    const e=mkFac('마',made===sq-1?1:0,x,y,'cheonma');e.angry=1;e.aggro=true;e.tgt=null;if(hunt)e.hunt=1;else e.arrest=1;mobs.push(e);made++}
   if(made){showBanner(hunt?'추살':'연행',hunt?'배교자는 추살한다':'교율을 어긴 자를 잡아간다');log(hunt?`마교의 추살조 ${made}명이 배교자를 쫓아왔습니다!`:`마교 연행조 ${made}명이 덮쳐 옵니다. 제압당하면 흑혈옥이다.`,'dmg')}return made>0}
 hook('hurt',c=>{if(P.jail||!c.src||!c.src.arrest||P.sect!=='cheonma')return;if(!(c.dm>=P.hp)&&!P.jailQ)return;c.dm=0;P.hp=Math.max(P.hp,1);
   if(!P.jailQ){P.jailQ=1;setTimeout(()=>{P.jailQ=0;if(playing&&P.hp>0)jailEnter('연행조에게 제압당했다')},60)}});
