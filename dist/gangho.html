@@ -562,9 +562,13 @@ function addSectArts(arts,pool,ults,formName,ultName){
   }
 }
 // ---- 가입 조건 ----
+// 성향 문: 정의맹은 정파, 사천맹은 사파만. 마교는 정·사를 가리지 않는다 (사용자 2026-10-15 v102 "정파여도 마교에 가입할 수 있게").
+const sideOk=al=>al==='magyo'||P.side===ALLY[al].side;
+// 무공의 정·사 계열 제한: 내 성향과 같거나, 내 문파(마교)의 무공이면 읽고 익힐 수 있다
+const artSideOk=a=>!a.side||a.side===P.side||(!!a.sect&&a.sect===P.sect);
 function joinBlock(s){
   const al=ALLY[s.al];
-  if(P.side!==al.side)return `${SIDES[al.side].n}만 받는다.`;
+  if(!sideOk(s.al))return `${SIDES[al.side].n}만 받는다.`;
   if(G.seal&&G.seal[s.id])return `${s.n}은(는) 봉문 중이라 제자를 받지 않는다.`;
   if(typeof sectPop==='function'&&sectPop(s.id)<=0)return `${s.n}은(는) 멸문해 폐허만 남았다.`;
   if(G.mdead&&G.mdead[s.id])return `${s.n}은(는) ${masterTitle(s)} 자리가 비어 제자를 받지 않는다.`;
@@ -589,17 +593,17 @@ function allianceDlg(alId){
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
   const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[Math.min(...s.arts.map(a=>artGrade(a.id)))]}~${AGR[Math.max(...s.arts.map(a=>artGrade(a.id)))]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
-  const head=P.side!==al.side?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
+  const head=!sideOk(alId)?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
   return `${head}<p class="note">${al.d}</p>${mine?`<p class="note">지금 소속: <b>${mine.n}</b> (${ALLY[mine.al].n})</p>`:''}
     <h4 style="margin:0">${alId==='jeong'?'9파1방':alId==='sacheon'?'4대문파':alId==='gunbu'?'황성 금군':'본교'}</h4><div class="list">${big.map(row).join('')}</div>
     ${five.length?`<h4 style="margin:0">오대세가</h4><div class="list">${five.map(row).join('')}</div>`:''}
     ${mid.length?`<h4 style="margin:0">중견문파</h4><div class="list">${mid.map(row).join('')}</div>`:''}
-    ${small.length?`<h4 style="margin:0">소문파</h4><div class="list">${small.map(row).join('')}</div>`:''}${ownSectHtml(al)}`;
+    ${small.length?`<h4 style="margin:0">소문파</h4><div class="list">${small.map(row).join('')}</div>`:''}${ownSectHtml(alId)}`;
 }
 // hq: 본산 장문인 앞에서 보는 창. 가입은 본산에서만 된다.
 function sectDetail(s,hq){
-  const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=P.side===al.side;
+  const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=sideOk(s.al);
   const hi=s.arts.find(a=>a.hi);
   const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member;
     const mb=s.id==='cheonma'?mgArtBlock(a):'',why=!same?'':mb?mb:lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
@@ -624,10 +628,10 @@ function sectDetail(s,hq){
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
 function teachHtml(){
-  const a=art(),s=A(a.id),fi=a.side===P.side?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,can=fi>=0&&P.taught<Math.floor(P.age);
+  const a=art(),s=A(a.id),fi=artSideOk(a)?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,can=fi>=0&&P.taught<Math.floor(P.age);
   return `<div class="row2"><span class="note">${fi>=0?`사부에게 [${a.forms[fi].n}]을(를) 전수받을 수 있다`:'지금 펼치는 무공에서 전수받을 초식이 없다'}${P.taught>=Math.floor(P.age)?' · 올해는 이미 배웠다':''}</span>${B('teach','가르침 청하기',{d:!can})}</div>`}
-function ownSectHtml(al){
-  if(P.side!==al.side)return '';
+function ownSectHtml(alId){
+  if(!sideOk(alId))return '';
   if(P.sect==='own')return `<div class="row2"><span class="note">${esc(P.sectName)}의 문주</span>${B('disciple',`제자 받기 · 은자 50 (${allies.filter(a=>a.kind==='disciple').length}/3)`,{pri:1,d:P.silver<50||allies.filter(a=>a.kind==='disciple').length>=3})}</div>`;
   const found=P.sect&&realmIdx()>=3&&P.fame>=150;
   return `<div class="row2"><span class="note">문파의 제자로 절정 이상, 명성 150이면 하산해 자기 문파를 세울 수 있다.</span>${B('found','문파 창설',{d:!found})}</div>`}
@@ -820,7 +824,7 @@ function readBlock(it){
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
-  if(a.side!==P.side)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
+  if(!artSideOk(a))return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
   if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
@@ -4325,7 +4329,7 @@ function postDlg(){
   const row=(id,n,sub,fee)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${REG===id?'<small class="dim">여기</small>':B('goto:'+id,`가기 · 은자 ${fee}`,{d:P.silver<fee})}</div></div>`;
   let h=`<p class="note">"어디로 모실까? 길은 멀어도 말은 빠르오."</p><div class="list">${row('gaebong','개봉','성내 역참',10)}</div>`;
   for(const al of['jeong','sacheon','magyo','gunbu'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+Object.values(SECTS).filter(s=>s.al===al)
-    .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${ALLY[al].side!==P.side?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
+    .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${P.sect===s.id?' · 내 문파':''}${!sideOk(al)?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
   return h}
 function postGo(id){
   if(!REGIONS[id]||REG===id)return;const fee=id==='gaebong'?10:REGIONS[id].city?CITY_FEE:POST_FEE;
@@ -4334,7 +4338,7 @@ function postGo(id){
 }
 // 본산 장문인: 가입·직위·임무·비급을 모두 여기서 본다
 function hqDlg(n){
-  const s=SECTS[n.hq],same=P.side===ALLY[s.al].side,member=P.sect===s.id;
+  const s=SECTS[n.hq],same=sideOk(s.al),member=P.sect===s.id;
   const hi=member?`"${rankName(s.id)}, 수고가 많구나."`:same?`"${s.n}에 뜻이 있어 찾아왔는가."`:`"${FACN[pfac()]} 사람이 여기까지 무슨 일인가. 칼을 뽑기 전에 돌아가게."`;
   const c={n,html:`<p class="note">${hi}</p>${sectDetail(s,true)}`};runHooks('hqDlg',c);return c.html}
 
