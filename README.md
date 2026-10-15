@@ -27,7 +27,7 @@ python3 build.py
 node tests/run.js              # tests/t*.js 전부, 4개씩 나란히. 하나라도 실패하면 exit 1
 node tests/run.js realm touch  # 이름에 realm·touch가 든 것만
 node tests/run.js -j 1 -t 600  # 하나씩, 파일마다 600초 제한
-node tests/run.js toss         # 가짜 토스 SDK로 앱인토스 대응 확인 (t4_toss)
+node tests/sim_balance.js -n 6  # 밸런스 시뮬(테스트 아님): 난이도×경지×등급마다 승률·체력 손실·시간. docs/경지_설계.md '난이도'
 ```
 
 각 테스트는 `PASS …`/`FAIL …` 줄과 마지막에 `no console errors` 또는 `ERRORS`를 찍습니다. 러너는 `FAIL` 줄, `ERRORS`, 0이 아닌 종료 코드, 시간 초과를 실패로 셉니다. 스크린샷은 `tests/shots/`(커밋하지 않음)에 남습니다.
@@ -49,6 +49,7 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 | `g_story.js` | 천하대전 스토리: 세력 힘·관계, 사건 10개와 선택, 정세 창, 구도 계산, 결전·점령·봉문 |
 | `g_story2.js` | 스토리 2단계(v108): 사건의 장소·인물 대화 카드, 사건 전용 적 |
 | `g_story3.js` | 스토리 5단계(v109): 결전장 맵(war_field)·출전·적장, 관군 토벌·마교 탈락(어부지리)의 특수 전개 |
+| `g_diff.js` | 난이도(v110): 완전 새로 시작할 때 다섯 단계(입문·보통·어려움·고수·지옥) 중 고른다. 적 생명·공격, 받는 피해, 활력, 마성, 추살조 인원 배율. 표 `data/difficulty.json`, 시뮬 `tests/sim_balance.js` |
 | `g_pop.js` | 문파 인원: 해마다 증가, 무인 사망으로 감소, 세력의 힘·직위 분포·본산 맵 수가 인원을 따름, 출입구 충원 |
 | `g_magyo2.js` | 마교 심화(v106): 정혈 드롭, 마교 영약(혈마단·흡정환·천마혈정)과 중독, 죄값·연행, 흑혈옥 맵(hq_cheonma_9)·복역·탈옥 |
 | `g_magyo3.js` | 마교 교주 쟁탈(v107): 교주 비무(부교주+탈마, 천마신전 마당), 교주의 권한(천하대전 출정·은둔, 세입, 교율 위), 도전자, 흑혈옥 사면(동료), 교주 공석·후예 |

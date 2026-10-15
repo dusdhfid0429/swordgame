@@ -15,9 +15,9 @@ const MOB_REALM=GD.MOB_REALM;
 const MOB_TIER=GD.MOB_TIER;
 function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm==null)return e;
   const r=clamp(e.realm,0,6),[a,h,m]=STD[r],t=TIER[d.boss?'b':d.elite||MOB_TIER[e.kind]==='e'?'e':'n'],g=GD.GROW||{h:0,a:0};
-  // 경지가 오를수록 사람은 초식·연속기·필살기로 표준보다 훨씬 세지므로, 몹은 경지마다 체력·공격을 더 얹는다
-  e.maxHp=e.hp=Math.round(h*t.h*(1+g.h*r));e.atk=Math.round(a*t.a*(1+g.a*r));e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
-  e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));return e}
+  // 경지가 오를수록 사람은 초식·연속기·필살기로 표준보다 훨씬 세지므로, 몹은 경지마다 체력·공격을 더 얹는다. v110: 생명은 성장표 GROW.hs[경지] (tests/sim_balance.js로 뽑음)
+  e.maxHp=e.hp=Math.round(h*t.h*(g.hs?g.hs[r]:1+(g.h||0)*r));e.atk=Math.round(a*t.a*(1+g.a*r));e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
+  e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));runHooks('mobScaled',e);return e}   // mobScaled: 난이도 배율 (g_diff.js)
 hook('mobMade',(e,kind,extra)=>{if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}});
 // 문파 무인: 직위(0 속가·졸개·교도, 1 정식·정예, 2 일대·조장·향주, 3 호법·당주)가 경지
 hook('facMade',e=>{e.realm=e.rank||0;scaleMob(e)});

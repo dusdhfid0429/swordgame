@@ -36,6 +36,7 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s.startsWith('gg:')){CR.gg=+s.slice(3);renderCreate()}
   else if(s.startsWith('cls:')){CR.cls=s.slice(4);renderCreate()}
+  else if(s.startsWith('diff:')){if(!G.lives)G.diff=+s.slice(5);renderCreate()}
   else if(s.startsWith('heir:')){const c=G.heir.children[+s.slice(5)];CR.heir=c;CR.name=c.name;CR.status=Math.max(G.nextStatus??1,2);CR.side=G.heir.side;CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s==='noheir'){CR.heir=null;CR.status=G.nextStatus??1;renderCreate()}
   else if(s==='start')beginLife();
@@ -55,6 +56,7 @@ function renderCreate(){
     <div class="center">${G.heir.children.map((c,i)=>`<button type="button" class="opt" data-s="heir:${i}" aria-pressed="${CR.heir===c}"><b>${esc(c.name)}</b><span>${c.age}세</span></button>`).join('')}<button type="button" class="opt" data-s="noheir" aria-pressed="${!CR.heir}"><b>남으로 태어나기</b><span>가문을 잇지 않는다</span></button></div></div>`:'';
   box.innerHTML=josa(`<h2 class="title" style="font-size:44px">${G.lives?`제${G.lives+1}생`:'탄생'}</h2>
     <div class="card"><div class="row2"><h3>신분 · ${st.n}</h3><span class="tag">오성 ${CR.wis}${G.wisCarry?` (전생의 선업 +${G.wisCarry})`:''} · 시작 활력 ${st.vit} · 은자 ${st.silver+(CR.heir?G.heir.silver:0)}</span></div><p>${CR.heir?'가문을 이어 무가 이상으로 태어난다. ':''}${st.d}${G.bonusVit?` 전생의 보상 활력 ${G.bonusVit}은(는) 다섯 몫으로 나뉘어 생일마다 ${Math.ceil(G.bonusVit/5)}씩 받는다.`:''} 근골과 오성은 타고나는 값이라 기연이나 윤회로만 오른다.</p></div>
+    ${typeof diffPickHtml==='function'?diffPickHtml():''}
     ${heir}
     <div class="row2"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
       <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>기초 내공 ${SIDES[s].base}</span></button>`).join('')}</div></div>
