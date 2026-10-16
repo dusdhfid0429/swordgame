@@ -26,7 +26,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 지붕 위 한 점을 누르면 그리로 걷는다
   const tp=await p.evaluate(()=>{const b=P.perch.b,tx=b.x+b.w-.4,ty=b.y+b.h-.4,s=toScreen(tx,ty);const ok=roofTap(s.x*S,(s.y-P.z)*S);for(let i=0;i<120&&P.roofGoal;i++)perchMove(0,0,.05);return{ok,d:Math.hypot(P.x-tx,P.y-ty),perch:!!P.perch}});
   ok(`지붕 위를 누르면 지붕 위로 걸어간다 (남은 거리 ${tp.d.toFixed(2)})`,tp.ok&&tp.d<.1&&tp.perch);
-  // 근접 적은 닿지 않는다
+  // v128: 지붕 위에서 생긴 효과·글자는 주인공 높이에서 그린다 (사용자: 내공 수련 성공 이펙트가 높이를 안 따른다)
+  const hz=await p.evaluate(()=>{fx.length=0;texts.length=0;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});addText(P.x,P.y,'내공 +1','#fff');const f=fx[fx.length-1],t=texts[texts.length-1];
+    const base=toScreen(P.x,P.y);ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);drawFx(f);const d=ctx.getImageData(0,0,ctx.canvas.width,ctx.canvas.height).data;let top=1e9;for(let y=0;y<ctx.canvas.height;y++){for(let x=0;x<ctx.canvas.width;x++)if(d[(y*ctx.canvas.width+x)*4+3]>40){top=Math.min(top,y);break}}return{z:P.z,fz:f.z,tz:t.z,top,base:base.y*devicePixelRatio}});
+  ok(`지붕 위 효과·글자가 주인공 높이를 따른다 (z ${hz.z}, fx ${hz.fz}, 글자 ${hz.tz})`,hz.fz===hz.z&&hz.tz===hz.z&&hz.z>40);
   await p.evaluate(()=>{const e=mkMob('늑대',P.x,P.y+2.2);e.aggro=true;mobs.push(e);window._w=e});
   const hp0=await p.evaluate(()=>P.hp);await p.waitForTimeout(3000);
   ok('지붕 위에서는 늑대가 물지 못한다',await p.evaluate(h=>P.hp===h,hp0));

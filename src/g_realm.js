@@ -49,7 +49,7 @@ function pgStart(k){
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
   P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
-  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,life:2});shake=Math.max(shake,.25);
+  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
     P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
   qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
