@@ -19,18 +19,35 @@
       "idle궁": {"a": "a2", "row": "i궁", "pp": true, "max": 8, "fps": 4},
       "idle각": {"a": "a2", "row": "i각", "pp": true, "max": 8, "fps": 4},
       "idle창": {"a": "a2", "f": [69, 70, 71, 72, 73], "pp": true, "fps": 4, "lk": "p"},
-      "idle봉": {"a": "a2", "f": [60, 61, 62], "pp": true, "fps": 4, "lk": "p"}
+      "idle봉": {"a": "a2", "f": [60, 61, 62], "pp": true, "fps": 4, "lk": "p"},
+      "_wx": "v123 핸드오프 시트(assets/wuxia, 145장 22클립). a=시트 이름, clip=시트 클립 이름(장 번호는 wuxia.clips.json이 가진다)",
+      "wxDodge": {"a": "wuxia", "clip": "dodge", "once": true, "dur": 0.45},
+      "wxRun": {"a": "wuxia", "clip": "run"},
+      "wxJump": {"a": "wuxia", "clip": "jump", "once": true},
+      "wxMeditate": {"a": "wuxia", "clip": "meditate", "pp": true, "fps": 6},
+      "wxStrength": {"a": "wuxia", "clip": "strength_1", "pp": true, "fps": 7},
+      "wxEndure": {"a": "wuxia", "clip": "endurance", "pp": true, "fps": 6},
+      "wxDash": {"a": "wuxia", "clip": "dash", "fps": 9},
+      "wxWaterfall": {"a": "wuxia", "clip": "waterfall_stance", "pp": true, "fps": 6},
+      "wxPole": {"a": "wuxia", "clip": "pole_balance", "pp": true, "fps": 6}
     },
     "hero": {
-      "base": {"idle": "idleSword", "run": "run", "jump1": "jump1", "jump2": "jump2", "jump3": "jump3", "jumpNb": "jumpSword", "lk": ""},
+      "_doc": "medit=운기조식·내공 수련, train.<수련 종류>=수련 창에서 수련하는 동안(str 근력·agi 민첩·end 지구력·neigong 내공·pg 폐관·mk 창안), dodge=피동 회피. 시트가 아직 안 읽혔으면 base·예전 클립으로 돌아간다",
+      "base": {"idle": "idleSword", "run": "run", "jump1": "jump1", "jump2": "jump2", "jump3": "jump3", "jumpNb": "jumpSword", "dodge": "dodge", "medit": "wxMeditate", "lk": "",
+        "train": {"str": "wxStrength", "agi": "wxDash", "end": "wxEndure", "neigong": "wxMeditate", "pg": "wxWaterfall", "mk": "wxPole"}},
       "검": {},
       "도": {"idle": "idle도"},
       "창": {"idle": "idle창", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
       "봉": {"idle": "idle봉", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
-      "권": {"idle": "idle권", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"},
+      "권": {"idle": "idle권", "idleNb": "idleBody", "run": "wxRun", "runNb": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"},
       "궁": {"idle": "idle궁", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"}
     },
     "atk": {
+      "_wx": "핸드오프 시트의 공격 클립(v123). 맨손만 바인딩: 검·도·창·봉 클립(sword_thrust/slash, saber_heavy/whirlwind, spear_1/2, staff_1/2)은 무기 소켓이 확정되면 잇는다 (핸드오프 다음 단계 1)",
+      "wx": {
+        "권": {"flat": "punches", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"},
+        "각": {"flat": "kicks", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"}
+      },
       "sword": {"flat": [13, 14, 14, 16], "vert": [18, 19, 20, 21, 22], "diag": [26, 27, 28, 29], "palm": [30, 30], "ult": [23, 24, 25, 26, 27, 28, 29], "jump": [32, 33, 34, 35, 36, 37, 38, 39, 40]},
       "body": {
         "도": {"flat": [13, 14, 14], "vert": [27, 21, 29], "diag": [13, 28, 29], "palm": [30, 30], "ult": [13, 27, 28, 29, 21, 29]},

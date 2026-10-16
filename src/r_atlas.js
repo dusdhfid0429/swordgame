@@ -25,16 +25,21 @@ const a2i=(row,i)=>A2[row][0]+Math.min(i,A2[row][1]-1);
 const isKick=f=>!!f&&/각|퇴|족|발/.test(f.n||'');
 function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag'][P.hc]}
   const w=heroCls();P.ss2=0;const row=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w;
-  if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
+  // v123: 핸드오프 시트의 공격 클립이 그 줄에 바인딩돼 있고 시트가 읽혔으면 그 장 배열을 쓴다 (P.ssh = 시트 이름)
+  P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],wc=wx&&wx[kind]&&sheetClip('wuxia',wx[kind]);
+  if(wc&&sheetOk('wuxia')){P.sset=wc.f;P.ssh='wuxia'}
+  else if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
     if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}
-  if(!P.ss2)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];
+  if(!P.ss2&&!P.ssh)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];
   P.satk=P.satkMax=kind==='ult'?.6:Math.max(.26,.1*P.sset.length)}
 // 클립 도구 (v122): 클립의 장 배열, 장 단위 시간 u로 장 고르기 (pp 왕복 / once 끝에서 멈춤 / 그 외 순환)
-function clipFrames(c){if(c.f)return c.f;const r=A2[c.row],o=c.skip||0,n=c.max?Math.min(c.max,r[1]-o):r[1]-o,a=[];for(let i=0;i<n;i++)a.push(r[0]+o+i);return a}
+function clipFrames(c){if(c.clip){const s=sheetClip(c.a,c.clip);return s?s.f:[]}if(c.f)return c.f;const r=A2[c.row],o=c.skip||0,n=c.max?Math.min(c.max,r[1]-o):r[1]-o,a=[];for(let i=0;i<n;i++)a.push(r[0]+o+i);return a}
 function clipAt(c,u){const f=clipFrames(c),n=f.length;if(c.pp){const k=Math.floor(u)%(2*n-2);return f[k<n?k:2*n-2-k]}if(c.once)return f[Math.min(n-1,Math.floor(u))];return f[Math.floor(u)%n]}
 // 무기 variant: 상태 이름 → 클립 이름. 무기에 바인딩이 없으면 base를 쓴다 (참고 게임의 AnimationGraphVariant와 같은 발상)
-function heroClip(name,w){const v=ANIM.hero[w]||{},k=v[name]||ANIM.hero.base[name];return k?CLIP[k]:null}
-const clipOut=(c,u,lk)=>[clipAt(c,u),c.a==='body',c.lk||(c.a==='body'?lk:''),c.a==='a2'];
+// 시트 클립(a=시트 이름)은 시트가 읽힌 뒤에만 쓴다. 안 읽혔으면 <이름>Nb → base 순서로 물러난다
+const clipReady=c=>!!c&&(!SHEETS[c.a]||sheetOk(c.a));
+function heroClip(name,w){const v=ANIM.hero[w]||{},b=ANIM.hero.base;for(const k of[v[name],v[name+'Nb'],b[name],b[name+'Nb']]){const c=k&&CLIP[k];if(clipReady(c))return c}return null}
+const clipOut=(c,u,lk)=>[clipAt(c,u),c.a==='body',c.lk||(c.a==='body'?lk:''),c.a==='a2',SHEETS[c.a]?c.a:null];
 // returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, 'p' polearm, '' none), use atlas 2 (HF2)]
 // 상태 우선순위: 경공 > 보법 > 피동 회피 > 위빙 > 공격 > 달리기 > 대기 (상태 하나, 클립은 무기 variant가 고른다)
 function heroFrame(){
@@ -42,17 +47,21 @@ function heroFrame(){
   // 경공 1~3단 (두 번째 시트). 시트가 없으면 variant의 jumpNb
   if(P.sj>0){const st=P.sjSt||1,u=1-P.sj/(P.sjMax||.6),c=h2?heroClip('jump'+st,w):null;if(c)return clipOut(c,u*clipFrames(c).length,lk);
     const b=CLIP[v.jumpNb||ANIM.hero.base.jumpNb];return clipOut(b,u*clipFrames(b).length,lk)}
+  // 운기조식·내공 수련: 가부좌 (v123 핸드오프 시트)
+  if((P.medit||P.qiTraining)&&P.satk<=0&&P.runT<=0){const c=heroClip('medit',w);if(c&&c.a!=='hero'&&c.a!=='body')return clipOut(c,time*(c.fps||6),lk)}
+  // 수련 창에서 수련하는 동안: 종류별 동작 (근력 들어올리기, 민첩 질주, 지구력 버티기, 폐관 폭포 자세, 창안 장대 위)
+  if(typeof trnBusy!=='undefined'&&trnBusy&&P.satk<=0&&P.runT<=0){const tk=trnBusy.k.startsWith('pg')?'pg':trnBusy.k.startsWith('mk')?'mk':trnBusy.k,k=(ANIM.hero.base.train||{})[tk],c=k&&CLIP[k];if(clipReady(c))return clipOut(c,time*(c.fps||6),lk)}
   // 보법: g_bob이 만든 장 배열(seq). 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때
   if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u<0||u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
   // 피동 회피 (측면 회피 줄) 0.45초
-  if(P.dA&&h2&&time>=P.dA&&time-P.dA<CLIP.dodge.dur&&P.satk<=0){const c=CLIP.dodge;return clipOut(c,(time-P.dA)/c.dur*clipFrames(c).length,lk)}
+  if(P.dA&&h2&&time>=P.dA&&P.satk<=0){const c=heroClip('dodge',w)||CLIP.dodge;if(time-P.dA<c.dur)return clipOut(c,(time-P.dA)/c.dur*clipFrames(c).length,lk)}
   // 맨손으로 상대를 마주 보고 서 있으면 위빙
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const c=CLIP.weave;return clipOut(c,time*c.fps,lk)}
   // 공격: heroAtk가 고른 장 배열(P.sset), 장 배분은 atkIdx
-  if(P.satk>0){const s=P.sset,i=s[atkIdx(1-P.satk/P.satkMax,s.length)];if(P.ss2&&h2)return[i,false,'',true];if(w==='검')return[i,false,''];
+  if(P.satk>0){const s=P.sset,i=s[atkIdx(1-P.satk/P.satkMax,s.length)];if(P.ssh&&sheetOk(P.ssh))return[i,false,'',false,P.ssh];if(P.ss2&&h2)return[i,false,'',true];if(w==='검')return[i,false,''];
     return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):lk]}
   // 달리기: 몸통 아틀라스 41~48 + 코드 무기 (사용자 결정 2026-10-12, 새 도트 안 씀)
-  if(P.runT>0){const c=CLIP[v.run||ANIM.hero.base.run];return clipOut(c,P.runPh*moveSpd()*3.6,lk)}
+  if(P.runT>0){const c=heroClip('run',w)||CLIP.run;return clipOut(c,P.runPh*moveSpd()*3.6,lk)}
   // 대기: 두 번째 시트의 무기별 대기 줄 (창·봉은 자루 잘라내고 코드 자루, v119), 없으면 idleNb/base
   const c=h2&&v.idle?CLIP[v.idle]:CLIP[v.idleNb||ANIM.hero.base.idle];return clipOut(c,time*(c.fps||5),lk)}
 // 창·봉 비스듬 양손 자세 (v119). f: 자루가 그려진 대기 장(아틀라스2), cut[frame]=[그릴 폭, 앞손 x, 앞손 y] — 폭 밖의 세로 자루·창날은 잘라낸다

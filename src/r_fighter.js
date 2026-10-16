@@ -8,14 +8,19 @@ function drawFighter(e,isP){
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
   if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
-  if(isP&&heroSprite()){let[fi,useB,lk,a2]=heroFrame(),f=a2?HF2[fi]:HF[fi];
+  if(isP&&heroSprite()){let[fi,useB,lk,a2,sh]=heroFrame(),f=sh?SHEETS[sh].frames[fi]:a2?HF2[fi]:HF[fi];
     // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
-    if(!f){if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
-    const k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
+    if(!f){sh=null;if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
+    const k=sh?sheetK(sh):a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
     // v120 움직임 덧입히기 (사용자 2026-10-16): 공격 예비는 뒤로, 휘두름·멈춤은 앞으로 밀고 기울임, 달리기는 앞으로 기울임, 피격은 뒤로 밀림. 발을 축으로 돈다
     {let mdx=0,mrot=0;if(P.satk>0){const u=1-P.satk/P.satkMax;if(u<.3){mdx=-3;mrot=-.05}else if(u<.85){mdx=5;mrot=.05}}else if(P.runT>0)mrot=.07;
       if(P.hit>0){const h=Math.min(1,P.hit/.2);mdx-=5*h;mrot-=.07*h}if(mdx||mrot){ctx.translate(mdx,0);ctx.rotate(mrot)}}
-    const gb=heroGarb(),img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
+    const gb=heroGarb();
+    // v123 핸드오프 시트 장: 발 기준점이 캔버스에 박혀 있어 자리 보정 없이 그린다. 무기는 소켓이 확정될 때까지 안 그린다
+    if(sh){drawSheet(sh,fi,k,flash,gb&&gb.wx);if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
+      if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
+      ctx.restore();return}
+    const img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
     const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
     ctx.drawImage(img,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
     // 직위 표식 (망토 대신, 사용자 결정 2026-10-13): 머리 위 문장 + 점
