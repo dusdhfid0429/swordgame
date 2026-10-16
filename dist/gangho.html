@@ -6491,6 +6491,17 @@ const sndNear=e=>!e||!P||Math.hypot(e.x-P.x,e.y-P.y)<10;
 const sndBtns=()=>`<div class="sndrow">${B('snd:m',`배경음악 ${SND.m?'켬':'끔'}`,{pri:!!SND.m})}${B('snd:s',`효과음 ${SND.s?'켬':'끔'}`,{pri:!!SND.s})}</div>`;
 {const pm=pMenu;pMenu=function(){return pm()+sndBtns()};const ph=pHelp;pHelp=function(){return sndBtns()+ph()}}
 
+// ================= 화면 꺼짐 막기 (v131, 사용자: 게임이 켜져 있을 때 휴대폰 자동 절전이 안 되게) =================
+// Screen Wake Lock API. 손길이 있어야 받을 수 있어 첫 손길에 요청하고, 게임이 꺼지거나(제목·죽음 화면) 다른 탭으로 가면 놓는다.
+// 다시 돌아오면(visibilitychange) 브라우저가 자동으로 놓은 것을 다시 받는다. 지원 안 하는 브라우저면 조용히 아무것도 안 한다
+let wakeLock=null,wakeBusy=false;
+async function wakeOn(){if(!('wakeLock' in navigator)||wakeLock||wakeBusy||document.hidden||!playing)return;wakeBusy=true;try{const l=await navigator.wakeLock.request('screen');l.addEventListener('release',()=>{if(wakeLock===l)wakeLock=null});if(playing&&!document.hidden)wakeLock=l;else l.release()}catch(e){}wakeBusy=false}
+function wakeOff(){if(wakeLock){try{wakeLock.release()}catch(e){}wakeLock=null}}
+function wakeTick(){if(playing&&!document.hidden)wakeOn();else wakeOff()}
+for(const ev of['pointerdown','keydown','touchend','click'])addEventListener(ev,()=>{setTimeout(()=>{if(playing)wakeOn()},0)},{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>{wakeTick();if(!document.hidden&&playing)wakeOn()});
+setInterval(wakeTick,1000);
+
 // ================= palettes for the cast =================
 Object.assign(PAL,{
   archer:{...PAL.bandit,robe:['#6e7a4c','#33391f'],robeB:'#424a28',band:'#4a5a2a',weapon:'bow',anim:'punch'},
