@@ -12,25 +12,13 @@ const heroCls=()=>P&&hasWeaponFor(curCls())?curCls():'권';
 const hero2Ok=()=>typeof HERO2!=='undefined'&&HERO2.complete&&HERO2.naturalWidth>0;
 const heroSprite=()=>HERO.complete&&HERO.naturalWidth>0&&HBODY.complete&&HBODY.naturalWidth>0&&(heroCls()!=='궁'||hero2Ok());
 // every attack set ends on a frame with the blade drawn, so the sword never blinks out mid-swing
-const HSET={flat:[13,14,14,16],vert:[18,19,20,21,22],diag:[26,27,28,29],palm:[30,30],ult:[23,24,25,26,27,28,29],jump:[32,33,34,35,36,37,38,39,40]};
+const ANIM=GD.ANIM,CLIP=ANIM.clips;
+// 공격 장 표는 data/anim.json ANIM.atk (v122). 아래 이름은 예전 코드·테스트 호환용 별칭
+const HSET=ANIM.atk.sword,WSET=ANIM.atk.body,W2SET=ANIM.atk.a2,BIDLE=CLIP.idleBody.f;
 const HKIND={proj:'flat',line:'flat',dash:'flat',blink:'flat',blinkMulti:'flat',drop:'vert',rain:'vert',chain:'vert',pull:'vert',arc:'diag',circle:'diag',multi:'diag'};
 // other weapons reuse the swordsman's body: 도·창·봉 swing/thrust frames with the weapon redrawn on the blade line,
 // 권 the open-hand strikes, 각 the leaping knee; idle/run frames carry 창·봉 along the scabbard line
-const WSET={
-  도:{flat:[13,14,14],vert:[27,21,29],diag:[13,28,29],palm:[30,30],ult:[13,27,28,29,21,29]},
-  창:{flat:[13,14,14,14],vert:[27,21,29],diag:[13,28,29],palm:[30,30],ult:[13,14,14,27,28,29]},
-  봉:{flat:[13,14,14],vert:[27,21,29],diag:[13,28,29,21],palm:[30,30],ult:[13,27,28,29,21,29]},
-  권:{flat:[12,15,15],vert:[12,30,30],diag:[12,28,28],palm:[30,30],ult:[12,15,15,30,30,28,28]},
-  각:{flat:[31,32,32],vert:[31,32,32],diag:[12,31,32,32],palm:[30,30],ult:[31,32,32,31,32,32]}};
-const BIDLE=[0,1,2,3,5,1];
 // 사용자 시트(r_atlas2.js)의 무기별 공격 줄: 줄 안 번호. palm은 권 줄의 장타 두 장
-const W2SET={
-  도:{flat:[1,2,2,5,0],vert:[3,4,4,5,0],diag:[1,3,4,6,0],ult:[0,1,2,3,4,5,6,5,0]},
-  봉:{flat:[1,6,7,7,0],vert:[2,3,4,5,0],diag:[1,5,6,7,0],ult:[0,1,2,3,4,5,6,7,0]},
-  창:{flat:[1,2,2,3,0],vert:[7,3,4,5,0],diag:[1,4,5,6,0],ult:[0,1,2,3,4,5,6,7,0]},
-  권:{flat:[1,2,3,0],vert:[1,5,6,0],diag:[1,4,7,0],palm:[2,3],ult:[0,1,2,3,4,5,6,7,0]},
-  각:{flat:[1,2,3,0],vert:[1,3,4,0],diag:[5,6,6,0],palm:[2,3],ult:[0,1,2,3,4,5,6,7,0]},
-  궁:{flat:[0,1,2,3,4,5,0],vert:[0,1,2,3,4,5,0],diag:[0,1,2,3,4,5,0],ult:[0,1,2,3,4,5,4,5,0]}};
 // 줄 안 번호 -> HF2 절대 번호
 const a2i=(row,i)=>A2[row][0]+Math.min(i,A2[row][1]-1);
 // f: 쓰는 초식. 권 계열인데 이름이 발차기면 각법 줄을 쓴다 (각법 무공은 권 풀에 섞여 있다)
@@ -41,36 +29,41 @@ function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag
     if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}
   if(!P.ss2)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];
   P.satk=P.satkMax=kind==='ult'?.6:Math.max(.26,.1*P.sset.length)}
-// returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, '' none), use atlas 2 (HF2)]
+// 클립 도구 (v122): 클립의 장 배열, 장 단위 시간 u로 장 고르기 (pp 왕복 / once 끝에서 멈춤 / 그 외 순환)
+function clipFrames(c){if(c.f)return c.f;const r=A2[c.row],o=c.skip||0,n=c.max?Math.min(c.max,r[1]-o):r[1]-o,a=[];for(let i=0;i<n;i++)a.push(r[0]+o+i);return a}
+function clipAt(c,u){const f=clipFrames(c),n=f.length;if(c.pp){const k=Math.floor(u)%(2*n-2);return f[k<n?k:2*n-2-k]}if(c.once)return f[Math.min(n-1,Math.floor(u))];return f[Math.floor(u)%n]}
+// 무기 variant: 상태 이름 → 클립 이름. 무기에 바인딩이 없으면 base를 쓴다 (참고 게임의 AnimationGraphVariant와 같은 발상)
+function heroClip(name,w){const v=ANIM.hero[w]||{},k=v[name]||ANIM.hero.base[name];return k?CLIP[k]:null}
+const clipOut=(c,u,lk)=>[clipAt(c,u),c.a==='body',c.lk||(c.a==='body'?lk:''),c.a==='a2'];
+// returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, 'p' polearm, '' none), use atlas 2 (HF2)]
+// 상태 우선순위: 경공 > 보법 > 피동 회피 > 위빙 > 공격 > 달리기 > 대기 (상태 하나, 클립은 무기 variant가 고른다)
 function heroFrame(){
-  const w=heroCls(),sw=w==='검',pole=w==='창'||w==='봉',h2=hero2Ok();
-  // 경공 1단 (사용자 시트): 웅크림 -> 달림 -> 도약 -> 공중 -> 착지. 무기와 상관없이 같은 동작
-  if(P.sj>0&&h2){const st=P.sjSt||1,s=st===3?A2.j3:st===2?A2.j2:A2.j,o=st===2?1:0,n=s[1]-o,u=1-P.sj/(P.sjMax||.6);return[s[0]+o+Math.min(n-1,Math.floor(u*n)),false,'',true]}
-  // 보법: 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때. 피동 회피(측면 회피 줄)는 0.45초
+  const w=heroCls(),h2=hero2Ok(),v=ANIM.hero[w]||{},lk=v.lk||ANIM.hero.base.lk||'';
+  // 경공 1~3단 (두 번째 시트). 시트가 없으면 variant의 jumpNb
+  if(P.sj>0){const st=P.sjSt||1,u=1-P.sj/(P.sjMax||.6),c=h2?heroClip('jump'+st,w):null;if(c)return clipOut(c,u*clipFrames(c).length,lk);
+    const b=CLIP[v.jumpNb||ANIM.hero.base.jumpNb];return clipOut(b,u*clipFrames(b).length,lk)}
+  // 보법: g_bob이 만든 장 배열(seq). 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때
   if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u<0||u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
-  if(P.dA&&h2&&time>=P.dA&&time-P.dA<.45&&P.satk<=0){const s=A2.sd;return[s[0]+Math.min(s[1]-1,Math.floor((time-P.dA)/.45*s[1])),false,'',true]}
-  // 달리기는 새 도트를 쓰지 않는다 (사용자 결정 2026-10-12): 아래 기존 몸통 아틀라스 41~48 + 코드 무기
-  // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
-  if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
-  if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[atkIdx(1-P.satk/P.satkMax,s.length)],false,'',true]}
-  // 창·봉 대기 (사용자 요청 2026-10-15): 시트의 세로 들기 장 가운데 자루가 보이는 장만 쓰고, 자루는 잘라낸 뒤 양손으로 비스듬히 잡은 자세를 코드로 그린다 (POLEI)
-  if(pole&&h2&&P.satk<=0&&P.runT<=0&&POLEI[w]){const s=POLEI[w].f,n=s.length,k=Math.floor(time*4)%(2*n-2);return[s[k<n?k:2*n-2-k],false,'p',true]}
-  if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w],n=Math.min(8,s[1]),k=Math.floor(time*4)%(2*n-2);return[s[0]+(k<n?k:2*n-2-k),false,'',true]}
-  if(P.sj>0){const uj=1-P.sj/(P.sjMax||.6);if(sw||w==='도'){const s=HSET.jump;return[s[Math.min(s.length-1,Math.floor(uj*s.length))],false,'']}
-    const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor(uj*s.length))];return[i,true,pole?'p':'']}
-  if(P.satk>0){const s=P.sset,i=s[atkIdx(1-P.satk/P.satkMax,s.length)];
-    if(sw)return[i,false,''];return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):(pole?'p':'')]}
-  const i=P.runT>0?41+Math.floor(P.runPh*moveSpd()*3.6)%8:sw||w==='도'?Math.floor(time*5)%6:BIDLE[Math.floor(time*5)%6];
-  if(sw||w==='도')return[i,false,''];return[i,true,pole?'p':'']}
+  // 피동 회피 (측면 회피 줄) 0.45초
+  if(P.dA&&h2&&time>=P.dA&&time-P.dA<CLIP.dodge.dur&&P.satk<=0){const c=CLIP.dodge;return clipOut(c,(time-P.dA)/c.dur*clipFrames(c).length,lk)}
+  // 맨손으로 상대를 마주 보고 서 있으면 위빙
+  if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const c=CLIP.weave;return clipOut(c,time*c.fps,lk)}
+  // 공격: heroAtk가 고른 장 배열(P.sset), 장 배분은 atkIdx
+  if(P.satk>0){const s=P.sset,i=s[atkIdx(1-P.satk/P.satkMax,s.length)];if(P.ss2&&h2)return[i,false,'',true];if(w==='검')return[i,false,''];
+    return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):lk]}
+  // 달리기: 몸통 아틀라스 41~48 + 코드 무기 (사용자 결정 2026-10-12, 새 도트 안 씀)
+  if(P.runT>0){const c=CLIP[v.run||ANIM.hero.base.run];return clipOut(c,P.runPh*moveSpd()*3.6,lk)}
+  // 대기: 두 번째 시트의 무기별 대기 줄 (창·봉은 자루 잘라내고 코드 자루, v119), 없으면 idleNb/base
+  const c=h2&&v.idle?CLIP[v.idle]:CLIP[v.idleNb||ANIM.hero.base.idle];return clipOut(c,time*(c.fps||5),lk)}
 // 창·봉 비스듬 양손 자세 (v119). f: 자루가 그려진 대기 장(아틀라스2), cut[frame]=[그릴 폭, 앞손 x, 앞손 y] — 폭 밖의 세로 자루·창날은 잘라낸다
-const POLEI={'창':{f:[69,70,71,72,73],cut:{69:[57,52,47],70:[66,61,47],71:[70,66,46],72:[65,61,47],73:[65,61,48]}},
-  '봉':{f:[60,61,62],cut:{60:[55,50,46],61:[64,59,46],62:[62,57,46]}}};
+const POLEI={'창':{cut:{69:[57,52,47],70:[66,61,47],71:[70,66,46],72:[65,61,47],73:[65,61,48]}},
+  '봉':{cut:{60:[55,50,46],61:[64,59,46],62:[62,57,46]}}};
 const POLE_U=[Math.cos(.96),-Math.sin(.96)];  // 자루 방향: 앞·위 55도 (창끝이 앞 위, 물미가 뒤 아래)
 // h: 스프라이트의 손 위치(아틀라스 px). other=-1이면 뒷손을 자루 아래쪽에, +1이면 앞손을 자루 위쪽에 코드로 더 그린다
 function drawPole(kind,h,other,flash){
   const u=POLE_U;drawWeapon(kind,[h[0],h[1],h[0]+u[0]*10,h[1]+u[1]*10],'p',flash)}   // v120: 덧그리던 둘째 손·소매는 뺐다 (사용자: 자루에 손이 달려 보임)
 // 공격 장 배분 (v120, 키우기류 문법): 첫 장(예비) 30%, 가운데 장들 25%, 끝에서 둘째 장(멈춤) 30%, 마지막 장(복귀) 15%
-function atkIdx(u,n){if(n<=2)return Math.min(n-1,Math.floor(u*n));if(u<.3)return 0;if(u<.55)return 1+Math.min(n-3,Math.floor((u-.3)/.25*(n-2)));if(u<.85)return n-2;return n-1}
+function atkIdx(u,n){const W=ANIM.atkWeight;if(n<=2)return Math.min(n-1,Math.floor(u*n));if(u<W[0])return 0;if(u<W[0]+W[1])return 1+Math.min(n-3,Math.floor((u-W[0])/W[1]*(n-3)));if(u<1-W[3])return n-2;return n-1}
 // weapons painted in atlas pixels on top of the body frame, flat colours with a dark outline like the sprite
 function pxLine(a,b,w,col){ctx.lineCap='butt';ctx.strokeStyle='#14100c';ctx.lineWidth=w+2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
 function drawWeapon(kind,ln,lk,flash){
