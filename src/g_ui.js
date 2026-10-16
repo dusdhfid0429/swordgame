@@ -323,6 +323,8 @@ function act(s){
 }
 function toggleMode(){P.mode=P.mode==='auto'?'manual':'auto';log(P.mode==='auto'?'자동초식: 클릭한 적에게 익힌 초식을 차례로 잇습니다.':'수동초식: 클릭은 평타만, 초식은 키로 냅니다.','info')}
 $('wx').addEventListener('click',closePanels);
+// v129 (사용자): HUD 왼쪽 위 정보창을 누르면 인물 창
+$('pstat').addEventListener('click',()=>{if(playing&&P)openPanel('char')});$('pstat').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&playing&&P){e.preventDefault();openPanel('char')}});
 logEl.addEventListener('click',()=>{if(playing)openPanel('logs')});const sysEl=document.querySelector('.sysmsg');if(sysEl)sysEl.addEventListener('click',()=>{if(playing)openPanel('logs')});
 $('modeb').addEventListener('click',()=>{if(P)toggleMode()});
 $('runb').addEventListener('click',()=>{if(P)toggleRun()});
