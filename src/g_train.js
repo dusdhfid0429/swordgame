@@ -43,7 +43,7 @@ function trainTick(dt){
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
   if(b.t<b.dur)return;trnBusy=null;
   if(P.hp>0&&!inCombat()){
-    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
         addText(P.x,P.y,`내공 +${g}`,'#9db8e0');log(`운기조식으로 내공이 ${g} 늘었습니다. (${P.qiN}회차)`,'xp');
         qiTrained()}}
     else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys');wallCheck()}}

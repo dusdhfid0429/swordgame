@@ -335,7 +335,7 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 function trainQi(){
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
-  const done=()=>{P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+  const done=()=>{P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
     log(`운기조식으로 내공이 ${g} 늘었습니다. (${P.qiN}회차, 다음 ${qiCost(P.side,P.qiN)})`,'xp');
     qiTrained();renderOpen()};
   // 인물창에서 누르면 창을 닫지 않고 그 자리에서 잠깐 운기한 뒤 결과를 보여 준다 (창이 열려 있는 동안 시간은 멈춰 있다)
@@ -369,11 +369,11 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
 function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
-  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6});return}
+  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
   else if(r<.85){const n=pick(Object.keys(SHINGONG));const v=src==='chest'?2:1;P.sg.pages[n]=(P.sg.pages[n]||0)+v;log(`기연: 절세신공 [${n}] ${v}장을 얻었습니다.`,'xp')}
   else{const b=randomBook();P.bag.push(b);log(`기연: 낡은 비급 [${b.name}]을(를) 발견했습니다.`,'xp')}
-  P.feats.push(`${Math.floor(P.age)}세에 기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,life:1.2});
+  P.feats.push(`${Math.floor(P.age)}세에 기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
 }

@@ -41,7 +41,7 @@ function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mk
   const a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
   P.arts[a.id]={p:30,f:a.forms.map(()=>true)};if(!P.arts[P.cur])setArt(a.id);
-  fx.push({t:'lvl',x:P.x,y:P.y,life:2});shake=Math.max(shake,.25);recalc();
+  fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);recalc();
   log(`${yrs}년의 폐관 끝에 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
   showBanner('무공 창안',a.n);P.feats.push(`${Math.floor(P.age)}세에 ${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
 // 다섯 무공에서 새 무공의 정의를 뽑아 G.made에 적고 ARTS에 만든다

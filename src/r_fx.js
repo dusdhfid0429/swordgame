@@ -9,7 +9,7 @@ function drawLamp(l){
   poly([[p.x-12,p.y-40],[p.x+12,p.y-40],[p.x,p.y-52]],lg(p.x-12,p.x+12,'#8c877b','#2e2c28'));
 }
 function drawFx(f){
-  const p=toScreen(f.x,f.y);
+  const p=toScreen(f.x,f.y);p.y-=f.z||0;   // v128: 나무·지붕 위(P.z)에서 생긴 효과는 그 높이에서 그린다
   if(f.t==='dust'){const k=1-f.life/.45;ctx.fillStyle=`rgba(150,128,96,${.35*(1-k)})`;ctx.beginPath();ctx.ellipse(p.x,p.y-2-k*4,4+k*9,2+k*4,0,0,7);ctx.fill();return}
   if(f.t==='ring'){const k=1-f.life/f.max,r=k*2.6;ctx.strokeStyle=`rgba(140,180,255,${1-k})`;ctx.lineWidth=5*(1-k)+1;
     ctx.beginPath();ctx.ellipse(p.x,p.y,r*TW/2*1.41,r*TH/2*1.41,0,0,7);ctx.stroke();ctx.fillStyle=`rgba(160,200,255,${.12*(1-k)})`;ctx.fill()}

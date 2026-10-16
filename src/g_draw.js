@@ -247,7 +247,7 @@ function draw(){
     for(const l of lamps){const p=toScreen(l.x,l.y);lightAt(p.x,p.y-30,150+Math.sin(time*9+l.p)*8,.95)}
     for(const d of drops)if(d.it.item||d.it.page){const p=toScreen(d.x,d.y);lightAt(p.x,p.y-10,60,.8)}
     if(G.giyeon){const p=toScreen(G.giyeon.x,G.giyeon.y);lightAt(p.x,p.y-20,120,.9)}
-    for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y,220,.8*f.life/(f.max||1.2))}
+    for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
     for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20,f.t==='bolt'?200:120,.6*f.life/f.max)}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
@@ -264,7 +264,7 @@ function draw(){
   ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center';
   drawGateHold();
-  for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;ctx.globalAlpha=Math.min(1,t.life*2);
+  for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;p.y-=t.z||0;ctx.globalAlpha=Math.min(1,t.life*2);
     const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
   ctx.globalAlpha=1;
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;

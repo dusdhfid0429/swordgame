@@ -95,7 +95,7 @@ hook('duelEnd',({win,o,me})=>{const r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0;
 hook('kill',e=>{if(!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx())gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')});
 hook('mastDone',({id,s,before})=>{if(before<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`)});
 hook('giyeon',c=>{const R=REGIONS[REG];
-  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,life:1.6})}});
+  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
 hook('giyeonDone',()=>gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.'));
 
 // ---- 영약: 공청석유(1갑자, 한 생에 한 번), 만년설삼(반 갑자, 한 생에 두 번) ----
@@ -106,7 +106,7 @@ hook('useCon',c=>{const k=c.k;
   if(!(P.mats[k]>0)){log(`${k}이(가) 없습니다.`,'info');return}if(P.hp<=0)return;
   if(k==='공청석유'){if(P.gcs){log('공청석유는 한 생에 한 번만 효험이 있습니다.','info');return}P.gcs=1;P.qiBonus+=120}
   else{if((P.mss||0)>=2){log('만년설삼은 한 생에 두 번까지만 효험이 있습니다.','info');return}P.mss=(P.mss||0)+1;P.qiBonus+=60}
-  P.mats[k]--;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,life:1.4});addText(P.x,P.y,`내공 +${k==='공청석유'?'1갑자':'반 갑자'}`,'#9db8e0');
+  P.mats[k]--;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.4});addText(P.x,P.y,`내공 +${k==='공청석유'?'1갑자':'반 갑자'}`,'#9db8e0');
   log(`${k}을(를) 먹고 운기하니 내공이 ${k==='공청석유'?'1갑자':'반 갑자'} 늘었습니다. (${gapja(baseQi())})`,'xp');wallCheck();renderOpen()});
 // 눈 덮인 산 맵의 약초밭에서 드물게 만년설삼
 function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.random()<.04){addMat('만년설삼',1);log('눈 속에서 만년설삼을 캤습니다!','xp');showBanner('만년설삼','내공 반 갑자')}}

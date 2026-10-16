@@ -18,7 +18,7 @@ function maraAdd(v,why){if(!P||!isMa()&&v>0||v>0&&isTalma())return;if(v>0&&typeo
   else if(t1<t0)log(`마기가 가라앉아 ${MARA_N[t1]}으로 돌아왔습니다.`,'info')}
 // 마성 100: 주화입마. 쌓은 내공 10%가 흩어지고 생명이 깎이며 마성 60으로 내려간다
 function maraDev(){const lost=Math.floor((P.qiAcc||0)*MARA.dev.qi);P.qiAcc=Math.max(0,(P.qiAcc||0)-lost);P.mara=MARA.dev.back;if(typeof recalc==='function')recalc();P.hp=Math.max(1,Math.min(P.hp,Math.round(P.maxHp*.3)));P.qi=Math.min(P.qi,P.maxQi);
-  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');P.feats.push(`${Math.floor(P.age)}세에 마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,life:1.2})}
+  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');P.feats.push(`${Math.floor(P.age)}세에 마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2})}
 // 폭주: 몇 초 동안 가장 가까운 것(같은 편·양민 포함)을 친다. 끝나면 강제공격을 원래대로
 function maraBurst(){if(P.burst||G.duel)return;P.burst={t:MARA.burstDur,force:typeof forceAtk!=='undefined'?forceAtk:false,mode:P.mode};if(typeof toggleForce==='function')toggleForce(true);P.mode='auto';P.medit=false;P.chan=null;
   log('마기가 날뛰어 이성을 잃었습니다! 눈앞의 것을 가리지 않고 칩니다.','dmg');showBanner('폭주','마기가 날뛴다');P.feats.push(`${Math.floor(P.age)}세에 마기에 휘둘려 폭주했다`)}

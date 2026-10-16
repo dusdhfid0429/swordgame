@@ -34,7 +34,7 @@ hook('useCon',c=>{const k=c.k,E=EL2[k];if(!E)return;c.done=true;
   else if(k==='혈마단'){P.buff.atk=E.dur;P.buff.atkV=E.atk;P.hyeolT=E.dur;P.weakT=0;log(`혈마단의 피가 끓어 ${E.dur}초 동안 공격 +${Math.round(E.atk*100)}%. 끝나면 ${E.weak}초 동안 몸이 무거워진다.`,'xp')}
   P.mats[k]--;P.elixirN=P.elixirN||{};P.elixirN[k]=(P.elixirN[k]||0)+1;P.thirst=0;
   if(P.elixirN[k]>MAGYO2.addictN&&k!=='천마혈정'){P.addict=P.addict||{};if(!P.addict[k])log(`${k}에 중독되었습니다. 효험이 끝날 때마다 갈증이 내공 회복을 반으로 줄인다. 탈마에 이르면 풀린다.`,'dmg');P.addict[k]=1;if(k==='흡정환')thirst(k)}
-  maraAdd(E.mara,k);addText(P.x,P.y,k,'#d8a0ff');fx.push({t:'lvl',x:P.x,y:P.y,life:.8});showBanner(k,'마교의 영약');renderOpen()});
+  maraAdd(E.mara,k);addText(P.x,P.y,k,'#d8a0ff');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:.8});showBanner(k,'마교의 영약');renderOpen()});
 function thirst(k){if(!(P.addict&&P.addict[k])||isTalma())return;P.thirst=1;log(`${k}의 갈증이 밀려옵니다. 내공 회복 -50% (다음 복용까지).`,'dmg')}
 hook('tick',dt=>{if(!P||!playing)return;
   if(P.hyeolT>0){P.hyeolT-=dt;if(P.hyeolT<=0){P.hyeolT=0;P.weakT=EL2.혈마단.weak;P.buff.atk=EL2.혈마단.weak;P.buff.atkV=-EL2.혈마단.weakV;log(`혈마단의 기운이 빠져 ${EL2.혈마단.weak}초 동안 공격·이동 -${Math.round(EL2.혈마단.weakV*100)}%.`,'info');thirst('혈마단')}}

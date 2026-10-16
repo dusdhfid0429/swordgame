@@ -254,7 +254,7 @@ function useConBase(k){
   else if(k==='금창약'||k==='주먹밥')P.hp=Math.min(P.maxHp,P.hp+P.maxHp*(k==='금창약'?.4:.35));
   else if(k==='소환단'||k==='보리죽')P.qi=Math.min(P.maxQi,P.qi+P.maxQi*(k==='소환단'?.5:.4));
   else if(k==='고기볶음'){P.buff.atk=90;P.buff.atkV=.15}else if(k==='잉어찜')P.buff.hm=90;
-  P.mats[k]--;addText(P.x,P.y,k,'#a6d47f');fx.push({t:'lvl',x:P.x,y:P.y,life:.6});renderOpen();
+  P.mats[k]--;addText(P.x,P.y,k,'#a6d47f');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:.6});renderOpen();
 }
 // ================= 나이 and 윤회 =================
 function newYear(){
