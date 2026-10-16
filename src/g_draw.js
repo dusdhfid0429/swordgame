@@ -171,6 +171,8 @@ function drawMedit(front){
 // ================= frame =================
 function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
+// 그리기 레이어 (v122): BACK 바닥에 붙은 것(시체·핏자국·바닥 표식) → ENT 개체·건물(깊이 정렬) → FX 효과 → OVER 지명 → TOP 조준선
+const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
 function draw(){
   const dpr=devicePixelRatio;
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
@@ -210,22 +212,23 @@ function draw(){
   for(const d of drops)list.push({d:d.x+d.y-.1,f:()=>drawDrop(d)});
   if(G.giyeon)list.push({d:G.giyeon.x+G.giyeon.y,f:()=>drawGiyeon(G.giyeon)});
   for(const g of REGION().gates)if(vis(g.x,g.y))list.push({d:g.x+g.y-.4,f:()=>drawGate(g)});
-  for(const m of lmHints())list.push({d:9999,f:()=>drawLmName(m)});
+  for(const m of lmHints())list.push({L:LY.OVER,d:9999,f:()=>drawLmName(m)});
   if(REGION().edges)for(const h of pvEdgeHints())list.push({d:h.x+h.y-.4,f:()=>drawEdgeHint(h)});
   for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
-  for(const c of corpses)if(vis(c.x,c.y))list.push({d:c.x+c.y-.05,f:()=>drawCorpse(c)});
-  if(REGION().dead&&REGION().gore)for(const b of REGION().gore)if(b.k==='body'&&vis(b.x,b.y))list.push({d:b.x+b.y-.05,f:()=>drawBody(b)});
+  for(const c of corpses)if(vis(c.x,c.y))list.push({L:LY.BACK,d:c.x+c.y-.05,f:()=>drawCorpse(c)});
+  if(REGION().dead&&REGION().gore)for(const b of REGION().gore)if(b.k==='body'&&vis(b.x,b.y))list.push({L:LY.BACK,d:b.x+b.y-.05,f:()=>drawBody(b)});
   for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
   for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
     // 높은 곳에 있거나 그리로 뛰는 중이면 그 지붕·나무보다 나중에 그린다
     const pd=P.perch?perchD():lt&&P.leap.t/P.leap.dur>.45?(lt.k==='roof'?lt.b.x+lt.b.w+lt.b.y+lt.b.h-1+.6:lt.i+lt.j+1.1):P.leap&&P.leap.z0>0&&P.leap.t/P.leap.dur<.5?P.x+P.y+3:P.x+P.y;
-    if(P.perch&&joy.on){const a=leapAim();if(a){const s=toScreen(a.x,a.y),az=a.q.z,k=(time*2)%1;list.push({d:99999,f:()=>{ctx.strokeStyle=`rgba(190,220,255,${.9-k*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(s.x,s.y-az,8+k*8,4+k*4,0,0,7);ctx.stroke()}})}}
+    if(P.perch&&joy.on){const a=leapAim();if(a){const s=toScreen(a.x,a.y),az=a.q.z,k=(time*2)%1;list.push({L:LY.TOP,d:99999,f:()=>{ctx.strokeStyle=`rgba(190,220,255,${.9-k*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(s.x,s.y-az,8+k*8,4+k*4,0,0,7);ctx.stroke()}})}}
     if(z>2){const g=toScreen(P.x,P.y);list.push({d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
-  for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
-  list.sort((a,b)=>a.d-b.d).forEach(o=>o.f());
+  for(const f of fx)if(!f.glow){const gnd=f.t==='ring'||f.t==='warn';list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>drawFx2(f)})}
+  // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
+  list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
   const w=REGION().hall?null:G.weather;
   if(w==='비'){ctx.strokeStyle='rgba(170,190,220,.35)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<140;i++){const x=(hash(i,7)*W+time*60*hash(i,3))%W,y=(hash(i,11)*H+time*(500+hash(i,5)*200))%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+12)}ctx.stroke();ctx.fillStyle='rgba(20,30,50,.15)';ctx.fillRect(0,0,W,H)}
