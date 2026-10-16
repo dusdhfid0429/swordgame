@@ -11,7 +11,7 @@ function drawFighter(e,isP){
   if(isP&&heroSprite()){let[fi,useB,lk,a2,sh]=heroFrame(),f=sh?SHEETS[sh].frames[fi]:a2?HF2[fi]:HF[fi];
     // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
     if(!f){sh=null;if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
-    const k=sh?sheetK(sh):a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
+    const k=sh?sheetK(sh):a2?K2*(f[5]||1)*a2RowK(fi):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);WPN_K=k;
     // v120 움직임 덧입히기 (사용자 2026-10-16): 공격 예비는 뒤로, 휘두름·멈춤은 앞으로 밀고 기울임, 달리기는 앞으로 기울임, 피격은 뒤로 밀림. 발을 축으로 돈다
     {let mdx=0,mrot=0;if(P.satk>0){const u=1-P.satk/P.satkMax;if(u<.3){mdx=-3;mrot=-.05}else if(u<.85){mdx=5;mrot=.05}}else if(P.runT>0)mrot=.07;
       if(P.hit>0){const h=Math.min(1,P.hit/.2);mdx-=5*h;mrot-=.07*h}if(mdx||mrot){ctx.translate(mdx,0);ctx.rotate(mrot)}}
@@ -23,7 +23,7 @@ function drawFighter(e,isP){
       const wl=dc!=='권'&&dc!=='각'?sheetWeaponLine(sh,fi,dc):null;
       if(wl){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawWeapon(dc,wl,dc==='창'||dc==='봉'?'p':'b',flash);ctx.restore()}
       if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
-      ctx.restore();return}
+      ctx.restore();WPN_K=.47;return}
     const img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
     const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
     // v125 칼집: 검객 원본 시트가 아닌 장(몸통·두 번째 시트)에서 검·도를 들었으면 허리 뒤에 걸린 칼집을 몸보다 먼저
@@ -34,7 +34,7 @@ function drawFighter(e,isP){
     if(lk==='p'){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);if(pc)drawPole(dc,[pc[1],pc[2]],-1,flash);else if(WL.s[fi])drawPole(dc,[WL.s[fi][0],WL.s[fi][1]],1,flash);ctx.restore()}
     else if(lk){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawWeapon(dc,lk==='b'?WL.b[fi]:WL.s[fi],lk,flash);ctx.restore()}
     if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
-    ctx.restore();return}
+    ctx.restore();WPN_K=.47;return}
   ctx.scale(sc*side,sc);
   const s1=mv?Math.sin(ph):0,c1=mv?Math.cos(ph):0,bob=mv?Math.abs(c1)*2.2:Math.sin(time*2.2+(e.bob||0))*.5;
   ctx.translate(0,-bob-jump/sc);

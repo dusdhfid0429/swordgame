@@ -49,5 +49,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     draw();return r});
   ok(`무기 파츠 시트 ${wp2.n}장 [${wp2.clips}] 소켓 ${wp2.sock} · 검 장 각도 ${wp2.swordAngs} · 창 길이 ${wp2.spearLen}px · 시트로 그림 ${wp2.sword}(drawImage ${wp2.drawn}) · 맨손은 없음 ${wp2.none===false} · 칼집 ${wp2.sheath}`,
     wp2.n===50&&wp2.clips==='검,검집,궁,도,도집,봉,창'&&wp2.sock&&wp2.swordAngs.split(',').length===6&&wp2.spearLen>150&&wp2.sword&&wp2.drawn===3&&wp2.none===false&&wp2.sheath);
+  // 8. (v126) 대기·달리기·공격·경공 어느 장에서도 몸 키와 무기 크기가 같은 기준: 무기를 든 대기 실루엣 높이가 핸드오프 공격 장과 같은 60~76px 안, 무기 배율은 WPN_K로 되돌려진다
+  const sz=await p.evaluate(()=>{paused=true;const od=draw;draw=()=>{};mobs=[];const useCls=w=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===w);P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=mkWeapon(w,1,0);recalc()};
+    const o=toScreen(P.x,P.y),r={};for(const w of['검','창','봉']){useCls(w);P.runT=0;P.satk=0;P.sj=0;P.hit=0;P.inv=0;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.save();ctx.translate(300-o.x,400-o.y);P.fx=1;P.fy=.3;drawFighter(P,true);ctx.restore();
+      const d=ctx.getImageData(0,0,600,420).data;let top=999;for(let y=0;y<398&&top===999;y++)for(let x=0;x<600;x++)if(d[(y*600+x)*4+3]>40){top=y;break}r[w]=400-top}
+    // 무기 배율: 같은 무기 선을 K2 배율 장과 .47 배율 장에서 그릴 때 drawImage의 변환 배율이 같다
+    const sc=[];const odi=ctx.drawImage;ctx.drawImage=function(){const t=ctx.getTransform();sc.push(Math.hypot(t.a,t.b));return odi.apply(this,arguments)};
+    for(const k of[.47,K2]){ctx.setTransform(1,0,0,1,0,0);ctx.save();ctx.scale(k,k);WPN_K=k;sheetWeaponDraw('창',[0,0,30,0],'b',false);ctx.restore()}ctx.drawImage=odi;WPN_K=.47;r.wk=sc.map(v=>v.toFixed(2));draw=od;paused=false;return r});
+  ok(`무기 든 대기 실루엣 높이 검 ${sz.검} 창 ${sz.창} 봉 ${sz.봉} px · 무기 배율 (.47 장 / K2 장) ${sz.wk.join(' / ')}`,[sz.검,sz.창,sz.봉].every(h=>h>=60&&h<=76)&&sz.wk[0]===sz.wk[1]);
   if(errs.length){console.log('ERRORS');console.log(errs.join('\n'))}
   await b.close()})();

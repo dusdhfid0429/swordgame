@@ -22,7 +22,8 @@ function drawSheet(n,i,k,flash,img){const s=SHEETS[n],f=s&&s.frames[i];if(!f)ret
 
 // ---- 무기 파츠 시트 (v125, 사용자 시트 2026-10-16: 초록 마커=손 자리) ----
 // 클립 이름=무기 종류, 장=방향이 다른 같은 무기 그림. 소켓 grip(손)·tip(끝)·butt(반대 끝). 필요한 각도에 가장 가까운 장을 골라 나머지만 돌린다
-// 길이는 코드 무기와 같게(아틀라스 px, 155px 주인공 기준) 맞춰 그린다
+// 길이는 코드 무기와 같게(아틀라스 px, 155px 주인공 기준) 맞춰 그린다. WPN_K: 부르는 쪽의 현재 장 배율(두 번째 시트는 .7285, 원본·핸드오프는 .47 안팎) — 어느 장에서 그려도 화면 크기가 같도록 .47/WPN_K로 되돌린다 (v126, 사용자: 대기 때 무기가 너무 크다)
+let WPN_K=.47;
 const WPN_LEN={'검':84,'도':86,'창':130,'봉':132,'궁':110,'검집':72,'도집':74};
 function wpnFrames(kind){const s=SHEETS.wpn,c=s&&s.clips[kind];if(!c)return null;if(!c._fr){c._fr=c.f.map(i=>{const f=s.frames[i],g=f.sk.grip,t=f.sk.tip,b=f.sk.butt;return{f,i,ang:Math.atan2(t[1]-g[1],t[0]-g[0]),len:Math.hypot(t[0]-b[0],t[1]-b[1])}})}return c._fr}
 const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
@@ -30,7 +31,7 @@ const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+
 function sheetWeaponDraw(kind,ln,lk,flash){if(!ln||!sheetOk('wpn'))return false;const fr=wpnFrames(kind);if(!fr)return false;
   let u=[ln[2]-ln[0],ln[3]-ln[1]];const L=Math.hypot(u[0],u[1])||1;u=[u[0]/L,u[1]/L];if(lk==='s')u=[-u[0],-u[1]];
   const ang=Math.atan2(u[1],u[0]);let best=fr[0],bd=9;for(const x of fr){const d=Math.abs(angDiff(ang,x.ang));if(d<bd){bd=d;best=x}}
-  const s=SHEETS.wpn,f=best.f,sc=(WPN_LEN[kind]||100)/best.len,img=flash&&s.white?s.white:s.img;
+  const s=SHEETS.wpn,f=best.f,sc=(WPN_LEN[kind]||100)/best.len*(.47/WPN_K),img=flash&&s.white?s.white:s.img;
   ctx.save();ctx.translate(ln[0],ln[1]);ctx.rotate(angDiff(ang,best.ang));ctx.scale(sc,sc);ctx.drawImage(img,f.r[0],f.r[1],f.r[2],f.r[3],-f.sk.grip[0],-f.sk.grip[1],f.r[2],f.r[3]);ctx.restore();return true}
 // 허리춤 칼집 (v125, 사용자: 검집·도집은 허리춤에 비스듬히): 입(grip)을 허리 뒤쪽에 두고 아래·뒤로 60도. 몸보다 먼저 그려 몸 뒤에 걸린다
 // 원본 검객 시트(검 대기·경공 장)는 그림에 칼집이 있어 부르지 않는다
