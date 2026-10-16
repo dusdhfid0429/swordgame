@@ -9,9 +9,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('wuxia'),null,{timeout:10000});await p.waitForTimeout(200);
   // 1. 시트가 묶여 들어왔다: 145장 22클립, 장마다 같은 캔버스(327×337)·발 기준점, 무기 클립엔 손 소켓
   const s=await p.evaluate(()=>{const S=SHEETS.wuxia,f=S.frames;return{n:f.length,clips:Object.keys(S.clips).length,canvas:f.every(x=>x.s[0]===327&&x.s[1]===337&&x.pv[1]===1),
-    sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:!!S.white,k:sheetK('wuxia')}});
+    sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:!!S.white,k:sheetK('wuxia'),kStaff:sheetK('wuxia',S.clips.staff_1.f[0])/sheetK('wuxia'),kPunch:sheetK('wuxia',S.clips.punches.f[0])/sheetK('wuxia')}});
   ok(`시트 ${s.n}장 ${s.clips}클립 · 같은 캔버스 ${s.canvas} · 창 클립 손 소켓 ${s.sock}장 · 맨손 클립 소켓 없음 ${s.noSock} · 번쩍 그림 ${s.white} · 배율 ${s.k.toFixed(3)}`,
-    s.n===145&&s.clips===22&&s.canvas&&s.sock>=5&&s.noSock&&s.white&&s.k>.4&&s.k<.55);
+    s.n===145&&s.clips===22&&s.canvas&&s.sock>=5&&s.noSock&&s.white&&s.k>.4&&s.k<.55&&s.kStaff>1.05&&s.kStaff<1.2&&s.kPunch===1);
   // 2. 맨손 공격은 시트 클립(punches/kicks/combo/palm_strikes)을 쓰고 heroFrame이 시트 이름을 돌려준다. 발차기 무공은 각 줄(kicks)
   const a=await p.evaluate(()=>{P.satk=0;P.runT=0;P.sj=0;const r={};heroAtk('flat',null);r.flat=[P.ssh,P.sset.join(','),heroFrame()];heroAtk('vert',null);r.vert=P.sset.join(',');heroAtk('palm',null);r.palm=P.sset.join(',');
     heroAtk('flat',{n:'선풍각'});r.kick=P.sset.join(',');P.satk=0;const S=SHEETS.wuxia.clips;r.c={punches:S.punches.f.join(','),kicks:S.kicks.f.join(','),palm:S.palm_strikes.f.join(',')};r.after=heroFrame();return r});

@@ -11,7 +11,10 @@ const sheetOk=n=>{const s=SHEETS[n];return!!s&&s.img.complete&&s.img.naturalWidt
 const sheetClip=(n,c)=>{const s=SHEETS[n];return s&&s.clips[c]||null};
 // 시트의 서 있는 키를 원본 주인공(155px × .47)과 맞춘 배율
 const SHEET_K={wuxia:.47*155/157};   // 서 있는 장(punches 첫 장 등)이 158px 안팎
-const sheetK=n=>SHEET_K[n]||.5;
+// v127: 장 번호 i를 주면 그 장이 속한 클립의 배율(data/anim.json ANIM.sheetK)도 곱한다 — 무기 공격 클립이 맨손 클립보다 작게 그려져 있어서
+const sheetK=(n,i)=>(SHEET_K[n]||.5)*(i==null?1:sheetClipK(n,i));
+const _CLIPK={};
+function sheetClipK(n,i){let m=_CLIPK[n];if(!m){m=_CLIPK[n]={};const t=(typeof ANIM!=='undefined'&&ANIM.sheetK||{})[n]||{},s=SHEETS[n];if(s)for(const c in t){const cl=s.clips[c];if(cl)for(const fi of cl.f)m[fi]=t[c]}}return m[i]||1}
 // 장의 캔버스 좌표 → 발(0,0) 기준 화면 좌표(배율 k). 발바닥은 원본과 같이 +3
 const sheetXY=(n,i,x,y,k)=>{const f=SHEETS[n].frames[i];return[(x-f.s[0]*f.pv[0])*k,(y-f.s[1]*f.pv[1])*k+3]};
 const sheetTop=(n,i,k)=>sheetXY(n,i,0,SHEETS[n].frames[i].o[1],k)[1];
