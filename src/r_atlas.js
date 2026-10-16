@@ -80,7 +80,7 @@ function atkIdx(u,n){const W=ANIM.atkWeight;if(n<=2)return Math.min(n-1,Math.flo
 // weapons painted in atlas pixels on top of the body frame, flat colours with a dark outline like the sprite
 function pxLine(a,b,w,col){ctx.lineCap='butt';ctx.strokeStyle='#14100c';ctx.lineWidth=w+2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
 function drawWeapon(kind,ln,lk,flash){
-  if(!ln)return;let h=[ln[0],ln[1]],t=[ln[2],ln[3]];const dx=t[0]-h[0],dy=t[1]-h[1],L=Math.hypot(dx,dy)||1,u=[dx/L,dy/L],n=[-u[1],u[0]];
+  if(!ln)return;if(typeof sheetWeaponDraw==='function'&&sheetWeaponDraw(kind,ln,lk,flash))return;   // v125: 무기 파츠 시트가 있으면 그 그림을 손에 붙인다let h=[ln[0],ln[1]],t=[ln[2],ln[3]];const dx=t[0]-h[0],dy=t[1]-h[1],L=Math.hypot(dx,dy)||1,u=[dx/L,dy/L],n=[-u[1],u[0]];
   if(lk==='s'){u[0]=-u[0];u[1]=-u[1]}  // scabbard line runs hand -> back; weapons point forward from the hand
   const at=d=>[h[0]+u[0]*d,h[1]+u[1]*d],W=c=>flash?'#ffffff':c;
   if(kind==='창'){const back=lk==='s'?-95:lk==='p'?-64:-55,fwd=lk==='s'?40:lk==='p'?50:88,tip=at(fwd);pxLine(at(back),tip,4,W('#7b4a26'));

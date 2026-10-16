@@ -1,0 +1,119 @@
+{
+ "atlas": "wpn.png",
+ "clips": {
+  "검": {
+   "frames": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    7
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "검집": {
+   "frames": [
+    5,
+    6,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "도": {
+   "frames": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    20
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "도집": {
+   "frames": [
+    18,
+    19,
+    21,
+    22,
+    23,
+    24,
+    25
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "창": {
+   "frames": [
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "봉": {
+   "frames": [
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  },
+  "궁": {
+   "frames": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+   ],
+   "fps": 0,
+   "loop": false,
+   "durations_ms": null,
+   "events": [],
+   "canvas": null
+  }
+ },
+ "_doc": "클립 이름=무기 종류. 장은 방향이 다른 같은 무기 그림; 런타임이 필요한 각도에 가장 가까운 장을 골라 돌린다"
+}

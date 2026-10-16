@@ -40,5 +40,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const s=SHEETS.wuxia.frames[52].sk,l=sheetWeaponLine('wuxia',52,'창');r.spearMid=Math.abs(l[0]-(s.hand[0]+s.hand2[0])/2)<.01&&l[2]>l[0];const k=SHEETS.wuxia.frames[123].sk,l2=sheetWeaponLine('wuxia',123,'검');r.sword=l2[0]===k.hand[0]&&l2[2]===k.aim[0];r.none=sheetWeaponLine('wuxia',79,'검')===null;return r});
   ok(`무기 공격: ${['검','도','창','봉'].map(w=>w+' '+wp[w].clip+(wp[w].sheet==='wuxia'&&wp[w].inClip&&wp[w].line?' ✓':' ✗')).join(' · ')} · 창 가운데 ${wp.spearMid} · 검 hand→aim ${wp.sword} · 맨손 장 소켓 없음 ${wp.none}`,
     ['검','도','창','봉'].every(w=>wp[w].sheet==='wuxia'&&wp[w].inClip&&wp[w].line)&&wp.spearMid&&wp.sword&&wp.none);
+  // 7. 무기 파츠 시트 (v125): 무기 5종 36장 + 검집·도집 14장, 장마다 grip·tip·butt 소켓, 각도에 가장 가까운 장을 골라 손에 붙인다. 코드 무기 대신 시트가 그려진다. 칼집은 허리춤에
+  await p.waitForFunction(()=>sheetOk('wpn'),null,{timeout:10000});
+  const wp2=await p.evaluate(()=>{const S=SHEETS.wpn,r={n:S.frames.length,clips:Object.keys(S.clips).sort().join(','),sock:S.frames.every(f=>f.sk.grip&&f.sk.tip&&f.sk.butt)};
+    const fr=wpnFrames('검');r.swordAngs=fr.map(x=>Math.round(x.ang*180/Math.PI)).sort((a,b)=>a-b).join(',');r.spearLen=Math.round(wpnFrames('창')[0].len);
+    // 그리기: 코드 무기 대신 시트가 그려지는지 (sheetWeaponDraw가 true를 돌려주고 drawImage가 불린다)
+    let drawn=0;const od=ctx.drawImage;ctx.drawImage=function(){drawn++;return od.apply(this,arguments)};r.sword=sheetWeaponDraw('검',[0,0,30,0],'b',false);r.none=sheetWeaponDraw('권',[0,0,30,0],'b',false);r.sheath=drawSheath('검',150,260,false)&&drawSheath('도',150,260,false)&&drawSheath('창',150,260,false)===false;ctx.drawImage=od;r.drawn=drawn;
+    draw();return r});
+  ok(`무기 파츠 시트 ${wp2.n}장 [${wp2.clips}] 소켓 ${wp2.sock} · 검 장 각도 ${wp2.swordAngs} · 창 길이 ${wp2.spearLen}px · 시트로 그림 ${wp2.sword}(drawImage ${wp2.drawn}) · 맨손은 없음 ${wp2.none===false} · 칼집 ${wp2.sheath}`,
+    wp2.n===50&&wp2.clips==='검,검집,궁,도,도집,봉,창'&&wp2.sock&&wp2.swordAngs.split(',').length===6&&wp2.spearLen>150&&wp2.sword&&wp2.drawn===3&&wp2.none===false&&wp2.sheath);
   if(errs.length){console.log('ERRORS');console.log(errs.join('\n'))}
   await b.close()})();

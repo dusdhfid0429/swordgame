@@ -52,6 +52,7 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 | `data/anim.json` | 주인공 애니메이션 클립·무기 variant·공격 장 배분 가중치(v122, 참고 게임 구조 적용) |
 | `r_sheet.js` | 핸드오프 시트 로더(v123): `assets/<이름>/` 아틀라스·클립을 `SHEETS`로 읽고 발 기준점으로 그린다 |
 | `assets/wuxia/` | 핸드오프 주인공 시트(145장 22클립)와 원본 시트, `tools/` 는 시트 제작 툴(spritify·autosheet). 설명: docs/스프라이트_핸드오프.md |
+| `assets/wpn/` | 무기 파츠 시트(v125, 검·도·창·봉·궁 36장, 초록 마커→grip 소켓). `tools/weaponsheet.py`로 잘라낸다. 주인공 코드 무기를 대체 |
 | `g_guard.js` | 문파 구성(v118): 문지기·순찰조·전각 당원/시종(data/guard.json), 결전장 16 대 20 + 증원 파도 |
 | `g_vault.js` | 문파 재화·침투·전각 NPC 순환(v117): 금고 누적(data/vault.json), 몰래 털기/멸문 금고, 장로·당주·집사 처치와 3년 뒤 후임 |
 | `g_ruin.js` | 멸문 폐허(v115): 인원 0인 문파의 본산·전각 안은 들어갈 수 있는 폐허(그을린 건물·꺼진 지붕·핏자국·시체, NPC 없음). v116 폐허 약탈품: 시체·잔해 뒤지기(data/ruin.json) |
