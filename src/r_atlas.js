@@ -52,13 +52,13 @@ function heroFrame(){
   // 달리기는 새 도트를 쓰지 않는다 (사용자 결정 2026-10-12): 아래 기존 몸통 아틀라스 41~48 + 코드 무기
   // 맨손으로 상대를 마주 보고 서 있으면 위빙 (권 대기 대신)
   if(w==='권'&&h2&&P.satk<=0&&P.runT<=0&&P.target&&P.target.hp>0&&dist(P.target,P)<4){const s=A2.wv;return[s[0]+Math.floor(time*6)%s[1],false,'',true]}
-  if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))],false,'',true]}
+  if(P.satk>0&&P.ss2&&h2){const s=P.sset;return[s[atkIdx(1-P.satk/P.satkMax,s.length)],false,'',true]}
   // 창·봉 대기 (사용자 요청 2026-10-15): 시트의 세로 들기 장 가운데 자루가 보이는 장만 쓰고, 자루는 잘라낸 뒤 양손으로 비스듬히 잡은 자세를 코드로 그린다 (POLEI)
   if(pole&&h2&&P.satk<=0&&P.runT<=0&&POLEI[w]){const s=POLEI[w].f,n=s.length,k=Math.floor(time*4)%(2*n-2);return[s[k<n?k:2*n-2-k],false,'p',true]}
   if(!sw&&h2&&P.satk<=0&&P.runT<=0&&A2['i'+w]){const s=A2['i'+w],n=Math.min(8,s[1]),k=Math.floor(time*4)%(2*n-2);return[s[0]+(k<n?k:2*n-2-k),false,'',true]}
   if(P.sj>0){const uj=1-P.sj/(P.sjMax||.6);if(sw||w==='도'){const s=HSET.jump;return[s[Math.min(s.length-1,Math.floor(uj*s.length))],false,'']}
     const s=[31,32,32,32,32,38],i=s[Math.min(s.length-1,Math.floor(uj*s.length))];return[i,true,pole?'p':'']}
-  if(P.satk>0){const s=P.sset,i=s[Math.min(s.length-1,Math.floor((1-P.satk/P.satkMax)*s.length))];
+  if(P.satk>0){const s=P.sset,i=s[atkIdx(1-P.satk/P.satkMax,s.length)];
     if(sw)return[i,false,''];return[i,true,WL.b[i]?(w==='권'||w==='각'?'':'b'):(pole?'p':'')]}
   const i=P.runT>0?41+Math.floor(P.runPh*moveSpd()*3.6)%8:sw||w==='도'?Math.floor(time*5)%6:BIDLE[Math.floor(time*5)%6];
   if(sw||w==='도')return[i,false,''];return[i,true,pole?'p':'']}
@@ -68,12 +68,9 @@ const POLEI={'창':{f:[69,70,71,72,73],cut:{69:[57,52,47],70:[66,61,47],71:[70,6
 const POLE_U=[Math.cos(.96),-Math.sin(.96)];  // 자루 방향: 앞·위 55도 (창끝이 앞 위, 물미가 뒤 아래)
 // h: 스프라이트의 손 위치(아틀라스 px). other=-1이면 뒷손을 자루 아래쪽에, +1이면 앞손을 자루 위쪽에 코드로 더 그린다
 function drawPole(kind,h,other,flash){
-  const u=POLE_U;
-  drawWeapon(kind,[h[0],h[1],h[0]+u[0]*10,h[1]+u[1]*10],'p',flash);
-  const W=c=>flash?'#ffffff':c,o=[h[0]+u[0]*24*other,h[1]+u[1]*24*other];
-  // 소매: 몸통 쪽에서 둘째 손까지 (가로로 짧게)
-  pxLine([o[0]-16*other,o[1]+(other<0?-6:4)],o,7,W('#2b3242'));
-  for(const q of[h,o]){ctx.fillStyle='#14100c';ctx.beginPath();ctx.ellipse(q[0],q[1],5,4.2,-.96,0,7);ctx.fill();ctx.fillStyle=W('#e7b48b');ctx.beginPath();ctx.ellipse(q[0],q[1],3.6,2.9,-.96,0,7);ctx.fill()}}
+  const u=POLE_U;drawWeapon(kind,[h[0],h[1],h[0]+u[0]*10,h[1]+u[1]*10],'p',flash)}   // v120: 덧그리던 둘째 손·소매는 뺐다 (사용자: 자루에 손이 달려 보임)
+// 공격 장 배분 (v120, 키우기류 문법): 첫 장(예비) 30%, 가운데 장들 25%, 끝에서 둘째 장(멈춤) 30%, 마지막 장(복귀) 15%
+function atkIdx(u,n){if(n<=2)return Math.min(n-1,Math.floor(u*n));if(u<.3)return 0;if(u<.55)return 1+Math.min(n-3,Math.floor((u-.3)/.25*(n-2)));if(u<.85)return n-2;return n-1}
 // weapons painted in atlas pixels on top of the body frame, flat colours with a dark outline like the sprite
 function pxLine(a,b,w,col){ctx.lineCap='butt';ctx.strokeStyle='#14100c';ctx.lineWidth=w+2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
 function drawWeapon(kind,ln,lk,flash){

@@ -12,6 +12,9 @@ function drawFighter(e,isP){
     // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
     if(!f){if(!window.__badFrame){window.__badFrame=1;console.warn('hero frame missing',fi,a2,P.ss2,P.sset,P.bA,P.sjSt,P.runT,P.satk)}fi=0;a2=false;useB=false;lk='';f=HF[0];P.satk=0;P.bA=null;P.ss2=0}
     const k=a2?K2*(f[5]||1):.47,lift=P.sj>0?Math.sin((1-P.sj/(P.sjMax||.6))*Math.PI)*(P.sjSt===3?10:P.sjSt===2?30:22):jump;ctx.translate(0,-lift);ctx.scale(side,1);
+    // v120 움직임 덧입히기 (사용자 2026-10-16): 공격 예비는 뒤로, 휘두름·멈춤은 앞으로 밀고 기울임, 달리기는 앞으로 기울임, 피격은 뒤로 밀림. 발을 축으로 돈다
+    {let mdx=0,mrot=0;if(P.satk>0){const u=1-P.satk/P.satkMax;if(u<.3){mdx=-3;mrot=-.05}else if(u<.85){mdx=5;mrot=.05}}else if(P.runT>0)mrot=.07;
+      if(P.hit>0){const h=Math.min(1,P.hit/.2);mdx-=5*h;mrot-=.07*h}if(mdx||mrot){ctx.translate(mdx,0);ctx.rotate(mrot)}}
     const gb=heroGarb(),img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
     const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
     ctx.drawImage(img,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
