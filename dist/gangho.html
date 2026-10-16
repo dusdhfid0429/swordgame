@@ -1782,7 +1782,7 @@ function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()
 function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
-function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9,z:x===P.x&&y===P.y?P.z||0:0})}   // 주인공 자리 글자는 주인공 높이(나무·지붕)를 따른다 (v128)
+function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ================= skill bar =================
@@ -2908,7 +2908,7 @@ function drawLamp(l){
   poly([[p.x-12,p.y-40],[p.x+12,p.y-40],[p.x,p.y-52]],lg(p.x-12,p.x+12,'#8c877b','#2e2c28'));
 }
 function drawFx(f){
-  const p=toScreen(f.x,f.y);p.y-=f.z||0;   // v128: 나무·지붕 위(P.z)에서 생긴 효과는 그 높이에서 그린다
+  const p=toScreen(f.x,f.y);
   if(f.t==='dust'){const k=1-f.life/.45;ctx.fillStyle=`rgba(150,128,96,${.35*(1-k)})`;ctx.beginPath();ctx.ellipse(p.x,p.y-2-k*4,4+k*9,2+k*4,0,0,7);ctx.fill();return}
   if(f.t==='ring'){const k=1-f.life/f.max,r=k*2.6;ctx.strokeStyle=`rgba(140,180,255,${1-k})`;ctx.lineWidth=5*(1-k)+1;
     ctx.beginPath();ctx.ellipse(p.x,p.y,r*TW/2*1.41,r*TH/2*1.41,0,0,7);ctx.stroke();ctx.fillStyle=`rgba(160,200,255,${.12*(1-k)})`;ctx.fill()}
@@ -6664,8 +6664,12 @@ function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
 // 그리기 레이어 (v122): BACK 바닥에 붙은 것(시체·핏자국·바닥 표식) → ENT 개체·건물(깊이 정렬) → FX 효과 → OVER 지명 → TOP 조준선
 const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
+// v128: 나무·지붕 위 효과 높이. 주인공 발치(0.8칸 안)에서 새로 생긴 fx·글자·투사체는 주인공의 높이 P.z를 받아 그 높이에서 그린다(한 번 정해지면 고정).
+// 효과를 만드는 곳마다 z를 붙이는 대신 그리기 직전에 한 번 붙인다. 지붕 위에 적이 붙을 수 없으니 적의 효과가 잘못 올라갈 일은 없다
+function tagZ(){const z=P&&P.z||0;for(const arr of[fx,texts,projs])for(const f of arr)if(f.z===undefined)f.z=z>0&&Math.abs(f.x-P.x)<.8&&Math.abs(f.y-P.y)<.8?z:0}
+const atZ=(f,g)=>{if(f.z){ctx.save();ctx.translate(0,-f.z);g();ctx.restore()}else g()};
 function draw(){
-  const dpr=devicePixelRatio;
+  const dpr=devicePixelRatio;tagZ();
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
@@ -6717,7 +6721,7 @@ function draw(){
     if(P.perch&&joy.on){const a=leapAim();if(a){const s=toScreen(a.x,a.y),az=a.q.z,k=(time*2)%1;list.push({L:LY.TOP,d:99999,f:()=>{ctx.strokeStyle=`rgba(190,220,255,${.9-k*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(s.x,s.y-az,8+k*8,4+k*4,0,0,7);ctx.stroke()}})}}
     if(z>2){const g=toScreen(P.x,P.y);list.push({d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
-  for(const f of fx)if(!f.glow){const gnd=f.t==='ring'||f.t==='warn';list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>drawFx2(f)})}
+  for(const f of fx)if(!f.glow){const gnd=!f.z&&(f.t==='ring'||f.t==='warn');list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>atZ(f,()=>drawFx2(f))})}
   // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
@@ -6739,17 +6743,17 @@ function draw(){
     for(const d of drops)if(d.it.item||d.it.page){const p=toScreen(d.x,d.y);lightAt(p.x,p.y-10,60,.8)}
     if(G.giyeon){const p=toScreen(G.giyeon.x,G.giyeon.y);lightAt(p.x,p.y-20,120,.9)}
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
-    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20,f.t==='bolt'?200:120,.6*f.life/f.max)}
+    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max)}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
     ctx.globalCompositeOperation='lighter';
     for(const l of lamps){const p=toScreen(l.x,l.y),g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,120);g.addColorStop(0,`rgba(255,150,60,${.22*dark})`);g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.fillRect(p.x-120,p.y-150,240,240)}
     ctx.globalCompositeOperation='source-over';
   }
-  for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r,r*2,r*2)}ctx.globalAlpha=1;
+  for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
-  for(const f of fx)if(f.glow){fxMode(f.col);drawGlow2(f)}for(const q of projs){fxMode(q.c);drawProj(q)}ctx.globalCompositeOperation='lighter';HI=WH;
+  for(const f of fx)if(f.glow){fxMode(f.col);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c);atZ(q,()=>drawProj(q))}ctx.globalCompositeOperation='lighter';HI=WH;
   for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';

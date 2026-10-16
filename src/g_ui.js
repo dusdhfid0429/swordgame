@@ -31,7 +31,7 @@ function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()
 function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
-function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9,z:x===P.x&&y===P.y?P.z||0:0})}   // 주인공 자리 글자는 주인공 높이(나무·지붕)를 따른다 (v128)
+function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ================= skill bar =================
