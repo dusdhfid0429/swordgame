@@ -33,7 +33,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .chan i{display:block;height:4px;background:var(--exp);margin-top:3px}
 .panel{flex:none;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:10px;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));
   background:linear-gradient(#2c2419,#17120c);border-top:2px solid var(--bronze);box-shadow:inset 0 1px 0 var(--bronze-hi)}
-.status{display:grid;gap:4px;align-content:start;font-size:12px;font-variant-numeric:tabular-nums}
+.status{display:grid;gap:4px;align-content:start;font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer}.status:hover{filter:brightness(1.15)}
 .who{font-family:var(--display);font-size:16px;display:flex;justify-content:space-between;gap:8px;white-space:nowrap}
 .who span{color:var(--exp);font-family:var(--body);font-size:12px}
 .sub{color:var(--paper-dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -152,7 +152,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 #tui{display:none}
 .touch .panel{display:none}
 .touch #tui{display:block;position:absolute;inset:0;pointer-events:none;z-index:0}
-.touch .status{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:8px;width:min(196px,48vw);background:#0b0a09cc;border:1px solid var(--bronze);padding:5px 7px;gap:3px;pointer-events:none}
+.touch .status{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:8px;width:min(196px,48vw);background:#0b0a09cc;border:1px solid var(--bronze);padding:5px 7px;gap:3px;pointer-events:auto}   /* v129: 누르면 인물 창 */
 .touch .status .sub#sub{display:none}
 .touch .status .gauge{height:13px}.touch .status .gauge b{line-height:12px;font-size:10px}
 .touch .status .who{font-size:14px}.touch .status #res{font-size:10px;white-space:normal}
@@ -220,11 +220,11 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .exitq .card{width:min(320px,100%);gap:10px;padding:16px;text-align:center}
 @media (orientation:landscape){.toss #stage::after{content:'휴대폰을 세로로 들어 주세요';position:absolute;inset:0;display:grid;place-items:center;background:#0b0a09f6;font:22px var(--display);color:var(--paper);z-index:9}}
 /* ---- 수련 창: 화면 아래쪽에 붙고 시간은 흐른다. 캐릭터(화면 가운데)를 가리지 않게 높이를 제한 ---- */
-.trn{position:absolute;left:50%;bottom:calc(8px + var(--sab,0px));transform:translateX(-50%);width:min(560px,calc(100% - 16px));max-height:min(40%,330px);overflow:auto;z-index:3;
+.trn{position:absolute;left:50%;bottom:calc(8px + var(--sab,0px));transform:translateX(-50%);width:min(560px,calc(100% - 16px));max-height:min(40%,330px);overflow:hidden;grid-template-rows:auto minmax(0,1fr);z-index:3;
   background:linear-gradient(#2c2419f2,#17120cf2);border:2px solid var(--bronze);box-shadow:0 6px 24px #000c,inset 0 1px 0 var(--bronze-hi);padding:8px 10px;display:grid;gap:6px;touch-action:pan-y}
 .thead{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:17px}
 .thead small{font-family:var(--body);font-size:12px;color:var(--paper-dim);margin-left:6px}
-.tlist{display:grid;gap:4px}
+.tlist{display:grid;gap:4px;overflow:auto;min-height:0;touch-action:pan-y}   /* v129: 닫기 버튼이 있는 머리줄은 그대로, 목록만 스크롤 */
 .trow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#0a0806e6;border:1px solid #4a3c27;padding:5px 8px}
 .tname{font-size:13px}.tname b{font-family:var(--display);font-weight:400;font-size:15px}.tname small{display:block;font-size:11px;color:var(--paper-dim)}
 .tbtn{position:relative;overflow:hidden;min-width:118px}.tbtn .tcd{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--exp)}
@@ -244,7 +244,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
     <div class="screen" id="scr" hidden><div class="box" id="scrbox"></div></div>
   </div>
   <div class="panel">
-    <div class="status">
+    <div class="status" id="pstat" role="button" tabindex="0" title="인물 창 (K)">
       <div class="who"><span id="nm" style="color:var(--paper);font-family:var(--display);font-size:16px">무명</span><span id="rank">삼류</span></div>
       <div class="sub" id="sub"></div>
       <div class="gauge hp"><i id="hpb"></i><b id="hpt">HP</b></div>
@@ -2075,6 +2075,8 @@ function act(s){
 }
 function toggleMode(){P.mode=P.mode==='auto'?'manual':'auto';log(P.mode==='auto'?'자동초식: 클릭한 적에게 익힌 초식을 차례로 잇습니다.':'수동초식: 클릭은 평타만, 초식은 키로 냅니다.','info')}
 $('wx').addEventListener('click',closePanels);
+// v129 (사용자): HUD 왼쪽 위 정보창을 누르면 인물 창
+$('pstat').addEventListener('click',()=>{if(playing&&P)openPanel('char')});$('pstat').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&playing&&P){e.preventDefault();openPanel('char')}});
 logEl.addEventListener('click',()=>{if(playing)openPanel('logs')});const sysEl=document.querySelector('.sysmsg');if(sysEl)sysEl.addEventListener('click',()=>{if(playing)openPanel('logs')});
 $('modeb').addEventListener('click',()=>{if(P)toggleMode()});
 $('runb').addEventListener('click',()=>{if(P)toggleRun()});

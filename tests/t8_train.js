@@ -19,6 +19,15 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     const st=await p.evaluate(()=>{const r=TRN.getBoundingClientRect(),q=toScreen(P.x,P.y),cr=C.getBoundingClientRect();return{open:!TRN.hidden,paused,win:!$('win').hidden,top:r.top,head:cr.top+(q.y-70)*S,feet:cr.top+q.y*S}});
     ok(`${tag}: 수련 창이 열리고 시간은 흐른다`,st.open&&!st.paused&&!st.win);
     ok(`${tag}: 창이 캐릭터 아래에 있다 (창 위 ${st.top|0}, 발 ${st.feet|0})`,st.top>st.feet);
+    // v129 (사용자): 목록을 스크롤해도 닫기 버튼(머리줄)은 제자리
+    const sc=await p.evaluate(()=>{const l=TRN.querySelector('.tlist'),h=TRN.querySelector('.thead'),b0=h.getBoundingClientRect().top;l.scrollTop=400;const b1=h.getBoundingClientRect().top;return{can:l.scrollHeight>l.clientHeight,moved:Math.abs(b1-b0),st:l.scrollTop,inside:h.getBoundingClientRect().top>=TRN.getBoundingClientRect().top-1}});
+    ok(`${tag}: 목록을 ${sc.st}px 내려도 닫기 버튼은 제자리 (움직임 ${sc.moved}px${sc.can?'':', 목록이 다 보여 스크롤 없음'})`,(!sc.can||sc.st>0)&&sc.moved<1&&sc.inside);
+    await p.evaluate(()=>{TRN.querySelector('.tlist').scrollTop=0});
+    // v129 (사용자): HUD 왼쪽 위 정보창을 누르면 인물 창
+    await tap('#pstat');await p.waitForTimeout(200);
+    const pc=await p.evaluate(()=>({panel,win:!$('win').hidden,trn:!TRN.hidden,title:$('wtitle').textContent}));
+    ok(`${tag}: 정보창을 누르면 인물 창이 열린다 (${pc.title})`,pc.panel==='char'&&pc.win&&!pc.trn);
+    await p.evaluate(()=>closePanels());if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyT');await p.waitForTimeout(200);
     for(const k of['str','end','agi','qi']){
       const v0=await p.evaluate(k=>P.st[k],k);await tap(`[data-tr="${k}"]`);
       await p.waitForTimeout(550);
