@@ -33,5 +33,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r=await p.evaluate(()=>{const o={};P.mara=50;P.merit.cheonma=100;openNpc(hqNpc('hq_cheonma')||{id:'x',hq:'cheonma',x:0,y:0});o.btn=!!document.querySelector('[data-act="mrefine"]');sectAct('mrefine');o.after=P.mara;o.merit=P.merit.cheonma;closePanels();
     openPanel('char');o.card=$('win').innerText.includes('마성');closePanels();P.fame=60;mobs=[];o.hunt=maraHunt();o.n=mobs.filter(m=>m.hunt).length;o.foe=mobs.filter(m=>m.hunt).every(m=>!peaceful(m));mobs=[];return o});
   ok(`마기 정련 단추 ${r.btn} → 마성 50 → ${r.after}, 공적 100 → ${r.merit} · 인물창 마성 카드 ${r.card} · 추살조 ${r.hunt} ${r.n}명 모두 적 ${r.foe}`,r.btn&&r.after===20&&r.merit===80&&r.card&&r.hunt&&r.n===4&&r.foe);
+  // v130 (사용자): 내공·생명이 가득해도 마성이 남아 있으면 터치 운기 단추가 보인다
+  await p.evaluate(()=>{setTouch(true);P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';P.qi=P.maxQi;P.hp=P.maxHp;P.medit=false;P.ride=null;mobs=[];P.mara=0});await p.waitForTimeout(400);const m={isMa:await p.evaluate(()=>isMa()),full:await p.evaluate(()=>$('t_med').hidden)};await p.evaluate(()=>{P.mara=30});await p.waitForTimeout(400);m.mara=await p.evaluate(()=>$('t_med').hidden);await p.evaluate(()=>{P.mara=0;setTouch(false)});
+  ok(`터치 운기 단추: 마공 ${m.isMa} · 내공·생명 가득이면 숨김(${m.full}), 마성 30이면 보임(${!m.mara})`,m.isMa&&m.full&&!m.mara);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();
