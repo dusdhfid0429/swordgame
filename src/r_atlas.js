@@ -64,6 +64,10 @@ function heroFrame(){
   if(P.runT>0){const c=heroClip('run',w)||CLIP.run;return clipOut(c,P.runPh*moveSpd()*3.6,lk)}
   // 대기: 두 번째 시트의 무기별 대기 줄 (창·봉은 자루 잘라내고 코드 자루, v119), 없으면 idleNb/base
   const c=h2&&v.idle?CLIP[v.idle]:CLIP[v.idleNb||ANIM.hero.base.idle];return clipOut(c,time*(c.fps||5),lk)}
+// v124: 시트 장의 소켓(hand/hand2/aim)으로 무기 선 [손x,손y,방향x,방향y]. 양손 자루는 두 손 가운데를 잡고 뒷손→앞손 방향, 한손 무기는 hand→aim
+function sheetWeaponLine(sh,fi,kind){const f=SHEETS[sh].frames[fi],sk=f&&f.sk;if(!sk||!sk.hand)return null;const h=sk.hand,pole=kind==='창'||kind==='봉';
+  if(pole&&sk.hand2){const b=sk.hand2,m=[(h[0]+b[0])/2,(h[1]+b[1])/2];return[m[0],m[1],m[0]+(h[0]-b[0]),m[1]+(h[1]-b[1])]}
+  const a=sk.aim||(sk.hand2?[h[0]+(h[0]-sk.hand2[0]),h[1]+(h[1]-sk.hand2[1])]:[h[0]+30,h[1]]);return[h[0],h[1],a[0],a[1]]}
 // 창·봉 비스듬 양손 자세 (v119). f: 자루가 그려진 대기 장(아틀라스2), cut[frame]=[그릴 폭, 앞손 x, 앞손 y] — 폭 밖의 세로 자루·창날은 잘라낸다
 const POLEI={'창':{cut:{69:[57,52,47],70:[66,61,47],71:[70,66,46],72:[65,61,47],73:[65,61,48]}},
   '봉':{cut:{60:[55,50,46],61:[64,59,46],62:[62,57,46]}}};
@@ -89,6 +93,8 @@ function drawWeapon(kind,ln,lk,flash){
   else if(kind==='궁'){const a=at(lk==='s'?-70:-60),b=at(lk==='s'?40:50),m=at(lk==='s'?-15:-5),bow=[m[0]-n[0]*14,m[1]-n[1]*14];
     ctx.strokeStyle='#14100c';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(...a);ctx.quadraticCurveTo(bow[0],bow[1],...b);ctx.stroke();ctx.strokeStyle=W('#7b4a26');ctx.lineWidth=3;ctx.stroke();
     pxLine(a,b,1,W('#e8e2d0'))}
+  else if(kind==='검'){const g=at(2),tip=at(74);pxLine(at(-8),g,3,W('#2a1a10'));pxLine([g[0]+n[0]*5,g[1]+n[1]*5],[g[0]-n[0]*5,g[1]-n[1]*5],3,W('#c9a14a'));pxLine(at(4),tip,3,W('#e4e9ec'));
+    ctx.strokeStyle=W('#9aa5ae');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(...at(6));ctx.lineTo(...at(70));ctx.stroke()}   // v124: 시트 장에 코드로 그리는 검 (원본 시트는 검이 그림에 있다)
   else if(kind==='도'){const g=at(3),tip=at(76),sp=k=>{const p=at(8+k*68);return[p[0]-n[0]*(1+k*1.5),p[1]-n[1]*(1+k*1.5)]},ed=k=>{const p=at(8+k*68),wd=4+k*6-(k>.85?(k-.85)*50:0);return[p[0]+n[0]*wd,p[1]+n[1]*wd]};
     ctx.fillStyle='#14100c';ctx.beginPath();for(let k=0;k<=1.001;k+=.1){const p=sp(k);ctx.lineTo(p[0]-n[0],p[1]-n[1])}ctx.lineTo(tip[0]+u[0]*2,tip[1]+u[1]*2);for(let k=1;k>=-.001;k-=.1){const p=ed(k);ctx.lineTo(p[0]+n[0],p[1]+n[1])}ctx.fill();
     ctx.fillStyle=W('#e4e9ec');ctx.beginPath();for(let k=0;k<=1.001;k+=.1)ctx.lineTo(...sp(k));ctx.lineTo(...tip);for(let k=1;k>=-.001;k-=.1)ctx.lineTo(...ed(k));ctx.fill();
