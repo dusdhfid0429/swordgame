@@ -111,7 +111,7 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${INTOSS?B('exit','끝내기'):B('ctl:k','PC 조작으로')}</span></div>`;
 }
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
