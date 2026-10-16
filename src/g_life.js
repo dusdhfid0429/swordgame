@@ -336,7 +336,7 @@ function applySave(data){data=migrateSave(data);
   {const pl=GAE_PLOTS||plots;data.plots&&data.plots.forEach((s,i)=>{if(pl[i])Object.assign(pl[i],s)})}
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     // 시계(time)는 새로 시작하므로 지난 판의 시각이 적힌 연출 상태는 버린다. 안 버리면 회피 도트(P.dA)·보법 도트(P.bA)에 갇혀 이동 모션이 안 나오고 '장 번호 없음' 경고가 이어진다 (사용자 보고 2026-10-12)
-    P.dA=0;P.bA=null;P.ggc=null;P.ggSpd=null;P.ss2=0;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
+    P.dA=0;P.bA=null;P.ggc=null;P.ggSpd=null;P.ss2=0;P.ssh=null;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
     allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();afterLoad(data);return true}
   return false;
 }
