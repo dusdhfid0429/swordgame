@@ -27,9 +27,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 강제공격으로 장문인 끌어내기 + 제자가 죽으면 첫해에도 쇠퇴 (v112: 직위별 손실이라 졸개로 고정)
   const m1=await p.evaluate(()=>{toggleForce(false);const s=SECTS.nabu,ids=[hqId(s),...((REGIONS[hqId(s)]||{}).halls||[]).map(h=>h.id)],mr=ids.find(id=>(REGIONS[id].npcs||[]).some(n=>n.hq===s.id));
     mobs=[];loadRegion(mr);P.reg=mr;const n=(REGION().npcs||[]).find(x=>x.hq);const p0=sectPop('nabu');const off=masterOut(n);toggleForce(true);const e=masterOut(n);const npcGone=!(REGION().npcs||[]).some(x=>x.hq);
-    const same=masterOut(n)===e;const d=mkFac(alFac(s.al),0,P.x+1,P.y,'nabu');d.rank=0;mobs.push(d);damage(d,9999,0,0,P);const weak=sectWeak(s);mobs=[];loadRegion(mr);P.reg=mr;const boss2=mobs.some(m=>m.master==='nabu');toggleForce(false);return{off:off===null,e:!!(e&&e.master==='nabu'),npcGone,same,p0,p1:sectPop('nabu'),weak,boss2}});
+    const same=masterOut(n)===e;const d=mkFac(alFac(s.al),0,P.x+1,P.y,'nabu');d.rank=0;mobs.push(d);damage(d,9999,0,0,P);const weak=sectWeak(s);mobs=[];loadRegion(mr);P.reg=mr;const boss2=mobs.some(m=>m.master==='nabu'),npcBack=(REGION().npcs||[]).some(x=>x.hq);toggleForce(false);return{off:off===null,e:!!(e&&e.master==='nabu'),npcGone,same,p0,p1:sectPop('nabu'),weak,boss2,npcBack}});
   ok(`강제 꺼진 채 ${m1.off?'안 나옴':'나옴'}, 켜면 장문인 출전 ${m1.e}·NPC 숨김 ${m1.npcGone}·같은 우두머리 ${m1.same}`,m1.off&&m1.e&&m1.npcGone&&m1.same);
-  ok(`제자 1명 죽으면 첫해에도 쇠퇴 (${m1.p0}→${m1.p1}, 쇠퇴 ${m1.weak}, 다시 들어가면 장문인 출전 ${m1.boss2})`,m1.p1===m1.p0-1&&m1.weak&&m1.boss2);
+  ok(`제자 1명 죽으면 첫해에도 쇠퇴 (${m1.p0}→${m1.p1}, 쇠퇴 ${m1.weak}, 같은 편이라 다시 들어가면 장문인 NPC ${m1.npcBack} 출전 ${m1.boss2}) [v133]`,m1.p1===m1.p0-1&&m1.weak&&m1.npcBack&&!m1.boss2);
   // PC 키 T, 터치 단추
   await p.keyboard.press('KeyT');const k1=await p.evaluate(()=>forceAtk);await p.keyboard.press('KeyT');const k2=await p.evaluate(()=>forceAtk);
   ok(`T 키로 켜고 끔 (${k1}→${k2})`,k1===true&&k2===false);

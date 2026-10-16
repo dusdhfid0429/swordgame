@@ -2415,15 +2415,23 @@ function popReset(){G.pop=null;popInit();popSync()}
 // 쓰러뜨리면 그 문파 인원 10%가 흩어지고(G.mdead) 고수 비율이 떨어지며 가입이 막힌다. 쇠퇴에서 벗어나 3년이 지나면 새 장문인이 선다.
 const sectWeak=s=>{const p=sectPop(s.id);if(p<=0)return false;if(p<=popBase(s)*POP.weak)return true;const a=G.popPrev&&G.popPrev[s.id];return a!=null&&p<a};
 // 장문인 NPC를 싸우는 우두머리로 바꿔 세운다 (쇠퇴했을 때, 또는 강제공격으로 장문인을 쳤을 때)
-function masterBoss(R,n,s,why){R.npcs=(R._npcsM||R.npcs).filter(x=>x!==n);const e=mkFac(alFac(s.al),1,n.x,n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
-  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(why,'info');return e}
+function masterBoss(R,n,s,why,x,y){R.npcs=(R._npcsM||R.npcs).filter(x=>x!==n);const e=mkFac(alFac(s.al),1,x??n.x,y??n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
+  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:e.x,y:e.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(why,'info');return e}
 // 지금 맵(id)의 장문인 상태를 인원에 맞춘다: 쇠퇴·공석이면 NPC를 숨기고(쇠퇴면 우두머리를 세우고), 아니면 NPC로 돌린다. 맵에 들어올 때와 이 맵에서 제자가 죽을 때마다
-function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;const base=R._npcsM||R.npcs||[];const n=base.find(x=>x.hq);if(!n)return;const s=SECTS[n.hq];if(!s)return;if(!R._npcsM)R._npcsM=R.npcs;popInit();
-  const dead=!!G.mdead[s.id],weak=sectWeak(s),boss=mobs.some(m=>m.master===s.id&&m.hp>0);
-  if(dead||weak){R.npcs=R._npcsM.filter(x=>x!==n);
-    if(!dead&&REG===id&&!boss)masterBoss(R,n,s,`${s.n}이(가) 쇠퇴해 ${masterTitle(s)}이 몸소 칼을 잡고 섰다.`)}
-  else if(!boss)R.npcs=R._npcsM;   // 강제공격으로 끌어낸 장문인은 싸움이 끝날 때까지 그대로
-  NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+// v133 (사용자): 쇠퇴해도 같은 편(문도·같은 진영)에게는 NPC로 남아 말을 걸고 무공을 배울 수 있다. 적대 진영에게만 우두머리로 나서며,
+// 그때는 전각 안이 아니라 전각이 있는 바깥 맵의 전각 앞문 앞에 선다(전각 안 NPC는 비운다). 강제공격으로 끌어내는 길(masterOut)은 그대로
+function masterState(H,hid,n,s,out){if(!s)return;if(typeof ldHall!=='undefined'&&ldHall===H)return;   // 교주 비무가 숨긴 NPC는 건드리지 않는다
+  if(!H._npcsM)H._npcsM=H.npcs;
+  const foe=typeof facFoe==='function'&&facFoe(alFac(s.al),pfac());
+  const dead=!!G.mdead[s.id],weak=sectWeak(s)&&foe,boss=mobs.some(m=>m.master===s.id&&m.hp>0);
+  if(dead||weak){H.npcs=H._npcsM.filter(x=>x!==n);
+    if(!dead&&!boss){const why=`${s.n}이(가) 쇠퇴해 ${masterTitle(s)}이 몸소 칼을 잡고 ${out?'전각 앞에 ':''}섰다.`;
+      if(out){if(REG===out.id)masterBoss(out.R,n,s,why,out.x,out.y)}else if(REG===hid)masterBoss(H,n,s,why)}}
+  else if(!boss)H.npcs=H._npcsM}   // 강제공격으로 끌어낸 장문인은 싸움이 끝날 때까지 그대로
+function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;popInit();let any=false;
+  const here=(R._npcsM||R.npcs||[]).find(x=>x.hq);if(here){any=true;masterState(R,id,here,SECTS[here.hq],null)}
+  for(const h of R.halls||[]){const H=REGIONS[h.id];if(!H||H.ruin)continue;const n=(H._npcsM||H.npcs||[]).find(x=>x.hq);if(!n)continue;any=true;masterState(H,h.id,n,SECTS[n.hq],{R,id,x:h.x,y:h.y+1.5})}
+  if(any)NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
 hook('regionLoaded',masterCheck);
 hook('kill',e=>{if(e.sect&&e.d&&e.d.fac&&!e.master&&P&&REG)masterCheck(REG)});
 // 강제공격을 켜고 장문인 NPC를 치면 쇠퇴하지 않았어도 우두머리로 나선다 (사용자 2026-10-13 "왜 장문인을 죽일 수 없지"). 돌아온다: 맵을 나갔다 오면 다시 NPC
