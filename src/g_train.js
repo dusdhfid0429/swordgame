@@ -21,7 +21,8 @@ function renderTrain(){
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
     <div class="tlist">${pgRow()}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong',`내공 심법 · ${simCur().n} ${AGR[simCur().g]}`,baseQi(),`${gapja(baseQi())} · ${simCur().sc} ${simCur().el} · 1회 +${simGain()}${simCur().tr&&simCur().tr.length?' · 특색 '+simTraitTxt(simCur()):''}`,c,P.vit>=c&&!fight,fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}${simRows()}</div>`;
-  if(h!==renderTrain.h){renderTrain.h=h;TRN.innerHTML=h}
+  // v132 (사용자): 다시 그려도 목록 스크롤은 그대로. innerHTML을 갈면 스크롤이 맨 위로 가므로 자리를 재서 되돌린다
+  if(h!==renderTrain.h){renderTrain.h=h;const l=TRN.querySelector('.tlist'),st=l?l.scrollTop:0;TRN.innerHTML=h;if(st){const l2=TRN.querySelector('.tlist');if(l2)l2.scrollTop=st}}
 }
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
