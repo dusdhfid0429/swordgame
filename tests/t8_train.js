@@ -22,7 +22,11 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     // v129 (사용자): 목록을 스크롤해도 닫기 버튼(머리줄)은 제자리
     const sc=await p.evaluate(()=>{const l=TRN.querySelector('.tlist'),h=TRN.querySelector('.thead'),b0=h.getBoundingClientRect().top;l.scrollTop=400;const b1=h.getBoundingClientRect().top;return{can:l.scrollHeight>l.clientHeight,moved:Math.abs(b1-b0),st:l.scrollTop,inside:h.getBoundingClientRect().top>=TRN.getBoundingClientRect().top-1}});
     ok(`${tag}: 목록을 ${sc.st}px 내려도 닫기 버튼은 제자리 (움직임 ${sc.moved}px${sc.can?'':', 목록이 다 보여 스크롤 없음'})`,(!sc.can||sc.st>0)&&sc.moved<1&&sc.inside);
-    await p.evaluate(()=>{TRN.querySelector('.tlist').scrollTop=0});
+    // v132 (사용자): 버튼을 누르거나 수련이 끝나 다시 그려도 스크롤 자리 유지
+    const keep=await p.evaluate(async()=>{const l=TRN.querySelector('.tlist');if(l.scrollHeight<=l.clientHeight)return{skip:true};l.scrollTop=40;const s0=l.scrollTop;renderTrain.h='';renderTrain();const s1=TRN.querySelector('.tlist').scrollTop;
+      const b=TRN.querySelector('[data-tr="str"]');b&&b.click();await new Promise(r=>setTimeout(r,120));const s2=TRN.querySelector('.tlist').scrollTop;return{s0,s1,s2}});
+    ok(`${tag}: 다시 그려도 스크롤 자리 유지 (${keep.skip?'목록이 다 보여 생략':`${keep.s0} → ${keep.s1} → 수련 뒤 ${keep.s2}`})`,keep.skip||(keep.s0>0&&keep.s1===keep.s0&&keep.s2===keep.s0));
+    await p.evaluate(()=>{TRN.querySelector('.tlist').scrollTop=0;trnBusy=null;renderTrain.h='';renderTrain()});await p.waitForTimeout(1700);
     // v129 (사용자): HUD 왼쪽 위 정보창을 누르면 인물 창
     await tap('#pstat');await p.waitForTimeout(200);
     const pc=await p.evaluate(()=>({panel,win:!$('win').hidden,trn:!TRN.hidden,title:$('wtitle').textContent}));
