@@ -226,8 +226,8 @@ function draw(){
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
   for(const f of fx)if(!f.glow)list.push({d:f.x+f.y+(f.t==='ring'||f.t==='warn'?-5:.1),f:()=>drawFx2(f)});
   list.sort((a,b)=>a.d-b.d).forEach(o=>o.f());
-  // weather
-  const w=G.weather;
+  // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
+  const w=REGION().hall?null:G.weather;
   if(w==='비'){ctx.strokeStyle='rgba(170,190,220,.35)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<140;i++){const x=(hash(i,7)*W+time*60*hash(i,3))%W,y=(hash(i,11)*H+time*(500+hash(i,5)*200))%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+12)}ctx.stroke();ctx.fillStyle='rgba(20,30,50,.15)';ctx.fillRect(0,0,W,H)}
   else if(w==='눈'){ctx.fillStyle='rgba(245,248,255,.8)';for(let i=0;i<120;i++){const x=(hash(i,7)*W+Math.sin(time+i)*20+time*15)%W,y=(hash(i,11)*H+time*(40+hash(i,5)*30))%H;ctx.beginPath();ctx.arc(x,y,1+hash(i,2)*1.6,0,7);ctx.fill()}}
   else if(w==='흐림'){ctx.fillStyle='rgba(60,64,72,.18)';ctx.fillRect(0,0,W,H)}
