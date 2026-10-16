@@ -29,8 +29,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 4. 시트 장으로 그릴 때 오류 없고, 발 기준점이 맞다: 가부좌 장의 아래끝이 발(0) 근처, 위끝은 위로
   const d=await p.evaluate(()=>{P.medit=true;draw();P.medit=false;const S=SHEETS.wuxia,i=S.clips.meditate.f[0],f=S.frames[i],k=sheetK('wuxia'),[x,y]=sheetXY('wuxia',i,f.o[0],f.o[1],k);return{bottom:y+f.r[3]*k,top:sheetTop('wuxia',i,k),x}});
   ok(`그리기 오류 없음 · 가부좌 장 아래끝 ${d.bottom.toFixed(1)} 위끝 ${d.top.toFixed(1)} 왼끝 ${d.x.toFixed(1)}`,Math.abs(d.bottom-3)<1&&d.top<-50&&d.x<0&&d.x>-60);
-  // 5. 아틀라스 파일 자체: 소켓은 자동 추정 표시(auto)
-  const atlas=require('../assets/wuxia/wuxia.atlas.json'),hand=Object.values(atlas.frames).filter(f=>f.sockets.length);
-  ok(`atlas.json 손 소켓 ${hand.length}장, 모두 auto 표시 ${hand.every(f=>f.sockets.every(s=>s.auto))}`,hand.length>=40&&hand.every(f=>f.sockets.every(s=>s.auto)));
+  // 5. 아틀라스 파일: 검·도·창·봉 공격 클립 51장 모두 hand 소켓, 창·봉은 hand2, 검·도는 aim (v124 손으로 찍음)
+  const atlas=require('../assets/wuxia/wuxia.atlas.json'),clips=require('../assets/wuxia/wuxia.clips.json').clips,FR=Object.values(atlas.frames);
+  const has=(c,n)=>clips[c].frames.every(i=>FR[i].sockets.some(s=>s.name===n));
+  const all=['sword_thrust','sword_slash','saber_heavy','saber_whirlwind','spear_1','spear_2','staff_1','staff_2'].every(c=>has(c,'hand')),pole=['spear_1','spear_2','staff_1','staff_2'].every(c=>has(c,'hand2')),one=['sword_thrust','sword_slash','saber_heavy','saber_whirlwind'].every(c=>has(c,'aim'));
+  ok(`atlas.json 무기 클립 소켓: hand ${all} · 자루 hand2 ${pole} · 한손 aim ${one} · 소켓 있는 장 ${FR.filter(f=>f.sockets.length).length}`,all&&pole&&one&&FR.filter(f=>f.sockets.length).length===51);
+  // 6. 검·도·창·봉 공격은 시트 클립 + 소켓 무기 선: 창은 두 손 가운데에서 뒷손→앞손 방향, 검은 hand→aim. 그리기 오류 없음
+  const wp=await p.evaluate(()=>{const useCls=w=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===w);P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=mkWeapon(w,1,0);recalc()};const r={};
+    for(const w of['검','도','창','봉']){useCls(w);heroAtk('flat',null);const f=heroFrame();r[w]={sheet:f[4],clip:ANIM.atk.wx[w].flat,inClip:SHEETS.wuxia.clips[ANIM.atk.wx[w].flat].f.includes(f[0]),line:sheetWeaponLine('wuxia',f[0],w)};P.satk=.3;draw();P.satk=0}
+    const s=SHEETS.wuxia.frames[52].sk,l=sheetWeaponLine('wuxia',52,'창');r.spearMid=Math.abs(l[0]-(s.hand[0]+s.hand2[0])/2)<.01&&l[2]>l[0];const k=SHEETS.wuxia.frames[123].sk,l2=sheetWeaponLine('wuxia',123,'검');r.sword=l2[0]===k.hand[0]&&l2[2]===k.aim[0];r.none=sheetWeaponLine('wuxia',79,'검')===null;return r});
+  ok(`무기 공격: ${['검','도','창','봉'].map(w=>w+' '+wp[w].clip+(wp[w].sheet==='wuxia'&&wp[w].inClip&&wp[w].line?' ✓':' ✗')).join(' · ')} · 창 가운데 ${wp.spearMid} · 검 hand→aim ${wp.sword} · 맨손 장 소켓 없음 ${wp.none}`,
+    ['검','도','창','봉'].every(w=>wp[w].sheet==='wuxia'&&wp[w].inClip&&wp[w].line)&&wp.spearMid&&wp.sword&&wp.none);
   if(errs.length){console.log('ERRORS');console.log(errs.join('\n'))}
   await b.close()})();

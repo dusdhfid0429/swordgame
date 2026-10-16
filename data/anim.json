@@ -43,8 +43,12 @@
       "궁": {"idle": "idle궁", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"}
     },
     "atk": {
-      "_wx": "핸드오프 시트의 공격 클립(v123). 맨손만 바인딩: 검·도·창·봉 클립(sword_thrust/slash, saber_heavy/whirlwind, spear_1/2, staff_1/2)은 무기 소켓이 확정되면 잇는다 (핸드오프 다음 단계 1)",
+      "_wx": "핸드오프 시트의 공격 클립(v123 맨손, v124 검·도·창·봉). 무기는 atlas.json 소켓(hand/hand2/aim) 자리에 코드로 그린다. palm은 예전 장 그대로",
       "wx": {
+        "검": {"flat": "sword_thrust", "vert": "sword_slash", "diag": "sword_slash", "ult": "sword_slash"},
+        "도": {"flat": "saber_whirlwind", "vert": "saber_heavy", "diag": "saber_whirlwind", "ult": "saber_heavy"},
+        "창": {"flat": "spear_1", "vert": "spear_2", "diag": "spear_2", "ult": "spear_1"},
+        "봉": {"flat": "staff_1", "vert": "staff_2", "diag": "staff_2", "ult": "staff_2"},
         "권": {"flat": "punches", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"},
         "각": {"flat": "kicks", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"}
       },

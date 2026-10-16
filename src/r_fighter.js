@@ -18,6 +18,9 @@ function drawFighter(e,isP){
     const gb=heroGarb();
     // v123 핸드오프 시트 장: 발 기준점이 캔버스에 박혀 있어 자리 보정 없이 그린다. 무기는 소켓이 확정될 때까지 안 그린다
     if(sh){drawSheet(sh,fi,k,flash,gb&&gb.wx);if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
+      // v124: 소켓이 있는 장(검·도·창·봉 공격)은 손 자리에 코드 무기를 얹는다
+      const wl=dc!=='권'&&dc!=='각'?sheetWeaponLine(sh,fi,dc):null;
+      if(wl){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawWeapon(dc,wl,dc==='창'||dc==='봉'?'p':'b',flash);ctx.restore()}
       if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
       ctx.restore();return}
     const img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
