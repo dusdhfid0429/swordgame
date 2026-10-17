@@ -29,5 +29,5 @@ function migrateSave(d){if(!d||typeof d!=='object')return d;
   while(v<SAVE_VER){d=MIGRATE[v](d)||d;d.v=++v}
   return d}
 // 불러온 뒤 한 번: 옮기면서 생긴 알림을 띄우고, 경지 효과처럼 저장에서 다시 계산하는 것을 맞춘다
-function afterLoad(d){realmFxSync();
+function afterLoad(d){realmFxSync();P.vit=Math.round(P.vit||0);if(P.vitCarry)P.vitCarry=Math.round(P.vitCarry);   /* 예전 저장에 남은 소수점 활력 */
   for(const n of d.notes||[])setTimeout(()=>log(n,'sys'),600);d.notes=[]}

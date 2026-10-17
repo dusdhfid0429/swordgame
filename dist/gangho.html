@@ -799,7 +799,7 @@ function qiAccAdd(v){P.qiAcc=(P.qiAcc??(P.qiN*SIDES[P.side].gain))+v}
 function splitVit(v){if(!(v>0))return[];const a=Math.floor(v/5),r=v-a*5;return[0,1,2,3,4].map(i=>a+(i<r?1:0))}
 const maxVit=()=>150+P.st.end*25;
 // 활력을 얻는다. 지구력이 정한 최대치까지만 찬다 (전생에서 넘겨받아 이미 넘친 활력은 깎지 않는다).
-function gainVit(v){if(typeof diffVit==='function')v=diffVit(v);const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
+function gainVit(v){if(typeof diffVit==='function')v=diffVit(v);v=Math.round(v);const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
 // 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
 const qiRealm=(p=P)=>{const q=baseQi(p);let i=0;REALM_QI.forEach((v,j)=>{if(q>=v)i=j});return i};
@@ -1672,7 +1672,7 @@ function newYear(){
 // 생일 선물: 전생의 활력 한 몫. 활력이 가득 차 못 받은 만큼은 다음 생일로 넘긴다.
 function birthdayVit(){
   if(!P.vitInst)P.vitInst=[];const n=P.vitInst.length;if(!n&&!(P.vitCarry>0))return;
-  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=v-got;
+  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=Math.max(0,Math.round(v-got));
   if(got>0)log(`생일을 맞아 전생의 활력 ${got}을(를) 받았습니다.${n?` (${6-n}/5)`:''}${P.vitCarry?` 활력이 가득 차 ${P.vitCarry}은(는) 다음 생일로 넘깁니다.`:''}`,'xp');
   else if(P.vitCarry)log(`활력이 가득 차 전생의 활력 ${P.vitCarry}을(를) 다음 생일로 넘깁니다.`,'info');
 }
@@ -3777,7 +3777,7 @@ function migrateSave(d){if(!d||typeof d!=='object')return d;
   while(v<SAVE_VER){d=MIGRATE[v](d)||d;d.v=++v}
   return d}
 // 불러온 뒤 한 번: 옮기면서 생긴 알림을 띄우고, 경지 효과처럼 저장에서 다시 계산하는 것을 맞춘다
-function afterLoad(d){realmFxSync();
+function afterLoad(d){realmFxSync();P.vit=Math.round(P.vit||0);if(P.vitCarry)P.vitCarry=Math.round(P.vitCarry);   /* 예전 저장에 남은 소수점 활력 */
   for(const n of d.notes||[])setTimeout(()=>log(n,'sys'),600);d.notes=[]}
 
 // ================= 무덤 던전: 죽은 자리에 봉분이 남고, 그 생의 내가 망령 보스로 지킨다 =================
@@ -6320,7 +6320,7 @@ const diffMul=k=>{const v=diffOf()[k];return v==null?1:v};
 hook('mobScaled',e=>{if(!e.d||e.d.villager||e.d.passive)return;e.maxHp=Math.max(1,Math.round(e.maxHp*diffMul('mobHp')));e.hp=e.maxHp;e.atk=Math.max(1,Math.round(e.atk*diffMul('mobAtk')))});
 hook('mobMade',e=>{const d=e.d;if(!d||!d.beast||e.diffed)return;e.diffed=1;e.maxHp=Math.max(1,Math.round(e.maxHp*diffMul('mobHp')));e.hp=e.maxHp;e.atk=Math.max(1,Math.round(e.atk*diffMul('mobAtk')))});
 hook('hurt',c=>{if(c.src&&c.src.d)c.dm*=diffMul('taken')});
-const diffVit=v=>v>0?v*diffMul('vit'):v;
+const diffVit=v=>v>0?Math.round(v*diffMul('vit')):v;   // v136 (사용자): 활력은 정수만 (배율을 곱하면 소수점이 나왔다)
 const diffSquad=n=>Math.max(1,Math.round(n*diffMul('squad')));
 function diffHtml(){const d=diffOf();return `<div class="card"><h4>난이도 <small class="dim">완전 새로 시작할 때 정한다</small></h4><p><b class="gold">${d.n}</b> · ${d.d}</p><p class="note">적 생명 ×${d.mobHp} · 적 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken} · 활력 ×${d.vit} · 마성 ×${d.mara} · 추살조 ×${d.squad}</p></div>`}
 function diffPickHtml(){if(G.lives)return '';const i=diffIdx();

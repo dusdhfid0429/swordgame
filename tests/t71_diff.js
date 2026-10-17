@@ -17,12 +17,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const mob=k=>at(k,()=>{const e=mkMob('산적',0,0);e.d={...e.d,elite:1};e.realm=2;scaleMob(e);return[e.maxHp,e.atk]});o.n=mob(1);o.h=mob(4);o.e=mob(0);
     const beast=k=>at(k,()=>{const e=mkMob('늑대',0,0);return e.maxHp});o.wn=beast(1);o.wh=beast(4);
     const took=k=>at(k,()=>{const e=mkMob('산적',P.x+1,P.y);e.realm=0;const R=Math.random;Math.random=()=>.99;P.inv=0;P.hp=P.maxHp;hurtP(50,e);Math.random=R;return P.maxHp-P.hp});o.tn=took(1);o.th=took(4);
-    const vit=k=>at(k,()=>{P.vit=0;gainVit(100);return P.vit});o.vn=vit(1);o.vh=vit(4);
+    const vit=k=>at(k,()=>{P.vit=0;gainVit(100);return P.vit});o.vn=vit(1);o.vh=vit(4);o.vi=[0,1,2,3,4].every(k=>at(k,()=>{P.vit=0;gainVit(7);gainVit(13);return Number.isInteger(P.vit)}));
     const mara=k=>at(k,()=>{P.sect='cheonma';P.mara=0;maraAdd(10,'t');const v=P.mara;P.sect=null;P.mara=0;return v});o.mn=mara(1);o.mh=mara(4);
     o.sq=[at(0,()=>diffSquad(4)),at(1,()=>diffSquad(4)),at(4,()=>diffSquad(4))];o.mul=DIFF[4];P.hp=P.maxHp;mobs=[];return o});
   const mu=m.mul;
-  ok(`배율(지옥): 정예 생명 ${m.n[0]}→${m.h[0]} 공격 ${m.n[1]}→${m.h[1]} (입문 ${m.e[0]}/${m.e[1]}) · 늑대 ${m.wn}→${m.wh} · 받는 피해 ${m.tn}→${m.th} · 활력 ${m.vn}→${m.vh} · 마성 ${m.mn}→${m.mh} · 추살조 ${m.sq}`,
-    Math.abs(m.h[0]-m.n[0]*mu.mobHp)<=1&&Math.abs(m.h[1]-m.n[1]*mu.mobAtk)<=1&&m.e[0]<m.n[0]&&Math.abs(m.wh-m.wn*mu.mobHp)<=1&&m.th>m.tn*mu.taken*.9&&Math.abs(m.vh-m.vn*mu.vit)<=1&&Math.abs(m.mh-m.mn*mu.mara)<=.5&&m.sq[0]<m.sq[1]&&m.sq[2]===Math.round(4*mu.squad));
+  ok(`배율(지옥): 정예 생명 ${m.n[0]}→${m.h[0]} 공격 ${m.n[1]}→${m.h[1]} (입문 ${m.e[0]}/${m.e[1]}) · 늑대 ${m.wn}→${m.wh} · 받는 피해 ${m.tn}→${m.th} · 활력 ${m.vn}→${m.vh} · 마성 ${m.mn}→${m.mh} · 추살조 ${m.sq} · 활력 정수 ${m.vi}`,
+    Math.abs(m.h[0]-m.n[0]*mu.mobHp)<=1&&Math.abs(m.h[1]-m.n[1]*mu.mobAtk)<=1&&m.e[0]<m.n[0]&&Math.abs(m.wh-m.wn*mu.mobHp)<=1&&m.th>m.tn*mu.taken*.9&&Math.abs(m.vh-m.vn*mu.vit)<=1&&Math.abs(m.mh-m.mn*mu.mara)<=.5&&m.sq[0]<m.sq[1]&&m.sq[2]===Math.round(4*mu.squad)&&m.vi);
   // 3. 인물 창에 난이도 카드. 윤회(둘째 인생)의 탄생 화면에는 난이도 카드가 없고 G.diff는 그대로
   const l=await p.evaluate(()=>{const o={};openPanel('char');o.card=$('win').innerText.includes('난이도')&&$('win').innerText.includes('고수');closePanels();
     G.lives=1;showCreate();o.pick=!document.querySelector('[data-s^="diff:"]');o.diff=G.diff;const g=G.diff;act=null;return o});
