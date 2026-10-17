@@ -15,6 +15,10 @@ const ACAD=GD.ACAD,ACAD_ST=GD.ACAD_STAGES,ACAD_SPOTS=GD.ACAD_SPOTS,ACAD_SPAR=GD.
 const ACAD_OFF=/[?&#]noacad/.test(location.href);
 const acadOf=side=>ACAD[side]||ACAD['정'];
 const acadOn=()=>!!(P&&P.acad&&!P.acad.grad);
+// 졸업했거나 윤회 때 무관을 건너뛰었으면(v138, P.acadSkip) 맹 총관에게서 남은 하승 심법을 배울 수 있다
+const acadPast=()=>!!(P&&((P.acad&&P.acad.grad)||P.acadSkip));
+function acadSkipStart(sim){const x=SIM[sim];P.acadSkip=1;if(x&&x.acad&&x.side===P.side){simLearn(x);recalc()}
+  P.feats.push(`8세에 무관을 거치지 않고 강호에 나섰다`)}
 const acadReg=()=>acadOf(P.side).id;
 const acadField=side=>acadOf(side).id+'_field';
 const inAcad=()=>!!(P&&P.acad&&REG===acadOf(P.side).id);
@@ -242,7 +246,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
 hook('npcDlg',c=>{if(c.html!=null||!c.n.acad)return;c.html=acadDlg(c.n)});
 // 맹 총관: 고르지 않은 무관 하승 심법을 맹 공적으로 (졸업한 사람만)
 const acadMptFree=al=>((P.mpt||{})[al]||0)-((P.mspent||{})[al]||0);
-hook('npcDlg',c=>{const n=c.n;if(!n.maeng||n.role!=='steward'||c.html==null||!P.acad||!P.acad.grad)return;const al=n.maeng,side=ALLY[al].side;if(side!==P.side)return;
+hook('npcDlg',c=>{const n=c.n;if(!n.maeng||n.role!=='steward'||c.html==null||!acadPast())return;const al=n.maeng,side=ALLY[al].side;if(side!==P.side)return;
   const xs=ACAD_SIM[side].filter(x=>!simKnown(x.id)),on=maengOf()===al;if(!xs.length)return;
   c.html+=`<div class="card"><h4>무관 하승 심법 <small class="dim">맹 공적 ${ACAD_SIM_COST} · 쓸 수 있는 공적 ${acadMptFree(al)} (직위는 그대로)</small></h4><div class="list">${xs.map(x=>simRowHtml(SIM[x.id],B('acbuy:'+x.id,'배운다',{d:!on||acadMptFree(al)<ACAD_SIM_COST}))).join('')}</div></div>`});
 // 행동
@@ -251,7 +255,7 @@ hook('sectAct',c=>{const{a,x}=c;
   if(!a.startsWith('ac'))return;
   const H={acpick:()=>acadPick(x),acsim:()=>acadSimPick(x),actalk:()=>{if(acadOn())P.acad.c['talk_'+x]=1;acadCheck()},acspar:()=>acadSpar(x),acq:()=>acadQuestTake(+x),acqd:()=>acadQuestReport(+x),
     acrep:()=>acadReport(),acgrad:()=>acadGraduate(),acrec:()=>acadRec(x),
-    acbuy:()=>{const s=SIM[x],al=s&&(s.side==='정'?'jeong':'sacheon');if(!s||!s.acad||s.side!==P.side||simKnown(x)||!P.acad||!P.acad.grad||maengOf()!==al||acadMptFree(al)<ACAD_SIM_COST)return;
+    acbuy:()=>{const s=SIM[x],al=s&&(s.side==='정'?'jeong':'sacheon');if(!s||!s.acad||s.side!==P.side||simKnown(x)||!acadPast()||maengOf()!==al||acadMptFree(al)<ACAD_SIM_COST)return;
       P.mspent=P.mspent||{};P.mspent[al]=(P.mspent[al]||0)+ACAD_SIM_COST;P.sims[x]=1;log(`${MAENG[al].short}에서 [${s.n}]을(를) 배웠습니다. 수련 창에서 바꿔 운용할 수 있다.`,'xp')}};
   if(!H[a])return;c.done=true;c.r=true;H[a]()});
 

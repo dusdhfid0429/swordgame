@@ -8,8 +8,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto(url);await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');
   // 1. 생성 화면에 무기 고르기가 없고, 무관에서 시작한다
-  const n0=await p.$$eval('[data-s^="cls:"]',x=>x.length),t0=await p.evaluate(()=>$('scrbox').textContent);
-  ok(`생성 화면: 무기 단추 ${n0}개, 청운무관 안내`,n0===0&&t0.includes('청운무관에 들다'));
+  const n0=await p.$$eval('[data-s^="cls:"]',x=>x.length),sk0=await p.$$eval('[data-s="skipacad"]',x=>x.length),t0=await p.evaluate(()=>$('scrbox').textContent);
+  ok(`생성 화면: 무기 단추 ${n0}개, 첫 생엔 건너뛰기 없음 (${sk0}), 청운무관 안내`,n0===0&&sk0===0&&t0.includes('청운무관에 들다'));
   await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   const r1=await p.evaluate(()=>({reg:REG,st:P.acad&&P.acad.stage,w:P.eq.weapon,books:P.bag.filter(i=>i.slot==='book').length,robe:!!P.bag.find(i=>i.acad),dummy:mobs.filter(m=>m.acadDummy).length,track:$('qtrack').textContent}));
   ok(`청운무관 1단계에서 시작 (무기 ${r1.w?'있음':'없음'}, 비급 ${r1.books}, 무관복, 목인장 ${r1.dummy}), 왼쪽에 과제`,r1.reg==='acad_jeong'&&r1.st===0&&!r1.w&&r1.books===0&&r1.robe&&r1.dummy===3&&r1.track.includes('1단계'));
@@ -108,6 +108,20 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r18=await p.evaluate(()=>{saveGame(true);const sv=loadGame();const reg0=REG;loadRegion('gaebong');P.reg='gaebong';applySave(loadGame());startPlay(false);
     const m=migrateSave({v:3,P:{name:'옛사람'},G:{}});return{reg:REG,reg0,acad:sv.P.acad.stage,mig:m.P.acad,v:m.v,sa:ACAD['사'].n,saReg:!!REGIONS['acad_sacheon']&&!!REGIONS['acad_sacheon_field']}});
   ok(`이어 하기 → ${r18.reg}, 저장에 단계 ${r18.acad}, v3 저장 → v${r18.v} acad=${r18.mig}, 사파 ${r18.sa}`,r18.reg==='acad_jeong'&&r18.acad===3&&r18.mig===null&&r18.v===4&&r18.sa==='패천관'&&r18.saReg);
+  // 10b. v138 윤회 때 무관 건너뛰기: 병기·하승 심법 고르는 창 → 개봉에서 바로 시작
+  await p.evaluate(()=>{closePanels();die('건너뛰기')});await p.waitForSelector('[data-s="rebirth"]',{timeout:8000});await p.click('[data-s="rebirth"]');
+  await p.evaluate(()=>{const b=document.querySelector('[data-s="noheir"]');if(b)b.click()});await p.click('[data-s="side:사"]');
+  await p.click('[data-s="skipacad"]');
+  const s20=await p.evaluate(()=>({cls:document.querySelectorAll('[data-s^="cls:"]').length,sim:[...document.querySelectorAll('[data-s^="ssim:"]')].map(e=>e.dataset.s.slice(5)),t:$('scrbox').textContent}));
+  await p.click('[data-s="skipback"]');const back=await p.$$eval('[data-s="skipacad"]',x=>x.length);
+  await p.click('[data-s="skipacad"]');await p.click('[data-s="cls:봉"]');await p.click(`[data-s="ssim:${s20.sim[2]}"]`);
+  const pr=await p.evaluate(()=>document.querySelector('[data-s="cls:봉"]').getAttribute('aria-pressed'));
+  await p.click('[data-s="skipstart"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
+  const r20=await p.evaluate(()=>({reg:REG,acad:P.acad,skip:P.acadSkip,w:P.eq.weapon&&P.eq.weapon.cls,sim:P.sim,on:acadOn(),past:acadPast(),track:$('qtrack').textContent}));
+  const r21=await p.evaluate(()=>{P.mpt={sacheon:100};P.maeng='sacheon';const n=Object.values(REGIONS).flatMap(R=>R.npcs||[]).find(n=>n.maeng==='sacheon'&&n.role==='steward');if(!n)return{none:1};openNpc(n);
+    const o=ACAD_SIM['사'].find(x=>!simKnown(x.id));act('acbuy:'+o.id);return{known:simKnown(o.id)}});
+  ok(`건너뛰기 창: 병기 ${s20.cls}개·사파 심법 ${s20.sim.length}개, 돌아가기 (${back}), 봉 선택 ${pr} → ${r20.reg}에서 ${r20.w}·${r20.sim} 들고 시작, 무관 없음, 맹 총관 심법 (${JSON.stringify(r21)})`,
+    s20.cls===6&&s20.sim.length===4&&s20.sim.every(id=>id.startsWith('N_ac_sa'))&&back===1&&pr==='true'&&r20.reg==='gaebong'&&r20.acad===null&&r20.skip===1&&r20.w==='봉'&&r20.sim===s20.sim[2]&&!r20.on&&r20.past&&r21.known);
   // 11. ?noacad: 옛 방식 (생성 화면 무기, 개봉 시작)
   await p.goto(url+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');
   const n19=await p.$$eval('[data-s^="cls:"]',x=>x.length);await p.click('[data-s="cls:도"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
