@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 사건이 열리면 장소를 알려 주고, 정세 창 카드에 '장소' 줄
   const a=await p.evaluate(()=>{P.age=20;lastYear=19;update(.1);const o={open:P.story.open,log:$('log').textContent.includes('의뢰판'),card:$('wbody').textContent.includes('장소: 개봉 의뢰판')};closePanels();return o});

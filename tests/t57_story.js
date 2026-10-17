@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 8세 시작, 데이터, 초기 세상 상태
   const t0=await p.evaluate(()=>({age:P.age,n:STORY.EV.length,ages:STORY.EV.map(e=>e.age),war:STORY.T.war,w:G.W,init:STORY.INIT,st:P.story,plan:warPlan().n}));
@@ -41,8 +41,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`다음 생: 8세(${t9.age}), 마교 힘 유지 ${t9.ma}, 봉문 유지 ${t9.seal}`,Math.floor(t9.age)===8&&Math.round(t9.ma)===77&&t9.seal[0]===t8.seal&&t9.lives===1&&t9.st===null);
   ok('전생의 흔적이 사건 창에 보인다',t9.hint.includes('전생의 흔적')&&t9.hint.includes('제1생'));
   // 10. 저장 이전: v2 저장(story 없음, 23세)은 지난 사건을 '지나감'으로 적고 세상 상태를 채운다
-  const t10=await p.evaluate(()=>{saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));d.v=2;delete d.P.story;delete d.G.W;delete d.G.seal;d.P.age=23;const m=migrateSave(JSON.parse(JSON.stringify(d)));return{v:m.v,pick:m.P.story.pick,seal:m.G.seal,W:m.G.W}});
-  ok(`v2 → v3: 지난 사건 ${Object.keys(t10.pick).length}개 지나감, 봉문 ${JSON.stringify(t10.seal)}`,t10.v===3&&Object.keys(t10.pick).length===7&&t10.pick.ev7===-1&&t10.pick.ev8==null&&JSON.stringify(t10.seal)==='{}'&&t10.W===null);
+  const t10=await p.evaluate(()=>{saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));d.v=2;delete d.P.story;delete d.G.W;delete d.G.seal;d.P.age=23;const m=migrateSave(JSON.parse(JSON.stringify(d)));return{SV:SAVE_VER,v:m.v,pick:m.P.story.pick,seal:m.G.seal,W:m.G.W}});
+  ok(`v2 → v3: 지난 사건 ${Object.keys(t10.pick).length}개 지나감, 봉문 ${JSON.stringify(t10.seal)}`,t10.v===t10.SV&&Object.keys(t10.pick).length===7&&t10.pick.ev7===-1&&t10.pick.ev8==null&&JSON.stringify(t10.seal)==='{}'&&t10.W===null);
   // 11. 타이틀 '처음부터 새로' → 세상과 강호사가 지워진다
   await p.evaluate(()=>{saveGame(true);showTitle()});await p.waitForTimeout(200);
   const hasReset=await p.$('[data-s="reset"]');await p.click('[data-s="reset"]');await p.waitForTimeout(150);await p.click('[data-s="reset2"]');await p.waitForTimeout(300);   // 화면 안 확인 두 단계 (2026-10-14)

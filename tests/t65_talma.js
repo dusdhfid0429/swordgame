@@ -5,7 +5,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 경지 이름과 마성 단계 이름
   const n=await p.evaluate(()=>{const o={};P.sect='cheonma';P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';P.realm=5;o.r5=realmName();P.realm=6;o.r6=realmName();P.realm=0;o.tier=MARA_N.join('·');return o});

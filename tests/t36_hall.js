@@ -7,7 +7,7 @@ const path=require('path');
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   const shot=n=>path.join(__dirname,'shots',n+'.png');
-  await p.goto('file://'+path.resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+path.resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');
   await p.waitForFunction(()=>playing);await p.waitForTimeout(1500);
   const go=(id,x,y)=>p.evaluate(([id,x,y])=>{mobs=[];P.reg=id;loadRegion(id);P.x=x;P.y=y;P.path=null;P.gateLock=0;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;miniBase=null},[id,x,y]);

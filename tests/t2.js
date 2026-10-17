@@ -4,7 +4,7 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1280,height:800}});
   const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message+' '+(e.stack||'').split('\n')[1]));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   p.on('dialog',d=>d.accept('테스트'));
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(3000);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(3000);
   await p.evaluate(()=>localStorage.clear());
   await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="cls:궁"]');await p.click('[data-s="start"]');await p.waitForTimeout(800);
   const step=async(name,fn,wait=300)=>{try{const r=await p.evaluate(fn);console.log(name,JSON.stringify(r))}catch(e){console.log(name,'ERR',e.message)}await p.waitForTimeout(wait)};

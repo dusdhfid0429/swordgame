@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForTimeout(400);
   await p.evaluate(()=>{for(let i=0;i<40;i++){const e=mkMob('강시',P.x+1.5,P.y+.5);mobs.push(e);e.hp=0;onKill(e)}P.hp=P.maxHp=99999});
   await p.waitForTimeout(800);

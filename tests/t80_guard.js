@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 산문 맵: 출입구마다 문지기 둘(바깥을 본다), 대문파 순찰조 2×3. 순찰조는 시간이 지나면 움직인다. 같은 편이라 평화
   const a=await p.evaluate(()=>{paused=true;popInit();regionJump('hq_hwasan_gate',20,24);const gs=REGION().gates.filter(g=>!g.door).length,gd=mobs.filter(m=>m.fixed==='gate'),pt=mobs.filter(m=>m.fixed==='patrol');

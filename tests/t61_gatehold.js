@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760},hasTouch:true});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 출입구에 서서: 1.5초까지는 그대로, 2초가 차면 이동
   const g1=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;P.path=null;const r0=REG;gateTick(.3);gateTick(.3);gateTick(.3);const t=P.gateT,trav=!!P.traveling;gateTick(.2);return{r0,t,trav,trav2:!!P.traveling,to:g.to}});

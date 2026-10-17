@@ -7,7 +7,7 @@ const hit=(a,b)=>a&&b&&a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t;
   for(const[nm,vp]of[['세로',{width:390,height:844}],['가로',{width:844,height:390}]]){
     const c=await b.newContext({viewport:vp,deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await c.newPage();
     p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
-    await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+    await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
     await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
     await p.evaluate(()=>{const b=Object.values(ARTS).find(x=>x.side===P.side&&!x.sect&&!A(x.id)&&x.cls===curCls());P.bag.push(mkBook(b.id,0));P.vit+=200;openPanel('bag')});await p.waitForTimeout(200);
     const id=await p.evaluate(()=>P.bag.find(i=>i.slot==='book').id);

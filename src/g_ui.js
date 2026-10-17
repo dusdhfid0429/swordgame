@@ -14,8 +14,9 @@ function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없
 let qtrackKey='';
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const kill=q.kind==='kill',have=kill?q.have:Math.min(q.cnt,P.mats[q.mat]||0),done=have>=q.cnt,what=kill?q.mob.join('·')+' 처치':q.mat+' 납품';return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const key=rows.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rows.length;
-  el.innerHTML=rows.length?`<h5>맡은 임무 ${rows.length}</h5>`+rows.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):''}
+  const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)
+  const key=ac+rows.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rows.length&&!ac;
+  el.innerHTML=ac+(rows.length?`<h5>맡은 임무 ${rows.length}</h5>`+rows.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')}
 let noteT;
 // 창(행낭·인물창 등)이나 수련 창이 열려 있을 때의 메시지는 화면 맨 위 레이어에 잠깐 띄웠다가 서서히 지운다.
 // 위치는 위쪽 상태창·지도 아래, 아래쪽 조이스틱·버튼 위라 조작을 가리지 않고, 터치도 통과한다.
@@ -88,7 +89,7 @@ function plabel(f){
 let panel=null;
 const TITLES=GD.TITLES;
 let panelAt=0;
-function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0;runHooks('panelOpen',id)}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs,story:pStory}[panel];

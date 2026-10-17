@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');
   // 1. 빈 칸의 첫 인생: 탄생 화면에 난이도 카드(5단계, 기본 보통). 고르면 G.diff
   const c=await p.evaluate(()=>{const o={};o.n=document.querySelectorAll('[data-s^="diff:"]').length;o.def=document.querySelector('[data-s="diff:1"]').getAttribute('aria-pressed')==='true';o.names=DIFF.map(d=>d.n).join('·');return o});

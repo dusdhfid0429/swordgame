@@ -6,7 +6,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const c=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await c.newPage();
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   const r=await p.evaluate(()=>{const all=Object.values(PAS),com=all.filter(q=>!q.sect),sec=all.filter(q=>q.sect);
     const per=Object.values(SECTS).every(s=>{const l=pasOf(s.id);return l.length===3&&l[0].type===l[2].type&&l[0].tier===1&&l[2].tier===2&&l[0].rank<l[1].rank+1&&l[2].rank>l[0].rank});

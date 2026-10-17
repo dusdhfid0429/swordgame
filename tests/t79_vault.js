@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 금고: 처음 3해치, 해마다 규모·인원·질만큼 쌓이고 20해치에서 멈춘다. 소문파는 적게
   const v=await p.evaluate(()=>{paused=true;popInit();vaultInit();const s=SECTS.hwasan,inc0=vaultIncome(s),v0=sectVault('hwasan');runHooks('newYear');const inc=vaultIncome(s),v1=sectVault('hwasan');G.vault.hwasan=inc*30;runHooks('newYear');const inc2=vaultIncome(s),v2=sectVault('hwasan');

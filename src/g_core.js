@@ -18,15 +18,16 @@ function newLife(o){
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiAcc:0,sim:null,sims:{},mara:0,burst:null,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
-    duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls,lifeNo:G.lives+1,feats:[],
+    duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls||'권',acad:null,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
   P.life=Math.round(58+P.st.end*.7+Math.random()*8);
   P.mats.비도=0;
-  // the starting weapon and the first 비급 of that class's 화 무공
-  const c=o.cls;if(c!=='권')P.eq.weapon=mkWeapon(c,o.status>=2?1.15:.85,0);
-  P.bag.push(mkBook(o.side+c+'0',0));if(o.status>=2)P.bag.push(mkBook(o.side+c+'1',0));
+  // 무관에서 시작한다(g_academy.js): 무기와 첫 비급은 무관 2단계에서 고른다. o.cls가 오면(?noacad) 옛 방식: 시작 무기와 그 계열 화 무공 첫 초식 비급
+  const c=o.cls;if(c){if(c!=='권')P.eq.weapon=mkWeapon(c,o.status>=2?1.15:.85,0);
+    P.bag.push(mkBook(o.side+c+'0',0));if(o.status>=2)P.bag.push(mkBook(o.side+c+'1',0))}
+  else acadEnroll();
   recalc();P.hp=P.maxHp;P.qi=P.maxQi;
 }
 // ================= derived stats =================
@@ -179,6 +180,7 @@ function spawnTick(){
 //  sectAct(c) / sectActDone(c)  문파 행동. c.done=true면 기본 행동을 건너뛴다
 //  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
+//  panelOpen(id) 창을 연 뒤
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
@@ -203,7 +205,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   // 마기 (마교 심법, 2026-10-14): 오행·음양 대신 검은 기운. 느려지고 생명·내공을 빨아들인다
   if(el==='마'){e.slow=Math.max(e.slow||0,1.5);if(from===P&&P.hp>0){P.hp=Math.min(P.maxHp,P.hp+d*.08);P.qi=Math.min(P.maxQi,P.qi+d*.08)}}
   if(el==='뇌'&&Math.random()<.2){e.stun=Math.max(e.stun||0,e.d.boss?.15:.35);addText(e.x,e.y-.4,'뇌격','#cfe8ff')}
-  gainMast(X.key,1);
+  if(!e.acadDummy||mast(X.key)<25)gainMast(X.key,1);   // 무관 목인장으로는 소성까지만 (g_academy.js)
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
   if(from===P)runHooks('hitDone',c);

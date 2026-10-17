@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.dismiss());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 하승 검 무공 다섯을 숙련 100으로 만들고 화산파 본산으로 간다
   const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.arts['정검4'].p=99;const gLow=mkGroups().length;P.arts['정검4'].p=100;P.cur='정검0';P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;

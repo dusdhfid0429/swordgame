@@ -5,7 +5,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   const shot=n=>require('path').resolve(__dirname,'shots',n+'.png');
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
   await p.waitForFunction(()=>hero2Ok());await p.waitForTimeout(300);
   // 1. 아틀라스: 13줄 112장, 줄마다 시작+장수가 이어진다

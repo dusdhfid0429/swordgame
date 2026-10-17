@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 몹과 인물의 좌표를 NaN으로 망가뜨려도 몇 프레임 뒤 게임이 계속 돈다
   const r=await p.evaluate(()=>{const e=mkMob('산적',P.x+2,P.y);e.x=NaN;e.y=NaN;mobs.push(e);P.x=NaN;P.y=NaN;P.path=[{x:NaN,y:NaN}];const t0=time;

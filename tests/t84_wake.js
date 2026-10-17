@@ -8,7 +8,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 가짜 Wake Lock: 요청·해제 횟수를 센다
   await p.addInitScript(()=>{window._wl={req:0,rel:0,held:0};Object.defineProperty(navigator,'wakeLock',{value:{request:async()=>{_wl.req++;_wl.held++;const ls=new Set;return{released:false,release(){if(!this.released){this.released=true;_wl.rel++;_wl.held--;ls.forEach(f=>f())}},addEventListener(n,f){if(n==='release')ls.add(f)}}}},configurable:true});
     window._hid=false;Object.defineProperty(document,'hidden',{get:()=>window._hid,configurable:true})});
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1000);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1000);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.waitForTimeout(300);
   ok('제목 화면에서는 화면 잠금을 잡지 않는다',await p.evaluate(()=>_wl.held===0&&!playing));
   await p.tap('[data-s="start"]');await p.waitForTimeout(500);

@@ -8,7 +8,7 @@ const V0=fs.readFileSync(path.join(__dirname,'fixtures/save_v0.json'),'utf8');
   const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+path.resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1200);
+  await p.goto('file://'+path.resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1200);
   // 옛 저장을 넣고 "이어하기"
   await p.evaluate(raw=>{localStorage.clear();localStorage.setItem(SAVE_KEY,raw)},V0);
   await p.reload();await p.waitForTimeout(1200);await p.click('[data-s="cont"]');await p.waitForTimeout(1000);

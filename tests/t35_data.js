@@ -7,7 +7,7 @@ const PACK=JSON.parse(fs.readFileSync(path.join(__dirname,'../dist/gamedata.json
   const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  const url='file://'+path.resolve(__dirname,'../dist/gangho.html');
+  const url='file://'+path.resolve(__dirname,'../dist/gangho.html')+'?noacad';
   await p.goto(url);await p.waitForFunction(()=>typeof STORE==='object'&&typeof GD==='object');
   const base=await p.evaluate(()=>({rev:GD._meta.rev,schema:GD._meta.schema,n:Object.keys(GD).length,same:GD===GD_BUNDLED,arts:ARTS.length}));
   ok(`묶인 데이터로 시작: 표 ${base.n}개, rev ${base.rev}`,base.same&&base.n>100);

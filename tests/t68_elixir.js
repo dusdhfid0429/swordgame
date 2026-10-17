@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 정혈: 마공 아닐 땐 안 떨어지고, 마공 운용 중 정파 무인을 죽이면 떨어진다. 양민은 안 나온다
   const d=await p.evaluate(()=>{const o={};const R=Math.random;Math.random=()=>.1;const kill=()=>{drops=[];const e=mkFac('정',0,P.x+1,P.y);mobs.push(e);e.hp=1;damage(e,5,0,0,P);mobs=[];return drops.filter(x=>x.it&&x.it.mat==='정혈').length};
