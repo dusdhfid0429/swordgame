@@ -26,6 +26,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .zone button,.mini-b{font:12px var(--body);color:var(--paper);background:var(--stone);border:1px solid var(--bronze);padding:3px 8px;cursor:pointer}
 .zone button.on{border-color:var(--exp);color:var(--exp)}
 .qtrack{margin-top:6px;font:12px/1.45 var(--body);color:#e8d9a8;text-shadow:0 1px 2px #000,0 0 4px #000;max-width:260px}.qtrack div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qtrack b{color:#ffd98a;font-weight:normal}.qtrack .done{color:#a6d47f}.qtrack h5{margin:0 0 1px;font:12px var(--body);color:var(--paper-dim)}
+.qtrack div.achint{white-space:normal;font-size:11px;color:var(--paper-dim);margin-bottom:2px}
+/* v135 무관 과제가 가리키는 단추·줄 */.achl{outline:2px solid #ffd36a;outline-offset:1px;animation:achl 1s ease-in-out infinite}@keyframes achl{50%{box-shadow:0 0 14px 3px #ffd36aaa;outline-color:#fff0c0}}
 .log{cursor:pointer}.log:hover{border-color:var(--bronze-hi)}.sysmsg p{pointer-events:auto;cursor:pointer}
 .logs{display:grid;gap:3px;font-size:13px}.logs p{margin:0;padding:3px 6px;border-bottom:1px solid #2a2218}.logs p small{color:var(--paper-dim);margin-right:6px}.logs .xp{color:var(--good)}.logs .dmg{color:var(--bad)}.logs .info{color:#a9c4ea}.logs .sys{color:#e8d9a8}
 #mini{position:absolute;top:8px;right:10px;width:150px;height:84px;border:1px solid var(--bronze);background:#000a;image-rendering:pixelated}
@@ -922,6 +924,7 @@ function spawnTick(){
 //  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 //  panelOpen(id) 창을 연 뒤
+//  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
@@ -5852,7 +5855,7 @@ const GOAL={
   goto:g=>[g.spots.filter(s=>P.acad.c['spot_'+s]).length,g.v],
   equip:()=>[P.eq.armor&&P.eq.armor.acad?1:0,1],
   hit:g=>[P.acad.c.hit||0,g.v],
-  oe:g=>[pillarVal('oe')-P.acad.oe0,g.v],
+  oe:g=>[pillarVal('oe'),g.v],
   medit:()=>[P.acad.c.medit?1:0,1],
   pick:()=>[P.acad.cls?1:0,1],
   read:()=>[P.acad.cls&&acadArts().some(id=>ARTS[id].cls===P.acad.cls)?1:0,1],
@@ -5872,20 +5875,29 @@ const GOAL={
   mu:g=>[pillarVal('mu'),g.v],
   realm:g=>[realmIdx(),g.v],
   final:g=>[P.acad.c.final||0,g.v]};
-function goalProg(g,i=P.acad.stage){const k=i+':'+g.j;if(P.acad.done[k])return{have:1,need:1,done:true};const[h,n]=GOAL[g.k](g);return{have:h,need:n,done:h>=n}}
-const acadAllDone=(i=P.acad.stage)=>acadGoals(i).every(g=>goalProg(g,i).done);
+// v135 (사용자): 과제는 한 번에 하나씩. 앞 과제를 마쳐야 다음 과제가 열리고, 세는 과제는 열린 때부터 센다(ACAD_REL, a.base)
+const ACAD_REL=new Set(['hit','oe','bob','leap','throw','boss']);
+function goalProg(g,i=P.acad.stage){const a=P.acad,k=i+':'+g.j;if(a.done[k])return{have:1,need:1,done:true};let[h,n]=GOAL[g.k](g);
+  if(ACAD_REL.has(g.k)){const b=(a.base||{})[k];h=b==null?0:h-b}return{have:h,need:n,done:h>=n}}
+const acadAllDone=(i=P.acad.stage)=>acadGoals(i).every(g=>P.acad.done[i+':'+g.j]);
+const acadCur=()=>acadGoals().find(g=>!P.acad.done[P.acad.stage+':'+g.j]);
+const acadCurK=()=>{const g=acadOn()&&acadCur();return g?g.k:null};
+// 과제가 열릴 때: 세는 과제는 지금 값을 기준으로 잡고, 한 번 하면 되는 과제(운기·창 열기·이야기)는 새로 하게 한다
+function acadActivate(g){const a=P.acad,c=a.c,k=a.stage+':'+g.j;a.cur=k;a.base=a.base||{};
+  if(ACAD_REL.has(g.k))a.base[k]=GOAL[g.k](g)[0];
+  if(g.k==='medit'){c.medit=0;c.meditLow=0}if(g.k==='panel')c['panel_'+g.id]=0;if(g.k==='talk')c['talk_'+g.id]=0}
 const acadReporter=()=>P.acad.stage===4?acadOf(P.side).master:acadOf(P.side).inst[acadSt().inst];
 // 판정: 새로 마친 과제를 알리고, 다음 과제를 일러 준다
-function acadCheck(){if(!acadOn())return;const a=P.acad,st=acadSt();let news=false;
-  for(const g of acadGoals()){const k=a.stage+':'+g.j;if(a.done[k])continue;if(goalProg(g).done){a.done[k]=1;news=true;log(`과제 완료: ${g.n}`,'xp')}}
+function acadCheck(){if(!acadOn())return;const a=P.acad,st=acadSt();let g=acadCur(),news=0;
+  while(g){const k=a.stage+':'+g.j;if(a.cur!==k)acadActivate(g);if(!goalProg(g).done)break;a.done[k]=1;news++;log(`과제 완료: ${g.n}`,'xp');g=acadCur()}
   if(!news)return;
-  if(acadAllDone()){log(`${st.n} 과제를 모두 마쳤다. ${acadReporter()}에게 보고하자.`,'xp');showBanner(`${st.n} 과제 완료`,`${acadReporter()}에게 보고`)}
-  else{const nx=acadGoals().find(g=>!goalProg(g).done);if(nx)log(`다음 과제: ${nx.n} · ${nx.h}`,'info')}}
+  if(!g){log(`${st.n} 과제를 모두 마쳤다. ${acadReporter()}에게 보고하자.`,'xp');showBanner(`${st.n} 과제 완료`,`${acadReporter()}에게 보고`)}
+  else{log(`다음 과제: ${g.n} · ${g.h}`,'info');showBanner('과제 완료',`다음: ${g.n}`)}}
 function acadStageStart(){const a=P.acad,st=acadSt(),A=acadOf(P.side);
   if(a.stage===2&&!P.sp.암기){P.sp.암기=1;log('암기술의 기초를 배웠습니다.','xp')}
   if(a.stage===2||(a.skip&&a.stage===3&&!a.knives)){a.knives=1;P.mats.비도=(P.mats.비도||0)+10;acadKnife=P.mats.비도;log('연습용 비도 10자루를 받았습니다.','sys')}
   showBanner(`${A.n} ${a.stage+1}단계`,`${st.n} · ${st.sub}`);log(`[${A.n} ${a.stage+1}단계 · ${st.n}] ${st.d}`,'sys');
-  const g=acadGoals().find(g=>!goalProg(g).done);if(g)log(`과제: ${g.n} · ${g.h}`,'info')}
+  const g=acadCur();if(g){acadActivate(g);log(`과제: ${g.n} · ${g.h}`,'info')}}
 
 // ---- 세는 것: 무관 둘러보기·운기·보법·경공·비도 ----
 let acadT=0,acadLeap=null,acadKnife=null;
@@ -5902,7 +5914,7 @@ hook('panelOpen',id=>{if(acadOn())P.acad.c['panel_'+id]=1});
 // ---- 대련·월반 시험·졸업 비무 (비무 틀을 빌린다) ----
 const acadSparStat=s=>{const[a,h,m]=STD[s.lv];return{hp:Math.round(h*2.2*s.k),atk:Math.round(a*.6*s.k),hm:m,def:Math.round(2+s.lv*1.5)}};
 const acadSparOk=kind=>{const a=P.acad;if(!acadOn()||!inAcad())return false;
-  return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]:kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&realmIdx()>=1&&(a.c.final||0)<3:false};
+  return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&realmIdx()>=1&&(a.c.final||0)<3&&acadCurK()==='final':false};
 function acadSpar(kind){if(G.duel||P.hp<=0||!acadSparOk(kind))return;const a=P.acad,A=acadOf(P.side);let o;
   if(kind==='final'){const i=a.c.final||0,s=ACAD_SPAR.final[i];if(!s)return;const mt=A.mates[i];o={n:mt[0],...acadSparStat(s),cls:CLS[(i*2+(P.side==='사'?1:0))%5]}}
   else{const s=ACAD_SPAR[kind];o={n:kind==='inst'?A.inst[1]:A.master,...acadSparStat(s),cls:kind==='inst'?(a.cls==='궁'?'검':a.cls||'검'):'검'}}
@@ -5969,10 +5981,14 @@ hook('sectActDone',c=>{if(c.a!=='sjoin'||!P.acad||P.acad.rec!==c.x||P.sect!==c.x
   P.acad.recUsed=1;const v=addMerit(c.x,g.merit);log(`추천서 덕에 ${SECTS[c.x].n} 공적 +${v}을(를) 얹어 받았습니다.`,'xp')});
 
 // ---- 대화 ----
-const acadGoalRow=(g,i)=>{const p=goalProg(g,i);return `<div class="it"><div>${p.done?'<b class="good">✓</b>':'<b class="dim">○</b>'} ${esc(g.n)} ${p.done?'':`<small class="num gold">${Math.min(p.have,p.need)}/${p.need}</small>`}<span>${esc(g.h)}</span></div><div class="ib"></div></div>`};
+const acadGoalRow=(g,i)=>{const p=goalProg(g,i);return p.done?`<div class="it"><div><b class="good">✓</b> <span class="dim">${esc(g.n)}</span></div><div class="ib"></div></div>`
+  :`<div class="it"><div><b class="gold">▶</b> <b>${esc(g.n)}</b> <small class="num gold">${Math.min(p.have,p.need)}/${p.need}</small><span>${esc(g.h)}</span></div><div class="ib"></div></div>`};
+// 마친 과제와 지금 과제만 보인다. 뒤 과제는 개수만
+const acadGoalList=()=>{const gs=acadGoals(),cur=acadCur(),k=cur?gs.findIndex(g=>g.j===cur.j):gs.length,left=gs.length-k-1;
+  return gs.slice(0,k+1).map(g=>acadGoalRow(g,P.acad.stage)).join('')+(left>0?`<p class="note dim">남은 과제 ${left}개는 지금 과제를 마치면 하나씩 열린다.</p>`:'')};
 function acadStageCard(btn){const a=P.acad,A=acadOf(P.side),st=acadSt();
   return `<div class="card"><div class="row2"><h4>${A.n} ${a.stage+1}단계 · ${st.n} <small class="dim">${st.sub}</small></h4><span class="tag">보고 ${esc(acadReporter())}</span></div><p class="note">${st.d}</p>
-    <div class="list">${acadGoals().map(g=>acadGoalRow(g,a.stage)).join('')}</div>${btn||''}</div>`}
+    <div class="list">${acadGoalList()}</div>${btn||''}</div>`}
 const acadSteps=()=>`<p class="note">${ACAD_ST.map((s,i)=>`<span class="${i<P.acad.stage||P.acad.grad?'good':i===P.acad.stage?'gold':'dim'}">${i+1}.${s.n}</span>`).join(' · ')}</p>`;
 function acadWeaponHtml(){const a=P.acad,lock=acadPickLocked();
   return `<div class="card"><h4>병기고 <small class="dim">고르면 그 계열 하승 무공 비급과 연습 병기를 받는다${lock?' · 이미 비급을 읽어 바꿀 수 없다':a.cls?' · 비급을 읽기 전이면 바꿀 수 있다':''}</small></h4><div class="list">${CLS.map(c=>{const C=CLASS[c],art=ARTS[P.side+c+'0'];
@@ -6004,10 +6020,10 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>';
   let body='';
   if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();else body+='<p class="note">"1단계를 마치면 병기를 고르게 해 주마."</p>';
-    if(a.stage>=1&&!a.c.spar_inst&&GOAL.read()[0])body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
+    if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
   if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml();else body+='<p class="note">"심법은 3단계에서 고른다. 그전엔 타고난 기초 심법으로 내공을 쌓아라."</p>'}
   if(n.i===3){if(a.stage>=3)body+=acadQuestHtml();else body+='<p class="note">"4단계가 되면 수련곡으로 실습을 나간다."</p>'}
-  if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승${realmIdx()<1?' · 이류가 되어야 치를 수 있다':''}</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:realmIdx()<1})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
+  if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승${realmIdx()<1?' · 이류가 되어야 치를 수 있다':''}</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:!acadSparOk('final')})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
   return head+body+(acadSt().inst===n.i?acadStageCard(rep(n.i)):'')}
 hook('npcDlg',c=>{if(c.html!=null||!c.n.acad)return;c.html=acadDlg(c.n)});
 // 맹 총관: 고르지 않은 무관 하승 심법을 맹 공적으로 (졸업한 사람만)
@@ -6027,8 +6043,61 @@ hook('sectAct',c=>{const{a,x}=c;
 
 // ---- 임무창·왼쪽 임무 줄 ----
 const acadQuestCard=()=>acadOn()?acadSteps()+acadStageCard():'';
-function acadTrackHtml(){if(!acadOn())return'';const a=P.acad,gs=acadGoals().map(g=>({g,p:goalProg(g)}));const left=gs.filter(o=>!o.p.done).slice(0,3);
-  return `<h5>${acadOf(P.side).n} ${a.stage+1}단계 · ${acadSt().n}</h5>`+(left.length?left.map(({g,p})=>`<div>${esc(g.n)} <b>${Math.min(p.have,p.need)}/${p.need}</b></div>`).join(''):`<div class="done">과제 완료 · ${esc(acadReporter())}에게 보고</div>`)}
+function acadTrackHtml(){if(!acadOn())return'';const a=P.acad,gs=acadGoals(),g=acadCur(),p=g&&goalProg(g);
+  return `<h5>${acadOf(P.side).n} ${a.stage+1}단계 · ${acadSt().n} <small>${g?gs.findIndex(o=>o.j===g.j)+1:gs.length}/${gs.length}</small></h5>`+(g?`<div>${esc(g.n)} <b>${Math.min(p.have,p.need)}/${p.need}</b></div><div class="achint">${esc(g.h)}</div>`:`<div class="done">과제 완료 · ${esc(acadReporter())}에게 보고</div>`)}
+
+// ---- v135 (사용자): 지금 과제와 이어진 장소·물건·NPC·UI에 표시를 띄운다 ----
+// 맵: 금빛 고리와 화살표(화면 밖이면 가장자리 화살표). UI: 눌러야 할 단추·창 줄에 금빛 테두리(.achl)
+function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REGIONS[REG];if(!R)return[];
+  const g=acadCur(),near=(list,l,h)=>{let b=null,bd=1e9;for(const o of list){const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;b=o}}return b?[{x:b.x,y:b.y,l,h}]:[]};
+  const npc=(id,l)=>{const n=(R.npcs||[]).find(n=>n.id===id);return n?[{x:n.x,y:n.y,l:l||n.n,h:84,npc:1}]:[]};
+  const gate=to=>{const q=(R.gates||[]).find(q=>q.to===to);return q?[{x:q.x,y:q.y,l:q.label,h:56}]:[]};
+  const qs=P.quests.filter(q=>q.acad),qOpen=qs.filter(q=>!questProg(q).done);
+  if(REG===acadField(P.side)){let w=[];
+    if(g&&g.k==='boss')w=near(mobs.filter(m=>m.kind==='산적두목'&&m.hp>0),'산적두목',84);
+    else if(g&&g.k==='quest')for(const q of qOpen)w=w.concat(q.kind==='give'?near(nodes.filter(n=>n.t==='herb'&&n.cd<=0),q.n,40):near(mobs.filter(m=>q.mob.includes(m.kind)&&m.hp>0),q.n,80));
+    return w.length?w:gate(A.id)}
+  if(REG!==A.id)return gate(A.id);   // 성내 지도면 무관 포털
+  const dummy=l=>near(mobs.filter(m=>m.acadDummy),l||'목인장',70);
+  if(!g)return npc(a.stage===4?'ac_master':'ac_i'+acadSt().inst,'보고');
+  switch(g.k){
+    case'goto':{const left=g.spots.filter(s=>!a.c['spot_'+s]).map(s=>({x:ACAD_SPOTS[s][0],y:ACAD_SPOTS[s][1]+1.2,s}));const m=near(left,'',44)[0];return m?[{...m,l:left.find(o=>o.x===m.x&&o.y===m.y).s}]:[]}
+    case'hit':case'mast':case'mu':return dummy();
+    case'throw':return dummy('비도 던지기');
+    case'pick':case'spar':return npc('ac_i1');
+    case'sim':case'talk':return npc('ac_i2');
+    case'final':return npc('ac_i0');
+    case'repair':return npc('smith');
+    case'boss':return gate(acadField(P.side));
+    case'quest':return qs.some(q=>questProg(q).done)||!qs.length?npc('ac_i3'):gate(acadField(P.side));
+    case'realm':return[{x:ACAD_SPOTS.폐관실[0],y:ACAD_SPOTS.폐관실[1]+1.2,l:'폐관실',h:44}]}
+  return[]}
+function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p.x<pad||p.x>W-pad||p.y-m.h<top||p.y>bot;ctx.save();
+  ctx.font='bold 12px "Gowun Dodum"';ctx.textAlign='center';ctx.lineJoin='round';
+  if(off){const pp=toScreen(P.x,P.y),x=clamp(p.x,pad,W-pad),y=clamp(p.y-m.h/2,top,bot),an=Math.atan2(p.y-pp.y,p.x-pp.x),k=.75+.25*Math.sin(time*5);
+    ctx.translate(x,y);ctx.save();ctx.rotate(an);ctx.fillStyle=`rgba(255,211,106,${k})`;ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-2,0);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    if(m.l){const ty=y>H/2?-16:24;ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,0,ty);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,0,ty)}ctx.restore();return}
+  const k=(time*1.4)%1,b=Math.sin(time*4)*4,y=p.y-m.h+b;
+  ctx.strokeStyle=`rgba(255,211,106,${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
+  ctx.fillStyle='#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
+  if(m.l){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
+hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
+function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
+  const TR=['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=['#tmenu','#b_p_bag','[data-act="open:bag"]'];
+  const robe=P.bag.find(i=>i.acad&&i.slot==='armor'),books=P.bag.filter(i=>i.slot==='book'&&a.cls&&ARTS[i.art]&&ARTS[i.art].cls===a.cls);
+  const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
+    oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
+    ne:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
+    hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],leap:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
+    pick:['[data-act^="acpick:"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
+    quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:['#tmenu',`[data-act="open:${g.id}"]`]};
+  const s=(U[g.k]||[]).slice();
+  // 표시한 NPC 곁에 서 있으면 터치 상황 단추(대화)도
+  if(acadMarks().some(m=>m.npc&&Math.hypot(m.x-P.x,m.y-P.y)<3))s.push('#t_ctx');
+  return s}
+let acadHlEls=[];
+setInterval(()=>{let els=[];try{if(playing&&acadOn()){const s=acadUi();if(s.length)els=[...document.querySelectorAll(s.join(','))]}}catch(e){}
+  for(const e of acadHlEls)if(!els.includes(e))e.classList.remove('achl');for(const e of els)e.classList.add('achl');acadHlEls=els},250);
 
 // ================= 보법: 회피기 (경공과 따로) =================
 // 경공은 멀리·높이 뛰는 이동기, 보법은 싸움 중 짧게 미끄러지는 회피기다. 설계: docs/세력_문파_설계.md 14장
@@ -6946,6 +7015,7 @@ function draw(){
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
   for(const f of fx)if(!f.glow){const gnd=!f.z&&(f.t==='ring'||f.t==='warn');list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>atZ(f,()=>drawFx2(f))})}
   // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
+  runHooks('drawList',list);   // drawList: 그릴 목록에 더 얹기 (g_academy.js 과제 표시)
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
   const w=REGION().hall?null:G.weather;

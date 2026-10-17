@@ -17,7 +17,17 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r2=await p.evaluate(()=>{const d=mobs.find(m=>m.acadDummy);P.x=d.x-1;P.y=d.y;const h0=P.acad.c.hit||0;for(let i=0;i<6;i++)hitE(mkX('base',1),d,1,0,0);P.arts.base.p=24.9;for(let i=0;i<40;i++)hitE(mkX('base',1),d,1,0,0);
     return{hits:(P.acad.c.hit||0)-h0,p:P.arts.base.p,alive:d.hp>0}});
   ok(`목인장 타격 ${r2.hits}회 셈, 쓰러지지 않음, 기초권각 숙련 ${r2.p.toFixed(1)} (소성 25 근처에서 멈춤)`,r2.hits>=15&&r2.alive&&r2.p<26);
-  await p.evaluate(()=>{for(const k of['장경각','병기고','숙소','식당'])P.acad.c['spot_'+k]=1;const r=P.bag.find(i=>i.acad);P.eq.armor=r;P.bag.splice(P.bag.indexOf(r),1);P.vit=400;trainStat('str');trainStat('end');trainStat('agi');P.acad.c.medit=1;acadCheck();act('acrep')});
+  // v135: 과제는 하나씩. 지금 과제만 보이고, 세는 과제는 열린 뒤부터 센다. 표시는 장소·단추에
+  const r2b=await p.evaluate(()=>{const o={g0:acadCur().k,mk:acadMarks().map(m=>m.l),tr:$('qtrack').textContent};
+    for(const k of['장경각','병기고','숙소','식당'])P.acad.c['spot_'+k]=1;acadCheck();o.g1=acadCur().k;o.done=Object.keys(P.acad.done).length;return o});
+  await p.waitForTimeout(350);
+  const r2c=await p.evaluate(()=>({bag:!!document.querySelector('#b_p_bag.achl'),card:(openNpc(npcsHere().find(n=>n.id==='ac_i0')),$('wbody').textContent)}));
+  await p.evaluate(()=>{closePanels();openPanel('bag')});await p.waitForTimeout(350);
+  const r2d=await p.evaluate(()=>{const r=P.bag.find(i=>i.acad);const hl=!!document.querySelector(`[data-act="eq:${r.id}"].achl`);act('eq:'+r.id);closePanels();acadCheck();
+    const o={hl,g:acadCur().k,have:goalProg(acadCur()).have,mk:acadMarks().map(m=>m.l)};for(let i=0;i<20;i++)P.acad.c.hit++;acadCheck();o.g2=acadCur().k;return o});
+  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('내공 채우기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
+    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('내공 채우기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
+  await p.evaluate(()=>{P.vit=400;trainStat('str');trainStat('end');trainStat('agi');acadCheck();P.acad.c.medit=1;acadCheck();act('acrep')});
   const r3=await p.evaluate(()=>({st:P.acad.stage,early:(act('acrep'),P.acad.stage)}));
   ok(`1단계 보고 → 2단계 (과제 전 보고는 넘어가지 않음: ${r3.early})`,r3.st===1&&r3.early===1);
   // 3. 2단계: 병기고에서 고르고, 비급을 읽기 전에는 바꿀 수 있다. 대련은 비급을 읽은 뒤
@@ -27,7 +37,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r4=await p.evaluate(()=>{const a={w:P.eq.weapon&&P.eq.weapon.cls,dur:P.eq.weapon&&P.eq.weapon.dur<P.eq.weapon.maxDur};act('acpick:검');const sparPre=(acadSpar('inst'),G.duel);
     const bk=P.bag.filter(i=>i.slot==='book');return{...a,w2:P.eq.weapon.cls,books:bk.map(i=>ARTS[i.art].cls),startCls:P.startCls,sparPre}});
   ok(`병기 교두 창에 여섯 계열 (${t3.includes('검법')&&t3.includes('궁')}), 도 → 검으로 바꿈, 비급 ${r4.books.join('')}, 연습 병기 내구 깎임 ${r4.dur}, 비급 전 대련 막힘`,t3.includes('창법')&&r4.w==='도'&&r4.w2==='검'&&r4.books.join('')==='검'&&r4.startCls==='검'&&r4.dur&&!r4.sparPre);
-  const r5=await p.evaluate(()=>{P.vit=400;readBook(P.bag.find(i=>i.slot==='book'));const lockB=(act('acpick:창'),P.eq.weapon.cls);P.arts[acadArts()[0]].p=26;P.acad.c.bob=3;acadSpar('inst');const duel=G.duel,e=mobs.find(m=>m.duel);damage(e,99999,0,0,P);return{lockB,duel}});
+  const r5=await p.evaluate(()=>{P.vit=400;readBook(P.bag.find(i=>i.slot==='book'));const lockB=(act('acpick:창'),P.eq.weapon.cls);P.arts[acadArts()[0]].p=26;acadCheck();P.acad.c.bob=(P.acad.c.bob||0)+3;acadCheck();acadSpar('inst');const duel=G.duel,e=mobs.find(m=>m.duel);damage(e,99999,0,0,P);return{lockB,duel}});
   await p.waitForTimeout(400);
   const r5b=await p.evaluate(()=>({win:P.acad.c.spar_inst,duel:G.duel,done:acadAllDone()}));
   ok(`비급 읽은 뒤 병기 못 바꿈(${r5.lockB}), 대련 승리, 2단계 과제 완료`,r5.lockB==='검'&&r5.duel&&r5b.win===1&&!r5b.duel&&r5b.done);
@@ -39,7 +49,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r6=await p.evaluate(()=>{const again=(act('acsim:N_ac_jeong_1'),P.sim);return{st:P.acad.stage,sim:P.sim,again,def:simTv('def'),g:SIM[P.sim].g,sc:pSchool(),el:pEl(),knife:P.mats.비도,sp:P.sp.암기,
     four:ACAD_SIM['정'].length===4&&ACAD_SIM['사'].length===4&&ACAD_SIM['사'].every(x=>SIM[x.id].sc==='사공'),trs:new Set(ACAD_SIM['정'].map(x=>x.tr[0])).size}});
   ok(`장경각 심법 넷 (${['금강호체공','태청토납법','청풍심법','소양진기'].every(n=>t4.includes(n))}), 금강호체공: 하승·불가·금, 금강 ${r6.def}%, 한 번 고르면 끝, 비도 ${r6.knife}`,r6.st===2&&r6.sim==='N_ac_jeong_0'&&r6.again==='N_ac_jeong_0'&&Math.abs(r6.def-3.6)<.01&&r6.g===0&&r6.sc==='불가'&&r6.el==='금'&&r6.knife===10&&r6.sp===1&&r6.four&&r6.trs===4);
-  await p.evaluate(()=>{closePanels();P.qiAcc=45;recalc();act('actalk:el');P.acad.c.leap=3;P.mats.비도-=5});await p.waitForTimeout(500);
+  await p.evaluate(()=>{closePanels();P.qiAcc=45;recalc();acadCheck();act('actalk:el');acadCheck();P.acad.c.leap=(P.acad.c.leap||0)+3;acadCheck();P.mats.비도-=5});await p.waitForTimeout(500);
   const r7=await p.evaluate(()=>({thr:P.acad.c.throw,done:acadAllDone()}));
   ok(`비도 던진 수 ${r7.thr}, 3단계 과제 완료`,r7.thr===5&&r7.done);
   await p.evaluate(()=>act('acrep'));
@@ -48,18 +58,18 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{t,q:Object.keys(P.acad.c.qd).length,left:P.quests.length,herb:P.mats.약초}});
   ok(`실습 의뢰 셋 해결 (임무창에 단계 카드·의뢰처 청운무관, 약초 납품 ${r8.herb})`,r8.t.includes('4단계')&&r8.t.includes('청운무관')&&r8.q===3&&r8.left===0&&r8.herb===0);
   await p.evaluate(()=>travel({to:'acad_jeong_field',tx:20.5,ty:36.2}));await p.waitForFunction(()=>REG==='acad_jeong_field');await p.waitForTimeout(300);
-  const r9=await p.evaluate(()=>{const kinds=[...new Set(mobs.map(m=>m.kind))];const e=mkMob('산적두목',P.x+1,P.y);mobs.push(e);damage(e,99999,0,0,P);return{kinds,boss:P.acad.c.boss,gate:REGION().gates.map(g=>g.to)}});
+  const r9=await p.evaluate(()=>{acadCheck();const kinds=[...new Set(mobs.map(m=>m.kind))],mk=acadMarks()[0];if(!mk||mk.l!=='산적두목')return{mk};const e=mkMob('산적두목',P.x+1,P.y);mobs.push(e);damage(e,99999,0,0,P);return{kinds,boss:P.acad.c.boss,gate:REGION().gates.map(g=>g.to)}});
   ok(`수련곡: ${r9.kinds.join('·')}, 산적두목 처치 ${r9.boss}`,r9.kinds.includes('산적')&&r9.kinds.includes('늑대')&&r9.boss===1&&r9.gate.includes('acad_jeong'));
   await p.evaluate(()=>travel({to:'acad_jeong',tx:20.5,ty:30}));await p.waitForFunction(()=>REG==='acad_jeong');await p.waitForTimeout(300);
   await p.evaluate(()=>{P.silver+=100;openNpc(npcsHere().find(n=>n.id==='smith'))});await p.waitForTimeout(150);await p.click('[data-act="repair"]');
-  await p.evaluate(()=>{closePanels();openPanel('story');closePanels();acadCheck()});
+  await p.evaluate(()=>{closePanels();acadCheck();openPanel('story');closePanels();acadCheck()});
   const r10=await p.evaluate(()=>({rep:P.acad.c.repair,done:acadAllDone(),st:(act('acrep'),P.acad.stage)}));
   ok(`대장간 수리 ${r10.rep}, 정세창, 4단계 보고 → 5단계`,r10.rep===1&&r10.done&&r10.st===4);
   // 6. 5단계: 세 기둥 → 벽 → 무관 폐관실(호법, 가벼운 주화입마) → 이류, 졸업 비무는 이류가 된 뒤
   const r11=await p.evaluate(()=>{const pre=(acadSpar('final'),G.duel);P.st.str+=3;P.st.end+=2;P.st.agi+=2;P.qiAcc=80;P.arts[acadArts()[0]].p=52;recalc();wallCheck();
     const o={pre,wall:atWall(),place:pgPlace(),hob:hobeop()};const r0=Math.random;Math.random=()=>.999;const st0={...P.st};qiDeviation(1);Math.random=r0;o.heavy=P.injS;o.stat=JSON.stringify(st0)===JSON.stringify(P.st);P.inj=0;P.injS=0;return o});
   ok(`5단계: 이류 전 졸업 비무 막힘, 벽 ${r11.wall}, 폐관 장소 ${r11.place}, 호법 ${r11.hob}, 무관 주화입마는 가벼움(injS ${r11.heavy}, 스탯 그대로 ${r11.stat})`,!r11.pre&&r11.wall&&r11.place==='청운무관 폐관실'&&r11.hob&&r11.heavy===1&&r11.stat);
-  await p.evaluate(()=>{P.realm=1;recalc()});
+  await p.evaluate(()=>{P.realm=1;recalc();acadCheck()});
   for(let i=0;i<3;i++){await p.evaluate(i=>{acadSpar('final');if(i<2)damage(mobs.find(m=>m.duel),99999,0,0,P);else duelEnd(false)},i);await p.waitForTimeout(250)}
   const r12=await p.evaluate(()=>({f:P.acad.c.final,w:P.acad.c.finalWin,done:acadAllDone(),grade:acadGradeOf().n}));
   ok(`졸업 비무 ${r12.f}판 ${r12.w}승, 성적 ${r12.grade}`,r12.f===3&&r12.w===2&&r12.done&&r12.grade==='수석');

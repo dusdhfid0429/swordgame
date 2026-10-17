@@ -181,6 +181,7 @@ function spawnTick(){
 //  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 //  panelOpen(id) 창을 연 뒤
+//  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};

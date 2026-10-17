@@ -26,6 +26,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .zone button,.mini-b{font:12px var(--body);color:var(--paper);background:var(--stone);border:1px solid var(--bronze);padding:3px 8px;cursor:pointer}
 .zone button.on{border-color:var(--exp);color:var(--exp)}
 .qtrack{margin-top:6px;font:12px/1.45 var(--body);color:#e8d9a8;text-shadow:0 1px 2px #000,0 0 4px #000;max-width:260px}.qtrack div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qtrack b{color:#ffd98a;font-weight:normal}.qtrack .done{color:#a6d47f}.qtrack h5{margin:0 0 1px;font:12px var(--body);color:var(--paper-dim)}
+.qtrack div.achint{white-space:normal;font-size:11px;color:var(--paper-dim);margin-bottom:2px}
+/* v135 무관 과제가 가리키는 단추·줄 */.achl{outline:2px solid #ffd36a;outline-offset:1px;animation:achl 1s ease-in-out infinite}@keyframes achl{50%{box-shadow:0 0 14px 3px #ffd36aaa;outline-color:#fff0c0}}
 .log{cursor:pointer}.log:hover{border-color:var(--bronze-hi)}.sysmsg p{pointer-events:auto;cursor:pointer}
 .logs{display:grid;gap:3px;font-size:13px}.logs p{margin:0;padding:3px 6px;border-bottom:1px solid #2a2218}.logs p small{color:var(--paper-dim);margin-right:6px}.logs .xp{color:var(--good)}.logs .dmg{color:var(--bad)}.logs .info{color:#a9c4ea}.logs .sys{color:#e8d9a8}
 #mini{position:absolute;top:8px;right:10px;width:150px;height:84px;border:1px solid var(--bronze);background:#000a;image-rendering:pixelated}
