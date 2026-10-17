@@ -98,7 +98,7 @@ const acadCurK=()=>{const g=acadOn()&&acadCur();return g?g.k:null};
 // 과제가 열릴 때: 세는 과제는 지금 값을 기준으로 잡고, 한 번 하면 되는 과제(운기·창 열기·이야기)는 새로 하게 한다
 function acadActivate(g){const a=P.acad,c=a.c,k=a.stage+':'+g.j;a.cur=k;a.base=a.base||{};
   if(ACAD_REL.has(g.k))a.base[k]=GOAL[g.k](g)[0];
-  if(g.k==='medit'){c.medit=0;c.meditLow=0}if(g.k==='panel')c['panel_'+g.id]=0;if(g.k==='talk')c['talk_'+g.id]=0}
+  if(g.k==='medit'){c.medit=0;c.meditLow=0;c.meditT=0}if(g.k==='panel')c['panel_'+g.id]=0;if(g.k==='talk')c['talk_'+g.id]=0}
 const acadReporter=()=>P.acad.stage===4?acadOf(P.side).master:acadOf(P.side).inst[acadSt().inst];
 // 판정: 새로 마친 과제를 알리고, 다음 과제를 일러 준다
 function acadCheck(){if(!acadOn())return;const a=P.acad,st=acadSt();let g=acadCur(),news=0;
@@ -117,7 +117,8 @@ let acadT=0,acadLeap=null,acadKnife=null;
 hook('tick',dt=>{if(!acadOn())return;const a=P.acad,c=a.c;
   if(P.leap&&P.leap!==acadLeap){acadLeap=P.leap;if(P.leap.step)c.bob=(c.bob||0)+1;else c.leap=(c.leap||0)+1}else if(!P.leap)acadLeap=null;
   const kn=P.mats.비도||0;if(acadKnife!=null&&kn<acadKnife&&inAcad())c.throw=(c.throw||0)+(acadKnife-kn);acadKnife=kn;
-  if(P.medit&&P.qi<P.maxQi-.5)c.meditLow=1;if(P.medit&&c.meditLow&&P.qi>=P.maxQi-.5)c.medit=1;
+  // 운기 과제: 내공이 빈 채로 앉아 다 채우거나, 이미 가득하면 3초 동안 앉아 있으면 된다 (v136 사용자 버그: 내공이 가득하면 진행이 안 됐다)
+  if(P.medit){c.meditT=(c.meditT||0)+dt;if(P.qi<P.maxQi-.5)c.meditLow=1;if(P.qi>=P.maxQi-.5&&(c.meditLow||c.meditT>=3))c.medit=1}
   if(inAcad())for(const[k,[x,y]]of acadSpotsOf())if(!c['spot_'+k]&&Math.hypot(P.x-x,P.y-y)<2.6){c['spot_'+k]=1;log(`${acadOf(P.side).n} ${k}`,'sys')}
   if((acadT-=dt)<=0){acadT=.25;acadCheck()}});
 hook('hitDone',c=>{if(acadOn()&&c.e&&c.e.acadDummy)P.acad.c.hit=(P.acad.c.hit||0)+1});

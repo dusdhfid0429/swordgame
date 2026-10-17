@@ -25,9 +25,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.evaluate(()=>{closePanels();openPanel('bag')});await p.waitForTimeout(350);
   const r2d=await p.evaluate(()=>{const r=P.bag.find(i=>i.acad);const hl=!!document.querySelector(`[data-act="eq:${r.id}"].achl`);act('eq:'+r.id);closePanels();acadCheck();
     const o={hl,g:acadCur().k,have:goalProg(acadCur()).have,mk:acadMarks().map(m=>m.l)};for(let i=0;i<20;i++)P.acad.c.hit++;acadCheck();o.g2=acadCur().k;return o});
-  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('내공 채우기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
-    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('내공 채우기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
-  await p.evaluate(()=>{P.vit=400;trainStat('str');trainStat('end');trainStat('agi');acadCheck();P.acad.c.medit=1;acadCheck();act('acrep')});
+  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('운기조식 해 보기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
+    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('운기조식 해 보기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
+  // 운기 과제: 내공이 가득해도 운기 단추가 보이고, 3초 앉아 있으면 된다 (v136 사용자 버그)
+  await p.evaluate(()=>{P.vit=400;trainStat('str');trainStat('end');trainStat('agi');acadCheck();P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
+  const rm=await p.evaluate(()=>({k:acadCurK(),btn:!$('t_med').hidden,hl:$('t_med').classList.contains('achl')}));
+  await p.evaluate(()=>{setTouch(false);meditate()});await p.waitForTimeout(3600);
+  const rm2=await p.evaluate(()=>({done:!!P.acad.done['0:4'],all:acadAllDone()}));
+  ok(`운기 과제: 내공 가득해도 운기 단추 ${rm.btn}·표시 ${rm.hl}, 3초 앉으면 끝 (${rm2.done})`,rm.k==='medit'&&rm.btn&&rm.hl&&rm2.done&&rm2.all);
+  await p.evaluate(()=>{P.medit=false;act('acrep')});
   const r3=await p.evaluate(()=>({st:P.acad.stage,early:(act('acrep'),P.acad.stage)}));
   ok(`1단계 보고 → 2단계 (과제 전 보고는 넘어가지 않음: ${r3.early})`,r3.st===1&&r3.early===1);
   // 3. 2단계: 병기고에서 고르고, 비급을 읽기 전에는 바꿀 수 있다. 대련은 비급을 읽은 뒤

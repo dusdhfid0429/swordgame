@@ -12,6 +12,8 @@ function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
 // 맡은 임무와 진행도: 지역 이름 아래
 let qtrackKey='';
+// v136 (사용자): 임무 줄은 높이가 고정이고 스크롤된다. 누르면(끌어 스크롤하면 아님) 임무창이 열린다
+$('qtrack').addEventListener('click',()=>{if(playing&&P)openPanel('quest')});
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const kill=q.kind==='kill',have=kill?q.have:Math.min(q.cnt,P.mats[q.mat]||0),done=have>=q.cnt,what=kill?q.mob.join('·')+' 처치':q.mat+' 납품';return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
   const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)

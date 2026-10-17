@@ -26,6 +26,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .zone button,.mini-b{font:12px var(--body);color:var(--paper);background:var(--stone);border:1px solid var(--bronze);padding:3px 8px;cursor:pointer}
 .zone button.on{border-color:var(--exp);color:var(--exp)}
 .qtrack{margin-top:6px;font:12px/1.45 var(--body);color:#e8d9a8;text-shadow:0 1px 2px #000,0 0 4px #000;max-width:260px}.qtrack div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qtrack b{color:#ffd98a;font-weight:normal}.qtrack .done{color:#a6d47f}.qtrack h5{margin:0 0 1px;font:12px var(--body);color:var(--paper-dim)}
+.qtrack{width:220px;max-height:138px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;pointer-events:auto;cursor:pointer;background:#0a0806a0;border:1px solid #4a3c2780;border-radius:6px;padding:4px 7px;scrollbar-width:thin;scrollbar-color:#6a5636 transparent}
+.qtrack h5 small{display:inline;font-size:inherit}.qtrack::-webkit-scrollbar{width:4px}.qtrack::-webkit-scrollbar-thumb{background:#6a5636;border-radius:2px}
 .qtrack div.achint{white-space:normal;font-size:11px;color:var(--paper-dim);margin-bottom:2px}
 /* v135 무관 과제가 가리키는 단추·줄 */.achl{outline:2px solid #ffd36a;outline-offset:1px;animation:achl 1s ease-in-out infinite}@keyframes achl{50%{box-shadow:0 0 14px 3px #ffd36aaa;outline-color:#fff0c0}}
 .log{cursor:pointer}.log:hover{border-color:var(--bronze-hi)}.sysmsg p{pointer-events:auto;cursor:pointer}
@@ -95,16 +97,16 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .sndrow{display:flex;gap:8px;margin:10px 0}.sndrow .btn{flex:1}
 .world .pv{cursor:pointer}.world .hit{fill:transparent;stroke:none}.world .ring{fill:none;stroke:#ffd36a;stroke-width:2.5;stroke-dasharray:5 3}.world .sel text{fill:#fff;font-weight:700}
 /* 시스템 메시지: 화면 맨 위 레이어. 창 위에도 보이고, 상단 상태창·지도 아래 / 하단 조작 버튼 위에 뜬다 */
-.sysmsg{position:absolute;left:50%;top:104px;transform:translateX(-50%);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:30;pointer-events:none}
+.sysmsg{position:absolute;left:50%;top:104px;transform:translateX(-50%);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:30;pointer-events:none}
 .sysmsg p{margin:0;max-width:100%;padding:8px 16px;background:rgba(14,11,8,.9);border:1px solid var(--bronze);border-radius:8px;font-size:14px;line-height:1.45;color:#e8d9a8;text-align:center;word-break:keep-all;
   box-shadow:0 6px 20px rgba(0,0,0,.6);opacity:0;transform:translateY(-10px) scale(.97);transition:opacity .35s ease,transform .35s ease}
 .sysmsg p.on{opacity:1;transform:none}.sysmsg p.off{opacity:0;transform:translateY(-6px);transition-duration:.6s}
 .sysmsg p.xp{color:#ffd98a;border-color:#a8853e}.sysmsg p.dmg{color:#f0968a;border-color:#7a3a30}.sysmsg p.info{color:#a9c4ea}
-.touch .sysmsg{top:calc(126px + env(safe-area-inset-top,0px));width:min(360px,calc(100% - 24px));gap:4px}
+/* v136 (사용자): 세로 화면에서는 왼쪽 위(기록 줄 자리)에 좁게 띄워 오른쪽 임무 줄과 겹치지 않는다 */.touch .sysmsg{top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));left:8px;transform:none;width:min(210px,50vw);align-items:flex-start;gap:4px}
 /* 메시지가 떠 있는 동안은 같은 내용의 작은 기록 줄을 숨겨 겹쳐 보이지 않게 */
 .touch #log{transition:opacity .3s}.touch.sys-on #log{opacity:0}
-.touch .sysmsg p{font-size:13px;padding:7px 12px}
-@media (max-height:520px){.touch .sysmsg{top:calc(8px + env(safe-area-inset-top,0px));width:min(320px,40vw)}}
+.touch .sysmsg p{font-size:12px;padding:6px 10px;text-align:left}
+@media (max-height:520px){.touch .sysmsg{top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(260px,32vw);align-items:center}.touch .sysmsg p{text-align:center}}
 @media (prefers-reduced-motion:reduce){.sysmsg p{transition:opacity .2s}}.wnote.sys{color:#e8d9a8}.wnote.dmg{color:var(--bad)}
 .win,.screen{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -158,9 +160,9 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .touch .status .sub#sub{display:none}
 .touch .status .gauge{height:13px}.touch .status .gauge b{line-height:12px;font-size:10px}
 .touch .status .who{font-size:14px}.touch .status #res{font-size:10px;white-space:normal}
-.touch #log{position:absolute;left:8px;top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(300px,62vw);height:64px;background:none;border:0;box-shadow:none;padding:0;font-size:11px;line-height:1.45;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
+.touch #log{position:absolute;left:8px;top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(210px,50vw);height:64px;background:none;border:0;box-shadow:none;padding:0;font-size:11px;line-height:1.45;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
 .touch .zone{top:calc(74px + env(safe-area-inset-top,0px));left:auto;right:10px;text-align:right;font-size:13px;max-width:44vw;pointer-events:none}
-.touch .zone small{font-size:11px}.touch .zone .row{display:none}.touch .qtrack{font-size:11px;max-width:44vw;pointer-events:none}.touch #log p{pointer-events:auto}
+.touch .zone small{font-size:11px}.touch .zone .row{display:none}.touch .qtrack{font-size:11px;width:min(170px,42vw);max-height:100px;pointer-events:auto;text-align:left;margin-left:auto}.touch #log p{pointer-events:auto}
 .touch #mini{top:calc(6px + env(safe-area-inset-top,0px));width:110px;height:62px}
 #tmenu{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:126px;width:46px;height:46px;font-size:22px;line-height:1;color:var(--paper);background:var(--stone);border:1px solid var(--bronze-hi);pointer-events:auto}
 #joyz{position:absolute;left:0;bottom:0;width:48%;height:46%;pointer-events:auto;touch-action:none}
@@ -201,7 +203,8 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .mbtn{display:grid;gap:2px;text-align:center;padding:12px 6px!important;min-height:64px}
 .mbtn b{font:400 17px var(--display)}.mbtn small{font-size:11px;color:var(--paper-dim);white-space:normal;word-break:keep-all}
 @media (max-height:520px){ /* phone held sideways */
-  .touch #log{top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(340px,40vw);height:48px;text-align:center}
+  .touch #log{top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(260px,32vw);height:48px;text-align:center}
+  .touch .zone{right:calc(58px + env(safe-area-inset-right,0px))}.touch .qtrack{max-height:80px}
   #tbtns,#tquick{transform:scale(.82);transform-origin:100% 100%}
   #tquick{bottom:calc(196px + env(safe-area-inset-bottom,0px))}
   #tslots{left:50%;transform:translateX(-50%)}
