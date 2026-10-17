@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>{localStorage.clear();window.confirm=()=>{throw new Error('confirm 호출')};showTitle()});
   const t0=await p.evaluate(()=>({rows:box.querySelectorAll('.slot').length,sel:box.querySelector('.slot[aria-pressed="true"]').dataset.s,empty:$('slotinfo')===null&&!!box.querySelector('[data-s="new"]'),slot:SLOT}));
   ok(`제목 화면에 칸 ${t0.rows}개, 고른 칸 ${t0.sel}, 빈 칸이라 새 인생 단추 ${t0.empty}`,t0.rows===5&&t0.sel==='slot:0'&&t0.empty&&t0.slot===0);

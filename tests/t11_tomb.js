@@ -6,7 +6,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const p=await b.newPage({viewport:{width:1100,height:760}});
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="cls:도"]');await p.click('[data-s="start"]');await p.waitForTimeout(500);
   // 마을 밖에서 장비를 갖추고 죽는다
   const before=await p.evaluate(()=>{{let best=null;for(let j=2;j<N-2;j++)for(let i=2;i<N-2;i++){if(inTown(i,j))continue;let f=0;for(let v=-3;v<=3;v++)for(let u=-3;u<=3;u++)if(walk(i+u,j+v))f++;const d=Math.hypot(i-21,j-21);if(f===49&&d>13&&(!best||d<best.d))best={i,j,d}}P.x=best.i+.5;P.y=best.j+.5}P.path=null;

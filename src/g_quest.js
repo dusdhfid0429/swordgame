@@ -6,6 +6,7 @@ const MAT_FROM=GD.MAT_FROM||{};
 function questFrom(q){
   if(q.sect&&SECTS[q.sect]){const s=SECTS[q.sect];return{n:s.n,at:`본산 ${hqPlace(s)}의 ${masterTitle(s)}, 또는 성도의 ${s.n} 연락관`,merit:`${s.n} 공적 +${q.merit}`}}
   if(q.maeng&&typeof MAENG!=='undefined'&&MAENG[q.maeng]){const M=MAENG[q.maeng];return{n:M.n,at:`${PROV[M.prov].n} ${M.city} 성내 북쪽 ${M.n}`,merit:`${M.short} 공적 +${q.merit}`}}
+  if(q.acad)return{n:acadOf(P.side).n,at:`${acadOf(P.side).n}의 ${acadOf(P.side).inst[3]}`,merit:''};
   if(q.story)return{n:'강호 정세',at:'정세 창(N)의 사건 카드에서 바로 보고',merit:''};
   if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
   if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
@@ -26,7 +27,7 @@ function pQuest(){const qs=P.quests||[];
   const where=[`개봉 의뢰판 <small class="dim">한 번에 셋 · ${G.board&&G.board.length?`붙은 방 ${G.board.length}`:'새 방은 해가 바뀌면'}</small>`];
   if(P.sect&&SECTS[P.sect])where.push(`${SECTS[P.sect].n} 임무 <small class="dim">본산 ${masterTitle(SECTS[P.sect])}·성도 연락관 · 해마다 둘</small>`);
   const al=typeof maengOf==='function'?maengOf():null;if(al&&typeof MAENG!=='undefined'&&MAENG[al])where.push(`${MAENG[al].n} 임무 <small class="dim">총단 · 해마다 셋</small>`);
-  return `<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
+  return acadQuestCard()+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
     ${qs.length?qs.map(questCard).join(''):'<p class="note">맡은 임무가 없다.</p>'}
     <div class="card"><h4>임무를 맡는 곳</h4>${where.map(w=>`<p>${w}</p>`).join('')}</div>`}
 // 열기: J 키, 왼쪽 '맡은 임무' 글(PC)

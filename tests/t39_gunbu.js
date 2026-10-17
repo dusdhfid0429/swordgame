@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   const go=(id,x,y)=>p.evaluate(([id,x,y])=>{mobs=[];P.reg=id;loadRegion(id);P.x=x;P.y=y;P.path=null;P.gateLock=0;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;miniBase=null},[id,x,y]);
   // 1. 세력 구도: 군부가 네 번째 세력, 금군이 그 문파. 관군은 사파·마교와만 싸운다

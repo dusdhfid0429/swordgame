@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text()+' @'+JSON.stringify(m.location()))});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 문 2.2칸 아래에서 문 쪽으로 경공: 문 앞에 내려선 뒤 안으로 들어간다
   const r1=await p.evaluate(()=>{mobs=[];loadRegion('hq_shaolin');P.reg='hq_shaolin';const g=REGION().gates.find(g=>g.door);if(!g)return{nog:1};P.gateLock=0;P.x=g.x;P.y=g.y+2.2;P.fx=0;P.fy=-1;P.qi=P.maxQi=999;P.perch=null;P.leap=null;texts.length=0;

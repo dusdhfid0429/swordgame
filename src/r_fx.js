@@ -61,7 +61,7 @@ function shock(x,y,rx,ry,col,k,w){ctx.save();ctx.translate(x,y);ctx.scale(1,ry/r
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,rx,0,7);ctx.fill();ctx.restore()}
 // crescent sword-qi ribbon swept along an iso ellipse; thick bright leading edge, streaky tail
 function ribbon(f,p,k,o={}){
-  const flat=o.flat,rx=flat?isoR(f.r)[0]:f.r*46,ry=flat?isoR(f.r)[1]:rx*.7,th=Math.atan2(Math.sin(f.ang)*rx,Math.cos(f.ang)*ry),pr=1-k,sp=o.spread||f.spread,dir=f.flip?-1:1;
+  const flat=o.flat,rx=flat?isoR(f.r)[0]:f.r*55,ry=flat?isoR(f.r)[1]:f.r*32,th=Math.atan2(Math.sin(f.ang)*rx,Math.cos(f.ang)*ry),pr=1-k,sp=o.spread||f.spread,dir=f.flip?-1:1;
   const head=Math.min(1,pr/(o.fast||.32)),tail=Math.max(0,(pr-.28)/.72)*.97,cy=p.y-(o.h??26),lift=(o.lift??8)*f.r,thick=(o.thick||(6+f.w*2.2))*(f.r>1.2?1.25:1);
   if(head-tail<.02)return;const a0=(o.a0??th-dir*sp/2);
   const P2=(u,rr)=>{const a=a0+dir*sp*u;return[p.x+Math.cos(a)*rx*rr,cy+Math.sin(a)*ry*rr-lift*Math.sin(u*Math.PI)*(o.tilt??1)]};
@@ -103,7 +103,7 @@ function drawGlow(f){
     for(const r of f.rays){const a=r.a+f.cr,L=r.l*s;ctx.strokeStyle=rgba(f.col,.8*k);ctx.lineWidth=r.w;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*5*s,cy+Math.sin(a)*5*s);ctx.lineTo(p.x+Math.cos(a)*L,cy+Math.sin(a)*L);ctx.stroke()}
     for(let n=0;n<4;n++){const a=n*Math.PI/2+f.cr,L=(n%2?22:34)*s*k;ctx.fillStyle=rgba(HI,k);ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*L,cy+Math.sin(a)*L);
       ctx.lineTo(p.x+Math.cos(a+1.57)*2.2*s,cy+Math.sin(a+1.57)*2.2*s);ctx.lineTo(p.x-Math.cos(a)*3,cy-Math.sin(a)*3);ctx.lineTo(p.x-Math.cos(a+1.57)*2.2*s,cy-Math.sin(a+1.57)*2.2*s);ctx.fill()}}
-  else if(f.t==='claw'){const pr=Math.min(1,(1-k)*4);for(let n=-1;n<=1;n++){const x0=p.x+(n*9-16)*f.side,y0=p.y-56+n*3,x1=p.x+(n*9+16)*f.side,y1=p.y-10+n*3,xm=x0+(x1-x0)*pr,ym=y0+(y1-y0)*pr;
+  else if(f.t==='claw'){const pr=Math.min(1,(1-k)*4);for(let n=-1;n<=1;n++){const x0=p.x+(n*11-22)*f.side,y0=p.y-56+n*3,x1=p.x+(n*11+22)*f.side,y1=p.y-10+n*3,xm=x0+(x1-x0)*pr,ym=y0+(y1-y0)*pr;
     for(const[w,c,a]of[[9,f.col,.25],[4,f.col,.7],[1.5,HI,1]]){ctx.strokeStyle=rgba(c,a*k);ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo((x0+xm)/2+6*f.side,(y0+ym)/2-4,xm,ym);ctx.stroke()}}}
   else if(f.t==='parts'){const t=f.max-f.life;ctx.fillStyle=rgba(f.col,k);
     for(const q of f.ps){const x=p.x+q.vx*t,y=p.y-28+q.vy*t+90*t*t;

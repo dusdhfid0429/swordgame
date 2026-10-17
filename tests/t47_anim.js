@@ -5,7 +5,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   const shot=n=>require('path').resolve(__dirname,'shots',n+'.png');
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 사람 몹과 짐승을 죽이면 시체가 쓰러지며 사라진다
   const r=await p.evaluate(()=>{const e=mkMob('산적',P.x+1.5,P.y),w=mkMob('늑대',P.x-1.5,P.y);mobs.push(e,w);e.hp=0;onKill(e);w.hp=0;onKill(w);return{n:corpses.length,beast:corpses.map(c=>c.beast),dead:corpses.every(c=>c.e.dead)}});

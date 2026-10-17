@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing&&hero2Ok());await p.waitForTimeout(300);
   // 1. 기본 경공은 하승 1단만: 두 번 눌러도 2단이 안 나간다
   const r1=await p.evaluate(()=>{mobs=[];P.qi=P.maxQi;const q0=P.qi;leap();const a=P.leap&&P.leap.st;const q1=P.qi;leap();return{a,st2:P.leap&&P.leap.st,qd:q0-q1,same:P.qi===q1,max:ggMaxStage(),m:ggMast()}});

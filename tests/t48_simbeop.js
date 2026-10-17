@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 문파 규모별 심법 수와 최고 등급
   const t=await p.evaluate(()=>{const f=id=>simOf(id).map(x=>x.n+':'+AGR[x.g]);return{small:f('hyeongsan'),mid:f('hwangbo'),big:f('hwasan'),five:f('namgung'),one:f('cheonma'),sa:f(Object.values(SECTS).find(s=>s.al==='sacheon'&&s.tier==='big').id),base:simCur().n,gain:simGain(),cost0:qiCost(P.side,P.qiN)}});

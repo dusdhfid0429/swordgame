@@ -73,7 +73,7 @@ function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
   if(P.sect!==x.sect)return`${SECTS[x.sect].n} 제자만`;const r=rankIdx(x.sect);if(r<SIM_RANK[x.g])return`${rankName(x.sect,SIM_RANK[x.g])} 이상`;
   if((P.merit[x.sect]||0)<SIM_COST[x.g])return`공적 ${SIM_COST[x.g]} 필요`;return''}
 function simLearn(x){P.sims=P.sims||{};P.sims[x.id]=1;P.sim=x.id;log(`심법 [${x.n}](${AGR[x.g]})을(를) 익혀 운용합니다. 수련 한 번에 내공 +${simGain()}.`,'xp');if(x.tr&&x.tr.length)log(`특색: ${simTraitTxt(x)} (운용 중에만)`,'xp');showBanner(x.n,`${AGR[x.g]} 심법`)}
-const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop)?' <small class="gold">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}<br>${simElHtml(x)}${x.tr&&x.tr.length?`<br>특색 ${simTraitHtml(x)}`:''}</span></div><div class="ib">${btn}</div></div>`;
+const simRowHtml=(x,btn)=>`<div class="it"><div>${x.n} ${gradeTag(x.g)}${P.sim===x.id||(!P.sim&&x.g===0&&x.side===P.side&&!x.sect&&!x.shop&&!x.acad)?' <small class="gold">운용 중</small>':''}<span>수련 1회 내공 +${Math.round(SIDES[P.side].gain*SIM_GQ[x.g]*10)/10} · ${x.d}<br>${simElHtml(x)}${x.tr&&x.tr.length?`<br>특색 ${simTraitHtml(x)}`:''}</span></div><div class="ib">${btn}</div></div>`;
 // 문파 창: 문파 심법 목록
 function simSectHtml(s){const list=simOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 심법 <small class="dim">${tierName(s)}는 ${AGR[SIM_TOP[s.tier]||1]}까지 · 직위가 오르면 더 익힌다</small></h4><div class="list">${list.map(x=>{const no=simBlock(x);

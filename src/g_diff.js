@@ -9,7 +9,7 @@ const diffMul=k=>{const v=diffOf()[k];return v==null?1:v};
 hook('mobScaled',e=>{if(!e.d||e.d.villager||e.d.passive)return;e.maxHp=Math.max(1,Math.round(e.maxHp*diffMul('mobHp')));e.hp=e.maxHp;e.atk=Math.max(1,Math.round(e.atk*diffMul('mobAtk')))});
 hook('mobMade',e=>{const d=e.d;if(!d||!d.beast||e.diffed)return;e.diffed=1;e.maxHp=Math.max(1,Math.round(e.maxHp*diffMul('mobHp')));e.hp=e.maxHp;e.atk=Math.max(1,Math.round(e.atk*diffMul('mobAtk')))});
 hook('hurt',c=>{if(c.src&&c.src.d)c.dm*=diffMul('taken')});
-const diffVit=v=>v>0?v*diffMul('vit'):v;
+const diffVit=v=>v>0?Math.round(v*diffMul('vit')):v;   // v136 (사용자): 활력은 정수만 (배율을 곱하면 소수점이 나왔다)
 const diffSquad=n=>Math.max(1,Math.round(n*diffMul('squad')));
 function diffHtml(){const d=diffOf();return `<div class="card"><h4>난이도 <small class="dim">완전 새로 시작할 때 정한다</small></h4><p><b class="gold">${d.n}</b> · ${d.d}</p><p class="note">적 생명 ×${d.mobHp} · 적 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken} · 활력 ×${d.vit} · 마성 ×${d.mara} · 추살조 ×${d.squad}</p></div>`}
 function diffPickHtml(){if(G.lives)return '';const i=diffIdx();

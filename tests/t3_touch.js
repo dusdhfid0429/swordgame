@@ -8,7 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const p=await c.newPage();
   const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   p.on('dialog',d=>d.accept('테스트'));
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(2500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(2500);
   await p.evaluate(()=>localStorage.clear());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   ok('touch mode on by default',await p.evaluate(()=>TOUCH&&document.body.classList.contains('touch')));

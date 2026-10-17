@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   const t=await p.evaluate(()=>{const cm=Object.values(SIM).filter(x=>x.sect==='cheonma');P.sims={N_cheonma_1:1,N_cheonma_4:1};P.sim='N_cheonma_4';const a=ARTS[P.cur];
     return{n:cm.length,allMa:cm.every(x=>x.el==='마'&&x.sc==='마공'),el:pEl(),sc:pSchool(),c:a.c,dark:isDark(a.c),ct:a.ct,elc:a.elc,fx:EL['마'].fx,beats:[elMul('마','양'),elMul('양','마'),elMul('마','금'),elMul('마','마'),elMul('마',null),elMul('마','금','마공','불가'),elMul('금','마','불가','마공'),elMul('마','금','마공','도가')],html:simElHtml(simCur())}});

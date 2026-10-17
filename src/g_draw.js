@@ -232,6 +232,7 @@ function draw(){
     list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
   for(const f of fx)if(!f.glow){const gnd=!f.z&&(f.t==='ring'||f.t==='warn');list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>atZ(f,()=>drawFx2(f))})}
   // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
+  runHooks('drawList',list);   // drawList: 그릴 목록에 더 얹기 (g_academy.js 과제 표시)
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
   const w=REGION().hall?null:G.weather;

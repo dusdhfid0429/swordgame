@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing&&hero2Ok());await p.waitForTimeout(300);
   // 1. 데이터: 경공마다 특징이 있고 종류가 GG_TK에 있다. 문파마다 START가 있고 그 무공은 그 문파의 고급 아닌 무공, 보법·경공·심법이 실제로 있다
   const d=await p.evaluate(()=>{const bad=[];for(const[id,g]of Object.entries(GGS)){if(id!=='g_basic'&&!(g.tr&&g.tr.length))bad.push(id+' 특징 없음');for(const t of g.tr||[])if(!GG_TK[t.k])bad.push(id+' '+t.k)}

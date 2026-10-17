@@ -63,6 +63,7 @@ function joinBlock(s){
   if(P.sect===s.id)return '이미 이 문파의 제자다.';
   if(P.sect&&P.sect!=='own'&&SECTS[P.sect])return `이미 ${SECTS[P.sect].n}의 제자다. 먼저 하산(탈퇴)해야 한다.`;
   if(P.sect==='own')return '스스로 세운 문파의 문주다.';
+  if(P.acad&&P.acad.rec===s.id)return null;   // 무관 추천서: 명성·나이 조건을 묻지 않는다 (g_academy.js)
   if(s.al==='gunbu')return P.evil>=30?'악업이 30 이상이면 군부가 받지 않는다.':P.age<16?'16세는 되어야 병졸로 뽑는다.':P.fame>=30?null:'명성 30은 있어야 금군이 받는다.';
   if(s.tier==='one')return P.fame>=100||P.evil>=80?null:'명성 100 또는 악업 80이 있어야 마교가 부른다.';
   if(s.tier==='big'){if(s.al==='jeong'&&P.evil>=50)return '악업이 50 이상이면 정파 대문파가 받지 않는다.';return P.age<18||P.fame>=50?null:'18세 전이거나 명성 50 이상이어야 한다.'}

@@ -8,7 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   for(const mobile of[false,true]){
     const c=await b.newContext(mobile?{viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true}:{viewport:{width:1100,height:760},deviceScaleFactor:2});
     const p=await c.newPage();p.on('pageerror',e=>errs.push('PE '+e.message));
-    await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+    await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
     await p.evaluate(()=>localStorage.clear());
     const tap=s=>mobile?p.tap(s):p.click(s);
     await tap('[data-s="new"]');await tap('[data-s="start"]');await p.waitForTimeout(400);

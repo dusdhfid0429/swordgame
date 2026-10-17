@@ -22,12 +22,13 @@ function sectRegs(sid){const s=SECTS[sid];if(!s)return[];const id=hqId(s),R=REGI
 const inOwnSect=()=>!!(P.sect&&P.sect!=='own'&&sectRegs(P.sect).includes(REG));
 function pgPlace(){
   if(inOwnSect())return SECTS[P.sect].n+' 후산';
+  if(inAcad())return acadOf(P.side).n+' 폐관실';   // 무관 (g_academy.js)
   if(REG==='gaebong'&&G.house&&G.house.built&&dist(houseDoor(),P)<6)return'내 집';
   const R=REGIONS[REG];if(R&&R.lm&&R.lm.t==='m'&&P.y<=9.5)return R.name+' 정상';
   return null}
 const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
-const hobeop=()=>inOwnSect()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+const hobeop=()=>inOwnSect()||inAcad()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
 // 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=GD.PG_BASE;
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
@@ -57,7 +58,7 @@ function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관
 function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
   if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
   // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
-  const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f,lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
+  const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f&&!inAcad(),lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
   P.inj=YEAR_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}

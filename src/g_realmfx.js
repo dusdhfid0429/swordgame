@@ -68,9 +68,18 @@ hook('hit',c=>{const r=realmIdx();
   if(r>=2)c.def=Math.round(c.def*.5)});
 hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
   if(sig('사불'))P.hp=Math.min(P.maxHp,P.hp+(c.hp0-Math.max(0,e.hp))*.06);if(sig('사공'))e.slow=Math.max(e.slow||0,2);
-  if(r>=2)fParts(null,e,r>=4?'255,230,140':'150,210,255',r>=4?6:3,60,'dot',.35);
+  // v136 (사용자): 세 단계가 서로 달라 보이게. 검기=푸른 날 기운, 검사=은빛 실, 검강=금빛 강기 충격
+  if(r>=4){fParts(null,e,RFX_COL.gang,8,80,'dot',.4);GL({t:'ring2',x:e.x,y:e.y,r:.75,col:RFX_COL.gang,w:4,life:.3})}
+  else if(r===3)for(let i=0;i<2;i++)GL({t:'line',x:e.x+(Math.random()-.5)*.8,y:e.y+(Math.random()-.5)*.8,ex:e.x,ey:e.y,w:1,wavy:1,life:.22,col:RFX_COL.sa});
+  else if(r===2)fParts(null,e,RFX_COL.gi,4,60,'dot',.35);
   if(r>=3&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
-    if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);GL({t:'line',x:P.x,y:P.y,ex:o.x,ey:o.y,w:2,life:.25,col:'200,230,255'})}}});
+    if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);for(let i=0;i<3;i++)GL({t:'line',x:P.x,y:P.y,ex:o.x+(i-1)*.15,ey:o.y,w:i===1?1.6:.8,wavy:1,life:.3,col:r>=4?RFX_COL.gang:RFX_COL.sa})}}});
+// 베기마다: 검기는 칼날 너머로 뻗는 푸른 반달, 검사는 반달 끝에서 뻗는 은빛 실 셋, 검강은 굵고 무거운 금빛 반달 두 겹
+const RFX_COL={gi:'140,205,255',sa:'215,245,255',gang:'255,212,105'};
+hook('slashFx',o=>{const r=realmIdx();if(r<2)return;const L=o.life,arc=(k)=>fx.push({...o,glow:true,el:false,max:L*(k.l||1),life:L*(k.l||1),st:null,...k});
+  if(r>=4){arc({col:RFX_COL.gang,r:o.r*1.4,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.32,w:o.w*1,spread:o.spread*1.05,dim:.95});return}
+  arc({col:RFX_COL.gi,r:o.r*1.35,w:o.w*.9,spread:o.spread*1.1,dim:.75,l:1.1});
+  if(r===3){const a0=Math.atan2(P.fy,P.fx);for(const d of[-.5,0,.5]){const a=a0+d*o.spread*.6,L2=o.r*2.2;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,wavy:1,life:.28,col:RFX_COL.sa})}}});
 hook('hurt',c=>{const r=realmIdx(),src=c.src;
   if(src.d&&r>=4&&mobRealm(src)<=r-2){c.dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
   if(src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))c.dm*=.85;
