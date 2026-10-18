@@ -232,10 +232,10 @@ function acadSimHtml(){const a=P.acad;
 function acadBobHtml(){const t=c=>c==='line'?'직선':'간파',cur=P.bcur;
   return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 단추':'Shift 또는 W'} · 하나만 고른다</small></h4>
     <p class="note">"보법은 싸움 중에 짧게 미끄러져 몸을 빼는 걸음이다. 펼치는 동안은 몸이 흐려져 칼이 닿지 않는다. 내공을 쓰지만 쉬는 시간은 없어, 내공이 있는 한 연달아 쓸 수 있다."</p>
-    <p><b class="gold">직선</b> 누른 방향(조이스틱, 놓았으면 바라보는 쪽)으로 곧게 미끄러진다. 적 사이를 빠져나가고 벽·물에서 멈춘다. 거리를 벌리거나 포위를 뚫기 좋다.<br>
-    <b class="gold">간파</b> 둘레를 살펴 치기 좋은 자리로 옮긴다. 상대 등 뒤를 잡고 다른 적에게 둘러싸이지 않는 자리를 고른다. 등 뒤를 잡으면 다음 일격이 치명타다.</p>
+    <p><b class="gold">직선</b> 누른 방향(조이스틱, 놓았으면 바라보는 쪽)으로 곧게 미끄러진다. 적을 뚫고 지나가며, 벽에 막혀도 제자리에서 몸을 흘려 무조건 나간다. 거리를 벌리거나 포위를 뚫기 좋다.<br>
+    <b class="gold">간파</b> 둘레를 살펴 치기 좋은 자리로 옮긴다. 상대 등 뒤를 잡고 다른 적에게 둘러싸이지 않는 자리를 고른다. 등 뒤를 잡으면 다음 일격이 치명타다. 다만 빈틈을 잘못 읽으면 실패해 내공만 쓰고 휘청인다(실패 확률 하승 ${BG.fail[0]}% · 절정 ${BG.fail[3]}%).</p>
     <p class="note dim">등급(하승·중승·상승·절정)이 높을수록 멀리·넓게 움직인다. 중승은 개봉 잡화점 비급, 상승·절정은 문파에서 배운다.</p>
-    <div class="list">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<div class="it"><div>${b.n} <small class="gold">${t(b.t)}</small>${cur===id?' <small class="good">익힘</small>':''}<span>${b.d} · 거리 ${BG.len[b.g]} · 내공 ${BG.qi[b.g]}</span></div><div class="ib">${cur===id?'':B('acbob:'+id,'익힌다',{d:!!cur})}</div></div>`}).join('')}</div></div>`}
+    <div class="list">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<div class="it"><div>${b.n} <small class="gold">${t(b.t)}</small>${cur===id?' <small class="good">익힘</small>':''}<span>${b.d} · 거리 ${BG.len[b.g]} · 내공 ${BG.qi[b.g]}${b.t==='flank'?` · 실패 ${BG.fail[b.g]}%`:' · 무조건 발동'}</span></div><div class="ib">${cur===id?'':B('acbob:'+id,'익힌다',{d:!!cur})}</div></div>`}).join('')}</div></div>`}
 function acadGkHtml(){const has=!!P.gkcur;
   return `<div class="card"><h4>경공 <small class="dim">멀리 뛰는 이동기 · ${TOUCH?'경공 단추':'Space'}</small></h4>
     <p class="note">"경공은 땅을 박차고 멀리 뛰는 법이다. 지붕과 나무 위에도 오른다. 단추를 이어 누르면 다음 단이 나간다."</p>

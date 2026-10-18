@@ -88,7 +88,7 @@ function renderSkip(){
       <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>
     <div class="card"><h4>하승 내공심법 <small class="dim">하나만 고른다 · 나머지는 맹 총관에게서 맹 공적으로 배울 수 있다</small></h4>
       <div class="choice">${ACAD_SIM[CR.side].map(x=>{const m=SIM[x.id];return `<button type="button" class="opt" data-s="ssim:${x.id}" aria-pressed="${CR.sim===x.id}"><b>${m.n}</b><span>${m.sc} · ${m.el}${m.tr&&m.tr.length?' · '+simTraitTxt(m):''}</span></button>`}).join('')}</div></div>
-    <div class="card"><h4>보법 <small class="dim">회피기 · 직선은 곧게 미끄러지고, 간파는 상대 등 뒤로 돈다 · 경공은 기초 경공(1단)을 받는다</small></h4>
+    <div class="card"><h4>보법 <small class="dim">회피기 · 직선은 적을 뚫고 무조건 나가고, 간파는 상대 등 뒤로 돌지만 실패할 수 있다 · 경공은 기초 경공(1단)을 받는다</small></h4>
       <div class="choice">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<button type="button" class="opt" data-s="sbob:${id}" aria-pressed="${CR.bob===id}"><b>${b.n}</b><span>${b.t==='line'?'직선':'간파'} · ${b.d}</span></button>`}).join('')}</div></div>
     <div class="center"><button type="button" class="btn" data-s="skipback">돌아가기</button><button type="button" class="btn pri" data-s="skipstart" style="font-size:18px;padding:8px 26px">8세, 강호에 나서다</button></div>`);
 }

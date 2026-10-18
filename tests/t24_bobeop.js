@@ -32,7 +32,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.waitForTimeout(500);
   // 간파: 상대 등 뒤로
   await setup(open);
-  const s3=await p.evaluate(()=>{P.bob.b_gugung=1;P.bcur='b_gugung';const T=mkMob('늑대',P.x+1.6,P.y);T.fx=-1;T.fy=0;mobs.push(T);P.target=T;bobeop();window._T=T;const L=P.leap,dx=L.ex-T.x,dy=L.ey-T.y,d=Math.hypot(dx,dy);window._bk={back:-(dx*T.fx+dy*T.fy)/d,d};return 1});
+  const s3=await p.evaluate(()=>{P.bob.b_gugung=1;P.bcur='b_gugung';const T=mkMob('늑대',P.x+1.6,P.y);T.fx=-1;T.fy=0;mobs.push(T);P.target=T;const r0=Math.random;Math.random=()=>.999;bobeop();Math.random=r0;window._T=T;const L=P.leap,dx=L.ex-T.x,dy=L.ey-T.y,d=Math.hypot(dx,dy);window._bk={back:-(dx*T.fx+dy*T.fy)/d,d};return 1});
   await p.waitForTimeout(500);
   const s3b=await p.evaluate(()=>{const T=window._T,dx=P.x-T.x,dy=P.y-T.y,d=Math.hypot(dx,dy);return{back:window._bk.back,d:window._bk.d,crit:P.buff.crit>0,face:P.fx*(T.x-P.x)+P.fy*(T.y-P.y)>0}});
   ok(`간파 보법(구궁팔괘보): 상대 등 뒤(방향 일치 ${s3b.back.toFixed(2)})로 ${s3b.d.toFixed(1)}칸, 다음 일격 치명타, 상대를 바라본다`,s3b.back>.5&&s3b.d<2.6&&s3b.crit&&s3b.face);
@@ -40,10 +40,20 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 둘러싸이면 덜 둘러싸인 자리로
   await setup(open);
   const s4=await p.evaluate(()=>{for(const[a,bb]of[[1,0],[-1,0],[0,1],[0,-1],[.7,.7]])mobs.push(mkMob('늑대',P.x+a*1.1,P.y+bb*1.1));
-    const cnt=()=>mobs.filter(e=>dist(e,P)<1.7).length;const c0=cnt();bobeop();window._c0=c0;return c0});
+    const cnt=()=>mobs.filter(e=>dist(e,P)<1.7).length;const c0=cnt();const r0=Math.random;Math.random=()=>.999;bobeop();Math.random=r0;window._c0=c0;return c0});
   await p.waitForFunction(()=>mobs.filter(e=>dist(e,P)<1.7).length<window._c0,null,{timeout:4000}).catch(()=>{});   // 시간 대신 결과를 기다린다 (바쁜 기계)
   const c1=await p.evaluate(()=>mobs.filter(e=>dist(e,P)<1.7).length);
   ok(`둘러싸였을 때 (붙은 적 ${s4} → ${c1})`,c1<s4);
+  // v142 (사용자): 간파는 실패할 수 있다(등급별 확률, 내공만 쓰고 무적 없음). 직선은 적을 뚫고, 막혀도 무조건 나간다
+  await setup(open);
+  const s8=await p.evaluate(()=>{P.bob.b_gugung=1;P.bcur='b_gugung';const T=mkMob('늑대',P.x+1.6,P.y);mobs.push(T);P.target=T;P.inv=0;const q=P.qi,r0=Math.random;Math.random=()=>0;const r=bobeop();Math.random=r0;
+    return{r,leap:!!P.leap,inv:P.inv,q:q-P.qi,need:BG.qi[2],dec:BG.fail.every((v,i)=>!i||v<BG.fail[i-1]),fail:BG.fail.join('>')}});
+  ok(`간파 실패: 안 나가고(${s8.leap}) 무적 없음, 내공 ${s8.q} 씀, 확률 ${s8.fail}%`,!s8.r&&!s8.leap&&s8.inv===0&&s8.q===s8.need&&s8.dec);
+  await setup(open);
+  const s9=await p.evaluate(()=>{P.bcur='b_basic';for(let d=.3;d<=3;d+=.3)for(const o of[-.3,0,.3])mobs.push(mkMob('늑대',P.x+d,P.y+o));const r1=bobeop();const L=P.leap;P.leap=null;
+    mobs=[];P.x=Math.floor(P.x)+.5;P.y=Math.floor(P.y)+.5;const tx=Math.floor(P.x),ty=Math.floor(P.y),old=[];for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)if(i||j){old.push([i,j,map[ty+j][tx+i].g]);map[ty+j][tx+i].g=2}
+    P.inv=0;const r2=bobeop();for(const[i,j,g]of old)map[ty+j][tx+i].g=g;return{r1,ex:L&&L.ex-L.sx,r2,inv:P.inv}});
+  ok(`직선: 앞이 적으로 꽉 차도 뚫고 ${s9.ex&&s9.ex.toFixed(1)}칸, 사방이 물이어도 그 자리에서 회피(무적 ${s9.inv})`,s9.r1&&s9.ex>1&&s9.r2&&s9.inv>0);
   // 등급이 높을수록 범위가 넓다
   const s5=await p.evaluate(()=>BG.rad.map((r,i)=>r).join('<')+' · '+BG.len.join('<'));
   ok(`등급별 범위 ${s5}`,await p.evaluate(()=>BG.rad.every((r,i)=>!i||r>BG.rad[i-1])&&BG.len.every((r,i)=>!i||r>BG.len[i-1])));
