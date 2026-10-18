@@ -115,7 +115,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`맹 총관에서 청풍심법 배움 (목록 ${r15.t}), 맹 공적 ${r15.mpt} 그대로·쓸 수 있는 공적 ${r15.free}`,r15.t&&r15.known&&r15.mpt===100&&r15.free===60);
   // 9. 윤회: 전생에 졸업했으면 월반 시험. 붙으면 4단계부터, 병기·심법은 그래도 고른다
   await p.evaluate(()=>{closePanels();die('시험')});await p.waitForSelector('[data-s="rebirth"]',{timeout:8000});await p.click('[data-s="rebirth"]');
-  await p.evaluate(()=>{const b=document.querySelector('[data-s="noheir"]');if(b)b.click()});await p.click('[data-s="side:정"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing&&P.acad);await p.waitForTimeout(300);
+  await p.evaluate(()=>{const b=document.querySelector('[data-s="noheir"]');if(b)b.click()});await p.click('[data-s="side:정"]');
+  // v143 (사용자 버그): 두 번째 생부터는 무관 건너뛰기가 기본으로 골라져 있다. 무관부터 하려면 따로 고른다
+  const d16=await p.evaluate(()=>({mode:CR.amode,start:!!document.querySelector('[data-s="start"]'),skip:document.querySelector('.btn.pri').dataset.s}));
+  ok(`윤회 생성 화면: 기본은 건너뛰기 (${d16.mode}, 큰 단추 ${d16.skip}, 무관 입관 단추 ${d16.start})`,d16.mode==='skip'&&!d16.start&&d16.skip==='skipacad');
+  await p.click('[data-s="amode:acad"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing&&P.acad);await p.waitForTimeout(300);
   await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_master'))});await p.waitForTimeout(150);
   const t16=await p.evaluate(()=>$('wbody').textContent);
   await p.click('[data-act="acspar:skip"]');await p.waitForTimeout(150);

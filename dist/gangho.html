@@ -3103,6 +3103,7 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='start')beginLife();
   // v138 (사용자): 윤회하면 무관 튜토리얼을 건너뛸 수 있다. 건너뛰면 병기·심법을 고르는 창을 거쳐 바로 강호에서 시작
   else if(s==='skipacad'){CR.skip=1;CR.bob=ACAD_BOB.includes(CR.bob)?CR.bob:ACAD_BOB[0];CR.sim=CR.sim&&SIM[CR.sim]&&SIM[CR.sim].side===CR.side?CR.sim:ACAD_SIM[CR.side][0].id;renderSkip()}
+  else if(s.startsWith('amode:')){CR.amode=s.slice(6);renderCreate()}
   else if(s==='skipback'){CR.skip=0;renderCreate()}
   else if(s.startsWith('ssim:')){CR.sim=s.slice(5);renderSkip()}
   else if(s.startsWith('sbob:')){CR.bob=s.slice(5);renderSkip()}
@@ -3115,7 +3116,8 @@ const rname=()=>pick(NAMES1)+pick(NAMES2)+(Math.random()<.6?pick(NAMES2):'');
 function rollGG(side){const n=STATUS[G.nextStatus??1].pick,idx=GEUNGOL[side].map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}return idx.slice(0,n).sort((a,b)=>a-b)}
 function showCreate(){
   scrEl.hidden=false;playing=false;paused=true;const st=G.nextStatus??1;
-  CR={name:rname(),side:'정',cls:'검',status:st,wis:Math.min(10,R1(3,7)+STATUS[st].wis+(G.wisCarry||0)),heir:null};CR.opts=rollGG('정');CR.gg=CR.opts[0];renderCreate();
+  // v143 (사용자 버그: 윤회했는데 무관 처음부터): 두 번째 생부터는 무관 건너뛰기가 기본으로 골라져 있고, 무관부터 하려면 따로 고른다
+  CR={name:rname(),side:'정',cls:'검',status:st,wis:Math.min(10,R1(3,7)+STATUS[st].wis+(G.wisCarry||0)),heir:null,amode:G.lives?'skip':'acad'};CR.opts=rollGG('정');CR.gg=CR.opts[0];renderCreate();
 }
 function renderCreate(){
   const st=STATUS[CR.status],gl=GEUNGOL[CR.side];
@@ -3126,14 +3128,17 @@ function renderCreate(){
     ${typeof diffPickHtml==='function'?diffPickHtml():''}
     ${heir}
     <div class="row2"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
-      <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>기초 내공 ${SIDES[s].base}</span></button>`).join('')}</div></div>
+      <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>${ACAD_OFF?`기초 내공 ${SIDES[s].base}`:acadOf(s).n}</span></button>`).join('')}</div></div>
     <p class="note">${SIDES[CR.side].d}</p>
     <div class="card"><h4>근골 <small class="dim">${st.n}은(는) ${st.pick}가지 중에서 고른다 · 근력/지구력/민첩력/본원진기, 합 32</small></h4>
       <div class="choice">${CR.opts.map(i=>{const g=gl[i];return `<button type="button" class="opt" data-s="gg:${i}" aria-pressed="${CR.gg===i}"><b>${g[0]}</b><span class="num">${g[1]} / ${g[2]} / ${g[3]} / ${g[4]}</span>${g[5]?'':'<span class="dim">창작 근골</span>'}</button>`}).join('')}</div></div>
     ${ACAD_OFF?`    <div class="card"><h4>처음 잡을 무기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급을 받는다</small></h4>
-      <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>`:`<div class="card"><h4>${acadOf(CR.side).n}에서 시작 <small class="dim">무관 5단계를 마치고 이류가 되면 졸업한다</small></h4><p class="note">병기와 내공심법은 무관에서 직접 보고 고른다. ${acadOf(CR.side).hello}</p></div>`}
-    <div class="center"><button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">${ACAD_OFF?'8세, 강호에 태어나다':`8세, ${acadOf(CR.side).n}에 들다`}</button>${!ACAD_OFF&&G.lives?'<button type="button" class="btn" data-s="skipacad" style="font-size:16px;padding:8px 18px">무관 건너뛰기</button>':''}</div>
-    ${!ACAD_OFF&&G.lives?`<p class="note center">전생에 이미 배운 몸이라면 무관 과제를 건너뛰고 병기와 하승 심법만 골라 바로 강호에서 시작할 수 있다. 졸업 보상과 추천서는 없다.</p>`:''}`);
+      <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>`:G.lives?`<div class="card"><h4>어디서 시작할까 <small class="dim">전생을 거친 몸이다</small></h4><div class="choice">
+      <button type="button" class="opt" data-s="amode:skip" aria-pressed="${CR.amode==='skip'}"><b>무관 건너뛰기</b><span>병기·심법·보법만 골라 바로 강호에서 시작한다. 졸업 보상과 추천서는 없다.</span></button>
+      <button type="button" class="opt" data-s="amode:acad" aria-pressed="${CR.amode==='acad'}"><b>${acadOf(CR.side).n}부터</b><span>무관 과제를 처음부터 한다.${(G.acadN||0)>0?' 전생에 졸업했으면 관주에게 월반 시험을 볼 수 있다.':''}</span></button></div></div>`
+      :`<div class="card"><h4>${acadOf(CR.side).n}에서 시작 <small class="dim">무관 5단계를 마치고 이류가 되면 졸업한다</small></h4><p class="note">병기와 내공심법은 무관에서 직접 보고 고른다. ${acadOf(CR.side).hello}</p></div>`}
+    <div class="center">${!ACAD_OFF&&G.lives&&CR.amode==='skip'?'<button type="button" class="btn pri" data-s="skipacad" style="font-size:18px;padding:8px 26px">다음: 병기·심법·보법 고르기</button>'
+      :`<button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">${ACAD_OFF?'8세, 강호에 태어나다':`8세, ${acadOf(CR.side).n}에 들다`}</button>`}</div>`);
   const ni=$('nmi');if(ni)ni.addEventListener('input',()=>CR.name=ni.value);
 }
 // 무관 건너뛰기 창: 병기 하나, 진영의 하승 심법 넷 중 하나
