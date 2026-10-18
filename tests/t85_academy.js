@@ -28,7 +28,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('운기조식 해 보기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
     r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('운기조식 해 보기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
   // 운기 과제: 내공이 가득해도 운기 단추가 보이고, 3초 앉아 있으면 된다 (v136 사용자 버그)
-  await p.evaluate(()=>{P.vit=400;trainStat('str');trainStat('end');trainStat('agi');acadCheck();P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
+  // v140 (사용자): 기본기 과제는 1만. 처음 받은 활력으로 한 번 수련하면 끝난다
+  const ro=await p.evaluate(()=>{const o={k:acadCurK(),vit:P.vit};trainStat('str');acadCheck();o.next=acadCurK();return o});
+  ok(`기본기 과제: 처음 활력 ${ro.vit}으로 한 번 수련하면 끝 (${ro.k} → ${ro.next})`,ro.k==='oe'&&ro.next!=='oe');
+  await p.evaluate(()=>{P.vit=400;trainStat('end');trainStat('agi');acadCheck();P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
   const rm=await p.evaluate(()=>({k:acadCurK(),btn:!$('t_med').hidden,hl:$('t_med').classList.contains('achl')}));
   await p.evaluate(()=>{setTouch(false);meditate()});await p.waitForTimeout(3600);
   const rm2=await p.evaluate(()=>({done:!!P.acad.done['0:4'],all:acadAllDone()}));
