@@ -92,6 +92,7 @@ function touchHud(){
   if(touchAtk&&!paused&&!joy.on)touchTarget();
   const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
+  $('t_leap').hidden=!P.gkcur;$('t_step').hidden=!P.bcur;
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
   {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
   const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;

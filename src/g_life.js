@@ -180,7 +180,7 @@ function rideToggle(){
 }
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
-  if(P.hp<=0)return;const st=ggNext(),qi=ggQi(st);if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
+  if(P.hp<=0)return;ggInit();if(!P.gkcur){if(!P.perch)log('아직 익힌 경공이 없습니다.','info');return}const st=ggNext(),qi=ggQi(st);if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
   const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;

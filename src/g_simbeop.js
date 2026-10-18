@@ -48,16 +48,18 @@ hook('hitDone',c=>{const e=c.e,d=c.hp0-e.hp;if(!e||d<=0||!(simCur().tr||[]).leng
 hook('hurtDone',c=>{const v=simTv('reflect'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(v&&d>0&&src&&src.d&&src.hp>0&&src!==P)damage(src,Math.max(1,Math.round(d*v/100)),0,0,P)});
 const simOf=sid=>Object.values(SIM).filter(x=>x.sect===sid).sort((a,b)=>a.g-b.g);
 const simBase=()=>SIM['N_base_'+P.side];
+// v141 (사용자): 무관에서 시작하면 타고난 기초 심법이 없다(P.noBase). 심법을 고르기 전엔 '심법 없음'이고 내공 수련을 못 한다
+const SIM_NONE={id:'N_none',n:'심법 없음',g:0,sc:'',el:'',tr:[],none:1,d:'아직 익힌 심법이 없다. 무관 심법 교두에게서 고른다.'};
 // 상극 심법 (사용자 2026-10-15 v103 "마교 심법과 정파 심법을 같이 쓰는 건 기괴"): 마공은 정파 계열(불가·도가·정종)과 한 몸에 둘 수 없다. 사공·사불은 마공과 어울린다.
 const SIM_FOE={마공:['불가','도가','정종'],불가:['마공'],도가:['마공'],정종:['마공']};
 const simClash=(a,b)=>!!a&&!!b&&(SIM_FOE[a]||[]).includes(b);
 const simHeld=()=>Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean);
 // 타고난 기초 심법은 상극 심법(마공)을 지니는 동안 봉인된다: 목록엔 남지만 운용할 수 없다
-const simBaseSealed=()=>simHeld().some(x=>simClash(x.sc,simBase().sc));
-function simCur(){if(P.sim&&SIM[P.sim]&&simKnown(P.sim))return SIM[P.sim];if(simBaseSealed()){const alt=simHeld().find(x=>!simClash(x.sc,simBase().sc)&&x.sc!==simBase().sc)||simHeld()[0];if(alt)return alt}return simBase()}
-const simKnown=id=>(id===('N_base_'+P.side)&&!simBaseSealed())||!!(P.sims&&P.sims[id]);
+const simBaseSealed=()=>!P.noBase&&simHeld().some(x=>simClash(x.sc,simBase().sc));
+function simCur(){if(P.sim&&SIM[P.sim]&&simKnown(P.sim))return SIM[P.sim];if(simBaseSealed()){const alt=simHeld().find(x=>!simClash(x.sc,simBase().sc)&&x.sc!==simBase().sc)||simHeld()[0];if(alt)return alt}return P.noBase?simHeld()[0]||SIM_NONE:simBase()}
+const simKnown=id=>(id===('N_base_'+P.side)&&!P.noBase&&!simBaseSealed())||!!(P.sims&&P.sims[id]);
 // 산공: 익히려는 심법 계열과 상극인 심법을 모두 잊고, 쌓은 내공의 절반이 흩어진다. 잃는 것이 없으면 아무 일도 없다.
-function sangongLoss(sc){const gone=simHeld().filter(x=>simClash(x.sc,sc));return{gone,base:simClash(simBase().sc,sc)&&!simBaseSealed()}}
+function sangongLoss(sc){const gone=simHeld().filter(x=>simClash(x.sc,sc));return{gone,base:!P.noBase&&simClash(simBase().sc,sc)&&!simBaseSealed()}}
 function sangong(sc){const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return false;
   for(const x of gone)delete P.sims[x.id];if(P.sim&&!P.sims[P.sim])P.sim=null;
   if(sc==='마공')P.mara=Math.min(100,(P.mara||0)+(typeof MARA!=='undefined'?MARA.sangong:20));else if(gone.some(x=>x.sc==='마공'))P.mara=0;   // 입마는 마성을 안고 시작하고, 마공을 버리면 마성도 사라진다 (v104)
@@ -66,7 +68,7 @@ function sangong(sc){const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)ret
   P.feats.push(`${Math.floor(P.age)}세에 ${sc}에 들려 산공했다`);return true}
 const sangongTxt=sc=>{const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return'';return`${sc}은 ${[...gone.map(x=>x.n),...(base?[simBase().n]:[])].join('·')}과 상극이라 입문하면 그 심법을 버리고(산공) 쌓은 내공 절반이 흩어진다.`};
 const simGain=()=>Math.round(SIDES[P.side].gain*SIM_GQ[simCur().g]*10)/10;
-const simMine=()=>[simBase(),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);
+const simMine=()=>[...(P.noBase?[]:[simBase()]),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);
 function simBlock(x){if(!x)return'없는 심법';if(simKnown(x.id))return'';
   if(simHeld().some(h=>simClash(h.sc,x.sc)))return`상극 심법(${simHeld().find(h=>simClash(h.sc,x.sc)).sc})을 지녀 못 익힌다`;
   if(x.shop)return x.side==='사'&&P.side!=='사'?'성향이 다르다':P.silver<SIM_SHOP.price?`은자 ${SIM_SHOP.price} 필요`:'';
@@ -89,6 +91,6 @@ hook('sectAct',c=>{const{a,x}=c;
 // 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
 const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
-  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
+  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
     <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다. 마공과 정파 계열(불가·도가·정종) 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다.</p></div>`}
 function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${x.el}속성 · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}

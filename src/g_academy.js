@@ -11,13 +11,15 @@
 // - 무관 안에서는 폐관수련을 할 수 있고(관주가 호법), 주화입마가 가볍다(g_realm.js pgPlace·hobeop·qiDeviation).
 // - ?noacad (개발·테스트용): 생성 화면에서 무기를 고르고 개봉에서 태어나는 옛 방식. 기존 테스트가 쓴다.
 // 데이터: data/academy.json. 설계: docs/무관_설계.md. 테스트: tests/t85_academy.js
+const ACAD_BOB=GD.ACAD_BOB||['b_basic'];
 const ACAD=GD.ACAD,ACAD_ST=GD.ACAD_STAGES,ACAD_SPOTS=GD.ACAD_SPOTS,ACAD_SPAR=GD.ACAD_SPAR,ACAD_GRADE=GD.ACAD_GRADE,ACAD_SIM=GD.ACAD_SIM,ACAD_SIM_COST=GD.ACAD_SIM_COST;
 const ACAD_OFF=/[?&#]noacad/.test(location.href);
 const acadOf=side=>ACAD[side]||ACAD['정'];
 const acadOn=()=>!!(P&&P.acad&&!P.acad.grad);
 // 졸업했거나 윤회 때 무관을 건너뛰었으면(v138, P.acadSkip) 맹 총관에게서 남은 하승 심법을 배울 수 있다
 const acadPast=()=>!!(P&&((P.acad&&P.acad.grad)||P.acadSkip));
-function acadSkipStart(sim){const x=SIM[sim];P.acadSkip=1;if(x&&x.acad&&x.side===P.side){simLearn(x);recalc()}
+// v141: 건너뛰어도 타고난 심법은 없고, 고른 심법·보법과 기초 경공으로 시작한다
+function acadSkipStart(sim,bob){const x=SIM[sim];P.acadSkip=1;P.noBase=1;if(ACAD_BOB.includes(bob)){P.bob={[bob]:1};P.bcur=bob}if(x&&x.acad&&x.side===P.side){simLearn(x);recalc()}
   P.feats.push(`8세에 무관을 거치지 않고 강호에 나섰다`)}
 const acadReg=()=>acadOf(P.side).id;
 const acadField=side=>acadOf(side).id+'_field';
@@ -27,6 +29,8 @@ for(const side of['정','사'])for(const x of ACAD_SIM[side])SIM[x.id]={...x,g:0
 
 // ---- 입관: 새 생이 무관에서 시작한다 (newLife가 부른다) ----
 function acadEnroll(){const A=acadOf(P.side);
+  // v141 (사용자): 처음엔 심법·경공·보법이 모두 없다. 보법은 2단계 병기 교두, 심법·경공은 3단계 심법 교두에게서 설명을 듣고 익힌다
+  P.noBase=1;P.bob={};P.bcur=null;P.gk={};P.gkcur=null;
   P.acad={stage:0,c:{},done:{},cls:null,sim:null,skip:0,grad:0,t0:P.age,oe0:STATS.reduce((s,{k})=>s+P.st[k],0),items:[]};
   const robe=mkGear('armor',`${A.n} 무관복`,1,{def:2,hp:6});robe.acad=1;P.bag.push(robe);
   P.feats.push(`8세에 ${A.n}에 들었다`)}
@@ -77,11 +81,13 @@ const GOAL={
   pick:()=>[P.acad.cls?1:0,1],
   read:()=>[P.acad.cls&&acadArts().some(id=>ARTS[id].cls===P.acad.cls)?1:0,1],
   mast:g=>[Math.floor(Math.max(0,...acadArts().map(id=>A(id).p))),g.v],
+  bobpick:()=>[P.bcur?1:0,1],
   bob:g=>[P.acad.c.bob||0,g.v],
   spar:g=>[P.acad.c['spar_'+g.id]?1:0,1],
   sim:()=>[P.acad.sim?1:0,1],
   ne:g=>[baseQi(),g.v],
   talk:g=>[P.acad.c['talk_'+g.id]?1:0,1],
+  gklearn:()=>[P.gkcur?1:0,1],
   leap:g=>[P.acad.c.leap||0,g.v],
   throw:g=>[P.acad.c.throw||0,g.v],
   quest:g=>[Object.keys(P.acad.c.qd||{}).length,g.v],
@@ -174,6 +180,15 @@ function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||ac
 const acadSimOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=2||P.acad.skip);
 function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();P.feats.push(`${Math.floor(P.age)}세에 ${x.n}을(를) 익혔다`);acadCheck()}
 
+// ---- 보법 고르기 (2단계, 월반이면 4단계): 직선·간파 하승 보법 가운데 하나 ----
+const acadBobOpen=()=>acadOn()&&(P.acad.stage>=1||P.acad.skip);
+function acadBobPick(id){if(!acadBobOpen()||!ACAD_BOB.includes(id)||!BOBS[id])return;bobInit();if(P.bcur)return;
+  P.bob[id]=1;P.bcur=id;const b=BOBS[id];log(`보법 [${b.n}](${b.t==='line'?'직선':'간파'})을(를) 익혔습니다. ${TOUCH?'보법 단추':'Shift'}로 씁니다.`,'xp');showBanner(b.n,'보법을 익히다');acadCheck()}
+// ---- 경공 배우기 (3단계, 월반이면 4단계): 기초 경공 ----
+const acadGkOpen=()=>acadOn()&&(P.acad.stage>=2||P.acad.skip);
+function acadGkLearn(){if(!acadGkOpen())return;ggInit();if(P.gkcur)return;P.gk.g_basic=1;P.gkcur='g_basic';
+  log(`경공 [${GGS.g_basic.n}](하승 · 1단)을(를) 익혔습니다. ${TOUCH?'경공 단추':'Space'}로 뜁니다.`,'xp');showBanner(GGS.g_basic.n,'경공을 익히다');acadCheck()}
+
 // ---- 단계 보고·졸업 ----
 function acadReport(){const a=P.acad;if(!acadOn()||a.stage>=4||!acadAllDone())return;const st=acadSt(),r=st.reward||{};
   P.silver+=r.silver||0;gainVit(r.vit||0);for(const[k,v]of Object.entries(r.mats||{}))P.mats[k]=(P.mats[k]||0)+v;
@@ -212,7 +227,27 @@ function acadWeaponHtml(){const a=P.acad,lock=acadPickLocked();
   return `<div class="card"><h4>병기고 <small class="dim">고르면 그 계열 하승 무공 비급과 연습 병기를 받는다${lock?' · 이미 비급을 읽어 바꿀 수 없다':a.cls?' · 비급을 읽기 전이면 바꿀 수 있다':''}</small></h4><div class="list">${CLS.map(c=>{const C=CLASS[c],art=ARTS[P.side+c+'0'];
     return `<div class="it"><div>${C.n} <small class="dim">${C.w}</small>${a.cls===c?' <small class="gold">고름</small>':''}<span>${C.d} · 공격 ×${C.atk} · 방어 ×${C.def} · 현묘도 ${C.hm>0?'+':''}${C.hm} · 사거리 ${C.reach}${art?` · 무공 [${art.n}]`:''}</span></div><div class="ib">${B('acpick:'+c,a.cls===c?'고름':'고른다',{d:lock||a.cls===c})}</div></div>`}).join('')}</div></div>`}
 function acadSimHtml(){const a=P.acad;
-  return `<div class="card"><h4>장경각 하승 심법 <small class="dim">하나만 고른다 · 나머지는 졸업 뒤 맹 총관에게서 맹 공적으로 배울 수 있다</small></h4><div class="list">${ACAD_SIM[P.side].map(x=>simRowHtml(SIM[x.id],a.sim===x.id?'<small class="gold">익힘</small>':B('acsim:'+x.id,'익힌다',{d:!!a.sim}))).join('')}</div></div>`}
+  return `<div class="card"><h4>장경각 하승 심법 <small class="dim">하나만 고른다 · 나머지는 졸업 뒤 맹 총관에게서 맹 공적으로 배울 수 있다</small></h4>${acadSimIntro()}<div class="list">${ACAD_SIM[P.side].map(x=>simRowHtml(SIM[x.id],a.sim===x.id?'<small class="gold">익힘</small>':B('acsim:'+x.id,'익힌다',{d:!!a.sim}))).join('')}</div></div>`}
+// v141 (사용자): 보법은 종류(직선·간파)를 설명하고 고르게, 경공은 1·2·3단을 설명하고 익히게, 심법도 무엇을 정하는지 설명한 뒤 고르게
+function acadBobHtml(){const t=c=>c==='line'?'직선':'간파',cur=P.bcur;
+  return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 단추':'Shift 또는 W'} · 하나만 고른다</small></h4>
+    <p class="note">"보법은 싸움 중에 짧게 미끄러져 몸을 빼는 걸음이다. 펼치는 동안은 몸이 흐려져 칼이 닿지 않는다. 내공을 쓰지만 쉬는 시간은 없어, 내공이 있는 한 연달아 쓸 수 있다."</p>
+    <p><b class="gold">직선</b> 누른 방향(조이스틱, 놓았으면 바라보는 쪽)으로 곧게 미끄러진다. 적 사이를 빠져나가고 벽·물에서 멈춘다. 거리를 벌리거나 포위를 뚫기 좋다.<br>
+    <b class="gold">간파</b> 둘레를 살펴 치기 좋은 자리로 옮긴다. 상대 등 뒤를 잡고 다른 적에게 둘러싸이지 않는 자리를 고른다. 등 뒤를 잡으면 다음 일격이 치명타다.</p>
+    <p class="note dim">등급(하승·중승·상승·절정)이 높을수록 멀리·넓게 움직인다. 중승은 개봉 잡화점 비급, 상승·절정은 문파에서 배운다.</p>
+    <div class="list">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<div class="it"><div>${b.n} <small class="gold">${t(b.t)}</small>${cur===id?' <small class="good">익힘</small>':''}<span>${b.d} · 거리 ${BG.len[b.g]} · 내공 ${BG.qi[b.g]}</span></div><div class="ib">${cur===id?'':B('acbob:'+id,'익힌다',{d:!!cur})}</div></div>`}).join('')}</div></div>`}
+function acadGkHtml(){const has=!!P.gkcur;
+  return `<div class="card"><h4>경공 <small class="dim">멀리 뛰는 이동기 · ${TOUCH?'경공 단추':'Space'}</small></h4>
+    <p class="note">"경공은 땅을 박차고 멀리 뛰는 법이다. 지붕과 나무 위에도 오른다. 단추를 이어 누르면 다음 단이 나간다."</p>
+    <p><b class="gold">1단 도약</b> 땅을 박차고 한 번 뛴다.<br><b class="gold">2단 공중 도약</b> 날고 있거나 막 내려선 순간 다시 누르면 허공을 한 번 더 밟는다. 1.4배 멀리.<br>
+    <b class="gold">3단 능공비행</b> 한 번 더 누르면 허공을 길게 난다. 2배 멀리, 나는 내내 무적.</p>
+    <p class="note dim">경공의 등급이 최고 단을 정한다: 하승은 1단, 중승은 2단, 상승·절정은 3단까지. 뛸수록 숙련이 올라 숙련 ${GG_OPEN[1]}에 2단, ${GG_OPEN[2]}에 3단이 열린다. 무관은 하승 기초 경공을 가르친다. 중승은 개봉 잡화점 비급, 상승 이상은 문파에서 배운다.</p>
+    <div class="row2"><span>${GGS.g_basic.n} <small class="dim">하승 · 1단 · 내공 ${GG_QI[0]}</small>${has?' <small class="good">익힘</small>':''}</span>${has?'':B('acgk','기초 경공을 익힌다',{pri:1})}</div></div>`}
+const acadSimIntro=()=>`<p class="note">"심법은 단전에 내공을 쌓는 법이다. 심법이 없으면 수련을 해도 내공이 늘지 않는다. 운용하는 심법이 세 가지를 정한다."</p>
+  <p><b class="gold">내공 증가</b> 수련 한 번에 쌓이는 내공. 심법 등급(하승·중승·상승·절정·천고)이 높을수록 많다. 무관 심법은 모두 하승이다.<br>
+  <b class="gold">속성</b> 무공의 기운(오행 등)과 이펙트 색. 같은 검법도 심법에 따라 불이 되고 물이 된다. 상극 속성을 만나면 피해가 커진다.<br>
+  <b class="gold">특색</b> 심법마다 따로 붙는 효과. 운용하는 동안만 살아난다.</p>
+  <p class="note dim">계열(불가·도가·정종·사공·마공)이 상극인 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다. 쌓은 내공은 심법을 바꿔도 그대로다.</p>`;
 function acadElHtml(){const els=[...new Set(ACAD_SIM[P.side].map(x=>x.el))];
   return `<div class="card"><h4>속성과 상극</h4><p class="note">"무공의 기운은 심법을 따른다. 어떤 심법을 운용하느냐에 따라 같은 검법도 불이 되고 물이 된다."</p>
     <p>상극: ${Object.entries(BEATS).map(([k,v])=>`${k}→${v}`).join(' · ')} <small class="dim">(앞이 뒤를 누른다 · 피해가 커진다)</small></p>
@@ -237,9 +272,9 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   const head=`<p class="note">${['기본기와 몸가짐을 맡는다.','병기와 무공을 맡는다.','심법과 내공을 맡는다.','강호 실습을 맡는다.'][n.i]}</p>`;
   if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>';
   let body='';
-  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();else body+='<p class="note">"1단계를 마치면 병기를 고르게 해 주마."</p>';
+  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(!acadPickOpen()) body+='<p class="note">"1단계를 마치면 병기를 고르게 해 주마."</p>';
     if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
-  if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml();else body+='<p class="note">"심법은 3단계에서 고른다. 그전엔 타고난 기초 심법으로 내공을 쌓아라."</p>'}
+  if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml()+(P.acad.c.talk_el||P.gkcur||P.acad.skip?acadGkHtml():'');else body+='<p class="note">"심법은 3단계에서 고른다. 심법이 없으면 수련을 해도 내공이 쌓이지 않는다."</p>'}
   if(n.i===3){if(a.stage>=3)body+=acadQuestHtml();else body+='<p class="note">"4단계가 되면 수련곡으로 실습을 나간다."</p>'}
   if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승${realmIdx()<1?' · 이류가 되어야 치를 수 있다':''}</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:!acadSparOk('final')})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
   return head+body+(acadSt().inst===n.i?acadStageCard(rep(n.i)):'')}
@@ -253,7 +288,7 @@ hook('npcDlg',c=>{const n=c.n;if(!n.maeng||n.role!=='steward'||c.html==null||!ac
 hook('sectAct',c=>{const{a,x}=c;
   if(a==='repair'){const w=P.eq.weapon;if(acadOn()&&w&&w.dur<w.maxDur&&P.silver>=Math.ceil((w.maxDur-w.dur)*.6))P.acad.c.repair=1;return}
   if(!a.startsWith('ac'))return;
-  const H={acpick:()=>acadPick(x),acsim:()=>acadSimPick(x),actalk:()=>{if(acadOn())P.acad.c['talk_'+x]=1;acadCheck()},acspar:()=>acadSpar(x),acq:()=>acadQuestTake(+x),acqd:()=>acadQuestReport(+x),
+  const H={acpick:()=>acadPick(x),acsim:()=>acadSimPick(x),acbob:()=>acadBobPick(x),acgk:()=>acadGkLearn(),actalk:()=>{if(acadOn())P.acad.c['talk_'+x]=1;acadCheck()},acspar:()=>acadSpar(x),acq:()=>acadQuestTake(+x),acqd:()=>acadQuestReport(+x),
     acrep:()=>acadReport(),acgrad:()=>acadGraduate(),acrec:()=>acadRec(x),
     acbuy:()=>{const s=SIM[x],al=s&&(s.side==='정'?'jeong':'sacheon');if(!s||!s.acad||s.side!==P.side||simKnown(x)||!acadPast()||maengOf()!==al||acadMptFree(al)<ACAD_SIM_COST)return;
       P.mspent=P.mspent||{};P.mspent[al]=(P.mspent[al]||0)+ACAD_SIM_COST;P.sims[x]=1;log(`${MAENG[al].short}에서 [${s.n}]을(를) 배웠습니다. 수련 창에서 바꿔 운용할 수 있다.`,'xp')}};
@@ -282,8 +317,8 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
     case'goto':{const left=g.spots.filter(s=>!a.c['spot_'+s]).map(s=>({x:ACAD_SPOTS[s][0],y:ACAD_SPOTS[s][1]+1.2,s}));const m=near(left,'',44)[0];return m?[{...m,l:left.find(o=>o.x===m.x&&o.y===m.y).s}]:[]}
     case'hit':case'mast':case'mu':return dummy();
     case'throw':return dummy('비도 던지기');
-    case'pick':case'spar':return npc('ac_i1');
-    case'sim':case'talk':return npc('ac_i2');
+    case'pick':case'spar':case'bobpick':return npc('ac_i1');
+    case'sim':case'talk':case'gklearn':return npc('ac_i2');
     case'final':return npc('ac_i0');
     case'repair':return npc('smith');
     case'boss':return gate(acadField(P.side));
@@ -307,7 +342,7 @@ function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
     ne:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
     hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],leap:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
-    pick:['[data-act^="acpick:"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
+    pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
     quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:['#tmenu',`[data-act="open:${g.id}"]`]};
   const s=(U[g.k]||[]).slice();
   // 표시한 NPC 곁에 서 있으면 터치 상황 단추(대화)도

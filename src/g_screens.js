@@ -46,9 +46,10 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='noheir'){CR.heir=null;CR.status=G.nextStatus??1;renderCreate()}
   else if(s==='start')beginLife();
   // v138 (사용자): 윤회하면 무관 튜토리얼을 건너뛸 수 있다. 건너뛰면 병기·심법을 고르는 창을 거쳐 바로 강호에서 시작
-  else if(s==='skipacad'){CR.skip=1;CR.sim=CR.sim&&SIM[CR.sim]&&SIM[CR.sim].side===CR.side?CR.sim:ACAD_SIM[CR.side][0].id;renderSkip()}
+  else if(s==='skipacad'){CR.skip=1;CR.bob=ACAD_BOB.includes(CR.bob)?CR.bob:ACAD_BOB[0];CR.sim=CR.sim&&SIM[CR.sim]&&SIM[CR.sim].side===CR.side?CR.sim:ACAD_SIM[CR.side][0].id;renderSkip()}
   else if(s==='skipback'){CR.skip=0;renderCreate()}
   else if(s.startsWith('ssim:')){CR.sim=s.slice(5);renderSkip()}
+  else if(s.startsWith('sbob:')){CR.bob=s.slice(5);renderSkip()}
   else if(s==='skipstart')beginLife(true);
   else if(s==='rebirth')showCreate();
 });
@@ -82,17 +83,19 @@ function renderCreate(){
 // 무관 건너뛰기 창: 병기 하나, 진영의 하승 심법 넷 중 하나
 function renderSkip(){
   box.innerHTML=josa(`<h2 class="title" style="font-size:40px">무관 건너뛰기</h2>
-    <p class="note center">${acadOf(CR.side).n} 과제를 건너뛰고 바로 강호에서 시작한다. 병기와 내공심법을 고르자.</p>
+    <p class="note center">${acadOf(CR.side).n} 과제를 건너뛰고 바로 강호에서 시작한다. 병기·내공심법·보법을 고르자.</p>
     <div class="card"><h4>병기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급과 병기를 받는다</small></h4>
       <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>
     <div class="card"><h4>하승 내공심법 <small class="dim">하나만 고른다 · 나머지는 맹 총관에게서 맹 공적으로 배울 수 있다</small></h4>
       <div class="choice">${ACAD_SIM[CR.side].map(x=>{const m=SIM[x.id];return `<button type="button" class="opt" data-s="ssim:${x.id}" aria-pressed="${CR.sim===x.id}"><b>${m.n}</b><span>${m.sc} · ${m.el}${m.tr&&m.tr.length?' · '+simTraitTxt(m):''}</span></button>`}).join('')}</div></div>
+    <div class="card"><h4>보법 <small class="dim">회피기 · 직선은 곧게 미끄러지고, 간파는 상대 등 뒤로 돈다 · 경공은 기초 경공(1단)을 받는다</small></h4>
+      <div class="choice">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<button type="button" class="opt" data-s="sbob:${id}" aria-pressed="${CR.bob===id}"><b>${b.n}</b><span>${b.t==='line'?'직선':'간파'} · ${b.d}</span></button>`}).join('')}</div></div>
     <div class="center"><button type="button" class="btn" data-s="skipback">돌아가기</button><button type="button" class="btn pri" data-s="skipstart" style="font-size:18px;padding:8px 26px">8세, 강호에 나서다</button></div>`);
 }
 function beginLife(skip){
   const nm=(CR.name||'').trim()||rname();const heir=CR.heir;
   newLife({name:nm.slice(0,8),side:CR.side,gg:CR.gg,wis:CR.wis,status:CR.status,cls:ACAD_OFF||skip?CR.cls:null,bonusVit:G.bonusVit||0,silver:heir?G.heir.silver:0});
-  if(skip&&!ACAD_OFF)acadSkipStart(CR.sim);
+  if(skip&&!ACAD_OFF)acadSkipStart(CR.sim,CR.bob);
   if(heir){P.feats.push(`${G.lives}번째 생의 자식으로 가문을 이었다`)}else{G.house=null;G.storage={mats:{},bag:[]}}
   G.heir=null;G.bonusVit=0;G.wisCarry=0;G.board=null;
   allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];

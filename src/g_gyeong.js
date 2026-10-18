@@ -20,7 +20,8 @@ function ggLand(L){if(!L||!L.st)return;const g=ggOf();
   const inv=ggTv('inv',g);if(inv)P.inv=Math.max(P.inv||0,inv);
   const sh=ggTv('shock',g);if(sh){let n=0;for(const e of foes())if(dist(e,P)<1.7){damage(e,Math.max(1,Math.round(atk()*sh/100)),.9,0,P);n++}if(n){shake=Math.max(shake,.15);fx.push({t:'ring',x:P.x,y:P.y,life:.3,max:.3,col:'220,200,150'})}}
   const hd=ggTv('hide',g);if(hd){let n=0;for(const e of mobs)if(e.hp>0&&e.aggro&&!e.duel&&!e.d.boss&&dist(e,P)<10){e.aggro=false;e.tgt=null;e.lost=time+hd;e.goal={x:e.home.x,y:e.home.y};n++}if(n){addText(P.x,P.y-.6,'무흔','#dfe9ff');if(P.target&&P.target.isMob)P.target=null}}}
-function ggInit(){if(!P.gk)P.gk={g_basic:1};if(!P.gkcur||!P.gk[P.gkcur])P.gkcur='g_basic';if(!P.ggm)P.ggm={}}
+// v141 (사용자): 무관에서 시작하면 경공이 없다(P.gk={}, P.gkcur=null). 심법 교두에게서 기초 경공을 배운다. 옛 저장은 기초 경공
+function ggInit(){if(!P.gk)P.gk={g_basic:1};if(!P.gkcur||!P.gk[P.gkcur])P.gkcur=Object.keys(P.gk).find(id=>GGS[id])||null;if(!P.ggm)P.ggm={}}
 const ggOf=()=>{ggInit();return GGS[P.gkcur]||GGS.g_basic};
 const ggMast=id=>{ggInit();return P.ggm[id||P.gkcur]||0};
 // 지금 쓰는 경공으로 열린 최고 단계

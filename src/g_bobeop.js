@@ -13,7 +13,8 @@ const BOBS=GD.BOBS;
 // 얻는 곳: 하승·중승은 개봉 잡화점 비급, 상승은 문파 본산에서 정식제자 이상 공적 100, 절정은 호법(당주) 이상 공적 300
 const BCOST=GD.BCOST,BRANK=GD.BRANK,BPRICE=GD.BPRICE;
 const bobOf=()=>BOBS[P.bcur]||BOBS.b_basic;
-function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur='b_basic';if(P.bcd2==null)P.bcd2=0}
+// v141 (사용자): 무관에서 시작하면 보법이 없다(P.bob={}, P.bcur=null). 병기 교두에게서 고른다. 옛 저장은 기초보법
+function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur=Object.keys(P.bob).find(id=>BOBS[id])||null;if(P.bcd2==null)P.bcd2=0}
 function bobBlock(id,viaSect){const b=BOBS[id];bobInit();if(P.bob[id])return'이미 익혔다';
   if(b.g>=2){if(!viaSect)return'문파에서';if(!P.sect)return'문파 제자만';if(rankIdx(P.sect)<BRANK[b.g])return`${rankName(P.sect,BRANK[b.g])} 이상`;if((P.merit[P.sect]||0)<BCOST[b.g])return`공적 ${BCOST[b.g]} 필요`}
   return null}
@@ -52,6 +53,7 @@ const BOB_STAT=GD.BOB_STAT;
 function bobeop(){
   if(!P||P.hp<=0||P.leap)return false;bobInit();
   if(P.perch){perchDrop();return true}
+  if(!P.bcur){log('아직 익힌 보법이 없습니다.','info');return false}
   const b=bobOf(),q=BG.qi[b.g];
   if(P.qi<q){log('내공이 부족합니다.','info');return false}   // 쿨타임 없음: 내공이 있는 한 연달아 쓴다 (사용자 결정 2026-10-13)
   const t0=performance.now(),jx=joy.on?joy.gx:0,jy=joy.on?joy.gy:0;
