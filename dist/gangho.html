@@ -2032,6 +2032,7 @@ function act(s){
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
+    case'totitle':toTitle();return;
     case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
@@ -3071,6 +3072,11 @@ function slotPanel(){const i=SLOT,s=slotInfo(i);
   const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
     :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
   return `<div class="card" id="slotinfo">${body}${btns}</div>`}
+// 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
+function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
+  P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
+  for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
+  showTitle()}
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
@@ -3339,7 +3345,7 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('totitle','저장 칸 고르기')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
 }
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);

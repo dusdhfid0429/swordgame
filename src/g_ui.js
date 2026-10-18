@@ -285,6 +285,7 @@ function act(s){
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
+    case'totitle':toTitle();return;
     case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}

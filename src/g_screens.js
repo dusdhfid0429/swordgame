@@ -16,6 +16,11 @@ function slotPanel(){const i=SLOT,s=slotInfo(i);
   const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
     :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
   return `<div class="card" id="slotinfo">${body}${btns}</div>`}
+// 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
+function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
+  P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
+  for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
+  showTitle()}
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
