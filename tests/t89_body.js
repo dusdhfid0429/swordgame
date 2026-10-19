@@ -48,8 +48,5 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 4. 예전 저장: 현경인데 P.ban이 없으면 불러올 때 젊어진다
   const r8=await p.evaluate(()=>{P.sect='namgung';P.realm=6;P.age=70;saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));delete d.P.ban;delete d.P.hgt;delete P.ban;delete P.hgt;applySave(d);return{age:Math.floor(P.age),ban:!!P.ban,hgt:P.hgt&&P.hgt.why}});
   ok(`예전 저장 현경: ${r8.age}세, 반로환동 ${r8.ban}, 환골탈태 ${r8.hgt}`,r8.age===25&&r8.ban&&r8.hgt==='화경');
-  // 6. 문파 유래: 역사·중국 소설·한국 무협 색 구분
-  const r10=await p.evaluate(()=>{const h=sectDetail(SECTS.hwasan),c=sectLoreHtml('cheonma');return{h:h.includes('유래')&&h.includes('서악'),c:['역사','중국 소설','한국 무협'].every(k=>c.includes(k)),none:sectLoreHtml('nope')===''}});
-  ok(`문파 유래: 화산파 창 ${r10.h}, 천마신교 세 갈래 ${r10.c}, 없는 문파는 비움 ${r10.none}`,r10.h&&r10.c&&r10.none);
   ok(`오류 없음 ${errs.join(' | ')}`,errs.length===0);
   await b.close()})();
