@@ -22,15 +22,19 @@ function questCard(q,i){const f=questFrom(q),p=questProg(q);
     <p>${p.kill?'처치':'납품'} <b class="gold">${questWhere(q)}</b></p>
     ${p.kill&&q.near&&q.near.some(o=>o.t)?`<p class="note">맡을 때 가장 가까운 출몰지: ${q.near.filter(o=>o.t).map(o=>`${esc(o.k)} <b>${esc(o.t)}</b>`).join(' · ')}</p>`:''}
     <p>진행 <b class="num ${p.done?'good':''}">${p.have}/${q.cnt}</b>${p.kill?'':` <small class="dim">(가진 것 ${P.mats[q.mat]||0})</small>`}</p><div class="mbar"><i style="width:${p.pct}%;background:${p.done?'#7fc77a':'#c9a24a'}"></i></div>
+    ${(()=>{const r=typeof storyRows==='function'&&storyRows().find(o=>o.q===q);return r&&r.left!=null?`<p class="bad">남은 시간: ${r.lbl} <b>${fmtLeft(r.left)}</b></p>`:''})()}
     <p>보상 ${rew}</p><p class="note">보고: ${f.at}</p>
-    <div class="row2"><span></span>${B('qdrop:'+i,'포기')}</div></div>`}
+    <div class="row2"><span></span><span>${q.story||q.war||q.sq?B('open:story','정세창'):''}${B('qdrop:'+i,'포기')}</span></div></div>`}
+// v149 (사용자): 정세 사건과 정세 임무는 맨 위, 남은 시간과 함께
+function storyOpenCard(){const r=typeof storyRows==='function'&&storyRows().find(o=>!o.q);if(!r)return'';
+  return `<div class="card"><div class="row2"><h4>${esc(r.n)} <small class="gold">선택 대기</small></h4><span class="tag">강호 정세</span></div><p class="bad">남은 시간: ${r.lbl} <b>${fmtLeft(r.left)}</b> · 지나면 손쓰지 못한 채 흘러간다</p><div class="row2"><span></span>${B('open:story','정세창에서 고르기')}</div></div>`}
 function pQuest(){const qs=P.quests||[];
   const where=[`개봉 의뢰판 <small class="dim">한 번에 셋 · ${G.board&&G.board.length?`붙은 방 ${G.board.length}`:'새 방은 해가 바뀌면'}</small>`];
   if(P.sect&&SECTS[P.sect])where.push(`${SECTS[P.sect].n} 임무 <small class="dim">본산 ${masterTitle(SECTS[P.sect])}·성도 연락관 · 해마다 둘</small>`);
   const al=typeof maengOf==='function'?maengOf():null;if(al&&typeof MAENG!=='undefined'&&MAENG[al])where.push(`${MAENG[al].n} 임무 <small class="dim">총단 · 해마다 셋</small>`);
   return acadQuestCard()+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
-    ${qs.length?qs.map(questCard).join(''):'<p class="note">맡은 임무가 없다.</p>'}
+    ${storyOpenCard()}${qs.length?qs.map((q,i)=>[q,i]).sort((a,b)=>!!(b[0].story||b[0].war||b[0].sq)-!!(a[0].story||a[0].war||a[0].sq)).map(([q,i])=>questCard(q,i)).join(''):'<p class="note">맡은 임무가 없다.</p>'}
     <div class="card"><h4>임무를 맡는 곳</h4>${where.map(w=>`<p>${w}</p>`).join('')}</div>`}
 // 열기: J 키, 왼쪽 '맡은 임무' 글(PC)
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;if(e.code==='KeyJ')openPanel('quest')});
-{const el=$('qtrack');if(el){el.style.cursor='pointer';el.addEventListener('click',()=>{if(playing&&!TOUCH)openPanel('quest')})}}
+// 임무 줄 누르기는 g_ui.js (v149: 정세 줄은 정세창으로 나눠 연다)

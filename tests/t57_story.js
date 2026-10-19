@@ -14,9 +14,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.keyboard.press('KeyN');await p.waitForTimeout(150);
   const t1=await p.evaluate(()=>{const r={panel,title:$('wtitle').textContent,body:$('wbody').textContent};closePanels();for(let i=0;i<40;i++)update(1);r.open=P.story.open;r.age=P.age;return r});
   ok(`N 키 → '${t1.title}', 성장 구간(${t1.age.toFixed(1)}세) 사건 없음`,t1.panel==='story'&&t1.title==='강호 정세'&&t1.body.includes('삼파전')&&t1.open===null);
-  // 3. 20세가 되면 첫 사건이 열리고 창이 뜬다. 정파에겐 정파의 길과 중립 선택만 보인다 (v114)
-  const t2=await p.evaluate(()=>{P.age=20;lastYear=19;update(.1);return{open:P.story.open,panel,btns:[...document.querySelectorAll('[data-act^="spick:"]')].map(b=>b.disabled),log:$('log').textContent}});
-  ok(`20세: ${t2.open} 열림, 정세 창 자동, 선택 잠김 ${JSON.stringify(t2.btns)}`,t2.open==='ev1'&&t2.panel==='story'&&t2.btns.length===2&&t2.btns[0]===false&&t2.btns[1]===false&&t2.log.includes('혈교의 그림자'));
+  // 3. 20세가 되면 첫 사건이 열린다. 정파에겐 정파의 길과 중립 선택만 보인다 (v114)
+  // v149 (사용자): 사건이 터지면 창을 띄우지 않고 화면에 크게 알린다(터치 통과). 왼쪽 임무 줄 맨 위에 남은 시간, 누르면 정세창
+  const t2a=await p.evaluate(()=>{closePanels();P.age=20;lastYear=19;update(.1);questTrack();const b=$('sban'),row=document.querySelector('#qtrack [data-story]');
+    return{panel,ban:b.classList.contains('on')&&b.textContent.includes('혈교의 그림자'),pe:getComputedStyle(b).pointerEvents,row:row&&row.textContent,first:$('qtrack').querySelector('div')===row}});
+  ok(`20세: 창 안 뜸 (${t2a.panel}), 화면 연출 ${t2a.ban} (터치 ${t2a.pe}), 임무 줄 맨 위 "${t2a.row}"`,t2a.panel===null&&t2a.ban&&t2a.pe==='none'&&/흘러가기까지 \d+분 \d+초/.test(t2a.row||'')&&t2a.first);
+  await p.click('#qtrack [data-story]');await p.waitForTimeout(150);
+  const t2=await p.evaluate(()=>({open:P.story.open,panel,btns:[...document.querySelectorAll('[data-act^="spick:"]')].map(b=>b.disabled),log:$('log').textContent}));
+  ok(`정세 줄 누르면 정세창 (${t2.panel}): ${t2.open} 열림, 선택 잠김 ${JSON.stringify(t2.btns)}`,t2.open==='ev1'&&t2.panel==='story'&&t2.btns.length===2&&t2.btns[0]===false&&t2.btns[1]===false&&t2.log.includes('혈교의 그림자'));
   // 4. 임무 선택: 임무가 들어오고, 적을 잡아 정세 창에서 보고하면 끝맺음 효과
   const t3=await p.evaluate(()=>{act('spick:ev1:0');const q=P.quests.find(q=>q.story==='ev1');const pw=G.W.pow.정;q.have=q.cnt;closePanels();openPanel('story');const btn=document.querySelector('[data-act^="qdone:"]');const good=P.good;act(btn.dataset.act);
     return{pick:P.story.pick.ev1,q:!!q,open:P.story.open,btn:!!btn&&!btn.disabled,done:P.story.done.ev1,pw0:pw,pw1:G.W.pow.정,good:P.good-good,left:P.quests.some(q=>q.story==='ev1')}});
@@ -36,7 +41,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 9. 죽으면 선택이 강호사에 남고, 다음 생도 세상 상태(봉문·힘)를 잇는다. 사건 창에 전생의 흔적
   const t8=await p.evaluate(()=>{warEnd(true);setPow('마',77);const seal=Object.keys(G.seal)[0];die('싸움');return{seal,hist:G.history[G.history.length-1].story,wars:G.wars.length}});
   await p.waitForTimeout(1200);await p.click('[data-s="rebirth"]');await p.waitForTimeout(200);await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
-  const t9=await p.evaluate(()=>({age:P.age,ma:G.W.pow.마,seal:Object.keys(G.seal),lives:G.lives,st:P.story.open,hint:(P.age=20,lastYear=19,update(.1),$('wbody').textContent)}));
+  const t9=await p.evaluate(()=>({age:P.age,ma:G.W.pow.마,seal:Object.keys(G.seal),lives:G.lives,st:P.story.open,hint:(P.age=20,lastYear=19,update(.1),openPanel('story'),$('wbody').textContent)}));
   ok(`강호사에 선택 ${JSON.stringify(t8.hist.pick).slice(0,40)}…, 대전 기록 ${t8.wars}`,t8.hist&&t8.hist.pick.ev1===0&&t8.wars===1);
   ok(`다음 생: 8세(${t9.age}), 마교 힘 유지 ${t9.ma}, 봉문 유지 ${t9.seal}`,Math.floor(t9.age)===8&&Math.round(t9.ma)===77&&t9.seal[0]===t8.seal&&t9.lives===1&&t9.st===null);
   ok('전생의 흔적이 사건 창에 보인다',t9.hint.includes('전생의 흔적')&&t9.hint.includes('제1생'));

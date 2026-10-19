@@ -70,6 +70,16 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .banner div{font-family:var(--display);font-size:clamp(28px,6vw,50px);color:var(--paper);text-shadow:0 2px 18px #000,0 0 2px #000;opacity:0;transition:opacity .4s;text-align:center}
 .banner div.on{opacity:1}
 .banner small{display:block;font-size:.4em;color:var(--exp);letter-spacing:.2em;margin-top:6px}
+/* v149 (사용자): 정세 사건 연출. 창 대신 화면 가운데 먹빛 띠에 붉은 제목이 쾅 박힌다. 터치는 통과 */
+.sban{position:absolute;left:0;right:0;top:38%;transform:translateY(-50%);pointer-events:none;display:grid;place-items:center;opacity:0;z-index:30}
+.sban.on{animation:sbanIn 4.2s ease forwards}
+.sban .bd{position:absolute;inset:-14px 0;background:linear-gradient(90deg,transparent,#0b0604e8 18%,#0b0604f2 50%,#0b0604e8 82%,transparent);border-top:1px solid #a8332a90;border-bottom:1px solid #a8332a90}
+.sban .k{position:relative;font:13px var(--body);letter-spacing:.5em;color:#e0b25a;margin-bottom:2px}
+.sban .t{position:relative;font-family:var(--display);font-size:clamp(34px,7.5vw,64px);color:#f3e2c0;text-shadow:0 0 18px #c0281c,0 0 2px #000,0 3px 0 #5a0f0a;letter-spacing:.08em;animation:sbanT 4.2s ease forwards}
+.sban .s{position:relative;font:clamp(12px,2.4vw,15px)/1.5 var(--body);color:#d8c7a0;max-width:min(560px,86vw);text-align:center;margin-top:4px}
+@keyframes sbanIn{0%{opacity:0}8%{opacity:1}82%{opacity:1}100%{opacity:0}}
+@keyframes sbanT{0%{transform:scale(2.2);opacity:0;filter:blur(6px)}10%{transform:scale(.94);opacity:1;filter:blur(0)}16%{transform:scale(1)}100%{transform:scale(1.04)}}
+.qtrack div.sq{color:#f0a890;white-space:normal}.qtrack .sq b{color:#ffb38a}.qtrack .sq i{font-style:normal;color:#e0b25a}
 .win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 24px));max-height:calc(100% - 20px);overflow:hidden;
   background:linear-gradient(#2c2419,#17120c);border:2px solid var(--bronze);box-shadow:0 10px 40px #000,inset 0 1px 0 var(--bronze-hi);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 #wbody{overflow:auto;min-height:0;flex:1 1 auto;overscroll-behavior:contain}
@@ -230,7 +240,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
     <div class="zone"><span id="zone">개봉 성내</span><small id="cal">봄 · 맑음</small>
       <div class="row"><button id="modeb" type="button" title="Tab">자동초식</button><button id="runb" type="button" title="R">질주</button><button id="forceb" type="button" title="T">강제</button><button id="saveb" type="button">기록</button><button id="helpb" type="button">조작법</button></div><div class="qtrack" id="qtrack" hidden></div></div>
     <div class="chan" id="chan" hidden><span id="chant"></span><i id="chanb"></i></div>
-    <div class="banner"><div id="banner"></div></div>
+    <div class="banner"><div id="banner"></div></div><div class="sban" id="sban"></div>
     <div class="win" id="win" hidden role="dialog" aria-modal="true"><div class="whead"><span id="wtitle"></span><button class="btn" id="wx" type="button">닫기</button></div><p class="wnote" id="wnote" hidden role="status"></p><div id="wbody" style="display:grid;gap:10px"></div></div>
     <div class="screen" id="scr" hidden><div class="box" id="scrbox"></div></div>
   </div>

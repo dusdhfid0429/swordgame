@@ -13,12 +13,18 @@ function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없
 // 맡은 임무와 진행도: 지역 이름 아래
 let qtrackKey='';
 // v136 (사용자): 임무 줄은 높이가 고정이고 스크롤된다. 누르면(끌어 스크롤하면 아님) 임무창이 열린다
-$('qtrack').addEventListener('click',()=>{if(playing&&P)openPanel('quest')});
+// v149 (사용자): 정세 줄을 누르면 정세창, 다른 줄은 임무창
+$('qtrack').addEventListener('click',e=>{if(!playing||!P)return;openPanel(e.target.closest('[data-story]')?'story':'quest')});
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const kill=q.kind==='kill',have=kill?q.have:Math.min(q.cnt,P.mats[q.mat]||0),done=have>=q.cnt,what=kill?q.mob.join('·')+' 처치':q.mat+' 납품';return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
   const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)
-  const key=ac+rows.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rows.length&&!ac;
-  el.innerHTML=ac+(rows.length?`<h5>맡은 임무 ${rows.length}</h5>`+rows.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')}
+  // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
+  const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
+  const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
+  const key=ac+st+rest.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rest.length&&!ac&&!st;
+  el.innerHTML=ac+(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')}
+// 남은 시간: 한 시간 넘으면 시·분, 그 아래는 분·초, 1분 아래는 초
+function fmtLeft(sec){sec=Math.max(0,Math.ceil(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}시간 ${m}분`:m?`${m}분 ${s}초`:`${s}초`}
 let noteT;
 // 창(행낭·인물창 등)이나 수련 창이 열려 있을 때의 메시지는 화면 맨 위 레이어에 잠깐 띄웠다가 서서히 지운다.
 // 위치는 위쪽 상태창·지도 아래, 아래쪽 조이스틱·버튼 위라 조작을 가리지 않고, 터치도 통과한다.
@@ -34,6 +40,9 @@ function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()
 function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
+// v149 (사용자): 정세 사건은 창을 띄우지 않고 화면 가운데에 크게 박는다 (맵 이동 알림보다 세게, 터치는 통과)
+let sbanT;function storyBanner(t,s,k){const b=$('sban');if(!b)return;b.innerHTML=`<div class="bd"></div><div class="k">${esc(k||'강호 정세')}</div><div class="t">${esc(t)}</div>${s?`<div class="s">${esc(josa(s))}</div>`:''}`;
+  b.classList.remove('on');void b.offsetWidth;b.classList.add('on');clearTimeout(sbanT);sbanT=setTimeout(()=>b.classList.remove('on'),4300);shake=Math.max(shake||0,.25);if(typeof sfx==='function')sfx('ult')}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
