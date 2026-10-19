@@ -193,7 +193,7 @@ const HQ_GRASS=GD.HQ_GRASS;
 // x0,y0,C,CH: 큰 지역은 C×CH칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모. 맵 전체면 N×NH
 function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&!y0?NH:C){
   const X0=(x0-y0-CH)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round((C+CH)*TW/2*k),gh=Math.round((C+CH)*TH/2*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
-  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,gc=HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow';
+  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,TR=th==='hall'||th==='dark'&&!(TP&&TP.key==='십만대산')?null:TP,gc=TR&&TR.grass||HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow',MI=TR&&TR.mist;   // v155: TR = 지역 지형(g_terrain.js)
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
     const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
     if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+CH||gx>=N||gy>=NH)continue;
@@ -201,13 +201,19 @@ function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
     const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
     let R,G,B;
-    if(t===2){const w=fbm(gx*2.5,gy*4);if(th==='swamp'||th==='miao'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
+    if(t===2){const w=fbm(gx*2.5,gy*4);if(TR&&TR.water){const c=TR.water,m=.8+w*.4;R=c[0]*m;G=c[1]*m;B=c[2]*m}else if(th==='swamp'||th==='miao'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
     else if(t===3){R=136;G=96;B=60;const gr=vn(gx*40,gy*4);R*=.8+gr*.35;G*=.8+gr*.35;B*=.8+gr*.3;if(frac(gx*4)<.1){R*=.45;G*=.45;B*=.45}}
     else if(t===1){if(stair){const st=frac(gy*2),h=hash(Math.floor(gx*2),Math.floor(gy*2));R=(126+n*22)*(.88+h*.2);G=(120+n*20)*(.88+h*.2);B=(110+n*18)*(.88+h*.2);if(st<.08){R*=.6;G*=.6;B*=.6}}
       else{const k=vn(gx*6,gy*6);R=122+n*24+k*10;G=102+n*20+k*8;B=74+n*14}}
     else if(t===4){const sx=gx*2+(Math.floor(gy*2)%2)*.5,sy=gy*2,f1=frac(sx),f2=frac(sy),h=hash(Math.floor(sx)*7,Math.floor(sy)*13),tone=.84+h*.22,m=Math.min(f1,1-f1,f2,1-f2);
       R=(th==='dark'?110:168)*tone;G=(th==='dark'?100:162)*tone;B=(th==='dark'?100:152)*tone;if(m<.05){R=80;G=76;B=72}}
-    else if(t===6){const k=vn(gx*3,gy*3);R=96+n*30+k*14;G=94+n*28+k*12;B=90+n*26+k*12;if(vn(gx*9,gy*9)>.72){R*=.7;G*=.7;B*=.72}}
+    else if(t===6){const k=vn(gx*3,gy*3);if(TR&&TR.rock){const c=TR.rock,pt=TR.pat,m=.8+n*.3+k*.14;let s=1;R=c[0]*m;G=c[1]*m;B=c[2]*m;
+        if(pt==='streak'){const q=frac(gx*2.2+vn(gy*.9,gx*.4)*1.6);s=q<.07?.6:q<.13?1.12:1}
+        else if(pt==='strata'){s=.86+Math.sin((gx*.35+gy)*2.6+k*2.2)*.14}
+        else if(pt==='round')s=vn(gx*5,gy*5)>.68?1.12:1;
+        else if(pt==='scree')s=.8+hash(Math.floor(gx*6),Math.floor(gy*6))*.35;
+        R*=s;G*=s;B*=s;if(vn(gx*9,gy*9)>.76){R*=.72;G*=.72;B*=.74}}
+      else{R=96+n*30+k*14;G=94+n*28+k*12;B=90+n*26+k*12;if(vn(gx*9,gy*9)>.72){R*=.7;G*=.7;B*=.72}}}
     else if(t===7){const k=vn(gx*4,gy*4);R=106+n*26+k*10;G=88+n*20+k*8;B=64+n*14}
     else if(t===8){const k=fbm(gx*.6,gy*.6);R=212+n*26-k*18;G=220+n*24-k*14;B=232+n*18-k*6;if(vn(gx*5+3,gy*5)>.8){R-=60;G-=56;B-=46}}
     else if(t===9){const k=vn(gx*3,gy*3);R=64+n*24+k*10;G=60+n*22+k*8;B=38+n*12;if(vn(gx*8,gy*8)>.76){R*=.7;G*=.8;B*=.7}}
@@ -216,16 +222,18 @@ function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&
     else if(t===13){const pl=frac(gy*1.5)<.06||frac(gx*.5+Math.floor(gy*1.5)*.5)<.04,k=vn(gx*2,gy*7);R=(th==='dark'?74:150)+n*18+k*10;G=(th==='dark'?52:104)+n*14+k*8;B=(th==='dark'?44:66)+n*10;if(pl){R*=.55;G*=.55;B*=.55}}
     else if(t===11){const k=vn(gx*3,gy*3);R=40+n*18+k*10;G=36+n*16+k*8;B=38+n*16+k*8;if(vn(gx*11,gy*11)>.82){R+=60;G+=14;B+=8}}
     else{const big=vn(gx*.2,gy*.2);R=gc[0]+n*34+big*16;G=gc[1]+n*40+big*14;B=gc[2]+n*20;const dirt=fbm(gx*.5+20,gy*.5);if(dirt>.64){const k=Math.min(1,(dirt-.64)*5);R+=(100-R)*k;G+=(94-G)*k;B+=(80-B)*k}}
-    const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);
-    const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
+    const i=(qy*gw+qx)*4,ed=Math.min(gx,gy,N-gx,NH-gy);
+    if(MI){const e=clamp((ed-.4+(fbm(gx*.35,gy*.35)-.5)*2.4)/3.2,0,1),f=e*e*(3-2*e);   // 구름바다: 가장자리가 안개 빛으로 바랜다
+      d[i]=R*grain*f+MI[0]*(1-f);d[i+1]=G*grain*f+MI[1]*(1-f);d[i+2]=B*grain*f+MI[2]*(1-f)}
+    else{const fade=Math.min(1,ed/1.6);d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade}d[i+3]=255;
   }
   g.putImageData(img,0,0);
   const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*CH/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(NH-1,y0+r()*CH);g.lineCap='round';
-  const hue=th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
+  const hue=TR&&TR.sand?40:th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
   for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>NH-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
   for(let q=0;q<900*A;q++){const gx=rx(),gy=ry(),t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
-    g.fillStyle=t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
+    g.fillStyle=t===6&&TR&&TR.rock?`rgb(${TR.rock.map(v=>v*(.55+r()*.5)|0).join(',')})`:t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
   return c;
 }
 // 큰 지역(성) 바닥: 한 장으로 구우면 휴대폰 메모리가 모자라서, 12×12칸 조각을 화면 가까이에서만 굽고 멀어진 조각은 버린다

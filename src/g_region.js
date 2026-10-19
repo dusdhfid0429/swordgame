@@ -22,6 +22,7 @@ function loadRegion(id){
   {const c={id};runHooks('loadRegion',c);id=c.id}
   REG=id;const R=REGION();R.gen();
   for(const g of R.gates)if(!g.door)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
+  runHooks('regionGen',id);   // v155: 지형 개성(TP)·물 칸 목록·봉우리 (g_terrain.js). 바닥을 굽기 전에
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
