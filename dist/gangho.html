@@ -642,7 +642,7 @@ function allianceDlg(alId){
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
   const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[Math.min(...s.arts.map(a=>artGrade(a.id)))]}~${AGR[Math.max(...s.arts.map(a=>artGrade(a.id)))]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
   const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
-  const head=!sideOk(alId)?`<p class="note">"${SIDES[P.side].n} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
+  const head=!sideOk(alId)?`<p class="note">"${facName()} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
   return `${head}<p class="note">${al.d}</p>${mine?`<p class="note">지금 소속: <b>${mine.n}</b> (${ALLY[mine.al].n})</p>`:''}
     <h4 style="margin:0">${alId==='jeong'?'9파1방':alId==='sacheon'?'4대문파':alId==='gunbu'?'황성 금군':'본교'}</h4><div class="list">${big.map(row).join('')}</div>
@@ -1824,7 +1824,7 @@ function meditate(){if(P.medit){P.medit=false;return}if(typeof simCur==='functio
 const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${SIDES[P.side].n}`;
+  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${facName()}`;
   $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}`;
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();$('mag').style.display=ma?'':'none';if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$('mat').textContent=tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`}}
@@ -1868,7 +1868,7 @@ function pChar(){
   const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
-  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
+  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
@@ -4350,6 +4350,8 @@ const alFac=al=>al==='magyo'?'마':al==='gunbu'?'관':ALLY[al].side;
 const FACN=GD.FACN;
 // 플레이어 편: 마교 제자면 '마', 문파가 있으면 그 세력, 없으면 타고난 성향
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
+// v150 (사용자 버그): 인물 정보에 보이는 소속 세력. 마교에 들면 '마교' (P.side는 태어난 계열이라 정/사로 남는다)
+const facName=()=>({정:'정파',사:'사파',마:'마교',관:'관군'})[pfac()]||SIDES[P.side].n;
 // 누가 누구와 싸우나: 정↔사, 마교는 모두와, 관군(군부)은 사파·마교와. 정파와 관군은 서로 건드리지 않는다 (2026-10-10 군부)
 const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사','관'],'관':['사','마']};
 // 천하대전 중에는 구도(G.war.plan)가 적·아군을 정한다 (g_story.js warFoe). 구도에 없는 세력은 평소 표를 따른다
@@ -5823,7 +5825,7 @@ function maengBlock(al,atHq){const M=MAENG[al],id=maengId(al);
   return `${maengRankHtml(al)}${maengJoinHtml(al)}${maengMisHtml(al)}${atHq?'':`<div class="row2"><span class="note">총단은 ${PROV[M.prov].n} ${M.city} 성내 북쪽에 있다. 역참 말로 바로 갈 수 있다.</span>${B('goto:'+id,`총단 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===id})}</div>`}`}
 function maengDlg(n){const al=n.maeng,M=MAENG[al],same=P.side===ALLY[al].side,on=maengOf()===al,r=maengRank(al),mine=mySectIn(al);
   if(n.role==='leader'){
-    if(!same)return `<p class="note">"${SIDES[P.side].n} 사람이 여기까지 오다니. 당 무인들이 보기 전에 돌아가라."</p>`;
+    if(!same)return `<p class="note">"${facName()} 사람이 여기까지 오다니. 당 무인들이 보기 전에 돌아가라."</p>`;
     let h=`<p class="note">${M.leader}이(가) 상석에서 내려다본다. "${on?`${mine?`${mine.n}의 ${rankName(mine.id)}`:'맹원'} ${esc(P.name)}, ${r>=4?'그대의 공이 맹을 지탱한다.':'맹을 위해 힘써 주게.'}`:'맹에 들고 싶거든 접객당 총관을 찾게.'}"</p><p class="note">${M.d}</p>${maengSeatsHtml(al)}${maengRankHtml(al)}`;
     if(on&&r>=4){const got=(P.mgift||{})[al]||0,lv=r>=5?2:1;
       h+=`<div class="card"><h4>맹주의 하사 <small class="dim">장로 이상 · 직위마다 한 번</small></h4><p class="note">장로: 은자 300·명성 50 · 부맹주: 은자 800·명성 100</p>${got>=lv?'<p class="note">이미 받았다.</p>':B('mgift:'+al,'하사 받기',{pri:1})}</div>`}

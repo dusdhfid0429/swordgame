@@ -7,6 +7,8 @@ const alFac=al=>al==='magyo'?'마':al==='gunbu'?'관':ALLY[al].side;
 const FACN=GD.FACN;
 // 플레이어 편: 마교 제자면 '마', 문파가 있으면 그 세력, 없으면 타고난 성향
 function pfac(){const s=P&&P.sect&&SECTS[P.sect];return s?alFac(s.al):P?P.side:'정'}
+// v150 (사용자 버그): 인물 정보에 보이는 소속 세력. 마교에 들면 '마교' (P.side는 태어난 계열이라 정/사로 남는다)
+const facName=()=>({정:'정파',사:'사파',마:'마교',관:'관군'})[pfac()]||SIDES[P.side].n;
 // 누가 누구와 싸우나: 정↔사, 마교는 모두와, 관군(군부)은 사파·마교와. 정파와 관군은 서로 건드리지 않는다 (2026-10-10 군부)
 const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사','관'],'관':['사','마']};
 // 천하대전 중에는 구도(G.war.plan)가 적·아군을 정한다 (g_story.js warFoe). 구도에 없는 세력은 평소 표를 따른다

@@ -65,7 +65,7 @@ function maengBlock(al,atHq){const M=MAENG[al],id=maengId(al);
   return `${maengRankHtml(al)}${maengJoinHtml(al)}${maengMisHtml(al)}${atHq?'':`<div class="row2"><span class="note">총단은 ${PROV[M.prov].n} ${M.city} 성내 북쪽에 있다. 역참 말로 바로 갈 수 있다.</span>${B('goto:'+id,`총단 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===id})}</div>`}`}
 function maengDlg(n){const al=n.maeng,M=MAENG[al],same=P.side===ALLY[al].side,on=maengOf()===al,r=maengRank(al),mine=mySectIn(al);
   if(n.role==='leader'){
-    if(!same)return `<p class="note">"${SIDES[P.side].n} 사람이 여기까지 오다니. 당 무인들이 보기 전에 돌아가라."</p>`;
+    if(!same)return `<p class="note">"${facName()} 사람이 여기까지 오다니. 당 무인들이 보기 전에 돌아가라."</p>`;
     let h=`<p class="note">${M.leader}이(가) 상석에서 내려다본다. "${on?`${mine?`${mine.n}의 ${rankName(mine.id)}`:'맹원'} ${esc(P.name)}, ${r>=4?'그대의 공이 맹을 지탱한다.':'맹을 위해 힘써 주게.'}`:'맹에 들고 싶거든 접객당 총관을 찾게.'}"</p><p class="note">${M.d}</p>${maengSeatsHtml(al)}${maengRankHtml(al)}`;
     if(on&&r>=4){const got=(P.mgift||{})[al]||0,lv=r>=5?2:1;
       h+=`<div class="card"><h4>맹주의 하사 <small class="dim">장로 이상 · 직위마다 한 번</small></h4><p class="note">장로: 은자 300·명성 50 · 부맹주: 은자 800·명성 100</p>${got>=lv?'<p class="note">이미 받았다.</p>':B('mgift:'+al,'하사 받기',{pri:1})}</div>`}

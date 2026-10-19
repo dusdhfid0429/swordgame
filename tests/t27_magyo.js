@@ -50,6 +50,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 하산하면 당도 잃는다
   const lv=await p.evaluate(()=>{sectAct('sleave');return P.dang});
   ok('하산하면 당이 없어짐',lv===null);
+  // v150 (사용자 버그): 마교에 들면 인물 정보와 이름 아래 줄에 '마교' (예전엔 태어난 계열 '사파'가 나왔다)
+  const fn=await p.evaluate(()=>{const s0=P.sect;P.sect='cheonma';closePanels();openPanel('char');const o={side:P.side,char:$('wbody').textContent,fac:facName()};closePanels();P.sect=s0;return o});
+  ok(`마교 가입: 인물창 소속 ${fn.fac} (태어난 계열 ${fn.side})`,fn.fac==='마교'&&fn.char.includes('마교'));
   // 예전 72×72 십만대산 자리에서 불러오면 맵 안 출입구 앞으로
   const old=await p.evaluate(()=>{loadRegion('gaebong');P.reg='hq_cheonma';P.x=60.5;P.y=66.5;loadRegion('hq_cheonma');return walkAt(P.x,P.y)});
   ok('예전 본산 자리 저장도 걸을 수 있는 곳에 놓임',old);
