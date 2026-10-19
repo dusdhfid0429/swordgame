@@ -244,13 +244,13 @@ function draw(){
   else if(w==='흐림'){ctx.fillStyle='rgba(60,64,72,.18)';ctx.fillRect(0,0,W,H)}
   else if(w==='폭염'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,170,60,.45)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   // night and the cave: darkness with holes cut by the hero's aura, lanterns and qi bursts
-  const cave=inCave(Math.floor(P.x),Math.floor(P.y));
-  const dark=Math.max(cave?.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
+  const cave=REGION().cave||inCave(Math.floor(P.x),Math.floor(P.y));
+  const dark=Math.max(cave?cave.dark||.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
     sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
   if(dusk>0){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(255,120,40,${.5*dusk})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   if(dark>.01){
     lx.setTransform(S*dpr,0,0,S*dpr,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);
-    lx.fillStyle=`rgba(4,8,22,${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
+    lx.fillStyle=`rgba(${cave&&cave.dk||'4,8,22'},${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
     for(const b of builds)if(b.kind!=='pavilion'){const q=scr(b.x+b.w/2,b.y+b.h+.3,20);lightAt(q[0],q[1],110,.8)}
     lightAt(pp.x,pp.y-20,240,1);
     for(const l of lamps){const p=toScreen(l.x,l.y);lightAt(p.x,p.y-30,150+Math.sin(time*9+l.p)*8,.95)}
@@ -259,11 +259,13 @@ function draw(){
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
     for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max)}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
+    runHooks('darkLights');   // 동굴 시안: 수정·횃불·용암 빛 (g_cave.js)
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
     ctx.globalCompositeOperation='lighter';
     for(const l of lamps){const p=toScreen(l.x,l.y),g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,120);g.addColorStop(0,`rgba(255,150,60,${.22*dark})`);g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.fillRect(p.x-120,p.y-150,240,240)}
     ctx.globalCompositeOperation='source-over';
   }
+  runHooks('afterDark');   // 동굴 시안: 어둠 위의 빛과 움직임 (g_cave.js)
   for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
