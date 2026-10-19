@@ -20,10 +20,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const L=t2.last;
   ok(`보고 → 공 ${t2.done}, 1차 승 ${t2.r1}(${t2.r1me}), 2차 임무 ${t2.q2}, 2차 승 ${t2.r2}, 세 차례 뒤 끝 (전쟁 ${t2.war}, 기록 ${t2.wars})`,t2.done&&t2.r1===0&&t2.r1me==='공'&&t2.q2&&t2.r2===0&&!t2.war&&t2.wars===1);
   // 3. 승자의 힘: 정사연합 승 → 마교 본산 점령은 마교 대문파가 없으니 0곳, 봉문 0 (마교는 단일 문파 tier one). 힘·관계 변화
-  const t3=await p.evaluate(()=>({won:G.wars[0].won,lost:G.wars[0].lost,me:G.wars[0].me,ma:G.W.pow.마,occ:Object.keys(G.occ),seal:Object.keys(G.seal),fame:P.fame,flag:P.story.flag.warDone,sides:G.wars[0].sides.length}));
+  const t3=await p.evaluate(()=>({won:G.wars[0].won,lost:G.wars[0].lost,me:G.wars[0].me,ma:G.W.pow.마,occ:Object.keys(G.occ),seal:Object.keys(G.seal),fame:P.fame,flag:P.story.flag.warDone||P.story.act===2,sides:G.wars[0].sides.length}));
   ok(`결과: ${t3.won} 승 / ${t3.lost} 패 · 당신 ${t3.me} · 마교 힘 ${t3.ma} · 명성 ${t3.fame}`,t3.won.join()==='정,사'&&t3.lost.join()==='마'&&t3.me==='승'&&t3.ma<30&&t3.fame>=50&&t3.flag&&t3.sides===2);
   // 4. 사마연합이 정파를 이기면: 정파 대문파 본산 2곳 점령 + 소문파 4곳 봉문(사파의 승리). 점령 본산엔 주둔군·점령군 대장, 가입 불가, 탈환 임무
-  const t4=await p.evaluate(()=>{G.occ={};G.seal={};P.story.flag.warDone=false;G.W.rel.정사=-30;G.W.rel.사마=30;setPow('정',20);setPow('사',80);setPow('마',70);G.W.rel.정관=0;
+  const t4=await p.evaluate(()=>{G.occ={};G.seal={};P.story.flag.warDone=false;delete P.story.act;G.W.rel.정사=-30;G.W.rel.사마=30;setPow('정',20);setPow('사',80);setPow('마',70);G.W.rel.정관=0;
     G.war=null;warStart();const n=G.war.plan.n;for(let i=0;i<3;i++){P.age=27+i;lastYear=26+i;update(.1)}
     const rec=G.wars[G.wars.length-1],occ=Object.keys(G.occ),seal=Object.keys(G.seal);
     return{n,won:rec.won,me:rec.me,occ,occTier:occ.map(id=>SECTS[id].tier+alFac(SECTS[id].al)),by:occ.map(id=>G.occ[id].by),seal,sealTier:seal.map(id=>SECTS[id].tier+alFac(SECTS[id].al))}});

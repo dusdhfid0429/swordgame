@@ -28,7 +28,10 @@ function pgPlace(){
   return null}
 const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
-const hobeop=()=>inOwnSect()||inAcad()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+const hobeop=()=>inOwnSect()||inAcad()||!!P.hob||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+// v153 (사용자): 호법을 은자로 고용한다. 다음 한 번의 폐관을 지킨다 (PG_HOB.cost[다음 경지])
+const hobCost=()=>GD.PG_HOB.cost[Math.min(GD.PG_HOB.cost.length-1,realmIdx()+1)];
+function hobHire(){if(hobeop()||!pgPlace())return;const c=hobCost();if(P.silver<c){log(`호법을 부를 은자가 모자랍니다 (${c}).`,'info');return}P.silver-=c;P.hob=1;log(`은자 ${c}로 호법을 불렀습니다. 다음 폐관 동안 곁을 지킵니다 (성공 +10%).`,'sys');renderTrain()}
 // 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=GD.PG_BASE;
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
@@ -44,14 +47,15 @@ function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없�
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
-    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}</div>`}
+    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}
+    ${!hobeop()&&pgPlace()?`<button type="button" class="btn tbtn" data-tr="hob"${trnBusy||P.silver<hobCost()?' disabled':''}>호법 고용 · 은자 ${hobCost()}</button>`:''}</div>`}
 function pgStart(k){
   if(trnBusy||P.hp<=0)return;const why=pgWhy();if(why){log(`폐관수련을 할 수 없습니다: ${why}.`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
   log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}
 // 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
-  const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
+  const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;P.hob=0;
   if(!passYears(yrs))return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);

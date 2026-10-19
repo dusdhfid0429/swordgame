@@ -6,6 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   // 1. 문파 규모별 심법 수와 최고 등급
   const t=await p.evaluate(()=>{const f=id=>simOf(id).map(x=>x.n+':'+AGR[x.g]);return{small:f('hyeongsan'),mid:f('hwangbo'),big:f('hwasan'),five:f('namgung'),one:f('cheonma'),sa:f(Object.values(SECTS).find(s=>s.al==='sacheon'&&s.tier==='big').id),base:simCur().n,gain:simGain(),cost0:qiCost(P.side,P.qiN)}});
   console.log(JSON.stringify(t));

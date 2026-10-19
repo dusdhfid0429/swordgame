@@ -239,7 +239,7 @@ function onKill(e){
   gainPas(2);
   fx.push({t:'puff',x:e.x,y:e.y,life:.6});if(P.target===e)P.target=null;
   if(e.duel){duelEnd(true,e);return}
-  const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03));
+  const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03)*(1+GD.KILL_VIT.per*(e.realm||0)));   // v153: 경지 높은 적일수록 활력이 크다
   if(d.villager){v=P.side==='사'?8:0;P.evil+=P.side==='정'?20:8;log('양민이 죽었습니다. 무거운 악업이 쌓였습니다.','dmg')}
   gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;feat(`${e.kind}을(를) 쓰러뜨렸다`)}
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');

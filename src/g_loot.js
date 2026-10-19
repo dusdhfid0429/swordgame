@@ -31,7 +31,7 @@ function mobFormCall(e){const a=ARTS[e.art];if(!a||!e.known)return;const f=a.for
 // 전리품
 function mobLoot(e){
   const d=e.d,out=[];
-  if(d.silver){const s=R1(d.silver[0],d.silver[1]);if(s>0){P.silver+=s;addText(P.x,P.y-.3,`은자 +${s}`,'#e8c66e')}}
+  if(d.silver){const s=Math.round(R1(d.silver[0],d.silver[1])*worldMul('loot'));if(s>0){P.silver+=s;addText(P.x,P.y-.3,`은자 +${s}`,'#e8c66e')}}
   if(d.meat)out.push({mat:'고기',n:d.meat});if(d.hide)out.push({mat:'가죽',n:d.hide});
   const a=ARTS[e.art];
   if(a&&e.known){

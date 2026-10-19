@@ -6,6 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   // 1. 조건: 마교도·부교주·탈마·마성·천마신전. 미달이면 단추 비활성
   const c=await p.evaluate(()=>{const o={};o.no0=leaderWhy();P.sect='cheonma';P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';P.mtot={cheonma:2200};P.mara=0;P.sin=0;P.realm=4;o.no1=leaderWhy();P.realm=6;o.no2=leaderWhy();
     loadRegion('in_hq_cheonma_0');P.reg='in_hq_cheonma_0';P.x=9;P.y=6;runHooks('regionLoaded','in_hq_cheonma_0');o.no3=leaderWhy();P.mara=30;o.no4=leaderWhy();P.mara=0;

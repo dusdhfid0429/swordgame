@@ -1,7 +1,7 @@
 // ================= 천하대전 스토리 5단계 (2026-10-15 v109): 결전장 맵, 결전 연출, 관군 토벌·마교 탈락의 특수 전개 =================
 // 설계 docs/스토리_설계.md '5단계'. 데이터 data/story.json STORY.FIELD.
 // - 결전장 war_field(개봉 동쪽 근교, 결전 중에만 열리는 출입구): 결전이 벌어진 해에 정세 창의 '출전'으로 바로 간다(차례마다 한 번). 아래쪽에 내 편 무인, 위쪽에 적 무인과 적장. 아래 출입구로 개봉에 돌아간다.
-// - 적장(e.warChief)을 베면 이번 차례의 공(+25)을 세운 것으로 치고 명성 +15. 습격(raid)은 전처럼 그 자리에도 온다.
+// - 적장(e.warChief)을 베면 이번 차례의 공(warMerit)을 세운 것으로 치고 명성 +15. 습격(raid)은 전처럼 그 자리에도 온다.
 // - 관군 토벌: 조정이 홀로 서는 구도면 결전장의 적장이 '토벌대장'이고, 대전 끝에 조정이 이기면 정관 -20·무림 전체의 힘이 깎이고, 지면 조정의 힘이 더 꺾인다.
 // - 마교 탈락: 마교가 구도에서 빠졌는데 내가 마교도면 결전마다 '어부지리' 임무(양쪽 고수 4명)가 생기고, 결전장에서는 모두가 적이다. 끝내면 마교 힘 +3.
 const FIELD=STORY.FIELD||{id:'war_field',ally:5,foe:8,elite:2,chiefHp:2.5,chiefAtk:1.4,chiefFame:15,sneak:4,sneakPow:3,gunRel:-20,gunLose:-10};
@@ -24,7 +24,7 @@ function warGo(){if(!warFieldOk()||!REGION()||G.duel||P.hp<=0)return false;const
   const gun=foes.includes('관')&&w.plan.sides.some(s=>s.length===1&&s[0]==='관'),cfac=gun?'관':foes[0],cf=put(cfac,1,10,13,e=>{e.raid=n;e.warChief=1;e.aggro=true;e.realm=Math.min(5,Math.max(3,realmIdx()+1));if(typeof scaleMob==='function')scaleMob(e);e.maxHp=e.hp=Math.round(e.maxHp*FIELD.chiefHp);e.atk=Math.round(e.atk*FIELD.chiefAtk);e.name=gun?'관군 토벌대장':`${FAC4N[cfac]} 대장`});
   {const al=mobs.filter(m=>m.warAlly===n),fo=mobs.filter(m=>m.raid===n);const near=(e,list)=>{let b=null,bd=1e9;for(const o of list){const q=dist(e,o);if(q<bd){bd=q;b=o}}return b};for(const e of al){e.tgt=near(e,fo);e.aggro=!!e.tgt}for(const e of fo){const t=near(e,al);if(t&&Math.random()<.6)e.tgt=t}}   // 결전 연출: 양 진영이 곧바로 맞붙는다
   showBanner(`제${n}차 결전`,w.plan.n);log(`결전장. ${ally?`${sideName(my)} 무인 ${ally}명이 전열에 섰다. `:'당신은 홀로 섰다. '}${foes.map(f=>FAC4N[f]).join('·')} ${made}명이 마주 섰고 적장 ${cf?cf.name:''}이(가) 깃발 아래 있다. 적장을 베면 이번 차례의 공을 세운 것으로 친다.`,'sys');return true}
-hook('kill',e=>{if(!e||!e.warChief||!warOn())return;const w=G.war;P.fame+=FIELD.chiefFame;if(!(w.cur&&w.cur.done)){w.cur=w.cur||{};w.cur.done=true;w.cur.q=w.cur.q||'적장 격파';log(`적장 ${e.name}을(를) 베었다! 이번 차례의 공을 세웠다(+25). 명성 +${FIELD.chiefFame}.`,'xp')}else log(`적장 ${e.name}을(를) 베었다. 명성 +${FIELD.chiefFame}.`,'xp');
+hook('kill',e=>{if(!e||!e.warChief||!warOn())return;const w=G.war;P.fame+=FIELD.chiefFame;if(!(w.cur&&w.cur.done)){w.cur=w.cur||{};w.cur.done=true;w.cur.q=w.cur.q||'적장 격파';log(`적장 ${e.name}을(를) 베었다! 이번 차례의 공을 세웠다(+${warMerit()}). 명성 +${FIELD.chiefFame}.`,'xp')}else log(`적장 ${e.name}을(를) 베었다. 명성 +${FIELD.chiefFame}.`,'xp');
   showBanner('적장 격파',e.name);P.feats.push(`${Math.floor(P.age)}세 제${w.round}차 결전에서 적장 ${e.name}을(를) 베었다`)});
 hook('sectAct',c=>{if(c.a!=='wargo')return;c.done=true;c.r=true;closePanels();warGo()});
 // 마교 탈락: 어부지리 임무

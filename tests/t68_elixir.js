@@ -6,6 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   // 1. 정혈: 마공 아닐 땐 안 떨어지고, 마공 운용 중 정파 무인을 죽이면 떨어진다. 양민은 안 나온다
   const d=await p.evaluate(()=>{const o={};const R=Math.random;Math.random=()=>.1;const kill=()=>{drops=[];const e=mkFac('정',0,P.x+1,P.y);mobs.push(e);e.hp=1;damage(e,5,0,0,P);mobs=[];return drops.filter(x=>x.it&&x.it.mat==='정혈').length};
     o.noMa=kill();P.sect='cheonma';P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';P.mtot={cheonma:1e6};o.ma=kill();

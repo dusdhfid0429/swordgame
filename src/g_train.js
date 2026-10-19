@@ -27,7 +27,8 @@ function renderTrain(){
 TRN.addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!b||b.disabled)return;const k=b.dataset.tr;
   if(k==='close'){closeTrain();return}startTrain(k)});
 function startTrain(k){
-  if(k==='pg'||k==='pg2')return pgStart(k);   // 폐관수련 (g_realm.js)
+  if(k==='pg'||k==='pg2')return pgStart(k);
+  if(k==='hob')return hobHire();   // 폐관수련 (g_realm.js)
   if(k.startsWith('mk:'))return mkStart(k);   // 무공 창안 (g_create.js)
   if(k.startsWith('sim:'))return simSwitch(k.slice(4));   // 심법 바꾸기 (g_simbeop.js)
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}

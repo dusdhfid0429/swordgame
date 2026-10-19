@@ -244,7 +244,8 @@ function draw(){
   else if(w==='폭염'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,170,60,.45)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   // night and the cave: darkness with holes cut by the hero's aura, lanterns and qi bursts
   const cave=inCave(Math.floor(P.x),Math.floor(P.y));
-  const dark=Math.max(cave?.55:0,darkLvl()),sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
+  const dark=Math.max(cave?.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
+    sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
   if(dusk>0){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(255,120,40,${.5*dusk})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   if(dark>.01){
     lx.setTransform(S*dpr,0,0,S*dpr,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);

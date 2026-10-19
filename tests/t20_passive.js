@@ -8,6 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   const r=await p.evaluate(()=>{const all=Object.values(PAS),com=all.filter(q=>!q.sect),sec=all.filter(q=>q.sect);
     const per=Object.values(SECTS).every(s=>{const l=pasOf(s.id);return l.length===3&&l[0].type===l[2].type&&l[0].tier===1&&l[2].tier===2&&l[0].rank<l[1].rank+1&&l[2].rank>l[0].rank});
     return{com:com.length,types:new Set(com.map(q=>q.type)).size,sec:sec.length,per,names:new Set(all.map(q=>q.n)).size===all.length,ex:pasOf('hwasan').map(q=>`${q.n}(${PTYPE[q.type].n}·${rankName('hwasan',q.rank)})`).join(', ')}});

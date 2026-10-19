@@ -54,7 +54,7 @@ function peakTick(dt){const R=REGIONS[REG];if(!P.medit||!R||!R.lm||R.lm.t!=='m'|
   gainEnl(v,got===0?(PEAK_MSG[R.name]||`${R.name} 정상의 운무 속에서 천지의 이치를 엿본다.`)+(dawn?' 일출이 장엄하다.':''):'')}
 
 // ---- 경지가 오를 때 한 번만 받는 것 (예전 저장은 불러올 때 채운다) ----
-function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;
+function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;rankRealmUp(r);
   if(school()==='도가'&&r>0)P.life+=2;
   // 환골탈태·반로환동·금강불괴는 g_body.js (v151): 영약으로 먼저 환골탈태했으면 화경에서는 상단전만 열린다
   if(r===BODY.hg.minR)elixirBody();

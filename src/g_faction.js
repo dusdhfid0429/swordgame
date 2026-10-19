@@ -86,21 +86,30 @@ const SRANK=GD.SRANK;
 const RANK_PTS=GD.RANK_PTS;
 const rankTop=sid=>{const s=SECTS[sid];return s?SRANK[s.al].length-1:4};
 const HI_RANK=GD.HI_RANK;   // 고급 무공 n번째 초식 비급에 필요한 직위
-function rankIdx(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
+// v153 (사용자): 직위는 경지+1 단까지만 (RANK_CAP). 공적이 넘쳐도 경지가 오르면 그때 오른다 (rankRealmUp)
+const rankCap=()=>P?realmIdx()+GD.RANK_CAP.plus:99;
+function rankRaw(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
+const rankIdx=(sid=P.sect)=>Math.min(rankRaw(sid),rankCap());
+const capNeed=i=>rk(Math.max(0,i-GD.RANK_CAP.plus));
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
-  if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1));   // 맹 서열 1위 문파 +15% (g_maeng.js)
+  if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1)*(G.unified&&G.unified.by===alFac(SECTS[sid].al)?worldMul('merit'):1));   // v153: 천하통일한 세력의 문파   // 맹 서열 1위 문파 +15% (g_maeng.js)
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
+    if(a===b&&rankRaw(sid)>a&&P.capN!==sid+a){P.capN=sid+a;log(`공적은 ${rankName(sid,a+1)}에 닿았지만 경지가 모자라 직위가 오르지 않는다 (${capNeed(a+1)} 이상).`,'info')}
     if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
+// 경지가 오르면 막혀 있던 직위가 오른다 (g_realmfx.js realmGain이 부른다)
+function rankRealmUp(r){const was=r-1+GD.RANK_CAP.plus;
+  if(P.sect&&SECTS[P.sect]){const a=rankIdx(),s=SECTS[P.sect];if(a>was&&rankRaw()>was){showBanner(`${s.n} ${rankName()}`,'경지에 걸맞은 직위');log(`경지가 올라 ${s.n}의 ${rankName()}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${rankName()}이(가) 되었다`)}}
+  const al=typeof maengOf==='function'&&maengOf();if(al){const a=maengRank(al);if(a>was&&maengRaw(al)>was){log(`경지가 올라 ${MAENG[al].short}의 ${maengRankName(al)}(으)로 올랐습니다.`,'xp');feat(`${MAENG[al].short}의 ${maengRankName(al)}이(가) 되었다`)}}}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
 // 해마다 직위에 따른 녹봉
-function rankStipend(){const s=P.sect&&SECTS[P.sect];if(!s)return;const i=rankIdx(),v=i*15;if(v>0){P.silver+=v;log(`${s.n} ${rankName()} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}}
+function rankStipend(){const s=P.sect&&SECTS[P.sect];if(!s)return;const i=rankIdx(),v=Math.round(i*15*worldMul('stipend'));if(v>0){P.silver+=v;log(`${s.n} ${rankName()} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}}
 function rankHtml(s){
   const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=i<rankTop(s.id)?RANK_PTS[i+1]:0;
-  return `<div class="card"><h4>직위 <b>${rankName(s.id)}</b></h4><p>누적 공적 ${t}${nx?` / ${nx} (다음 ${rankName(s.id,i+1)})`:' · 최고 직위'} · 공적 획득 +${i*10}% · 녹봉 해마다 은자 ${i*15}${i>=2?' · 비급 공적 20% 할인':''}</p>
+  return `<div class="card"><h4>직위 <b>${rankName(s.id)}</b></h4><p>누적 공적 ${t}${nx?` / ${nx} (다음 ${rankName(s.id,i+1)}${i+1>rankCap()?` · <b class="bad">${capNeed(i+1)} 이상</b>`:''})`:' · 최고 직위'} · 공적 획득 +${i*10}% · 녹봉 해마다 은자 ${i*15}${i>=2?' · 비급 공적 20% 할인':''}</p>
     <p class="dim">${SRANK[s.al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p></div>`}
 
 // ================= 문파 본산 지역 =================

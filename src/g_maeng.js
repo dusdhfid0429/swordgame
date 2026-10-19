@@ -13,7 +13,8 @@ const maengId=al=>'maeng_'+al;
 // 지금 속한 맹: 맹원으로 들었거나, 그 맹 문파의 제자
 const maengOf=()=>P&&(P.maeng||(P.sect&&SECTS[P.sect]&&MAENG[SECTS[P.sect].al]?SECTS[P.sect].al:null))||null;
 const mySectIn=al=>P.sect&&SECTS[P.sect]&&SECTS[P.sect].al===al?SECTS[P.sect]:null;
-function maengRank(al){const t=(P.mpt||{})[al]||0;let i=0;while(i<MPTS.length-1&&t>=MPTS[i+1])i++;return i}
+function maengRaw(al){const t=(P.mpt||{})[al]||0;let i=0;while(i<MPTS.length-1&&t>=MPTS[i+1])i++;return i}
+const maengRank=al=>Math.min(maengRaw(al),rankCap());   // v153: 맹 직위도 경지+1 단까지
 const maengRankName=(al,i)=>MRANK[al][i??maengRank(al)];
 // ---- 문파 입지와 서열 ----
 function sectStanding(al,s){const base=MSEAT[s.tier]||50,j=(s.i*37)%40;return base+j+(((G.mst||{})[al]||{})[s.id]||0)}
@@ -43,7 +44,7 @@ function maengJoinBlock(al){const M=MAENG[al];
   if(P.fame<10)return '명성 10은 있어야 맹원으로 받는다.';return null}
 // ---- 창 ----
 function maengRankHtml(al){const M=MAENG[al],i=maengRank(al),t=(P.mpt||{})[al]||0,nx=i<MPTS.length-1?MPTS[i+1]:0,on=maengOf()===al;
-  return `<div class="card"><h4>${M.short} 직위 <b>${on?maengRankName(al,i):'없음'}</b></h4>${on?`<p>맹 공적 ${t}${nx?` / ${nx} (다음 ${maengRankName(al,i+1)})`:' · 최고 직위'} · 맹 임무 공적 +${i*10}% · 녹봉 해마다 은자 ${i*20}${P.mdang&&P.mdang.al===al?` · ${M.dangs[P.mdang.k]}`:''}</p>
+  return `<div class="card"><h4>${M.short} 직위 <b>${on?maengRankName(al,i):'없음'}</b></h4>${on?`<p>맹 공적 ${t}${nx?` / ${nx} (다음 ${maengRankName(al,i+1)}${i+1>rankCap()?` · <b class="bad">${capNeed(i+1)} 이상</b>`:''})`:' · 최고 직위'} · 맹 임무 공적 +${i*10}% · 녹봉 해마다 은자 ${i*20}${P.mdang&&P.mdang.al===al?` · ${M.dangs[P.mdang.k]}`:''}</p>
     <p class="dim">${MRANK[al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p>`:`<p class="note">${mySectIn(al)?'':`${M.short} 문파의 제자가 되거나, 명성 10으로 맹원이 되어 맹 임무를 맡는다.`}</p>`}</div>`}
 function maengSeatsHtml(al){const M=MAENG[al],mine=mySectIn(al);
   return `<div class="card"><h4>${M.short} 서열 <small class="dim">문파 입지 순</small></h4><p class="dim">${maengSeats(al).slice(0,8).map((q,i)=>`${i+1}위 ${q.s.id===(mine&&mine.id)?`<b class="gold">${q.s.n}</b>`:q.s.n} ${q.v}`).join(' · ')}</p>
@@ -86,7 +87,7 @@ hook('sectAct',c=>{const{a,x,y}=c;
     P.mgift[al]=lv;const sv=lv===2?800:300,fm=lv===2?100:50;P.silver+=sv;P.fame+=fm;log(`맹주의 하사: 은자 ${sv}, 명성 ${fm}.`,'xp');showBanner('맹주의 하사',M.leader);feat(`${M.short} 맹주의 하사를 받았다`);return}
 });
 // 녹봉: 해마다 직위×20
-hook('newYear',()=>{const al=maengOf();if(!al)return;const i=maengRank(al),v=i*20;if(v>0){P.silver+=v;log(`${MAENG[al].short} ${maengRankName(al)} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}});
+hook('newYear',()=>{const al=maengOf();if(!al)return;const i=maengRank(al),v=Math.round(i*20*worldMul('stipend'));if(v>0){P.silver+=v;log(`${MAENG[al].short} ${maengRankName(al)} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}});
 // 성도 연락관 창에 맹 덩어리를 붙인다. 총단 NPC는 자기 창
 hook('npcDlg',c=>{if(c.html!=null)return;const n=c.n;
   if(n.maeng){c.html=maengDlg(n);return}

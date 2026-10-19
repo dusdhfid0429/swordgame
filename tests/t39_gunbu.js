@@ -6,6 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   const go=(id,x,y)=>p.evaluate(([id,x,y])=>{mobs=[];P.reg=id;loadRegion(id);P.x=x;P.y=y;P.path=null;P.gateLock=0;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;miniBase=null},[id,x,y]);
   // 1. 세력 구도: 군부가 네 번째 세력, 금군이 그 문파. 관군은 사파·마교와만 싸운다
   const f=await p.evaluate(()=>({al:!!ALLY.gunbu,sect:SECTS.geumgun&&SECTS.geumgun.al,fac:alFac('gunbu'),kinds:FAC_KIND['관'],
