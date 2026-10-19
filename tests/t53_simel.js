@@ -13,11 +13,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   console.log(JSON.stringify(t));
   ok(`심법 ${t.n}개 모두 계열·속성(없는 것 ${t.bad.length}) · 타고난 ${t.base} 잡화점 사 ${t.shop} 소림 ${t.sl} 천마 ${t.cm} · 색 getter(JSON에 없음 ${!t.json}) · 상극 ${t.beats.join(',')}`,
     t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공마'&&!t.json&&t.c==='255,214,120'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
+  const SW_MU='170,210,255';   // v156: 색은 심법 계열이 아니라 심법의 문파 색 (SECT_FX)
   // 2. 심법을 바꾸면 같은 무공의 색·속성·뇌기가 바뀐다 (무당 양=도가 파랑, 천마 뇌=마공 보라+뇌기)
   const sw=await p.evaluate(()=>{P.sims={N_mudang_2:1,N_cheonma_4:1,N_hwasan_1:1};const a=ARTS[P.cur],o={};P.sim='N_mudang_2';o.mu=[a.c,pEl(),a.elc,a.pt];P.sim='N_cheonma_4';o.cm=[a.c,pEl(),a.elc];
-    P.sim='N_hwasan_1';o.hw=[a.c,pEl(),SCHOOL_FX[simSchoolOf('hwasan')]];const s=ARTS[SECTS.shaolin.arts[0].id];o.other=[s.c,artEl(s)];return o});
+    P.sim='N_hwasan_1';o.hw=[a.c,pEl(),SECT_FX.hwasan[0]];const s=ARTS[SECTS.shaolin.arts[0].id];o.other=[s.c,artEl(s)];return o});
   ok(`무당 ${sw.mu.join('/')} · 천마 ${sw.cm.join('/')} · 화산 ${sw.hw.join('/')} · 남의 소림 무공은 소림 심법 색 ${sw.other.join('/')}`,
-    sw.mu[0]==='150,220,255'&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='28,6,40'&&sw.cm[1]==='마'&&sw.cm[2]===false&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,214,120'&&sw.other[1]==='금');
+    sw.mu[0]===SW_MU&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='28,6,40'&&sw.cm[1]==='마'&&sw.cm[2]===false&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,200,90'&&sw.other[1]==='금');
   // 3. 적중 효과는 심법 속성: 무당(양)이면 화상+밀침, 천마(마)면 느려짐·흡수, 화산(화)이면 화상, 금(기초)이면 치명타 가산
   const h=await p.evaluate(()=>{const mk=()=>({x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:30,hm:0,el:null,burn:0,slow:0,d:{},isMob:true});const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;
     const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=[e.slow,5000-e.hp];delete P.sims.N_cheonma_4;P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;

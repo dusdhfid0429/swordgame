@@ -27,7 +27,14 @@ const elOf=x=>x===P?pEl():(x&&x.el)||null;
 const scOf=x=>x===P?pSchool():x&&x.sect&&SECTS[x.sect]?simSchoolOf(x.sect):null;
 const simSectEl=sid=>{const l=simOf(sid);return l.length?l[0].el:'금'};
 function artEl(a){if(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))))return simSectEl(a.sect);return pEl()}
-function fxCol(a){const sc=a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id])))?simSchoolOf(a.sect):pSchool();return SCHOOL_FX[sc]||SCHOOL_FX['정종']}
+// v156 (사용자 2026-10-19 "사파·정파·마교·군부 기준에서 문파 기준으로 세분화"): 이펙트·운기 색은 문파 색(SECT_FX: [주색, 보조색]).
+// 내 쪽은 운용 중 심법의 문파 → 그 심법이 문파 것이 아니면(타고난·잡화점·무관) 내 문파 → 둘 다 없으면 예전처럼 계열(SCHOOL_FX) 색
+const SECT_FX=GD.SECT_FX;
+function pFxSect(){if(!P)return null;const s=simCur(),sid=s.sect||(P.sect&&P.sect!=='own'?P.sect:null);return sid&&SECT_FX[sid]?sid:null}
+function pFxPair(){const sid=pFxSect();if(sid)return SECT_FX[sid];const sc=pSchool();
+  return sc==='마공'?['28,6,40','110,20,150']:sc==='사공'||sc==='사불'||P&&P.side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255']}
+function fxCol(a){if(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))))return SECT_FX[a.sect]?SECT_FX[a.sect][0]:SCHOOL_FX[simSchoolOf(a.sect)]||SCHOOL_FX['정종'];
+  const sid=pFxSect();return sid?SECT_FX[sid][0]:SCHOOL_FX[pSchool()]||SCHOOL_FX['정종']}
 const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${x.el}</b> ${EL[x.el]?EL[x.el].fx:''}`;
 // 심법 특색: 운용 중인 심법의 특색 k 값(SIM_TK 단위: %p 또는 현묘도 점수). 없으면 0
 function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&SECTS[sid].al==='sacheon'?'사공':'정종'}

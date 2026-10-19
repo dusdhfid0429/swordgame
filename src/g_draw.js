@@ -141,8 +141,8 @@ function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
 function medPos(q,r,a,c){return[c.x+Math.cos(a)*r,c.y+Math.sin(a)*r*.48+q.h*(r/q.r0)]}
 function drawMedit(front){
   if(!front)medTick();if(MED.k<=0)return;
-  const dk=typeof pSchool==='function'&&pSchool()==='마공';   // 마교 심법: 검은 마기 (사용자 요청 2026-10-14)
-  const p=toScreen(P.x,P.y),k=MED.k,col=dk?['28,6,40','110,20,150']:P.side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255'],c={x:p.x,y:p.y-30};
+  // v156: 운기 색은 문파 색(pFxPair, g_simbeop.js). 마교 심법은 검은 마기 그대로 (사용자 요청 2026-10-14)
+  const col=pFxPair(),dk=isDark(col[0]),p=toScreen(P.x,P.y),k=MED.k,c={x:p.x,y:p.y-30};
   ctx.save();
   if(!front){
     // 발밑: 천천히 도는 두 겹의 기운 고리
