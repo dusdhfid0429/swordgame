@@ -39,4 +39,4 @@ function emperorDlg(n){
 hook('npcDlg',c=>{if(c.html==null&&c.n.emperor)c.html=emperorDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='imperial')return;c.done=true;c.r=true;if(P.sect!=='geumgun'||rankIdx('geumgun')<3||P.imperial)return;
   P.imperial=1;P.silver+=500;P.fame+=100;const it=mkGear('acc','어사패',1.4,{qi:24,hm:5});P.bag.push(it);
-  log('어전 포상: 어사패와 은자 500, 명성 100을 받았습니다.','xp');showBanner('어전 포상','황제의 신임');P.feats.push(`${Math.floor(P.age)}세에 황제에게 포상을 받았다`)});
+  log('어전 포상: 어사패와 은자 500, 명성 100을 받았습니다.','xp');showBanner('어전 포상','황제의 신임');feat(`황제에게 포상을 받았다`)});

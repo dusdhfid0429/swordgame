@@ -18,7 +18,7 @@ function rk(i){return i>=5&&i<=6&&P?summit(i).r:RANKS[i]}
 const stTxt=st=>STATS.map(({k,n})=>`${n} +${st[k]}`).join(', ');
 function fxOf(i){if(i<5)return REALM_FX[i];const c=SC(),s=summit(i);
   return i===5?{n:`${s.n} · 환골탈태`,d:`${s.d}. 상단전이 열려 최대 내공 +${Math.round(c.q*100)}%, ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}`}
-    :{n:`반로환동 · ${s.n}`,d:`${s.d}: 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}`}}
+    :{n:`반로환동 · ${s.n}`,d:`${s.d}: 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}, 몸이 ${BODY.ban.to}세까지 젊어진다`}}
 const sig=k=>realmIdx()>=5&&school()===k;
 const realmAt=r=>realmIdx()>=r;
 // 단전: 하단전 → 중단전(절정) → 상단전(화경)
@@ -54,12 +54,14 @@ function peakTick(dt){const R=REGIONS[REG];if(!P.medit||!R||!R.lm||R.lm.t!=='m'|
   gainEnl(v,got===0?(PEAK_MSG[R.name]||`${R.name} 정상의 운무 속에서 천지의 이치를 엿본다.`)+(dawn?' 일출이 장엄하다.':''):'')}
 
 // ---- 경지가 오를 때 한 번만 받는 것 (예전 저장은 불러올 때 채운다) ----
-function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;
+function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;rankRealmUp(r);
   if(school()==='도가'&&r>0)P.life+=2;
-  if(r===5){const c=SC();P.life+=c.l5;for(const{k}of STATS){P.st[k]+=c.st[k];P.base[k]+=c.st[k]}P.inj=0;P.injS=0;log(`환골탈태: 탁한 기운이 빠져나가고 뼈와 살이 새로 태어났습니다. ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}.`,'xp')}
-  if(r===6){const c=SC();P.life+=c.l6;if(c.l6)log(`반로환동: 늙은 몸이 다시 젊어집니다. 수명 +${c.l6}년.`,'xp')}
-  if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');recalc()}
-function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r)}
+  // 환골탈태·반로환동·금강불괴는 g_body.js (v151): 영약으로 먼저 환골탈태했으면 화경에서는 상단전만 열린다
+  if(r===BODY.hg.minR)elixirBody();
+  if(r===5&&!hwangol('화경'))log('이미 환골탈태한 몸이라 화경에서는 상단전만 새로 열립니다.','info');
+  if(r===6){const c=SC();P.life+=c.l6;if(c.l6)log(`현경: 수명 +${c.l6}년.`,'xp');banro()}
+  if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');recalc();gangCheck()}
+function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r);bodySync()}
 
 // ---- 전투: 검기·검강·검사, 호신강기, 이기어검 ----
 hook('hit',c=>{const r=realmIdx();
@@ -84,7 +86,7 @@ hook('hurt',c=>{const r=realmIdx(),src=c.src;
   if(src.d&&r>=4&&mobRealm(src)<=r-2){c.dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
   if(src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))c.dm*=.85;
   if(src.d&&school()==='사불'&&src.d.fac==='정')c.dm*=.85;
-  if(sig('불가'))c.dm*=.9});
+  /* 불가 화경의 금강불괴(받는 피해 -10%)는 g_body.js 의 금강불괴지신(-15%, 등 뒤 조문)이 맡는다 */});
 hook('hurtDone',c=>{const src=c.src;if(sig('도가')&&src.isMob&&src.hp>0&&P.hp<c.hp0)damage(src,Math.max(1,Math.round((c.hp0-Math.max(0,P.hp))*.15)),0,0,P)});
 hook('recalc',()=>{const m=danMul();if(m!==1){P.maxQi=Math.round(P.maxQi*m);P.qi=Math.min(P.qi,P.maxQi)}});
 
@@ -104,7 +106,7 @@ hook('duelEnd',({win,o,me})=>{const r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0;
 hook('kill',e=>{if(!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx())gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')});
 hook('mastDone',({id,s,before})=>{if(before<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`)});
 hook('giyeon',c=>{const R=REGIONS[REG];
-  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
+  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');feat(`${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
 hook('giyeonDone',()=>gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.'));
 
 // ---- 영약: 공청석유(1갑자, 한 생에 한 번), 만년설삼(반 갑자, 한 생에 두 번) ----
@@ -116,7 +118,7 @@ hook('useCon',c=>{const k=c.k;
   if(k==='공청석유'){if(P.gcs){log('공청석유는 한 생에 한 번만 효험이 있습니다.','info');return}P.gcs=1;P.qiBonus+=120}
   else{if((P.mss||0)>=2){log('만년설삼은 한 생에 두 번까지만 효험이 있습니다.','info');return}P.mss=(P.mss||0)+1;P.qiBonus+=60}
   P.mats[k]--;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.4});addText(P.x,P.y,`내공 +${k==='공청석유'?'1갑자':'반 갑자'}`,'#9db8e0');
-  log(`${k}을(를) 먹고 운기하니 내공이 ${k==='공청석유'?'1갑자':'반 갑자'} 늘었습니다. (${gapja(baseQi())})`,'xp');wallCheck();renderOpen()});
+  log(`${k}을(를) 먹고 운기하니 내공이 ${k==='공청석유'?'1갑자':'반 갑자'} 늘었습니다. (${gapja(baseQi())})`,'xp');elixirBody();wallCheck();renderOpen()});
 // 눈 덮인 산 맵의 약초밭에서 드물게 만년설삼
 function snowSam(){const R=REGIONS[REG];if(R&&R.lm&&R.theme==='snow'&&Math.random()<.04){addMat('만년설삼',1);log('눈 속에서 만년설삼을 캤습니다!','xp');showBanner('만년설삼','내공 반 갑자')}}
 
@@ -147,5 +149,5 @@ function realmCardExtra(){const ri=realmIdx(),s=school();
   const ladder=REALM_FX.map((_,i)=>fxOf(i)).map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${rk(i)} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
   const extra=`<p>내공 <b class="gold">${gapja(baseQi())}</b> (${baseQi()}) · ${danName()} · 심법 계열 <b class="gold">${s}</b> <small class="dim">${SCHOOL[s].d}</small></p>
     <p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>
-    <details><summary>경지의 길</summary><div class="list">${ladder}</div></details>`;
+    <details><summary>경지의 길</summary><div class="list">${ladder}</div></details>${bodyHtml()}`;
   return extra}

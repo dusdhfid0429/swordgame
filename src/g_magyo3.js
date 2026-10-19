@@ -25,24 +25,24 @@ let ldHall=null;   // 비무 동안 교주 NPC를 숨긴 신전 대전
 function leaderDuel(){const no=leaderWhy();if(no){log(`교주 비무: ${no}.`,'info');return false}const HR=REGIONS[LD_HALL]||REGIONS[LD_HQ],n=(HR._npcsM||HR.npcs).find(x=>x.hq===LD_SECT);if(!n)return false;
   P.ldTried=1;closePanels();if(!HR._npcsM)HR._npcsM=HR.npcs;HR.npcs=HR._npcsM.filter(x=>x!==n);ldHall=HR;
   if(REG!==LD_HQ)regionJump(LD_HQ,20.5,15.5);else{P.x=20.5;P.y=15.5}G.duel=true;G.ldDuel='take';for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}
-  P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const e=leaderMob(n,0);P.target=e;if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);
+  P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const e=leaderMob(n,0);P.target=e;refreshNPCF();
   showBanner('교주 비무','천마신전 마당');log('교주 천마가 제단에서 내려와 마당에 섰다. "힘이 곧 자리다. 덤벼라." 마당 안의 교도는 구경만 한다. 약은 쓸 수 없고 마당을 벗어나면 항복이다.','sys');return true}
 // 도전자: 교주가 된 뒤 해마다 20%. 그 자리에서 바로 비무
 function leaderChallenge(){if(!isLeader()||G.duel||P.jail||P.hp<=0||!REGION()||P.traveling)return false;
   G.duel=true;G.ldDuel='def';for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}P.path=null;P.target=null;const e=leaderMob(null,1);P.target=e;
   showBanner('도전','교주 자리를 노리는 자');log(`${e.name}이(가) 교주 자리를 걸고 비무를 청했다. 거절할 수 없다. 지면 자리를 잃고 흑혈옥이다.`,'dmg');return true}
 function leaderEnd(win,e){const kind=G.ldDuel;G.duel=false;G.ldDuel=0;mobs=mobs.filter(m=>!m.duel);P.target=null;
-  if(ldHall){ldHall.npcs=ldHall._npcsM;ldHall=null;if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+  if(ldHall){ldHall.npcs=ldHall._npcsM;ldHall=null;refreshNPCF()}
   if(win){if(kind==='take')leaderWin();else{P.fame+=30;log(`도전자를 꺾었다. 교주의 자리는 굳건하다. 명성 +30`,'xp');showBanner('비무 승리','교주의 위엄')}}
-  else{if(kind==='def'){P.leader=null;G.leader=null;log('도전자에게 졌다. 교주의 자리를 잃었다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 져 자리를 잃었다`)}
-    else{log('교주 천마에게 졌다. "탈마에 이르렀어도 아직 멀었다." 호법들이 양팔을 잡았다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 졌다`)}
+  else{if(kind==='def'){P.leader=null;G.leader=null;log('도전자에게 졌다. 교주의 자리를 잃었다.','dmg');feat(`교주 비무에서 져 자리를 잃었다`)}
+    else{log('교주 천마에게 졌다. "탈마에 이르렀어도 아직 멀었다." 호법들이 양팔을 잡았다.','dmg');feat(`교주 비무에서 졌다`)}
     P.hp=Math.max(1,P.hp);P.mara=clamp((P.mara||0)+LD.mara,0,100);P.maraLow=null;P.sin=LD.jail*J2.perYear;jailEnter('교주 비무에서 패했다')}
   runHooks('leaderDuel',{win,kind,e})}
 function leaderWin(){const s=SECTS[LD_SECT];P.leader=LD_SECT;G.leader={life:P.lifeNo,name:P.name,y:Math.floor(G.cal)};P.fame+=LD.fame;P.sin=0;P.ldWar=P.ldWar||'out';
   const got=[];for(const k in MDANG){const a=ARTS[MDANG[k].art];if(!a)continue;if(!P.arts[a.id]){P.arts[a.id]={p:0,f:a.forms.map((f,i)=>i===0)};got.push(a.n)}}
   const top=SIM[`N_${LD_SECT}_${SIM_TOP.one||4}`];if(top&&!(P.sims&&P.sims[top.id])){simLearn(top);got.push(top.n)}
   log(`교주 천마를 꺾었다! 제단에 당신의 이름이 새겨지고 사대호법과 오당 당주가 무릎을 꿇었다. 천마신교 교주가 되었다. 명성 +${LD.fame}${got.length?`, 얻음: ${got.join('·')}`:''}.`,'xp');
-  showBanner('교주 등극','천마신교의 새 천마');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 천마를 꺾고 천마신교 교주가 되었다`);if(typeof saveGame==='function')saveGame(true)}
+  showBanner('교주 등극','천마신교의 새 천마');feat(`교주 비무에서 천마를 꺾고 천마신교 교주가 되었다`);if(typeof saveGame==='function')saveGame(true)}
 {const de=duelEnd;duelEnd=function(win,e){if(G.ldDuel)return leaderEnd(win,e);return de(win,e)}}
 {const uc=useCon;useCon=function(k){if(G.ldDuel){log('비무 중엔 약을 쓸 수 없다. 영약은 비무 전에 먹었어야 했다.','info');return}return uc(k)}}
 // 보스 패턴: 천마해체(생명 50% 아래 피해 +25%), 마기 폭발(25% 아래 5초마다 반경 3)
@@ -68,9 +68,9 @@ hook('sectAct',c=>{if(c.a==='ldduel'){c.done=true;c.r=true;leaderDuel()}else if(
   else if(c.a==='pardon'){c.done=true;c.r=true;leaderPardon(c.x)}});
 // ---- 사면: 흑혈옥의 정파 수감자를 풀어 동료로 들인다 ----
 function leaderPardon(id){if(!isLeader()||REG!==JAIL_ID)return false;const n=npcsHere().find(x=>x.prisoner&&x.id===id);if(!n)return false;
-  P.pardon=P.pardon||{};P.pardon[id]=1;const R=REGION();R._npcsP=R._npcsP||R.npcs;R.npcs=R.npcs.filter(x=>x!==n);if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);
+  P.pardon=P.pardon||{};P.pardon[id]=1;const R=REGION();R._npcsP=R._npcsP||R.npcs;R.npcs=R.npcs.filter(x=>x!==n);refreshNPCF();
   const a=mkAlly('disciple',n.n.replace('갇힌 ',''),P.x+.6,P.y+.4);a.lv=4;a.maxHp=a.hp=240;a.atk=18;a.k='동료';allies.push(a);closePanels();
-  log(`${n.n}을(를) 사면했다. "목숨을 빚졌소. 교주의 곁에서 갚겠소." 동료가 되었다.`,'xp');showBanner('사면','교주의 은혜');P.feats.push(`${Math.floor(P.age)}세에 흑혈옥의 ${n.n}을(를) 사면했다`);return true}
+  log(`${n.n}을(를) 사면했다. "목숨을 빚졌소. 교주의 곁에서 갚겠소." 동료가 되었다.`,'xp');showBanner('사면','교주의 은혜');feat(`흑혈옥의 ${n.n}을(를) 사면했다`);return true}
 hook('regionLoaded',id=>{if(id!==JAIL_ID)return;const R=REGIONS[id];if(!R)return;R._npcsP=R._npcsP||R.npcs;R.npcs=R._npcsP.filter(n=>!(n.prisoner&&P.pardon&&P.pardon[n.id]))});
 {const pd=prisonerDlg;prisonerDlg=function(n){const h=pd(n);if(!isLeader())return h;return h+`<div class="row2"><span class="note">교주의 사면: 풀어 주면 동료로 따른다.</span>${B('pardon:'+n.id,'사면하기',{pri:1})}</div>`}}
 // ---- 화면 ----

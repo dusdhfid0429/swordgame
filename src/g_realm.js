@@ -28,7 +28,10 @@ function pgPlace(){
   return null}
 const pgCost=()=>40+30*realmIdx();
 const pgYears=()=>.5+.5*realmIdx();
-const hobeop=()=>inOwnSect()||inAcad()||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+const hobeop=()=>inOwnSect()||inAcad()||!!P.hob||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+// v153 (사용자): 호법을 은자로 고용한다. 다음 한 번의 폐관을 지킨다 (PG_HOB.cost[다음 경지])
+const hobCost=()=>GD.PG_HOB.cost[Math.min(GD.PG_HOB.cost.length-1,realmIdx()+1)];
+function hobHire(){if(hobeop()||!pgPlace())return;const c=hobCost();if(P.silver<c){log(`호법을 부를 은자가 모자랍니다 (${c}).`,'info');return}P.silver-=c;P.hob=1;log(`은자 ${c}로 호법을 불렀습니다. 다음 폐관 동안 곁을 지킵니다 (성공 +10%).`,'sys');renderTrain()}
 // 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=GD.PG_BASE;
 function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=PG_BASE[r];
@@ -37,26 +40,30 @@ function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=P
 // 할 수 없는 까닭 (없으면 '')
 function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
   if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
-  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
+  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;
+  // 폐관 중 흐른 해에 천하대전이 지나가거나 강호의 사건이 저절로 정해지지 않게 막는다
+  if(typeof warOn==='function'&&warOn())return'천하대전 중이다';
+  if(typeof storyDueIn==='function'){const a=storyDueIn(pgYears());if(a!=null)return`${a}세에 강호에 일이 생긴다. 그 뒤에 폐관하라`}if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
-    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}</div>`}
+    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}
+    ${!hobeop()&&pgPlace()?`<button type="button" class="btn tbtn" data-tr="hob"${trnBusy||P.silver<hobCost()?' disabled':''}>호법 고용 · 은자 ${hobCost()}</button>`:''}</div>`}
 function pgStart(k){
   if(trnBusy||P.hp<=0)return;const why=pgWhy();if(why){log(`폐관수련을 할 수 없습니다: ${why}.`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
   log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}
 // 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
-  const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
-  P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
+  const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;P.hob=0;
+  if(!passYears(yrs))return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
-    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
+    feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
   qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
 function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
-  if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
+  if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');feat(`${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
   // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
   const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f&&!inAcad(),lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
@@ -64,7 +71,7 @@ function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ri
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
   recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
   const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
-  log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
+  log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');feat(`${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
 hook('trainTick',dt=>{
   if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
   const b=trnBusy;if(b&&b.k.startsWith('pg')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';

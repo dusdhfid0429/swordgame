@@ -7,7 +7,7 @@ function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 const logHist=[];   // 시스템 메시지 기록: 메시지창을 누르면 되돌아본다
 function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove();
-  logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세 ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
+  logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
 function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없습니다.</p>';
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
 // 맡은 임무와 진행도: 지역 이름 아래
@@ -64,33 +64,38 @@ function press(b){
 }
 function meditate(){if(P.medit){P.medit=false;return}if(typeof simCur==='function'&&simCur().none){log('익힌 심법이 없어 운기조식을 할 수 없습니다.','info');return}   // v144 (사용자): 내공을 채우는 일도 심법을 익힌 뒤
   if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
-const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
+// HUD는 매 프레임 그린다: 값이 바뀐 것만 DOM에 쓴다 (예전엔 프레임마다 textContent 36번·querySelector 40번이 레이아웃을 다시 잡게 했다)
+const txt=(el,v)=>{v=String(v);if(el._t!==v){el._t=v;el.textContent=v}};
+const sty=(el,k,v)=>{const c=el._s||(el._s={});if(c[k]!==v){c[k]=v;el.style[k]=v}};
+const qc=(el,sel)=>{const c=el._q||(el._q={});return c[sel]||(c[sel]=el.querySelector(sel))};
+const $t=(id,v)=>txt($(id),v);
+const tip=(el,v)=>{if(el._ti!==v){el._ti=v;el.title=v}};
+const setW=(id,v)=>sty($(id),'width',clamp(v,0,1)*100+'%');
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${facName()}`;
-  $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}`;
+  $t('nm',P.name);$t('rank',`${realmName()} · ${facName()}`);
+  $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
-  if($('mag')){const ma=typeof isMa==='function'&&isMa();$('mag').style.display=ma?'':'none';if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$('mat').textContent=tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`}}
-  $('hpt').textContent=`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`;$('qit').textContent=`내공 ${Math.floor(P.qi)}/${P.maxQi}`;
-  $('mst').textContent=`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`;
-  $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
-  $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
-  questTrack();$('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
-  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
+  if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
+  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);
+  $t('mst',`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`);
+  $t('res',`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`);
+  $t('zone',regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':''));
+  questTrack();$t('cal',`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`);
+  $t('modeb',P.mode==='auto'?'자동초식':'수동초식');$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
   const ch=P.chain,live=time-ch.t<1.7;
-  a.forms.forEach((f,i)=>{});
-  for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');b.querySelector('.nm').textContent='';b.querySelector('em').textContent='';b.querySelector('.cd').style.height='0';b.title='';continue}
-    const on=s.f[i];const tag=f.n+on;if(b.dataset.n!==tag){b.dataset.n=tag;b.querySelector('.nm').textContent=f.n;b.title=`${f.n} · ${plabel(f)} · 연속기 +${f.bonus}%${on?'':` · 미습득 (숙련 ${f.req}, 활력 ${f.cost})`}`}
-    b.querySelector('em').textContent=on?(f.qi||''):'';b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<f.qi||!hasWeaponFor(a.cls)));
-    b.querySelector('.cd').style.height=(on?P.fcd[i]/P.fmax[i]*100:0)+'%';b.classList.toggle('used',live&&ch.last===i)}
-  const u=$('b_ult');u.querySelector('.nm').textContent=a.ult.n;u.classList.toggle('off',!allLearned(a.id));u.querySelector('.cd').style.height=(P.ucd/8*100)+'%';u.title=`필살기 ${a.ult.n} · 초식을 모두 익혀야 쓸 수 있다`;
-  for(const k of['암기','독공','점혈']){const b=$('b_'+k);b.querySelector('.nm').textContent=k;b.classList.toggle('off',!P.sp[k]);b.querySelector('.cd').style.height=(P.scd[k]/SPEC[k].cd*100)+'%';
-    b.querySelector('em').textContent=k==='암기'?(P.mats.비도||0):SPEC[k].qi}
-  const g=$('b_신공');g.querySelector('.nm').textContent=P.sg.name?P.sg.name.slice(0,2):'신공';g.classList.toggle('off',!P.sg.name);g.querySelector('.cd').style.height=(P.scd.신공/5*100)+'%';
-  for(const k of['금창약','소환단']){const b=$('b_'+k);b.querySelector('.nm').textContent=k;b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('lock',!(P.mats[k]>0))}
+  for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');txt(qc(b,'.nm'),'');txt(qc(b,'em'),'');sty(qc(b,'.cd'),'height','0');tip(b,'');continue}
+    const on=s.f[i];const tag=f.n+on;if(b.dataset.n!==tag){b.dataset.n=tag;txt(qc(b,'.nm'),f.n);tip(b,`${f.n} · ${plabel(f)} · 연속기 +${f.bonus}%${on?'':` · 미습득 (숙련 ${f.req}, 활력 ${f.cost})`}`)}
+    txt(qc(b,'em'),on?(f.qi||''):'');b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<f.qi||!hasWeaponFor(a.cls)));
+    sty(qc(b,'.cd'),'height',(on?P.fcd[i]/P.fmax[i]*100:0)+'%');b.classList.toggle('used',live&&ch.last===i)}
+  const u=$('b_ult');txt(qc(u,'.nm'),a.ult.n);u.classList.toggle('off',!allLearned(a.id));sty(qc(u,'.cd'),'height',(P.ucd/8*100)+'%');tip(u,`필살기 ${a.ult.n} · 초식을 모두 익혀야 쓸 수 있다`);
+  for(const k of['암기','독공','점혈']){const b=$('b_'+k);txt(qc(b,'.nm'),k);b.classList.toggle('off',!P.sp[k]);sty(qc(b,'.cd'),'height',(P.scd[k]/SPEC[k].cd*100)+'%');
+    txt(qc(b,'em'),k==='암기'?(P.mats.비도||0):SPEC[k].qi)}
+  const g=$('b_신공');txt(qc(g,'.nm'),P.sg.name?P.sg.name.slice(0,2):'신공');g.classList.toggle('off',!P.sg.name);sty(qc(g,'.cd'),'height',(P.scd.신공/5*100)+'%');
+  for(const k of['금창약','소환단']){const b=$('b_'+k);txt(qc(b,'.nm'),k);txt(qc(b,'em'),P.mats[k]||0);b.classList.toggle('lock',!(P.mats[k]>0))}
   $('b_medit').classList.toggle('used',P.medit);$('b_ridebtn').classList.toggle('off',!allies.some(x=>x.d&&x.d.ride));
   if(TOUCH)touchHud();
-  if(P.chan){$('chan').hidden=false;$('chant').textContent=P.chan.label;$('chanb').style.width=(P.chan.t/P.chan.dur*100)+'%'}else $('chan').hidden=true;
+  if(P.chan){$('chan').hidden=false;$t('chant',P.chan.label);sty($('chanb'),'width',(P.chan.t/P.chan.dur*100)+'%')}else $('chan').hidden=true;
 }
 function plabel(f){
   const m={melee:'단일',multi:`${f.hits}연타`,arc:'부채꼴',circle:'주변 전체',line:'직선 관통',drop:'원격 낙하',rain:'광역 낙하',pull:'끌어당김',chain:'연쇄',blink:'순간이동',blinkMulti:'연속 순간이동',dash:'돌진'};
@@ -112,7 +117,7 @@ function pChar(){
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
-    <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
+    <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}
@@ -209,7 +214,8 @@ function openNpc(n){shopMode=null;sectView=null;if(n.board&&(!G.board||!G.board.
 function shopRow(label,desc,price,act,d){return `<div class="it"><div>${label}<span>${desc}</span></div><div class="ib">${B(act,`사기 · 은자 ${price}`,{d:d||P.silver<price})}</div></div>`}
 const SHOP=GD.SHOP;
 function shopList(id){
-  return SHOP[id].map(([k,t,p],i)=>{
+  return SHOP[id].map(([k,t,p0,mr],i)=>{const p=worldPrice(p0);   // v153: 천하통일 세상의 물가 (g_story5.js). mr = 살 수 있는 최소 경지
+    if(mr!=null&&realmIdx()<mr)return shopRow(k,`${CONSUME[k]?CONSUME[k].d+' · ':''}${rk(mr)} 이상`,p,`buy:${id}:${i}`,true);
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?'비도 10자루':k;return shopRow(nm,CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
     if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}`,p,`buy:${id}:${i}`)}
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
@@ -217,11 +223,11 @@ function shopList(id){
     if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
     if(t==='gbook'){ggInit();const gid=k.split(':')[1],g=GGS[gid],has=!!P.gk[gid];return shopRow(`경공 비급 · ${g.n} <small class="dim">${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>`,has?'이미 익혔다':g.d+(g.tr&&g.tr.length?' · '+ggTraitTxt(g):''),p,`buy:${id}:${i}`,has)}
     if(t==='pbook'){const q=PAS[k.split(':')[1]],has=P.pas&&P.pas[q.id];return shopRow(`패시브 비급 · ${q.n} <small class="dim">${PTYPE[q.type].n}</small>`,has?'이미 익혔다':`${PTYPE[q.type].f(pasVal(q,0))}~${PTYPE[q.type].f(pasVal(q,100)).replace(/^[^+-]*/,'')} · ${q.d}`,p,`buy:${id}:${i}`,has)}
-    if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?60:p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
+    if(t==='sbook'){const s=k.split(':')[1],pp=s==='독공'&&P.side==='사'?worldPrice(60):p;return shopRow(`특수무공 비급 · ${s}`,{암기:'비도를 던진다',독공:'독 기운으로 5초간 중독 (사파 1.5배)',점혈:'붙어서 혈을 짚어 3초간 묶는다'}[s]+(P.sp[s]?' · 익힘':''),pp,`buy:${id}:${i}`,!!P.sp[s])}
   }).join('');
 }
 function buy(id,i){
-  const[k,t,p0]=SHOP[id][i];const p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?60:p0;if(P.silver<p)return;
+  const[k,t,p1,mr]=SHOP[id][i];if(mr!=null&&realmIdx()<mr)return;const p0=worldPrice(p1),p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?worldPrice(60):p0;if(P.silver<p)return;
   if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook'||t==='bbook'||t==='gbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
   if(t==='mat')addMat(k);else if(t==='mat10')addMat('비도',10);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
@@ -316,16 +322,16 @@ function act(s){
     case'rumor':log(`객잔 주인: "${pick(TIPS)}"`,'info');break;
     case'repair':{const w=P.eq.weapon,c=Math.ceil((w.maxDur-w.dur)*.6);if(P.silver>=c){P.silver-=c;w.dur=w.maxDur;log('무기를 고쳤습니다.','sys')}break}
     case'marry':{const v=prompt('배우자의 이름',pick(['연화','소혜','설아','월향','진운','하령','유경','백란']));if(!v)return;P.silver-=200;P.spouse={name:v.trim().slice(0,8)};
-      log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
-    case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
+      log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);feat(`${P.spouse.name}와(과) 혼인했다`);break}
+    case'qtake':{const q={...G.board[n],have:0},m=worldMul('board');if(m!==1)q.silver=Math.round(q.silver*m);P.quests.push(q)}G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;runHooks('questDone',q);P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect||q.maeng)(P.qdone=P.qdone||{})[q.key]=1;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;runHooks('questDone',q);P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
-    case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;
-    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(P.age);log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
+    case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');feat(`집을 지었다`);break;
+    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(realAge());log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
     case'sbuy':{const fi=+y,price=40*(fi+1);if(P.silver>=price){P.silver-=price;P.bag.push(mkBook(x,fi));log('비급을 샀습니다. 행낭에서 읽으세요.','sys')}break}
-    case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;P.feats.push(`${Math.floor(P.age)}세에 ${P.sectName}을(를) 세웠다`);break}
+    case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;feat(`${P.sectName}을(를) 세웠다`);break}
     case'disciple':{P.silver-=50;const nm=pick(['소운','청하','무진','백결','한솔','도현','진우','설화','유린']);const d=mkAlly('disciple',nm,P.x+.6,P.y+.4);allies.push(d);log(`${nm}을(를) 제자로 받았습니다.`,'xp');break}
     case'rest':P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('집에서 쉬었습니다.','sys');if(P.spouse)familyTalk();closePanels();return;
     case'putm':for(const[k,v]of Object.entries(P.mats))if(v>0&&!CONSUME[k]&&k!=='비도'){G.storage.mats[k]=(G.storage.mats[k]||0)+v;P.mats[k]=0}break;

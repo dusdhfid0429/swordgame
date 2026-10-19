@@ -59,13 +59,20 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const hop=await p.evaluate(()=>{const q=P.perch,from={i:q.i,j:q.j};let to=null;
     for(let r=2;r<=4&&!to;r++)for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]]){const i=q.i+dx*r,j=q.j+dy*r;if(i>2&&j>2&&i<N-3&&j<N-3&&PERCH_TREE[objs[j][i]]){to={i,j,dx,dy};break}}
     if(!to)return{none:1};const l=Math.hypot(to.dx,to.dy);joy.on=true;joy.gx=to.dx/l;joy.gy=to.dy/l;
-    for(let i=0;i<3;i++)perchMove(joy.gx,joy.gy,.03);const still=!!P.perch,aim=leapAim();P.qi=P.maxQi;leap();joy.on=false;return{to,from,still,aim:!!aim}});
+    for(let i=0;i<3;i++)perchMove(joy.gx,joy.gy,.03);P.ggc=null;const still=!!P.perch,aim=leapAim();P.qi=P.maxQi;leap();joy.on=false;return{to,from,still,aim:!!aim}});
   await p.waitForTimeout(900);
   const hop2=await p.evaluate(h=>({k:P.perch&&P.perch.k,i:P.perch&&P.perch.i,j:P.perch&&P.perch.j}),hop);
   ok(`나무 위에서 조이스틱을 잠깐 기울이면 떨어지지 않고 겨눈 자리가 보이며, 경공으로 그쪽 나무 위로 건너뛴다 (${hop.from?`${hop.from.i},${hop.from.j} → ${hop2.i},${hop2.j}`:'없음'})`,hop.still&&hop.aim&&hop2.k==='tree'&&(hop2.i!==hop.from.i||hop2.j!==hop.from.j)&&((hop2.i-hop.from.i)*hop.to.dx+(hop2.j-hop.from.j)*hop.to.dy)>0);
   await p.screenshot({path:shot('height_tree_hop')});
   await p.evaluate(()=>{for(let i=0;i<45;i++)perchMove(1,0,.05)});await p.waitForTimeout(700);
   ok('나무에서 조이스틱을 계속 밀면 아래로 내려온다',await p.evaluate(()=>!P.perch&&P.z===0&&walkAt(P.x,P.y)));
+  // v154 (사용자): 오르는 건 1단뿐. 나무에 오르고 곧바로 이어 쓴 2단은 이동기라 다른 나무를 노리지 않고 땅으로 뛴다
+  await p.evaluate(()=>{mobs=[];P.ggc=null;for(let j=3;j<N-3;j++)for(let i=3;i<N-3;i++)if(PERCH_TREE[objs[j][i]]&&walk(i,j+1)&&walk(i,j+2)&&Math.hypot(i-P.x,j-P.y)<20){P.x=i+.5;P.y=j+2.4;P.fx=0;P.fy=-1;P.qi=P.maxQi;leap();return}});
+  await p.waitForTimeout(900);
+  const g2=await p.evaluate(()=>{const on=P.perch&&P.perch.k;const mx=ggMaxStage;ggMaxStage=()=>3;P.qi=P.maxQi;P.ggc={n:1,until:time+2.5};const st=ggNext();joy.on=true;joy.gx=0;joy.gy=-1;const aim=leapAim();joy.on=false;leap();ggMaxStage=mx;return{on,st,aim:!!aim,to:!!(P.leap&&P.leap.to)}});
+  await p.waitForTimeout(900);
+  const g2b=await p.evaluate(()=>({perch:!!P.perch,z:P.z}));
+  ok(`나무 위(${g2.on})에서 이어 쓴 경공 ${g2.st}단은 나무를 노리지 않고(겨눔 ${g2.aim}, 목표 ${g2.to}) 땅으로 뛴다 (나무 위 ${g2b.perch}, 높이 ${g2b.z})`,g2.on==='tree'&&g2.st===2&&!g2.aim&&!g2.to&&!g2b.perch&&g2b.z===0);
   // 지역을 옮기면 높이가 풀린다
   await p.evaluate(()=>{P.perch={k:'tree',i:1,j:1,z:30};P.z=30;travel({to:'gaebong',tx:20.5,ty:20.5})});await p.waitForTimeout(800);
   ok('지역을 옮기면 땅에 선다',await p.evaluate(()=>!P.perch&&P.z===0));

@@ -1,0 +1,56 @@
+{
+ "_TERR_NOTE": "v155 지역별 지형 개성 (사용자 2026-10-19). place: 지명 조각(본산 자리·명산 이름·지역 이름에 들어 있으면 그 지형), th: 지역 테마 기본값. rock/grass/water/mist = [r,g,b]. pat: streak(세로 절리) strata(지층 띠) round(둥근 풍화) scree(돌부스러기). spire: SPIRE 팔레트, spireN: 안쪽 바위가 봉우리로 바뀌는 몫, edge: 뒤쪽 가장자리 바위·나무가 봉우리로 바뀌는 몫. mist: 가장자리가 구름바다로 바랜다, cloud: 떠도는 구름 수. sand: 모래바람, heat: 아지랑이",
+ "TERR": {
+  "place": {
+   "화산": {"rock": [200, 196, 188], "grass": [40, 70, 44], "pat": "streak", "spire": "g", "spireN": 0.34, "edge": 0.6, "mist": [214, 220, 228], "cloud": 3},
+   "황산": {"rock": [176, 172, 164], "grass": [38, 72, 46], "pat": "streak", "spire": "g", "spireN": 0.27, "edge": 0.5, "mist": [220, 224, 230], "cloud": 3},
+   "무당산": {"rock": [100, 114, 104], "grass": [34, 72, 42], "pat": "streak", "spire": "m", "spireN": 0.16, "edge": 0.3, "mist": [196, 208, 204], "cloud": 2},
+   "아미산": {"rock": [92, 95, 104], "grass": [32, 68, 48], "pat": "strata", "spire": "b", "spireN": 0.14, "edge": 0.35, "mist": [238, 238, 234], "cloud": 3},
+   "종남산": {"rock": [142, 152, 154], "grass": [52, 88, 66], "pat": "streak", "spire": "g", "spireN": 0.14, "edge": 0.25, "mist": [204, 214, 216], "cloud": 3},
+   "형산": {"rock": [150, 154, 148], "grass": [48, 100, 58], "pat": "round", "mist": [212, 224, 228], "cloud": 2},
+   "태산": {"rock": [156, 144, 128], "grass": [74, 88, 60], "pat": "streak", "spire": "t", "spireN": 0.16, "edge": 0.3},
+   "숭산": {"rock": [170, 140, 100], "grass": [92, 100, 64], "pat": "strata", "spire": "q", "spireN": 0.2, "edge": 0.3},
+   "곤륜산": {"rock": [124, 112, 100], "grass": [118, 112, 86], "pat": "scree", "spire": "s", "spireN": 0.2, "edge": 0.4},
+   "천산": {"rock": [112, 114, 120], "grass": [54, 112, 64], "water": [56, 150, 164], "pat": "streak", "spire": "s", "spireN": 0.14, "edge": 0.35},
+   "대설산": {"rock": [120, 122, 128], "grass": [70, 92, 72], "pat": "scree", "spire": "s", "spireN": 0.18, "edge": 0.4},
+   "장백산": {"rock": [88, 84, 80], "grass": [56, 92, 60], "water": [34, 84, 140], "pat": "scree", "spire": "d", "spireN": 0.16, "edge": 0.4},
+   "공동산": {"rock": [168, 86, 60], "grass": [80, 96, 56], "pat": "strata", "spire": "r", "spireN": 0.25, "edge": 0.4},
+   "점창산": {"rock": [194, 196, 194], "grass": [46, 86, 64], "water": [72, 128, 170], "pat": "streak", "spire": "g", "spireN": 0.14, "edge": 0.3, "mist": [216, 220, 222], "cloud": 2},
+   "청성산": {"rock": [132, 120, 92], "grass": [30, 78, 40], "pat": "round", "mist": [198, 212, 198], "cloud": 2},
+   "명사산": {"rock": [176, 146, 104], "grass": [150, 120, 74], "pat": "strata", "spire": "y", "spireN": 0.18, "edge": 0.3, "sand": 1, "heat": 1},
+   "화염산": {"rock": [180, 82, 50], "grass": [132, 92, 58], "pat": "strata", "spire": "r", "spireN": 0.27, "edge": 0.4, "sand": 1, "heat": 1},
+   "단하산": {"rock": [176, 80, 54], "grass": [70, 92, 54], "pat": "strata", "spire": "r", "spireN": 0.27, "edge": 0.5},
+   "보타산": {"rock": [186, 176, 166], "grass": [50, 96, 66], "water": [70, 128, 152], "pat": "round"},
+   "삼협": {"rock": [144, 146, 138], "grass": [58, 82, 52], "pat": "streak", "spire": "k", "spireN": 0.23, "edge": 0.6, "mist": [200, 208, 206], "cloud": 2},
+   "동정호": {"grass": [66, 98, 58], "water": [86, 118, 120], "mist": [208, 216, 216], "cloud": 2},
+   "십만대산": {"rock": [70, 72, 70], "grass": [30, 40, 34], "pat": "streak", "spire": "k", "spireN": 0.18, "edge": 0.5, "mist": [60, 66, 64], "cloud": 2}
+  },
+  "th": {
+   "peak": {"spire": "g", "spireN": 0.09, "edge": 0.2, "pat": "streak"},
+   "snow": {"spire": "s", "spireN": 0.11, "edge": 0.3, "pat": "scree"},
+   "canyon": {"spire": "r", "spireN": 0.16, "edge": 0.3, "pat": "strata"},
+   "sand": {"spire": "y", "spireN": 0.14, "edge": 0.2, "pat": "strata", "sand": 1, "heat": 1},
+   "desert": {"rock": [170, 140, 100], "grass": [140, 112, 70], "spire": "y", "spireN": 0.16, "edge": 0.25, "pat": "strata", "sand": 1, "heat": 1},
+   "gobi": {"rock": [150, 128, 100], "grass": [128, 108, 72], "spire": "y", "spireN": 0.14, "edge": 0.2, "pat": "scree", "sand": 1, "heat": 1},
+   "loess": {"rock": [168, 138, 96], "grass": [96, 96, 60], "pat": "strata", "spire": "q", "spireN": 0.11, "edge": 0.2},
+   "karst": {"rock": [138, 142, 134], "grass": [40, 84, 44], "pat": "streak", "spire": "k", "spireN": 0.32, "edge": 0.5, "mist": [200, 210, 206], "cloud": 2},
+   "highland": {"spire": "s", "spireN": 0.11, "edge": 0.3, "pat": "scree"},
+   "plateau": {"rock": [126, 114, 100], "spire": "s", "spireN": 0.11, "edge": 0.3, "pat": "scree"},
+   "hills": {"spire": "g", "spireN": 0.09, "edge": 0.2, "pat": "round"},
+   "tea": {"pat": "round", "mist": [208, 218, 214], "cloud": 2}
+  }
+ },
+ "SPIRE": {
+  "_": "봉우리 그림 팔레트: hi(밝은 면) mid dk(그늘 면) pat(결) cap(봉우리 머리 눈) tree(바위틈 소나무) top(머리 모양: sharp 칼날, round 둥근, flat 평평)",
+  "g": {"hi": [222, 218, 210], "mid": [158, 154, 148], "dk": [72, 70, 68], "pat": "streak", "tree": 1, "top": "sharp", "h": [170, 230]},
+  "m": {"hi": [140, 156, 142], "mid": [92, 106, 96], "dk": [40, 50, 44], "pat": "streak", "tree": 2, "top": "sharp", "h": [140, 190]},
+  "b": {"hi": [140, 142, 150], "mid": [90, 92, 100], "dk": [38, 40, 46], "pat": "strata", "tree": 1, "top": "flat", "h": [150, 200]},
+  "t": {"hi": [196, 184, 166], "mid": [140, 128, 112], "dk": [66, 60, 54], "pat": "streak", "tree": 1, "top": "round", "h": [130, 170]},
+  "q": {"hi": [210, 180, 136], "mid": [160, 128, 90], "dk": [80, 62, 44], "pat": "tilt", "tree": 0, "top": "sharp", "h": [130, 180]},
+  "k": {"hi": [176, 180, 172], "mid": [118, 124, 116], "dk": [52, 58, 52], "pat": "drip", "tree": 2, "top": "round", "h": [170, 230]},
+  "r": {"hi": [214, 120, 84], "mid": [164, 78, 52], "dk": [82, 36, 26], "pat": "strata", "tree": 0, "top": "round", "h": [130, 180]},
+  "s": {"hi": [186, 186, 192], "mid": [116, 114, 118], "dk": [52, 52, 58], "pat": "streak", "cap": 1, "tree": 0, "top": "sharp", "h": [160, 220]},
+  "d": {"hi": [130, 124, 118], "mid": [82, 78, 74], "dk": [34, 32, 30], "pat": "scree", "cap": 1, "tree": 0, "top": "flat", "h": [130, 170]},
+  "y": {"hi": [226, 196, 140], "mid": [186, 150, 100], "dk": [104, 80, 54], "pat": "strata", "tree": 0, "top": "flat", "h": [80, 120]}
+ }
+}

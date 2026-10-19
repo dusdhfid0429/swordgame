@@ -171,6 +171,8 @@ function drawMedit(front){
 // ================= frame =================
 function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
+// 지금 맵의 NPC가 바뀌면(이동·사망·사면·전각) 그리기용 목록을 다시 만든다
+function refreshNPCF(){NPCF=npcsHere().filter(n=>!n.board).map(npcFighter)}
 // 그리기 레이어 (v122): BACK 바닥에 붙은 것(시체·핏자국·바닥 표식) → ENT 개체·건물(깊이 정렬) → FX 효과 → OVER 지명 → TOP 조준선
 const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
 // v128: 나무·지붕 위 효과 높이. 주인공 발치(0.8칸 안)에서 새로 생긴 fx·글자·투사체는 주인공의 높이 P.z를 받아 그 높이에서 그린다(한 번 정해지면 고정).
@@ -181,14 +183,13 @@ function draw(){
   const dpr=devicePixelRatio;tagZ();
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
-  ctx.fillStyle='#0b0a09';ctx.fillRect(-30,-30,W+60,H+60);
+  ctx.fillStyle=terrBg();ctx.fillRect(-30,-30,W+60,H+60);
   const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else ctx.drawImage(ground,o.x-NH*TW/2,o.y,(N+NH)*TW/2,(N+NH)*TH/2);
   if(typeof drawGore==='function')drawGore();   // 멸문 폐허의 핏자국 (g_ruin.js)
   const sea=P?season():'봄';
   if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(240,245,255,.7)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(230,140,40,.35)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
-  for(let j=RIV;j<=RIV+1&&j<NH;j++)for(let i=0;i<N;i++)if(map[j][i].g===2){for(let k=0;k<2;k++){const u=frac(time*.12+hash(i,j*3+k)),v=.2+hash(i*5+k,j)*.6,p=toScreen(i+u,j+v);if(p.x<-20||p.x>W+20||p.y<-20||p.y>H+20)continue;const a=Math.sin(u*Math.PI);
-    ctx.strokeStyle=`rgba(225,240,245,${.35*a})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x-6,p.y-3);ctx.quadraticCurveTo(p.x,p.y-1,p.x+6,p.y+3);ctx.stroke()}}
+  terrWater();   // v155: 모든 물 칸이 일렁인다 (g_terrain.js)
   if(!P)return;
   if(P.path&&P.path.length){const l=P.path[P.path.length-1],p=toScreen(l.x,l.y),k=(time*2)%1;ctx.strokeStyle=`rgba(230,200,120,${1-k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,6+k*10,3+k*5,0,0,7);ctx.stroke()}
   if(P.target&&P.target.hp>0){const p=toScreen(P.target.x,P.target.y);ctx.strokeStyle=P.target.d.hostile||P.target.aggro?'rgba(220,60,40,.85)':'rgba(230,200,120,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,18,8,0,0,7);ctx.stroke()}
@@ -204,9 +205,10 @@ function draw(){
     if(FURN[ob]){const mg=REGION().hall&&REGION().hall.mg;list.push({d:i+j+1,f:()=>drawFurn(ob,i,j,mg)});continue}
     if(ob.startsWith('flag:')){if(REGION().dead)continue;list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const set=SPRITES[ob],spr=set[(i*7+j*3)%set.length],tall=ob!=='rock';
-    const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<55&&p.y-pp.y<150&&p.y>pp.y;
+    const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<(ob==='spire'?60:55)&&p.y-pp.y<spr.height-10&&p.y>pp.y;
     list.push({d:i+j+1,f:()=>{if(fade)ctx.globalAlpha=.4;ctx.drawImage(spr,p.x-spr.width/2,p.y-spr.height+(tall?12:10));ctx.globalAlpha=1}})}
   for(const b of builds){const d=b.x+b.w-1+b.y+b.h-1+1,l=scr(b.x,b.y+b.h)[0]-20,r=scr(b.x+b.w,b.y)[0]+20,bt=scr(b.x+b.w,b.y+b.h)[1];
+    if(r<-10||l>W+10||bt<-40||bt-600>H)continue;   // v154: 화면 밖 건물은 건너뛴다
     const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,f:()=>drawBuild(b,hide?.45:1)})}
   for(const rl of rails)list.push({d:rl.x+rl.y+.5,f:()=>drawRail(rl)});
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
@@ -234,6 +236,7 @@ function draw(){
   // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
   runHooks('drawList',list);   // drawList: 그릴 목록에 더 얹기 (g_academy.js 과제 표시)
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
+  terrSky();   // v155: 구름·모래바람·아지랑이
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
   const w=REGION().hall?null:G.weather;
   if(w==='비'){ctx.strokeStyle='rgba(170,190,220,.35)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<140;i++){const x=(hash(i,7)*W+time*60*hash(i,3))%W,y=(hash(i,11)*H+time*(500+hash(i,5)*200))%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+12)}ctx.stroke();ctx.fillStyle='rgba(20,30,50,.15)';ctx.fillRect(0,0,W,H)}
@@ -242,7 +245,8 @@ function draw(){
   else if(w==='폭염'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,170,60,.45)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   // night and the cave: darkness with holes cut by the hero's aura, lanterns and qi bursts
   const cave=inCave(Math.floor(P.x),Math.floor(P.y));
-  const dark=Math.max(cave?.55:0,darkLvl()),sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
+  const dark=Math.max(cave?.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
+    sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
   if(dusk>0){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(255,120,40,${.5*dusk})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   if(dark>.01){
     lx.setTransform(S*dpr,0,0,S*dpr,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);
@@ -275,12 +279,17 @@ function draw(){
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;
     const mx=((m.x%1)+1)%1*W,my=m.y*H;if(dark>.3){ctx.fillStyle=`rgba(210,255,140,${(.35+.35*Math.sin(time*3+m.p))*dark})`;ctx.fillRect(mx,my,1.8*m.s,1.8*m.s)}
     else if(sea==='봄'||sea==='가을'){ctx.fillStyle=sea==='봄'?'rgba(245,200,215,.7)':'rgba(220,130,50,.7)';ctx.beginPath();ctx.ellipse(mx,my,2.6*m.s,1.3*m.s,time*2+m.p,0,7);ctx.fill()}}
-  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.drawImage(vignette(),0,0,W,H);
 }
+// 화면 가장자리 어둡게: 크기가 바뀔 때만 다시 그린다 (매 프레임 화면 전체 방사형 그라디언트가 5ms쯤 들었다)
+let VIG=null;
+function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&VIG.height===h)return VIG;
+  VIG=document.createElement('canvas');VIG.width=w;VIG.height=h;const g2=VIG.getContext('2d'),g=g2.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');g2.fillStyle=g;g2.fillRect(0,0,w,h);return VIG}
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}

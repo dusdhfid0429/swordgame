@@ -18,10 +18,10 @@ function maraAdd(v,why){if(!P||!isMa()&&v>0||v>0&&isTalma())return;if(v>0&&typeo
   else if(t1<t0)log(`마기가 가라앉아 ${MARA_N[t1]}으로 돌아왔습니다.`,'info')}
 // 마성 100: 주화입마. 쌓은 내공 10%가 흩어지고 생명이 깎이며 마성 60으로 내려간다
 function maraDev(){const lost=Math.floor((P.qiAcc||0)*MARA.dev.qi);P.qiAcc=Math.max(0,(P.qiAcc||0)-lost);P.mara=MARA.dev.back;if(typeof recalc==='function')recalc();P.hp=Math.max(1,Math.min(P.hp,Math.round(P.maxHp*.3)));P.qi=Math.min(P.qi,P.maxQi);
-  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');P.feats.push(`${Math.floor(P.age)}세에 마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2})}
+  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');feat(`마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2})}
 // 폭주: 몇 초 동안 가장 가까운 것(같은 편·양민 포함)을 친다. 끝나면 강제공격을 원래대로
 function maraBurst(){if(P.burst||G.duel)return;P.burst={t:MARA.burstDur,force:typeof forceAtk!=='undefined'?forceAtk:false,mode:P.mode};if(typeof toggleForce==='function')toggleForce(true);P.mode='auto';P.medit=false;P.chan=null;
-  log('마기가 날뛰어 이성을 잃었습니다! 눈앞의 것을 가리지 않고 칩니다.','dmg');showBanner('폭주','마기가 날뛴다');P.feats.push(`${Math.floor(P.age)}세에 마기에 휘둘려 폭주했다`)}
+  log('마기가 날뛰어 이성을 잃었습니다! 눈앞의 것을 가리지 않고 칩니다.','dmg');showBanner('폭주','마기가 날뛴다');feat(`마기에 휘둘려 폭주했다`)}
 function burstTick(dt){const B=P.burst;if(!B)return;B.t-=dt;if(B.t<=0){P.burst=null;if(typeof toggleForce==='function')toggleForce(B.force);P.mode=B.mode;log('마기가 가라앉아 정신이 돌아왔습니다.','info');return}
   if(!P.target||P.target.hp<=0||Math.random()<dt*2){let b=null,bd=8;for(const e of mobs)if(e.hp>0&&!e.ghost){const d=dist(e,P);if(d<bd){bd=d;b=e}}if(b){P.target=b;P.path=null}}
   if(Math.random()<dt*6)fx.push({t:'ghost',x:P.x,y:P.y,life:.3,col:'110,20,150'})}
@@ -38,7 +38,7 @@ function talmaWhy(r){if(!talmaWall(r))return'';const T=TALMA();
   if(talmaHold()<T.hold)return`마성 ${T.low} 미만을 ${T.hold}년 유지해야 (${Math.floor(talmaHold()*12)}/${T.hold*12}달)`;
   if(REG!=='hq_cheonma_8')return'천마동에서만';return''}
 const talmaBonus=r=>{if(!talmaWall(r)||talmaWhy(r))return 0;const T=TALMA();return Math.min(T.max,Math.floor(talmaHold()-T.hold)*T.bonus)};
-function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;P.addict=null;P.thirst=0;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 마기를 다스려 탈마에 이르렀다`)}
+function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;P.addict=null;P.thirst=0;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');feat(`마기를 다스려 탈마에 이르렀다`)}
 function talmaFail(r){if(!talmaWall(r)||!P||P.hp<=0)return;P.maraLow=null;P.mara=Math.max(P.mara||0,MARA.dev.back);log(`마기가 역류해 마성이 ${Math.round(P.mara)}으로 치솟았습니다. 유지 기간은 처음부터입니다.`,'dmg')}
 hook('tick',dt=>{if(!P||!playing||!isMa())return;burstTick(dt);
   if(!isTalma()){if((P.mara||0)<TALMA().low){if(P.maraLow==null)P.maraLow=G.cal}else P.maraLow=null}

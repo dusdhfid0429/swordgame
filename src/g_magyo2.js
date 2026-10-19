@@ -68,23 +68,20 @@ function arrestSquad(hunt){if(!P||!REGION()||G.duel)return false;let made=0;cons
 hook('hurt',c=>{if(P.jail||!c.src||!c.src.arrest||P.sect!=='cheonma')return;if(!(c.dm>=P.hp)&&!P.jailQ)return;c.dm=0;P.hp=Math.max(P.hp,1);
   if(!P.jailQ){P.jailQ=1;setTimeout(()=>{P.jailQ=0;if(playing&&P.hp>0)jailEnter('연행조에게 제압당했다')},60)}});
 // 지역을 바로 옮긴다 (출입구 없이)
-function regionJump(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;P.target=null;P.path=null;P.goal=null;P.talk=null;P.chan=null;P.medit=false;P.burst=null;
-  loadRegion(id);P.reg=id;P.x=x;P.y=y;P.gateLock=1;P.gateT=0;P.perch=null;P.z=0;P.leap=null;P.jump=0;
-  allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;if(typeof closePanels==='function')closePanels()}
+function regionJump(id,x,y){P.chan=null;P.medit=false;P.burst=null;enterRegion(id,x,y);closePanels()}
 function jailEnter(why){if(!P||P.jail)return;const yrs=Math.max(1,Math.ceil((P.sin||0)/J2.perYear));P.jail={t:yrs,sin:P.sin||0};
   regionJump(JAIL_ID,20.5,20.5);showBanner('흑혈옥',`형기 ${yrs}년`);log(`${why}. 천마동 아래 흑혈옥에 갇혔습니다. 형기 ${yrs}년: 해를 넘기거나 옥주에게 복역을 청하면 풀려난다. 옥주를 치고 나가면 배교자다.`,'dmg');
-  P.feats.push(`${Math.floor(P.age)}세에 교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
+  feat(`교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
 function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1}
   log(`형기를 다 채워 흑혈옥에서 나왔습니다. 죄값은 지워졌지만 직위는 ${rankName('cheonma')}(으)로 한 단계 내려갔습니다.`,'xp');showBanner('출옥','흑혈옥의 문이 열렸다');
   if(REG===JAIL_ID)regionJump('hq_cheonma_8',20.5,22)}
 // 복역: 남은 형기만큼 세월을 바로 보낸다
-function jailServe(){if(!P.jail||P.hp<=0)return;const yrs=P.jail.t;P.age+=yrs;G.cal+=yrs;P.medit=false;
-  while(Math.floor(P.age)>lastYear){lastYear++;newYear();if(!playing)return}if(P.jail)jailRelease()}
+function jailServe(){if(!P.jail||P.hp<=0)return;P.medit=false;if(!passYears(P.jail.t))return;if(P.jail)jailRelease()}
 // 탈옥: 옥주를 쳐야 한다. 이기면 배교
 function jailBreak(){if(!P.jail||mobs.some(m=>m.jailer&&m.hp>0))return;const e=mkFac('마',1,20.5,16.5,'cheonma');e.angry=1;e.aggro=true;e.tgt=null;e.jailer=1;e.name='흑혈옥 옥주';e.maxHp=e.hp=Math.round(e.hp*3);e.atk=Math.round(e.atk*1.5);mobs.push(e);P.target=e;
   log('옥주가 칼을 뽑았습니다. "옥문을 나서려면 내 목을 넘어가라."','dmg');showBanner('탈옥','옥주를 쳐라')}
 function jailEscape(){if(!P.jail)return;P.jail=null;P.sin=J2.escape;P.escaped=1;const s=SECTS.cheonma;P.sect=null;P.dang=null;P.mgLeft=1;
-  log(`옥주를 쓰러뜨리고 흑혈옥을 나왔습니다. 배교자가 되어 ${s.n}에서 하산했고, 마교의 추살조가 해마다 쫓아올 것입니다. 마공은 남습니다.`,'dmg');showBanner('배교','마교의 적이 되었다');P.feats.push(`${Math.floor(P.age)}세에 흑혈옥을 탈옥해 마교의 배교자가 되었다`)}
+  log(`옥주를 쓰러뜨리고 흑혈옥을 나왔습니다. 배교자가 되어 ${s.n}에서 하산했고, 마교의 추살조가 해마다 쫓아올 것입니다. 마공은 남습니다.`,'dmg');showBanner('배교','마교의 적이 되었다');feat(`흑혈옥을 탈옥해 마교의 배교자가 되었다`)}
 // 흑혈옥 안의 사람들
 function jailerDlg(n){if(!P.jail)return `<p class="note">"${P.sect==='cheonma'?rankName('cheonma'):'손님'}, 옥을 둘러보러 왔는가. 여기엔 교율을 어긴 자와 붙잡힌 정파 놈들이 있다. 사면은 교주님만 하신다."</p><p class="note">죄값 ${P.sin||0}/${J2.cap} · 해마다 ${J2.pardon}씩 준다.</p>`;
   return `<p class="note">"죄값 ${P.jail.sin}, 형기 ${P.jail.t}년. 옥 안에서 운기조식이나 하며 마기를 다스려라. 나가고 싶으면 내 목을 넘어가든가, 세월을 삭이든가."</p>

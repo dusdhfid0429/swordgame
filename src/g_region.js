@@ -22,23 +22,26 @@ function loadRegion(id){
   {const c={id};runHooks('loadRegion',c);id=c.id}
   REG=id;const R=REGION();R.gen();
   for(const g of R.gates)if(!g.door)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
+  runHooks('regionGen',id);   // v155: 지형 개성(TP)·물 칸 목록·봉우리 (g_terrain.js). 바닥을 굽기 전에
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
-  NPCF=npcsHere().filter(n=>!n.board).map(npcFighter);
+  refreshNPCF();
   runHooks('regionLoaded',id);
 }
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다.
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);
+// 맵을 옮긴다: 지난 맵의 것을 비우고 플레이어·동료·카메라를 새 자리에 둔다 (출입구 travel과 출입구 없이 옮기는 regionJump가 같이 쓴다)
+function enterRegion(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
+  loadRegion(id);P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
+  allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
+  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y}
 function travel(g){
   {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
   setTimeout(()=>{
     try{
-      mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
-      allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
-      const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
+      enterRegion(g.to,g.tx,g.ty);spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
     }finally{
       // 이동 중 표시를 먼저 내리고 저장한다 (표시가 저장에 남으면 불러온 뒤 다시는 이동하지 못한다)

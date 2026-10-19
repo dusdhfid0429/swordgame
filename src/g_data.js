@@ -28,7 +28,8 @@ const elMul=(a,b,sa,sb)=>{if(!a||!b)return 1;if(a==='마'&&b!=='마')return sb==
 const FORMN=GD.FORMN;
 // 무공 객체의 c(색)·pt(입자)·elc(뇌기)는 저장되지 않는 getter 로, 그때그때 심법에서 읽는다 (g_simbeop.js artEl/fxCol)
 // 어두운 색(마기): 이펙트는 더하기 합성 대신 보통 합성으로 검게 그리고, 글자에는 보랏빛 테두리색(ct)을 쓴다 (사용자 요청 2026-10-14 "마교 무공은 검은색 계열")
-const isDark=c=>{const v=String(c).split(',').map(Number);return v.length===3&&v[0]*.3+v[1]*.6+v[2]*.1<70};
+const DARKC=new Map();   // 이펙트마다 매 프레임 묻는다: 색 문자열별로 한 번만 가린다
+const isDark=c=>{let r=DARKC.get(c);if(r===undefined){const v=String(c).split(',').map(Number);r=v.length===3&&v[0]*.3+v[1]*.6+v[2]*.1<70;DARKC.set(c,r)}return r};
 const HI_DARK='150,40,190';
 const textCol=c=>isDark(c)?HI_DARK:c;
 function artFx(a){delete a.c;delete a.pt;delete a.elc;delete a.ct;
@@ -56,10 +57,7 @@ function buildArts(){
   let ci=0,ui=0;const arts={};
   for(const side of['정','사'])CLS.forEach(c=>ELS.forEach((el,ei)=>{
     const n=ART_NAMES[side][c][ei],k=FORMN[el],r=rng(7+n.charCodeAt(0)*31+n.charCodeAt(1)*7+ei);
-    const p=pool[c].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-    // a quick single-target strike first, then the rest from cheapest to heaviest
-    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
-    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((a,b)=>a.cd-b.cd)];
+    const pick=pickForms(pool[c],r,k);
     const off=OFFICIAL[n];
     const forms=pick.map((f,i)=>({...f,n:off?off.forms[i]:combos[ci++%combos.length],req:REQ[i],cost:COST[i],bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*(k<=3?1.25:1)}));
     const u=ults[c][(ei+(side==='사'?1:0))%ults[c].length];
@@ -102,3 +100,7 @@ const WEATHER=GD.WEATHER;
 // 비무 상대
 const DUELISTS=GD.DUELISTS;
 const QUESTS=GD.QUESTS;
+// 초식 고르기 (g_data 기본 무공, g_sect 문파 무공, g_giyeon 기연 무공이 같이 쓴다): 씨앗 r로 섞고, 빠른 단일 타격 하나를 먼저, 나머지 k-1개는 가벼운 것부터
+function pickForms(src,r,k){const p=src.slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
+  return [p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((a,b)=>a.cd-b.cd)]}

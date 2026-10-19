@@ -6,6 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   // 1. 총단 맵 둘: 성도(형주·악양) 북쪽 포털로 들어가고, 전각 안에 맹주·장로 셋·총관·당주 넷이 있다
   const r=await p.evaluate(()=>['maeng_jeong','maeng_sacheon'].map(id=>{const R=REGIONS[id];const ids=npcsOf(id).map(n=>n.id);
     return {id,name:R.name,via:R.lmVia,portal:!!REGIONS[R.lmVia].gates.find(g=>g.to===id&&g.portal),halls:(R.halls||[]).length,hq:R.hq,

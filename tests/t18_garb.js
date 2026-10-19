@@ -8,6 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   const r=await p.evaluate(()=>{const S=Object.values(SECTS),miss=S.filter(s=>!LOOK[s.id]||!embCanvas(s.id)).map(s=>s.n);
     const sig=new Set(S.map(s=>{const L=lookOf(s.id);return L.glyph+L.shape+L.accent})),robes=new Set(S.map(s=>LOOK[s.id][2]));
     const pals=[0,1,2,3,4].map(r=>PAL[sectPal('hwasan',r,'검',{master:r===4})]);

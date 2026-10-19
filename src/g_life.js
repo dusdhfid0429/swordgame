@@ -6,6 +6,9 @@ const npcsHere=()=>REG==='gaebong'?NPCS:(REGION().npcs||[]);
 let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=8;
+// 배열을 새로 만들지 않고 그 자리에서 거른다 (매 틱 mobs·fx·texts·drops를 filter로 새로 만들던 것)
+function prune(a,ok){let j=0;for(let i=0;i<a.length;i++)if(ok(a[i]))a[j++]=a[i];a.length=j;return a}
+function dust(e,dt){if(!e.moving||!(e.hp>0))return;e.dustT=(e.dustT||0)-dt;if(e.dustT<=0){fx.push({t:'dust',x:e.x-.1,y:e.y-.1,life:.45});e.dustT=.24}}
 function update(dt){
   time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick(dt);
   // calendar, age, weather, day
@@ -21,14 +24,14 @@ function update(dt){
   for(const n of nodes)n.cd=Math.max(0,n.cd-dt);
   if(P.hp>0)updateP(dt);
   for(const e of mobs)updateMob(e,dt);
-  mobs=mobs.filter(e=>e.hp>0);
+  prune(mobs,e=>e.hp>0);
   for(const a of allies)updateAlly(a,dt);
-  for(const e of[P,...mobs,...allies])if(e.moving&&e.hp>0){e.dustT=(e.dustT||0)-dt;if(e.dustT<=0){fx.push({t:'dust',x:e.x-.1,y:e.y-.1,life:.45});e.dustT=.24}}
-  if(P.hp>0)drops=drops.filter(d=>!(dist(d,P)<.6&&pickUp(d)));
+  dust(P,dt);for(const e of mobs)dust(e,dt);for(const e of allies)dust(e,dt);
+  if(P.hp>0)prune(drops,d=>!(dist(d,P)<.6&&pickUp(d)));
   updateProjs(dt);updateEprojs(dt);
-  sched.forEach(q=>q.t-=dt);const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f());
-  fx.forEach(f=>f.life-=dt);fx=fx.filter(f=>f.life>0);
-  texts.forEach(t=>t.life-=dt);texts=texts.filter(t=>t.life>0);
+  if(sched.length){for(const q of sched)q.t-=dt;if(sched.some(q=>q.t<=0)){const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f())}}
+  for(const f of fx)f.life-=dt;prune(fx,f=>f.life>0);
+  for(const t of texts)t.life-=dt;prune(texts,t=>t.life>0);
   const t=iso(P.x,P.y);cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
 }
 function updateP(dt){
@@ -184,8 +187,8 @@ function leap(){
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
   const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;
-  // 지붕·나무 위로 (말을 탔으면 못 오른다)
-  if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
+  // 지붕·나무 위로 (말을 탔으면 못 오른다). v154 (사용자): 오르는 건 1단뿐, 2·3단은 이동기라 나무·지붕을 노리지 않고 땅으로 뛴다
+  if(!P.ride&&st===1){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
   for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
@@ -257,6 +260,8 @@ function useConBase(k){
   P.mats[k]--;addText(P.x,P.y,k,'#a6d47f');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:.6});renderOpen();
 }
 // ================= 나이 and 윤회 =================
+// 해를 한꺼번에 보낸다(폐관·창안·옥살이): 해마다 newYear를 부르고, 도중에 죽으면 멈춘다. 살아 있으면 true
+function passYears(yrs){P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear();if(!playing)return false}return playing&&P.hp>0}
 function newYear(){
   const a=Math.floor(P.age);birthdayVit();rankStipend();runHooks('newYear');
   if(a>=50){recalc()}
@@ -279,7 +284,7 @@ function die(cause){
   let st=karma<-30?0:karma<30?1:karma<120?2:3;if(P.fame>=300&&st<3)st++;
   const bonus=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3);
   const wis=karma>=60?1:0;
-  const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(P.age),cause,realm:rk(realm),fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
+  const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(typeof realAge==='function'?realAge():P.age),cause,realm:rk(realm),fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:sectName(),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
   makeTomb(cause);runHooks('died',entry,cause);
   G.history.push(entry);G.lives++;G.nextStatus=st;G.bonusVit=bonus;G.wisCarry=Math.min(3,(G.wisCarry||0)+wis);
@@ -301,7 +306,7 @@ function duelStart(){
 function duelEnd(win,e){
   if(G.acadDuel){acadDuelEnd(win,e);return}   // 무관 대련·월반 시험·졸업 비무 (g_academy.js)
   const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
-  if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);P.feats.push(`${Math.floor(P.age)}세에 비무에서 ${o.n}을(를) 꺾었다`)}
+  if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);feat(`비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}
   runHooks('duelEnd',c);
 }

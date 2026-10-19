@@ -33,17 +33,17 @@ function mkStart(k){const[,cls,g]=k.split(':'),grp=mkGroups().find(q=>q.cls===cl
   log(`${pgPlace()}에서 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 모아 새 무공을 궁리합니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR.mk||3};renderTrain()}
 function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mkGroups().find(q=>q.cls===cls&&q.g===g);
   const why=grp?mkWhy(g):'재료가 모자라다';if(why){log(`무공 창안이 끊겼습니다: ${why}.`,'info');return}
-  const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
+  const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);if(!passYears(yrs))return;
   P.qi=0;
   if(Math.random()>=ch){P.inj=YEAR_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
     log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
-    P.feats.push(`${Math.floor(P.age)}세에 ${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
+    feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
   const a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
   P.arts[a.id]={p:30,f:a.forms.map(()=>true)};if(!P.arts[P.cur])setArt(a.id);
   fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);recalc();
   log(`${yrs}년의 폐관 끝에 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
-  showBanner('무공 창안',a.n);P.feats.push(`${Math.floor(P.age)}세에 ${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
+  showBanner('무공 창안',a.n);feat(`${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
 // 다섯 무공에서 새 무공의 정의를 뽑아 G.made에 적고 ARTS에 만든다
 function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=(G.madeN||0)+1),id=`mk_${n0}`,r=rng(5000+n0*97+P.name.length);
   const cnt={};for(const a of srcs)cnt[a.el]=(cnt[a.el]||0)+1;const el=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0]||'금';

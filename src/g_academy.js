@@ -62,11 +62,7 @@ const acadSpotsOf=()=>Object.entries(ACAD_SPOTS);
   const FR=stageRegion(fc);FR.hq=null;FR.acad=side;FR.capital=0;FR.acadProv=M.prov;
   R.gates.push({x:20.5,y:1.2,to:fc.id,tx:20.5,ty:36.2,label:A.field});FR.gates.push({x:20.5,y:38.6,to:A.id,tx:20.5,ty:3.6,label:A.n});
   // 성내 포털 (맹 총단 옆 자리)
-  const F=REGIONS[pvId(M.prov)],m=F&&F.marks&&F.marks.find(q=>q.n===M.city&&q.gate),L=m&&REGIONS[m.gate],cL=L&&L.stage;
-  if(cL&&cL.portals){const n=cL.portals.length,slot=LM_PORTAL_C[Math.min(n,2)],x=slot[0]+.5,y=slot[1]+.5;
-    cL.portals.push({x,y,s:null,label:A.n});L.gates.push({x,y,to:A.id,tx:20.5,ty:36.2,label:A.n,portal:1});
-    R.gates.push({x:20.5,y:38.6,to:m.gate,tx:x,ty:y+2,label:L.name||m.n});R.lmVia=m.gate}
-  else R.gates.push({x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:20.5,label:'개봉'});
+  linkCityPortal(R,A.id,A.n,M.prov,M.city);
 });
 // 연무장 목인장: 맞아도 쓰러지지 않고 반격하지 않는다. 숙련은 소성(25)까지만 오른다(g_core hitE)
 const ACAD_DUMMY=[[14.5,20.5],[16.5,20.5],[25.5,20.5]];
@@ -163,7 +159,7 @@ hook('gLoaded',()=>{if(G.acadDuel){G.acadDuel=null;G.duel=false}});
 function acadDuelEnd(win,e){const kind=G.acadDuel&&G.acadDuel.kind,a=P.acad;G.duel=false;G.acadDuel=null;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(!win)P.hp=Math.max(1,Math.round(P.maxHp*.3));if(!a)return;
   if(kind==='inst'){if(win){a.c.spar_inst=1;log('병기 교두를 꺾었습니다.','xp');showBanner('대련 승리','')}else log('병기 교두에게 졌습니다. 숨을 고르고 다시 청하자.','dmg')}
-  else if(kind==='skip'){a.skipTried=1;if(win){a.skip=1;a.stage=3;log('월반 시험에 붙었습니다. 4단계 강호 실습부터 한다. 병기와 심법은 교두들에게서 골라야 한다.','xp');P.feats.push(`${Math.floor(P.age)}세에 월반 시험에 붙었다`);acadStageStart()}
+  else if(kind==='skip'){a.skipTried=1;if(win){a.skip=1;a.stage=3;log('월반 시험에 붙었습니다. 4단계 강호 실습부터 한다. 병기와 심법은 교두들에게서 골라야 한다.','xp');feat(`월반 시험에 붙었다`);acadStageStart()}
     else log('월반 시험에 떨어졌습니다. 1단계부터 차근차근 배우자.','dmg')}
   else if(kind==='final'){a.c.final=(a.c.final||0)+1;if(win)a.c.finalWin=(a.c.finalWin||0)+1;log(`졸업 비무 ${a.c.final}판째: ${win?'이겼다':'졌다'}. (${a.c.finalWin||0}승)`,win?'xp':'info')}
   acadCheck()}
@@ -189,7 +185,7 @@ function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||ac
   recalc();log(`${CLASS[cls].n}을(를) 골랐습니다. ${cls==='권'?'맨손으로 싸운다.':'연습 병기를 찼다(날이 무뎌 있다).'} 행낭의 비급을 읽어 첫 초식을 익히자.`,'xp');showBanner(CLASS[cls].n,'병기를 고르다');acadCheck()}
 // ---- 심법 고르기 (2단계, 월반이면 4단계) ----
 const acadSimOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=1||P.acad.skip);
-function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();P.feats.push(`${Math.floor(P.age)}세에 ${x.n}을(를) 익혔다`);acadCheck()}
+function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();feat(`${x.n}을(를) 익혔다`);acadCheck()}
 
 // ---- 보법 고르기 (3단계, 월반이면 4단계): 직선·간파 하승 보법 가운데 하나 ----
 const acadBobOpen=()=>acadOn()&&(P.acad.stage>=2||P.acad.skip);
@@ -204,13 +200,13 @@ function acadGkLearn(){if(!acadGkOpen())return;ggInit();if(P.gkcur)return;P.gk.g
 function acadReport(){const a=P.acad;if(!acadOn()||a.stage>=4||!acadAllDone())return;const st=acadSt(),r=st.reward||{};
   P.silver+=r.silver||0;gainVit(r.vit||0);for(const[k,v]of Object.entries(r.mats||{}))P.mats[k]=(P.mats[k]||0)+v;
   log(`${st.n} 수료. 은자 ${r.silver||0}, 활력 ${r.vit||0}${Object.keys(r.mats||{}).length?', '+Object.entries(r.mats).map(([k,v])=>`${k} ${v}`).join(', '):''}.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 ${acadOf(P.side).n} ${a.stage+1}단계(${st.n})를 마쳤다`);a.stage++;acadStageStart()}
+  feat(`${acadOf(P.side).n} ${a.stage+1}단계(${st.n})를 마쳤다`);a.stage++;acadStageStart()}
 function acadGradeOf(){const a=P.acad,w=a.c.finalWin||0;return ACAD_GRADE.find(g=>P.age<=g.need&&w>=g.win)||ACAD_GRADE[ACAD_GRADE.length-1]}
 function acadGraduate(){const a=P.acad;if(!acadOn()||a.stage!==4||!acadAllDone())return;const A=acadOf(P.side),g=acadGradeOf();
   a.grad=1;a.grade=g.n;a.gradAge=Math.floor(P.age);G.acadN=(G.acadN||0)+1;P.silver+=g.silver;P.fame+=g.fame;
   const tok=mkGear('acc',`${A.n} 졸업 증표 (${g.n})`,g.n==='수석'?1.4:g.n==='우등'?1.2:1,{qi:10,hm:2});if(P.bag.length<24)P.bag.push(tok);
   log(`${A.n}을(를) ${g.n}(으)로 졸업했습니다. 은자 ${g.silver}, 명성 ${g.fame}, 졸업 증표. 관주에게 추천서를 받자.`,'xp');showBanner(`${A.n} 졸업`,`${g.n} · ${Math.floor(P.age)}세`);
-  P.feats.push(`${Math.floor(P.age)}세에 ${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
+  feat(`${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
   // 사파 무관을 악업이 무겁게 졸업하면 마교 밀사가 길을 일러 준다 (가입은 지금처럼 본산에서)
   if(P.side==='사'&&P.evil>=30&&SECTS.cheonma)setTimeout(()=>log(`졸업식 밤, 마교 밀사가 찾아와 속삭였다. "천마신교는 강한 자를 반긴다. ${hqPlace(SECTS.cheonma)}(으)로 오라."`,'dmg'),1200)}
 // 추천서: 성적에 맞는 같은 진영 문파 하나. 그 문파에 들면 가입 조건(명성·나이)을 덜고 공적을 얹어 받는다

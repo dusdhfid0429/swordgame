@@ -25,7 +25,7 @@ hook('mobTick',(e,dt)=>{if(!e.fixed||e.hp<=0||e.aggro||G.duel)return;e.wt=99;
     if(e.drill){e.dr=(e.dr||0)-dt;if(e.dr<=0){e.dr=1.4+Math.random()*2.2;e.swing=.24;e.fx=Math.random()<.5?1:-1;e.fy=Math.random()<.5?1:-1;e.pfx=e.fx;e.pfy=e.fy}}}});
 // 결전장 증원: 적장이 살아 있고 결전장에 있는 동안 10초마다 양쪽에 3명씩, 각 상한(FIELD.ally/foe)까지, 최대 6파도
 hook('tick',dt=>{if(!P||typeof warOn!=='function'||!warOn()||REG!==FIELD.id||!G.war.cur||!G.war.cur.field||G.war.cur.done)return;const w=G.war,c=w.cur;c.waveT=(c.waveT||0)+dt;if(c.waveT<GUARD.wave.sec||(c.waves||0)>=GUARD.wave.max)return;c.waveT=0;c.waves=(c.waves||0)+1;
-  const n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();const put=(f,elite,y0,y1,tag)=>{for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null};
+  const n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();const put=spawnBand;
   const al=mobs.filter(m=>m.warAlly===n&&m.hp>0),fo=mobs.filter(m=>m.raid===n&&m.hp>0&&!m.warChief);let a=0,f=0;
   for(let i=0;i<GUARD.wave.n&&my.length&&al.length+a<FIELD.ally;i++)if(put(my[i%my.length],i===0?1:0,33,37,e=>{e.warAlly=n;const t=fo[Math.floor(Math.random()*fo.length)];if(t){e.tgt=t;e.aggro=true}}))a++;
   for(let i=0;i<GUARD.wave.n&&foes.length&&fo.length+f<FIELD.foe;i++)if(put(foes[i%foes.length],i===0?1:0,3,7,e=>{e.raid=n;e.aggro=true;const t=al[Math.floor(Math.random()*al.length)];if(t)e.tgt=t}))f++;

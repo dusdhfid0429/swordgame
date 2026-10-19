@@ -4,17 +4,18 @@
 // - 임무가 딸린 선택을 고르면 사건 전용 적 무리가 곧바로 둘레에 나타난다(이름 "사건 · 종류", e.story). 임무가 안 끝난 채 다른 바깥 지역에 들어서면 남은 수만큼 다시 나타난다.
 // - 이 파일은 PARTS 끝에 있어 npcDlg 훅이 다른 대화 훅들 뒤에 돈다 (앞에 두면 c.html이 차서 다른 대화가 막힌다).
 const EV_AT=STORY.AT||{};
+const evAt=id=>EV_AT[id]||(id&&id.startsWith('b2_')?S2.AT:null);   // v153: 2막 사건은 한 장소 규칙을 함께 쓴다
 function evNpcOk(rule,n){if(!rule||!n)return false;for(const k in rule){const v=rule[k];
   if(k==='id'){if(n.id!==v)return false}else if(k==='hqFac'){if(!n.hq||!SECTS[n.hq]||alFac(SECTS[n.hq].al)!==v)return false}
   else if(k==='maeng'){if(n.maeng!==v)return false}else if(k==='role'){if(n.role!==v)return false}else if(k==='emperor'){if(!n.emperor)return false}else if(n[k]!==v)return false}return true}
-const evAtNpc=n=>{const s=P&&PS();if(!s||!s.open)return null;const e=evOf(s.open),a=EV_AT[s.open];return e&&a&&a.at.some(r=>evNpcOk(r,n))?e:null};
+const evAtNpc=n=>{const s=P&&PS();if(!s||!s.open)return null;const e=evOf(s.open),a=evAt(s.open);return e&&a&&a.at.some(r=>evNpcOk(r,n))?e:null};
 hook('npcDlg',c=>{const e=evAtNpc(c.n);if(!e)return;const base=c.html??pNpcBase(c.n);c.html=`<p class="note">"${e.n} 이야기를 들었소? 강호가 술렁이오."</p>`+evCard(e)+base});
-{const oe=openEvent;openEvent=function(e){oe(e);const a=EV_AT[e.id];if(a&&a.where)log(`${a.where}에게서 이야기를 들을 수 있다. 정세 창(N)에서도 고른다.`,'info')}}
-{const ec=evCard;evCard=function(e){let h=ec(e);const a=EV_AT[e.id];if(a&&a.where&&evState(e)==='open')h=h.replace('<div class="list">',`<p class="note">장소: ${a.where}</p><div class="list">`);return h}}
+{const oe=openEvent;openEvent=function(e){oe(e);const a=evAt(e.id);if(a&&a.where)log(`${a.where}에게서 이야기를 들을 수 있다. 정세 창(N)에서도 고른다.`,'info')}}
+{const ec=evCard;evCard=function(e){let h=ec(e);const a=evAt(e.id);if(a&&a.where&&evState(e)==='open')h=h.replace('<div class="list">',`<p class="note">장소: ${a.where}</p><div class="list">`);return h}}
 // ---- 사건 전용 적 ----
 const kindFac=k=>Object.keys(FAC_KIND).find(f=>FAC_KIND[f].includes(k));
 function evFoes(e,q){if(!P||!playing||!REGION()||G.duel||/^in_/.test(REG)||P.jail)return 0;q=q||P.quests.find(x=>x.story===e.id);if(!q||q.have>=q.cnt)return 0;
-  if(mobs.some(m=>m.story===e.id&&m.hp>0))return 0;const a=EV_AT[e.id]||{},want=Math.min(6,q.cnt-q.have+1);let made=0;
+  if(mobs.some(m=>m.story===e.id&&m.hp>0))return 0;const a=evAt(e.id)||{},want=Math.min(6,q.cnt-q.have+1);let made=0;
   for(let t=0;t<80&&made<want;t++){const an=Math.random()*Math.PI*2,r=7+Math.random()*3,x=P.x+Math.cos(an)*r,y=P.y+Math.sin(an)*r;if(!walkAt(x,y))continue;
     const k=q.mob[made%q.mob.length],f=kindFac(k);let m;
     if(f)m=mkFac(f,FAC_KIND[f].indexOf(k)===1?1:0,x,y);else if(MOBS[k])m=mkMob(k,x,y);else continue;

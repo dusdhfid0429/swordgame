@@ -15,7 +15,7 @@ function popSync(){popInit();const w=G.W;if(!w)return;for(const f of FAC4){const
 // 한 세력의 문파 인원을 비율로 늘리거나 줄인다 (사건·전쟁의 효과)
 function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)G.pop[s.id]=Math.max(0,Math.round(G.pop[s.id]*m*10)/10);popSync()}
 function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;const was=G.pop[sid];G.pop[sid]=Math.max(0,Math.round((was-n)*10)/10);popSync();
-  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)P.feats.push(`${Math.floor(P.age)}세에 ${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
+  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)feat(`${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
   else{const b=popBase(SECTS[sid]);if(Math.floor(was/b*10)!==Math.floor(G.pop[sid]/b*10))log(`${SECTS[sid].n} 인원 ${Math.round(G.pop[sid])}명 (기준의 ${Math.round(G.pop[sid]/b*100)}%).`,'info')}}   // v112: 10%씩 줄 때마다 알린다
 // 해마다: 자연 증가. 봉문 중이면 수련만 하니 더 늘고, 점령당했으면 늘지 않는다. 멸문(0)은 되살아나지 않는다
 hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
@@ -83,7 +83,7 @@ function popReset(){G.pop=null;popInit();popSync()}
 const sectWeak=s=>{const p=sectPop(s.id);if(p<=0)return false;if(p<=popBase(s)*POP.weak)return true;const a=G.popPrev&&G.popPrev[s.id];return a!=null&&p<a};
 // 장문인 NPC를 싸우는 우두머리로 바꿔 세운다 (쇠퇴했을 때, 또는 강제공격으로 장문인을 쳤을 때)
 function masterBoss(R,n,s,why,x,y){R.npcs=(R._npcsM||R.npcs).filter(x=>x!==n);const e=mkFac(alFac(s.al),1,x??n.x,y??n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
-  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:e.x,y:e.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(why,'info');return e}
+  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:e.x,y:e.y};mobs.push(e);refreshNPCF();log(why,'info');return e}
 // 지금 맵(id)의 장문인 상태를 인원에 맞춘다: 쇠퇴·공석이면 NPC를 숨기고(쇠퇴면 우두머리를 세우고), 아니면 NPC로 돌린다. 맵에 들어올 때와 이 맵에서 제자가 죽을 때마다
 // v133 (사용자): 쇠퇴해도 같은 편(문도·같은 진영)에게는 NPC로 남아 말을 걸고 무공을 배울 수 있다. 적대 진영에게만 우두머리로 나서며,
 // 그때는 전각 안이 아니라 전각이 있는 바깥 맵의 전각 앞문 앞에 선다(전각 안 NPC는 비운다). 강제공격으로 끌어내는 길(masterOut)은 그대로
@@ -98,12 +98,12 @@ function masterState(H,hid,n,s,out){if(!s)return;if(typeof ldHall!=='undefined'&
 function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;popInit();let any=false;
   const here=(R._npcsM||R.npcs||[]).find(x=>x.hq);if(here){any=true;masterState(R,id,here,SECTS[here.hq],null)}
   for(const h of R.halls||[]){const H=REGIONS[h.id];if(!H||H.ruin)continue;const n=(H._npcsM||H.npcs||[]).find(x=>x.hq);if(!n)continue;any=true;masterState(H,h.id,n,SECTS[n.hq],{R,id,x:h.x,y:h.y+1.5})}
-  if(any)NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+  if(any)refreshNPCF()}
 hook('regionLoaded',masterCheck);
 hook('kill',e=>{if(e.sect&&e.d&&e.d.fac&&!e.master&&P&&REG)masterCheck(REG)});
 // 강제공격을 켜고 장문인 NPC를 치면 쇠퇴하지 않았어도 우두머리로 나선다 (사용자 2026-10-13 "왜 장문인을 죽일 수 없지"). 돌아온다: 맵을 나갔다 오면 다시 NPC
 function masterOut(n){if(!n||!n.hq||!forceAtk)return null;const s=SECTS[n.hq];if(!s||G.mdead[s.id])return null;const R=REGION();const live=mobs.find(m=>m.master===s.id&&m.hp>0);if(live)return live;
   if(!R._npcsM)R._npcsM=R.npcs;return masterBoss(R,n,s,`${masterTitle(s)} ${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`)}
 hook('kill',e=>{if(!e.master)return;const s=SECTS[e.master];if(!s)return;G.mdead[s.id]={y:Math.floor(G.cal),life:P.lifeNo};popLose(s.id,Math.round(sectPop(s.id)*POP.masterLoss),`${masterTitle(s)} 사망`);
-  P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
+  P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');feat(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
 hook('newYear',()=>{popInit();for(const sid in G.mdead){const s=SECTS[sid];if(!s)continue;if(!sectWeak(s)&&Math.floor(G.cal)-G.mdead[sid].y>=POP.masterBack){delete G.mdead[sid];log(`${s.n}에 새 ${masterTitle(s)}이 섰다.`,'sys')}}});

@@ -8,6 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
+  await p.evaluate(()=>{GD.RANK_CAP.plus=9});   // v153 직위 상한(경지+1)은 t91에서 본다. 여기서는 공적만으로 직위를 본다
   // 시뮬레이션: 게임 루프를 멈추고 몹 AI만 직접 돌린다
   await p.evaluate(()=>{window.sim=(sec)=>{for(let t=0;t<sec*30;t++){for(const e of mobs)updateMob(e,1/30);updateEprojs(1/30);mobs=mobs.filter(e=>e.hp>0)}};
     window.place=(fac,x,y,el,sid)=>{const e=mkFac(fac,el?1:0,x,y,sid);mobs.push(e);return e}});
