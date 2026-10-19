@@ -29,7 +29,7 @@ for(const side of['정','사'])for(const x of ACAD_SIM[side])SIM[x.id]={...x,g:0
 
 // ---- 입관: 새 생이 무관에서 시작한다 (newLife가 부른다) ----
 function acadEnroll(){const A=acadOf(P.side);
-  // v141 (사용자): 처음엔 심법·경공·보법이 모두 없다. 보법은 2단계 병기 교두, 심법·경공은 3단계 심법 교두에게서 설명을 듣고 익힌다
+  // v141 (사용자): 처음엔 심법·경공·보법이 모두 없다. v144 (사용자): 순서는 기본기 → 심법·내공·운기(2단계 심법 교두) → 무공·소성·보법·경공·암기(3단계 병기 교두). 내공을 쓰거나 채우는 일은 모두 심법 뒤
   P.noBase=1;P.bob={};P.bcur=null;P.gk={};P.gkcur=null;
   P.acad={stage:0,c:{},done:{},cls:null,sim:null,skip:0,grad:0,t0:P.age,oe0:STATS.reduce((s,{k})=>s+P.st[k],0),items:[]};
   const robe=mkGear('armor',`${A.n} 무관복`,1,{def:2,hp:6});robe.acad=1;P.bag.push(robe);
@@ -86,6 +86,7 @@ const GOAL={
   spar:g=>[P.acad.c['spar_'+g.id]?1:0,1],
   sim:()=>[P.acad.sim?1:0,1],
   ne:g=>[baseQi(),g.v],
+  qin:g=>[P.qiN||0,g.v],
   talk:g=>[P.acad.c['talk_'+g.id]?1:0,1],
   gklearn:()=>[P.gkcur?1:0,1],
   leap:g=>[P.acad.c.leap||0,g.v],
@@ -99,7 +100,7 @@ const GOAL={
   realm:g=>[realmIdx(),g.v],
   final:g=>[P.acad.c.final||0,g.v]};
 // v135 (사용자): 과제는 한 번에 하나씩. 앞 과제를 마쳐야 다음 과제가 열리고, 세는 과제는 열린 때부터 센다(ACAD_REL, a.base)
-const ACAD_REL=new Set(['hit','oe','bob','leap','throw','boss']);
+const ACAD_REL=new Set(['hit','oe','qin','bob','leap','throw','boss']);
 function goalProg(g,i=P.acad.stage){const a=P.acad,k=i+':'+g.j;if(a.done[k])return{have:1,need:1,done:true};let[h,n]=GOAL[g.k](g);
   if(ACAD_REL.has(g.k)){const b=(a.base||{})[k];h=b==null?0:h-b}return{have:h,need:n,done:h>=n}}
 const acadAllDone=(i=P.acad.stage)=>acadGoals(i).every(g=>P.acad.done[i+':'+g.j]);
@@ -164,8 +165,8 @@ function acadQuestReport(i){const q=P.quests[i];if(!q||!q.acad||!questProg(q).do
   if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame||0;P.good+=q.good||0;
   const c=P.acad.c;c.qd=c.qd||{};c.qd[q.key]=1;runHooks('questDone',q);P.quests.splice(i,1);log(`실습 의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}`,'xp')}
 
-// ---- 병기 고르기 (2단계, 월반이면 4단계) ----
-const acadPickOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=1||P.acad.skip);
+// ---- 병기 고르기 (3단계, 월반이면 4단계) ----
+const acadPickOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=2||P.acad.skip);
 const acadPickLocked=()=>!!(P.acad.cls&&acadArts().some(id=>ARTS[id].cls===P.acad.cls));
 function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||acadPickLocked()||cls===a.cls)return;
   // 아직 비급을 읽기 전이면 바꿀 수 있다: 먼저 받은 연습 병기·비급을 거둔다
@@ -176,15 +177,15 @@ function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||ac
   const b0=mkBook(P.side+cls+'0',0);P.bag.push(b0);a.items.push(b0.id);
   if(P.status>=2){const b1=mkBook(P.side+cls+'1',0);P.bag.push(b1);a.items.push(b1.id)}
   recalc();log(`${CLASS[cls].n}을(를) 골랐습니다. ${cls==='권'?'맨손으로 싸운다.':'연습 병기를 찼다(날이 무뎌 있다).'} 행낭의 비급을 읽어 첫 초식을 익히자.`,'xp');showBanner(CLASS[cls].n,'병기를 고르다');acadCheck()}
-// ---- 심법 고르기 (3단계, 월반이면 4단계) ----
-const acadSimOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=2||P.acad.skip);
+// ---- 심법 고르기 (2단계, 월반이면 4단계) ----
+const acadSimOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=1||P.acad.skip);
 function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();P.feats.push(`${Math.floor(P.age)}세에 ${x.n}을(를) 익혔다`);acadCheck()}
 
-// ---- 보법 고르기 (2단계, 월반이면 4단계): 직선·간파 하승 보법 가운데 하나 ----
-const acadBobOpen=()=>acadOn()&&(P.acad.stage>=1||P.acad.skip);
+// ---- 보법 고르기 (3단계, 월반이면 4단계): 직선·간파 하승 보법 가운데 하나 ----
+const acadBobOpen=()=>acadOn()&&(P.acad.stage>=2||P.acad.skip);
 function acadBobPick(id){if(!acadBobOpen()||!ACAD_BOB.includes(id)||!BOBS[id])return;bobInit();if(P.bcur)return;
   P.bob[id]=1;P.bcur=id;const b=BOBS[id];log(`보법 [${b.n}](${b.t==='line'?'직선':'간파'})을(를) 익혔습니다. ${TOUCH?'보법 단추':'Shift'}로 씁니다.`,'xp');showBanner(b.n,'보법을 익히다');acadCheck()}
-// ---- 경공 배우기 (3단계, 월반이면 4단계): 기초 경공 ----
+// ---- 경공 배우기 (3단계 병기 교두, 월반이면 4단계): 기초 경공 ----
 const acadGkOpen=()=>acadOn()&&(P.acad.stage>=2||P.acad.skip);
 function acadGkLearn(){if(!acadGkOpen())return;ggInit();if(P.gkcur)return;P.gk.g_basic=1;P.gkcur='g_basic';
   log(`경공 [${GGS.g_basic.n}](하승 · 1단)을(를) 익혔습니다. ${TOUCH?'경공 단추':'Space'}로 뜁니다.`,'xp');showBanner(GGS.g_basic.n,'경공을 익히다');acadCheck()}
@@ -272,9 +273,9 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   const head=`<p class="note">${['기본기와 몸가짐을 맡는다.','병기와 무공을 맡는다.','심법과 내공을 맡는다.','강호 실습을 맡는다.'][n.i]}</p>`;
   if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>';
   let body='';
-  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(!acadPickOpen()) body+='<p class="note">"1단계를 마치면 병기를 고르게 해 주마."</p>';
+  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(acadGkOpen()&&(P.bcur||P.gkcur||P.acad.skip))body+=acadGkHtml();if(!acadPickOpen()) body+='<p class="note">"병기는 3단계에서 고른다. 무공은 내공을 쓰니, 먼저 심법 교두에게서 심법을 익히고 내공을 쌓아라."</p>';
     if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
-  if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml()+(P.acad.c.talk_el||P.gkcur||P.acad.skip?acadGkHtml():'');else body+='<p class="note">"심법은 3단계에서 고른다. 심법이 없으면 수련을 해도 내공이 쌓이지 않는다."</p>'}
+  if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml();else body+='<p class="note">"심법은 2단계에서 고른다. 심법이 없으면 수련을 해도 내공이 쌓이지 않는다."</p>'}
   if(n.i===3){if(a.stage>=3)body+=acadQuestHtml();else body+='<p class="note">"4단계가 되면 수련곡으로 실습을 나간다."</p>'}
   if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승${realmIdx()<1?' · 이류가 되어야 치를 수 있다':''}</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:!acadSparOk('final')})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
   return head+body+(acadSt().inst===n.i?acadStageCard(rep(n.i)):'')}
@@ -317,8 +318,8 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
     case'goto':{const left=g.spots.filter(s=>!a.c['spot_'+s]).map(s=>({x:ACAD_SPOTS[s][0],y:ACAD_SPOTS[s][1]+1.2,s}));const m=near(left,'',44)[0];return m?[{...m,l:left.find(o=>o.x===m.x&&o.y===m.y).s}]:[]}
     case'hit':case'mast':case'mu':return dummy();
     case'throw':return dummy('비도 던지기');
-    case'pick':case'spar':case'bobpick':return npc('ac_i1');
-    case'sim':case'talk':case'gklearn':return npc('ac_i2');
+    case'pick':case'spar':case'bobpick':case'gklearn':return npc('ac_i1');
+    case'sim':case'talk':return npc('ac_i2');
     case'final':return npc('ac_i0');
     case'repair':return npc('smith');
     case'boss':return gate(acadField(P.side));
@@ -340,7 +341,7 @@ function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','
   const robe=P.bag.find(i=>i.acad&&i.slot==='armor'),books=P.bag.filter(i=>i.slot==='book'&&a.cls&&ARTS[i.art]&&ARTS[i.art].cls===a.cls);
   const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
-    ne:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
+    ne:[...TR,'[data-tr="neigong"]'],qin:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
     hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],leap:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
     pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
     quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:['#tmenu',`[data-act="open:${g.id}"]`]};

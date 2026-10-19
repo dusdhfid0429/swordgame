@@ -53,7 +53,8 @@ function press(b){
   if(b.form!==undefined)useForm(b.form);else if(b.u)ultimate();else if(b.sp)special(b.id);else if(b.sg)shingong();else if(b.con)useCon(b.id);
   else if(b.id==='leap')leap();else if(b.id==='medit')meditate();else if(b.id==='ridebtn')rideToggle();else if(b.id==='use')useNearest();
 }
-function meditate(){if(P.medit){P.medit=false;return}if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
+function meditate(){if(P.medit){P.medit=false;return}if(typeof simCur==='function'&&simCur().none){log('익힌 심법이 없어 운기조식을 할 수 없습니다.','info');return}   // v144 (사용자): 내공을 채우는 일도 심법을 익힌 뒤
+  if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
 const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);

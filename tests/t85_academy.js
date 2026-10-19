@@ -29,27 +29,43 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.evaluate(()=>{closePanels();openPanel('bag')});await p.waitForTimeout(350);
   const r2d=await p.evaluate(()=>{const r=P.bag.find(i=>i.acad);const hl=!!document.querySelector(`[data-act="eq:${r.id}"].achl`);act('eq:'+r.id);closePanels();acadCheck();
     const o={hl,g:acadCur().k,have:goalProg(acadCur()).have,mk:acadMarks().map(m=>m.l)};for(let i=0;i<20;i++)P.acad.c.hit++;acadCheck();o.g2=acadCur().k;return o});
-  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('운기조식 해 보기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
-    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('운기조식 해 보기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
-  // 운기 과제: 내공이 가득해도 운기 단추가 보이고, 3초 앉아 있으면 된다 (v136 사용자 버그)
+  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('수련으로 기본기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
+    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('수련으로 기본기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
   // v140 (사용자): 기본기 과제는 1만. 처음 받은 활력으로 한 번 수련하면 끝난다
-  const ro=await p.evaluate(()=>{const o={k:acadCurK(),vit:P.vit};trainStat('str');acadCheck();o.next=acadCurK();return o});
-  ok(`기본기 과제: 처음 활력 ${ro.vit}으로 한 번 수련하면 끝 (${ro.k} → ${ro.next})`,ro.k==='oe'&&ro.next!=='oe');
-  await p.evaluate(()=>{P.vit=400;trainStat('end');trainStat('agi');acadCheck();P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
+  const ro=await p.evaluate(()=>{const o={k:acadCurK(),vit:P.vit};trainStat('str');acadCheck();o.next=acadCurK();o.all=acadAllDone();return o});
+  ok(`기본기 과제: 처음 활력 ${ro.vit}으로 한 번 수련하면 끝 (${ro.k} → 1단계 과제 완료 ${ro.all})`,ro.k==='oe'&&ro.all);
+  // v144 (사용자): 내공을 채우는 일(운기)도 심법을 익힌 뒤. 심법이 없으면 운기 단추가 없고 운기조식이 안 된다
+  await p.evaluate(()=>{P.vit=400;trainStat('end');trainStat('agi');P.qi=1;setTouch(true)});await p.waitForTimeout(300);
+  const rn=await p.evaluate(()=>{const btn=!$('t_med').hidden;setTouch(false);meditate();return{btn,med:P.medit}});
+  ok(`심법 전: 운기 단추 ${rn.btn}, 운기조식 ${rn.med}`,!rn.btn&&!rn.med);
+  await p.evaluate(()=>{P.qi=P.maxQi;act('acrep')});
+  const r3=await p.evaluate(()=>({st:P.acad.stage,early:(act('acrep'),P.acad.stage),k:acadCurK(),mk:acadMarks()[0]&&acadMarks()[0].l}));
+  ok(`1단계 보고 → 2단계 심법 선택 (과제 전 보고는 넘어가지 않음: ${r3.early}), 첫 과제 ${r3.k} → ${r3.mk}`,r3.st===1&&r3.early===1&&r3.k==='sim'&&/문진/.test(r3.mk||''));
+  // 3. 2단계: 하승 심법 넷 중 하나(설명 뒤), 특색(하승 세기 0.6). 병기는 아직 못 고른다
+  await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
+  const t3pre=await p.evaluate(()=>({t:$('wbody').textContent,pick:!!document.querySelector('[data-act^="acpick:"]')}));
+  await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i2'))});await p.waitForTimeout(150);
+  const t4=await p.evaluate(()=>$('wbody').textContent);
+  await p.click('[data-act="acsim:N_ac_jeong_0"]');
+  const r6=await p.evaluate(()=>{const again=(act('acsim:N_ac_jeong_1'),P.sim);return{st:P.acad.stage,sim:P.sim,again,def:simTv('def'),g:SIM[P.sim].g,sc:pSchool(),el:pEl(),
+    four:ACAD_SIM['정'].length===4&&ACAD_SIM['사'].length===4&&ACAD_SIM['사'].every(x=>SIM[x.id].sc==='사공'),trs:new Set(ACAD_SIM['정'].map(x=>x.tr[0])).size}});
+  ok(`병기 교두는 아직 (${!t3pre.pick}), 장경각 심법 넷과 심법 설명 (${t4.includes('내공 증가')&&t4.includes('특색')}), 금강호체공: 하승·불가·금, 금강 ${r6.def}%, 한 번 고르면 끝`,!t3pre.pick&&t3pre.t.includes('먼저 심법')&&['금강호체공','태청토납법','청풍심법','소양진기'].every(n=>t4.includes(n))&&t4.includes('내공 증가')&&r6.st===1&&r6.sim==='N_ac_jeong_0'&&r6.again==='N_ac_jeong_0'&&Math.abs(r6.def-3.6)<.01&&r6.g===0&&r6.sc==='불가'&&r6.el==='금'&&r6.four&&r6.trs===4);
+  const rq=await p.evaluate(()=>{closePanels();const o={k:acadCurK()};P.qiN+=2;acadCheck();P.qiN-=2;P.qiAcc=45;recalc();o.k2=acadCurK();act('actalk:el');acadCheck();o.k3=acadCurK();return o});
+  ok(`내공 수련 두 번 (${rq.k}) → ${rq.k2} → ${rq.k3}`,rq.k==='qin'&&rq.k2==='talk'&&rq.k3==='medit');
+  // 운기 과제: 내공이 가득해도 운기 단추가 보이고, 3초 앉아 있으면 된다 (v136 사용자 버그)
+  await p.evaluate(()=>{P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
   const rm=await p.evaluate(()=>({k:acadCurK(),btn:!$('t_med').hidden,hl:$('t_med').classList.contains('achl')}));
   await p.evaluate(()=>{setTouch(false);meditate()});await p.waitForTimeout(3600);
-  const rm2=await p.evaluate(()=>({done:!!P.acad.done['0:4'],all:acadAllDone()}));
-  ok(`운기 과제: 내공 가득해도 운기 단추 ${rm.btn}·표시 ${rm.hl}, 3초 앉으면 끝 (${rm2.done})`,rm.k==='medit'&&rm.btn&&rm.hl&&rm2.done&&rm2.all);
+  const rm2=await p.evaluate(()=>({done:!!P.acad.done['1:3'],all:acadAllDone()}));
+  ok(`운기 과제: 심법 뒤, 내공 가득해도 운기 단추 ${rm.btn}·표시 ${rm.hl}, 3초 앉으면 끝 (${rm2.done})`,rm.k==='medit'&&rm.btn&&rm.hl&&rm2.done&&rm2.all);
   await p.evaluate(()=>{P.medit=false;act('acrep')});
-  const r3=await p.evaluate(()=>({st:P.acad.stage,early:(act('acrep'),P.acad.stage)}));
-  ok(`1단계 보고 → 2단계 (과제 전 보고는 넘어가지 않음: ${r3.early})`,r3.st===1&&r3.early===1);
-  // 3. 2단계: 병기고에서 고르고, 비급을 읽기 전에는 바꿀 수 있다. 대련은 비급을 읽은 뒤
+  // 4. 3단계: 병기고에서 고르고, 비급을 읽기 전에는 바꿀 수 있다. 대련은 비급을 읽은 뒤. 암기와 비도 10
   await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
   const t3=await p.evaluate(()=>$('wbody').textContent);
   await p.click('[data-act="acpick:도"]');
-  const r4=await p.evaluate(()=>{const a={w:P.eq.weapon&&P.eq.weapon.cls,dur:P.eq.weapon&&P.eq.weapon.dur<P.eq.weapon.maxDur};act('acpick:검');const sparPre=(acadSpar('inst'),G.duel);
+  const r4=await p.evaluate(()=>{const a={st:P.acad.stage,knife:P.mats.비도,sp:P.sp.암기,w:P.eq.weapon&&P.eq.weapon.cls,dur:P.eq.weapon&&P.eq.weapon.dur<P.eq.weapon.maxDur};act('acpick:검');const sparPre=(acadSpar('inst'),G.duel);
     const bk=P.bag.filter(i=>i.slot==='book');return{...a,w2:P.eq.weapon.cls,books:bk.map(i=>ARTS[i.art].cls),startCls:P.startCls,sparPre}});
-  ok(`병기 교두 창에 여섯 계열 (${t3.includes('검법')&&t3.includes('궁')}), 도 → 검으로 바꿈, 비급 ${r4.books.join('')}, 연습 병기 내구 깎임 ${r4.dur}, 비급 전 대련 막힘`,t3.includes('창법')&&r4.w==='도'&&r4.w2==='검'&&r4.books.join('')==='검'&&r4.startCls==='검'&&r4.dur&&!r4.sparPre);
+  ok(`3단계: 병기 교두 창에 여섯 계열 (${t3.includes('검법')&&t3.includes('궁')}), 도 → 검으로 바꿈, 비급 ${r4.books.join('')}, 연습 병기 내구 깎임 ${r4.dur}, 비급 전 대련 막힘, 비도 ${r4.knife}`,r4.st===2&&t3.includes('창법')&&r4.w==='도'&&r4.w2==='검'&&r4.books.join('')==='검'&&r4.startCls==='검'&&r4.dur&&!r4.sparPre&&r4.knife===10&&r4.sp===1);
   const r5=await p.evaluate(()=>{P.vit=400;readBook(P.bag.find(i=>i.slot==='book'));const lockB=(act('acpick:창'),P.eq.weapon.cls);P.arts[acadArts()[0]].p=26;acadCheck();return{lockB}});
   // v141: 보법은 두 갈래 설명을 듣고 고른다
   await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
@@ -57,27 +73,18 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const hlb=await p.evaluate(()=>!!document.querySelector('[data-act="acbob:b_hoe"].achl'));await p.click('[data-act="acbob:b_hoe"]');
   const rb=await p.evaluate(()=>{const o={cur:P.bcur,again:(act('acbob:b_basic'),P.bcur),k:acadCurK()};return o});
   ok(`보법 고르기: 설명(직선 ${tb.t.includes('직선')}·간파 ${tb.t.includes('간파')}), 표시 ${tb.mk}·${hlb}, 회선보 익힘, 다시 못 고름, 다음 ${rb.k}`,tb.k==='bobpick'&&tb.t.includes('곧게 미끄러진다')&&tb.t.includes('등 뒤')&&hlb&&rb.cur==='b_hoe'&&rb.again==='b_hoe'&&rb.k==='bob');
-  Object.assign(r5,await p.evaluate(()=>{closePanels();P.acad.c.bob=(P.acad.c.bob||0)+3;acadCheck();acadSpar('inst');const duel=G.duel,e=mobs.find(m=>m.duel);damage(e,99999,0,0,P);return{duel}}));
+  // v141: 경공은 1·2·3단 설명을 듣고 기초 경공을 익힌다 (v144: 병기 교두)
+  await p.evaluate(()=>{closePanels();P.acad.c.bob=(P.acad.c.bob||0)+3;acadCheck();openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
+  const tg=await p.evaluate(()=>({t:$('wbody').textContent,k:acadCurK(),mk:acadMarks()[0]&&acadMarks()[0].l}));await p.click('[data-act="acgk"]');
+  const rg=await p.evaluate(()=>({gk:P.gkcur,k:acadCurK()}));
+  ok(`경공 배우기: 1단 도약·2단 공중 도약·3단 능공비행 설명 (표시 ${tg.mk}), 기초 경공 익힘 → ${rg.k}`,tg.k==='gklearn'&&['1단 도약','2단 공중 도약','3단 능공비행','하승은 1단'].every(s=>tg.t.includes(s))&&rg.gk==='g_basic'&&rg.k==='leap');
+  await p.evaluate(()=>{closePanels();P.acad.c.leap=(P.acad.c.leap||0)+3;acadCheck();P.mats.비도-=5});await p.waitForTimeout(500);
+  const r7=await p.evaluate(()=>({thr:P.acad.c.throw,k:acadCurK()}));
+  ok(`비도 던진 수 ${r7.thr}, 다음 ${r7.k}`,r7.thr===5&&r7.k==='spar');
+  Object.assign(r5,await p.evaluate(()=>{acadSpar('inst');const duel=G.duel,e=mobs.find(m=>m.duel);damage(e,99999,0,0,P);return{duel}}));
   await p.waitForTimeout(400);
   const r5b=await p.evaluate(()=>({win:P.acad.c.spar_inst,duel:G.duel,done:acadAllDone()}));
-  ok(`비급 읽은 뒤 병기 못 바꿈(${r5.lockB}), 대련 승리, 2단계 과제 완료`,r5.lockB==='검'&&r5.duel&&r5b.win===1&&!r5b.duel&&r5b.done);
-  await p.evaluate(()=>act('acrep'));
-  // 4. 3단계: 하승 심법 넷 중 하나, 특색(하승 세기 0.6), 암기와 비도 10
-  await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i2'))});await p.waitForTimeout(150);
-  const t4=await p.evaluate(()=>$('wbody').textContent);
-  await p.click('[data-act="acsim:N_ac_jeong_0"]');
-  const r6=await p.evaluate(()=>{const again=(act('acsim:N_ac_jeong_1'),P.sim);return{st:P.acad.stage,sim:P.sim,again,def:simTv('def'),g:SIM[P.sim].g,sc:pSchool(),el:pEl(),knife:P.mats.비도,sp:P.sp.암기,
-    four:ACAD_SIM['정'].length===4&&ACAD_SIM['사'].length===4&&ACAD_SIM['사'].every(x=>SIM[x.id].sc==='사공'),trs:new Set(ACAD_SIM['정'].map(x=>x.tr[0])).size}});
-  ok(`장경각 심법 넷 (${['금강호체공','태청토납법','청풍심법','소양진기'].every(n=>t4.includes(n))}), 금강호체공: 하승·불가·금, 금강 ${r6.def}%, 한 번 고르면 끝, 비도 ${r6.knife}`,r6.st===2&&r6.sim==='N_ac_jeong_0'&&r6.again==='N_ac_jeong_0'&&Math.abs(r6.def-3.6)<.01&&r6.g===0&&r6.sc==='불가'&&r6.el==='금'&&r6.knife===10&&r6.sp===1&&r6.four&&r6.trs===4);
-  await p.evaluate(()=>{closePanels();P.qiAcc=45;recalc();acadCheck();act('actalk:el');acadCheck()});
-  // v141: 경공은 1·2·3단 설명을 듣고 기초 경공을 익힌다
-  await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i2'))});await p.waitForTimeout(150);
-  const tg=await p.evaluate(()=>({t:$('wbody').textContent,k:acadCurK()}));await p.click('[data-act="acgk"]');
-  const rg=await p.evaluate(()=>({gk:P.gkcur,k:acadCurK(),intro:tg=>0}));
-  ok(`경공 배우기: 1단 도약·2단 공중 도약·3단 능공비행 설명, 심법 설명 (${tg.t.includes('내공 증가')}), 기초 경공 익힘 → ${rg.k}`,tg.k==='gklearn'&&['1단 도약','2단 공중 도약','3단 능공비행','하승은 1단'].every(s=>tg.t.includes(s))&&tg.t.includes('특색')&&rg.gk==='g_basic'&&rg.k==='leap');
-  await p.evaluate(()=>{closePanels();P.acad.c.leap=(P.acad.c.leap||0)+3;acadCheck();P.mats.비도-=5});await p.waitForTimeout(500);
-  const r7=await p.evaluate(()=>({thr:P.acad.c.throw,done:acadAllDone()}));
-  ok(`비도 던진 수 ${r7.thr}, 3단계 과제 완료`,r7.thr===5&&r7.done);
+  ok(`비급 읽은 뒤 병기 못 바꿈(${r5.lockB}), 대련 승리, 3단계 과제 완료`,r5.lockB==='검'&&r5.duel&&r5b.win===1&&!r5b.duel&&r5b.done);
   await p.evaluate(()=>act('acrep'));
   // 5. 4단계: 실습 의뢰(임무창에 의뢰처 청운무관), 수련곡, 산적두목, 대장간, 정세창
   const r8=await p.evaluate(()=>{act('acq:0');act('acq:2');openPanel('quest');const t=$('wbody').textContent;closePanels();P.quests[0].have=5;P.mats.약초=4;act('acqd:0');act('acqd:0');act('acq:1');P.quests[0].have=2;act('acqd:0');
@@ -125,7 +132,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.click('[data-act="acspar:skip"]');await p.waitForTimeout(150);
   await p.evaluate(()=>{const e=mobs.find(m=>m.duel);damage(e,99999,0,0,P)});await p.waitForTimeout(400);
   const r16=await p.evaluate(()=>({st:P.acad.stage,skip:P.acad.skip,goals:acadGoals().map(g=>g.k),knife:P.mats.비도,again:(acadSpar('skip'),G.duel)}));
-  ok(`월반 시험 안내 (${t16.includes('월반 시험')}), 붙으면 4단계, 과제에 병기·심법 고르기 (${r16.goals.join(',')}), 비도 ${r16.knife}, 다시 못 봄`,t16.includes('월반 시험')&&r16.st===3&&r16.skip===1&&r16.goals[0]==='pick'&&r16.goals[1]==='sim'&&r16.knife===10&&!r16.again);
+  ok(`월반 시험 안내 (${t16.includes('월반 시험')}), 붙으면 4단계, 과제에 병기·심법 고르기 (${r16.goals.join(',')}), 비도 ${r16.knife}, 다시 못 봄`,t16.includes('월반 시험')&&r16.st===3&&r16.skip===1&&r16.goals[0]==='sim'&&r16.goals[1]==='pick'&&r16.knife===10&&!r16.again);
   const r17=await p.evaluate(()=>{const b0=P.bcur,g0=P.gkcur;act('acpick:창');act('acsim:N_ac_jeong_1');act('acbob:b_basic');act('acgk');acadCheck();return{w:P.eq.weapon&&P.eq.weapon.cls,sim:P.sim,b0,g0,b:P.bcur,g:P.gkcur,k:acadCurK()}});
   ok(`월반 뒤 병기(${r17.w})·심법(${r17.sim})·보법(${r17.b})·경공(${r17.g}) 고름, 다음 ${r17.k}`,r17.w==='창'&&r17.sim==='N_ac_jeong_1'&&r17.b0===null&&r17.g0===null&&r17.b==='b_basic'&&r17.g==='g_basic'&&r17.k==='quest');
   // 10. 사파는 패천관, 사공 심법 넷. 이어 하기는 무관에서. 옛 저장(v3)은 무관 없이(P.acad=null)
