@@ -21,6 +21,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r2=await p.evaluate(()=>{const d=mobs.find(m=>m.acadDummy);P.x=d.x-1;P.y=d.y;const h0=P.acad.c.hit||0;for(let i=0;i<6;i++)hitE(mkX('base',1),d,1,0,0);P.arts.base.p=24.9;for(let i=0;i<40;i++)hitE(mkX('base',1),d,1,0,0);
     return{hits:(P.acad.c.hit||0)-h0,p:P.arts.base.p,alive:d.hp>0}});
   ok(`목인장 타격 ${r2.hits}회 셈, 쓰러지지 않음, 기초권각 숙련 ${r2.p.toFixed(1)} (소성 25 근처에서 멈춤)`,r2.hits>=15&&r2.alive&&r2.p<26);
+  // v145 (사용자): 무관 과제 중에만 목인장 타격으로 활력, 한 생에 한도까지
+  const r2v=await p.evaluate(()=>{const d=mobs.find(m=>m.acadDummy),k=P.acad.c,sv={hit:k.hit,dvit:k.dvit,vit:P.vit,end:P.st.end};P.vit=0;k.dvit=0;k.hit=0;
+    for(let i=0;i<10;i++)runHooks('hitDone',{e:d});const a=P.vit;for(let i=0;i<400;i++)runHooks('hitDone',{e:d});const b=P.vit,dv=k.dvit;
+    P.acad.grad=1;P.vit=0;k.dvit=0;for(let i=0;i<20;i++)runHooks('hitDone',{e:d});const c=P.vit;P.acad.grad=0;const note=acadStageCard().includes('목인장 수련 활력');
+    Object.assign(k,{hit:sv.hit,dvit:sv.dvit});P.vit=sv.vit;return{a,b,dv,c,note,cap:ACAD_DVIT.cap,per:ACAD_DVIT.per}});
+  ok(`목인장 활력: ${r2v.per}번에 1 → 10번 ${r2v.a}, 400번 더 쳐도 ${r2v.b} (한도 ${r2v.cap}), 졸업 뒤 ${r2v.c}, 과제 카드에 표시`,r2v.a>0&&r2v.a<=2&&r2v.dv===r2v.cap&&r2v.c===0&&r2v.note);
   // v135: 과제는 하나씩. 지금 과제만 보이고, 세는 과제는 열린 뒤부터 센다. 표시는 장소·단추에
   const r2b=await p.evaluate(()=>{const o={g0:acadCur().k,mk:acadMarks().map(m=>m.l),tr:$('qtrack').textContent};
     for(const k of['장경각','병기고','숙소','식당'])P.acad.c['spot_'+k]=1;acadCheck();o.g1=acadCur().k;o.done=Object.keys(P.acad.done).length;return o});

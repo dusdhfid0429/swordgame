@@ -12,6 +12,8 @@
 // - ?noacad (개발·테스트용): 생성 화면에서 무기를 고르고 개봉에서 태어나는 옛 방식. 기존 테스트가 쓴다.
 // 데이터: data/academy.json. 설계: docs/무관_설계.md. 테스트: tests/t85_academy.js
 const ACAD_BOB=GD.ACAD_BOB||['b_basic'];
+// v145 (사용자): 무관 과제 중에만 목인장을 치면 활력을 조금 얻는다. per번 칠 때마다 1, 한 생에 cap까지
+const ACAD_DVIT=GD.ACAD_DVIT||{per:5,cap:40};
 const ACAD=GD.ACAD,ACAD_ST=GD.ACAD_STAGES,ACAD_SPOTS=GD.ACAD_SPOTS,ACAD_SPAR=GD.ACAD_SPAR,ACAD_GRADE=GD.ACAD_GRADE,ACAD_SIM=GD.ACAD_SIM,ACAD_SIM_COST=GD.ACAD_SIM_COST;
 const ACAD_OFF=/[?&#]noacad/.test(location.href);
 const acadOf=side=>ACAD[side]||ACAD['정'];
@@ -132,7 +134,10 @@ hook('tick',dt=>{if(!acadOn())return;const a=P.acad,c=a.c;
   if(P.medit){c.meditT=(c.meditT||0)+dt;if(P.qi<P.maxQi-.5)c.meditLow=1;if(P.qi>=P.maxQi-.5&&(c.meditLow||c.meditT>=3))c.medit=1}
   if(inAcad())for(const[k,[x,y]]of acadSpotsOf())if(!c['spot_'+k]&&Math.hypot(P.x-x,P.y-y)<2.6){c['spot_'+k]=1;log(`${acadOf(P.side).n} ${k}`,'sys')}
   if((acadT-=dt)<=0){acadT=.25;acadCheck()}});
-hook('hitDone',c=>{if(acadOn()&&c.e&&c.e.acadDummy)P.acad.c.hit=(P.acad.c.hit||0)+1});
+hook('hitDone',c=>{if(!acadOn()||!c.e||!c.e.acadDummy)return;const k=P.acad.c;k.hit=(k.hit||0)+1;
+  if((k.dvit||0)<ACAD_DVIT.cap&&k.hit%ACAD_DVIT.per===0){const v=gainVit(1);if(v>0){k.dvit=(k.dvit||0)+v;texts.push({x:c.e.x,y:c.e.y-.6,t:`활력 +${v}`,c:'#9fe08a',life:.8});
+    if(k.dvit>=ACAD_DVIT.cap)log(`목인장 수련으로 얻는 활력이 한도(${ACAD_DVIT.cap})에 닿았습니다. 이제부터는 숙련만 오릅니다.`,'info')}}});
+const acadDvitNote=()=>acadOn()?`<p class="note">목인장 수련 활력 <b>${P.acad.c.dvit||0}/${ACAD_DVIT.cap}</b> · ${ACAD_DVIT.per}번 칠 때마다 1 · 무관 과제 중에만</p>`:'';
 hook('kill',e=>{if(acadOn()&&e.kind==='산적두목'&&REG===acadField(P.side))P.acad.c.boss=(P.acad.c.boss||0)+1});
 hook('panelOpen',id=>{if(acadOn())P.acad.c['panel_'+id]=1});
 
@@ -222,7 +227,7 @@ const acadGoalList=()=>{const gs=acadGoals(),cur=acadCur(),k=cur?gs.findIndex(g=
   return gs.slice(0,k+1).map(g=>acadGoalRow(g,P.acad.stage)).join('')+(left>0?`<p class="note dim">남은 과제 ${left}개는 지금 과제를 마치면 하나씩 열린다.</p>`:'')};
 function acadStageCard(btn){const a=P.acad,A=acadOf(P.side),st=acadSt();
   return `<div class="card"><div class="row2"><h4>${A.n} ${a.stage+1}단계 · ${st.n} <small class="dim">${st.sub}</small></h4><span class="tag">보고 ${esc(acadReporter())}</span></div><p class="note">${st.d}</p>
-    <div class="list">${acadGoalList()}</div>${btn||''}</div>`}
+    <div class="list">${acadGoalList()}</div>${acadDvitNote()}${btn||''}</div>`}
 const acadSteps=()=>`<p class="note">${ACAD_ST.map((s,i)=>`<span class="${i<P.acad.stage||P.acad.grad?'good':i===P.acad.stage?'gold':'dim'}">${i+1}.${s.n}</span>`).join(' · ')}</p>`;
 function acadWeaponHtml(){const a=P.acad,lock=acadPickLocked();
   return `<div class="card"><h4>병기고 <small class="dim">고르면 그 계열 하승 무공 비급과 연습 병기를 받는다${lock?' · 이미 비급을 읽어 바꿀 수 없다':a.cls?' · 비급을 읽기 전이면 바꿀 수 있다':''}</small></h4><div class="list">${CLS.map(c=>{const C=CLASS[c],art=ARTS[P.side+c+'0'];
