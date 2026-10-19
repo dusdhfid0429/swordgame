@@ -23,10 +23,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`목인장 타격 ${r2.hits}회 셈, 쓰러지지 않음, 기초권각 숙련 ${r2.p.toFixed(1)} (소성 25 근처에서 멈춤)`,r2.hits>=15&&r2.alive&&r2.p<26);
   // v145 (사용자): 무관 과제 중에만 목인장 타격으로 활력, 한 생에 한도까지
   const r2v=await p.evaluate(()=>{const d=mobs.find(m=>m.acadDummy),k=P.acad.c,sv={hit:k.hit,dvit:k.dvit,vit:P.vit,end:P.st.end};P.vit=0;k.dvit=0;k.hit=0;
-    for(let i=0;i<10;i++)runHooks('hitDone',{e:d});const a=P.vit;for(let i=0;i<400;i++)runHooks('hitDone',{e:d});const b=P.vit,dv=k.dvit;
-    P.acad.grad=1;P.vit=0;k.dvit=0;for(let i=0;i<20;i++)runHooks('hitDone',{e:d});const c=P.vit;P.acad.grad=0;const note=acadStageCard().includes('목인장 수련 활력');
-    Object.assign(k,{hit:sv.hit,dvit:sv.dvit});P.vit=sv.vit;return{a,b,dv,c,note,cap:ACAD_DVIT.cap,per:ACAD_DVIT.per}});
-  ok(`목인장 활력: ${r2v.per}번에 1 → 10번 ${r2v.a}, 400번 더 쳐도 ${r2v.b} (한도 ${r2v.cap}), 졸업 뒤 ${r2v.c}, 과제 카드에 표시`,r2v.a>0&&r2v.a<=2&&r2v.dv===r2v.cap&&r2v.c===0&&r2v.note);
+    for(let i=0;i<20;i++)runHooks('hitDone',{e:d});const s0=P.vit;P.acad.stage=1;for(let i=0;i<10;i++)runHooks('hitDone',{e:d});const a=P.vit;for(let i=0;i<400;i++)runHooks('hitDone',{e:d});const b=P.vit,dv=k.dvit;
+    P.acad.grad=1;P.vit=0;k.dvit=0;for(let i=0;i<20;i++)runHooks('hitDone',{e:d});const c=P.vit;P.acad.grad=0;const note=acadStageCard().includes('목인장 수련 활력');P.acad.stage=0;
+    Object.assign(k,{hit:sv.hit,dvit:sv.dvit});P.vit=sv.vit;return{s0,a,b,dv,c,note,cap:ACAD_DVIT.cap,per:ACAD_DVIT.per}});
+  ok(`목인장 활력: 1단계엔 ${r2v.s0}, 2단계부터 ${r2v.per}번에 1 → 10번 ${r2v.a}, 400번 더 쳐도 ${r2v.b} (한도 ${r2v.cap}), 졸업 뒤 ${r2v.c}, 과제 카드에 표시`,r2v.s0===0&&r2v.a>0&&r2v.a<=2&&r2v.dv===r2v.cap&&r2v.c===0&&r2v.note);
   // v135: 과제는 하나씩. 지금 과제만 보이고, 세는 과제는 열린 뒤부터 센다. 표시는 장소·단추에
   const r2b=await p.evaluate(()=>{const o={g0:acadCur().k,mk:acadMarks().map(m=>m.l),tr:$('qtrack').textContent};
     for(const k of['장경각','병기고','숙소','식당'])P.acad.c['spot_'+k]=1;acadCheck();o.g1=acadCur().k;o.done=Object.keys(P.acad.done).length;return o});
@@ -34,9 +34,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r2c=await p.evaluate(()=>({bag:!!document.querySelector('#b_p_bag.achl'),card:(openNpc(npcsHere().find(n=>n.id==='ac_i0')),$('wbody').textContent)}));
   await p.evaluate(()=>{closePanels();openPanel('bag')});await p.waitForTimeout(350);
   const r2d=await p.evaluate(()=>{const r=P.bag.find(i=>i.acad);const hl=!!document.querySelector(`[data-act="eq:${r.id}"].achl`);act('eq:'+r.id);closePanels();acadCheck();
-    const o={hl,g:acadCur().k,have:goalProg(acadCur()).have,mk:acadMarks().map(m=>m.l)};for(let i=0;i<20;i++)P.acad.c.hit++;acadCheck();o.g2=acadCur().k;return o});
-  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('수련으로 기본기')}), 무관복 줄 표시 ${r2d.hl}, 열리기 전 타격은 안 셈 (${r2d.have}), 목인장 표시, 다음 ${r2d.g2}`,
-    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('수련으로 기본기')&&r2d.hl&&r2d.g==='hit'&&r2d.have===0&&r2d.mk[0]==='목인장'&&r2d.g2==='oe');
+    const o={hl,g:acadCur().k};return o});
+  ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('수련으로 기본기')}), 무관복 줄 표시 ${r2d.hl}, 다음 ${r2d.g} (목인장은 심법 뒤로)`,
+    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('수련으로 기본기')&&r2d.hl&&r2d.g==='oe');
   // v140 (사용자): 기본기 과제는 1만. 처음 받은 활력으로 한 번 수련하면 끝난다
   const ro=await p.evaluate(()=>{const o={k:acadCurK(),vit:P.vit};trainStat('str');acadCheck();o.next=acadCurK();o.all=acadAllDone();return o});
   ok(`기본기 과제: 처음 활력 ${ro.vit}으로 한 번 수련하면 끝 (${ro.k} → 1단계 과제 완료 ${ro.all})`,ro.k==='oe'&&ro.all);
@@ -56,13 +56,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r6=await p.evaluate(()=>{const again=(act('acsim:N_ac_jeong_1'),P.sim);return{st:P.acad.stage,sim:P.sim,again,def:simTv('def'),g:SIM[P.sim].g,sc:pSchool(),el:pEl(),
     four:ACAD_SIM['정'].length===4&&ACAD_SIM['사'].length===4&&ACAD_SIM['사'].every(x=>SIM[x.id].sc==='사공'),trs:new Set(ACAD_SIM['정'].map(x=>x.tr[0])).size}});
   ok(`병기 교두는 아직 (${!t3pre.pick}), 장경각 심법 넷과 심법 설명 (${t4.includes('내공 증가')&&t4.includes('특색')}), 금강호체공: 하승·불가·금, 금강 ${r6.def}%, 한 번 고르면 끝`,!t3pre.pick&&t3pre.t.includes('먼저 심법')&&['금강호체공','태청토납법','청풍심법','소양진기'].every(n=>t4.includes(n))&&t4.includes('내공 증가')&&r6.st===1&&r6.sim==='N_ac_jeong_0'&&r6.again==='N_ac_jeong_0'&&Math.abs(r6.def-3.6)<.01&&r6.g===0&&r6.sc==='불가'&&r6.el==='금'&&r6.four&&r6.trs===4);
+  const rh=await p.evaluate(()=>{closePanels();const o={k:acadCurK(),have:goalProg(acadCur()).have,mk:acadMarks().map(m=>m.l)};for(let i=0;i<20;i++)P.acad.c.hit++;acadCheck();o.k2=acadCurK();return o});
+  ok(`v146: 심법 뒤 목인장 (${rh.k}, 앞서 친 것은 안 셈 ${rh.have}, 표시 ${rh.mk[0]}) → ${rh.k2}`,rh.k==='hit'&&rh.have===0&&rh.mk[0]==='목인장'&&rh.k2==='qin');
   const rq=await p.evaluate(()=>{closePanels();const o={k:acadCurK()};P.qiN+=2;acadCheck();P.qiN-=2;P.qiAcc=45;recalc();o.k2=acadCurK();act('actalk:el');acadCheck();o.k3=acadCurK();return o});
   ok(`내공 수련 두 번 (${rq.k}) → ${rq.k2} → ${rq.k3}`,rq.k==='qin'&&rq.k2==='talk'&&rq.k3==='medit');
   // 운기 과제: 내공이 가득해도 운기 단추가 보이고, 3초 앉아 있으면 된다 (v136 사용자 버그)
   await p.evaluate(()=>{P.qi=P.maxQi;setTouch(true)});await p.waitForTimeout(300);
   const rm=await p.evaluate(()=>({k:acadCurK(),btn:!$('t_med').hidden,hl:$('t_med').classList.contains('achl')}));
   await p.evaluate(()=>{setTouch(false);meditate()});await p.waitForTimeout(3600);
-  const rm2=await p.evaluate(()=>({done:!!P.acad.done['1:3'],all:acadAllDone()}));
+  const rm2=await p.evaluate(()=>({done:!!P.acad.done['1:4'],all:acadAllDone()}));
   ok(`운기 과제: 심법 뒤, 내공 가득해도 운기 단추 ${rm.btn}·표시 ${rm.hl}, 3초 앉으면 끝 (${rm2.done})`,rm.k==='medit'&&rm.btn&&rm.hl&&rm2.done&&rm2.all);
   await p.evaluate(()=>{P.medit=false;act('acrep')});
   // 4. 3단계: 병기고에서 고르고, 비급을 읽기 전에는 바꿀 수 있다. 대련은 비급을 읽은 뒤. 암기와 비도 10
