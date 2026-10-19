@@ -37,7 +37,7 @@ function ruinLoot(n){const s=SECTS[n.sect];if(!s)return;G.looted=G.looted||{};(G
   if(e.t==='gear')it=ruinGear(s);else if(e.t==='relic')it=ruinRelic(s);else if(e.t==='book')it=ruinBook(s,false)||ruinRelic(s);else if(e.t==='hibook')it=ruinBook(s,true)||ruinRelic(s);
   if(!it)return;if(P.bag.length>=24){log('행낭이 가득 찼다. 자리를 비우고 다시 뒤져라.','info');delete G.looted[REG][n.key];n.cd=0;return}
   P.bag.push(it);log(`${where}에서 ${itemLabel(it)}을(를) 찾았다.${it.relic?` ${s.n}의 유물이다.`:e.t==='hibook'?` 멸문한 ${s.n}의 절기가 폐허에서 흘러나왔다.`:''}`,it.slot==='book'||it.relic?'xp':'sys');
-  if(e.t==='hibook')P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 폐허에서 ${it.name}을(를) 찾았다`)}
+  if(e.t==='hibook')feat(`${s.n} 폐허에서 ${it.name}을(를) 찾았다`)}
 
 // 바닥 그림 바로 위에 핏자국. 시체는 깊이 정렬 목록에 들어간다 (g_draw.js)
 function drawGore(){const R=REGION();if(!R.dead||!R.gore)return;ctx.save();
@@ -50,4 +50,4 @@ function drawBody(b){const p=toScreen(b.x,b.y);ctx.save();ctx.translate(p.x,p.y)
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R)return;goreMake(id);
   if(!R.dead&&G.looted&&G.looted[id])delete G.looted[id];
   if(R.hall){if(R.dead){if(!R._npcsH)R._npcsH=R.npcs||[];R.npcs=[]}else if(R._npcsH){R.npcs=R._npcsH;delete R._npcsH}}   // 살아 있을 땐 손대지 않는다 (g_pop masterCheck 가 장문인을 숨긴다)
-  if(R.dead){NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);const s=ruinSect(R);if(!R.hall)log(`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}});
+  if(R.dead){refreshNPCF();const s=ruinSect(R);if(!R.hall)log(`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}});

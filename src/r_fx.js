@@ -143,4 +143,4 @@ function drawProj(q){
   else{glowDot(0,0,10*s,q.c,1);if(q.X.art.elc){const bs=flick(q,()=>{const o=[];for(let i=0;i<3;i++){const a=rnd()*6.28;boltPts(0,0,Math.cos(a)*14*s,Math.sin(a)*14*s,6,0,2,o)}return o},.05);strokeBolts(bs,q.c,1,.35)}}
   ctx.restore();
 }
-function lightAt(x,y,r,a){const g=lx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');lx.fillStyle=g;lx.fillRect(x-r,y-r,r*2,r*2)}
+function lightAt(x,y,r,a){if(a<=0)return;const g=lx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');lx.fillStyle=g;lx.fillRect(x-r,y-r,r*2,r*2)}

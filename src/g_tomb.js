@@ -47,7 +47,7 @@ function tombKill(e){
   for(const m of mobs)if(m.tombGuard===t.id&&m.hp>0)m.hp=0;mobs=mobs.filter(m=>m.tombGuard!==t.id||m.hp>0);
   fx.push({t:'lvl',x:t.x,y:t.y,life:1.2});showBanner('무덤 정화',`${t.name}이(가) 잠들었습니다`);
   log(`${t.name}의 망령이 잠들고 무덤이 허물어졌습니다. 물건 ${out.length}/${t.items.length}개가 남았습니다.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 전생 ${t.name}의 망령을 잠재웠다`);
+  feat(`전생 ${t.name}의 망령을 잠재웠다`);
 }
 function drawTomb(t){
   const p=toScreen(t.x,t.y),live=mobs.some(m=>m.tomb===t.id&&m.hp>0);

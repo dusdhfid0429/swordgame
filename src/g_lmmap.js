@@ -79,3 +79,9 @@ for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(s
   REGIONS.hq_shaolin.gates.push({x:20.5,y:38.6,to:'sungsan',tx:x,ty:y+2,label:'숭산'});REGIONS.hq_shaolin.lmVia='sungsan';REGIONS.hq_shaolin.prov='henan'}
 // 예전 저장이 숭산 꼭대기(옛 소림사 자리)였으면 걸을 수 있는 곳으로
 hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=10.5;P.y=36.4}});
+// 성도 맵에 포털을 내고 R(맹 총단·무관처럼 성 안에 따로 있는 맵)의 남문을 그 포털 앞으로 잇는다. 성도 맵이 없으면 개봉으로 (g_maeng.js, g_academy.js)
+function linkCityPortal(R,toId,label,prov,city){const F=REGIONS[pvId(prov)],m=F&&F.marks&&F.marks.find(q=>q.n===city&&q.gate),L=m&&REGIONS[m.gate],cL=L&&L.stage;
+  if(cL&&cL.portals){const n=cL.portals.length,slot=LM_PORTAL_C[Math.min(n,2)],x=slot[0]+.5,y=slot[1]+.5;
+    cL.portals.push({x,y,s:null,label});L.gates.push({x,y,to:toId,tx:20.5,ty:36.2,label,portal:1});
+    R.gates.push({x:20.5,y:38.6,to:m.gate,tx:x,ty:y+2,label:L.name||m.n});R.lmVia=m.gate}
+  else R.gates.push({x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:20.5,label:'개봉'})}

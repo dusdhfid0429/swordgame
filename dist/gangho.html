@@ -484,7 +484,8 @@ const elMul=(a,b,sa,sb)=>{if(!a||!b)return 1;if(a==='마'&&b!=='마')return sb==
 const FORMN=GD.FORMN;
 // 무공 객체의 c(색)·pt(입자)·elc(뇌기)는 저장되지 않는 getter 로, 그때그때 심법에서 읽는다 (g_simbeop.js artEl/fxCol)
 // 어두운 색(마기): 이펙트는 더하기 합성 대신 보통 합성으로 검게 그리고, 글자에는 보랏빛 테두리색(ct)을 쓴다 (사용자 요청 2026-10-14 "마교 무공은 검은색 계열")
-const isDark=c=>{const v=String(c).split(',').map(Number);return v.length===3&&v[0]*.3+v[1]*.6+v[2]*.1<70};
+const DARKC=new Map();   // 이펙트마다 매 프레임 묻는다: 색 문자열별로 한 번만 가린다
+const isDark=c=>{let r=DARKC.get(c);if(r===undefined){const v=String(c).split(',').map(Number);r=v.length===3&&v[0]*.3+v[1]*.6+v[2]*.1<70;DARKC.set(c,r)}return r};
 const HI_DARK='150,40,190';
 const textCol=c=>isDark(c)?HI_DARK:c;
 function artFx(a){delete a.c;delete a.pt;delete a.elc;delete a.ct;
@@ -512,10 +513,7 @@ function buildArts(){
   let ci=0,ui=0;const arts={};
   for(const side of['정','사'])CLS.forEach(c=>ELS.forEach((el,ei)=>{
     const n=ART_NAMES[side][c][ei],k=FORMN[el],r=rng(7+n.charCodeAt(0)*31+n.charCodeAt(1)*7+ei);
-    const p=pool[c].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-    // a quick single-target strike first, then the rest from cheapest to heaviest
-    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
-    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((a,b)=>a.cd-b.cd)];
+    const pick=pickForms(pool[c],r,k);
     const off=OFFICIAL[n];
     const forms=pick.map((f,i)=>({...f,n:off?off.forms[i]:combos[ci++%combos.length],req:REQ[i],cost:COST[i],bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*(k<=3?1.25:1)}));
     const u=ults[c][(ei+(side==='사'?1:0))%ults[c].length];
@@ -558,6 +556,10 @@ const WEATHER=GD.WEATHER;
 // 비무 상대
 const DUELISTS=GD.DUELISTS;
 const QUESTS=GD.QUESTS;
+// 초식 고르기 (g_data 기본 무공, g_sect 문파 무공, g_giyeon 기연 무공이 같이 쓴다): 씨앗 r로 섞고, 빠른 단일 타격 하나를 먼저, 나머지 k-1개는 가벼운 것부터
+function pickForms(src,r,k){const p=src.slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
+  return [p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((a,b)=>a.cd-b.cd)]}
 
 // ================= 세력과 문파: 정의맹(정파) · 사천맹(사파) · 마교 =================
 // 문파마다 고유 무공이 있다. 일반 무공은 임무로 쌓은 공적으로 비급을 받아 익히고, 고급 무공은 가입할 때 받는다.
@@ -566,7 +568,6 @@ const ALLY=GD.ALLY;
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=GD.SECT_DATA;
 const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
-const sectOf=id=>SECTS[id]||null;
 // 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식, 등급은 항상 하승 · addSectArts) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
 // 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
 const START=GD.START||{};
@@ -597,9 +598,7 @@ const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
 function addSectArts(arts,pool,ults,formName,ultName){
   for(const s of Object.values(SECTS))for(const a of s.arts){
     const side=ALLY[s.al].side,k=a.hi?6:Math.max(3,Math.min(4,FORMN[a.el])),r=rng(31+a.n.charCodeAt(0)*17+a.n.charCodeAt(a.n.length-1)*5+s.i);
-    const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
-    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,k-1).sort((x,y)=>x.cd-y.cd)];
+    const pick=pickForms(pool[a.cls],r,k);
     // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
     const st=START[s.id],g=!a.hi&&st&&st.art===a.n?0:sectGrade(s,a.hi),mul=GMUL[g];
     const forms=pick.map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
@@ -631,7 +630,7 @@ function joinBlock(s){
   return null}
 // ---- 임무: 세력마다 맡길 일이 다르고, 문파마다 두 가지씩 해마다 바뀐다 ----
 const SMIS=GD.SMIS;
-function sectMissions(s){const pool=SMIS[s.al],y=Math.floor(P.age),a=(s.i*3+y)%pool.length,b=(s.i*3+y+1+(s.i%2))%pool.length;
+function sectMissions(s){const pool=SMIS[s.al],y=Math.floor(realAge()),a=(s.i*3+y)%pool.length,b=(s.i*3+y+1+(s.i%2))%pool.length;
   return [a,b===a?(a+1)%pool.length:b].map(i=>({...pool[i],n:`[${s.n}] ${pool[i].n}`,sect:s.id,vit:Math.round(pool[i].merit*1.5),fame:Math.round(pool[i].merit/5),good:s.al==='jeong'?3:0,key:`${s.id}:${i}:${y}`}))}
 // 직위가 일대제자(조장·향주) 이상이면 자기 문파 비급이 20% 싸다 (g_faction.js)
 const meritCost=(a,fi)=>Math.round(GCOST[artGrade(a.id)]*(fi+1)*rankDisc(artSect(a.id).id)*dangDisc(a.id));
@@ -658,12 +657,8 @@ function sectDetail(s,hq){
     const mb=s.id==='cheonma'?mgArtBlock(a):'',why=!same?'':mb?mb:lock?'제자만':fi<0?'모두 익힘':a.hi&&rankIdx(s.id)<HI_RANK[fi]?`${rankName(s.id,HI_RANK[fi])} 이상`:m<c?`공적 ${c} 필요`:'';
     return `<div class="it"><div style="color:rgb(${A2.ct})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
-  const mis=same?sectMissions(s).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
-    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 공적 ${q.merit} · 은자 ${q.silver}</span></div>
-      <div class="ib">${on?B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done}):B('stake:'+s.id+':'+qi,'맡기',{d:P.quests.length>=4})}</div></div>`}).join(''):'';
   // 지난해에 맡아 아직 들고 있는 임무도 보고할 수 있다 (해가 바뀌어도 임무는 사라지지 않는다)
-  const cur=same?sectMissions(s).map(q=>q.key):[],old=same?P.quests.map((q,i)=>[q,i]).filter(([q])=>q.sect===s.id&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
-    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join(''):'';
+  const mis=same?missionRows(sectMissions(s),{take:qi=>'stake:'+s.id+':'+qi,lbl:'공적'}):'',old=same?oldMissionRows(q=>q.sect===s.id,sectMissions(s),'공적'):'';
   const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}${!jb&&typeof sangongTxt==='function'&&startSet(s).sim?` <b class="bad">${sangongTxt(SIM[startSet(s).sim].sc)}</b>`:''}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
@@ -677,8 +672,8 @@ function sectDetail(s,hq){
 }
 // 사부의 가르침(해마다 한 번)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
 function teachHtml(){
-  const a=art(),s=A(a.id),fi=artSideOk(a)?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,can=fi>=0&&P.taught<Math.floor(P.age);
-  return `<div class="row2"><span class="note">${fi>=0?`사부에게 [${a.forms[fi].n}]을(를) 전수받을 수 있다`:'지금 펼치는 무공에서 전수받을 초식이 없다'}${P.taught>=Math.floor(P.age)?' · 올해는 이미 배웠다':''}</span>${B('teach','가르침 청하기',{d:!can})}</div>`}
+  const a=art(),s=A(a.id),fi=artSideOk(a)?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,can=fi>=0&&P.taught<Math.floor(realAge());
+  return `<div class="row2"><span class="note">${fi>=0?`사부에게 [${a.forms[fi].n}]을(를) 전수받을 수 있다`:'지금 펼치는 무공에서 전수받을 초식이 없다'}${P.taught>=Math.floor(realAge())?' · 올해는 이미 배웠다':''}</span>${B('teach','가르침 청하기',{d:!can})}</div>`}
 function ownSectHtml(alId){
   if(!sideOk(alId))return '';
   if(P.sect==='own')return `<div class="row2"><span class="note">${esc(P.sectName)}의 문주</span>${B('disciple',`제자 받기 · 은자 50 (${allies.filter(a=>a.kind==='disciple').length}/3)`,{pri:1,d:P.silver<50||allies.filter(a=>a.kind==='disciple').length>=3})}</div>`;
@@ -690,13 +685,13 @@ function sectActBase(a,x,y){
     case'sview':sectView=x||null;return true;
     case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const k=startSet(s),got=giveStartSet(s);
       log(`${s.n}에 입문했습니다. 입문공으로 ${got.map(n=>`[${n}]`).join(' · ')}을(를) 받았습니다.`,'xp');showBanner(`${s.n} 입문`,`입문공 · ${k.art.n}`);
-      P.feats.push(`${Math.floor(P.age)}세에 ${s.n}에 입문했다`);return true}
+      feat(`${s.n}에 입문했다`);return true}
     case'sleave':{const s=SECTS[P.sect];if(!s)return true;if(!confirm(`${s.n}에서 하산할까요? 익힌 무공은 남지만 고급 무공의 다음 초식은 더 받을 수 없습니다.`))return true;
       P.sect=null;log(`${s.n}에서 하산했습니다.`,'info');return true}
     case'blearn':learnBob(x,1);return true;
     case'glearn':learnGg(x,1);return true;
     case'plearn':{const q=PAS[x];if(q&&q.sect)learnPas(x);return true}
-    case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
+    case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)&&!qDone(q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
     case'mbuy':{const a2=ARTS[x],s=artSect(x),meta=s.arts.find(q=>q.id===x),fi=+y,c=meritCost(meta,fi);
       if(fi<0||(s.id==='cheonma'&&mgArtBlock(meta))||(meta.hi&&(P.sect!==s.id||rankIdx(s.id)<HI_RANK[fi]))||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
@@ -727,9 +722,7 @@ function addGiyeonArts(arts,pool,ults){
   const g=4,mul=GMUL[g];
   Object.entries(GY_ARTS).forEach(([id,a],ai)=>{
     const r=rng(911+a.n.charCodeAt(0)*13+a.n.charCodeAt(1)*3+ai);
-    const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
-    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,a.forms.length-1).sort((x,y)=>x.cd-y.cd)];
+    const pick=pickForms(pool[a.cls],r,a.forms.length);
     const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][ai%ults[a.cls].length],EC=EL[a.el];
     arts[id]=artFx({id,side:null,cls:a.cls,el:a.el,n:a.n,forms,gy:1,grade:g,
@@ -827,7 +820,12 @@ const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
 const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
-const adult=()=>P.age>=18;
+// 살아온 해: 반로환동(g_body.js)으로 몸의 나이(P.age)가 줄어도 줄지 않는다. 해마다 바뀌는 것(사부 전수·문파·맹 임무·천하대전 시계)은 이것으로 센다
+const realAge=()=>P.age+(P.ban?P.ban.yrs:0);
+// 문파·맹 임무는 해마다 한 번씩만 보고한다 (키에 해가 들어 있어 해가 바뀌면 비운다)
+// 행적: "N세에 …" (윤회 기록·비석에 남는다)
+function feat(t){P.feats.push(`${Math.floor(P.age)}세에 ${t}`)}
+const qDone=k=>!!(P.qdone&&P.qdone[k]);
 // 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
 const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
@@ -992,7 +990,7 @@ function onKill(e){
   if(e.duel){duelEnd(true,e);return}
   const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03));
   if(d.villager){v=P.side==='사'?8:0;P.evil+=P.side==='정'?20:8;log('양민이 죽었습니다. 무거운 악업이 쌓였습니다.','dmg')}
-  gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;P.feats.push(`${Math.floor(P.age)}세에 ${e.kind}을(를) 쓰러뜨렸다`)}
+  gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;feat(`${e.kind}을(를) 쓰러뜨렸다`)}
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
@@ -1006,10 +1004,6 @@ function randomBook(){
   const w=a.forms.map((f,i)=>1/(i+1));let r=Math.random()*w.reduce((x,y)=>x+y),i=0;while(r>w[i]){r-=w[i];i++}
   return mkBook(a.id,Math.min(i,a.forms.length-1));
 }
-function randomGear(m){const q=clamp(.6+Math.random()*.7*m,.5,1.6),s=pick(['weapon','weapon','armor','acc','boots']);
-  if(s==='weapon')return mkWeapon(Math.random()<.5&&!art().base?curCls():pick(CLS),q,0);
-  if(s==='armor')return mkGear('armor',pick(['마의','피갑','흑철갑']),q,{hp:26,def:4});if(s==='acc')return mkGear('acc',pick(['옥패','호신부','염주']),q,{qi:24,hm:5});
-  return mkGear('boots',pick(['짚신','무혜','운리혜']),q,{spd:.12,hm:4})}
 function pickUp(d){
   const it=d.it;
   if(it.silver){P.silver+=it.silver;addText(P.x,P.y,`은자 ${it.silver}`,'#e8c66e');return true}
@@ -1101,7 +1095,7 @@ function trainQi(){
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
 }
-const statCost=k=>Math.round((12+(P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
+const statCost=k=>Math.round((12+Math.max(0,P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
 function trainStat(k){
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
@@ -1128,13 +1122,13 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
 function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
-  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
+  if(gy){const a=gyLearn(gy);feat(`기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
   else if(r<.85){const n=pick(Object.keys(SHINGONG));const v=src==='chest'?2:1;P.sg.pages[n]=(P.sg.pages[n]||0)+v;log(`기연: 절세신공 [${n}] ${v}장을 얻었습니다.`,'xp')}
   else{const b=randomBook();P.bag.push(b);log(`기연: 낡은 비급 [${b.name}]을(를) 발견했습니다.`,'xp')}
-  P.feats.push(`${Math.floor(P.age)}세에 기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
+  feat(`기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
 }
 
 // ---------- world: 개봉 성내 at the centre, 황하 to the north with 숭산 forest and the 혈교 cave beyond,
@@ -1419,6 +1413,9 @@ const npcsHere=()=>REG==='gaebong'?NPCS:(REGION().npcs||[]);
 let dlg=null;
 // ================= update =================
 let spawnT=0,saveT=30,lastYear=8;
+// 배열을 새로 만들지 않고 그 자리에서 거른다 (매 틱 mobs·fx·texts·drops를 filter로 새로 만들던 것)
+function prune(a,ok){let j=0;for(let i=0;i<a.length;i++)if(ok(a[i]))a[j++]=a[i];a.length=j;return a}
+function dust(e,dt){if(!e.moving||!(e.hp>0))return;e.dustT=(e.dustT||0)-dt;if(e.dustT<=0){fx.push({t:'dust',x:e.x-.1,y:e.y-.1,life:.45});e.dustT=.24}}
 function update(dt){
   time+=dt;shake=Math.max(0,shake-dt);trainTick(dt);tombTick();gateTick(dt);
   // calendar, age, weather, day
@@ -1434,14 +1431,14 @@ function update(dt){
   for(const n of nodes)n.cd=Math.max(0,n.cd-dt);
   if(P.hp>0)updateP(dt);
   for(const e of mobs)updateMob(e,dt);
-  mobs=mobs.filter(e=>e.hp>0);
+  prune(mobs,e=>e.hp>0);
   for(const a of allies)updateAlly(a,dt);
-  for(const e of[P,...mobs,...allies])if(e.moving&&e.hp>0){e.dustT=(e.dustT||0)-dt;if(e.dustT<=0){fx.push({t:'dust',x:e.x-.1,y:e.y-.1,life:.45});e.dustT=.24}}
-  if(P.hp>0)drops=drops.filter(d=>!(dist(d,P)<.6&&pickUp(d)));
+  dust(P,dt);for(const e of mobs)dust(e,dt);for(const e of allies)dust(e,dt);
+  if(P.hp>0)prune(drops,d=>!(dist(d,P)<.6&&pickUp(d)));
   updateProjs(dt);updateEprojs(dt);
-  sched.forEach(q=>q.t-=dt);const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f());
-  fx.forEach(f=>f.life-=dt);fx=fx.filter(f=>f.life>0);
-  texts.forEach(t=>t.life-=dt);texts=texts.filter(t=>t.life>0);
+  if(sched.length){for(const q of sched)q.t-=dt;if(sched.some(q=>q.t<=0)){const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f())}}
+  for(const f of fx)f.life-=dt;prune(fx,f=>f.life>0);
+  for(const t of texts)t.life-=dt;prune(texts,t=>t.life>0);
   const t=iso(P.x,P.y);cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
 }
 function updateP(dt){
@@ -1670,6 +1667,8 @@ function useConBase(k){
   P.mats[k]--;addText(P.x,P.y,k,'#a6d47f');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:.6});renderOpen();
 }
 // ================= 나이 and 윤회 =================
+// 해를 한꺼번에 보낸다(폐관·창안·옥살이): 해마다 newYear를 부르고, 도중에 죽으면 멈춘다. 살아 있으면 true
+function passYears(yrs){P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear();if(!playing)return false}return playing&&P.hp>0}
 function newYear(){
   const a=Math.floor(P.age);birthdayVit();rankStipend();runHooks('newYear');
   if(a>=50){recalc()}
@@ -1714,7 +1713,7 @@ function duelStart(){
 function duelEnd(win,e){
   if(G.acadDuel){acadDuelEnd(win,e);return}   // 무관 대련·월반 시험·졸업 비무 (g_academy.js)
   const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
-  if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);P.feats.push(`${Math.floor(P.age)}세에 비무에서 ${o.n}을(를) 꺾었다`)}
+  if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);feat(`비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}
   runHooks('duelEnd',c);
 }
@@ -1821,33 +1820,38 @@ function press(b){
 }
 function meditate(){if(P.medit){P.medit=false;return}if(typeof simCur==='function'&&simCur().none){log('익힌 심법이 없어 운기조식을 할 수 없습니다.','info');return}   // v144 (사용자): 내공을 채우는 일도 심법을 익힌 뒤
   if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
-const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
+// HUD는 매 프레임 그린다: 값이 바뀐 것만 DOM에 쓴다 (예전엔 프레임마다 textContent 36번·querySelector 40번이 레이아웃을 다시 잡게 했다)
+const txt=(el,v)=>{v=String(v);if(el._t!==v){el._t=v;el.textContent=v}};
+const sty=(el,k,v)=>{const c=el._s||(el._s={});if(c[k]!==v){c[k]=v;el.style[k]=v}};
+const qc=(el,sel)=>{const c=el._q||(el._q={});return c[sel]||(c[sel]=el.querySelector(sel))};
+const $t=(id,v)=>txt($(id),v);
+const tip=(el,v)=>{if(el._ti!==v){el._ti=v;el.title=v}};
+const setW=(id,v)=>sty($(id),'width',clamp(v,0,1)*100+'%');
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${facName()}`;
-  $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`;
+  $t('nm',P.name);$t('rank',`${realmName()} · ${facName()}`);
+  $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
-  if($('mag')){const ma=typeof isMa==='function'&&isMa();$('mag').style.display=ma?'':'none';if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$('mat').textContent=tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`}}
-  $('hpt').textContent=`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`;$('qit').textContent=`내공 ${Math.floor(P.qi)}/${P.maxQi}`;
-  $('mst').textContent=`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`;
-  $('res').textContent=`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`;
-  $('zone').textContent=regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':'');
-  questTrack();$('cal').textContent=`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`;
-  $('modeb').textContent=P.mode==='auto'?'자동초식':'수동초식';$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
+  if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
+  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);
+  $t('mst',`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`);
+  $t('res',`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`);
+  $t('zone',regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':''));
+  questTrack();$t('cal',`${season()} · ${G.weather} · ${SIJIN[Math.floor((tod*24+1)/2)%12]}시${P.ride?' · 기마':''}${P.medit?' · 운기조식':''}`);
+  $t('modeb',P.mode==='auto'?'자동초식':'수동초식');$('modeb').classList.toggle('on',P.mode==='manual');$('runb').classList.toggle('on',P.run);$('forceb').classList.toggle('on',forceAtk);
   const ch=P.chain,live=time-ch.t<1.7;
-  a.forms.forEach((f,i)=>{});
-  for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');b.querySelector('.nm').textContent='';b.querySelector('em').textContent='';b.querySelector('.cd').style.height='0';b.title='';continue}
-    const on=s.f[i];const tag=f.n+on;if(b.dataset.n!==tag){b.dataset.n=tag;b.querySelector('.nm').textContent=f.n;b.title=`${f.n} · ${plabel(f)} · 연속기 +${f.bonus}%${on?'':` · 미습득 (숙련 ${f.req}, 활력 ${f.cost})`}`}
-    b.querySelector('em').textContent=on?(f.qi||''):'';b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<f.qi||!hasWeaponFor(a.cls)));
-    b.querySelector('.cd').style.height=(on?P.fcd[i]/P.fmax[i]*100:0)+'%';b.classList.toggle('used',live&&ch.last===i)}
-  const u=$('b_ult');u.querySelector('.nm').textContent=a.ult.n;u.classList.toggle('off',!allLearned(a.id));u.querySelector('.cd').style.height=(P.ucd/8*100)+'%';u.title=`필살기 ${a.ult.n} · 초식을 모두 익혀야 쓸 수 있다`;
-  for(const k of['암기','독공','점혈']){const b=$('b_'+k);b.querySelector('.nm').textContent=k;b.classList.toggle('off',!P.sp[k]);b.querySelector('.cd').style.height=(P.scd[k]/SPEC[k].cd*100)+'%';
-    b.querySelector('em').textContent=k==='암기'?(P.mats.비도||0):SPEC[k].qi}
-  const g=$('b_신공');g.querySelector('.nm').textContent=P.sg.name?P.sg.name.slice(0,2):'신공';g.classList.toggle('off',!P.sg.name);g.querySelector('.cd').style.height=(P.scd.신공/5*100)+'%';
-  for(const k of['금창약','소환단']){const b=$('b_'+k);b.querySelector('.nm').textContent=k;b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('lock',!(P.mats[k]>0))}
+  for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');txt(qc(b,'.nm'),'');txt(qc(b,'em'),'');sty(qc(b,'.cd'),'height','0');tip(b,'');continue}
+    const on=s.f[i];const tag=f.n+on;if(b.dataset.n!==tag){b.dataset.n=tag;txt(qc(b,'.nm'),f.n);tip(b,`${f.n} · ${plabel(f)} · 연속기 +${f.bonus}%${on?'':` · 미습득 (숙련 ${f.req}, 활력 ${f.cost})`}`)}
+    txt(qc(b,'em'),on?(f.qi||''):'');b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<f.qi||!hasWeaponFor(a.cls)));
+    sty(qc(b,'.cd'),'height',(on?P.fcd[i]/P.fmax[i]*100:0)+'%');b.classList.toggle('used',live&&ch.last===i)}
+  const u=$('b_ult');txt(qc(u,'.nm'),a.ult.n);u.classList.toggle('off',!allLearned(a.id));sty(qc(u,'.cd'),'height',(P.ucd/8*100)+'%');tip(u,`필살기 ${a.ult.n} · 초식을 모두 익혀야 쓸 수 있다`);
+  for(const k of['암기','독공','점혈']){const b=$('b_'+k);txt(qc(b,'.nm'),k);b.classList.toggle('off',!P.sp[k]);sty(qc(b,'.cd'),'height',(P.scd[k]/SPEC[k].cd*100)+'%');
+    txt(qc(b,'em'),k==='암기'?(P.mats.비도||0):SPEC[k].qi)}
+  const g=$('b_신공');txt(qc(g,'.nm'),P.sg.name?P.sg.name.slice(0,2):'신공');g.classList.toggle('off',!P.sg.name);sty(qc(g,'.cd'),'height',(P.scd.신공/5*100)+'%');
+  for(const k of['금창약','소환단']){const b=$('b_'+k);txt(qc(b,'.nm'),k);txt(qc(b,'em'),P.mats[k]||0);b.classList.toggle('lock',!(P.mats[k]>0))}
   $('b_medit').classList.toggle('used',P.medit);$('b_ridebtn').classList.toggle('off',!allies.some(x=>x.d&&x.d.ride));
   if(TOUCH)touchHud();
-  if(P.chan){$('chan').hidden=false;$('chant').textContent=P.chan.label;$('chanb').style.width=(P.chan.t/P.chan.dur*100)+'%'}else $('chan').hidden=true;
+  if(P.chan){$('chan').hidden=false;$t('chant',P.chan.label);sty($('chanb'),'width',(P.chan.t/P.chan.dur*100)+'%')}else $('chan').hidden=true;
 }
 function plabel(f){
   const m={melee:'단일',multi:`${f.hits}연타`,arc:'부채꼴',circle:'주변 전체',line:'직선 관통',drop:'원격 낙하',rain:'광역 낙하',pull:'끌어당김',chain:'연쇄',blink:'순간이동',blinkMulti:'연속 순간이동',dash:'돌진'};
@@ -2073,16 +2077,16 @@ function act(s){
     case'rumor':log(`객잔 주인: "${pick(TIPS)}"`,'info');break;
     case'repair':{const w=P.eq.weapon,c=Math.ceil((w.maxDur-w.dur)*.6);if(P.silver>=c){P.silver-=c;w.dur=w.maxDur;log('무기를 고쳤습니다.','sys')}break}
     case'marry':{const v=prompt('배우자의 이름',pick(['연화','소혜','설아','월향','진운','하령','유경','백란']));if(!v)return;P.silver-=200;P.spouse={name:v.trim().slice(0,8)};
-      log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);P.feats.push(`${Math.floor(P.age)}세에 ${P.spouse.name}와(과) 혼인했다`);break}
+      log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);feat(`${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':P.quests.push({...G.board[n],have:0});G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
-    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;runHooks('questDone',q);P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
+    case'qdone':{const q=P.quests[n];if(!q)break;if(q.sect||q.maeng)(P.qdone=P.qdone||{})[q.key]=1;if(q.sect){const v=addMerit(q.sect,q.merit);log(`${SECTS[q.sect].n} 공적 +${v}`,'xp');if(typeof sectGainStanding==='function'&&P.sect===q.sect){const sv=sectGainStanding(q.sect,q.merit);if(sv)log(`${SECTS[q.sect].n}의 맹 입지 +${sv}`,'xp')}}if(q.maeng&&typeof maengReport==='function')maengReport(q);if(q.kind==='give')P.mats[q.mat]-=q.cnt;P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;runHooks('questDone',q);P.quests.splice(n,1);log(`의뢰 [${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}`,'xp');break}
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
-    case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 집을 지었다`);break;
-    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(P.age);log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
+    case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');feat(`집을 지었다`);break;
+    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(realAge());log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
     case'sbuy':{const fi=+y,price=40*(fi+1);if(P.silver>=price){P.silver-=price;P.bag.push(mkBook(x,fi));log('비급을 샀습니다. 행낭에서 읽으세요.','sys')}break}
-    case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;P.feats.push(`${Math.floor(P.age)}세에 ${P.sectName}을(를) 세웠다`);break}
+    case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;feat(`${P.sectName}을(를) 세웠다`);break}
     case'disciple':{P.silver-=50;const nm=pick(['소운','청하','무진','백결','한솔','도현','진우','설화','유린']);const d=mkAlly('disciple',nm,P.x+.6,P.y+.4);allies.push(d);log(`${nm}을(를) 제자로 받았습니다.`,'xp');break}
     case'rest':P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('집에서 쉬었습니다.','sys');if(P.spouse)familyTalk();closePanels();return;
     case'putm':for(const[k,v]of Object.entries(P.mats))if(v>0&&!CONSUME[k]&&k!=='비도'){G.storage.mats[k]=(G.storage.mats[k]||0)+v;P.mats[k]=0}break;
@@ -2117,6 +2121,14 @@ function questFrom(q){
   if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
   if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}
+// 문파·맹 임무 목록 (g_sect.js 문파 창, g_maeng.js 맹 창이 같이 쓴다)
+const misSpan=(q,on)=>{const p=on&&questProg(on);return q.kind==='kill'?`${mobTxt(q.mob)} ${on?p.have+'/':''}${q.cnt}`:`${q.mat} ${on?p.have+'/':''}${q.cnt}개`};
+const misRow=(q,sub,btn)=>`<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${sub}</span></div><div class="ib">${btn}</div></div>`;
+const misReport=(on,i)=>{const d=questProg(on).done;return B('qdone:'+i,d?'보고하기':'진행 중',{pri:d,d:!d})};
+function missionRows(ms,{take,lbl,can=true,why=''}){return ms.map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key);
+  return misRow(q,`${misSpan(q,on)} · ${lbl} ${q.merit} · 은자 ${q.silver}`,on?misReport(on,P.quests.indexOf(on)):qDone(q.key)?B(take(qi),'올해 마침',{d:1}):B(take(qi),'맡기',{d:!can||P.quests.length>=4,t:can?'':why}))}).join('')}
+// 지난해에 맡아 아직 들고 있는 임무
+function oldMissionRows(own,ms,lbl){const cur=ms.map(q=>q.key);return P.quests.map((q,i)=>[q,i]).filter(([q])=>own(q)&&!cur.includes(q.key)).map(([on,i])=>misRow(on,`${misSpan(on,on)} · ${lbl} ${on.merit} · 지난해 임무`,misReport(on,i))).join('')}
 function questProg(q){const kill=q.kind==='kill',have=kill?q.have||0:Math.min(q.cnt,P.mats[q.mat]||0);return{kill,have,done:have>=q.cnt,pct:Math.min(100,Math.round(have/q.cnt*100))}}
 // 대상이 나오는 곳 / 재료를 얻는 곳
 function questWhere(q){
@@ -2199,19 +2211,21 @@ function warPlan(){const w=wld(),R=STORY.RULES;let rule=STORY.WAR.find(r=>condOk
   return{id:rule.id,n,d:rule.d,sides,notes}}
 const sideName=s=>s.map(f=>FAC4N[f]).join('·');
 // ---- 생의 단계와 남은 해 ----
-function lifeStage(){const a=P.age;let n=ST.stages[0][1];for(const[ag,nm]of ST.stages)if(a>=ag)n=nm;return n}
-const yearsToWar=()=>Math.max(0,ST.war-P.age);
+function lifeStage(){const a=realAge();let n=ST.stages[0][1];for(const[ag,nm]of ST.stages)if(a>=ag)n=nm;return n}
+const yearsToWar=()=>Math.max(0,ST.war-realAge());
+// yrs 안에 닥칠 사건·천하대전의 나이 (없으면 null). 폐관(g_realm.js pgWhy)이 본다
+function storyDueIn(yrs){const s=PS(),a=realAge();if(!s||s.flag.warDone)return null;const ev=SEV.find(e=>s.pick[e.id]==null&&e.age>a&&e.age<=a+yrs);if(ev)return ev.age;return a<ST.war&&ST.war<=a+yrs?ST.war:null}
 // ---- 사건 열기·고르기·미루기 ----
 const evOf=id=>SEV.find(e=>e.id===id);
 function evState(e){const s=PS();return s.pick[e.id]!=null?'done':s.open===e.id?'open':'wait'}
 // v149 (사용자): 사건이 터지면 창을 띄우지 않고 화면에 크게 알린다. 정세 줄(맨 위)을 누르거나 N으로 정세창을 연다
-function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');P.feats.push(`${Math.floor(P.age)}세에 ${e.n}을(를) 마주했다`);
+function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');feat(`${e.n}을(를) 마주했다`);
   if(panel==='story'&&!$('win').hidden)renderOpen()}
 // 정세 줄: 고를 사건(다음 사건이 열리면 저절로 흘러간다)과 정세 임무. left = 남은 초 (나이 → 1년 YEAR_SEC초)
-function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-P.age)*YEAR_SEC;
+function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-realAge())*YEAR_SEC;
   if(s.open){const e=evOf(s.open),i=SEV.indexOf(e),nx=SEV.slice(i+1).find(o=>s.pick[o.id]==null),due=nx?nx.age:ST.war;out.push({n:`사건 · ${e.n}`,prog:'선택 대기',left:sec(due),lbl:'흘러가기까지'})}
   for(const q of P.quests||[]){if(!q.story&&!q.war&&!q.sq)continue;const p=questProg(q);
-    const left=q.war?sec(Math.floor(P.age)+1):q.story&&P.age<ST.war?sec(ST.war):null,lbl=q.war?'이번 결전 끝까지':'천하대전까지';out.push({q,n:q.n,prog:`${p.have}/${q.cnt}`,done:p.done,left,lbl})}
+    const left=q.war?sec(Math.floor(realAge())+1):q.story&&realAge()<ST.war?sec(ST.war):null,lbl=q.war?'이번 결전 끝까지':'천하대전까지';out.push({q,n:q.n,prog:`${p.have}/${q.cnt}`,done:p.done,left,lbl})}
   return out}
 function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null)return false;if(!auto&&ch.fac&&ch.fac!==myFac()){log(`${FAC4N[ch.fac]}의 길이다. ${FAC4N[myFac()]}인 당신은 고를 수 없다.`,'info');return false}if(!auto&&!condOk(ch.req)){log(`아직 할 수 없다: ${condTxt(ch.req)}`,'info');return false}
   s.pick[e.id]=i;if(s.open===e.id)s.open=null;
@@ -2221,13 +2235,13 @@ function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null
   else s.done[e.id]=true;
   if(e.id===SEV[SEV.length-1].id)warStart();
   return true}
-hook('questDone',q=>{if(!q.story)return;const e=evOf(q.story),ch=e&&e.ch[q.ci];if(!ch)return;PS().done[e.id]=true;applyFx(ch.done,e.n);P.feats.push(`${Math.floor(P.age)}세에 ${e.n}: ${ch.n}`)});
+hook('questDone',q=>{if(!q.story)return;const e=evOf(q.story),ch=e&&e.ch[q.ci];if(!ch)return;PS().done[e.id]=true;applyFx(ch.done,e.n);feat(`${e.n}: ${ch.n}`)});
 // 매 틱: 나이가 사건의 때를 지나면 연다. 먼저 열린 사건이 남아 있으면 기본 선택으로 흘려보낸다. 마지막 사건을 미루면 전쟁이 나는 해에 흘러간다
 hook('tick',()=>{if(!P||!playing)return;wld();const s=PS();
-  const due=SEV.filter(e=>s.pick[e.id]==null&&P.age>=e.age);
+  const due=SEV.filter(e=>s.pick[e.id]==null&&realAge()>=e.age);
   if(due.length){const e=due[due.length-1];for(const o of due.slice(0,-1))pickChoice(o,o.ch.length-1,true);if(s.open!==e.id)openEvent(e)}
-  if(s.open===SEV[SEV.length-1].id&&P.age>=ST.war)pickChoice(SEV[SEV.length-1],SEV[SEV.length-1].ch.length-1,true);
-  if(!G.war&&!s.flag.warDone&&P.age>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
+  if(s.open===SEV[SEV.length-1].id&&realAge()>=ST.war)pickChoice(SEV[SEV.length-1],SEV[SEV.length-1].ch.length-1,true);
+  if(!G.war&&!s.flag.warDone&&realAge()>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
 });
 // ---- 해마다: 마교는 저절로 세를 불린다. 지난 대전의 패자는 서서히 힘을 되찾는다 ----
 hook('newYear',()=>{const last=G.wars[G.wars.length-1];if(last&&last.lost)for(const f of last.lost)powAdd(f,STORY.WIN.loserDrift)});
@@ -2241,7 +2255,7 @@ function pastPicks(e){return G.history.map(h=>{const p=h.story&&h.story.pick&&h.
 // ---- 정세 창 ----
 const sBar=(v,c)=>`<div class="mbar"><i style="width:${clamp(v,0,100)}%;background:${c}"></i></div>`;
 const FACC={정:'#8fb4e6',사:'#c98a5a',마:'#c05050',관:'#d7b45a'};
-function storyCard(){const w=wld(),plan=warPlan();return `<div class="card"><h4>강호 정세 <small class="dim">${lifeStage()} · ${G.war&&G.war.life===P.lifeNo?'천하대전 중':`천하대전까지 ${Math.ceil(yearsToWar())}년`}</small></h4>
+function storyCard(){const w=wld(),plan=warPlan();return `<div class="card"><h4>강호 정세 <small class="dim">${lifeStage()} · ${G.war&&G.war.life===P.lifeNo?'천하대전 중':PS().flag.warDone?'천하대전이 끝났다':`천하대전까지 ${Math.ceil(yearsToWar())}년`}</small></h4>
   <p>${FAC4.map(f=>`${FAC4N[f]} <b class="num" style="color:${FACC[f]}">${Math.round(w.pow[f])}</b>`).join(' · ')} · 예상 구도 <b class="gold">${plan.n}</b></p><div class="ib">${B('open:story','정세 창 (N)')}</div></div>`}
 function evCard(e){const s=PS(),st=evState(e),pk=s.pick[e.id],past=pastPicks(e);
   if(st==='wait')return `<div class="card dim"><div class="row2"><h4>${e.n}</h4><span class="tag">${Number.isInteger(e.age)?e.age+'세':Math.floor(e.age)+'세 하반기'}</span></div><p class="note">아직 오지 않았다.</p></div>`;
@@ -2256,7 +2270,7 @@ function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.
   const rel=Object.keys(w.rel).map(k=>`${k} <b class="num ${w.rel[k]>=20?'good':w.rel[k]<=-20?'bad':''}">${w.rel[k]>0?'+':''}${Math.round(w.rel[k])}</b>`).join(' · ');
   const seal=Object.keys(G.seal).filter(id=>SECTS[id]).map(id=>SECTS[id].n),occ=Object.keys(G.occ).filter(id=>SECTS[id]).map(id=>`${SECTS[id].n}(${FAC4N[G.occ[id].by]||G.occ[id].by})`);
   const wars=G.wars.slice(-3).reverse().map(x=>`제${x.life}생 ${x.n}${x.won?` · ${sideName(x.won)} 승`:''}`);
-  return `<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`천하대전 중: ${G.war.plan.n}`:`천하대전까지 ${Math.ceil(yearsToWar())}년 (${ST.war}세)`}</span></div>
+  return `<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`천하대전 중: ${G.war.plan.n}`:s.flag.warDone?'천하대전이 끝났다':`천하대전까지 ${Math.ceil(yearsToWar())}년 (${ST.war}세)`}</span></div>
     <p>${ST.evFrom}세부터 강호의 사건이 반년마다 하나씩 열 번 찾아오고, ${ST.war}세가 되는 해에 천하대전이 터진다. 그 전에 죽으면 8세로 윤회하되, 세력의 힘과 관계·봉문·점령은 그대로 이어진다.</p>
     <p>예상 구도 <b class="gold">${plan.n}</b> <small class="dim">${plan.d}${plan.notes.length?' · '+plan.notes.join(', '):''}</small></p></div>
     <div class="card"><h4>세력의 힘</h4>${pow}<p>관계 ${rel} <small class="dim">(+20 이상이면 손을 잡고, -20 아래면 등을 돌린다)</small></p>
@@ -2276,17 +2290,18 @@ function warFoe(a,b){if(!warOn())return null;const sa=warSideOf(a),sb=warSideOf(
 const mySide=()=>warSideOf(myFac());
 const sidePow=s=>s.reduce((a,f)=>a+(wld().pow[f]||0),0);
 function warStart(){if(G.war&&G.war.life===P.lifeNo)return;const plan=warPlan();G.war={life:P.lifeNo,y:Math.floor(G.cal),plan,round:0,rounds:[],won:null};
-  storyBanner('천하대전',plan.n,'강호 정세');log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`);
+  storyBanner('천하대전',plan.n,'강호 정세');log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');feat(`천하대전(${plan.n})을 맞았다`);
   if(PS().flag.mediate){mediate();return}
   if(plan.sides.length<2){log('맞설 상대가 없어 대전은 흐지부지 끝났다.','info');warEnd();return}
   warRound()}
 function mediate(){const w=wld();for(const f of FAC4)powAdd(f,-5);for(const k in w.rel)relAdd(k,15);P.fame+=40;P.good+=10;
-  showBanner('중재',`${P.name}의 이름으로 칼을 거두다`);log(`${P.name}의 중재로 세력들이 칼을 거뒀다. 명성 +40, 선업 +10. 모든 세력의 관계 +15.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 천하대전을 중재로 막았다`);
+  showBanner('중재',`${P.name}의 이름으로 칼을 거두다`);log(`${P.name}의 중재로 세력들이 칼을 거뒀다. 명성 +40, 선업 +10. 모든 세력의 관계 +15.`,'xp');feat(`천하대전을 중재로 막았다`);
   G.wars.push({life:P.lifeNo,y:G.war.y,n:'중재',won:null,lost:null,me:'중재'});G.war=null;PS().flag.warDone=true}
 const ENEMY_KINDS=()=>{const me=mySide(),out=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)for(const f of s)out.push(...FAC_KIND[f])});return out};
 function warRound(){const w=G.war,n=w.round+1;if(n>ST.rounds)return warEnd();w.round=n;w.cur={done:false};
-  const me=mySide(),enemy=ENEMY_KINDS();
-  if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
+  const me=mySide(),enemy=ENEMY_KINDS(),hide=!!PS().flag.hide;   // 10번 사건 '몸을 피한다'(flag.hide): 결전 임무·습격이 오지 않는다
+  if(me>=0&&hide)log(`제${n}차 결전이 벌어진다. 몸을 피해 이번 싸움에 나서지 않는다.`,'sys');
+  else if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
     log(`제${n}차 결전이 벌어진다. 임무 [${q.n}]: ${enemy.filter((k,i)=>i%2===0).join('·')} 6명을 꺾고 정세 창에서 보고하라.`,'sys');if(playing)raid(n)}
   else log(`제${n}차 결전이 벌어진다. ${me<0?'당신의 편은 이 싸움에 끼지 않았다.':''}`,'sys');
   storyBanner(`제${n}차 결전`,G.war.plan.n,'천하대전')}
@@ -2297,8 +2312,8 @@ function raid(n){if(G.duel||!REGION())return;const me=mySide(),facs=[];G.war.pla
   if(made){showBanner('습격',`${facs.map(f=>FAC4N[f]).join('·')}의 무인이 덮쳐 온다`);log(`${facs.map(f=>FAC4N[f]).join('·')}의 무인 ${made}명이 덮쳐 옵니다!`,'dmg')}}
 hook('questDone',q=>{if(!q.war||!warOn())return;G.war.cur.done=true;G.war.cur.q=q.n;log(`제${q.war}차 결전에서 공을 세웠다. 이번 차례에 내 편의 힘 +25.`,'xp')});
 // 한 차례의 승패를 가린다
-function warTally(){const w=G.war,me=mySide();const sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+Math.random()*15);
-  let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0?(w.cur&&w.cur.done?'공':'무'):'-'});
+function warTally(){const w=G.war,me=mySide();const fl=PS().flag,sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+(i===me&&fl.front?10:0)+Math.random()*15);   // flag.front: 앞장선 내 편 +10
+  let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0&&!fl.hide?(w.cur&&w.cur.done?'공':'무'):'-'});
   const wn=w.plan.sides[best];for(const f of wn)powAdd(f,2);popWarLoss(w.plan.sides.filter((s,i)=>i!==best).flat(),STORY.POP.roundLoss);
   log(`제${w.round}차 결전: ${sideName(wn)}이(가) 이겼다${me===best?' (내 편)':me>=0?' (내 편이 밀렸다)':''}.`,best===me?'xp':'dmg');
   for(const q of P.quests.slice())if(q.war&&q.war===w.round&&!(w.cur&&w.cur.done))P.quests.splice(P.quests.indexOf(q),1);
@@ -2348,8 +2363,8 @@ hook('sectAct',c=>{if(c.a!=='srecl'&&c.a!=='sopen')return;c.done=true;c.r=true;c
   const q=recl?{n:`${s.n} 탈환`,kind:'kill',mob:FAC_KIND[by],cnt:6,silver:200,vit:120,fame:25,good:0,have:0,key,sq:{t:'recl',sid:s.id,by}}:{n:`${s.n} 개문`,kind:'kill',mob:FAC_KIND[by],cnt:5,silver:120,vit:80,fame:15,good:0,have:0,key,sq:{t:'open',sid:s.id,by}};
   P.quests.push(q);log(`임무 [${q.n}]을(를) 맡았습니다. ${FAC4N[by]} 무인을 꺾고 정세 창에서 보고하라.`,'sys')});
 hook('questDone',q=>{if(!q.sq)return;const s=SECTS[q.sq.sid],by=q.sq.by;if(!s)return;
-  if(q.sq.t==='recl'){delete G.occ[s.id];powAdd(by,-5);powAdd(alFac(s.al),5);if(P.sect===s.id)addMerit(s.id,60);mobs=mobs.filter(m=>!m.chief);log(`${s.n} 본산을 되찾았다. ${masterTitle(s)}이 돌아온다.`,'xp');showBanner('탈환',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 본산을 되찾았다`);if(P.reg===`hq_${s.id}`||REGIONS[P.reg]&&REGIONS[P.reg].hq===s.id)runHooks('regionLoaded',P.reg)}
-  else{unsealSects([s.id]);powAdd(alFac(s.al),3);if(P.sect===s.id)addMerit(s.id,40);showBanner('개문',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 산문을 열었다`)}});
+  if(q.sq.t==='recl'){delete G.occ[s.id];powAdd(by,-5);powAdd(alFac(s.al),5);if(P.sect===s.id)addMerit(s.id,60);mobs=mobs.filter(m=>!m.chief);log(`${s.n} 본산을 되찾았다. ${masterTitle(s)}이 돌아온다.`,'xp');showBanner('탈환',s.n);feat(`${s.n} 본산을 되찾았다`);if(P.reg===`hq_${s.id}`||REGIONS[P.reg]&&REGIONS[P.reg].hq===s.id)runHooks('regionLoaded',P.reg)}
+  else{unsealSects([s.id]);powAdd(alFac(s.al),3);if(P.sect===s.id)addMerit(s.id,40);showBanner('개문',s.n);feat(`${s.n}의 산문을 열었다`)}});
 // 정세 창의 천하대전·본산 카드
 function warCard(){const w=G.war;if(!warOn()){const last=G.wars[G.wars.length-1];if(!last||last.life!==P.lifeNo)return '';
     return `<div class="card"><h4>이번 생의 천하대전 <small class="dim">${last.n}</small></h4><p>${last.won?`${sideName(last.won)}의 승리 (${last.rounds.map((r,i)=>`${i+1}차 ${sideName(last.sides[r])}`).join(' · ')})`:last.n==='중재'?'중재로 칼을 거뒀다':'흐지부지 끝났다'}${last.me&&last.me!=='-'?` · 당신: ${last.me}`:''}</p></div>`}
@@ -2380,7 +2395,7 @@ function popSync(){popInit();const w=G.W;if(!w)return;for(const f of FAC4){const
 // 한 세력의 문파 인원을 비율로 늘리거나 줄인다 (사건·전쟁의 효과)
 function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)G.pop[s.id]=Math.max(0,Math.round(G.pop[s.id]*m*10)/10);popSync()}
 function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;const was=G.pop[sid];G.pop[sid]=Math.max(0,Math.round((was-n)*10)/10);popSync();
-  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)P.feats.push(`${Math.floor(P.age)}세에 ${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
+  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)feat(`${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
   else{const b=popBase(SECTS[sid]);if(Math.floor(was/b*10)!==Math.floor(G.pop[sid]/b*10))log(`${SECTS[sid].n} 인원 ${Math.round(G.pop[sid])}명 (기준의 ${Math.round(G.pop[sid]/b*100)}%).`,'info')}}   // v112: 10%씩 줄 때마다 알린다
 // 해마다: 자연 증가. 봉문 중이면 수련만 하니 더 늘고, 점령당했으면 늘지 않는다. 멸문(0)은 되살아나지 않는다
 hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
@@ -2448,7 +2463,7 @@ function popReset(){G.pop=null;popInit();popSync()}
 const sectWeak=s=>{const p=sectPop(s.id);if(p<=0)return false;if(p<=popBase(s)*POP.weak)return true;const a=G.popPrev&&G.popPrev[s.id];return a!=null&&p<a};
 // 장문인 NPC를 싸우는 우두머리로 바꿔 세운다 (쇠퇴했을 때, 또는 강제공격으로 장문인을 쳤을 때)
 function masterBoss(R,n,s,why,x,y){R.npcs=(R._npcsM||R.npcs).filter(x=>x!==n);const e=mkFac(alFac(s.al),1,x??n.x,y??n.y,s.id);e.rank=4;e.realm=4;if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*POP.masterHp);e.hp=e.maxHp;e.atk=Math.round(e.atk*POP.masterAtk);
-  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:e.x,y:e.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(why,'info');return e}
+  e.master=s.id;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:e.x,y:e.y};mobs.push(e);refreshNPCF();log(why,'info');return e}
 // 지금 맵(id)의 장문인 상태를 인원에 맞춘다: 쇠퇴·공석이면 NPC를 숨기고(쇠퇴면 우두머리를 세우고), 아니면 NPC로 돌린다. 맵에 들어올 때와 이 맵에서 제자가 죽을 때마다
 // v133 (사용자): 쇠퇴해도 같은 편(문도·같은 진영)에게는 NPC로 남아 말을 걸고 무공을 배울 수 있다. 적대 진영에게만 우두머리로 나서며,
 // 그때는 전각 안이 아니라 전각이 있는 바깥 맵의 전각 앞문 앞에 선다(전각 안 NPC는 비운다). 강제공격으로 끌어내는 길(masterOut)은 그대로
@@ -2463,14 +2478,14 @@ function masterState(H,hid,n,s,out){if(!s)return;if(typeof ldHall!=='undefined'&
 function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;popInit();let any=false;
   const here=(R._npcsM||R.npcs||[]).find(x=>x.hq);if(here){any=true;masterState(R,id,here,SECTS[here.hq],null)}
   for(const h of R.halls||[]){const H=REGIONS[h.id];if(!H||H.ruin)continue;const n=(H._npcsM||H.npcs||[]).find(x=>x.hq);if(!n)continue;any=true;masterState(H,h.id,n,SECTS[n.hq],{R,id,x:h.x,y:h.y+1.5})}
-  if(any)NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+  if(any)refreshNPCF()}
 hook('regionLoaded',masterCheck);
 hook('kill',e=>{if(e.sect&&e.d&&e.d.fac&&!e.master&&P&&REG)masterCheck(REG)});
 // 강제공격을 켜고 장문인 NPC를 치면 쇠퇴하지 않았어도 우두머리로 나선다 (사용자 2026-10-13 "왜 장문인을 죽일 수 없지"). 돌아온다: 맵을 나갔다 오면 다시 NPC
 function masterOut(n){if(!n||!n.hq||!forceAtk)return null;const s=SECTS[n.hq];if(!s||G.mdead[s.id])return null;const R=REGION();const live=mobs.find(m=>m.master===s.id&&m.hp>0);if(live)return live;
   if(!R._npcsM)R._npcsM=R.npcs;return masterBoss(R,n,s,`${masterTitle(s)} ${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`)}
 hook('kill',e=>{if(!e.master)return;const s=SECTS[e.master];if(!s)return;G.mdead[s.id]={y:Math.floor(G.cal),life:P.lifeNo};popLose(s.id,Math.round(sectPop(s.id)*POP.masterLoss),`${masterTitle(s)} 사망`);
-  P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
+  P.fame+=30;showBanner(`${s.n} ${masterTitle(s)} 격살`,`${s.n}의 제자 ${Math.round(POP.masterLoss*100)}%가 흩어진다`);log(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다. 명성 +30. ${s.n}은(는) 당분간 제자를 받지 못하고 고수가 줄어든다.`,'xp');feat(`${s.n}의 ${masterTitle(s)}을(를) 쓰러뜨렸다`)});
 hook('newYear',()=>{popInit();for(const sid in G.mdead){const s=SECTS[sid];if(!s)continue;if(!sectWeak(s)&&Math.floor(G.cal)-G.mdead[sid].y>=POP.masterBack){delete G.mdead[sid];log(`${s.n}에 새 ${masterTitle(s)}이 섰다.`,'sys')}}});
 
 // ---------- drawing ----------
@@ -3084,7 +3099,7 @@ function drawProj(q){
   else{glowDot(0,0,10*s,q.c,1);if(q.X.art.elc){const bs=flick(q,()=>{const o=[];for(let i=0;i<3;i++){const a=rnd()*6.28;boltPts(0,0,Math.cos(a)*14*s,Math.sin(a)*14*s,6,0,2,o)}return o},.05);strokeBolts(bs,q.c,1,.35)}}
   ctx.restore();
 }
-function lightAt(x,y,r,a){const g=lx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');lx.fillStyle=g;lx.fillRect(x-r,y-r,r*2,r*2)}
+function lightAt(x,y,r,a){if(a<=0)return;const g=lx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');lx.fillStyle=g;lx.fillRect(x-r,y-r,r*2,r*2)}
 
 // ================= title, 캐릭터 생성, 윤회 =================
 const scrEl=$('scr'),box=$('scrbox');
@@ -3349,7 +3364,6 @@ function specPick(){
   if(P.sp.독공&&P.scd.독공<=0&&P.qi>=SPEC.독공.qi&&e)return'독공';
   return null}   // 암기(비도)는 퀵슬롯 칸이 따로 있어 여기서는 고르지 않는다
 function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
-function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)return null;if(a&&b)return P.hp/P.maxHp<=P.qi/P.maxQi?'금창약':'소환단';return a?'금창약':'소환단'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기',vault:'금고'};
 function ctxPick(){
@@ -3364,18 +3378,18 @@ let ctxT=0,ctxNow=null;   // 상황 버튼은 프레임 수가 아니라 실제 
 function touchHud(){
   if(P.mode!=='auto')P.mode='auto';
   if(touchAtk&&!paused&&!joy.on)touchTarget();
-  const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
-  const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
+  const a=art(),cd=(id,v)=>sty(qc($(id),'.cd'),'height',clamp(v,0,1)*100+'%');
+  const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));txt(qc(u,'span'),allLearned(a.id)?a.ult.n.slice(0,4):'필살');cd('t_ult',P.ucd/8);
   $('t_leap').hidden=!P.gkcur;$('t_step').hidden=!P.bcur;
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
-  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
+  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);txt(qc($('t_step'),'span'),b.n.length<=3?b.n:'보법');cd('t_step',0)}
   const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
-  $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
+  $('t_spec').hidden=!hasSp;txt(qc($('t_spec'),'span'),k||'비기');$('t_spec').classList.toggle('off',!k);
   // 퀵슬롯: 금창약·소환단은 수량, 비도는 암기를 익혔을 때만 (수량·식는 시간)
-  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('off',!(P.mats[k]>0))}
-  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
+  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);txt(qc(b,'em'),P.mats[k]||0);b.classList.toggle('off',!(P.mats[k]>0))}
+  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){txt(qc(b,'em'),P.mats.비도||0);b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
-  {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
+  {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)txt(qc(c,'span'),ctxNow.l);
     $('t_run').classList.toggle('on',!!P.run);$('t_force').classList.toggle('on',forceAtk);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
     const med=P.medit||(!inCombat()&&!P.ride&&!simCur().none&&(P.qi<P.maxQi||P.hp<P.maxHp||(typeof isMa==='function'&&isMa()&&P.mara>0)||(typeof acadCurK==='function'&&acadCurK()==='medit')));   /* v136: 무관 운기 과제 중이면 내공이 가득해도 보인다 */   /* v130 (사용자): 마성이 쌓여 있어도 운기 단추를 보인다 (운기조식이 마성을 내린다) */$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
@@ -3523,7 +3537,10 @@ function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;let c=P
 // 할 수 없는 까닭 (없으면 '')
 function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
   if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
-  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
+  if(P.vit<pgCost())return`활력 ${pgCost()} 필요`;
+  // 폐관 중 흐른 해에 천하대전이 지나가거나 강호의 사건이 저절로 정해지지 않게 막는다
+  if(typeof warOn==='function'&&warOn())return'천하대전 중이다';
+  if(typeof storyDueIn==='function'){const a=storyDueIn(pgYears());if(a!=null)return`${a}세에 강호에 일이 생긴다. 그 뒤에 폐관하라`}if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
@@ -3535,14 +3552,14 @@ function pgStart(k){
 // 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;
-  P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
+  if(!passYears(yrs))return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
-    P.feats.push(`${Math.floor(P.age)}세에 폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
+    feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
   qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
 function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
-  if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
+  if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');feat(`${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}
   // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
   const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f&&!inAcad(),lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
@@ -3550,7 +3567,7 @@ function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ri
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
   recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
   const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
-  log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');P.feats.push(`${Math.floor(P.age)}세에 ${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
+  log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');feat(`${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
 hook('trainTick',dt=>{
   if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
   const b=trnBusy;if(b&&b.k.startsWith('pg')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
@@ -3606,17 +3623,17 @@ function mkStart(k){const[,cls,g]=k.split(':'),grp=mkGroups().find(q=>q.cls===cl
   log(`${pgPlace()}에서 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 모아 새 무공을 궁리합니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR.mk||3};renderTrain()}
 function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mkGroups().find(q=>q.cls===cls&&q.g===g);
   const why=grp?mkWhy(g):'재료가 모자라다';if(why){log(`무공 창안이 끊겼습니다: ${why}.`,'info');return}
-  const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);P.age+=yrs;G.cal+=yrs;while(Math.floor(P.age)>lastYear){lastYear++;newYear()}if(!playing||P.hp<=0)return;
+  const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);if(!passYears(yrs))return;
   P.qi=0;
   if(Math.random()>=ch){P.inj=YEAR_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
     log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
-    P.feats.push(`${Math.floor(P.age)}세에 ${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
+    feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
   const a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
   P.arts[a.id]={p:30,f:a.forms.map(()=>true)};if(!P.arts[P.cur])setArt(a.id);
   fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);recalc();
   log(`${yrs}년의 폐관 끝에 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
-  showBanner('무공 창안',a.n);P.feats.push(`${Math.floor(P.age)}세에 ${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
+  showBanner('무공 창안',a.n);feat(`${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
 // 다섯 무공에서 새 무공의 정의를 뽑아 G.made에 적고 ARTS에 만든다
 function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=(G.madeN||0)+1),id=`mk_${n0}`,r=rng(5000+n0*97+P.name.length);
   const cnt={};for(const a of srcs)cnt[a.el]=(cnt[a.el]||0)+1;const el=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0]||'금';
@@ -3767,7 +3784,7 @@ hook('duelEnd',({win,o,me})=>{const r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0;
 hook('kill',e=>{if(!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx())gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')});
 hook('mastDone',({id,s,before})=>{if(before<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`)});
 hook('giyeon',c=>{const R=REGIONS[REG];
-  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
+  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');feat(`${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
 hook('giyeonDone',()=>gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.'));
 
 // ---- 영약: 공청석유(1갑자, 한 생에 한 번), 만년설삼(반 갑자, 한 생에 두 번) ----
@@ -3820,7 +3837,6 @@ function realmCardExtra(){const ri=realmIdx(),s=school();
 //  반로환동 P.ban: 현경에 오르면 몸의 나이를 BODY.ban.to 세까지(최대 max 년) 되돌린다. G.cal·살아온 해는 그대로
 //  금강불괴 P.gang: 불가 계열 화경(금강경), 또는 환골탈태한 몸의 지구력이 BODY.gang.end 이상. 받는 피해·독 면역, 등 뒤 조문은 약점
 const BODY=GD.BODY;
-const realAge=()=>P.age+(P.ban?P.ban.yrs:0);
 const elixirQi=()=>(P.gcs?120:0)+(P.mss||0)*60;
 function bodyFx(col,dark){if(dark)fParts(null,P,'40,30,30',22,70,'dot',1.1);fParts(null,P,col,16,90,'dot',.9);
   GL({t:'ring2',x:P.x,y:P.y,r:1.2,col,w:5,life:.8});fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.8})}
@@ -3832,7 +3848,7 @@ function hwangol(why){if(P.hgt)return false;const c=SC(),B=BODY.hg;P.hgt={age:Ma
   if(P.addict){cured.push('영약 중독');P.addict=null;P.thirst=0}if((P.mara||0)>0){P.mara=Math.max(0,P.mara-B.mara);cured.push('탁기')}
   recalc();P.hp=P.maxHp;bodyFx('255,236,190',1);showBanner('환골탈태','뼈와 살이 새로 태어났다');
   log(`환골탈태: 온몸의 털구멍으로 검은 탁기가 빠져나가고 뼈와 살이 새로 태어났습니다. ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}, 기본기 수련 활력 -${Math.round((1-B.cost)*100)}%${cured.length?`. 씻겨 나간 것: ${cured.join('·')}`:''}.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 ${why==='영약'?'영약의 기운으로 ':''}환골탈태했다`);gangCheck();return true}
+  feat(`${why==='영약'?'영약의 기운으로 ':''}환골탈태했다`);gangCheck();return true}
 // 영약 내공이 1갑자를 넘으면 몸이 바뀐다. 절정 아래에서는 몸이 받아내지 못하고 기다린다
 function elixirBody(){if(P.hgt||elixirQi()<BODY.hg.elixir)return;
   if(realmIdx()>=BODY.hg.minR){hwangol('영약');return}
@@ -3852,7 +3868,7 @@ function gangCheck(){if(P.gang||!P.st)return;const s=typeof school==='function'?
   const why=realmIdx()>=5&&s==='불가'?'금강경':P.hgt&&P.st.end>=BODY.gang.end?'외공':null;if(!why)return;
   P.gang={why};showBanner('금강불괴','칼이 들지 않는 몸');bodyFx('255,205,90');
   log(`금강불괴지신: 살갗이 쇠처럼 단단해져 받는 피해 -${Math.round((1-BODY.gang.dm)*100)}%, 독에 걸리지 않습니다. 다만 등 뒤의 조문(약점)을 맞으면 금강이 풀려 피해가 ${Math.round((BODY.gang.back-1)*100)}% 더 들어옵니다.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 금강불괴지신을 이루었다`)}
+  feat(`금강불괴지신을 이루었다`)}
 // 공격한 쪽이 내가 보는 방향의 등 뒤에 있으면 조문
 const fromBack=src=>{if(!src||src.x==null)return false;const dx=src.x-P.x,dy=src.y-P.y,l=Math.hypot(dx,dy)||1;return (dx*P.fx+dy*P.fy)/(l*(Math.hypot(P.fx,P.fy)||1))<-.35};
 hook('hurt',c=>{if(!gangOn()||!c.src||!c.src.d)return;
@@ -3967,7 +3983,7 @@ function tombKill(e){
   for(const m of mobs)if(m.tombGuard===t.id&&m.hp>0)m.hp=0;mobs=mobs.filter(m=>m.tombGuard!==t.id||m.hp>0);
   fx.push({t:'lvl',x:t.x,y:t.y,life:1.2});showBanner('무덤 정화',`${t.name}이(가) 잠들었습니다`);
   log(`${t.name}의 망령이 잠들고 무덤이 허물어졌습니다. 물건 ${out.length}/${t.items.length}개가 남았습니다.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 전생 ${t.name}의 망령을 잠재웠다`);
+  feat(`전생 ${t.name}의 망령을 잠재웠다`);
 }
 function drawTomb(t){
   const p=toScreen(t.x,t.y),live=mobs.some(m=>m.tomb===t.id&&m.hp>0);
@@ -4021,20 +4037,22 @@ function loadRegion(id){
   if(id==='gaebong'){if(GAE_PLOTS)plots=GAE_PLOTS;else GAE_PLOTS=plots;if(G.house&&G.house.built)buildHouse()}
   // 바닥 그림은 한 장에 약 13MB라, 지금 지역과 바로 전 지역 것만 남긴다 (휴대폰 메모리)
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id&&k!==loadRegion.prev)delete GROUND[k];loadRegion.prev=id;miniBase=null;
-  NPCF=npcsHere().filter(n=>!n.board).map(npcFighter);
+  refreshNPCF();
   runHooks('regionLoaded',id);
 }
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다.
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);
+// 맵을 옮긴다: 지난 맵의 것을 비우고 플레이어·동료·카메라를 새 자리에 둔다 (출입구 travel과 출입구 없이 옮기는 regionJump가 같이 쓴다)
+function enterRegion(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
+  loadRegion(id);P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
+  allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
+  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y}
 function travel(g){
   {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
   setTimeout(()=>{
     try{
-      mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
-      loadRegion(g.to);P.reg=g.to;P.x=g.tx;P.y=g.ty;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
-      allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
-      const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
+      enterRegion(g.to,g.tx,g.ty);spawnTick();spawnTick();
       showBanner(REGION().name,regionAt(Math.floor(P.x),Math.floor(P.y)));log(`${REGION().name}(으)로 왔습니다.${REGION().neutral?' 이곳은 중립지대라 싸움이 없습니다.':''}`,'sys');
     }finally{
       // 이동 중 표시를 먼저 내리고 저장한다 (표시가 저장에 남으면 불러온 뒤 다시는 이동하지 못한다)
@@ -4384,7 +4402,7 @@ function sangong(sc){const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)ret
   if(sc==='마공')P.mara=Math.min(100,(P.mara||0)+(typeof MARA!=='undefined'?MARA.sangong:20));else if(gone.some(x=>x.sc==='마공'))P.mara=0;   // 입마는 마성을 안고 시작하고, 마공을 버리면 마성도 사라진다 (v104)
   const lost=Math.floor((P.qiAcc||0)/2);P.qiAcc=(P.qiAcc||0)-lost;P.qiN=Math.max(0,P.qiN-Math.ceil(P.qiN/2));if(typeof recalc==='function')recalc();P.qi=Math.min(P.qi,P.maxQi);
   log(`${sc} 심법을 받아들이려 ${[...gone.map(x=>x.n),...(base?[simBase().n+'(봉인)']:[])].join('·')}을(를) 버리고 산공했습니다. 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('산공',`${sc}과 상극인 심법을 버렸다`);
-  P.feats.push(`${Math.floor(P.age)}세에 ${sc}에 들려 산공했다`);return true}
+  feat(`${sc}에 들려 산공했다`);return true}
 const sangongTxt=sc=>{const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return'';return`${sc}은 ${[...gone.map(x=>x.n),...(base?[simBase().n]:[])].join('·')}과 상극이라 입문하면 그 심법을 버리고(산공) 쌓은 내공 절반이 흩어진다.`};
 const simGain=()=>Math.round(SIDES[P.side].gain*SIM_GQ[simCur().g]*10)/10;
 const simMine=()=>[...(P.noBase?[]:[simBase()]),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);
@@ -4508,7 +4526,7 @@ function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1));   // 맹 서열 1위 문파 +15% (g_maeng.js)
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
@@ -5164,7 +5182,7 @@ function mgArtBlock(a){
 function mgJoinDang(k){const D=MDANG[k];if(!D||P.sect!=='cheonma'||P.dang)return false;
   P.dang=k;const a=ARTS[D.art];if(!P.arts[a.id])P.arts[a.id]={p:0,f:a.forms.map((f,i)=>i===0)};else P.arts[a.id].f[0]=true;
   log(`${D.n}에 들었습니다. 당의 무공 [${a.n}]의 첫 초식 [${a.forms[0].n}]을(를) 익혔습니다. 당 무공 비급은 공적이 30% 쌉니다.`,'xp');
-  showBanner(D.n,'천마신교 오당');P.feats.push(`${Math.floor(P.age)}세에 천마신교 ${D.n}에 들었다`);return true}
+  showBanner(D.n,'천마신교 오당');feat(`천마신교 ${D.n}에 들었다`);return true}
 
 // ---- 화면 ----
 function mgOrgHtml(){const i=P.sect==='cheonma'?rankIdx('cheonma'):-1,R=SRANK.magyo;
@@ -5240,10 +5258,10 @@ function maraAdd(v,why){if(!P||!isMa()&&v>0||v>0&&isTalma())return;if(v>0&&typeo
   else if(t1<t0)log(`마기가 가라앉아 ${MARA_N[t1]}으로 돌아왔습니다.`,'info')}
 // 마성 100: 주화입마. 쌓은 내공 10%가 흩어지고 생명이 깎이며 마성 60으로 내려간다
 function maraDev(){const lost=Math.floor((P.qiAcc||0)*MARA.dev.qi);P.qiAcc=Math.max(0,(P.qiAcc||0)-lost);P.mara=MARA.dev.back;if(typeof recalc==='function')recalc();P.hp=Math.max(1,Math.min(P.hp,Math.round(P.maxHp*.3)));P.qi=Math.min(P.qi,P.maxQi);
-  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');P.feats.push(`${Math.floor(P.age)}세에 마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2})}
+  log(`마기가 역류해 주화입마에 빠졌습니다! 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('주화입마','마기가 역류했다');feat(`마기에 먹혀 주화입마에 빠졌다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2})}
 // 폭주: 몇 초 동안 가장 가까운 것(같은 편·양민 포함)을 친다. 끝나면 강제공격을 원래대로
 function maraBurst(){if(P.burst||G.duel)return;P.burst={t:MARA.burstDur,force:typeof forceAtk!=='undefined'?forceAtk:false,mode:P.mode};if(typeof toggleForce==='function')toggleForce(true);P.mode='auto';P.medit=false;P.chan=null;
-  log('마기가 날뛰어 이성을 잃었습니다! 눈앞의 것을 가리지 않고 칩니다.','dmg');showBanner('폭주','마기가 날뛴다');P.feats.push(`${Math.floor(P.age)}세에 마기에 휘둘려 폭주했다`)}
+  log('마기가 날뛰어 이성을 잃었습니다! 눈앞의 것을 가리지 않고 칩니다.','dmg');showBanner('폭주','마기가 날뛴다');feat(`마기에 휘둘려 폭주했다`)}
 function burstTick(dt){const B=P.burst;if(!B)return;B.t-=dt;if(B.t<=0){P.burst=null;if(typeof toggleForce==='function')toggleForce(B.force);P.mode=B.mode;log('마기가 가라앉아 정신이 돌아왔습니다.','info');return}
   if(!P.target||P.target.hp<=0||Math.random()<dt*2){let b=null,bd=8;for(const e of mobs)if(e.hp>0&&!e.ghost){const d=dist(e,P);if(d<bd){bd=d;b=e}}if(b){P.target=b;P.path=null}}
   if(Math.random()<dt*6)fx.push({t:'ghost',x:P.x,y:P.y,life:.3,col:'110,20,150'})}
@@ -5260,7 +5278,7 @@ function talmaWhy(r){if(!talmaWall(r))return'';const T=TALMA();
   if(talmaHold()<T.hold)return`마성 ${T.low} 미만을 ${T.hold}년 유지해야 (${Math.floor(talmaHold()*12)}/${T.hold*12}달)`;
   if(REG!=='hq_cheonma_8')return'천마동에서만';return''}
 const talmaBonus=r=>{if(!talmaWall(r)||talmaWhy(r))return 0;const T=TALMA();return Math.min(T.max,Math.floor(talmaHold()-T.hold)*T.bonus)};
-function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;P.addict=null;P.thirst=0;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');P.feats.push(`${Math.floor(P.age)}세에 마기를 다스려 탈마에 이르렀다`)}
+function talmaGain(r){if(!talmaWall(r))return;P.mara=0;P.maraLow=null;P.addict=null;P.thirst=0;log('마기를 다스려 탈마(脫魔)에 이르렀습니다. 마성이 더 오르지 않고 마공의 한계가 풀립니다.','xp');feat(`마기를 다스려 탈마에 이르렀다`)}
 function talmaFail(r){if(!talmaWall(r)||!P||P.hp<=0)return;P.maraLow=null;P.mara=Math.max(P.mara||0,MARA.dev.back);log(`마기가 역류해 마성이 ${Math.round(P.mara)}으로 치솟았습니다. 유지 기간은 처음부터입니다.`,'dmg')}
 hook('tick',dt=>{if(!P||!playing||!isMa())return;burstTick(dt);
   if(!isTalma()){if((P.mara||0)<TALMA().low){if(P.maraLow==null)P.maraLow=G.cal}else P.maraLow=null}
@@ -5355,23 +5373,20 @@ function arrestSquad(hunt){if(!P||!REGION()||G.duel)return false;let made=0;cons
 hook('hurt',c=>{if(P.jail||!c.src||!c.src.arrest||P.sect!=='cheonma')return;if(!(c.dm>=P.hp)&&!P.jailQ)return;c.dm=0;P.hp=Math.max(P.hp,1);
   if(!P.jailQ){P.jailQ=1;setTimeout(()=>{P.jailQ=0;if(playing&&P.hp>0)jailEnter('연행조에게 제압당했다')},60)}});
 // 지역을 바로 옮긴다 (출입구 없이)
-function regionJump(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;P.target=null;P.path=null;P.goal=null;P.talk=null;P.chan=null;P.medit=false;P.burst=null;
-  loadRegion(id);P.reg=id;P.x=x;P.y=y;P.gateLock=1;P.gateT=0;P.perch=null;P.z=0;P.leap=null;P.jump=0;
-  allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;if(typeof closePanels==='function')closePanels()}
+function regionJump(id,x,y){P.chan=null;P.medit=false;P.burst=null;enterRegion(id,x,y);closePanels()}
 function jailEnter(why){if(!P||P.jail)return;const yrs=Math.max(1,Math.ceil((P.sin||0)/J2.perYear));P.jail={t:yrs,sin:P.sin||0};
   regionJump(JAIL_ID,20.5,20.5);showBanner('흑혈옥',`형기 ${yrs}년`);log(`${why}. 천마동 아래 흑혈옥에 갇혔습니다. 형기 ${yrs}년: 해를 넘기거나 옥주에게 복역을 청하면 풀려난다. 옥주를 치고 나가면 배교자다.`,'dmg');
-  P.feats.push(`${Math.floor(P.age)}세에 교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
+  feat(`교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
 function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1}
   log(`형기를 다 채워 흑혈옥에서 나왔습니다. 죄값은 지워졌지만 직위는 ${rankName('cheonma')}(으)로 한 단계 내려갔습니다.`,'xp');showBanner('출옥','흑혈옥의 문이 열렸다');
   if(REG===JAIL_ID)regionJump('hq_cheonma_8',20.5,22)}
 // 복역: 남은 형기만큼 세월을 바로 보낸다
-function jailServe(){if(!P.jail||P.hp<=0)return;const yrs=P.jail.t;P.age+=yrs;G.cal+=yrs;P.medit=false;
-  while(Math.floor(P.age)>lastYear){lastYear++;newYear();if(!playing)return}if(P.jail)jailRelease()}
+function jailServe(){if(!P.jail||P.hp<=0)return;P.medit=false;if(!passYears(P.jail.t))return;if(P.jail)jailRelease()}
 // 탈옥: 옥주를 쳐야 한다. 이기면 배교
 function jailBreak(){if(!P.jail||mobs.some(m=>m.jailer&&m.hp>0))return;const e=mkFac('마',1,20.5,16.5,'cheonma');e.angry=1;e.aggro=true;e.tgt=null;e.jailer=1;e.name='흑혈옥 옥주';e.maxHp=e.hp=Math.round(e.hp*3);e.atk=Math.round(e.atk*1.5);mobs.push(e);P.target=e;
   log('옥주가 칼을 뽑았습니다. "옥문을 나서려면 내 목을 넘어가라."','dmg');showBanner('탈옥','옥주를 쳐라')}
 function jailEscape(){if(!P.jail)return;P.jail=null;P.sin=J2.escape;P.escaped=1;const s=SECTS.cheonma;P.sect=null;P.dang=null;P.mgLeft=1;
-  log(`옥주를 쓰러뜨리고 흑혈옥을 나왔습니다. 배교자가 되어 ${s.n}에서 하산했고, 마교의 추살조가 해마다 쫓아올 것입니다. 마공은 남습니다.`,'dmg');showBanner('배교','마교의 적이 되었다');P.feats.push(`${Math.floor(P.age)}세에 흑혈옥을 탈옥해 마교의 배교자가 되었다`)}
+  log(`옥주를 쓰러뜨리고 흑혈옥을 나왔습니다. 배교자가 되어 ${s.n}에서 하산했고, 마교의 추살조가 해마다 쫓아올 것입니다. 마공은 남습니다.`,'dmg');showBanner('배교','마교의 적이 되었다');feat(`흑혈옥을 탈옥해 마교의 배교자가 되었다`)}
 // 흑혈옥 안의 사람들
 function jailerDlg(n){if(!P.jail)return `<p class="note">"${P.sect==='cheonma'?rankName('cheonma'):'손님'}, 옥을 둘러보러 왔는가. 여기엔 교율을 어긴 자와 붙잡힌 정파 놈들이 있다. 사면은 교주님만 하신다."</p><p class="note">죄값 ${P.sin||0}/${J2.cap} · 해마다 ${J2.pardon}씩 준다.</p>`;
   return `<p class="note">"죄값 ${P.jail.sin}, 형기 ${P.jail.t}년. 옥 안에서 운기조식이나 하며 마기를 다스려라. 나가고 싶으면 내 목을 넘어가든가, 세월을 삭이든가."</p>
@@ -5422,24 +5437,24 @@ let ldHall=null;   // 비무 동안 교주 NPC를 숨긴 신전 대전
 function leaderDuel(){const no=leaderWhy();if(no){log(`교주 비무: ${no}.`,'info');return false}const HR=REGIONS[LD_HALL]||REGIONS[LD_HQ],n=(HR._npcsM||HR.npcs).find(x=>x.hq===LD_SECT);if(!n)return false;
   P.ldTried=1;closePanels();if(!HR._npcsM)HR._npcsM=HR.npcs;HR.npcs=HR._npcsM.filter(x=>x!==n);ldHall=HR;
   if(REG!==LD_HQ)regionJump(LD_HQ,20.5,15.5);else{P.x=20.5;P.y=15.5}G.duel=true;G.ldDuel='take';for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}
-  P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const e=leaderMob(n,0);P.target=e;if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);
+  P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const e=leaderMob(n,0);P.target=e;refreshNPCF();
   showBanner('교주 비무','천마신전 마당');log('교주 천마가 제단에서 내려와 마당에 섰다. "힘이 곧 자리다. 덤벼라." 마당 안의 교도는 구경만 한다. 약은 쓸 수 없고 마당을 벗어나면 항복이다.','sys');return true}
 // 도전자: 교주가 된 뒤 해마다 20%. 그 자리에서 바로 비무
 function leaderChallenge(){if(!isLeader()||G.duel||P.jail||P.hp<=0||!REGION()||P.traveling)return false;
   G.duel=true;G.ldDuel='def';for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}P.path=null;P.target=null;const e=leaderMob(null,1);P.target=e;
   showBanner('도전','교주 자리를 노리는 자');log(`${e.name}이(가) 교주 자리를 걸고 비무를 청했다. 거절할 수 없다. 지면 자리를 잃고 흑혈옥이다.`,'dmg');return true}
 function leaderEnd(win,e){const kind=G.ldDuel;G.duel=false;G.ldDuel=0;mobs=mobs.filter(m=>!m.duel);P.target=null;
-  if(ldHall){ldHall.npcs=ldHall._npcsM;ldHall=null;if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+  if(ldHall){ldHall.npcs=ldHall._npcsM;ldHall=null;refreshNPCF()}
   if(win){if(kind==='take')leaderWin();else{P.fame+=30;log(`도전자를 꺾었다. 교주의 자리는 굳건하다. 명성 +30`,'xp');showBanner('비무 승리','교주의 위엄')}}
-  else{if(kind==='def'){P.leader=null;G.leader=null;log('도전자에게 졌다. 교주의 자리를 잃었다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 져 자리를 잃었다`)}
-    else{log('교주 천마에게 졌다. "탈마에 이르렀어도 아직 멀었다." 호법들이 양팔을 잡았다.','dmg');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 졌다`)}
+  else{if(kind==='def'){P.leader=null;G.leader=null;log('도전자에게 졌다. 교주의 자리를 잃었다.','dmg');feat(`교주 비무에서 져 자리를 잃었다`)}
+    else{log('교주 천마에게 졌다. "탈마에 이르렀어도 아직 멀었다." 호법들이 양팔을 잡았다.','dmg');feat(`교주 비무에서 졌다`)}
     P.hp=Math.max(1,P.hp);P.mara=clamp((P.mara||0)+LD.mara,0,100);P.maraLow=null;P.sin=LD.jail*J2.perYear;jailEnter('교주 비무에서 패했다')}
   runHooks('leaderDuel',{win,kind,e})}
 function leaderWin(){const s=SECTS[LD_SECT];P.leader=LD_SECT;G.leader={life:P.lifeNo,name:P.name,y:Math.floor(G.cal)};P.fame+=LD.fame;P.sin=0;P.ldWar=P.ldWar||'out';
   const got=[];for(const k in MDANG){const a=ARTS[MDANG[k].art];if(!a)continue;if(!P.arts[a.id]){P.arts[a.id]={p:0,f:a.forms.map((f,i)=>i===0)};got.push(a.n)}}
   const top=SIM[`N_${LD_SECT}_${SIM_TOP.one||4}`];if(top&&!(P.sims&&P.sims[top.id])){simLearn(top);got.push(top.n)}
   log(`교주 천마를 꺾었다! 제단에 당신의 이름이 새겨지고 사대호법과 오당 당주가 무릎을 꿇었다. 천마신교 교주가 되었다. 명성 +${LD.fame}${got.length?`, 얻음: ${got.join('·')}`:''}.`,'xp');
-  showBanner('교주 등극','천마신교의 새 천마');P.feats.push(`${Math.floor(P.age)}세에 교주 비무에서 천마를 꺾고 천마신교 교주가 되었다`);if(typeof saveGame==='function')saveGame(true)}
+  showBanner('교주 등극','천마신교의 새 천마');feat(`교주 비무에서 천마를 꺾고 천마신교 교주가 되었다`);if(typeof saveGame==='function')saveGame(true)}
 {const de=duelEnd;duelEnd=function(win,e){if(G.ldDuel)return leaderEnd(win,e);return de(win,e)}}
 {const uc=useCon;useCon=function(k){if(G.ldDuel){log('비무 중엔 약을 쓸 수 없다. 영약은 비무 전에 먹었어야 했다.','info');return}return uc(k)}}
 // 보스 패턴: 천마해체(생명 50% 아래 피해 +25%), 마기 폭발(25% 아래 5초마다 반경 3)
@@ -5465,9 +5480,9 @@ hook('sectAct',c=>{if(c.a==='ldduel'){c.done=true;c.r=true;leaderDuel()}else if(
   else if(c.a==='pardon'){c.done=true;c.r=true;leaderPardon(c.x)}});
 // ---- 사면: 흑혈옥의 정파 수감자를 풀어 동료로 들인다 ----
 function leaderPardon(id){if(!isLeader()||REG!==JAIL_ID)return false;const n=npcsHere().find(x=>x.prisoner&&x.id===id);if(!n)return false;
-  P.pardon=P.pardon||{};P.pardon[id]=1;const R=REGION();R._npcsP=R._npcsP||R.npcs;R.npcs=R.npcs.filter(x=>x!==n);if(typeof npcFighter==='function')NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);
+  P.pardon=P.pardon||{};P.pardon[id]=1;const R=REGION();R._npcsP=R._npcsP||R.npcs;R.npcs=R.npcs.filter(x=>x!==n);refreshNPCF();
   const a=mkAlly('disciple',n.n.replace('갇힌 ',''),P.x+.6,P.y+.4);a.lv=4;a.maxHp=a.hp=240;a.atk=18;a.k='동료';allies.push(a);closePanels();
-  log(`${n.n}을(를) 사면했다. "목숨을 빚졌소. 교주의 곁에서 갚겠소." 동료가 되었다.`,'xp');showBanner('사면','교주의 은혜');P.feats.push(`${Math.floor(P.age)}세에 흑혈옥의 ${n.n}을(를) 사면했다`);return true}
+  log(`${n.n}을(를) 사면했다. "목숨을 빚졌소. 교주의 곁에서 갚겠소." 동료가 되었다.`,'xp');showBanner('사면','교주의 은혜');feat(`흑혈옥의 ${n.n}을(를) 사면했다`);return true}
 hook('regionLoaded',id=>{if(id!==JAIL_ID)return;const R=REGIONS[id];if(!R)return;R._npcsP=R._npcsP||R.npcs;R.npcs=R._npcsP.filter(n=>!(n.prisoner&&P.pardon&&P.pardon[n.id]))});
 {const pd=prisonerDlg;prisonerDlg=function(n){const h=pd(n);if(!isLeader())return h;return h+`<div class="row2"><span class="note">교주의 사면: 풀어 주면 동료로 따른다.</span>${B('pardon:'+n.id,'사면하기',{pri:1})}</div>`}}
 // ---- 화면 ----
@@ -5564,6 +5579,12 @@ for(const[k,p]of Object.entries(PROV))for(const sid of p.sects){const m=lmPair(s
   REGIONS.hq_shaolin.gates.push({x:20.5,y:38.6,to:'sungsan',tx:x,ty:y+2,label:'숭산'});REGIONS.hq_shaolin.lmVia='sungsan';REGIONS.hq_shaolin.prov='henan'}
 // 예전 저장이 숭산 꼭대기(옛 소림사 자리)였으면 걸을 수 있는 곳으로
 hook('regionLoaded',id=>{if(P&&P.reg===id&&id==='sungsan'&&!walkAt(P.x,P.y)){P.x=10.5;P.y=36.4}});
+// 성도 맵에 포털을 내고 R(맹 총단·무관처럼 성 안에 따로 있는 맵)의 남문을 그 포털 앞으로 잇는다. 성도 맵이 없으면 개봉으로 (g_maeng.js, g_academy.js)
+function linkCityPortal(R,toId,label,prov,city){const F=REGIONS[pvId(prov)],m=F&&F.marks&&F.marks.find(q=>q.n===city&&q.gate),L=m&&REGIONS[m.gate],cL=L&&L.stage;
+  if(cL&&cL.portals){const n=cL.portals.length,slot=LM_PORTAL_C[Math.min(n,2)],x=slot[0]+.5,y=slot[1]+.5;
+    cL.portals.push({x,y,s:null,label});L.gates.push({x,y,to:toId,tx:20.5,ty:36.2,label,portal:1});
+    R.gates.push({x:20.5,y:38.6,to:m.gate,tx:x,ty:y+2,label:L.name||m.n});R.lmVia=m.gate}
+  else R.gates.push({x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:20.5,label:'개봉'})}
 
 // ================= 성 지도 나누기: 성 하나 = 40×40 맵 여러 장 =================
 // 사용자 결정(2026-10-09): 무림전도를 비율대로 줄이고, 맵 하나는 40×40, 성은 실제 크기에 따라 여러 맵으로 만든다.
@@ -5829,7 +5850,7 @@ function emperorDlg(n){
 hook('npcDlg',c=>{if(c.html==null&&c.n.emperor)c.html=emperorDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='imperial')return;c.done=true;c.r=true;if(P.sect!=='geumgun'||rankIdx('geumgun')<3||P.imperial)return;
   P.imperial=1;P.silver+=500;P.fame+=100;const it=mkGear('acc','어사패',1.4,{qi:24,hm:5});P.bag.push(it);
-  log('어전 포상: 어사패와 은자 500, 명성 100을 받았습니다.','xp');showBanner('어전 포상','황제의 신임');P.feats.push(`${Math.floor(P.age)}세에 황제에게 포상을 받았다`)});
+  log('어전 포상: 어사패와 은자 500, 명성 100을 받았습니다.','xp');showBanner('어전 포상','황제의 신임');feat(`황제에게 포상을 받았다`)});
 
 // ================= 맹 총단: 정의맹·사천맹의 본부, 문파 입지와 개인 직위 =================
 // 2026-10-11 동훈님: 사천맹과 정의맹도 지역을 정해 구성한다. 각 맹은 맹주·장로·전투 조직인 당을 두고,
@@ -5858,12 +5879,13 @@ function sectGainStanding(sid,v){const s=SECTS[sid];if(!s||!MAENG[s.al]||v<=0)re
   const before=seatOf(al,sid);G.mst[al][sid]=(G.mst[al][sid]||0)+v;const after=seatOf(al,sid);
   if(after<before)log(`${s.n}의 ${MAENG[al].short} 서열이 ${after}위로 올랐습니다.`,'xp');return v}
 // ---- 맹 임무: 해마다 셋씩 바뀐다 ----
-function maengMissions(al){const pool=MMIS[al],y=Math.floor(P.age),M=MAENG[al];
+hook('newYear',()=>{P.qdone={}});   // 올해 보고한 문파·맹 임무 (qDone, g_core.js)
+function maengMissions(al){const pool=MMIS[al],y=Math.floor(realAge()),M=MAENG[al];
   return[y%pool.length,(y+2)%pool.length,(y+4)%pool.length].map(i=>({...pool[i],n:`[${M.short}] ${pool[i].n}`,maeng:al,vit:Math.round(pool[i].merit*1.2),fame:Math.round(pool[i].merit/4),good:al==='jeong'?4:0,key:`m_${al}:${i}:${y}`}))}
 // 보고: 개인 맹 공적(직위에 따라 +10%씩)과, 문파 제자면 문파 입지(공적의 1.5배)
 function maengReport(q){const al=q.maeng,M=MAENG[al];if(!M)return;
   const b=maengRank(al),v=Math.round(q.merit*(1+b*.1));P.mpt=P.mpt||{};P.mpt[al]=(P.mpt[al]||0)+v;log(`${M.short} 공적 +${v}`,'xp');
-  const a=maengRank(al);if(a>b){const n=maengRankName(al,a);showBanner(`${M.short} ${n}`,'맹의 직위가 올랐습니다');log(`${M.short}의 ${n}(으)로 올랐습니다. ${maengPerk(al,a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${M.short}의 ${n}이(가) 되었다`)}
+  const a=maengRank(al);if(a>b){const n=maengRankName(al,a);showBanner(`${M.short} ${n}`,'맹의 직위가 올랐습니다');log(`${M.short}의 ${n}(으)로 올랐습니다. ${maengPerk(al,a)}`,'xp');feat(`${M.short}의 ${n}이(가) 되었다`)}
   const s=mySectIn(al);if(s){const sv=sectGainStanding(s.id,Math.round(q.merit*1.5));log(`${s.n}의 ${M.short} 입지 +${sv}`,'xp')}}
 function maengPerk(al,i){return['','맹 임무 공적 +10%.','당을 골라 당패를 받을 수 있다. 공적 +20%.','총단 당 무인들이 길을 비킨다. 공적 +30%.','맹주를 알현해 하사품을 받는다. 공적 +40%.','부맹주: 맹의 둘째 자리. 명성 +100.'][i]||''}
 // ---- 가입 조건 ----
@@ -5882,11 +5904,7 @@ function maengSeatsHtml(al){const M=MAENG[al],mine=mySectIn(al);
     ${mine?`<p class="note">${mine.n}은(는) ${seatOf(al,mine.id)}위 (입지 ${sectStanding(al,mine)}). 문파 임무를 보고하면 입지가 오르고, 맹 임무는 1.5배로 오른다. 서열 1위 제자는 공적 +15%, 3위까지 +5%.</p>`:'<p class="note">문파 제자가 되어 임무를 보고하면 그 문파의 입지가 오른다.</p>'}</div>`}
 function maengMisHtml(al){const M=MAENG[al];if(P.side!==ALLY[al].side)return '';
   const can=maengOf()===al;
-  const mis=maengMissions(al).map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key),done=on&&(on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt),i=P.quests.indexOf(on);
-    return `<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${on?on.have+'/':''}${q.cnt}`:`${q.mat} ${on?(P.mats[q.mat]||0)+'/':''}${q.cnt}개`} · 맹 공적 ${q.merit} · 은자 ${q.silver}</span></div>
-      <div class="ib">${on?B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done}):B('mtake:'+al+':'+qi,'맡기',{d:!can||P.quests.length>=4,t:can?'':'맹 소속이어야 맡는다'})}</div></div>`}).join('');
-  const cur=maengMissions(al).map(q=>q.key),old=P.quests.map((q,i)=>[q,i]).filter(([q])=>q.maeng===al&&!cur.includes(q.key)).map(([on,i])=>{const done=on.kind==='kill'?on.have>=on.cnt:(P.mats[on.mat]||0)>=on.cnt;
-    return `<div class="it"><div>${on.n.replace(/^\[[^\]]+\] /,'')}<span>${on.kind==='kill'?`${mobTxt(on.mob)} ${on.have}/${on.cnt}`:`${on.mat} ${P.mats[on.mat]||0}/${on.cnt}`} · 맹 공적 ${on.merit} · 지난해 임무</span></div><div class="ib">${B('qdone:'+i,done?'보고하기':'진행 중',{pri:done,d:!done})}</div></div>`}).join('');
+  const mis=missionRows(maengMissions(al),{take:qi=>'mtake:'+al+':'+qi,lbl:'맹 공적',can,why:'맹 소속이어야 맡는다'}),old=oldMissionRows(q=>q.maeng===al,maengMissions(al),'맹 공적');
   return `<div class="row2"><h4 style="margin:0">${M.short} 임무 <small class="dim">해마다 바뀐다 · 의뢰는 넷까지</small></h4>${B('open:quest','임무창')}</div><div class="list">${mis}${old}</div>`}
 function maengJoinHtml(al){const M=MAENG[al],jb=maengJoinBlock(al);
   if(P.side!==ALLY[al].side)return '';
@@ -5913,13 +5931,13 @@ function maengDlg(n){const al=n.maeng,M=MAENG[al],same=P.side===ALLY[al].side,on
   return `<p class="note">"${same?(on?`${maengRankName(al)} ${esc(P.name)}, 맹의 일감은 여기 있네.`:'맹에 뜻이 있는가? 명성 10이면 맹원으로 받는다.'):'우리 맹의 문은 그대에게 열려 있지 않다.'}"</p>${maengBlock(al,true)}${maengSeatsHtml(al)}`}
 // ---- 행동 ----
 hook('sectAct',c=>{const{a,x,y}=c;
-  if(a==='mjoin'){c.done=true;c.r=true;if(maengJoinBlock(x))return;P.maeng=x;P.mpt=P.mpt||{};P.mpt[x]=P.mpt[x]||0;log(`${MAENG[x].short}의 맹원이 되었습니다.`,'xp');showBanner(`${MAENG[x].short} 입맹`,'맹원');P.feats.push(`${Math.floor(P.age)}세에 ${MAENG[x].short} 맹원이 되었다`);return}
+  if(a==='mjoin'){c.done=true;c.r=true;if(maengJoinBlock(x))return;P.maeng=x;P.mpt=P.mpt||{};P.mpt[x]=P.mpt[x]||0;log(`${MAENG[x].short}의 맹원이 되었습니다.`,'xp');showBanner(`${MAENG[x].short} 입맹`,'맹원');feat(`${MAENG[x].short} 맹원이 되었다`);return}
   if(a==='mleave'){c.done=true;c.r=true;if(!P.maeng)return;if(!confirm(`${MAENG[P.maeng].short}에서 나갈까요? 맹 공적과 직위는 남지만 녹봉은 끊깁니다.`))return;log(`${MAENG[P.maeng].short}에서 나왔습니다.`,'info');P.maeng=null;return}
-  if(a==='mtake'){c.done=true;c.r=true;const q=maengMissions(x)[+y];if(q&&maengOf()===x&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return}
+  if(a==='mtake'){c.done=true;c.r=true;const q=maengMissions(x)[+y];if(q&&maengOf()===x&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)&&!qDone(q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return}
   if(a==='mdang'){c.done=true;c.r=true;const al=x,k=+y,M=MAENG[al];if(maengOf()!==al||maengRank(al)<2||P.mdang||P.bag.length>=24)return;
-    P.mdang={al,k};P.fame+=10;const it=mkGear('acc',`${M.dangs[k]} 당패`,1.2,{qi:16,hm:3});P.bag.push(it);log(`${M.dangs[k]}에 들었습니다. 당패를 받았습니다.`,'xp');showBanner(M.dangs[k],`${M.short} ${maengRankName(al)}`);P.feats.push(`${Math.floor(P.age)}세에 ${M.short} ${M.dangs[k]}에 들었다`);return}
+    P.mdang={al,k};P.fame+=10;const it=mkGear('acc',`${M.dangs[k]} 당패`,1.2,{qi:16,hm:3});P.bag.push(it);log(`${M.dangs[k]}에 들었습니다. 당패를 받았습니다.`,'xp');showBanner(M.dangs[k],`${M.short} ${maengRankName(al)}`);feat(`${M.short} ${M.dangs[k]}에 들었다`);return}
   if(a==='mgift'){c.done=true;c.r=true;const al=x,M=MAENG[al],r=maengRank(al);if(maengOf()!==al||r<4)return;P.mgift=P.mgift||{};const got=P.mgift[al]||0,lv=r>=5?2:1;if(got>=lv)return;
-    P.mgift[al]=lv;const sv=lv===2?800:300,fm=lv===2?100:50;P.silver+=sv;P.fame+=fm;log(`맹주의 하사: 은자 ${sv}, 명성 ${fm}.`,'xp');showBanner('맹주의 하사',M.leader);P.feats.push(`${Math.floor(P.age)}세에 ${M.short} 맹주의 하사를 받았다`);return}
+    P.mgift[al]=lv;const sv=lv===2?800:300,fm=lv===2?100:50;P.silver+=sv;P.fame+=fm;log(`맹주의 하사: 은자 ${sv}, 명성 ${fm}.`,'xp');showBanner('맹주의 하사',M.leader);feat(`${M.short} 맹주의 하사를 받았다`);return}
 });
 // 녹봉: 해마다 직위×20
 hook('newYear',()=>{const al=maengOf();if(!al)return;const i=maengRank(al),v=i*20;if(v>0){P.silver+=v;log(`${MAENG[al].short} ${maengRankName(al)} 녹봉으로 은자 ${v}을(를) 받았습니다.`,'sys')}});
@@ -5945,11 +5963,7 @@ MAENG_IDS.forEach((al,idx)=>{const M=MAENG[al],id=maengId(al),f=alFac(al),[k0,k1
   hallAdd(id,0,c.builds[0],M.halls[0],['mleader'],{w:18,h:13});hallAdd(id,1,c.builds[1],M.halls[1],['melder0','melder1','melder2']);hallAdd(id,2,c.builds[2],M.halls[2],['msteward'],{kit:'office'});
   M.dangs.forEach((d,k)=>hallAdd(id,3+k,c.builds[3+k],d,['mdang'+k],{kit:'drill'}));
   // 성내 북쪽 포털
-  const F=REGIONS[pvId(M.prov)],m=F&&F.marks&&F.marks.find(q=>q.n===M.city&&q.gate),L=m&&REGIONS[m.gate],cL=L&&L.stage;
-  if(cL&&cL.portals){const n=cL.portals.length,slot=LM_PORTAL_C[Math.min(n,2)],x=slot[0]+.5,y=slot[1]+.5;
-    cL.portals.push({x,y,s:null,label:M.n});L.gates.push({x,y,to:id,tx:20.5,ty:36.2,label:M.n,portal:1});
-    R.gates.push({x:20.5,y:38.6,to:m.gate,tx:x,ty:y+2,label:L.name||m.n});R.lmVia=m.gate}
-  else R.gates.push({x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:20.5,label:'개봉'});
+  linkCityPortal(R,id,M.n,M.prov,M.city);
 });
 // 역참 마부 창에 총단 두 곳
 hook('npcDlg',c=>{if(c.n.id!=='post'||c.html==null)return;
@@ -6020,11 +6034,7 @@ const acadSpotsOf=()=>Object.entries(ACAD_SPOTS);
   const FR=stageRegion(fc);FR.hq=null;FR.acad=side;FR.capital=0;FR.acadProv=M.prov;
   R.gates.push({x:20.5,y:1.2,to:fc.id,tx:20.5,ty:36.2,label:A.field});FR.gates.push({x:20.5,y:38.6,to:A.id,tx:20.5,ty:3.6,label:A.n});
   // 성내 포털 (맹 총단 옆 자리)
-  const F=REGIONS[pvId(M.prov)],m=F&&F.marks&&F.marks.find(q=>q.n===M.city&&q.gate),L=m&&REGIONS[m.gate],cL=L&&L.stage;
-  if(cL&&cL.portals){const n=cL.portals.length,slot=LM_PORTAL_C[Math.min(n,2)],x=slot[0]+.5,y=slot[1]+.5;
-    cL.portals.push({x,y,s:null,label:A.n});L.gates.push({x,y,to:A.id,tx:20.5,ty:36.2,label:A.n,portal:1});
-    R.gates.push({x:20.5,y:38.6,to:m.gate,tx:x,ty:y+2,label:L.name||m.n});R.lmVia=m.gate}
-  else R.gates.push({x:20.5,y:38.6,to:'gaebong',tx:20.5,ty:20.5,label:'개봉'});
+  linkCityPortal(R,A.id,A.n,M.prov,M.city);
 });
 // 연무장 목인장: 맞아도 쓰러지지 않고 반격하지 않는다. 숙련은 소성(25)까지만 오른다(g_core hitE)
 const ACAD_DUMMY=[[14.5,20.5],[16.5,20.5],[25.5,20.5]];
@@ -6121,7 +6131,7 @@ hook('gLoaded',()=>{if(G.acadDuel){G.acadDuel=null;G.duel=false}});
 function acadDuelEnd(win,e){const kind=G.acadDuel&&G.acadDuel.kind,a=P.acad;G.duel=false;G.acadDuel=null;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(!win)P.hp=Math.max(1,Math.round(P.maxHp*.3));if(!a)return;
   if(kind==='inst'){if(win){a.c.spar_inst=1;log('병기 교두를 꺾었습니다.','xp');showBanner('대련 승리','')}else log('병기 교두에게 졌습니다. 숨을 고르고 다시 청하자.','dmg')}
-  else if(kind==='skip'){a.skipTried=1;if(win){a.skip=1;a.stage=3;log('월반 시험에 붙었습니다. 4단계 강호 실습부터 한다. 병기와 심법은 교두들에게서 골라야 한다.','xp');P.feats.push(`${Math.floor(P.age)}세에 월반 시험에 붙었다`);acadStageStart()}
+  else if(kind==='skip'){a.skipTried=1;if(win){a.skip=1;a.stage=3;log('월반 시험에 붙었습니다. 4단계 강호 실습부터 한다. 병기와 심법은 교두들에게서 골라야 한다.','xp');feat(`월반 시험에 붙었다`);acadStageStart()}
     else log('월반 시험에 떨어졌습니다. 1단계부터 차근차근 배우자.','dmg')}
   else if(kind==='final'){a.c.final=(a.c.final||0)+1;if(win)a.c.finalWin=(a.c.finalWin||0)+1;log(`졸업 비무 ${a.c.final}판째: ${win?'이겼다':'졌다'}. (${a.c.finalWin||0}승)`,win?'xp':'info')}
   acadCheck()}
@@ -6147,7 +6157,7 @@ function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||ac
   recalc();log(`${CLASS[cls].n}을(를) 골랐습니다. ${cls==='권'?'맨손으로 싸운다.':'연습 병기를 찼다(날이 무뎌 있다).'} 행낭의 비급을 읽어 첫 초식을 익히자.`,'xp');showBanner(CLASS[cls].n,'병기를 고르다');acadCheck()}
 // ---- 심법 고르기 (2단계, 월반이면 4단계) ----
 const acadSimOpen=()=>P.acad&&!P.acad.grad&&(P.acad.stage>=1||P.acad.skip);
-function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();P.feats.push(`${Math.floor(P.age)}세에 ${x.n}을(를) 익혔다`);acadCheck()}
+function acadSimPick(id){const a=P.acad,x=SIM[id];if(!acadSimOpen()||a.sim||!x||!x.acad||x.side!==P.side)return;a.sim=id;simLearn(x);recalc();feat(`${x.n}을(를) 익혔다`);acadCheck()}
 
 // ---- 보법 고르기 (3단계, 월반이면 4단계): 직선·간파 하승 보법 가운데 하나 ----
 const acadBobOpen=()=>acadOn()&&(P.acad.stage>=2||P.acad.skip);
@@ -6162,13 +6172,13 @@ function acadGkLearn(){if(!acadGkOpen())return;ggInit();if(P.gkcur)return;P.gk.g
 function acadReport(){const a=P.acad;if(!acadOn()||a.stage>=4||!acadAllDone())return;const st=acadSt(),r=st.reward||{};
   P.silver+=r.silver||0;gainVit(r.vit||0);for(const[k,v]of Object.entries(r.mats||{}))P.mats[k]=(P.mats[k]||0)+v;
   log(`${st.n} 수료. 은자 ${r.silver||0}, 활력 ${r.vit||0}${Object.keys(r.mats||{}).length?', '+Object.entries(r.mats).map(([k,v])=>`${k} ${v}`).join(', '):''}.`,'xp');
-  P.feats.push(`${Math.floor(P.age)}세에 ${acadOf(P.side).n} ${a.stage+1}단계(${st.n})를 마쳤다`);a.stage++;acadStageStart()}
+  feat(`${acadOf(P.side).n} ${a.stage+1}단계(${st.n})를 마쳤다`);a.stage++;acadStageStart()}
 function acadGradeOf(){const a=P.acad,w=a.c.finalWin||0;return ACAD_GRADE.find(g=>P.age<=g.need&&w>=g.win)||ACAD_GRADE[ACAD_GRADE.length-1]}
 function acadGraduate(){const a=P.acad;if(!acadOn()||a.stage!==4||!acadAllDone())return;const A=acadOf(P.side),g=acadGradeOf();
   a.grad=1;a.grade=g.n;a.gradAge=Math.floor(P.age);G.acadN=(G.acadN||0)+1;P.silver+=g.silver;P.fame+=g.fame;
   const tok=mkGear('acc',`${A.n} 졸업 증표 (${g.n})`,g.n==='수석'?1.4:g.n==='우등'?1.2:1,{qi:10,hm:2});if(P.bag.length<24)P.bag.push(tok);
   log(`${A.n}을(를) ${g.n}(으)로 졸업했습니다. 은자 ${g.silver}, 명성 ${g.fame}, 졸업 증표. 관주에게 추천서를 받자.`,'xp');showBanner(`${A.n} 졸업`,`${g.n} · ${Math.floor(P.age)}세`);
-  P.feats.push(`${Math.floor(P.age)}세에 ${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
+  feat(`${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
   // 사파 무관을 악업이 무겁게 졸업하면 마교 밀사가 길을 일러 준다 (가입은 지금처럼 본산에서)
   if(P.side==='사'&&P.evil>=30&&SECTS.cheonma)setTimeout(()=>log(`졸업식 밤, 마교 밀사가 찾아와 속삭였다. "천마신교는 강한 자를 반긴다. ${hqPlace(SECTS.cheonma)}(으)로 오라."`,'dmg'),1200)}
 // 추천서: 성적에 맞는 같은 진영 문파 하나. 그 문파에 들면 가입 조건(명성·나이)을 덜고 공적을 얹어 받는다
@@ -6685,10 +6695,12 @@ const FIELD_ID=FIELD.id;
 const warSneak=()=>warOn()&&mySide()<0&&pfac()==='마';
 const warFieldOk=()=>warOn()&&G.war.round>=1&&(mySide()>=0||warSneak())&&!(G.war.cur&&G.war.cur.field);
 function warEnemyFacs(){const me=mySide(),out=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)out.push(...s)});return out}
+// 결전장·순찰조: 가로 6~34, 세로 y0~y1 띠 안 걸을 수 있는 곳에 세력 무인 하나 (g_guard.js도 쓴다)
+function spawnBand(f,elite,y0,y1,tag){for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null}
 function warGo(){if(!warFieldOk()||!REGION()||G.duel||P.hp<=0)return false;const w=G.war,n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();if(!foes.length)return false;
   w.cur.field=1;
   regionJump(FIELD_ID,20.5,35.5);let made=0,ally=0;
-  const put=(f,elite,y0,y1,tag)=>{for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null};
+  const put=spawnBand;
   for(let i=0;i<FIELD.ally&&my.length;i++)if(put(my[i%my.length],i===FIELD.ally-1?1:0,27,33,e=>{e.warAlly=n}))ally++;
   for(let i=0;i<FIELD.foe;i++)if(put(foes[i%foes.length],i<FIELD.elite?1:0,9,17,e=>{e.raid=n;e.aggro=true}))made++;
   const gun=foes.includes('관')&&w.plan.sides.some(s=>s.length===1&&s[0]==='관'),cfac=gun?'관':foes[0],cf=put(cfac,1,10,13,e=>{e.raid=n;e.warChief=1;e.aggro=true;e.realm=Math.min(5,Math.max(3,realmIdx()+1));if(typeof scaleMob==='function')scaleMob(e);e.maxHp=e.hp=Math.round(e.maxHp*FIELD.chiefHp);e.atk=Math.round(e.atk*FIELD.chiefAtk);e.name=gun?'관군 토벌대장':`${FAC4N[cfac]} 대장`});
@@ -6771,7 +6783,7 @@ function ruinLoot(n){const s=SECTS[n.sect];if(!s)return;G.looted=G.looted||{};(G
   if(e.t==='gear')it=ruinGear(s);else if(e.t==='relic')it=ruinRelic(s);else if(e.t==='book')it=ruinBook(s,false)||ruinRelic(s);else if(e.t==='hibook')it=ruinBook(s,true)||ruinRelic(s);
   if(!it)return;if(P.bag.length>=24){log('행낭이 가득 찼다. 자리를 비우고 다시 뒤져라.','info');delete G.looted[REG][n.key];n.cd=0;return}
   P.bag.push(it);log(`${where}에서 ${itemLabel(it)}을(를) 찾았다.${it.relic?` ${s.n}의 유물이다.`:e.t==='hibook'?` 멸문한 ${s.n}의 절기가 폐허에서 흘러나왔다.`:''}`,it.slot==='book'||it.relic?'xp':'sys');
-  if(e.t==='hibook')P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 폐허에서 ${it.name}을(를) 찾았다`)}
+  if(e.t==='hibook')feat(`${s.n} 폐허에서 ${it.name}을(를) 찾았다`)}
 
 // 바닥 그림 바로 위에 핏자국. 시체는 깊이 정렬 목록에 들어간다 (g_draw.js)
 function drawGore(){const R=REGION();if(!R.dead||!R.gore)return;ctx.save();
@@ -6784,7 +6796,7 @@ function drawBody(b){const p=toScreen(b.x,b.y);ctx.save();ctx.translate(p.x,p.y)
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R)return;goreMake(id);
   if(!R.dead&&G.looted&&G.looted[id])delete G.looted[id];
   if(R.hall){if(R.dead){if(!R._npcsH)R._npcsH=R.npcs||[];R.npcs=[]}else if(R._npcsH){R.npcs=R._npcsH;delete R._npcsH}}   // 살아 있을 땐 손대지 않는다 (g_pop masterCheck 가 장문인을 숨긴다)
-  if(R.dead){NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);const s=ruinSect(R);if(!R.hall)log(`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}});
+  if(R.dead){refreshNPCF();const s=ruinSect(R);if(!R.hall)log(`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}});
 
 // 문파 재화·침투·전각 NPC 순환 (2026-10-15 v117, 사용자: "각 문파의 크기에 따라 해마다 재화가 누적되게, 멸문시키거나 몰래 침투하여 재화를 가져갈 수 있게,
 // 전각 안 장로·당주 등 고정 NPC도 죽일 수 있게, 죽으면 시간이 지나 새 NPC가 배정되는 순환 구조")
@@ -6802,13 +6814,13 @@ function vaultSpot(){for(let y=1;y<Math.min(5,NH-1);y++)for(let dx=0;dx<N;dx++){
 hook('regionLoaded',id=>{const s=ruinSect(REGIONS[id]);if(!s||vaultHall(s)!==id)return;const p=vaultSpot();if(!p)return;nodes.push({t:'vault',sect:s.id,x:p.x,y:p.y,cd:0})});
 function vaultLabel(n){const s=SECTS[n.sect];return sectPop(s.id)<=0?'금고를 턴다':'몰래 턴다'}
 function vaultOpen(n){const s=SECTS[n.sect];if(!s)return;vaultInit();const v=Math.round(G.vault[s.id]||0),y=Math.floor(G.cal);
-  if(sectPop(s.id)<=0){if(v<=0){log('금고는 이미 비어 있다.','info');return}P.silver+=v;G.vault[s.id]=0;addText(P.x,P.y,`은자 ${v}`,'#e8c66e');log(`멸문한 ${s.n}의 금고에서 은자 ${v}을(를) 챙겼다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 폐허의 금고를 털었다 (은자 ${v})`);return}
+  if(sectPop(s.id)<=0){if(v<=0){log('금고는 이미 비어 있다.','info');return}P.silver+=v;G.vault[s.id]=0;addText(P.x,P.y,`은자 ${v}`,'#e8c66e');log(`멸문한 ${s.n}의 금고에서 은자 ${v}을(를) 챙겼다.`,'xp');feat(`${s.n} 폐허의 금고를 털었다 (은자 ${v})`);return}
   G.vaultHit=G.vaultHit||{};if(G.vaultHit[s.id]===y){log(`${s.n}의 경비가 삼엄하다. 올해는 다시 손댈 수 없다.`,'info');return}
   const ST=VAULT.steal,here=npcsHere().length,det=clamp(ST.base+ST.perNpc*here+(sectWeak(s)?ST.weak:0)-ST.realm*(P.realm||0),ST.min,ST.max);G.vaultHit[s.id]=y;
   if(Math.random()<det){P.evil+=ST.evil;P.fame=Math.max(0,P.fame+ST.fame);log(`금고에 손대다 들켰다! ${s.n}의 경비가 들이닥친다. 악업 +${ST.evil}, 명성 ${ST.fame}.`,'dmg');showBanner('발각',`${s.n} 경비 출동`);
     const fac=alFac(s.al);for(let i=0;i<ST.guards;i++){const a=Math.PI*2*i/ST.guards,e=mkFac(fac,i<2?1:0,P.x+Math.cos(a)*2.2,P.y+Math.sin(a)*2.2,s.id);e.angry=1;e.aggro=true;e.tgt=null;e.guard=s.id;e.name=`${s.n} 경비 · ${e.name}`;mobs.push(e)}return}
   const take=Math.max(1,Math.round(v*ST.frac));if(v<=0){log('금고가 비어 있다.','info');return}P.silver+=take;G.vault[s.id]=v-take;addText(P.x,P.y,`은자 ${take}`,'#e8c66e');
-  log(`${s.n}의 금고에서 은자 ${take}을(를) 몰래 챙겼다. (들킬 확률 ${Math.round(det*100)}%)`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 금고에 몰래 들어 은자 ${take}을(를) 가져갔다`)}
+  log(`${s.n}의 금고에서 은자 ${take}을(를) 몰래 챙겼다. (들킬 확률 ${Math.round(det*100)}%)`,'xp');feat(`${s.n} 금고에 몰래 들어 은자 ${take}을(를) 가져갔다`)}
 // ---- 전각 NPC 처치와 순환 ----
 const npcRole=n=>!n?null:n.elder?'elder':n.steward?'steward':n.disc?'disc':n.id&&n.id.startsWith('dang_')?'dang':null;
 const npcSect=n=>n.elder||n.steward||n.disc||(n.id&&n.id.startsWith('dang_')?'cheonma':null);
@@ -6818,13 +6830,13 @@ const npcCanOut=n=>!!n&&(!!n.hq||!!npcRole(n));
 function npcOut(n){if(!n||!forceAtk)return null;if(n.hq)return masterOut(n);const r=npcRole(n);if(!r)return null;const s=SECTS[npcSect(n)];if(!s||npcDead(n))return null;const key=npcKey(n);
   const live=mobs.find(m=>m.npcKey===key&&m.hp>0);if(live)return live;const R=REGION(),c=VAULT.npc[r];(R._npcsO=R._npcsO||[]).push(n);R.npcs=R.npcs.filter(x=>x!==n);   // 맵을 나갔다 오면 npcSync 가 되돌린다
   const e=mkFac(alFac(s.al),c.rank>=2?1:0,n.x,n.y,s.id);e.rank=c.rank;e.realm=Math.min(4,c.rank);if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*c.hp);e.hp=e.maxHp;e.atk=Math.round(e.atk*c.atk);
-  e.npcKey=key;e.npcRole=r;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);NPCF=npcsHere().filter(x=>!x.board).map(npcFighter);log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
+  e.npcKey=key;e.npcRole=r;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);refreshNPCF();log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
 hook('kill',e=>{if(!e.npcKey)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name};
-  P.fame+=c.fame;log(`${e.name}을(를) 쓰러뜨렸다. 명성 +${c.fame}. ${VAULT.revive}년 뒤 ${s?s.n:''}에 새 ${c.title}이(가) 선다.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${e.name}을(를) 쓰러뜨렸다`)});
+  P.fame+=c.fame;log(`${e.name}을(를) 쓰러뜨렸다. 명성 +${c.fame}. ${VAULT.revive}년 뒤 ${s?s.n:''}에 새 ${c.title}이(가) 선다.`,'xp');feat(`${e.name}을(를) 쓰러뜨렸다`)});
 // 공석인 자리는 맵에서 비우고(g_pop masterCheck 뒤에 돈다), 멸문 폐허(R.dead)는 g_ruin 이 이미 비웠다
 function npcSync(id){const R=REGIONS[id];if(!R||!R.npcs||R.dead)return;R._npcsD=R._npcsD||[];const back=[...R.npcs];for(const n of[...R._npcsD,...(R._npcsO||[])])if(!back.includes(n))back.push(n);R._npcsO=[];
   for(const n of back){const nm=G.nname&&G.nname[npcKey(n)];if(nm&&n.n!==nm)n.n=nm}
-  R._npcsD=back.filter(npcDead);R.npcs=back.filter(n=>!npcDead(n));NPCF=npcsHere().filter(x=>!x.board).map(npcFighter)}
+  R._npcsD=back.filter(npcDead);R.npcs=back.filter(n=>!npcDead(n));refreshNPCF()}
 hook('regionLoaded',npcSync);
 hook('newYear',()=>{if(!G.ndead)return;const y=Math.floor(G.cal);for(const key in G.ndead){const d=G.ndead[key];if(y-d.y<VAULT.revive)continue;const[sid,nid]=key.split('/'),s=SECTS[sid];if(!s||sectPop(sid)<=0)continue;
     const role=nid.startsWith('dang_')?'dang':nid,c=VAULT.npc[role]||{title:''},nm=`${s.n} ${c.title} ${pick(NAMES1)}${pick(NAMES2)}${pick(NAMES2)}`;G.nname=G.nname||{};G.nname[key]=nm;delete G.ndead[key];
@@ -6860,7 +6872,7 @@ hook('mobTick',(e,dt)=>{if(!e.fixed||e.hp<=0||e.aggro||G.duel)return;e.wt=99;
     if(e.drill){e.dr=(e.dr||0)-dt;if(e.dr<=0){e.dr=1.4+Math.random()*2.2;e.swing=.24;e.fx=Math.random()<.5?1:-1;e.fy=Math.random()<.5?1:-1;e.pfx=e.fx;e.pfy=e.fy}}}});
 // 결전장 증원: 적장이 살아 있고 결전장에 있는 동안 10초마다 양쪽에 3명씩, 각 상한(FIELD.ally/foe)까지, 최대 6파도
 hook('tick',dt=>{if(!P||typeof warOn!=='function'||!warOn()||REG!==FIELD.id||!G.war.cur||!G.war.cur.field||G.war.cur.done)return;const w=G.war,c=w.cur;c.waveT=(c.waveT||0)+dt;if(c.waveT<GUARD.wave.sec||(c.waves||0)>=GUARD.wave.max)return;c.waveT=0;c.waves=(c.waves||0)+1;
-  const n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();const put=(f,elite,y0,y1,tag)=>{for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null};
+  const n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();const put=spawnBand;
   const al=mobs.filter(m=>m.warAlly===n&&m.hp>0),fo=mobs.filter(m=>m.raid===n&&m.hp>0&&!m.warChief);let a=0,f=0;
   for(let i=0;i<GUARD.wave.n&&my.length&&al.length+a<FIELD.ally;i++)if(put(my[i%my.length],i===0?1:0,33,37,e=>{e.warAlly=n;const t=fo[Math.floor(Math.random()*fo.length)];if(t){e.tgt=t;e.aggro=true}}))a++;
   for(let i=0;i<GUARD.wave.n&&foes.length&&fo.length+f<FIELD.foe;i++)if(put(foes[i%foes.length],i===0?1:0,3,7,e=>{e.raid=n;e.aggro=true;const t=al[Math.floor(Math.random()*al.length)];if(t)e.tgt=t}))f++;
@@ -7231,6 +7243,8 @@ function drawMedit(front){
 // ================= frame =================
 function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
+// 지금 맵의 NPC가 바뀌면(이동·사망·사면·전각) 그리기용 목록을 다시 만든다
+function refreshNPCF(){NPCF=npcsHere().filter(n=>!n.board).map(npcFighter)}
 // 그리기 레이어 (v122): BACK 바닥에 붙은 것(시체·핏자국·바닥 표식) → ENT 개체·건물(깊이 정렬) → FX 효과 → OVER 지명 → TOP 조준선
 const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
 // v128: 나무·지붕 위 효과 높이. 주인공 발치(0.8칸 안)에서 새로 생긴 fx·글자·투사체는 주인공의 높이 P.z를 받아 그 높이에서 그린다(한 번 정해지면 고정).
@@ -7335,8 +7349,13 @@ function draw(){
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;
     const mx=((m.x%1)+1)%1*W,my=m.y*H;if(dark>.3){ctx.fillStyle=`rgba(210,255,140,${(.35+.35*Math.sin(time*3+m.p))*dark})`;ctx.fillRect(mx,my,1.8*m.s,1.8*m.s)}
     else if(sea==='봄'||sea==='가을'){ctx.fillStyle=sea==='봄'?'rgba(245,200,215,.7)':'rgba(220,130,50,.7)';ctx.beginPath();ctx.ellipse(mx,my,2.6*m.s,1.3*m.s,time*2+m.p,0,7);ctx.fill()}}
-  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.drawImage(vignette(),0,0,W,H);
 }
+// 화면 가장자리 어둡게: 크기가 바뀔 때만 다시 그린다 (매 프레임 화면 전체 방사형 그라디언트가 5ms쯤 들었다)
+let VIG=null;
+function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&VIG.height===h)return VIG;
+  VIG=document.createElement('canvas');VIG.width=w;VIG.height=h;const g2=VIG.getContext('2d'),g=g2.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');g2.fillStyle=g;g2.fillRect(0,0,w,h);return VIG}
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];

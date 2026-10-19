@@ -171,6 +171,8 @@ function drawMedit(front){
 // ================= frame =================
 function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
+// 지금 맵의 NPC가 바뀌면(이동·사망·사면·전각) 그리기용 목록을 다시 만든다
+function refreshNPCF(){NPCF=npcsHere().filter(n=>!n.board).map(npcFighter)}
 // 그리기 레이어 (v122): BACK 바닥에 붙은 것(시체·핏자국·바닥 표식) → ENT 개체·건물(깊이 정렬) → FX 효과 → OVER 지명 → TOP 조준선
 const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
 // v128: 나무·지붕 위 효과 높이. 주인공 발치(0.8칸 안)에서 새로 생긴 fx·글자·투사체는 주인공의 높이 P.z를 받아 그 높이에서 그린다(한 번 정해지면 고정).
@@ -275,8 +277,13 @@ function draw(){
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;
     const mx=((m.x%1)+1)%1*W,my=m.y*H;if(dark>.3){ctx.fillStyle=`rgba(210,255,140,${(.35+.35*Math.sin(time*3+m.p))*dark})`;ctx.fillRect(mx,my,1.8*m.s,1.8*m.s)}
     else if(sea==='봄'||sea==='가을'){ctx.fillStyle=sea==='봄'?'rgba(245,200,215,.7)':'rgba(220,130,50,.7)';ctx.beginPath();ctx.ellipse(mx,my,2.6*m.s,1.3*m.s,time*2+m.p,0,7);ctx.fill()}}
-  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.drawImage(vignette(),0,0,W,H);
 }
+// 화면 가장자리 어둡게: 크기가 바뀔 때만 다시 그린다 (매 프레임 화면 전체 방사형 그라디언트가 5ms쯤 들었다)
+let VIG=null;
+function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&VIG.height===h)return VIG;
+  VIG=document.createElement('canvas');VIG.width=w;VIG.height=h;const g2=VIG.getContext('2d'),g=g2.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');g2.fillStyle=g;g2.fillRect(0,0,w,h);return VIG}
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];

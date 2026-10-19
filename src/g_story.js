@@ -52,19 +52,21 @@ function warPlan(){const w=wld(),R=STORY.RULES;let rule=STORY.WAR.find(r=>condOk
   return{id:rule.id,n,d:rule.d,sides,notes}}
 const sideName=s=>s.map(f=>FAC4N[f]).join('·');
 // ---- 생의 단계와 남은 해 ----
-function lifeStage(){const a=P.age;let n=ST.stages[0][1];for(const[ag,nm]of ST.stages)if(a>=ag)n=nm;return n}
-const yearsToWar=()=>Math.max(0,ST.war-P.age);
+function lifeStage(){const a=realAge();let n=ST.stages[0][1];for(const[ag,nm]of ST.stages)if(a>=ag)n=nm;return n}
+const yearsToWar=()=>Math.max(0,ST.war-realAge());
+// yrs 안에 닥칠 사건·천하대전의 나이 (없으면 null). 폐관(g_realm.js pgWhy)이 본다
+function storyDueIn(yrs){const s=PS(),a=realAge();if(!s||s.flag.warDone)return null;const ev=SEV.find(e=>s.pick[e.id]==null&&e.age>a&&e.age<=a+yrs);if(ev)return ev.age;return a<ST.war&&ST.war<=a+yrs?ST.war:null}
 // ---- 사건 열기·고르기·미루기 ----
 const evOf=id=>SEV.find(e=>e.id===id);
 function evState(e){const s=PS();return s.pick[e.id]!=null?'done':s.open===e.id?'open':'wait'}
 // v149 (사용자): 사건이 터지면 창을 띄우지 않고 화면에 크게 알린다. 정세 줄(맨 위)을 누르거나 N으로 정세창을 연다
-function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');P.feats.push(`${Math.floor(P.age)}세에 ${e.n}을(를) 마주했다`);
+function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');feat(`${e.n}을(를) 마주했다`);
   if(panel==='story'&&!$('win').hidden)renderOpen()}
 // 정세 줄: 고를 사건(다음 사건이 열리면 저절로 흘러간다)과 정세 임무. left = 남은 초 (나이 → 1년 YEAR_SEC초)
-function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-P.age)*YEAR_SEC;
+function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-realAge())*YEAR_SEC;
   if(s.open){const e=evOf(s.open),i=SEV.indexOf(e),nx=SEV.slice(i+1).find(o=>s.pick[o.id]==null),due=nx?nx.age:ST.war;out.push({n:`사건 · ${e.n}`,prog:'선택 대기',left:sec(due),lbl:'흘러가기까지'})}
   for(const q of P.quests||[]){if(!q.story&&!q.war&&!q.sq)continue;const p=questProg(q);
-    const left=q.war?sec(Math.floor(P.age)+1):q.story&&P.age<ST.war?sec(ST.war):null,lbl=q.war?'이번 결전 끝까지':'천하대전까지';out.push({q,n:q.n,prog:`${p.have}/${q.cnt}`,done:p.done,left,lbl})}
+    const left=q.war?sec(Math.floor(realAge())+1):q.story&&realAge()<ST.war?sec(ST.war):null,lbl=q.war?'이번 결전 끝까지':'천하대전까지';out.push({q,n:q.n,prog:`${p.have}/${q.cnt}`,done:p.done,left,lbl})}
   return out}
 function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null)return false;if(!auto&&ch.fac&&ch.fac!==myFac()){log(`${FAC4N[ch.fac]}의 길이다. ${FAC4N[myFac()]}인 당신은 고를 수 없다.`,'info');return false}if(!auto&&!condOk(ch.req)){log(`아직 할 수 없다: ${condTxt(ch.req)}`,'info');return false}
   s.pick[e.id]=i;if(s.open===e.id)s.open=null;
@@ -74,13 +76,13 @@ function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null
   else s.done[e.id]=true;
   if(e.id===SEV[SEV.length-1].id)warStart();
   return true}
-hook('questDone',q=>{if(!q.story)return;const e=evOf(q.story),ch=e&&e.ch[q.ci];if(!ch)return;PS().done[e.id]=true;applyFx(ch.done,e.n);P.feats.push(`${Math.floor(P.age)}세에 ${e.n}: ${ch.n}`)});
+hook('questDone',q=>{if(!q.story)return;const e=evOf(q.story),ch=e&&e.ch[q.ci];if(!ch)return;PS().done[e.id]=true;applyFx(ch.done,e.n);feat(`${e.n}: ${ch.n}`)});
 // 매 틱: 나이가 사건의 때를 지나면 연다. 먼저 열린 사건이 남아 있으면 기본 선택으로 흘려보낸다. 마지막 사건을 미루면 전쟁이 나는 해에 흘러간다
 hook('tick',()=>{if(!P||!playing)return;wld();const s=PS();
-  const due=SEV.filter(e=>s.pick[e.id]==null&&P.age>=e.age);
+  const due=SEV.filter(e=>s.pick[e.id]==null&&realAge()>=e.age);
   if(due.length){const e=due[due.length-1];for(const o of due.slice(0,-1))pickChoice(o,o.ch.length-1,true);if(s.open!==e.id)openEvent(e)}
-  if(s.open===SEV[SEV.length-1].id&&P.age>=ST.war)pickChoice(SEV[SEV.length-1],SEV[SEV.length-1].ch.length-1,true);
-  if(!G.war&&!s.flag.warDone&&P.age>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
+  if(s.open===SEV[SEV.length-1].id&&realAge()>=ST.war)pickChoice(SEV[SEV.length-1],SEV[SEV.length-1].ch.length-1,true);
+  if(!G.war&&!s.flag.warDone&&realAge()>=ST.war&&s.pick[SEV[SEV.length-1].id]!=null)warStart();
 });
 // ---- 해마다: 마교는 저절로 세를 불린다. 지난 대전의 패자는 서서히 힘을 되찾는다 ----
 hook('newYear',()=>{const last=G.wars[G.wars.length-1];if(last&&last.lost)for(const f of last.lost)powAdd(f,STORY.WIN.loserDrift)});
@@ -94,7 +96,7 @@ function pastPicks(e){return G.history.map(h=>{const p=h.story&&h.story.pick&&h.
 // ---- 정세 창 ----
 const sBar=(v,c)=>`<div class="mbar"><i style="width:${clamp(v,0,100)}%;background:${c}"></i></div>`;
 const FACC={정:'#8fb4e6',사:'#c98a5a',마:'#c05050',관:'#d7b45a'};
-function storyCard(){const w=wld(),plan=warPlan();return `<div class="card"><h4>강호 정세 <small class="dim">${lifeStage()} · ${G.war&&G.war.life===P.lifeNo?'천하대전 중':`천하대전까지 ${Math.ceil(yearsToWar())}년`}</small></h4>
+function storyCard(){const w=wld(),plan=warPlan();return `<div class="card"><h4>강호 정세 <small class="dim">${lifeStage()} · ${G.war&&G.war.life===P.lifeNo?'천하대전 중':PS().flag.warDone?'천하대전이 끝났다':`천하대전까지 ${Math.ceil(yearsToWar())}년`}</small></h4>
   <p>${FAC4.map(f=>`${FAC4N[f]} <b class="num" style="color:${FACC[f]}">${Math.round(w.pow[f])}</b>`).join(' · ')} · 예상 구도 <b class="gold">${plan.n}</b></p><div class="ib">${B('open:story','정세 창 (N)')}</div></div>`}
 function evCard(e){const s=PS(),st=evState(e),pk=s.pick[e.id],past=pastPicks(e);
   if(st==='wait')return `<div class="card dim"><div class="row2"><h4>${e.n}</h4><span class="tag">${Number.isInteger(e.age)?e.age+'세':Math.floor(e.age)+'세 하반기'}</span></div><p class="note">아직 오지 않았다.</p></div>`;
@@ -109,7 +111,7 @@ function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.
   const rel=Object.keys(w.rel).map(k=>`${k} <b class="num ${w.rel[k]>=20?'good':w.rel[k]<=-20?'bad':''}">${w.rel[k]>0?'+':''}${Math.round(w.rel[k])}</b>`).join(' · ');
   const seal=Object.keys(G.seal).filter(id=>SECTS[id]).map(id=>SECTS[id].n),occ=Object.keys(G.occ).filter(id=>SECTS[id]).map(id=>`${SECTS[id].n}(${FAC4N[G.occ[id].by]||G.occ[id].by})`);
   const wars=G.wars.slice(-3).reverse().map(x=>`제${x.life}생 ${x.n}${x.won?` · ${sideName(x.won)} 승`:''}`);
-  return `<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`천하대전 중: ${G.war.plan.n}`:`천하대전까지 ${Math.ceil(yearsToWar())}년 (${ST.war}세)`}</span></div>
+  return `<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`천하대전 중: ${G.war.plan.n}`:s.flag.warDone?'천하대전이 끝났다':`천하대전까지 ${Math.ceil(yearsToWar())}년 (${ST.war}세)`}</span></div>
     <p>${ST.evFrom}세부터 강호의 사건이 반년마다 하나씩 열 번 찾아오고, ${ST.war}세가 되는 해에 천하대전이 터진다. 그 전에 죽으면 8세로 윤회하되, 세력의 힘과 관계·봉문·점령은 그대로 이어진다.</p>
     <p>예상 구도 <b class="gold">${plan.n}</b> <small class="dim">${plan.d}${plan.notes.length?' · '+plan.notes.join(', '):''}</small></p></div>
     <div class="card"><h4>세력의 힘</h4>${pow}<p>관계 ${rel} <small class="dim">(+20 이상이면 손을 잡고, -20 아래면 등을 돌린다)</small></p>
@@ -129,17 +131,18 @@ function warFoe(a,b){if(!warOn())return null;const sa=warSideOf(a),sb=warSideOf(
 const mySide=()=>warSideOf(myFac());
 const sidePow=s=>s.reduce((a,f)=>a+(wld().pow[f]||0),0);
 function warStart(){if(G.war&&G.war.life===P.lifeNo)return;const plan=warPlan();G.war={life:P.lifeNo,y:Math.floor(G.cal),plan,round:0,rounds:[],won:null};
-  storyBanner('천하대전',plan.n,'강호 정세');log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`);
+  storyBanner('천하대전',plan.n,'강호 정세');log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');feat(`천하대전(${plan.n})을 맞았다`);
   if(PS().flag.mediate){mediate();return}
   if(plan.sides.length<2){log('맞설 상대가 없어 대전은 흐지부지 끝났다.','info');warEnd();return}
   warRound()}
 function mediate(){const w=wld();for(const f of FAC4)powAdd(f,-5);for(const k in w.rel)relAdd(k,15);P.fame+=40;P.good+=10;
-  showBanner('중재',`${P.name}의 이름으로 칼을 거두다`);log(`${P.name}의 중재로 세력들이 칼을 거뒀다. 명성 +40, 선업 +10. 모든 세력의 관계 +15.`,'xp');P.feats.push(`${Math.floor(P.age)}세에 천하대전을 중재로 막았다`);
+  showBanner('중재',`${P.name}의 이름으로 칼을 거두다`);log(`${P.name}의 중재로 세력들이 칼을 거뒀다. 명성 +40, 선업 +10. 모든 세력의 관계 +15.`,'xp');feat(`천하대전을 중재로 막았다`);
   G.wars.push({life:P.lifeNo,y:G.war.y,n:'중재',won:null,lost:null,me:'중재'});G.war=null;PS().flag.warDone=true}
 const ENEMY_KINDS=()=>{const me=mySide(),out=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)for(const f of s)out.push(...FAC_KIND[f])});return out};
 function warRound(){const w=G.war,n=w.round+1;if(n>ST.rounds)return warEnd();w.round=n;w.cur={done:false};
-  const me=mySide(),enemy=ENEMY_KINDS();
-  if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
+  const me=mySide(),enemy=ENEMY_KINDS(),hide=!!PS().flag.hide;   // 10번 사건 '몸을 피한다'(flag.hide): 결전 임무·습격이 오지 않는다
+  if(me>=0&&hide)log(`제${n}차 결전이 벌어진다. 몸을 피해 이번 싸움에 나서지 않는다.`,'sys');
+  else if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
     log(`제${n}차 결전이 벌어진다. 임무 [${q.n}]: ${enemy.filter((k,i)=>i%2===0).join('·')} 6명을 꺾고 정세 창에서 보고하라.`,'sys');if(playing)raid(n)}
   else log(`제${n}차 결전이 벌어진다. ${me<0?'당신의 편은 이 싸움에 끼지 않았다.':''}`,'sys');
   storyBanner(`제${n}차 결전`,G.war.plan.n,'천하대전')}
@@ -150,8 +153,8 @@ function raid(n){if(G.duel||!REGION())return;const me=mySide(),facs=[];G.war.pla
   if(made){showBanner('습격',`${facs.map(f=>FAC4N[f]).join('·')}의 무인이 덮쳐 온다`);log(`${facs.map(f=>FAC4N[f]).join('·')}의 무인 ${made}명이 덮쳐 옵니다!`,'dmg')}}
 hook('questDone',q=>{if(!q.war||!warOn())return;G.war.cur.done=true;G.war.cur.q=q.n;log(`제${q.war}차 결전에서 공을 세웠다. 이번 차례에 내 편의 힘 +25.`,'xp')});
 // 한 차례의 승패를 가린다
-function warTally(){const w=G.war,me=mySide();const sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+Math.random()*15);
-  let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0?(w.cur&&w.cur.done?'공':'무'):'-'});
+function warTally(){const w=G.war,me=mySide();const fl=PS().flag,sc=w.plan.sides.map((s,i)=>sidePow(s)+(i===me&&w.cur&&w.cur.done?25:0)+(i===me&&fl.front?10:0)+Math.random()*15);   // flag.front: 앞장선 내 편 +10
+  let best=0;sc.forEach((v,i)=>{if(v>sc[best])best=i});w.rounds.push({win:best,sc:sc.map(Math.round),me:me>=0&&!fl.hide?(w.cur&&w.cur.done?'공':'무'):'-'});
   const wn=w.plan.sides[best];for(const f of wn)powAdd(f,2);popWarLoss(w.plan.sides.filter((s,i)=>i!==best).flat(),STORY.POP.roundLoss);
   log(`제${w.round}차 결전: ${sideName(wn)}이(가) 이겼다${me===best?' (내 편)':me>=0?' (내 편이 밀렸다)':''}.`,best===me?'xp':'dmg');
   for(const q of P.quests.slice())if(q.war&&q.war===w.round&&!(w.cur&&w.cur.done))P.quests.splice(P.quests.indexOf(q),1);
@@ -201,8 +204,8 @@ hook('sectAct',c=>{if(c.a!=='srecl'&&c.a!=='sopen')return;c.done=true;c.r=true;c
   const q=recl?{n:`${s.n} 탈환`,kind:'kill',mob:FAC_KIND[by],cnt:6,silver:200,vit:120,fame:25,good:0,have:0,key,sq:{t:'recl',sid:s.id,by}}:{n:`${s.n} 개문`,kind:'kill',mob:FAC_KIND[by],cnt:5,silver:120,vit:80,fame:15,good:0,have:0,key,sq:{t:'open',sid:s.id,by}};
   P.quests.push(q);log(`임무 [${q.n}]을(를) 맡았습니다. ${FAC4N[by]} 무인을 꺾고 정세 창에서 보고하라.`,'sys')});
 hook('questDone',q=>{if(!q.sq)return;const s=SECTS[q.sq.sid],by=q.sq.by;if(!s)return;
-  if(q.sq.t==='recl'){delete G.occ[s.id];powAdd(by,-5);powAdd(alFac(s.al),5);if(P.sect===s.id)addMerit(s.id,60);mobs=mobs.filter(m=>!m.chief);log(`${s.n} 본산을 되찾았다. ${masterTitle(s)}이 돌아온다.`,'xp');showBanner('탈환',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n} 본산을 되찾았다`);if(P.reg===`hq_${s.id}`||REGIONS[P.reg]&&REGIONS[P.reg].hq===s.id)runHooks('regionLoaded',P.reg)}
-  else{unsealSects([s.id]);powAdd(alFac(s.al),3);if(P.sect===s.id)addMerit(s.id,40);showBanner('개문',s.n);P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 산문을 열었다`)}});
+  if(q.sq.t==='recl'){delete G.occ[s.id];powAdd(by,-5);powAdd(alFac(s.al),5);if(P.sect===s.id)addMerit(s.id,60);mobs=mobs.filter(m=>!m.chief);log(`${s.n} 본산을 되찾았다. ${masterTitle(s)}이 돌아온다.`,'xp');showBanner('탈환',s.n);feat(`${s.n} 본산을 되찾았다`);if(P.reg===`hq_${s.id}`||REGIONS[P.reg]&&REGIONS[P.reg].hq===s.id)runHooks('regionLoaded',P.reg)}
+  else{unsealSects([s.id]);powAdd(alFac(s.al),3);if(P.sect===s.id)addMerit(s.id,40);showBanner('개문',s.n);feat(`${s.n}의 산문을 열었다`)}});
 // 정세 창의 천하대전·본산 카드
 function warCard(){const w=G.war;if(!warOn()){const last=G.wars[G.wars.length-1];if(!last||last.life!==P.lifeNo)return '';
     return `<div class="card"><h4>이번 생의 천하대전 <small class="dim">${last.n}</small></h4><p>${last.won?`${sideName(last.won)}의 승리 (${last.rounds.map((r,i)=>`${i+1}차 ${sideName(last.sides[r])}`).join(' · ')})`:last.n==='중재'?'중재로 칼을 거뒀다':'흐지부지 끝났다'}${last.me&&last.me!=='-'?` · 당신: ${last.me}`:''}</p></div>`}

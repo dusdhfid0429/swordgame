@@ -106,7 +106,7 @@ hook('duelEnd',({win,o,me})=>{const r=o?(o.realm??mobRealm({atk:o.atk,d:{}})):0;
 hook('kill',e=>{if(!e.duel&&!e.d.villager&&!e.d.passive&&mobRealm(e)>realmIdx())gainEnl(e.d.boss?.5:.15,e.d.boss?`${e.name}과의 사투에서`:'')});
 hook('mastDone',({id,s,before})=>{if(before<100&&s.p>=100)gainEnl(1.5,`${ARTS[id].n} 돈오:`)});
 hook('giyeon',c=>{const R=REGIONS[REG];
-  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');P.feats.push(`${Math.floor(P.age)}세에 ${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
+  if(R&&R.lm&&R.lm.t==='m'&&!P.gcs&&Math.random()<.3){c.done=true;addMat('공청석유');feat(`${R.name}에서 공청석유를 얻었다`);showBanner('공청석유','석실 천장에서 떨어지는 만년의 정수');log('기연: 석실 천장에서 떨어지는 공청석유를 얻었습니다. 먹으면 내공 1갑자가 늘어납니다.','xp');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6})}});
 hook('giyeonDone',()=>gainEnl(.5,'기연 속에서 전대 고수의 무리를 엿보았다.'));
 
 // ---- 영약: 공청석유(1갑자, 한 생에 한 번), 만년설삼(반 갑자, 한 생에 두 번) ----

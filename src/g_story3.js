@@ -13,10 +13,12 @@ const FIELD_ID=FIELD.id;
 const warSneak=()=>warOn()&&mySide()<0&&pfac()==='마';
 const warFieldOk=()=>warOn()&&G.war.round>=1&&(mySide()>=0||warSneak())&&!(G.war.cur&&G.war.cur.field);
 function warEnemyFacs(){const me=mySide(),out=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)out.push(...s)});return out}
+// 결전장·순찰조: 가로 6~34, 세로 y0~y1 띠 안 걸을 수 있는 곳에 세력 무인 하나 (g_guard.js도 쓴다)
+function spawnBand(f,elite,y0,y1,tag){for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null}
 function warGo(){if(!warFieldOk()||!REGION()||G.duel||P.hp<=0)return false;const w=G.war,n=w.round,me=mySide(),my=me>=0?w.plan.sides[me]:[],foes=warEnemyFacs();if(!foes.length)return false;
   w.cur.field=1;
   regionJump(FIELD_ID,20.5,35.5);let made=0,ally=0;
-  const put=(f,elite,y0,y1,tag)=>{for(let t=0;t<40;t++){const x=6+Math.random()*28,y=y0+Math.random()*(y1-y0);if(!walkAt(x,y))continue;const e=mkFac(f,elite,x,y);tag(e);mobs.push(e);return e}return null};
+  const put=spawnBand;
   for(let i=0;i<FIELD.ally&&my.length;i++)if(put(my[i%my.length],i===FIELD.ally-1?1:0,27,33,e=>{e.warAlly=n}))ally++;
   for(let i=0;i<FIELD.foe;i++)if(put(foes[i%foes.length],i<FIELD.elite?1:0,9,17,e=>{e.raid=n;e.aggro=true}))made++;
   const gun=foes.includes('관')&&w.plan.sides.some(s=>s.length===1&&s[0]==='관'),cfac=gun?'관':foes[0],cf=put(cfac,1,10,13,e=>{e.raid=n;e.warChief=1;e.aggro=true;e.realm=Math.min(5,Math.max(3,realmIdx()+1));if(typeof scaleMob==='function')scaleMob(e);e.maxHp=e.hp=Math.round(e.maxHp*FIELD.chiefHp);e.atk=Math.round(e.atk*FIELD.chiefAtk);e.name=gun?'관군 토벌대장':`${FAC4N[cfac]} 대장`});

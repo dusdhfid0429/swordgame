@@ -71,7 +71,12 @@ const learnedArts=()=>Object.keys(P.arts).filter(k=>k!=='base');
 const capArts=()=>learnedArts().filter(k=>!ARTS[k].gy);
 const allLearned=id=>A(id)&&A(id).f.every(Boolean);
 const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
-const adult=()=>P.age>=18;
+// 살아온 해: 반로환동(g_body.js)으로 몸의 나이(P.age)가 줄어도 줄지 않는다. 해마다 바뀌는 것(사부 전수·문파·맹 임무·천하대전 시계)은 이것으로 센다
+const realAge=()=>P.age+(P.ban?P.ban.yrs:0);
+// 문파·맹 임무는 해마다 한 번씩만 보고한다 (키에 해가 들어 있어 해가 바뀌면 비운다)
+// 행적: "N세에 …" (윤회 기록·비석에 남는다)
+function feat(t){P.feats.push(`${Math.floor(P.age)}세에 ${t}`)}
+const qDone=k=>!!(P.qdone&&P.qdone[k]);
 // 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
 const qiLife=()=>Math.floor(P.st.qi*.5);
 function recalc(){
@@ -236,7 +241,7 @@ function onKill(e){
   if(e.duel){duelEnd(true,e);return}
   const d=e.d,fam=P.spouse?1.1:1;let v=Math.round((d.xp||0)*fam*(1+P.children.length*.03));
   if(d.villager){v=P.side==='사'?8:0;P.evil+=P.side==='정'?20:8;log('양민이 죽었습니다. 무거운 악업이 쌓였습니다.','dmg')}
-  gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;P.feats.push(`${Math.floor(P.age)}세에 ${e.kind}을(를) 쓰러뜨렸다`)}
+  gainVit(v);P.kills++;if(d.good){P.good+=d.good*(P.side==='정'?2:1)}if(d.fame){P.fame+=d.fame;P.bosses++;feat(`${e.kind}을(를) 쓰러뜨렸다`)}
   if(v)log(`${e.name}을(를) 처치했습니다. 활력 +${v}`,'xp');
   for(const a of allies)if(a.kind==='disciple'&&dist(a,e)<8)discipleXp(a,1);
   for(const q of P.quests)if(q.kind==='kill'&&q.mob.includes(e.kind)&&q.have<q.cnt){q.have++;if(q.have>=q.cnt)log(`의뢰 [${q.n}] 완료. 의뢰판에서 보상을 받으세요.`,'xp')}
@@ -250,10 +255,6 @@ function randomBook(){
   const w=a.forms.map((f,i)=>1/(i+1));let r=Math.random()*w.reduce((x,y)=>x+y),i=0;while(r>w[i]){r-=w[i];i++}
   return mkBook(a.id,Math.min(i,a.forms.length-1));
 }
-function randomGear(m){const q=clamp(.6+Math.random()*.7*m,.5,1.6),s=pick(['weapon','weapon','armor','acc','boots']);
-  if(s==='weapon')return mkWeapon(Math.random()<.5&&!art().base?curCls():pick(CLS),q,0);
-  if(s==='armor')return mkGear('armor',pick(['마의','피갑','흑철갑']),q,{hp:26,def:4});if(s==='acc')return mkGear('acc',pick(['옥패','호신부','염주']),q,{qi:24,hm:5});
-  return mkGear('boots',pick(['짚신','무혜','운리혜']),q,{spd:.12,hm:4})}
 function pickUp(d){
   const it=d.it;
   if(it.silver){P.silver+=it.silver;addText(P.x,P.y,`은자 ${it.silver}`,'#e8c66e');return true}
@@ -345,7 +346,7 @@ function trainQi(){
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
 }
-const statCost=k=>Math.round((12+(P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
+const statCost=k=>Math.round((12+Math.max(0,P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
 function trainStat(k){
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
@@ -372,11 +373,11 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
 function giyeonBase(src){
   const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
-  if(gy){const a=gyLearn(gy);P.feats.push(`${Math.floor(P.age)}세에 기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
+  if(gy){const a=gyLearn(gy);feat(`기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
   if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
   else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
   else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
   else if(r<.85){const n=pick(Object.keys(SHINGONG));const v=src==='chest'?2:1;P.sg.pages[n]=(P.sg.pages[n]||0)+v;log(`기연: 절세신공 [${n}] ${v}장을 얻었습니다.`,'xp')}
   else{const b=randomBook();P.bag.push(b);log(`기연: 낡은 비급 [${b.name}]을(를) 발견했습니다.`,'xp')}
-  P.feats.push(`${Math.floor(P.age)}세에 기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
+  feat(`기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
 }

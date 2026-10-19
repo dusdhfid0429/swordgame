@@ -12,9 +12,7 @@ function addGiyeonArts(arts,pool,ults){
   const g=4,mul=GMUL[g];
   Object.entries(GY_ARTS).forEach(([id,a],ai)=>{
     const r=rng(911+a.n.charCodeAt(0)*13+a.n.charCodeAt(1)*3+ai);
-    const p=pool[a.cls].slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-    const first=p.findIndex(f=>['melee','multi','line'].includes(f.p)||(f.p==='proj'&&!f.full&&f.cnt<=2));
-    const pick=[p.splice(Math.max(0,first),1)[0],...p.slice(0,a.forms.length-1).sort((x,y)=>x.cd-y.cd)];
+    const pick=pickForms(pool[a.cls],r,a.forms.length);
     const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][ai%ults[a.cls].length],EC=EL[a.el];
     arts[id]=artFx({id,side:null,cls:a.cls,el:a.el,n:a.n,forms,gy:1,grade:g,

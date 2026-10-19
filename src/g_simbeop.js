@@ -65,7 +65,7 @@ function sangong(sc){const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)ret
   if(sc==='마공')P.mara=Math.min(100,(P.mara||0)+(typeof MARA!=='undefined'?MARA.sangong:20));else if(gone.some(x=>x.sc==='마공'))P.mara=0;   // 입마는 마성을 안고 시작하고, 마공을 버리면 마성도 사라진다 (v104)
   const lost=Math.floor((P.qiAcc||0)/2);P.qiAcc=(P.qiAcc||0)-lost;P.qiN=Math.max(0,P.qiN-Math.ceil(P.qiN/2));if(typeof recalc==='function')recalc();P.qi=Math.min(P.qi,P.maxQi);
   log(`${sc} 심법을 받아들이려 ${[...gone.map(x=>x.n),...(base?[simBase().n+'(봉인)']:[])].join('·')}을(를) 버리고 산공했습니다. 쌓은 내공 ${lost}이 흩어졌습니다.`,'dmg');showBanner('산공',`${sc}과 상극인 심법을 버렸다`);
-  P.feats.push(`${Math.floor(P.age)}세에 ${sc}에 들려 산공했다`);return true}
+  feat(`${sc}에 들려 산공했다`);return true}
 const sangongTxt=sc=>{const{gone,base}=sangongLoss(sc);if(!gone.length&&!base)return'';return`${sc}은 ${[...gone.map(x=>x.n),...(base?[simBase().n]:[])].join('·')}과 상극이라 입문하면 그 심법을 버리고(산공) 쌓은 내공 절반이 흩어진다.`};
 const simGain=()=>Math.round(SIDES[P.side].gain*SIM_GQ[simCur().g]*10)/10;
 const simMine=()=>[...(P.noBase?[]:[simBase()]),...Object.keys(P.sims||{}).map(id=>SIM[id]).filter(Boolean)].sort((a,b)=>a.g-b.g);

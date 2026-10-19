@@ -92,7 +92,7 @@ function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1));   // 맹 서열 1위 문파 +15% (g_maeng.js)
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');P.feats.push(`${Math.floor(P.age)}세에 ${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
+    if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;

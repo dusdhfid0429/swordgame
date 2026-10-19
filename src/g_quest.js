@@ -11,6 +11,14 @@ function questFrom(q){
   if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
   if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}
+// 문파·맹 임무 목록 (g_sect.js 문파 창, g_maeng.js 맹 창이 같이 쓴다)
+const misSpan=(q,on)=>{const p=on&&questProg(on);return q.kind==='kill'?`${mobTxt(q.mob)} ${on?p.have+'/':''}${q.cnt}`:`${q.mat} ${on?p.have+'/':''}${q.cnt}개`};
+const misRow=(q,sub,btn)=>`<div class="it"><div>${q.n.replace(/^\[[^\]]+\] /,'')}<span>${sub}</span></div><div class="ib">${btn}</div></div>`;
+const misReport=(on,i)=>{const d=questProg(on).done;return B('qdone:'+i,d?'보고하기':'진행 중',{pri:d,d:!d})};
+function missionRows(ms,{take,lbl,can=true,why=''}){return ms.map((q,qi)=>{const on=P.quests.find(x=>x.key===q.key);
+  return misRow(q,`${misSpan(q,on)} · ${lbl} ${q.merit} · 은자 ${q.silver}`,on?misReport(on,P.quests.indexOf(on)):qDone(q.key)?B(take(qi),'올해 마침',{d:1}):B(take(qi),'맡기',{d:!can||P.quests.length>=4,t:can?'':why}))}).join('')}
+// 지난해에 맡아 아직 들고 있는 임무
+function oldMissionRows(own,ms,lbl){const cur=ms.map(q=>q.key);return P.quests.map((q,i)=>[q,i]).filter(([q])=>own(q)&&!cur.includes(q.key)).map(([on,i])=>misRow(on,`${misSpan(on,on)} · ${lbl} ${on.merit} · 지난해 임무`,misReport(on,i))).join('')}
 function questProg(q){const kill=q.kind==='kill',have=kill?q.have||0:Math.min(q.cnt,P.mats[q.mat]||0);return{kill,have,done:have>=q.cnt,pct:Math.min(100,Math.round(have/q.cnt*100))}}
 // 대상이 나오는 곳 / 재료를 얻는 곳
 function questWhere(q){

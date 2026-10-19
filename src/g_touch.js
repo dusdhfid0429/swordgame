@@ -75,7 +75,6 @@ function specPick(){
   if(P.sp.독공&&P.scd.독공<=0&&P.qi>=SPEC.독공.qi&&e)return'독공';
   return null}   // 암기(비도)는 퀵슬롯 칸이 따로 있어 여기서는 고르지 않는다
 function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
-function potPick(){const a=P.mats.금창약>0,b=P.mats.소환단>0;if(!a&&!b)return null;if(a&&b)return P.hp/P.maxHp<=P.qi/P.maxQi?'금창약':'소환단';return a?'금창약':'소환단'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
 const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기',vault:'금고'};
 function ctxPick(){
@@ -90,18 +89,18 @@ let ctxT=0,ctxNow=null;   // 상황 버튼은 프레임 수가 아니라 실제 
 function touchHud(){
   if(P.mode!=='auto')P.mode='auto';
   if(touchAtk&&!paused&&!joy.on)touchTarget();
-  const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
-  const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
+  const a=art(),cd=(id,v)=>sty(qc($(id),'.cd'),'height',clamp(v,0,1)*100+'%');
+  const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));txt(qc(u,'span'),allLearned(a.id)?a.ult.n.slice(0,4):'필살');cd('t_ult',P.ucd/8);
   $('t_leap').hidden=!P.gkcur;$('t_step').hidden=!P.bcur;
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
-  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
+  {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);txt(qc($('t_step'),'span'),b.n.length<=3?b.n:'보법');cd('t_step',0)}
   const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
-  $('t_spec').hidden=!hasSp;$('t_spec').querySelector('span').textContent=k||'비기';$('t_spec').classList.toggle('off',!k);
+  $('t_spec').hidden=!hasSp;txt(qc($('t_spec'),'span'),k||'비기');$('t_spec').classList.toggle('off',!k);
   // 퀵슬롯: 금창약·소환단은 수량, 비도는 암기를 익혔을 때만 (수량·식는 시간)
-  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);b.querySelector('em').textContent=P.mats[k]||0;b.classList.toggle('off',!(P.mats[k]>0))}
-  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){b.querySelector('em').textContent=P.mats.비도||0;b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
+  for(const[id,k]of[['ts_gc','금창약'],['ts_sh','소환단']]){const b=$(id);txt(qc(b,'em'),P.mats[k]||0);b.classList.toggle('off',!(P.mats[k]>0))}
+  {const b=$('ts_bd');b.hidden=!P.sp.암기;if(P.sp.암기){txt(qc(b,'em'),P.mats.비도||0);b.classList.toggle('off',!(P.mats.비도>0)||P.scd.암기>0||P.qi<SPEC.암기.qi);cd('ts_bd',P.scd.암기/SPEC.암기.cd)}}
   $('t_atk').classList.toggle('on',!!(P.target&&P.target.hp>0));
-  {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
+  {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)txt(qc(c,'span'),ctxNow.l);
     $('t_run').classList.toggle('on',!!P.run);$('t_force').classList.toggle('on',forceAtk);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
     const med=P.medit||(!inCombat()&&!P.ride&&!simCur().none&&(P.qi<P.maxQi||P.hp<P.maxHp||(typeof isMa==='function'&&isMa()&&P.mara>0)||(typeof acadCurK==='function'&&acadCurK()==='medit')));   /* v136: 무관 운기 과제 중이면 내공이 가득해도 보인다 */   /* v130 (사용자): 마성이 쌓여 있어도 운기 단추를 보인다 (운기조식이 마성을 내린다) */$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}

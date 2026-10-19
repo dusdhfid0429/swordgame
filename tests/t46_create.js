@@ -10,7 +10,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.arts['정검4'].p=99;const gLow=mkGroups().length;P.arts['정검4'].p=100;P.cur='정검0';P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;
     const g0=mkGroups();openTrain();const h0=TRN.innerText;postGo('hq_hwasan');return{g0:g0.map(g=>g.cls+g.g+':'+g.ids.length),gLow,h0:h0.includes('무공 창안')}});
   await p.waitForTimeout(1500);
-  const s1=await p.evaluate(()=>{openTrain();renderTrain();const why0=mkWhy(0);P.realm=4;const why4=mkWhy(0);P.realm=5;renderTrain();return{reg:REG,place:pgPlace(),why0,why4,row:TRN.innerText.includes('무공 창안'),why1:mkWhy(0),btn:!!TRN.querySelector('[data-tr="mk:검:0"]:not([disabled])')}});
+  const s1=await p.evaluate(()=>{mobs=[];openTrain();   // 본산에 내려선 뒤 다가온 무인이 있으면 '싸움 중'으로 막힌다 (CI에서 가끔)
+    renderTrain();const why0=mkWhy(0);P.realm=4;const why4=mkWhy(0);P.realm=5;renderTrain();return{reg:REG,place:pgPlace(),why0,why4,row:TRN.innerText.includes('무공 창안'),why1:mkWhy(0),btn:!!TRN.querySelector('[data-tr="mk:검:0"]:not([disabled])')}});
   ok(`재료 묶음 ${s0.g0.join(',')} (숙련 99면 ${s0.gLow}묶음) · 개봉에서도 창안 줄은 보이고(${s0.h0}) 단추만 막힌다 · ${s1.reg}(${s1.place}) 삼류면 "${s1.why0}", 초절정이면 "${s1.why4}", 화경이면 단추 활성 ${s1.btn}`,s0.g0.join()==='검0:5'&&s0.gLow===0&&s0.h0&&s1.place&&/경지 필요/.test(s1.why0)&&/경지 필요/.test(s1.why4)&&s1.row&&s1.btn&&!s1.why1);
   // 창안 (성공을 고정)
   const r=await p.evaluate(()=>{window.__noPrompt=1;const age=P.age,vit=P.vit,R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return{age,vit,busy:trnBusy&&trnBusy.k}});

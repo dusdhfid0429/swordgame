@@ -19,7 +19,7 @@ function mgArtBlock(a){
 function mgJoinDang(k){const D=MDANG[k];if(!D||P.sect!=='cheonma'||P.dang)return false;
   P.dang=k;const a=ARTS[D.art];if(!P.arts[a.id])P.arts[a.id]={p:0,f:a.forms.map((f,i)=>i===0)};else P.arts[a.id].f[0]=true;
   log(`${D.n}에 들었습니다. 당의 무공 [${a.n}]의 첫 초식 [${a.forms[0].n}]을(를) 익혔습니다. 당 무공 비급은 공적이 30% 쌉니다.`,'xp');
-  showBanner(D.n,'천마신교 오당');P.feats.push(`${Math.floor(P.age)}세에 천마신교 ${D.n}에 들었다`);return true}
+  showBanner(D.n,'천마신교 오당');feat(`천마신교 ${D.n}에 들었다`);return true}
 
 // ---- 화면 ----
 function mgOrgHtml(){const i=P.sect==='cheonma'?rankIdx('cheonma'):-1,R=SRANK.magyo;
