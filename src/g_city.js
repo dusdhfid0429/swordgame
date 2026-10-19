@@ -37,6 +37,7 @@ function provOf(id){const R=REGIONS[id];if(!R)return null;if(R.prov)return R.pro
   if((m=/^pv_([a-z]+)/.exec(id)))return m[1];if((m=/^lm_([a-z]+)_\d+$/.exec(id)))return m[1];
   if(/^in_/.test(id))return provOf(id.replace(/^in_/,'').replace(/_\d+$/,''));
   if(R.maeng&&typeof MAENG!=='undefined')return MAENG[R.maeng].prov;
+  if(R.acadProv)return R.acadProv;   // 무관·수련곡 (g_academy.js)
   if(R.hq){for(const[k,p]of Object.entries(PROV))if(p.sects.includes(R.hq))return k;if(R.lmVia)return provOf(R.lmVia)}
   if(R.chain){for(const q of R.chain){const Q=REGIONS[q];if(Q&&Q.lmVia)return provOf(Q.lmVia)}}
   return null}

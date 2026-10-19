@@ -16,6 +16,11 @@ function slotPanel(){const i=SLOT,s=slotInfo(i);
   const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
     :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
   return `<div class="card" id="slotinfo">${body}${btns}</div>`}
+// 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
+function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
+  P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
+  for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
+  showTitle()}
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
@@ -35,11 +40,18 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='reset2'){STORE.del(SAVE_KEY);G=G0();slotAsk=false;showCreate()}
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s.startsWith('gg:')){CR.gg=+s.slice(3);renderCreate()}
-  else if(s.startsWith('cls:')){CR.cls=s.slice(4);renderCreate()}
+  else if(s.startsWith('cls:')){CR.cls=s.slice(4);if(CR.skip)renderSkip();else renderCreate()}
   else if(s.startsWith('diff:')){if(!G.lives)G.diff=+s.slice(5);renderCreate()}
   else if(s.startsWith('heir:')){const c=G.heir.children[+s.slice(5)];CR.heir=c;CR.name=c.name;CR.status=Math.max(G.nextStatus??1,2);CR.side=G.heir.side;CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s==='noheir'){CR.heir=null;CR.status=G.nextStatus??1;renderCreate()}
   else if(s==='start')beginLife();
+  // v138 (사용자): 윤회하면 무관 튜토리얼을 건너뛸 수 있다. 건너뛰면 병기·심법을 고르는 창을 거쳐 바로 강호에서 시작
+  else if(s==='skipacad'){CR.skip=1;CR.bob=ACAD_BOB.includes(CR.bob)?CR.bob:ACAD_BOB[0];CR.sim=CR.sim&&SIM[CR.sim]&&SIM[CR.sim].side===CR.side?CR.sim:ACAD_SIM[CR.side][0].id;renderSkip()}
+  else if(s.startsWith('amode:')){CR.amode=s.slice(6);renderCreate()}
+  else if(s==='skipback'){CR.skip=0;renderCreate()}
+  else if(s.startsWith('ssim:')){CR.sim=s.slice(5);renderSkip()}
+  else if(s.startsWith('sbob:')){CR.bob=s.slice(5);renderSkip()}
+  else if(s==='skipstart')beginLife(true);
   else if(s==='rebirth')showCreate();
 });
 let CR=null;
@@ -48,7 +60,8 @@ const rname=()=>pick(NAMES1)+pick(NAMES2)+(Math.random()<.6?pick(NAMES2):'');
 function rollGG(side){const n=STATUS[G.nextStatus??1].pick,idx=GEUNGOL[side].map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}return idx.slice(0,n).sort((a,b)=>a-b)}
 function showCreate(){
   scrEl.hidden=false;playing=false;paused=true;const st=G.nextStatus??1;
-  CR={name:rname(),side:'정',cls:'검',status:st,wis:Math.min(10,R1(3,7)+STATUS[st].wis+(G.wisCarry||0)),heir:null};CR.opts=rollGG('정');CR.gg=CR.opts[0];renderCreate();
+  // v143 (사용자 버그: 윤회했는데 무관 처음부터): 두 번째 생부터는 무관 건너뛰기가 기본으로 골라져 있고, 무관부터 하려면 따로 고른다
+  CR={name:rname(),side:'정',cls:'검',status:st,wis:Math.min(10,R1(3,7)+STATUS[st].wis+(G.wisCarry||0)),heir:null,amode:G.lives?'skip':'acad'};CR.opts=rollGG('정');CR.gg=CR.opts[0];renderCreate();
 }
 function renderCreate(){
   const st=STATUS[CR.status],gl=GEUNGOL[CR.side];
@@ -59,18 +72,35 @@ function renderCreate(){
     ${typeof diffPickHtml==='function'?diffPickHtml():''}
     ${heir}
     <div class="row2"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
-      <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>기초 내공 ${SIDES[s].base}</span></button>`).join('')}</div></div>
+      <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>${ACAD_OFF?`기초 내공 ${SIDES[s].base}`:acadOf(s).n}</span></button>`).join('')}</div></div>
     <p class="note">${SIDES[CR.side].d}</p>
     <div class="card"><h4>근골 <small class="dim">${st.n}은(는) ${st.pick}가지 중에서 고른다 · 근력/지구력/민첩력/본원진기, 합 32</small></h4>
       <div class="choice">${CR.opts.map(i=>{const g=gl[i];return `<button type="button" class="opt" data-s="gg:${i}" aria-pressed="${CR.gg===i}"><b>${g[0]}</b><span class="num">${g[1]} / ${g[2]} / ${g[3]} / ${g[4]}</span>${g[5]?'':'<span class="dim">창작 근골</span>'}</button>`}).join('')}</div></div>
-    <div class="card"><h4>처음 잡을 무기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급을 받는다</small></h4>
-      <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>
-    <div class="center"><button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">8세, 강호에 태어나다</button></div>`);
+    ${ACAD_OFF?`    <div class="card"><h4>처음 잡을 무기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급을 받는다</small></h4>
+      <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>`:G.lives?`<div class="card"><h4>어디서 시작할까 <small class="dim">전생을 거친 몸이다</small></h4><div class="choice">
+      <button type="button" class="opt" data-s="amode:skip" aria-pressed="${CR.amode==='skip'}"><b>무관 건너뛰기</b><span>병기·심법·보법만 골라 바로 강호에서 시작한다. 졸업 보상과 추천서는 없다.</span></button>
+      <button type="button" class="opt" data-s="amode:acad" aria-pressed="${CR.amode==='acad'}"><b>${acadOf(CR.side).n}부터</b><span>무관 과제를 처음부터 한다.${(G.acadN||0)>0?' 전생에 졸업했으면 관주에게 월반 시험을 볼 수 있다.':''}</span></button></div></div>`
+      :`<div class="card"><h4>${acadOf(CR.side).n}에서 시작 <small class="dim">무관 5단계를 마치고 이류가 되면 졸업한다</small></h4><p class="note">병기와 내공심법은 무관에서 직접 보고 고른다. ${acadOf(CR.side).hello}</p></div>`}
+    <div class="center">${!ACAD_OFF&&G.lives&&CR.amode==='skip'?'<button type="button" class="btn pri" data-s="skipacad" style="font-size:18px;padding:8px 26px">다음: 병기·심법·보법 고르기</button>'
+      :`<button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">${ACAD_OFF?'8세, 강호에 태어나다':`8세, ${acadOf(CR.side).n}에 들다`}</button>`}</div>`);
   const ni=$('nmi');if(ni)ni.addEventListener('input',()=>CR.name=ni.value);
 }
-function beginLife(){
+// 무관 건너뛰기 창: 병기 하나, 진영의 하승 심법 넷 중 하나
+function renderSkip(){
+  box.innerHTML=josa(`<h2 class="title" style="font-size:40px">무관 건너뛰기</h2>
+    <p class="note center">${acadOf(CR.side).n} 과제를 건너뛰고 바로 강호에서 시작한다. 병기·내공심법·보법을 고르자.</p>
+    <div class="card"><h4>병기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급과 병기를 받는다</small></h4>
+      <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>
+    <div class="card"><h4>하승 내공심법 <small class="dim">하나만 고른다 · 나머지는 맹 총관에게서 맹 공적으로 배울 수 있다</small></h4>
+      <div class="choice">${ACAD_SIM[CR.side].map(x=>{const m=SIM[x.id];return `<button type="button" class="opt" data-s="ssim:${x.id}" aria-pressed="${CR.sim===x.id}"><b>${m.n}</b><span>${m.sc} · ${m.el}${m.tr&&m.tr.length?' · '+simTraitTxt(m):''}</span></button>`}).join('')}</div></div>
+    <div class="card"><h4>보법 <small class="dim">회피기 · 직선은 적을 뚫고 무조건 나가고, 간파는 상대 등 뒤로 돌지만 실패할 수 있다 · 경공은 기초 경공(1단)을 받는다</small></h4>
+      <div class="choice">${ACAD_BOB.map(id=>{const b=BOBS[id];return `<button type="button" class="opt" data-s="sbob:${id}" aria-pressed="${CR.bob===id}"><b>${b.n}</b><span>${b.t==='line'?'직선':'간파'} · ${b.d}</span></button>`}).join('')}</div></div>
+    <div class="center"><button type="button" class="btn" data-s="skipback">돌아가기</button><button type="button" class="btn pri" data-s="skipstart" style="font-size:18px;padding:8px 26px">8세, 강호에 나서다</button></div>`);
+}
+function beginLife(skip){
   const nm=(CR.name||'').trim()||rname();const heir=CR.heir;
-  newLife({name:nm.slice(0,8),side:CR.side,gg:CR.gg,wis:CR.wis,status:CR.status,cls:CR.cls,bonusVit:G.bonusVit||0,silver:heir?G.heir.silver:0});
+  newLife({name:nm.slice(0,8),side:CR.side,gg:CR.gg,wis:CR.wis,status:CR.status,cls:ACAD_OFF||skip?CR.cls:null,bonusVit:G.bonusVit||0,silver:heir?G.heir.silver:0});
+  if(skip&&!ACAD_OFF)acadSkipStart(CR.sim,CR.bob);
   if(heir){P.feats.push(`${G.lives}번째 생의 자식으로 가문을 이었다`)}else{G.house=null;G.storage={mats:{},bag:[]}}
   G.heir=null;G.bonusVit=0;G.wisCarry=0;G.board=null;
   allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
@@ -80,12 +110,16 @@ function beginLife(){
 }
 function startPlay(fresh){
   scrEl.hidden=true;playing=true;paused=false;lastYear=Math.floor(P.age);logEl.innerHTML='';
-  if(fresh){log(`${P.name}, ${STATUS[P.status].n}의 자식으로 개봉에서 태어났습니다.`,'sys');
+  if(fresh&&acadOn()){const A=acadOf(P.side);log(`${P.name}, ${STATUS[P.status].n}의 자식으로 태어나 여덟 살에 ${A.n}에 들었습니다.`,'sys');
+    log(`"${A.hello}" 관주에게 말을 걸고, 왼쪽 위의 과제를 따라 배우자. 임무창(J · ☰ 메뉴 → 임무)에 자세히 나온다.`,'info');
+    log(TOUCH?'왼쪽 아래를 끌어 이동 · 사람 앞에서 행동 단추로 대화 · ☰ 메뉴의 조작법 참고':'땅 클릭 이동 · 사람을 눌러 대화 · F 행동 · 조작법 버튼 참고','info');showBanner(A.n,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
+  else if(fresh){log(`${P.name}, ${STATUS[P.status].n}의 자식으로 개봉에서 태어났습니다.`,'sys');
     log(TOUCH?'☰ 메뉴 → 행낭에서 비급을 읽어 첫 초식을 익히세요. ☰ 메뉴 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(T) 창에서 기본기와 내공을 다질 수 있습니다.','info');
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 공격 버튼으로 싸움 · ☰ 메뉴의 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else log(`${P.name}의 생을 이어갑니다. ${Math.floor(P.age)}세.`,'sys');
   // 새로 태어나면 개봉 성내에서, 이어 할 때는 마지막에 있던 곳에서 가장 가까운 성도에서 시작한다 (사용자 결정 2026-10-11)
-  const start=fresh?'gaebong':nearestCapital(P.reg||'gaebong');
+  // 무관(g_academy.js)을 졸업하기 전에는 새 생도 이어 하기도 무관 본관에서
+  const start=acadOn()?acadReg():fresh?'gaebong':nearestCapital(P.reg||'gaebong');
   if(REG!==start){mobs=[];drops=[];loadRegion(start)}P.reg=start;P.gateLock=0;
   const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
   if(!fresh&&start!=='gaebong')log(`${REGIONS[start].name}에서 다시 길을 나섭니다.`,'sys');saveGame(true);

@@ -12,10 +12,19 @@ function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
 // 맡은 임무와 진행도: 지역 이름 아래
 let qtrackKey='';
+// v136 (사용자): 임무 줄은 높이가 고정이고 스크롤된다. 누르면(끌어 스크롤하면 아님) 임무창이 열린다
+// v149 (사용자): 정세 줄을 누르면 정세창, 다른 줄은 임무창
+$('qtrack').addEventListener('click',e=>{if(!playing||!P)return;openPanel(e.target.closest('[data-story]')?'story':'quest')});
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const kill=q.kind==='kill',have=kill?q.have:Math.min(q.cnt,P.mats[q.mat]||0),done=have>=q.cnt,what=kill?q.mob.join('·')+' 처치':q.mat+' 납품';return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const key=rows.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rows.length;
-  el.innerHTML=rows.length?`<h5>맡은 임무 ${rows.length}</h5>`+rows.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):''}
+  const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)
+  // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
+  const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
+  const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
+  const key=ac+st+rest.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rest.length&&!ac&&!st;
+  el.innerHTML=ac+(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')}
+// 남은 시간: 한 시간 넘으면 시·분, 그 아래는 분·초, 1분 아래는 초
+function fmtLeft(sec){sec=Math.max(0,Math.ceil(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}시간 ${m}분`:m?`${m}분 ${s}초`:`${s}초`}
 let noteT;
 // 창(행낭·인물창 등)이나 수련 창이 열려 있을 때의 메시지는 화면 맨 위 레이어에 잠깐 띄웠다가 서서히 지운다.
 // 위치는 위쪽 상태창·지도 아래, 아래쪽 조이스틱·버튼 위라 조작을 가리지 않고, 터치도 통과한다.
@@ -31,6 +40,9 @@ function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()
 function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
 let bannerT;
 function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
+// v149 (사용자): 정세 사건은 창을 띄우지 않고 화면 가운데에 크게 박는다 (맵 이동 알림보다 세게, 터치는 통과)
+let sbanT;function storyBanner(t,s,k){const b=$('sban');if(!b)return;b.innerHTML=`<div class="bd"></div><div class="k">${esc(k||'강호 정세')}</div><div class="t">${esc(t)}</div>${s?`<div class="s">${esc(josa(s))}</div>`:''}`;
+  b.classList.remove('on');void b.offsetWidth;b.classList.add('on');clearTimeout(sbanT);sbanT=setTimeout(()=>b.classList.remove('on'),4300);shake=Math.max(shake||0,.25);if(typeof sfx==='function')sfx('ult')}
 function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -50,11 +62,12 @@ function press(b){
   if(b.form!==undefined)useForm(b.form);else if(b.u)ultimate();else if(b.sp)special(b.id);else if(b.sg)shingong();else if(b.con)useCon(b.id);
   else if(b.id==='leap')leap();else if(b.id==='medit')meditate();else if(b.id==='ridebtn')rideToggle();else if(b.id==='use')useNearest();
 }
-function meditate(){if(P.medit){P.medit=false;return}if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
+function meditate(){if(P.medit){P.medit=false;return}if(typeof simCur==='function'&&simCur().none){log('익힌 심법이 없어 운기조식을 할 수 없습니다.','info');return}   // v144 (사용자): 내공을 채우는 일도 심법을 익힌 뒤
+  if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('운기조식: 가만히 앉아 내공을 되찾는다. 내공은 운기조식과 회복약(소환단·보리죽)으로만 찬다.','info')}
 const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${SIDES[P.side].n}`;
+  $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${facName()}`;
   $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}`;
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();$('mag').style.display=ma?'':'none';if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$('mat').textContent=tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`}}
@@ -88,7 +101,7 @@ function plabel(f){
 let panel=null;
 const TITLES=GD.TITLES;
 let panelAt=0;
-function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0}
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0;runHooks('panelOpen',id)}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs,story:pStory}[panel];
@@ -98,7 +111,7 @@ function pChar(){
   const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
-  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${SIDES[P.side].n} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
+  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
@@ -282,6 +295,7 @@ function act(s){
     case'medit':closePanels();meditate();return;
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
+    case'totitle':toTitle();return;
     case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}

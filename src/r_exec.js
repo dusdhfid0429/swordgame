@@ -13,7 +13,7 @@ function GL(o,X){
   if(t>=2)fx.push({...o,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:.35,r:o.r&&o.r*1.08});
   if(t>=3)fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
 }
-const fArc=(X,r,spread,col,w,life)=>GL({t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)},X);
+const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);runHooks('slashFx',o)};   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
 const fRing=(X,c,r,col,w,life)=>GL({t:'ring2',x:c.x,y:c.y,r,col,w,life},X);
 const fLine=(X,len,col,w,life,wavy,off=0)=>{const e=rot(len,off);GL({t:'line',x:P.x,y:P.y,ex:e.x,ey:e.y,col,w,life,wavy},X)};

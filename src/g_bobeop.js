@@ -13,7 +13,8 @@ const BOBS=GD.BOBS;
 // 얻는 곳: 하승·중승은 개봉 잡화점 비급, 상승은 문파 본산에서 정식제자 이상 공적 100, 절정은 호법(당주) 이상 공적 300
 const BCOST=GD.BCOST,BRANK=GD.BRANK,BPRICE=GD.BPRICE;
 const bobOf=()=>BOBS[P.bcur]||BOBS.b_basic;
-function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur='b_basic';if(P.bcd2==null)P.bcd2=0}
+// v141 (사용자): 무관에서 시작하면 보법이 없다(P.bob={}, P.bcur=null). 병기 교두에게서 고른다. 옛 저장은 기초보법
+function bobInit(){if(!P.bob)P.bob={b_basic:1};if(!P.bcur||!P.bob[P.bcur])P.bcur=Object.keys(P.bob).find(id=>BOBS[id])||null;if(P.bcd2==null)P.bcd2=0}
 function bobBlock(id,viaSect){const b=BOBS[id];bobInit();if(P.bob[id])return'이미 익혔다';
   if(b.g>=2){if(!viaSect)return'문파에서';if(!P.sect)return'문파 제자만';if(rankIdx(P.sect)<BRANK[b.g])return`${rankName(P.sect,BRANK[b.g])} 이상`;if((P.merit[P.sect]||0)<BCOST[b.g])return`공적 ${BCOST[b.g]} 필요`}
   return null}
@@ -24,10 +25,11 @@ function mkBBook(id){const b=BOBS[id];return{id:++itemId,slot:'bbook',bob:id,nam
 // ---- 자리 찾기 ----
 // 가는 길이 막히지 않았나 (적은 빠져나가고, 벽·물·나무·바위에서 막힌다)
 function bobClear(x0,y0,x1,y1){const l=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(l/.3));for(let i=1;i<=n;i++){const t=i/n;if(!walkAt(x0+(x1-x0)*t,y0+(y1-y0)*t))return false}return true}
-function bobLine(b,dx,dy){const L=BG.len[b.g];let best=null;
-  for(let d=L;d>=.6;d-=.15){const x=P.x+dx*d,y=P.y+dy*d;if(!walkAt(x,y)||!bobClear(P.x,P.y,x,y))continue;
-    if(mobs.some(e=>e.hp>0&&Math.hypot(e.x-x,e.y-y)<.45))continue;best={x,y};break}
-  return best}
+// v142 (사용자): 직선 보법은 적을 뚫고 지나가며 무조건 나간다. 적과 겹치지 않는 가장 먼 자리 → 없으면 적 곁이라도 가장 먼 자리 → 벽에 붙어 있으면 제자리 회피(무적은 그대로)
+function bobLine(b,dx,dy){const L=BG.len[b.g];let best=null,any=null;
+  for(let d=L;d>=.15;d-=.15){const x=P.x+dx*d,y=P.y+dy*d;if(!walkAt(x,y)||!bobClear(P.x,P.y,x,y))continue;
+    if(!any)any={x,y};if(mobs.some(e=>e.hp>0&&Math.hypot(e.x-x,e.y-y)<.45))continue;best={x,y};break}
+  return best||any||{x:P.x,y:P.y}}
 // 간파: 후보 자리마다 점수를 매겨 가장 좋은 곳
 function bobFlank(b,jx,jy){
   const R=BG.rad[b.g],fs=foes().filter(e=>dist(e,P)<R+3).sort((a,c)=>dist(a,P)-dist(c,P)).slice(0,24);
@@ -52,15 +54,19 @@ const BOB_STAT=GD.BOB_STAT;
 function bobeop(){
   if(!P||P.hp<=0||P.leap)return false;bobInit();
   if(P.perch){perchDrop();return true}
+  if(!P.bcur){log('아직 익힌 보법이 없습니다.','info');return false}
   const b=bobOf(),q=BG.qi[b.g];
   if(P.qi<q){log('내공이 부족합니다.','info');return false}   // 쿨타임 없음: 내공이 있는 한 연달아 쓴다 (사용자 결정 2026-10-13)
   const t0=performance.now(),jx=joy.on?joy.gx:0,jy=joy.on?joy.gy:0;
   let dst=null;
   if(b.t==='flank')dst=bobFlank(b,jx,jy);
+  // v142 (사용자): 간파는 상대의 빈틈을 읽는 보법이라 읽기에 실패할 수 있다(등급이 높을수록 덜). 실패하면 내공만 쓰고 그 자리에서 휘청인다(무적 없음)
+  if(dst&&dst.T&&Math.random()*100<BG.fail[b.g]){P.qi-=q;P.path=null;P.chan=null;P.medit=false;addText(P.x,P.y,'간파 실패','#c98a6a');if(typeof sfx==='function')sfx('dodge');return false}
   if(!dst){const dx=jx||jy?jx:P.fx,dy=jx||jy?jy:P.fy;dst=bobLine(b,dx,dy)}
   BOB_STAT.ms=performance.now()-t0;
   if(!dst){addText(P.x,P.y,'막혔다','#9a8d72');return false}
   P.qi-=q;P.bcd2=0;P.inv=Math.max(P.inv,BG.inv[b.g]);P.path=null;P.chan=null;P.medit=false;
+  if(Math.hypot(dst.x-P.x,dst.y-P.y)<.1){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col:'190,220,255'});if(typeof sfx==='function')sfx('dodge');return true}   // 제자리 회피
   P.leap={sx:P.x,sy:P.y,ex:dst.x,ey:dst.y,t:0,dur:.2+Math.hypot(dst.x-P.x,dst.y-P.y)*.025,z0:0,z1:0,to:null,step:1};
   for(let i=0;i<4;i++)fx.push({t:'ghost',x:P.x+(dst.x-P.x)*i/4,y:P.y+(dst.y-P.y)*i/4,life:.3+i*.05,col:'190,220,255'});
   if(dst.T){P.target=dst.T;if(dst.back>.5){P.buff.crit=Math.max(P.buff.crit||0,1.4);addText(dst.x,dst.y,'배후','#ffd36a')}}
@@ -78,7 +84,7 @@ function bobLand(L){if(L.step&&P.target&&P.target.hp>0)face(P.target.x,P.target.
 
 // ---- 화면 ----
 function bobRow(id,btn){const b=BOBS[id],on=P.bcur===id;
-  return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${BG.len[b.g]}칸 미끄러짐`:`둘레 ${BG.rad[b.g]}칸을 살핌`} · 내공 ${BG.qi[b.g]}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
+  return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${BG.len[b.g]}칸 미끄러짐 · 적 투과 · 무조건 발동`:`둘레 ${BG.rad[b.g]}칸을 살핌 · 실패 ${BG.fail[b.g]}%`} · 내공 ${BG.qi[b.g]}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function bobArtsHtml(){bobInit();const mine=Object.keys(BOBS).filter(id=>P.bob[id]);
   return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 버튼':'Shift 또는 W'}</small></h4><div class="list">${mine.map(id=>bobRow(id,P.bcur===id?'':B('bsel:'+id,'쓰기'))).join('')}</div>
     <p class="note">직선 보법은 조이스틱(또는 바라보는) 방향으로 곧게 빠지고, 간파 보법은 상대 등 뒤나 덜 둘러싸인 자리를 찾아 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타. 경공은 멀리·높이 뛰는 이동기로 따로 쓴다.</p>

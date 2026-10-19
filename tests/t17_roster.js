@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:800}});
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1200);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1200);
   const r=await p.evaluate(()=>{const S=Object.values(SECTS),c=al=>S.filter(s=>s.al===al).length;
     const prov={};for(const[k,v]of Object.entries(PROV))for(const sid of v.sects)prov[sid]=(prov[sid]||[]).concat(k);
     const where=S.filter(s=>s.id!=='shaolin'&&(prov[s.id]||[]).length!==1).map(s=>s.n);

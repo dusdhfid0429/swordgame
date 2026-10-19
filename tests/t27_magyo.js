@@ -6,10 +6,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const c=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await c.newPage();
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:사"]');await p.tap('[data-s="cls:권"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   // 신강 십만대산 산 맵 중턱 포털에서 마교 여덟 맵으로
-  await p.evaluate(()=>{P.silver=5000;P.fame=150;const g=REGIONS[REGIONS.hq_cheonma_1.lmVia].gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
+  await p.evaluate(()=>{P.silver=5000;P.fame=150;P.inv=9999;   /* 입교 전 마교도에게 맞아 죽어 사망 화면이 탭을 가리던 것 (가끔 실패) */const g=REGIONS[REGIONS.hq_cheonma_1.lmVia].gates.find(q=>q.to==='hq_cheonma_1');travel(g)});await p.waitForTimeout(1500);
   const r=await p.evaluate(()=>({via:REGIONS.hq_cheonma_1.lmVia,reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
     npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,npcsOf(id).length]))}));
   ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes(r.via));
@@ -50,6 +50,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 하산하면 당도 잃는다
   const lv=await p.evaluate(()=>{sectAct('sleave');return P.dang});
   ok('하산하면 당이 없어짐',lv===null);
+  // v150 (사용자 버그): 마교에 들면 인물 정보와 이름 아래 줄에 '마교' (예전엔 태어난 계열 '사파'가 나왔다)
+  const fn=await p.evaluate(()=>{const s0=P.sect;P.sect='cheonma';closePanels();openPanel('char');const o={side:P.side,char:$('wbody').textContent,fac:facName()};closePanels();P.sect=s0;return o});
+  ok(`마교 가입: 인물창 소속 ${fn.fac} (태어난 계열 ${fn.side})`,fn.fac==='마교'&&fn.char.includes('마교'));
   // 예전 72×72 십만대산 자리에서 불러오면 맵 안 출입구 앞으로
   const old=await p.evaluate(()=>{loadRegion('gaebong');P.reg='hq_cheonma';P.x=60.5;P.y=66.5;loadRegion('hq_cheonma');return walkAt(P.x,P.y)});
   ok('예전 본산 자리 저장도 걸을 수 있는 곳에 놓임',old);

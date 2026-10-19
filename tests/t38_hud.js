@@ -4,7 +4,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 1. 의뢰를 맡으면 지역 이름 아래에 진행도가 뜬다
   const t0=await p.evaluate(()=>$('qtrack').hidden);
@@ -20,6 +20,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const rep=await p.evaluate(()=>{try{const h=sectDetail(SECTS[P.sect],true);return{has:h.includes('지난해 임무'),rep:h.includes('보고하기')}}catch(e){return{err:e.message}}});
   ok(`장문인 창에 지난해 임무가 보고 가능 상태로 보인다 ${JSON.stringify(rep)}`,rep.has&&rep.rep);
   // 3. 메시지창을 누르면 기록창이 열리고, 끝까지 내려도 닫기 버튼이 보인다
+  await p.waitForTimeout(700);   // v148: 새로 맡은 사냥 임무의 출몰지 알림이 먼저 지나가게
   await p.evaluate(()=>{for(let i=0;i<40;i++)log('기록 시험 '+i,'sys')});
   await p.click('#log');await p.waitForTimeout(300);
   const lg=await p.evaluate(()=>({panel,n:document.querySelectorAll('.logs p').length,first:document.querySelector('.logs p').textContent}));

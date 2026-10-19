@@ -92,6 +92,7 @@ function touchHud(){
   if(touchAtk&&!paused&&!joy.on)touchTarget();
   const a=art(),cd=(id,v)=>$(id).querySelector('.cd').style.height=clamp(v,0,1)*100+'%';
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));u.querySelector('span').textContent=allLearned(a.id)?a.ult.n.slice(0,4):'필살';cd('t_ult',P.ucd/8);
+  $('t_leap').hidden=!P.gkcur;$('t_step').hidden=!P.bcur;
   $('t_leap').classList.toggle('off',P.qi<ggQi(ggNext()));cd('t_leap',P.leap&&ggNext()===1?1:0);
   {const b=bobOf();$('t_step').classList.toggle('off',P.qi<BG.qi[b.g]);$('t_step').querySelector('span').textContent=b.n.length<=3?b.n:'보법';cd('t_step',0)}
   const hasSp=P.sg.name||P.sp.독공||P.sp.점혈,k=hasSp?specPick():null;
@@ -103,7 +104,7 @@ function touchHud(){
   {const now=performance.now();if(now-ctxT>=150){ctxT=now;ctxNow=ctxPick();const c=$('t_ctx');c.hidden=!ctxNow;if(ctxNow)c.querySelector('span').textContent=ctxNow.l;
     $('t_run').classList.toggle('on',!!P.run);$('t_force').classList.toggle('on',forceAtk);
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
-    const med=P.medit||(!inCombat()&&!P.ride&&(P.qi<P.maxQi||P.hp<P.maxHp||(typeof isMa==='function'&&isMa()&&P.mara>0)));   /* v130 (사용자): 마성이 쌓여 있어도 운기 단추를 보인다 (운기조식이 마성을 내린다) */$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
+    const med=P.medit||(!inCombat()&&!P.ride&&!simCur().none&&(P.qi<P.maxQi||P.hp<P.maxHp||(typeof isMa==='function'&&isMa()&&P.mara>0)||(typeof acadCurK==='function'&&acadCurK()==='medit')));   /* v136: 무관 운기 과제 중이면 내공이 가득해도 보인다 */   /* v130 (사용자): 마성이 쌓여 있어도 운기 단추를 보인다 (운기조식이 마성을 내린다) */$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
@@ -111,7 +112,7 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('totitle','저장 칸 고르기')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
 }
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);

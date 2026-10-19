@@ -67,7 +67,7 @@ function updateP(dt){
   }
   if(P.moving){P.runT=.14;P.runPh=(P.runPh||0)+dt;P.medit=false;if(P.chan&&!P.chan.walk)P.chan=null}else if(P.runT<=0)P.runPh=0;
   if(P.ride){P.ride.x=P.x;P.ride.y=P.y;P.ride.fx=P.fx;P.ride.fy=P.fy;P.ride.moving=P.moving}
-  if(G.duel&&!G.ldDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
+  if(G.duel&&!G.ldDuel&&!G.acadDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
   a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=f.qi)r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
@@ -180,7 +180,7 @@ function rideToggle(){
 }
 // ================= 경공: 질주 and 도약 (also over roofs and walls) =================
 function leap(){
-  if(P.hp<=0)return;const st=ggNext(),qi=ggQi(st);if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
+  if(P.hp<=0)return;ggInit();if(!P.gkcur){if(!P.perch)log('아직 익힌 경공이 없습니다.','info');return}const st=ggNext(),qi=ggQi(st);if(P.leap&&st===1)return;if(P.qi<qi){log('내공이 부족합니다.','info');return}
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
   const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;
@@ -269,7 +269,7 @@ function newYear(){
 // 생일 선물: 전생의 활력 한 몫. 활력이 가득 차 못 받은 만큼은 다음 생일로 넘긴다.
 function birthdayVit(){
   if(!P.vitInst)P.vitInst=[];const n=P.vitInst.length;if(!n&&!(P.vitCarry>0))return;
-  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=v-got;
+  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=Math.max(0,Math.round(v-got));
   if(got>0)log(`생일을 맞아 전생의 활력 ${got}을(를) 받았습니다.${n?` (${6-n}/5)`:''}${P.vitCarry?` 활력이 가득 차 ${P.vitCarry}은(는) 다음 생일로 넘깁니다.`:''}`,'xp');
   else if(P.vitCarry)log(`활력이 가득 차 전생의 활력 ${P.vitCarry}을(를) 다음 생일로 넘깁니다.`,'info');
 }
@@ -299,6 +299,7 @@ function duelStart(){
   runHooks('duelStart',o,e);
 }
 function duelEnd(win,e){
+  if(G.acadDuel){acadDuelEnd(win,e);return}   // 무관 대련·월반 시험·졸업 비무 (g_academy.js)
   const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);P.feats.push(`${Math.floor(P.age)}세에 비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}

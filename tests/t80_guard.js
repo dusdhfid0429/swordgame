@@ -4,11 +4,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('dialog',d=>d.accept());p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForFunction(()=>typeof loadRegion==='function');
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 산문 맵: 출입구마다 문지기 둘(바깥을 본다), 대문파 순찰조 2×3. 순찰조는 시간이 지나면 움직인다. 같은 편이라 평화
   const a=await p.evaluate(()=>{paused=true;popInit();regionJump('hq_hwasan_gate',20,24);const gs=REGION().gates.filter(g=>!g.door).length,gd=mobs.filter(m=>m.fixed==='gate'),pt=mobs.filter(m=>m.fixed==='patrol');
-    const out=gd.every(m=>{const g=REGION().gates.reduce((b,g)=>dist(g,m)<dist(b,m)?g:b);return (g.y<NH/2)?m.fy<0:m.fy>0});const p0=pt.map(m=>[m.x,m.y]);for(let i=0;i<80;i++)update(.1);const moved=pt.filter((m,i)=>Math.hypot(m.x-p0[i][0],m.y-p0[i][1])>1).length;
+    const out=gd.every(m=>{const g=REGION().gates.reduce((b,g)=>dist(g,m)<dist(b,m)?g:b);return (g.y<NH/2)?m.fy<0:m.fy>0});const p0=pt.map(m=>[m.x,m.y]),far=pt.map(()=>0);for(let i=0;i<80;i++){update(.1);pt.forEach((m,j)=>far[j]=Math.max(far[j],Math.hypot(m.x-p0[j][0],m.y-p0[j][1])))}const moved=far.filter(d=>d>1).length;   // 끝 위치가 아니라 8초 동안 가장 멀리 간 거리 (순찰 경로를 돌아 제자리 근처로 오거나 쉬는 때가 있다)
     return{gs,gd:gd.length,out,pt:pt.length,lead:pt.filter(m=>m.route&&!m.follow).length,moved,peace:[...gd,...pt].every(m=>peaceful(m)),names:[...new Set([...gd,...pt].map(m=>m.name))].join('·')}});
   ok(`산문: 출입구 ${a.gs}개 문지기 ${a.gd}명 바깥 보기 ${a.out} · 순찰 ${a.pt}명(조장 ${a.lead}) 8초 뒤 이동 ${a.moved}명 · 평화 ${a.peace} [${a.names}]`,a.gd===a.gs*2&&a.out&&a.pt===6&&a.lead===2&&a.moved>=4&&a.peace);
   // 2. 리젠 상한에 세지 않는다: 문지기·순찰을 빼고 정파 무인이 평소 상한만큼 선다

@@ -57,8 +57,15 @@ const yearsToWar=()=>Math.max(0,ST.war-P.age);
 // ---- 사건 열기·고르기·미루기 ----
 const evOf=id=>SEV.find(e=>e.id===id);
 function evState(e){const s=PS();return s.pick[e.id]!=null?'done':s.open===e.id?'open':'wait'}
-function openEvent(e){const s=PS();s.open=e.id;showBanner(e.n,'강호의 사건 · 정세 창(N)에서 선택');log(`[사건] ${e.n}: ${e.t}`,'sys');P.feats.push(`${Math.floor(P.age)}세에 ${e.n}을(를) 마주했다`);
-  if(playing&&!trnOpen&&(!panel||panel==='story')){if(panel==='story'&&!$('win').hidden)renderOpen();else{panel=null;openPanel('story')}}}
+// v149 (사용자): 사건이 터지면 창을 띄우지 않고 화면에 크게 알린다. 정세 줄(맨 위)을 누르거나 N으로 정세창을 연다
+function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');P.feats.push(`${Math.floor(P.age)}세에 ${e.n}을(를) 마주했다`);
+  if(panel==='story'&&!$('win').hidden)renderOpen()}
+// 정세 줄: 고를 사건(다음 사건이 열리면 저절로 흘러간다)과 정세 임무. left = 남은 초 (나이 → 1년 YEAR_SEC초)
+function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-P.age)*YEAR_SEC;
+  if(s.open){const e=evOf(s.open),i=SEV.indexOf(e),nx=SEV.slice(i+1).find(o=>s.pick[o.id]==null),due=nx?nx.age:ST.war;out.push({n:`사건 · ${e.n}`,prog:'선택 대기',left:sec(due),lbl:'흘러가기까지'})}
+  for(const q of P.quests||[]){if(!q.story&&!q.war&&!q.sq)continue;const p=questProg(q);
+    const left=q.war?sec(Math.floor(P.age)+1):q.story&&P.age<ST.war?sec(ST.war):null,lbl=q.war?'이번 결전 끝까지':'천하대전까지';out.push({q,n:q.n,prog:`${p.have}/${q.cnt}`,done:p.done,left,lbl})}
+  return out}
 function pickChoice(e,i,auto){const s=PS(),ch=e.ch[i];if(!ch||s.pick[e.id]!=null)return false;if(!auto&&ch.fac&&ch.fac!==myFac()){log(`${FAC4N[ch.fac]}의 길이다. ${FAC4N[myFac()]}인 당신은 고를 수 없다.`,'info');return false}if(!auto&&!condOk(ch.req)){log(`아직 할 수 없다: ${condTxt(ch.req)}`,'info');return false}
   s.pick[e.id]=i;if(s.open===e.id)s.open=null;
   log(auto?`[${e.n}] 손쓰지 못한 채 흘러갔다: ${ch.n}`:`[${e.n}] ${ch.n}`,auto?'info':'xp');
@@ -122,7 +129,7 @@ function warFoe(a,b){if(!warOn())return null;const sa=warSideOf(a),sb=warSideOf(
 const mySide=()=>warSideOf(myFac());
 const sidePow=s=>s.reduce((a,f)=>a+(wld().pow[f]||0),0);
 function warStart(){if(G.war&&G.war.life===P.lifeNo)return;const plan=warPlan();G.war={life:P.lifeNo,y:Math.floor(G.cal),plan,round:0,rounds:[],won:null};
-  showBanner('천하대전',plan.n);log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`);
+  storyBanner('천하대전',plan.n,'강호 정세');log(`천하대전이 터졌다: ${plan.n}. ${plan.d}${plan.notes.length?' '+plan.notes.join('. ')+'.':''}`,'dmg');P.feats.push(`${Math.floor(P.age)}세에 천하대전(${plan.n})을 맞았다`);
   if(PS().flag.mediate){mediate();return}
   if(plan.sides.length<2){log('맞설 상대가 없어 대전은 흐지부지 끝났다.','info');warEnd();return}
   warRound()}
@@ -135,7 +142,7 @@ function warRound(){const w=G.war,n=w.round+1;if(n>ST.rounds)return warEnd();w.r
   if(me>=0&&enemy.length){const q={n:`제${n}차 결전: 적 세력 격파`,kind:'kill',mob:enemy,cnt:6,silver:150,vit:100,fame:20,good:0,have:0,war:n,key:'war:'+n};if(!P.quests.some(o=>o.key===q.key))P.quests.push(q);
     log(`제${n}차 결전이 벌어진다. 임무 [${q.n}]: ${enemy.filter((k,i)=>i%2===0).join('·')} 6명을 꺾고 정세 창에서 보고하라.`,'sys');if(playing)raid(n)}
   else log(`제${n}차 결전이 벌어진다. ${me<0?'당신의 편은 이 싸움에 끼지 않았다.':''}`,'sys');
-  showBanner(`제${n}차 결전`,G.war.plan.n)}
+  storyBanner(`제${n}차 결전`,G.war.plan.n,'천하대전')}
 // 습격: 적 세력 무인이 플레이어 둘레에 나타난다 (무인 넷 + 고수 하나). 비무·무덤 중엔 안 온다
 function raid(n){if(G.duel||!REGION())return;const me=mySide(),facs=[];G.war.plan.sides.forEach((s,i)=>{if(i!==me)facs.push(...s)});if(!facs.length)return;
   let made=0;for(let t=0;t<60&&made<5;t++){const a=Math.random()*Math.PI*2,r=6+Math.random()*3,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!walkAt(x,y))continue;

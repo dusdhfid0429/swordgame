@@ -3,7 +3,7 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1280,height:800}});
   const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(3500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(3500);
   await p.screenshot({path:__dirname+'/shots/s_title.png'});
   await p.click('[data-s="new"]');await p.waitForTimeout(300);await p.screenshot({path:__dirname+'/shots/s_create.png'});
   await p.click('[data-s="start"]');await p.waitForTimeout(1500);

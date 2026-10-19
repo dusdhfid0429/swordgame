@@ -6,7 +6,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const p=await b.newPage({viewport:{width:1100,height:760}});
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForTimeout(500);
   await p.evaluate(()=>{P.hp=P.maxHp=99999;P.mats['배추씨']=(P.mats['배추씨']||0)+1;const pl=plots[0];pl.crop=Object.keys(CROPS)[0];pl.g=.5});
   // 북쪽 출입구 앞에서 걸어 들어간다

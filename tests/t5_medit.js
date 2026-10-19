@@ -5,7 +5,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:900,height:700},deviceScaleFactor:2});
   const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message));
-  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html'));await p.waitForTimeout(1500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForTimeout(500);
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
