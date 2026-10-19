@@ -2107,6 +2107,7 @@ function questCard(q,i){const f=questFrom(q),p=questProg(q);
   const rew=[`은자 ${q.silver}`,q.vit?`활력 ${q.vit}`:'',q.fame?`명성 ${q.fame}`:'',q.good?`선업 ${q.good}`:'',f.merit].filter(Boolean).join(' · ');
   return `<div class="card"><div class="row2"><h4>${esc(q.n)} ${p.done?'<small class="good">완료 · 보고하면 보상</small>':''}</h4><span class="tag">${f.n}</span></div>
     <p>${p.kill?'처치':'납품'} <b class="gold">${questWhere(q)}</b></p>
+    ${p.kill&&q.near&&q.near.some(o=>o.t)?`<p class="note">맡을 때 가장 가까운 출몰지: ${q.near.filter(o=>o.t).map(o=>`${esc(o.k)} <b>${esc(o.t)}</b>`).join(' · ')}</p>`:''}
     <p>진행 <b class="num ${p.done?'good':''}">${p.have}/${q.cnt}</b>${p.kill?'':` <small class="dim">(가진 것 ${P.mats[q.mat]||0})</small>`}</p><div class="mbar"><i style="width:${p.pct}%;background:${p.done?'#7fc77a':'#c9a24a'}"></i></div>
     <p>보상 ${rew}</p><p class="note">보고: ${f.at}</p>
     <div class="row2"><span></span>${B('qdrop:'+i,'포기')}</div></div>`}
@@ -4725,15 +4726,30 @@ for(const[k,list]of Object.entries(PV_LAIRS)){const R=REGIONS[pvId(k)],S=R.size;
   const z=R.zone;R.zone=(x,y)=>{const l=R.lairs.find(q=>Math.hypot(q.x-x,q.y-y)<7);return l?`${R.name} · ${l.n}`:z(x,y)}}
 // 사냥 임무의 적이 어디에 나오는지 (사용자 질문 2026-10-13 "혈교가 있어?": 혈교 동굴은 하남성 남동부 맵의 소굴이라 임무 글만 봐서는 찾기 어려웠다)
 // 모든 지역의 spawns·bosses에서 그 종류를 찾아 지역 이름 두 곳까지. 문파 본산 안쪽 맵보다 들판·소굴을 먼저.
-const MOB_WHERE={};
-function mobWhere(kind){if(MOB_WHERE[kind]!==undefined)return MOB_WHERE[kind];const names=[],hq=[];
+const MOB_WHERE={},MOB_SPOTS={};
+// 그 종류가 나오는 지역들 [{id, n(지역 이름 + 소굴), hq(문파 본산 안쪽)}]
+function mobSpots(kind){if(MOB_SPOTS[kind])return MOB_SPOTS[kind];const out=[];
   for(const[id,R]of Object.entries(REGIONS)){if(typeof isPvFull==='function'&&isPvFull(id))continue;   // 성 전체(조각 내기 전)는 사람이 가는 맵이 아니다
     // 조각 맵은 성 전체의 spawns를 그대로 물려받으므로, 이 맵 안에서 실제로 나올 자리가 있는지 띄엄띄엄 재 본다
     const S=R.size||40,H=R.h||S,sp=(R.spawns||[]).filter(s=>s[0]===kind),at=t=>{for(let y=1;y<H-1;y+=2)for(let x=1;x<S-1;x+=2){try{if(t(x,y))return{x,y}}catch(e){return{x,y}}}return null};
     let hit=null;for(const s of sp){hit=at(s[2]);if(hit)break}const boss=(R.bosses||[]).find(b=>b[0]===kind);if(!hit&&!boss)continue;
     const w=R.win,F=w?REGIONS[pvId(w.k)]:R,px=hit?hit.x+.5:boss[1],py=hit?hit.y+.5:boss[2],fx=px+(w?w.c*PV_W:0),fy=py+(w?w.r*PV_W:0);
-    const lair=(F.lairs||[]).find(l=>Math.hypot(l.x-fx,l.y-fy)<7.5),n=R.name+(lair?' '+lair.n:'');(id.startsWith('hq_')||id.startsWith('in_')?hq:names).push(n)}
-  const all=[...new Set(names.concat(hq))];return MOB_WHERE[kind]=all.length?all.slice(0,2).join('·')+(all.length>2?' 등':''):''}
+    const lair=(F.lairs||[]).find(l=>Math.hypot(l.x-fx,l.y-fy)<7.5),n=R.name+(lair?' '+lair.n:'');out.push({id,n,hq:id.startsWith('hq_')||id.startsWith('in_')})}
+  return MOB_SPOTS[kind]=out}
+function mobWhere(kind){if(MOB_WHERE[kind]!==undefined)return MOB_WHERE[kind];const sp=mobSpots(kind);
+  const all=[...new Set(sp.filter(o=>!o.hq).concat(sp.filter(o=>o.hq)).map(o=>o.n))];return MOB_WHERE[kind]=all.length?all.slice(0,2).join('·')+(all.length>2?' 등':''):''}
+// v148 (사용자): 사냥 임무를 맡으면 지금 자리에서 가장 가까운 출몰지를 알려 준다. 가깝다 = 지역을 몇 번 건너야 하나 (출입구·성 맵 가장자리로 이어진 길, 너비 우선)
+function regHops(from){const d={[from]:0},q=[from];
+  const nb=id=>{const R=REGIONS[id];if(!R)return[];const o=[];for(const g of R.gates||[]){let t=g.to;if(typeof isPvFull==='function'&&isPvFull(t))t=pvSplitAt(t,g.tx,g.ty).id;o.push(t)}
+    for(const e of Object.values(R.edges||{}))if(e)o.push(e);return o};
+  while(q.length){const c=q.shift();for(const n of nb(c))if(REGIONS[n]&&!(n in d)){d[n]=d[c]+1;q.push(n)}}return d}
+function mobNearest(kind,from=REG){const sp=mobSpots(kind);if(!sp.length)return null;const d=regHops(from);
+  let best=null;for(const o of sp){const h=d[o.id]??999;if(!best||h<best.h||(h===best.h&&best.hq&&!o.hq))best={...o,h}}return best}
+const mobNearTxt=b=>!b?'':b.h===0?`바로 이 지역 (${b.n})`:b.h>=999?b.n:`${b.n} · 여기서 지역 ${b.h}곳 건너`;
+// 새로 맡은 사냥 임무를 찾아 한 번 알린다 (임무를 주는 곳이 여러 군데라 맡는 자리마다 넣지 않고 여기서 본다)
+let qNearT=0;hook('tick',dt=>{if(!P||!P.quests||(qNearT-=dt)>0)return;qNearT=.5;
+  for(const q of P.quests){if(q.kind!=='kill'||q.near)continue;q.near=[...new Set(q.mob)].map(k=>{const b=mobNearest(k);return{k,t:mobNearTxt(b)}});
+    const w=q.near.filter(o=>o.t);if(w.length)log(`[${q.n}] 가장 가까운 출몰지: ${w.map(o=>`${o.k} ${o.t}`).join(' / ')}`,'info')}});
 const mobTxt=list=>{const w=[...new Set(list.map(mobWhere).filter(Boolean))];return list.join('·')+(w.length?` <small class="dim">(${w.join(' / ')})</small>`:'')};
 // 무림전도의 도시·명소·산·지형 자리 (g_landmark.js). 출입구·소굴이 정해진 뒤에 놓는다
 for(const k of Object.keys(PROV)){const R=REGIONS[pvId(k)];R.marks=lmPlace(k,R.size,R)}

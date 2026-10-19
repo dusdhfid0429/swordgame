@@ -20,6 +20,7 @@ function questCard(q,i){const f=questFrom(q),p=questProg(q);
   const rew=[`은자 ${q.silver}`,q.vit?`활력 ${q.vit}`:'',q.fame?`명성 ${q.fame}`:'',q.good?`선업 ${q.good}`:'',f.merit].filter(Boolean).join(' · ');
   return `<div class="card"><div class="row2"><h4>${esc(q.n)} ${p.done?'<small class="good">완료 · 보고하면 보상</small>':''}</h4><span class="tag">${f.n}</span></div>
     <p>${p.kill?'처치':'납품'} <b class="gold">${questWhere(q)}</b></p>
+    ${p.kill&&q.near&&q.near.some(o=>o.t)?`<p class="note">맡을 때 가장 가까운 출몰지: ${q.near.filter(o=>o.t).map(o=>`${esc(o.k)} <b>${esc(o.t)}</b>`).join(' · ')}</p>`:''}
     <p>진행 <b class="num ${p.done?'good':''}">${p.have}/${q.cnt}</b>${p.kill?'':` <small class="dim">(가진 것 ${P.mats[q.mat]||0})</small>`}</p><div class="mbar"><i style="width:${p.pct}%;background:${p.done?'#7fc77a':'#c9a24a'}"></i></div>
     <p>보상 ${rew}</p><p class="note">보고: ${f.at}</p>
     <div class="row2"><span></span>${B('qdrop:'+i,'포기')}</div></div>`}

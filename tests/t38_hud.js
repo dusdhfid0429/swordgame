@@ -20,6 +20,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const rep=await p.evaluate(()=>{try{const h=sectDetail(SECTS[P.sect],true);return{has:h.includes('지난해 임무'),rep:h.includes('보고하기')}}catch(e){return{err:e.message}}});
   ok(`장문인 창에 지난해 임무가 보고 가능 상태로 보인다 ${JSON.stringify(rep)}`,rep.has&&rep.rep);
   // 3. 메시지창을 누르면 기록창이 열리고, 끝까지 내려도 닫기 버튼이 보인다
+  await p.waitForTimeout(700);   // v148: 새로 맡은 사냥 임무의 출몰지 알림이 먼저 지나가게
   await p.evaluate(()=>{for(let i=0;i<40;i++)log('기록 시험 '+i,'sys')});
   await p.click('#log');await p.waitForTimeout(300);
   const lg=await p.evaluate(()=>({panel,n:document.querySelectorAll('.logs p').length,first:document.querySelector('.logs p').textContent}));
