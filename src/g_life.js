@@ -187,8 +187,8 @@ function leap(){
   // 조이스틱을 기울이고 있으면 그쪽으로 뛴다
   if(joy.on&&(joy.gx||joy.gy)){P.fx=joy.gx;P.fy=joy.gy}
   const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;
-  // 지붕·나무 위로 (말을 탔으면 못 오른다)
-  if(!P.ride){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
+  // 지붕·나무 위로 (말을 탔으면 못 오른다). v154 (사용자): 오르는 건 1단뿐, 2·3단은 이동기라 나무·지붕을 노리지 않고 땅으로 뛴다
+  if(!P.ride&&st===1){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
   const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
   for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}

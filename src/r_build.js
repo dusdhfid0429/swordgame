@@ -28,7 +28,7 @@ function roofFace(eave0,eave1,r0,r1,fill,lines){
   ctx.strokeStyle='#22262c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...eave0);ctx.lineTo(...eave1);ctx.stroke();
 }
 function curl(p,dx){ctx.strokeStyle='#22262c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...p);ctx.quadraticCurveTo(p[0]+dx*.6,p[1],p[0]+dx,p[1]-8);ctx.stroke()}
-function drawBuild(b,alpha){
+function drawBuildVec(b,alpha){
   const{x,y,w,h}=b,X1=x+w,Y1=y+h,pav=b.kind==='pavilion',ru=!!REGION().dead,WH=pav?(ru?22:34):(ru?26:38),o=.38;   // ru: 멸문 폐허 (g_ruin.js) - 낮고 그을린 담, 꺼진 지붕
   ctx.save();ctx.globalAlpha=alpha;
   quad([scr(x+.3,Y1+.25),scr(X1+.3,Y1+.25),scr(X1+.3,y+.25),scr(X1,y),scr(X1,Y1),scr(x,Y1)],'rgba(0,0,0,.22)',null);
@@ -57,11 +57,28 @@ function drawBuild(b,alpha){
   // hanging red lanterns at the front corners, and an inn flag
   if(!pav)for(const t of[.08,.92]){const q=up(lerp2(scr(x-o*.6,Y1+o*.6),scr(X1+o*.6,Y1+o*.6),t),H0-4);ctx.strokeStyle='#22262c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0],q[1]+5);ctx.stroke();
     ctx.fillStyle=darkLvl()>.25?'#ff6a3a':'#c4301e';ctx.beginPath();ctx.ellipse(q[0],q[1]+10,4,5.5,0,0,7);ctx.fill();ctx.fillStyle='#e0b050';ctx.fillRect(q[0]-2.5,q[1]+4,5,1.5)}
-  if(b.kind==='inn'){const f=scr(x-.15,Y1+.35);seg([f,up(f,62)],2,'#5a3a22');const fl=up(f,60),wv=Math.sin(time*2)*1.5;
-    quad([fl,[fl[0]+14+wv,fl[1]+2],[fl[0]+13+wv,fl[1]+40],[fl[0],fl[1]+38]],'#b8291f');
-    ctx.fillStyle='#f4e8c8';ctx.font='11px "Song Myung",serif';ctx.textAlign='center';ctx.fillText('客',fl[0]+7+wv/2,fl[1]+16);ctx.fillText('棧',fl[0]+7+wv/2,fl[1]+31)}
   ctx.restore();
 }
+// 객잔 깃발: 바람에 흔들려 매 프레임 그린다 (건물 그림 캐시 밖)
+function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.globalAlpha=alpha;seg([f,up(f,62)],2,'#5a3a22');const fl=up(f,60),wv=Math.sin(time*2)*1.5;
+  quad([fl,[fl[0]+14+wv,fl[1]+2],[fl[0]+13+wv,fl[1]+40],[fl[0],fl[1]+38]],'#b8291f');
+  ctx.fillStyle='#f4e8c8';ctx.font='11px "Song Myung",serif';ctx.textAlign='center';ctx.fillText('客',fl[0]+7+wv/2,fl[1]+16);ctx.fillText('棧',fl[0]+7+wv/2,fl[1]+31);ctx.restore()}
+// v154 건물 그림 캐시 (사용자 2026-10-19 '8번 진행'): 건물은 카메라를 따라 평행이동만 하므로 한 번 벡터로 그린 그림을 재사용한다.
+// 밤 창문·등불 색(darkLvl>.25), 폐허, 화면 배율이 바뀌면 다시 그린다. 최근 BC_MAX채만 들고 있는다 (휴대폰 메모리)
+const BCACHE=[],BC_MAX=24;
+function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
+function drawBuild(b,alpha){const dpr=devicePixelRatio,k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}`;
+  let c=BCACHE.find(o=>o.b===b);
+  if(!c||c.key!==key){const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
+    const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);
+    const cv=c&&c.cv&&c.cv.width===cw&&c.cv.height===chh?c.cv:document.createElement('canvas');cv.width=cw;cv.height=chh;const g=cv.getContext('2d');g.clearRect(0,0,cw,chh);g.setTransform(k,0,0,k,-x0*k,-y0*k);
+    const keep=ctx;ctx=g;try{drawBuildVec(b,1)}finally{ctx=keep}
+    if(c){c.key=key;c.cv=cv;c.ox=x0-a.x;c.oy=y0-a.y;c.w=cw/k;c.h=chh/k;BCACHE.splice(BCACHE.indexOf(c),1)}else c={b,key,cv,ox:x0-a.x,oy:y0-a.y,w:cw/k,h:chh/k};
+    BCACHE.push(c);if(BCACHE.length>BC_MAX)BCACHE.shift()}
+  const a=toScreen(b.x,b.y),px=Math.round((a.x+c.ox)*k)/k,py=Math.round((a.y+c.oy)*k)/k;
+  ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(c.cv,px,py,c.w,c.h);ctx.restore();
+  if(b.kind==='inn'&&!ru)drawInnFlag(b,alpha)}
 function drawStall(i,j){
   const c=map[j][i].cloth,x=i+.15,y=j+.15,X1=i+.85,Y1=j+.85;
   quad([scr(x,y,10),scr(X1,y,10),scr(X1,Y1,10),scr(x,Y1,10)],'#9a7048');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,10),scr(x,Y1,10)],'#6e4c2e');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,10),scr(X1,Y1,10)],'#5a3c22');
