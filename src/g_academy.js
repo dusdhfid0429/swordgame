@@ -14,6 +14,8 @@
 const ACAD_BOB=GD.ACAD_BOB||['b_basic'];
 // v145 (사용자): 무관 과제 중에만 목인장을 치면 활력을 조금 얻는다. per번 칠 때마다 1, 한 생에 cap까지
 const ACAD_DVIT=GD.ACAD_DVIT||{per:5,cap:40};
+// v147 (사용자): 보법은 교두가 던지는 목환을 피하는 수련, 경공은 지붕·나무로 된 수련장을 건너는 과제
+const ACAD_BOBD=GD.ACAD_BOBD,ACAD_GKC=GD.ACAD_GKC;
 // v146 (사용자): 목인장 과제는 심법을 고른 뒤, 내공 수련 앞. 활력도 그 단계부터 오른다 (기본기에 활력을 다 써도 내공 수련 전에 채울 수 있게)
 const ACAD=GD.ACAD,ACAD_ST=GD.ACAD_STAGES,ACAD_SPOTS=GD.ACAD_SPOTS,ACAD_SPAR=GD.ACAD_SPAR,ACAD_GRADE=GD.ACAD_GRADE,ACAD_SIM=GD.ACAD_SIM,ACAD_SIM_COST=GD.ACAD_SIM_COST;
 const ACAD_OFF=/[?&#]noacad/.test(location.href);
@@ -42,16 +44,17 @@ function acadEnroll(){const A=acadOf(P.side);
 const acadSpotsOf=()=>Object.entries(ACAD_SPOTS);
 ['정','사'].forEach((side,idx)=>{const A=ACAD[side],M=MAENG[A.al],f=alFac(A.al),pal=A.pal;
   const inYard=(x,y)=>x>=8&&x<=32&&y>=6&&y<=30;
-  const zone=(x,y)=>{if(!inYard(x,y))return `${A.n} 문밖`;let best=null,bd=3.2;for(const[k,[sx,sy]]of acadSpotsOf()){const d=Math.hypot(sx-x,sy-y);if(d<bd){bd=d;best=k}}return best?`${A.n} ${best}`:A.n};
+  const gkc=ACAD_GKC,inGk=(x,y)=>x>=gkc.water[0]&&x<=gkc.start[2]+1&&y>=gkc.water[1]&&y<=gkc.path[3]+1;
+  const zone=(x,y)=>{if(inGk(x,y))return `${A.n} ${gkc.n}`;if(!inYard(x,y))return `${A.n} 문밖`;let best=null,bd=3.2;for(const[k,[sx,sy]]of acadSpotsOf()){const d=Math.hypot(sx-x,sy-y);if(d<bd){bd=d;best=k}}return best?`${A.n} ${best}`:A.n};
   const c={id:A.id,name:A.n,s:{id:A.id,n:A.n,al:A.al,tier:'mid',i:95+idx},th:A.th,seed:A.seed,top:1,yard:[8,6,32,30],
-    builds:[{x:24,y:7,w:5,h:3,kind:'hall'},{x:9,y:8,w:3,h:2,kind:'hall'},{x:14,y:8,w:3,h:2},{x:9,y:17,w:3,h:2},{x:28,y:17,w:3,h:2},{x:9,y:24,w:3,h:2},{x:28,y:24,w:3,h:2}],
+    builds:[{x:24,y:7,w:5,h:3,kind:'hall'},{x:9,y:8,w:3,h:2,kind:'hall'},{x:14,y:8,w:3,h:2},{x:9,y:17,w:3,h:2},{x:28,y:17,w:3,h:2},{x:9,y:24,w:3,h:2},{x:28,y:24,w:3,h:2},...gkc.builds.map(b=>({...b}))],
     lamps:[[13,13],[27,13],[13,28],[27,28],[18,30],[23,30]],flags:[[18,31],[23,31]],zone,
     npcs:[{id:'ac_master',acad:side,role:'master',n:A.master,x:26.5,y:11.6,pal},
       ...A.inst.map((n,i)=>({id:'ac_i'+i,acad:side,role:'inst',i,n,pal:i===1?'smithy':i===2?(side==='정'?'taoist':'cultist'):'chief',...[{x:17.5,y:15.6},{x:16.5,y:11.6},{x:12.5,y:11.6},{x:23.5,y:15.6}][i]})),
       ...A.mates.map((m,i)=>({id:'ac_m'+i,acad:side,role:'mate',i,n:`동기 ${m[0]}`,x:12.5+i*2,y:22.6,pal:'disciple'})),
       {id:'smith',n:`${A.n} 대장장이`,x:27.5,y:22.6,pal:'smithy'},{id:'inn',n:`${A.n} 식당 숙수`,x:30.5,y:20.6,pal:'keeper'}],
     spawns:[]};
-  const R=stageRegion(c);R.hq=null;R.acad=side;R.capital=0;R.acadProv=M.prov;R.arrive={x:20.5,y:34.6};
+  const R=stageRegion(c);R.hq=null;R.acad=side;const g0=R.gen;R.gen=()=>{g0();acadGkCarve()};R.capital=0;R.acadProv=M.prov;R.arrive={x:20.5,y:34.6};
   // 수련곡: 산적·늑대·약초, 북쪽 깊은 곳에 산적두목
   const fc={id:acadField(side),name:A.field,s:{id:acadField(side),n:A.field,al:A.al,tier:'small',i:97+idx},th:A.fth,seed:A.seed+11,top:0,
     zone:(x,y)=>y<11?`${A.field} 깊은 곳`:A.field,nodes:{herb:12,ore:4,wood:4},
@@ -92,7 +95,7 @@ const GOAL={
   qin:g=>[P.qiN||0,g.v],
   talk:g=>[P.acad.c['talk_'+g.id]?1:0,1],
   gklearn:()=>[P.gkcur?1:0,1],
-  leap:g=>[P.acad.c.leap||0,g.v],
+  leap:g=>[P.acad.c.leap||0,g.v],bobd:g=>[P.acad.c.bobd||0,g.v],gkrun:g=>[P.acad.c.gkrun||0,g.v],
   throw:g=>[P.acad.c.throw||0,g.v],
   quest:g=>[Object.keys(P.acad.c.qd||{}).length,g.v],
   boss:g=>[P.acad.c.boss||0,g.v],
@@ -280,7 +283,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   const head=`<p class="note">${['기본기와 몸가짐을 맡는다.','병기와 무공을 맡는다.','심법과 내공을 맡는다.','강호 실습을 맡는다.'][n.i]}</p>`;
   if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>';
   let body='';
-  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(acadGkOpen()&&(P.bcur||P.gkcur||P.acad.skip))body+=acadGkHtml();if(!acadPickOpen()) body+='<p class="note">"병기는 3단계에서 고른다. 무공은 내공을 쓰니, 먼저 심법 교두에게서 심법을 익히고 내공을 쌓아라."</p>';
+  if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(acadGkOpen()&&(P.bcur||P.gkcur||P.acad.skip))body+=acadGkHtml();if(acadPickLocked())body+=acadFormsHtml();if(!acadPickOpen()) body+='<p class="note">"병기는 3단계에서 고른다. 무공은 내공을 쓰니, 먼저 심법 교두에게서 심법을 익히고 내공을 쌓아라."</p>';
     if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
   if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml();else body+='<p class="note">"심법은 2단계에서 고른다. 심법이 없으면 수련을 해도 내공이 쌓이지 않는다."</p>'}
   if(n.i===3){if(a.stage>=3)body+=acadQuestHtml();else body+='<p class="note">"4단계가 되면 수련곡으로 실습을 나간다."</p>'}
@@ -296,7 +299,7 @@ hook('npcDlg',c=>{const n=c.n;if(!n.maeng||n.role!=='steward'||c.html==null||!ac
 hook('sectAct',c=>{const{a,x}=c;
   if(a==='repair'){const w=P.eq.weapon;if(acadOn()&&w&&w.dur<w.maxDur&&P.silver>=Math.ceil((w.maxDur-w.dur)*.6))P.acad.c.repair=1;return}
   if(!a.startsWith('ac'))return;
-  const H={acpick:()=>acadPick(x),acsim:()=>acadSimPick(x),acbob:()=>acadBobPick(x),acgk:()=>acadGkLearn(),actalk:()=>{if(acadOn())P.acad.c['talk_'+x]=1;acadCheck()},acspar:()=>acadSpar(x),acq:()=>acadQuestTake(+x),acqd:()=>acadQuestReport(+x),
+  const H={acpick:()=>acadPick(x),acsim:()=>acadSimPick(x),acbob:()=>acadBobPick(x),acgk:()=>acadGkLearn(),acform:()=>acadFormLearn(+x),actalk:()=>{if(acadOn())P.acad.c['talk_'+x]=1;acadCheck()},acspar:()=>acadSpar(x),acq:()=>acadQuestTake(+x),acqd:()=>acadQuestReport(+x),
     acrep:()=>acadReport(),acgrad:()=>acadGraduate(),acrec:()=>acadRec(x),
     acbuy:()=>{const s=SIM[x],al=s&&(s.side==='정'?'jeong':'sacheon');if(!s||!s.acad||s.side!==P.side||simKnown(x)||!acadPast()||maengOf()!==al||acadMptFree(al)<ACAD_SIM_COST)return;
       P.mspent=P.mspent||{};P.mspent[al]=(P.mspent[al]||0)+ACAD_SIM_COST;P.sims[x]=1;log(`${MAENG[al].short}에서 [${s.n}]을(를) 배웠습니다. 수련 창에서 바꿔 운용할 수 있다.`,'xp')}};
@@ -325,6 +328,8 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
     case'goto':{const left=g.spots.filter(s=>!a.c['spot_'+s]).map(s=>({x:ACAD_SPOTS[s][0],y:ACAD_SPOTS[s][1]+1.2,s}));const m=near(left,'',44)[0];return m?[{...m,l:left.find(o=>o.x===m.x&&o.y===m.y).s}]:[]}
     case'hit':case'mast':case'mu':return dummy();
     case'throw':return dummy('비도 던지기');
+    case'bobd':{const s=acadDrSpot();return Math.hypot(P.x-s.x,P.y-s.y)<ACAD_BOBD.area?[]:[{x:s.x,y:s.y,l:'보법 수련 자리',h:44}]}
+    case'gkrun':{if(a.c.gkOn){const b=gkGoalB();return b?[{x:b.x+b.w/2,y:b.y+b.h/2,l:'도착 정자',h:70}]:[]}const s=ACAD_GKC.startAt;if(gkOnStart()){const b=gkGoalB();return b?[{x:b.x+b.w/2,y:b.y+b.h/2,l:'도착 정자',h:70}]:[]}return[{x:s[0],y:s[1],l:'경공 출발점',h:44}]}
     case'pick':case'spar':case'bobpick':case'gklearn':return npc('ac_i1');
     case'sim':case'talk':return npc('ac_i2');
     case'final':return npc('ac_i0');
@@ -349,7 +354,7 @@ function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','
   const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
     ne:[...TR,'[data-tr="neigong"]'],qin:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
-    hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],leap:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
+    hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],bobd:['#t_step'],leap:['#t_leap','#b_leap'],gkrun:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
     pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
     quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:['#tmenu',`[data-act="open:${g.id}"]`]};
   const s=(U[g.k]||[]).slice();
@@ -359,3 +364,49 @@ function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','
 let acadHlEls=[];
 setInterval(()=>{let els=[];try{if(playing&&acadOn()){const s=acadUi();if(s.length)els=[...document.querySelectorAll(s.join(','))]}}catch(e){}
   for(const e of acadHlEls)if(!els.includes(e))e.classList.remove('achl');for(const e of els)e.classList.add('achl');acadHlEls=els},250);
+
+// ---- v147 (사용자): 경공 수련장 · 보법 목환 수련 · 무관 무공 초식 전수 ----
+// 경공 수련장: 무관 남서쪽 연못(물이라 걸을 수 없다)에 나무와 정자를 한 줄로 세운다. 출발점(땅)에서 뛰어 나무·지붕만 밟고 서쪽 끝 도착 정자에 오르면 끝.
+// 땅을 밟으면 처음부터. 도착 정자에서는 작은 섬과 연못가 길로 내려와 돌아간다. 모양은 data/academy.json ACAD_GKC
+function acadGkCarve(){const k=ACAD_GKC,set=([x0,y0,x1,y1],g)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(objs[y][x]==='B')continue;objs[y][x]=null;map[y][x].g=g}};
+  set(k.water,2);set(k.start,1);set(k.path,1);set(k.isle,1);for(const[x,y]of k.trees)objs[y][x]='tree';
+  for(let y=k.water[1]-1;y<=k.path[3]+1;y++)if(PERCH_TREE[objs[y][0]])objs[y][0]='rock';
+  for(let x=0;x<=k.start[2];x++)if(objs[k.path[3]+1][x])objs[k.path[3]+1][x]='rock'}   // 연못가 길 바깥 줄은 바위로 (나무가 코스를 가리지 않게)   // 서쪽 끝 나무로 건너뛰어 도착 정자를 지나치지 않게
+const gkGoalB=()=>builds.find(b=>b.goal);
+const gkInStart=(x,y)=>{const s=ACAD_GKC.start;return x>=s[0]&&x<s[2]+1&&y>=s[1]&&y<s[3]+1},gkOnStart=()=>!P.perch&&!P.leap&&gkInStart(P.x,P.y);
+let acadDr=null;   // 보법 수련: 지금 날아오는 목환 {t, tx, ty, ox, oy, bob0}
+const acadDrOrigin=()=>{const n=(REGION().npcs||[]).find(n=>n.id==='ac_i1');return n?{x:n.x,y:n.y}:{x:P.x-6,y:P.y-6}};
+const acadDrSpot=()=>{const s=ACAD_SPOTS[ACAD_BOBD.spot];return{x:s[0],y:s[1]}};
+hook('tick',dt=>{if(!acadOn()||REG!==acadOf(P.side).id){acadDr=null;return}const c=P.acad.c,k=acadCurK();
+  // 경공 수련장
+  if(k==='gkrun'){if(gkOnStart()){if(c.gkOn)c.gkOn=0;c.gkArm=1}else if(P.leap&&!c.gkOn&&gkInStart(P.leap.sx,P.leap.sy))c.gkArm=1;   // 출발점에서 뛰어오른 것도 출발로 (한 프레임 안에 뛴 경우)
+    else if(P.perch&&c.gkArm&&!c.gkOn){c.gkOn=1;log(`${ACAD_GKC.n} 출발! 땅을 밟지 말고 서쪽 끝 도착 정자까지 건너라.`,'info')}
+    else if(c.gkOn&&!P.perch&&!P.leap){c.gkOn=0;c.gkArm=0;addText(P.x,P.y-.5,'땅을 밟았다','#e0a070');log('땅을 밟았습니다. 출발점에서 다시 시작하세요.','info')}
+    const gb=gkGoalB();if(c.gkOn&&P.perch&&P.perch.k==='roof'&&P.perch.b===gb){c.gkOn=0;c.gkArm=0;c.gkrun=(c.gkrun||0)+1;showBanner(ACAD_GKC.n,'도착 정자에 올랐다');log('경공 수련장을 건넜습니다. 정자에서 내려 연못가 길로 돌아가세요.','xp')}}
+  // 보법 수련: 연무장 표시 자리 가까이 서 있으면 병기 교두가 목환을 던진다
+  if(k!=='bobd'){acadDr=null;return}const D=ACAD_BOBD,sp=acadDrSpot(),inA=Math.hypot(P.x-sp.x,P.y-sp.y)<D.area&&!P.perch;
+  if(!acadDr){if(!inA){c.bobdGap=0;return}if((c.bobdGap=(c.bobdGap||D.gap)-dt)>0)return;const o=acadDrOrigin();acadDr={t:0,tx:P.x,ty:P.y,ox:o.x,oy:o.y,bob0:c.bob||0};return}
+  const d=acadDr;d.t+=dt;if(d.t<D.warn+D.fly)return;
+  const used=(c.bob||0)>d.bob0,hit=Math.hypot(P.x-d.tx,P.y-d.ty)<D.r&&!(P.inv>0);acadDr=null;c.bobdGap=D.gap;
+  fx.push({t:'puff',x:d.tx,y:d.ty,life:.35});
+  if(hit){addText(P.x,P.y-.5,'맞았다','#e0675a');shake=.08}
+  else if(used){c.bobd=(c.bobd||0)+1;addText(P.x,P.y-.5,`피했다 ${Math.min(c.bobd,acadCur().v)}/${acadCur().v}`,'#9fe08a')}
+  else addText(P.x,P.y-.5,'보법으로 피해야 센다','#cfe3ff')});
+hook('drawList',list=>{if(!playing||!acadDr)return;const d=acadDr,D=ACAD_BOBD;list.push({L:LY.TOP,d:99980,f:()=>{const p=toScreen(d.tx,d.ty),w=Math.min(1,d.t/D.warn);ctx.save();
+  ctx.strokeStyle=`rgba(230,80,60,${.5+.4*Math.sin(time*18)})`;ctx.fillStyle=`rgba(230,80,60,${.12+.18*w})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,D.r*TW*.7*w+4,D.r*TH*.7*w+2,0,0,7);ctx.fill();ctx.stroke();
+  if(d.t>D.warn){const u=(d.t-D.warn)/D.fly,o=toScreen(d.ox,d.oy),x=o.x+(p.x-o.x)*u,y=o.y+(p.y-o.y)*u-Math.sin(u*Math.PI)*40;
+    ctx.fillStyle='#b88a52';ctx.strokeStyle='#3a2410';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill();ctx.stroke()}ctx.restore()}})});
+// 무관 무공 초식 전수: 숙련(성)이 차면 병기 교두에게서 그 무공의 남은 초식을 활력으로 배운다 (비급 없이)
+const acadMainArt=()=>{const a=P.acad;return a&&a.cls?ARTS[P.side+a.cls+'0']:null};
+function acadFormBlock(i){const art=acadMainArt(),s=art&&A(art.id),f=art&&art.forms[i];if(!acadOn()||!f||!s)return'무공이 없다';if(s.f[i])return'익힘';
+  if(s.p<f.req)return`숙련 ${f.req} 필요`;if(P.vit<f.cost)return`활력 ${f.cost} 필요`;return null}
+function acadFormLearn(i){const art=acadMainArt();if(!art||acadFormBlock(i))return;const f=art.forms[i];P.vit-=f.cost;P.arts[art.id].f[i]=true;
+  log(`병기 교두에게서 ${art.n}의 [${f.n}]을(를) 전수받았습니다. (활력 -${f.cost})`,'xp');
+  if(allLearned(art.id))log(`${art.n}의 모든 초식을 익혀 필살기 [${art.ult.n}]을(를) 쓸 수 있습니다. (S / 키패드 5)`,'xp');acadCheck()}
+function acadFormsHtml(){const art=acadMainArt(),s=art&&A(art.id);if(!s)return'';
+  return `<div class="card"><h4>${art.n} 초식 전수 <small class="dim">숙련이 차면 무관에 있는 동안 남은 초식을 모두 배울 수 있다 · 지금 숙련 ${Math.floor(s.p)}</small></h4>
+    <p class="note">"목인장으로는 소성(25)까지만 오른다. 그 위는 수련곡에서 싸워 올려라."</p><div class="list">${art.forms.map((f,i)=>{const no=acadFormBlock(i);
+      return `<div class="it"><div>${i+1}초 ${f.n}${s.f[i]?' <small class="good">익힘</small>':''}<span>숙련 ${f.req} · 활력 ${f.cost}</span></div><div class="ib">${s.f[i]?'':B('acform:'+i,no||'전수받는다',{d:!!no})}</div></div>`}).join('')}</div></div>`}
+// 새 초식을 배울 숙련이 되면 한 번 알린다
+let acadFT=0;hook('tick',dt=>{if(!acadOn()||(acadFT-=dt)>0)return;acadFT=1;const art=acadMainArt(),s=art&&A(art.id);if(!s)return;const c=P.acad.c;
+  art.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req&&!c['fopen'+i]){c['fopen'+i]=1;if(i>0)log(`${art.n} 숙련이 ${f.req}에 닿아 [${f.n}]을(를) 배울 수 있습니다. 병기 교두에게 전수를 청하세요.`,'info')}})});

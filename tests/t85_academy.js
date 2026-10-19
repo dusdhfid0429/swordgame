@@ -75,18 +75,34 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const bk=P.bag.filter(i=>i.slot==='book');return{...a,w2:P.eq.weapon.cls,books:bk.map(i=>ARTS[i.art].cls),startCls:P.startCls,sparPre}});
   ok(`3단계: 병기 교두 창에 여섯 계열 (${t3.includes('검법')&&t3.includes('궁')}), 도 → 검으로 바꿈, 비급 ${r4.books.join('')}, 연습 병기 내구 깎임 ${r4.dur}, 비급 전 대련 막힘, 비도 ${r4.knife}`,r4.st===2&&t3.includes('창법')&&r4.w==='도'&&r4.w2==='검'&&r4.books.join('')==='검'&&r4.startCls==='검'&&r4.dur&&!r4.sparPre&&r4.knife===10&&r4.sp===1);
   const r5=await p.evaluate(()=>{P.vit=400;readBook(P.bag.find(i=>i.slot==='book'));const lockB=(act('acpick:창'),P.eq.weapon.cls);P.arts[acadArts()[0]].p=26;acadCheck();return{lockB}});
+  // v147 (사용자): 숙련이 차면 병기 교두에게서 무관 무공의 남은 초식을 모두 전수받는다
+  await p.evaluate(()=>{P.vit=1000;openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
+  const rf=await p.evaluate(()=>{const t=$('wbody').textContent,b1=document.querySelector('[data-act="acform:1"]'),b2=document.querySelector('[data-act="acform:2"]'),id=acadArts()[0],o={t:t.includes('초식 전수'),b1:b1&&!b1.disabled,b2:b2&&b2.disabled&&b2.textContent.includes('숙련 40')};
+    act('acform:1');o.f1=P.arts[id].f[1];act('acform:2');o.f2=P.arts[id].f[2];const p0=P.arts[id].p;P.arts[id].p=85;for(const i of[2,3,4])act('acform:'+i);o.all=allLearned(id);P.arts[id].p=p0;closePanels();return o});
+  ok(`초식 전수: 병기 교두 창 (${rf.t}), 2초 가능 ${rf.b1}·3초 숙련 40 필요 ${rf.b2}, 2초 익힘 ${rf.f1}, 숙련 모자라면 안 됨 (${!rf.f2}), 숙련 85면 다섯 초식 모두 ${rf.all}`,rf.t&&rf.b1&&rf.b2&&rf.f1&&!rf.f2&&rf.all);
   // v141: 보법은 두 갈래 설명을 듣고 고른다
   await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
   const tb=await p.evaluate(()=>({t:$('wbody').textContent,k:acadCurK(),mk:acadMarks()[0]&&acadMarks()[0].l}));await p.waitForTimeout(300);
   const hlb=await p.evaluate(()=>!!document.querySelector('[data-act="acbob:b_hoe"].achl'));await p.click('[data-act="acbob:b_hoe"]');
   const rb=await p.evaluate(()=>{const o={cur:P.bcur,again:(act('acbob:b_basic'),P.bcur),k:acadCurK()};return o});
-  ok(`보법 고르기: 설명(직선 ${tb.t.includes('직선')}·간파 ${tb.t.includes('간파')}), 표시 ${tb.mk}·${hlb}, 회선보 익힘, 다시 못 고름, 다음 ${rb.k}`,tb.k==='bobpick'&&tb.t.includes('곧게 미끄러진다')&&tb.t.includes('등 뒤')&&hlb&&rb.cur==='b_hoe'&&rb.again==='b_hoe'&&rb.k==='bob');
+  ok(`보법 고르기: 설명(직선 ${tb.t.includes('직선')}·간파 ${tb.t.includes('간파')}), 표시 ${tb.mk}·${hlb}, 회선보 익힘, 다시 못 고름, 다음 ${rb.k}`,tb.k==='bobpick'&&tb.t.includes('곧게 미끄러진다')&&tb.t.includes('등 뒤')&&hlb&&rb.cur==='b_hoe'&&rb.again==='b_hoe'&&rb.k==='bobd');
   // v141: 경공은 1·2·3단 설명을 듣고 기초 경공을 익힌다 (v144: 병기 교두)
-  await p.evaluate(()=>{closePanels();P.acad.c.bob=(P.acad.c.bob||0)+3;acadCheck();openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
+  // v147 (사용자): 보법 수련은 병기 교두가 던지는 목환을 보법으로 피한다. 가만히 있으면 맞고, 걸어서 피하면 세지 않는다
+  const rbd=await p.evaluate(()=>{closePanels();const s=acadDrSpot(),c=P.acad.c;P.x=s.x;P.y=s.y+1;P.qi=P.maxQi;const o={mk:acadMarks().length};
+    for(let i=0;i<80&&!acadDr;i++)update(.05);o.dr=!!acadDr;for(let i=0;i<40&&acadDr;i++)update(.05);o.still=c.bobd||0;
+    let tries=0;for(let i=0;i<1600&&(c.bobd||0)<5;i++){if(acadDr&&acadDr.t>.3&&!acadDr.tried){acadDr.tried=1;tries++;P.qi=P.maxQi;P.fx=1;P.fy=0;bobeop()}update(.05)}
+    o.n=c.bobd||0;o.tries=tries;acadCheck();o.k=acadCurK();return o});
+  ok(`보법 수련: 연무장 가면 목환 (${rbd.dr}), 가만히 있으면 안 셈 (${rbd.still}), 보법으로 ${rbd.tries}번 시도해 ${rbd.n}번 피함 → ${rbd.k}`,rbd.dr&&rbd.still===0&&rbd.n>=5&&rbd.k==='gklearn');
+  await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);
   const tg=await p.evaluate(()=>({t:$('wbody').textContent,k:acadCurK(),mk:acadMarks()[0]&&acadMarks()[0].l}));await p.click('[data-act="acgk"]');
   const rg=await p.evaluate(()=>({gk:P.gkcur,k:acadCurK()}));
-  ok(`경공 배우기: 1단 도약·2단 공중 도약·3단 능공비행 설명 (표시 ${tg.mk}), 기초 경공 익힘 → ${rg.k}`,tg.k==='gklearn'&&['1단 도약','2단 공중 도약','3단 능공비행','하승은 1단'].every(s=>tg.t.includes(s))&&rg.gk==='g_basic'&&rg.k==='leap');
-  await p.evaluate(()=>{closePanels();P.acad.c.leap=(P.acad.c.leap||0)+3;acadCheck();P.mats.비도-=5});await p.waitForTimeout(500);
+  ok(`경공 배우기: 1단 도약·2단 공중 도약·3단 능공비행 설명 (표시 ${tg.mk}), 기초 경공 익힘 → ${rg.k}`,tg.k==='gklearn'&&['1단 도약','2단 공중 도약','3단 능공비행','하승은 1단'].every(s=>tg.t.includes(s))&&rg.gk==='g_basic'&&rg.k==='gkrun');
+  // v147 (사용자): 경공 수련장. 출발점에서 나무·정자 지붕만 밟고 도착 정자까지
+  const rk0=await p.evaluate(()=>{closePanels();const mk0=acadMarks()[0]&&acadMarks()[0].l,s=ACAD_GKC.startAt;P.x=s[0];P.y=s[1];P.qi=P.maxQi;const o={mk:mk0,mk2:acadMarks()[0]&&acadMarks()[0].l,water:!walk(10,34),goal:!!gkGoalB(),qi:P.maxQi};return o});
+  const hops=[];for(let i=0;i<5;i++){await p.evaluate(()=>{P.fx=-1;P.fy=0;leap()});await p.waitForTimeout(900);hops.push(await p.evaluate(()=>(P.perch?P.perch.k:'땅')+(P.acad.c.gkOn?'':'·끝')))}
+  const rk=await p.evaluate(()=>({n:P.acad.c.gkrun||0,k:acadCurK()}));
+  ok(`경공 수련장: 출발점 표시 (${rk0.mk} → 서면 ${rk0.mk2}), 연못은 못 걷고 도착 정자 있음, 내공 ${rk0.qi}로 ${hops.join(' → ')} → 건넘 ${rk.n}, 다음 ${rk.k}`,rk0.mk==='경공 출발점'&&rk0.mk2==='도착 정자'&&rk0.water&&rk0.goal&&rk.n===1&&rk.k==='throw');
+  await p.evaluate(()=>{P.mats.비도-=5});await p.waitForTimeout(500);
   const r7=await p.evaluate(()=>({thr:P.acad.c.throw,k:acadCurK()}));
   ok(`비도 던진 수 ${r7.thr}, 다음 ${r7.k}`,r7.thr===5&&r7.k==='spar');
   Object.assign(r5,await p.evaluate(()=>{acadSpar('inst');const duel=G.duel,e=mobs.find(m=>m.duel);damage(e,99999,0,0,P);return{duel}}));
