@@ -7,7 +7,7 @@ function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 const logHist=[];   // 시스템 메시지 기록: 메시지창을 누르면 되돌아본다
 function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove();
-  logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세 ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
+  logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
 function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없습니다.</p>';
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
 // 맡은 임무와 진행도: 지역 이름 아래
@@ -68,7 +68,7 @@ const setW=(id,v)=>$(id).style.width=clamp(v,0,1)*100+'%';
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
   $('nm').textContent=P.name;$('rank').textContent=`${realmName()} · ${facName()}`;
-  $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}`;
+  $('sub').textContent=`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`;
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();$('mag').style.display=ma?'':'none';if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$('mat').textContent=tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`}}
   $('hpt').textContent=`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`;$('qit').textContent=`내공 ${Math.floor(P.qi)}/${P.maxQi}`;
@@ -112,7 +112,7 @@ function pChar(){
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
   return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
-    <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세 ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
+    <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}

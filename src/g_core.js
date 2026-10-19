@@ -345,7 +345,7 @@ function trainQi(){
   if(panel==='char'){if(P.qiTraining)return;P.qiTraining=true;renderOpen();setTimeout(()=>{P.qiTraining=false;if(P.hp>0)done();renderOpen()},900);return}
   P.chan={t:0,dur:1.6,label:'내공 수련',fn:done};
 }
-const statCost=k=>12+(P.st[k]-P.base[k])*6;
+const statCost=k=>Math.round((12+(P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
 function trainStat(k){
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
