@@ -12,9 +12,9 @@ function slotRow(i,sel){const s=slotInfo(i);const t=s?`<b>${i+1}번 · ${esc(s.n
   return `<button type="button" class="opt slot" data-s="slot:${i}" aria-pressed="${sel}">${t}</button>`}
 function slotPanel(){const i=SLOT,s=slotInfo(i);
   if(!s)return `<div class="card"><p>${i+1}번 칸은 비어 있다. 새 인생을 시작하면 이 칸에 기록된다.</p><div class="center"><button class="btn pri" data-s="new" type="button">새 인생</button></div></div>`;
-  const body=s.alive?`<p><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · 경지 ${esc(s.realm)} · 문파 ${s.sect?esc(s.sect):'없음'}${s.when?` · 기록 ${s.when}`:''}</p>`:`<p>${s.lives}번의 생을 마쳤다. 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` · 기록 ${s.when}`:''}</p>`;
+  const body=s.alive?`<p><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · 경지 ${esc(s.realm)} · 문파 ${s.sect?esc(s.sect):'없음'}${s.when?` · 기록 ${s.when}`:''}</p><p class="note">다음 생은 이 생이 끝나야 열린다: 죽거나, 생사경에 올라 좌화하거나.</p>`:`<p>${s.lives}번의 생을 마쳤다. 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` · 기록 ${s.when}`:''}</p>`;
   const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
-    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
+    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}${s.alive?'':`<button class="btn pri" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>`}${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
   return `<div class="card" id="slotinfo">${body}${btns}</div>`}
 // 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
 function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
@@ -126,7 +126,7 @@ function startPlay(fresh){
 }
 function showRebirth(e,cause){
   scrEl.hidden=false;const ns=STATUS[G.nextStatus];
-  box.innerHTML=josa(`<h2 class="title" style="font-size:46px">${cause==='천수'?'천수를 다하다':'쓰러지다'}</h2>
+  box.innerHTML=josa(`<h2 class="title" style="font-size:46px">${cause==='천수'?'천수를 다하다':cause==='좌화'?'좌화하다':'쓰러지다'}</h2>
    <div class="card"><h3>${esc(e.name)} · ${e.age}세</h3><p>${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg} · 경지 ${e.realm}</p>
    <p>선업 <span class="good">${e.good}</span> · 악업 <span class="bad">${e.evil}</span> · 명성 ${e.fame} · 처치 ${e.kills}</p>${e.arts.length?`<p>${e.arts.map(esc).join(', ')}</p>`:''}${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>
    <div class="card"><h4>윤회의 수레바퀴</h4><p>업보에 따라 다음 생은 <b class="gold">${ns.n}</b>(으)로 태어난다. 보상 활력 <b class="gold">${G.bonusVit}</b> (다음 생에서 생일마다 다섯 번 나눠 받음)${G.bonusParts?` · 이번 생에 얻은 활력 ${G.bonusParts.earned}의 ${Math.round(G.bonusParts.share*100)}% ${G.bonusParts.fromVit} + 명성·선업·경지·나이 ${G.bonusParts.deed}`:''}${G.wisCarry?`, 선업으로 오성 +${G.wisCarry}`:''}.</p>

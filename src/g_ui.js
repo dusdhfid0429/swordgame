@@ -180,7 +180,7 @@ function pLife(){
 function pHist(){
   const h=G.history.slice().reverse();
   return (h.length?h.map(e=>`<div class="card"><div class="row2"><h4>제${e.life}생 ${esc(e.name)}</h4><span class="tag">${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg}</span></div>
-    <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
+    <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='좌화'?`${e.realm}에 이르러 스스로 좌화했다`:e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
     ${e.arts.length?`<p>무공: ${e.arts.map(esc).join(', ')}</p>`:''}${e.sect?`<p>문파: ${esc(e.sect)}</p>`:''}${e.spouse?`<p>배우자 ${esc(e.spouse)}${e.children.length?' · 자식 '+e.children.map(esc).join(', '):''}</p>`:''}
     ${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');
 }
@@ -292,6 +292,7 @@ function act(s){
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(wpnNeed(ARTS[x].cls),'info');setArt(x);break;
     case'mode':toggleMode();break;
     case'trainwin':openTrain();return;
+    case'jwa':jwaAsk(x);break;case'jwa2':jwahwa();return;   // 좌화 (g_beyond.js)
     case'open':openPanel(x);return;
     case'wsel':wSel=x;break;
     case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;

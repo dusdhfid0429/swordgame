@@ -16,7 +16,8 @@ const SC=()=>SUMMIT[school()];
 const summit=i=>SC().r[i-5];
 function rk(i){return i>=5&&i<=6&&P?summit(i).r:RANKS[i]}
 const stTxt=st=>STATS.map(({k,n})=>`${n} +${st[k]}`).join(', ');
-function fxOf(i){if(i<5)return REALM_FX[i];const c=SC(),s=summit(i);
+function fxOf(i){if(i<5||i>6)return REALM_FX[i];   // 생사경·자연경은 계열과 상관없다 (g_beyond.js)
+const c=SC(),s=summit(i);
   return i===5?{n:`${s.n} · 환골탈태`,d:`${s.d}. 상단전이 열려 최대 내공 +${Math.round(c.q*100)}%, ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}`}
     :{n:`반로환동 · ${s.n}`,d:`${s.d}: 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}, 몸이 ${BODY.ban.to}세까지 젊어진다`}}
 const sig=k=>realmIdx()>=5&&school()===k;
@@ -24,7 +25,7 @@ const realmAt=r=>realmIdx()>=r;
 // 단전: 하단전 → 중단전(절정) → 상단전(화경)
 const danName=()=>realmAt(5)?'상단전':realmAt(3)?'중단전':'하단전';
 const danMul=()=>realmAt(5)?1+SC().q:realmAt(3)?1.15:1;
-function realmQiMul(){return realmAt(1)?1.3:1}
+function realmQiMul(){return(realmAt(1)?1.3:1)*(realmAt(8)?GD.BEYOND.jayeon.medit:1)}   // 자연경: 운기조식 회복 두 배
 
 // ---- 심법 계열: 문파를 따르고, 문파가 없으면 타고난 기초 내공(정파 대반야금강공=불가, 사파 혈라공=사공) ----
 // 사용자 결정(2026-10-09): 사파(사천맹) 문파는 모두 사공, 마공은 마교(천마신교)만.
@@ -60,6 +61,7 @@ function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;rankRealmUp(
   if(r===BODY.hg.minR)elixirBody();
   if(r===5&&!hwangol('화경'))log('이미 환골탈태한 몸이라 화경에서는 상단전만 새로 열립니다.','info');
   if(r===6){const c=SC();P.life+=c.l6;if(c.l6)log(`현경: 수명 +${c.l6}년.`,'xp');banro()}
+  if(r>=7)beyondGain(r);
   if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');recalc();gangCheck()}
 function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r);bodySync()}
 

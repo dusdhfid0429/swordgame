@@ -295,7 +295,7 @@ function die(cause){
   G.heir=P.children.length?{children:P.children.map(c=>({...c})),silver:Math.floor(P.silver/2),side:P.side}:null;
   if(!G.heir){G.house=null;G.storage={mats:{},bag:[]}}
   saveGame(true);
-  setTimeout(()=>showRebirth(entry,cause),cause==='천수'?400:900);
+  setTimeout(()=>showRebirth(entry,cause),cause==='천수'||cause==='좌화'?400:900);
 }
 // ================= 문파, 가족, 비무, 집 =================
 function duelStart(){

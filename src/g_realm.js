@@ -3,7 +3,7 @@
 // 함께 다음 경지 문턱에 닿으면 "벽"에 막히고, 안전한 곳에서 폐관수련으로 벽을 깨야 오른다. 실패하면 주화입마.
 // 설계: docs/경지_설계.md
 const PILLARS=GD.PILLARS;
-const REALM_NEED={oe:[0,42,54,68,84,102,122],ne:REALM_QI,mu:[0,3,7,12,18,26,36]};
+const REALM_NEED={oe:[0,42,54,68,84,102,122,...GD.BEYOND.oe],ne:REALM_QI,mu:[0,3,7,12,18,26,36,...GD.BEYOND.mu]};   // 현경 위 생사경·자연경 문턱은 data/realm.json BEYOND (g_beyond.js)
 // 무공 하나의 깨달음: 입문 1·소성 2·대성 3·극성 4·돈오(숙련 100) 6, 등급(하승~천고)이 높을수록 무겁다. 기본 무공은 절반.
 const MU_W=GD.MU_W;
 const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
@@ -90,4 +90,4 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
     ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>
     ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/YEAR_SEC*12)}달 남음)</p>`:''}
     <p>내공 심법 <b class="gold">${simCur().n}</b> ${gradeTag(simCur().g)} · 수련 ${P.qiN}회 · 1회 +${simGain()} · 다음 수련에 활력 ${c}${simCur().tr&&simCur().tr.length?` · 특색 ${simTraitHtml(simCur())}`:''}</p>
-    <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div></div>`}
+    <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div>${jwaHtml()}</div>`}
