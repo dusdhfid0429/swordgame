@@ -7359,7 +7359,7 @@ function genCave(c){
   for(const[x,y]of tp)if(map[y]&&map[y][x]&&map[y][x].g===11){objs[y][x]=null;CAVE.torch.push({x:x+.5,y:y+.5,p:r()*6})}
   // 안쪽 방: 해골과 동굴 보물상자. 산 동굴은 깊은 곁방에
   const cr=c.kind==='wild'?rooms[4]:rooms[2],cx=cr.x,cy=cr.y-1;for(let y=cy-1;y<=cy+1;y++)for(let x=cx-1;x<=cx+1;x++)if(map[y][x].g!==6)objs[y][x]=null;
-  map[cy][cx]={g:11,v:.5,pool:0};objs[cy][cx]=null;if(c.id)nodes.push({t:'cchest',x:cx+.5,y:cy+.5,cd:P&&P.caveGot&&P.caveGot[c.id]?99999:0,cave:c.id});
+  map[cy][cx]={g:11,v:.5,pool:0};objs[cy][cx]=null;nodes.push(c.id?{t:'cchest',x:cx+.5,y:cy+.5,cd:P&&P.caveGot&&P.caveGot[c.id]?99999:0,cave:c.id}:{t:'chest',x:cx+.5,y:cy+.5,cd:0});   // c.id 없는 굴(기연동굴 g_gyc.js)은 'chest'를 받아 자기 상자로 바꾼다
   for(let i=0;i<6*(T.bones||1);i++)CAVE.decor.push({x:rooms[2].x+.5+(r()-.5)*5,y:rooms[2].y+.5+(r()-.5)*4,k:'bone',p:r()*6});
   for(const b of c.bosses||[]){const x=Math.floor(b[1]),y=Math.floor(b[2]);for(let j=y-1;j<=y+1;j++)for(let i=x-1;i<=x+1;i++)if(map[j]&&map[j][i]&&map[j][i].g!==6&&objs[j][i]!=='cwall')objs[j][i]=null}
   CAVE.rooms=rooms;CAVE.poolD=poolD;CAVE.lavaF=lavaF;CAVE.id=c.id;CAVE.poolR=R0;
