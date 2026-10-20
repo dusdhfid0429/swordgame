@@ -77,6 +77,7 @@ function heroGarb(){
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
   const imgs=HERO_GARB[key];if(!imgs)return null;if(!imgs.h2&&hero2Ok())imgs.h2=recolorAtlas(HERO2,rankRobe(L,rank));
   if(!imgs.wx&&typeof sheetOk==='function'&&sheetOk('wuxia'))imgs.wx=recolorAtlas(SHEETS.wuxia.img,rankRobe(L,rank));
+  if(!imgs.train2&&typeof sheetOk==='function'&&sheetOk('train2'))imgs.train2=recolorAtlas(SHEETS.train2.img,rankRobe(L,rank));   // v159 수련 시트
   // 내 캐릭터는 망토를 두르지 않는다 (사용자 2026-10-13 "플레이어의 직위 망토가 어색해"): 직위는 머리 위 문장 표식(mark)으로 보인다
   return{...imgs,rank,pal:{cape:null,capeLen:0,capeEdge:null,emb:null},mark:rank>=1?{sid:P.sect,pips:rank-1,gold:rank>=4,trim:L.trim,accent:L.accent}:null}}
 // 머리 위 직위 표식: 정식제자부터 작은 문장, 일대제자부터 문장 아래 점(직위−1개), 장로는 금테. 도트가 좌우 뒤집혀도 문장은 바로 보인다

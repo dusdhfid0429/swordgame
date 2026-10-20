@@ -10,7 +10,7 @@ const SHEETS={};
 const sheetOk=n=>{const s=SHEETS[n];return!!s&&s.img.complete&&s.img.naturalWidth>0};
 const sheetClip=(n,c)=>{const s=SHEETS[n];return s&&s.clips[c]||null};
 // 시트의 서 있는 키를 원본 주인공(155px × .47)과 맞춘 배율
-const SHEET_K={wuxia:.47*155/157};   // 서 있는 장(punches 첫 장 등)이 158px 안팎
+const SHEET_K={wuxia:.47*155/157,train2:.47*155/157};   // v159 train2는 tools/cellsheet.py가 wuxia와 같은 px 크기로 줄여 넣는다   // 서 있는 장(punches 첫 장 등)이 158px 안팎
 // v127: 장 번호 i를 주면 그 장이 속한 클립의 배율(data/anim.json ANIM.sheetK)도 곱한다 — 무기 공격 클립이 맨손 클립보다 작게 그려져 있어서
 const sheetK=(n,i)=>(SHEET_K[n]||.5)*(i==null?1:sheetClipK(n,i));
 const _CLIPK={};

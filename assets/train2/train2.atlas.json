@@ -1,0 +1,850 @@
+{
+ "atlas": "train2.png",
+ "size": {
+  "w": 2008,
+  "h": 506
+ },
+ "frames": {
+  "train2_000": {
+   "index": 0,
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "w": 133,
+    "h": 139
+   },
+   "offset": {
+    "x": 3,
+    "y": 19
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_001": {
+   "index": 1,
+   "rect": {
+    "x": 135,
+    "y": 0,
+    "w": 123,
+    "h": 139
+   },
+   "offset": {
+    "x": 8,
+    "y": 19
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_002": {
+   "index": 2,
+   "rect": {
+    "x": 260,
+    "y": 0,
+    "w": 125,
+    "h": 139
+   },
+   "offset": {
+    "x": 7,
+    "y": 19
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": [
+    {
+     "name": "qi",
+     "x": 78.8,
+     "y": 87.3
+    }
+   ]
+  },
+  "train2_003": {
+   "index": 3,
+   "rect": {
+    "x": 387,
+    "y": 0,
+    "w": 123,
+    "h": 141
+   },
+   "offset": {
+    "x": 8,
+    "y": 17
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": [
+    {
+     "name": "qi",
+     "x": 80.1,
+     "y": 95.8
+    }
+   ]
+  },
+  "train2_004": {
+   "index": 4,
+   "rect": {
+    "x": 512,
+    "y": 0,
+    "w": 123,
+    "h": 138
+   },
+   "offset": {
+    "x": 8,
+    "y": 20
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_005": {
+   "index": 5,
+   "rect": {
+    "x": 637,
+    "y": 0,
+    "w": 125,
+    "h": 138
+   },
+   "offset": {
+    "x": 7,
+    "y": 20
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_006": {
+   "index": 6,
+   "rect": {
+    "x": 764,
+    "y": 0,
+    "w": 125,
+    "h": 137
+   },
+   "offset": {
+    "x": 7,
+    "y": 21
+   },
+   "sourceSize": {
+    "w": 139,
+    "h": 158
+   },
+   "pivot": {
+    "x": 0.4362,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_007": {
+   "index": 7,
+   "rect": {
+    "x": 891,
+    "y": 0,
+    "w": 118,
+    "h": 151
+   },
+   "offset": {
+    "x": 9,
+    "y": 27
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_008": {
+   "index": 8,
+   "rect": {
+    "x": 1011,
+    "y": 0,
+    "w": 113,
+    "h": 151
+   },
+   "offset": {
+    "x": 11,
+    "y": 27
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_009": {
+   "index": 9,
+   "rect": {
+    "x": 1126,
+    "y": 0,
+    "w": 127,
+    "h": 151
+   },
+   "offset": {
+    "x": 4,
+    "y": 27
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_010": {
+   "index": 10,
+   "rect": {
+    "x": 1255,
+    "y": 0,
+    "w": 97,
+    "h": 174
+   },
+   "offset": {
+    "x": 19,
+    "y": 4
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_011": {
+   "index": 11,
+   "rect": {
+    "x": 1354,
+    "y": 0,
+    "w": 99,
+    "h": 163
+   },
+   "offset": {
+    "x": 18,
+    "y": 15
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_012": {
+   "index": 12,
+   "rect": {
+    "x": 1455,
+    "y": 0,
+    "w": 121,
+    "h": 155
+   },
+   "offset": {
+    "x": 7,
+    "y": 23
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_013": {
+   "index": 13,
+   "rect": {
+    "x": 1578,
+    "y": 0,
+    "w": 120,
+    "h": 153
+   },
+   "offset": {
+    "x": 8,
+    "y": 25
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_014": {
+   "index": 14,
+   "rect": {
+    "x": 1700,
+    "y": 0,
+    "w": 127,
+    "h": 153
+   },
+   "offset": {
+    "x": 4,
+    "y": 25
+   },
+   "sourceSize": {
+    "w": 135,
+    "h": 178
+   },
+   "pivot": {
+    "x": 0.3994,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_015": {
+   "index": 15,
+   "rect": {
+    "x": 1829,
+    "y": 0,
+    "w": 89,
+    "h": 165
+   },
+   "offset": {
+    "x": 42,
+    "y": 15
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_016": {
+   "index": 16,
+   "rect": {
+    "x": 0,
+    "y": 176,
+    "w": 133,
+    "h": 125
+   },
+   "offset": {
+    "x": 20,
+    "y": 55
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_017": {
+   "index": 17,
+   "rect": {
+    "x": 135,
+    "y": 176,
+    "w": 154,
+    "h": 145
+   },
+   "offset": {
+    "x": 10,
+    "y": 35
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_018": {
+   "index": 18,
+   "rect": {
+    "x": 291,
+    "y": 176,
+    "w": 165,
+    "h": 122
+   },
+   "offset": {
+    "x": 4,
+    "y": 58
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_019": {
+   "index": 19,
+   "rect": {
+    "x": 458,
+    "y": 176,
+    "w": 121,
+    "h": 154
+   },
+   "offset": {
+    "x": 26,
+    "y": 26
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_020": {
+   "index": 20,
+   "rect": {
+    "x": 581,
+    "y": 176,
+    "w": 93,
+    "h": 156
+   },
+   "offset": {
+    "x": 40,
+    "y": 24
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_021": {
+   "index": 21,
+   "rect": {
+    "x": 676,
+    "y": 176,
+    "w": 93,
+    "h": 152
+   },
+   "offset": {
+    "x": 40,
+    "y": 28
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_022": {
+   "index": 22,
+   "rect": {
+    "x": 771,
+    "y": 176,
+    "w": 99,
+    "h": 153
+   },
+   "offset": {
+    "x": 37,
+    "y": 27
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_023": {
+   "index": 23,
+   "rect": {
+    "x": 872,
+    "y": 176,
+    "w": 67,
+    "h": 176
+   },
+   "offset": {
+    "x": 53,
+    "y": 4
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_024": {
+   "index": 24,
+   "rect": {
+    "x": 941,
+    "y": 176,
+    "w": 85,
+    "h": 152
+   },
+   "offset": {
+    "x": 44,
+    "y": 28
+   },
+   "sourceSize": {
+    "w": 173,
+    "h": 180
+   },
+   "pivot": {
+    "x": 0.5012,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_025": {
+   "index": 25,
+   "rect": {
+    "x": 1028,
+    "y": 176,
+    "w": 112,
+    "h": 153
+   },
+   "offset": {
+    "x": 10,
+    "y": 8
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_026": {
+   "index": 26,
+   "rect": {
+    "x": 1142,
+    "y": 176,
+    "w": 116,
+    "h": 146
+   },
+   "offset": {
+    "x": 8,
+    "y": 15
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_027": {
+   "index": 27,
+   "rect": {
+    "x": 1260,
+    "y": 176,
+    "w": 116,
+    "h": 147
+   },
+   "offset": {
+    "x": 8,
+    "y": 14
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_028": {
+   "index": 28,
+   "rect": {
+    "x": 1378,
+    "y": 176,
+    "w": 124,
+    "h": 146
+   },
+   "offset": {
+    "x": 4,
+    "y": 15
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_029": {
+   "index": 29,
+   "rect": {
+    "x": 1504,
+    "y": 176,
+    "w": 101,
+    "h": 155
+   },
+   "offset": {
+    "x": 16,
+    "y": 6
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_030": {
+   "index": 30,
+   "rect": {
+    "x": 1607,
+    "y": 176,
+    "w": 103,
+    "h": 155
+   },
+   "offset": {
+    "x": 15,
+    "y": 6
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_031": {
+   "index": 31,
+   "rect": {
+    "x": 1712,
+    "y": 176,
+    "w": 102,
+    "h": 157
+   },
+   "offset": {
+    "x": 15,
+    "y": 4
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_032": {
+   "index": 32,
+   "rect": {
+    "x": 1816,
+    "y": 176,
+    "w": 92,
+    "h": 152
+   },
+   "offset": {
+    "x": 20,
+    "y": 9
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_033": {
+   "index": 33,
+   "rect": {
+    "x": 1910,
+    "y": 176,
+    "w": 98,
+    "h": 152
+   },
+   "offset": {
+    "x": 17,
+    "y": 9
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_034": {
+   "index": 34,
+   "rect": {
+    "x": 0,
+    "y": 354,
+    "w": 100,
+    "h": 152
+   },
+   "offset": {
+    "x": 16,
+    "y": 9
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  },
+  "train2_035": {
+   "index": 35,
+   "rect": {
+    "x": 102,
+    "y": 354,
+    "w": 100,
+    "h": 151
+   },
+   "offset": {
+    "x": 16,
+    "y": 10
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 161
+   },
+   "pivot": {
+    "x": 0.4985,
+    "y": 1.0
+   },
+   "trimmed": true,
+   "sockets": []
+  }
+ },
+ "_doc": "tools/cellsheet.py 가 source_sheets 에서 만든다. 손으로 고치지 말 것"
+}

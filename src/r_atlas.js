@@ -39,6 +39,8 @@ function clipAt(c,u){const f=clipFrames(c),n=f.length;if(c.pp){const k=Math.floo
 // 시트 클립(a=시트 이름)은 시트가 읽힌 뒤에만 쓴다. 안 읽혔으면 <이름>Nb → base 순서로 물러난다
 const clipReady=c=>!!c&&(!SHEETS[c.a]||sheetOk(c.a));
 function heroClip(name,w){const v=ANIM.hero[w]||{},b=ANIM.hero.base;for(const k of[v[name],v[name+'Nb'],b[name],b[name+'Nb']]){const c=k&&CLIP[k];if(clipReady(c))return c}return null}
+// 수련 종류 → 클립. train2 시트가 아직 안 읽혔으면 trainNb (v159)
+function trainClip(tk){const b=ANIM.hero.base;for(const k of[(b.train||{})[tk],(b.trainNb||{})[tk]]){const c=k&&CLIP[k];if(clipReady(c))return c}return null}
 const clipOut=(c,u,lk)=>[clipAt(c,u),c.a==='body',c.lk||(c.a==='body'?lk:''),c.a==='a2',SHEETS[c.a]?c.a:null];
 // returns [frame, use body atlas, weapon line kind ('b' blade, 's' scabbard, 'p' polearm, '' none), use atlas 2 (HF2)]
 // 상태 우선순위: 경공 > 보법 > 피동 회피 > 위빙 > 공격 > 달리기 > 대기 (상태 하나, 클립은 무기 variant가 고른다)
@@ -47,10 +49,13 @@ function heroFrame(){
   // 경공 1~3단 (두 번째 시트). 시트가 없으면 variant의 jumpNb
   if(P.sj>0){const st=P.sjSt||1,u=1-P.sj/(P.sjMax||.6),c=h2?heroClip('jump'+st,w):null;if(c)return clipOut(c,u*clipFrames(c).length,lk);
     const b=CLIP[v.jumpNb||ANIM.hero.base.jumpNb];return clipOut(b,u*clipFrames(b).length,lk)}
-  // 운기조식·내공 수련: 가부좌 (v123 핸드오프 시트)
+  // v159 수련 동작 (사용자 시트 assets/train2): 내공 수련은 두 손 사이로 기운 모으기, 기본기는 근력 바위·민첩 장대·지구력 마보·본원진기 무릎에 손. span 클립은 진행도에 맞춰 한 번 훑는다
+  if(P.satk<=0&&P.runT<=0&&typeof trnBusy!=='undefined'){const ng=typeof ngProg==='function'?ngProg():-1,b=trnBusy,tk=ng>=0?'neigong':b&&!/^(pg|mk)/.test(b.k)?b.k:null;
+    if(tk){const c=trainClip(tk);if(c)return clipOut(c,c.span?Math.min(.999,ng>=0?ng:b.t/b.dur)*clipFrames(c).length:time*(c.fps||6),lk)}}
+  // 운기조식·폐관·창안: 가부좌 (v159 train2 시트, 없으면 v123 핸드오프 시트)
   if((P.medit||P.qiTraining)&&P.satk<=0&&P.runT<=0){const c=heroClip('medit',w);if(c&&c.a!=='hero'&&c.a!=='body')return clipOut(c,time*(c.fps||6),lk)}
-  // 수련 창에서 수련하는 동안: 종류별 동작 (근력 들어올리기, 민첩 질주, 지구력 버티기, 폐관 폭포 자세, 창안 장대 위)
-  if(typeof trnBusy!=='undefined'&&trnBusy&&P.satk<=0&&P.runT<=0){const tk=trnBusy.k.startsWith('pg')?'pg':trnBusy.k.startsWith('mk')?'mk':trnBusy.k,k=(ANIM.hero.base.train||{})[tk],c=k&&CLIP[k];if(clipReady(c))return clipOut(c,time*(c.fps||6),lk)}
+  // 폐관 폭포 자세, 창안 장대 위 (P.qiTraining이 아닐 때)
+  if(typeof trnBusy!=='undefined'&&trnBusy&&P.satk<=0&&P.runT<=0){const tk=trnBusy.k.startsWith('pg')?'pg':trnBusy.k.startsWith('mk')?'mk':trnBusy.k,c=trainClip(tk);if(c)return clipOut(c,time*(c.fps||6),lk)}
   // 보법: g_bob이 만든 장 배열(seq). 미끄러지는 동안은 무조건, 수습 중에는 공격이 없을 때
   if(P.bA&&h2){const u=(time-P.bA.t0)/P.bA.dur;if(u<0||u>=1||(u*P.bA.dur>P.bA.move&&P.satk>0))P.bA=null;else{const s=P.bA.seq;return[s[Math.min(s.length-1,Math.floor(u*s.length))],false,'',true]}}
   // 피동 회피 (측면 회피 줄) 0.45초
