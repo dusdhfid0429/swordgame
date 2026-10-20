@@ -208,8 +208,4 @@ hook('afterDark',()=>{if(!CAVE||!REGION().cave)return;const T=CAVE.T,dt=Math.min
     ctx.fillStyle='rgba(255,60,40,.8)';ctx.fillRect(x-1.5,y-1,1,1);ctx.fillRect(x+.5,y-1,1,1)}
   ctx.restore()});
 hook('regionGen',id=>{if(!REGIONS[id].cave){CAVE=null;return}if(CAVE&&CAVE.T.lava)WATER=[]});
-// ---- 시안 지역 셋 (개봉 북쪽에서 시험으로 들어간다) ----
-for(const[th,seed]of[['stone',7],['lava',19],['ice',31]]){const T=CAVE_TH[th],c={th,w:44,h:44,seed};
-  REGIONS['cave_'+th]={name:T.n,in:1,cave:{dark:T.dark,dk:T.dk},theme:'dark',size:44,gen:()=>genCave(c),bake:()=>bakeCave(th),zone:()=>T.n,
-    spawns:th==='lava'?[['혈교무인',3,(x,y)=>y<30],['강시',2,(x,y)=>y<26]]:th==='ice'?[['강시',4,(x,y)=>y<32]]:[['강시',4,(x,y)=>y<32],['혈교무인',2,(x,y)=>y<22]],
-    bosses:[],npcs:[],gates:[{x:22.5,y:42.4,to:'gaebong',tx:20.5,ty:22.5,label:'동굴 밖'}]}}
+// 시안 지역 셋(cave_stone·cave_lava·cave_ice, 개봉 북쪽 시험용)은 기연동굴(g_gyc.js)이 이 생성기를 쓰게 되어 뺐다 (v157)

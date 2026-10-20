@@ -17,13 +17,13 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const src=await p.evaluate(()=>{let bk=0;for(let i=0;i<800;i++){const it=randomBook();if(ARTS[it.art].gy)bk++}
     const shop=JSON.stringify(SHOP).includes('gy_'),sect=Object.values(SECTS).some(s=>s.arts.some(a=>a.id.startsWith('gy_')));return{bk,shop,sect}});
   ok(`비급(800번)·상점·문파 어디에도 없음: ${JSON.stringify(src)}`,src.bk===0&&!src.shop&&!src.sect);
-  // 기연 터는 낮은 확률, 보물상자는 높은 확률
-  const pr=await p.evaluate(()=>{const n={spot:0,chest:0};const keep=P.arts;for(const s of['spot','chest'])for(let i=0;i<4000;i++){P.arts={base:keep.base};if(gyRoll(s))n[s]++}P.arts=keep;return n});
-  ok(`기연 터 ${pr.spot/40}% < 보물상자 ${pr.chest/40}%`,pr.spot>300&&pr.spot<900&&pr.chest>1300&&pr.chest<1900);
-  // 기연을 만나 무공을 얻는다 (사파 검객 → 천외비선검)
-  const g1=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.01;giyeon('chest');Math.random=R;const s=P.arts.gy_geom;
-    return{has:!!s,f:s&&s.f.filter(Boolean).length,cur:P.cur,feat:P.feats.slice(-1)[0],log:G.gyLog}});
-  ok(`보물상자 기연으로 천외비선검, 첫 초식만, 바로 펼침: ${JSON.stringify(g1)}`,g1.has&&g1.f===1&&g1.cur==='gy_geom'&&g1.feat.includes('천외비선검'));
+  // v157: 기연 터·보물상자에서는 기연 무공이 나오지 않고 기연동굴(cave)에서만
+  const pr=await p.evaluate(()=>{const n={spot:0,chest:0,cave:0};const keep=P.arts;for(const s of['spot','chest','cave'])for(let i=0;i<4000;i++){P.arts={base:keep.base};if(gyRoll(s))n[s]++}P.arts=keep;return n});
+  ok(`기연 터 ${pr.spot/40}% · 보물상자 ${pr.chest/40}% · 기연동굴 ${pr.cave/40}%`,pr.spot===0&&pr.chest===0&&pr.cave>2100&&pr.cave<2700);
+  // 기연을 만나면 비급이 행낭에 들어오고, 읽어야 익힌다 (사파 검객 → 천외비선검)
+  const g1=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.01;giyeon('cave');Math.random=R;const bag=!!P.bag.find(i=>i.art==='gy_geom'),before=!!P.arts.gy_geom;readBook(P.bag.find(i=>i.art==='gy_geom'));const s=P.arts.gy_geom;
+    return{bag,before,has:!!s,f:s&&s.f.filter(Boolean).length,cur:P.cur,feat:P.feats.slice(-1)[0],log:G.gyLog}});
+  ok(`기연으로 천외비선검 비급이 행낭에(${g1.bag}, 바로 익히지 않음 ${!g1.before}) → 읽으면 첫 초식만, 바로 펼침: ${JSON.stringify(g1)}`,g1.bag&&!g1.before&&g1.has&&g1.f===1&&g1.cur==='gy_geom'&&g1.feat.includes('천외비선검'));
   // 오성 가짓수에 들지 않는다
   const cap=await p.evaluate(()=>({cap:capArts().length,all:learnedArts().length}));
   ok(`무공 가짓수에 들지 않음 (가짓수 ${cap.cap}, 전체 ${cap.all})`,cap.cap===cap.all-1);
@@ -31,8 +31,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const m=await p.evaluate(()=>{P.arts.gy_geom.p=19.9;gainMast('gy_geom',5);const a=P.arts.gy_geom.f.filter(Boolean).length;P.arts.gy_geom.p=99;gainMast('gy_geom',50);return[a,P.arts.gy_geom.f.filter(Boolean).length,allLearned('gy_geom')]});
   ok(`숙련 20에 2초식, 극성에 모든 초식과 필살기: ${m}`,m[0]===2&&m[1]===5&&m[2]);
   // 한 생에 두 가지까지
-  const mx=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.01;giyeon('spot');const two=gyMine().length;let third=null;for(let i=0;i<20;i++)third=third||gyRoll('chest');Math.random=R;return{two,third}});
-  ok(`한 생에 2가지까지: ${JSON.stringify(mx)}`,mx.two===2&&mx.third===null);
+  const mx=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.01;giyeon('cave');Math.random=R;const b=P.bag.find(i=>i.slot==='book'&&ARTS[i.art].gy);readBook(b);const two=gyMine().length;let third=null;for(let i=0;i<20;i++)third=third||gyRoll('cave');
+    const b3=mkBook(Object.keys(GY_ARTS).find(id=>!P.arts[id]),0);return{two,third,block:readBlock(b3)}});
+  ok(`한 생에 2가지까지: ${JSON.stringify(mx)}`,mx.two===2&&mx.third===null&&/2가지까지/.test(mx.block));
   // 무공 창
   await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(300);
   const t=await p.evaluate(()=>$('wbody').textContent);

@@ -41,7 +41,7 @@ function pQuest(){const qs=P.quests||[];
   if(P.sect&&SECTS[P.sect])where.push(`${SECTS[P.sect].n} 임무 <small class="dim">본산 ${masterTitle(SECTS[P.sect])}·성도 연락관 · 해마다 둘</small>`);
   const al=typeof maengOf==='function'?maengOf():null;if(al&&typeof MAENG!=='undefined'&&MAENG[al])where.push(`${MAENG[al].n} 임무 <small class="dim">총단 · 해마다 셋</small>`);
   return acadQuestCard()+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
-    ${storyOpenCard()}${qs.length?qs.map((q,i)=>[q,i]).sort((a,b)=>!!(b[0].story||b[0].war||b[0].sq)-!!(a[0].story||a[0].war||a[0].sq)).map(([q,i])=>questCard(q,i)).join(''):'<p class="note">맡은 임무가 없다.</p>'}
+    ${storyOpenCard()}${gycCard()}${intelCard()}${qs.length?qs.map((q,i)=>[q,i]).sort((a,b)=>!!(b[0].story||b[0].war||b[0].sq)-!!(a[0].story||a[0].war||a[0].sq)).map(([q,i])=>questCard(q,i)).join(''):'<p class="note">맡은 임무가 없다.</p>'}
     <div class="card"><h4>임무를 맡는 곳</h4>${where.map(w=>`<p>${w}</p>`).join('')}</div>`}
 // 열기: J 키, 왼쪽 '맡은 임무' 글(PC)
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;if(e.code==='KeyJ')openPanel('quest')});

@@ -57,7 +57,8 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   const names=new Set();const nm=()=>{let s;do{s=NA[Math.floor(r()*NA.length)]+NB[Math.floor(r()*NB.length)]}while(names.has(s));names.add(s);return s};
   const ua=srcs.slice().sort((x,y)=>(y.grade||0)-(x.grade||0)||(y.hi?1:0)-(x.hi?1:0))[0];
   const def={id,n,cls:grp.cls,el,grade:g,src:grp.ids.slice(),srcN:srcs.map(a=>a.n),forms:picks.map(x=>({a:x.a,i:x.i,n:nm()})),ult:{a:ua.id,n:UA[Math.floor(r()*UA.length)]+UB[Math.floor(r()*UB.length)]},by:P.name,life:P.lifeNo};
-  def.sect=P.sect&&P.sect!=='own'&&SECTS[P.sect]?P.sect:null;def.key=mkKey(def);def.reg=1;
+  // v157 (사용자 2026-10-20): 문파 제자라도 창안한 순간에는 등록하지 않는다. 문파 창에서 제자들에게 전수해야 그 문파 무공이 된다 (gycSectHtml, g_gyc.js). 무소속이면 예전처럼 기연에서 만나는 무공
+  const member=P.sect&&P.sect!=='own'&&SECTS[P.sect];def.sect=null;def.key=mkKey(def);def.reg=member?0:1;
   G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
   G.made[id]=def;const a=mkBuild(def);mkRegister(def);return a}
 const mkKey=def=>def.forms.map(x=>x.a+':'+x.i).sort().join(',')+'|'+def.ult.a;
