@@ -1,4 +1,4 @@
-// v157: 동굴 — 산 맵마다 굴 하나(입구 앞은 걸어서 닿는다), 혈교 지부(성 소굴)·총단, 비밀 문파 비동, 보물상자는 한 생에 한 번, 굴 속에서 불러와도 입구로 나온다
+// v158: 동굴 — 산 맵마다 굴 하나(입구 앞은 걸어서 닿는다), 혈교 지부(성 소굴)·총단, 비밀 문파 비동, 보물상자는 한 생에 한 번, 굴 속에서 불러와도 입구로 나온다
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];

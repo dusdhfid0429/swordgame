@@ -20,7 +20,13 @@ hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!P||R.dead||R.ruin)return;if
 // 자리 지키기·순찰: 평시에는 wander 대신 자리(post)나 다음 지점으로. 싸움이 붙으면(aggro) 여느 무인처럼 싸우고, 끝나면 돌아온다
 hook('mobTick',(e,dt)=>{if(!e.fixed||e.hp<=0||e.aggro||G.duel)return;e.wt=99;
   if(e.route){if(e.follow){const l=e.follow;if(l.hp<=0){e.follow=null;e.route=null;return}e.goal={x:l.x-e.foff.x,y:l.y-e.foff.y};if(dist(e,e.goal)<.4)e.goal={x:e.x,y:e.y};return}
-    const w=e.route[e.ri];if(Math.hypot(e.x-w.x,e.y-w.y)<.7)e.ri=(e.ri+1)%e.route.length;e.goal=e.route[e.ri];return}
+    const w=e.route[e.ri],d=Math.hypot(e.x-w.x,e.y-w.y);
+    // 곧장 걸으면 벽에 막혀 조 전체가 제자리에 서던 문제: 다음 지점까지 길을 찾아 따라가고, 길이 없거나 3초 동안 가까워지지 않으면 다음 지점으로
+    if(d<(e.rbest??1e9)-.3){e.rbest=d;e.rst=0}else e.rst=(e.rst||0)+dt;
+    if(d<.7||e.rst>3){e.ri=(e.ri+1)%e.route.length;e.rbest=null;e.rst=0;e.rpath=null}
+    const t=e.route[e.ri];e.rpT=(e.rpT||0)-dt;if(!e.rpath||e.rpT<=0){e.rpT=1.5;e.rpath=findPath(Math.floor(e.x),Math.floor(e.y),Math.floor(t.x),Math.floor(t.y),900)||[]}
+    while(e.rpath.length&&Math.hypot(e.rpath[0].x-e.x,e.rpath[0].y-e.y)<.35)e.rpath.shift();
+    e.goal=e.rpath.length>1?e.rpath[0]:t;return}
   if(e.post){e.goal={x:e.post.x,y:e.post.y};if(Math.hypot(e.x-e.post.x,e.y-e.post.y)<.3&&e.pfx!=null){e.fx=e.pfx;e.fy=e.pfy}
     if(e.drill){e.dr=(e.dr||0)-dt;if(e.dr<=0){e.dr=1.4+Math.random()*2.2;e.swing=.24;e.fx=Math.random()<.5?1:-1;e.fy=Math.random()<.5?1:-1;e.pfx=e.fx;e.pfy=e.fy}}}});
 // 결전장 증원: 적장이 살아 있고 결전장에 있는 동안 10초마다 양쪽에 3명씩, 각 상한(FIELD.ally/foe)까지, 최대 6파도

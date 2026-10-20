@@ -15,7 +15,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
-  P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
+  P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,vitEarned:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
     qiN:0,qiAcc:0,sim:null,sims:{},mara:0,burst:null,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls||'권',acad:null,lifeNo:G.lives+1,feats:[],
@@ -53,7 +53,9 @@ function qiAccAdd(v){P.qiAcc=(P.qiAcc??(P.qiN*SIDES[P.side].gain))+v}
 function splitVit(v){if(!(v>0))return[];const a=Math.floor(v/5),r=v-a*5;return[0,1,2,3,4].map(i=>a+(i<r?1:0))}
 const maxVit=()=>150+P.st.end*25;
 // 활력을 얻는다. 지구력이 정한 최대치까지만 찬다 (전생에서 넘겨받아 이미 넘친 활력은 깎지 않는다).
-function gainVit(v){if(typeof diffVit==='function')v=diffVit(v);v=Math.round(v);const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
+// v157: inh=전생에서 받은 몫. 난이도 배율을 다시 곱하지 않고, 이번 생에 번 활력(P.vitEarned, 윤회 보상의 바탕)에도 넣지 않는다.
+function gainVit(v,inh){if(!inh&&typeof diffVit==='function')v=diffVit(v);v=Math.round(v);const m=maxVit(),was=P.vit;P.vit=Math.max(P.vit,Math.min(m,P.vit+v));
+  if(!inh)P.vitEarned=(P.vitEarned||0)+(P.vit-was);
   if(P.vit-was<v&&time-(P.vitFullT||-99)>20){P.vitFullT=time;log(`활력이 가득 찼습니다 (최대 ${m}). 지구력이 높을수록 더 담을 수 있습니다.`,'info')}return P.vit-was}
 // 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
 const qiRealm=(p=P)=>{const q=baseQi(p);let i=0;REALM_QI.forEach((v,j)=>{if(q>=v)i=j});return i};
