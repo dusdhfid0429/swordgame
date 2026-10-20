@@ -11,7 +11,7 @@ hook('mobMade',e=>{const d=e.d;if(!d||!d.beast||e.diffed)return;e.diffed=1;e.max
 hook('hurt',c=>{if(c.src&&c.src.d)c.dm*=diffMul('taken')});
 const diffVit=v=>v>0?Math.round(v*diffMul('vit')):v;   // v136 (사용자): 활력은 정수만 (배율을 곱하면 소수점이 나왔다)
 const diffSquad=n=>Math.max(1,Math.round(n*diffMul('squad')));
-function diffHtml(){const d=diffOf();return `<div class="card"><h4>난이도 <small class="dim">완전 새로 시작할 때 정한다</small></h4><p><b class="gold">${d.n}</b> · ${d.d}</p><p class="note">적 생명 ×${d.mobHp} · 적 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken} · 활력 ×${d.vit} · 마성 ×${d.mara} · 추살조 ×${d.squad}</p></div>`}
+function diffHtml(){const d=diffOf();return `<div class="card"><h4>난이도 <small class="dim">완전 새로 시작할 때 정한다</small></h4><p><b class="gold">${d.n}</b> · ${d.d}</p><p class="note">적 생명 ×${d.mobHp} · 적 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken} · 활력 ×${d.vit} · 윤회 보상 ${Math.round((d.carry??.3)*100)}% · 마성 ×${d.mara} · 추살조 ×${d.squad}</p></div>`}
 function diffPickHtml(){if(G.lives)return '';const i=diffIdx();
   return `<div class="card"><h4>난이도 <small class="dim">이 저장 칸의 모든 생에 걸친다 · 처음부터 새로 시작할 때만 고른다</small></h4>
     <div class="choice">${DIFF.map((d,k)=>`<button type="button" class="opt" data-s="diff:${k}" aria-pressed="${k===i}"><b>${d.n}</b><span>${d.d}</span><span class="dim">적 생명 ×${d.mobHp} · 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken}</span></button>`).join('')}</div></div>`}

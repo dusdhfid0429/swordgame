@@ -1,4 +1,4 @@
-// v157: 윤회 보상 활력에 이번 생에 실제로 얻은 활력의 몫(GD.VIT_CARRY.share)이 들어간다. 전생에서 받은 몫은 다시 세지 않고 난이도 배율도 다시 곱하지 않는다
+// v157: 윤회 보상 활력에 이번 생에 실제로 얻은 활력의 몫(난이도별 carry: 입문 40% → 지옥 15%)이 들어간다. 전생에서 받은 몫은 다시 세지 않고 난이도 배율도 다시 곱하지 않는다
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];
@@ -13,13 +13,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     for(let i=0;i<20;i++){gainVit(100);P.vit=0}
     const earned=P.vitEarned;
     // 전생 몫은 이번 생 벌이에 들지 않고, 난이도 배율도 받지 않는다
-    const gd=G.diff;G.diff=0;P.vit=0;gainVit(300,true);const inh=P.vit,earned2=P.vitEarned;G.diff=gd;P.vit=0;
+    const gd=G.diff;G.diff=0;P.vit=0;gainVit(300,true);const inh=P.vit,earned2=P.vitEarned;
+    // 난이도별 비율: 입문 → 지옥으로 갈수록 낮다
+    const shares=DIFF.map((d,i)=>{G.diff=i;rebirthVit(0);return G.bonusParts.share});G.diff=gd;P.vit=0;
     die('test');
-    return{earned,earned2,inh,bonus:G.bonusVit,parts:G.bonusParts,share:GD.VIT_CARRY.share}});
+    return{earned,earned2,inh,bonus:G.bonusVit,parts:G.bonusParts,share:diffOf().carry,shares}});
   await p.waitForTimeout(1300);r.html=await p.evaluate(()=>document.body.innerText);
   ok(`번 활력 ${r.earned} = 2000`,r.earned===2000);
   ok(`전생 몫 300은 그대로 ${r.inh}, 이번 생 벌이 그대로 ${r.earned2}`,r.inh===300&&r.earned2===2000);
   ok(`보상 활력 ${r.bonus} = 2000 × ${r.share} (${r.parts&&r.parts.fromVit}) + 업적 ${r.parts&&r.parts.deed}`,r.bonus===Math.round(2000*r.share)+r.parts.deed&&r.parts.fromVit===600);
+  ok(`난이도별 비율 ${r.shares.join('/')} 점점 낮아짐`,r.shares.join()==='0.4,0.3,0.25,0.2,0.15');
   ok('윤회 화면에 얻은 활력 몫 표시',r.html.includes('이번 생에 얻은 활력 2000의 30% 600'));
   ok(`오류 없음 ${errs.join(' | ')}`,errs.length===0);
   console.log(errs.length?'ERRORS':'no console errors');

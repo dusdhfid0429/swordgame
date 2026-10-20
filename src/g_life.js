@@ -278,8 +278,8 @@ function birthdayVit(){
   if(got>0)log(`생일을 맞아 전생의 활력 ${got}을(를) 받았습니다.${n?` (${6-n}/5)`:''}${P.vitCarry?` 활력이 가득 차 ${P.vitCarry}은(는) 다음 생일로 넘깁니다.`:''}`,'xp');
   else if(P.vitCarry)log(`활력이 가득 차 전생의 활력 ${P.vitCarry}을(를) 다음 생일로 넘깁니다.`,'info');
 }
-// 윤회 보상 활력: 명성·선업·경지·나이 몫 + 이번 생에 실제로 얻은 활력의 일정 몫 (v157, GD.VIT_CARRY.share)
-function rebirthVit(realm=realmIdx()){const share=(GD.VIT_CARRY||{share:.3}).share,earned=Math.max(0,Math.round(P.vitEarned||0));
+// 윤회 보상 활력: 명성·선업·경지·나이 몫 + 이번 생에 실제로 얻은 활력의 일정 몫 (v157). 비율은 난이도가 높을수록 낮다 (difficulty.json carry, 없으면 GD.VIT_CARRY.share)
+function rebirthVit(realm=realmIdx()){const share=(typeof diffOf==='function'?diffOf().carry:null)??(GD.VIT_CARRY||{share:.3}).share,earned=Math.max(0,Math.round(P.vitEarned||0));
   const deed=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3),fromVit=Math.round(earned*share);
   G.bonusParts={deed,earned,share,fromVit};return deed+fromVit}
 function die(cause){
