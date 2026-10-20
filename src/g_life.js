@@ -274,15 +274,19 @@ function newYear(){
 // 생일 선물: 전생의 활력 한 몫. 활력이 가득 차 못 받은 만큼은 다음 생일로 넘긴다.
 function birthdayVit(){
   if(!P.vitInst)P.vitInst=[];const n=P.vitInst.length;if(!n&&!(P.vitCarry>0))return;
-  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v);P.vitCarry=Math.max(0,Math.round(v-got));
+  const v=(n?P.vitInst.shift():0)+(P.vitCarry||0),got=gainVit(v,true);P.vitCarry=Math.max(0,Math.round(v-got));
   if(got>0)log(`생일을 맞아 전생의 활력 ${got}을(를) 받았습니다.${n?` (${6-n}/5)`:''}${P.vitCarry?` 활력이 가득 차 ${P.vitCarry}은(는) 다음 생일로 넘깁니다.`:''}`,'xp');
   else if(P.vitCarry)log(`활력이 가득 차 전생의 활력 ${P.vitCarry}을(를) 다음 생일로 넘깁니다.`,'info');
 }
+// 윤회 보상 활력: 명성·선업·경지·나이 몫 + 이번 생에 실제로 얻은 활력의 일정 몫 (v157). 비율은 난이도가 높을수록 낮다 (difficulty.json carry, 없으면 GD.VIT_CARRY.share)
+function rebirthVit(realm=realmIdx()){const share=(typeof diffOf==='function'?diffOf().carry:null)??(GD.VIT_CARRY||{share:.3}).share,earned=Math.max(0,Math.round(P.vitEarned||0));
+  const deed=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3),fromVit=Math.round(earned*share);
+  G.bonusParts={deed,earned,share,fromVit};return deed+fromVit}
 function die(cause){
   if(!playing)return;playing=false;paused=true;P.hp=0;
   const karma=P.good-P.evil,realm=realmIdx();
   let st=karma<-30?0:karma<30?1:karma<120?2:3;if(P.fame>=300&&st<3)st++;
-  const bonus=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3);
+  const bonus=rebirthVit(realm);
   const wis=karma>=60?1:0;
   const entry={life:P.lifeNo,name:P.name,side:P.side,gg:GEUNGOL[P.side][P.gg][0],status:STATUS[P.status].n,age:Math.floor(typeof realAge==='function'?realAge():P.age),cause,realm:rk(realm),fame:P.fame,good:P.good,evil:P.evil,kills:P.kills,
     arts:learnedArts().map(k=>`${ARTS[k].n} ${Math.floor(A(k).p)}`),feats:P.feats.slice(-6),sect:sectName(),spouse:P.spouse&&P.spouse.name,children:P.children.map(c=>c.name)};
