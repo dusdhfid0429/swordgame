@@ -1,14 +1,22 @@
-// ================= 동굴 맵 시안 (미리보기, 사용자 2026-10-19 "동굴맵을 만든다고 했을 경우 예시 이미지") =================
-// 본 게임에 넣기 전의 시안. 세 가지 동굴 테마: stone 종유굴(흑룡동), lava 용암굴(화룡굴), ice 얼음굴(빙백동).
-// - 지형: 세포 자동자(cellular automata)로 굴을 파고, 입구 방·물웅덩이 방·안쪽 방을 구불구불한 굴로 잇는다. 입구에서 닿지 않는 곳은 메운다.
-// - 벽: 바닥에 닿은 벽 칸만 바위 벽 그림(cwall)으로 세우고, 그 뒤는 검은 천장(cvoid, 그리지 않음)
-// - 바닥·물·용암·얼음은 한 번 굽는다(bakeCave). 벽 가까이는 그늘(AO)
-// - 화면 효과(어둠 뒤에 그림): 수정·버섯·횃불·용암 빛, 물방울, 먼지, 박쥐, 바닥 안개. 빛 구멍은 미리 만든 빛 그림을 찍어 매 프레임 그라디언트를 만들지 않는다
-const CAVE_TH={
-  stone:{n:'흑룡동',floor:[84,78,70],floor2:[60,64,70],wall:[22,20,19],face:[[112,104,92],[64,58,52],[38,34,31]],liq:[30,64,82],cry:'120,205,255',cryC:['#d8f6ff','#5ab4e8','#163e66'],moss:[52,82,60],mush:'110,255,190',fog:'150,190,220',dk:'3,6,16',dark:.82},
-  lava:{n:'화룡굴',floor:[62,46,40],floor2:[40,32,30],wall:[18,13,12],face:[[96,70,58],[54,38,32],[30,20,18]],liq:[255,120,30],cry:'255,140,60',cryC:['#ffe6b0','#ff7a30','#6a1606'],moss:[70,42,30],mush:'255,170,90',fog:'255,110,50',dk:'14,4,2',dark:.76,lava:1},
-  ice:{n:'빙백동',floor:[150,170,188],floor2:[104,126,148],wall:[30,40,54],face:[[214,232,246],[120,150,178],[58,78,104]],liq:[96,150,190],cry:'175,235,255',cryC:['#ffffff','#a6e2f8','#3a78a8'],moss:[140,170,190],mush:'200,245,255',fog:'215,238,255',dk:'4,10,22',dark:.7,ice:1}};
+// ================= 동굴 (v158, 사용자 2026-10-20 "동굴도 추가해줘. 입구는 산이 있는 맵에 자연스럽게, 혈교 등 비밀단체의 지부와 본거지에도") =================
+// 시안(2026-10-19, screens/cave/)을 게임에 넣었다. 데이터: data/cave.json CAVE. 테스트: tests/t96_cave.js
+// 동굴 종류 (지역 id 'cv_<바깥 지역>'):
+// - wild 산 동굴: 테마가 산(peak·snow·canyon)인 명소·본산 맵과 숭산에 하나씩. 입구 자리는 처음 그 맵을 열 때 바위·나무가 몰린 뒤쪽에서 고르고
+//   (입구 앞 칸은 출입구에서 걸어서 닿아야 한다) 둘레를 바위로 감싼다. 테마: 눈 산 → 빙굴, 이름이 화염·불 → 화굴, 협곡은 셋에 하나 화굴, 그 밖은 석굴
+// - branch 혈교 지부: 성 소굴(world.json PV_LAIRS의 cave 표시) 한가운데 바위 굴. 두목(혈교장로)은 굴 안쪽 방으로 옮긴다. 소굴 밖에는 졸개가 지킨다
+// - hq 혈교 총단: 귀주 마령하협곡의 굴. 혈교주와 혈교장로
+// - secret 비밀 문파(귀영문·하오문·천마신교) 본산의 비동: 그 문파 무인이 지킨다 (같은 문파면 길을 비킨다)
+// 굴 속: 세포 자동자(cellular automata)로 굴을 파고 입구 방·웅덩이 방·안쪽 방·곁방을 구불구불한 굴로 잇는다. 입구에서 닿지 않는 곳은 메운다.
+// 바닥에 닿은 벽 칸만 바위 벽(cwall)을 세우고 그 뒤는 검은 천장(cvoid, 그리지 않음). 바닥·물·용암·얼음·피 웅덩이는 한 번 굽는다(bakeCave)
+// 안쪽 방에 동굴 보물상자(cchest): 한 생에 동굴마다 한 번 (P.caveGot)
+// 화면 효과(어둠 뒤에 그림): 수정·버섯·횃불·용암 빛, 물방울, 먼지, 박쥐, 바닥 안개. 빛 구멍은 미리 만든 빛 그림을 찍어 매 프레임 그라디언트를 만들지 않는다
+const CV=GD.CAVE,CAVE_TH=CV.th;
 let CAVE=null;   // 지금 동굴: {th,T,decor,cry,lava,torch,bats,drips,motes}
+// 방 자리는 굴 크기만으로 정한다 (두목 자리를 굴을 만들기 전에 알 수 있게). 56칸 넘는 총단은 제단 방이 하나 더
+function caveRooms(W,H){const k=Math.min(1,W/44),mid=Math.floor(W/2);
+  const o=[{x:mid,y:H-5,r:4.2,k:'gate'},{x:Math.round(W*.3),y:Math.round(H*.5),r:6.5*k,k:'pool'},{x:Math.round(W*.66),y:Math.round(H*.22),r:5.2*k+.4,k:'boss'},
+    {x:Math.round(W*.72),y:Math.round(H*.62),r:4*k+.3,k:'side'},{x:Math.round(W*.28),y:Math.round(H*.2),r:3.6*k+.4,k:'side'}];
+  if(W>=50)o.push({x:Math.round(W*.5),y:Math.round(H*.1)+2,r:4.6,k:'altar'});return o}
 function genCave(c){
   const T=CAVE_TH[c.th];N=c.w;NH=c.h;const r=rng(c.seed);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];
   const mid=Math.floor(N/2);let s=[];
@@ -16,8 +24,7 @@ function genCave(c){
   for(let it=0;it<5;it++){const t=[];for(let y=0;y<NH;y++){t[y]=[];for(let x=0;x<N;x++){if(x<2||y<2||x>N-3||y>NH-3){t[y][x]=1;continue}
     let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)n+=s[y+dy][x+dx];t[y][x]=n>=5?1:0}}s=t}
   // 방: 입구, 물웅덩이(용암·얼음), 안쪽(상자), 곁방 둘
-  const rooms=[{x:mid,y:NH-5,r:4.2,k:'gate'},{x:Math.round(N*.3),y:Math.round(NH*.5),r:6.5,k:'pool'},{x:Math.round(N*.66),y:Math.round(NH*.22),r:5.2,k:'boss'},
-    {x:Math.round(N*.72),y:Math.round(NH*.62),r:4,k:'side'},{x:Math.round(N*.28),y:Math.round(NH*.2),r:3.6,k:'side'}];
+  const rooms=caveRooms(N,NH);
   const open=(cx,cy,rr)=>{for(let y=Math.floor(cy-rr-2);y<=cy+rr+2;y++)for(let x=Math.floor(cx-rr-2);x<=cx+rr+2;x++){if(x<2||y<2||x>N-3||y>NH-3)continue;
     const d=Math.hypot(x+.5-cx,y+.5-cy)+(vn(x*.7+c.seed,y*.7)-.5)*2.2;if(d<rr)s[y][x]=0}};
   const keep=new Set();   // 굴 길: 돌기둥·수정을 세우지 않는다
@@ -25,19 +32,19 @@ function genCave(c){
     for(let t=0;t<=1;t+=.5/L){const bend=Math.sin(t*Math.PI)*Math.sin(t*6+w)*3.2,x=a.x+(b.x-a.x)*t+nx*bend,y=a.y+(b.y-a.y)*t+ny*bend;
       open(x,y,1.5+vn(t*9,w)*1.1);keep.add(Math.floor(x)+','+Math.floor(y))}};
   for(const m of rooms)open(m.x,m.y,m.r);
-  tunnel(rooms[0],rooms[1]);tunnel(rooms[0],rooms[3]);tunnel(rooms[1],rooms[4]);tunnel(rooms[1],rooms[2]);tunnel(rooms[3],rooms[2]);
+  tunnel(rooms[0],rooms[1]);tunnel(rooms[0],rooms[3]);tunnel(rooms[1],rooms[4]);tunnel(rooms[1],rooms[2]);tunnel(rooms[3],rooms[2]);if(rooms[5])tunnel(rooms[4],rooms[5]),tunnel(rooms[2],rooms[5]);
   for(let y=NH-6;y<NH-1;y++)for(let x=mid-1;x<=mid+1;x++)s[y][x]=0;   // 입구 굴
   // 입구에서 닿는 곳만 남긴다
   const seen=[];for(let y=0;y<NH;y++)seen[y]=[];const q=[[mid,NH-2]];seen[NH-2][mid]=1;
   while(q.length){const[x,y]=q.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=N||Y>=NH||seen[Y][X]||s[Y][X])continue;seen[Y][X]=1;q.push([X,Y])}}
   for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(!s[y][x]&&!seen[y][x])s[y][x]=1;
   // 격자: 벽 6, 바닥 11, 물·용암 2 (얼음은 걸을 수 있게 바닥으로 두고 ice 표시만)
-  const pool=rooms[1],poolD=(x,y)=>Math.hypot(x-pool.x,y-pool.y)+(fbm(x*.4,y*.4)-.5)*3,lavaF=(x,y)=>Math.abs(vn(x*.18+3,y*.18)-.5);
+  const pool=rooms[1],poolD=(x,y)=>Math.hypot(x-pool.x,y-pool.y)+(fbm(x*.4,y*.4)-.5)*3,lavaF=(x,y)=>Math.abs(vn(x*.18+3,y*.18)-.5),R0=3.6*Math.min(1,N/44);
   for(let y=0;y<NH;y++){map[y]=[];objs[y]=[];for(let x=0;x<N;x++){const v=r();
     if(s[y][x]){map[y][x]={g:6,v};let edge=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<N&&Y<NH&&!s[Y][X])edge=1}
       objs[y][x]=edge?'cwall':'cvoid';continue}
     const pd=poolD(x+.5,y+.5);
-    map[y][x]={g:pd<3.6&&!T.ice?2:11,v,pool:pd<3.6?1:0};objs[y][x]=null}}
+    map[y][x]={g:pd<R0&&!T.ice?2:11,v,pool:pd<R0?1:0};objs[y][x]=null}}
   // 용암은 물웅덩이 말고도 갈라진 틈으로 흐른다
   if(T.lava)for(let y=3;y<NH-3;y++)for(let x=3;x<N-3;x++){const f=lavaF(x+.5,y+.5);if(f<.02&&map[y][x].g===11&&!keep.has(x+','+y)&&Math.hypot(x-mid,y-(NH-4))>6)map[y][x]={g:2,v:r(),pool:1}}
   // 돌기둥(종유석), 수정, 장식(버섯·뼈·횃불)
@@ -50,13 +57,23 @@ function genCave(c){
     else if(nw&&v<.12)CAVE.decor.push({x:x+.2+r()*.6,y:y+.2+r()*.6,k:'mush',n:2+Math.floor(r()*4),p:r()*6});
     else if(v<.16)CAVE.decor.push({x:x+r(),y:y+r(),k:'pebble',p:r()*6});
     else if(v<.175)CAVE.decor.push({x:x+.5,y:y+.5,k:'bone',p:r()*6})}
-  // 입구 횃불 둘, 안쪽 방 제단 횃불 둘
-  for(const[x,y]of[[mid-2,NH-4],[mid+2,NH-4],[rooms[2].x-2,rooms[2].y-1],[rooms[2].x+2,rooms[2].y-1]])if(map[y]&&map[y][x].g===11){objs[y][x]=null;CAVE.torch.push({x:x+.5,y:y+.5,p:r()*6})}
-  // 안쪽 방: 해골과 낡은 상자 (드러난 비급)
-  nodes.push({t:'chest',x:rooms[2].x+.5,y:rooms[2].y-.5,cd:0});objs[rooms[2].y][rooms[2].x]=null;
-  for(let i=0;i<6;i++)CAVE.decor.push({x:rooms[2].x+.5+(r()-.5)*4,y:rooms[2].y+.5+(r()-.5)*3,k:'bone',p:r()*6});
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===2&&T.lava)CAVE.lava.push(x,y);
-  CAVE.rooms=rooms;CAVE.poolD=poolD;CAVE.lavaF=lavaF;
+  // 횃불: 입구 둘, 안쪽 방 둘 (산 동굴은 사람이 없으니 입구엔 없다). 혈교·비밀 문파 굴은 방마다 더
+  const tp=[[rooms[2].x-2,rooms[2].y-1],[rooms[2].x+2,rooms[2].y-1]];if(c.kind!=='wild')tp.push([mid-2,NH-4],[mid+2,NH-4]);
+  for(let i=0;i<(T.torches||0);i++){const m=rooms[1+i%(rooms.length-1)];tp.push([m.x+(i%2?2:-2),m.y+(i%3)-1])}
+  for(const[x,y]of tp)if(map[y]&&map[y][x]&&map[y][x].g===11){objs[y][x]=null;CAVE.torch.push({x:x+.5,y:y+.5,p:r()*6})}
+  // 안쪽 방: 해골과 동굴 보물상자. 산 동굴은 깊은 곁방에
+  const cr=c.kind==='wild'?rooms[4]:rooms[2],cx=cr.x,cy=cr.y-1;for(let y=cy-1;y<=cy+1;y++)for(let x=cx-1;x<=cx+1;x++)if(map[y][x].g!==6)objs[y][x]=null;
+  map[cy][cx]={g:11,v:.5,pool:0};objs[cy][cx]=null;nodes.push(c.id?{t:'cchest',x:cx+.5,y:cy+.5,cd:P&&P.caveGot&&P.caveGot[c.id]?99999:0,cave:c.id}:{t:'chest',x:cx+.5,y:cy+.5,cd:0});   // c.id 없는 굴(기연동굴 g_gyc.js)은 'chest'를 받아 자기 상자로 바꾼다
+  for(let i=0;i<6*(T.bones||1);i++)CAVE.decor.push({x:rooms[2].x+.5+(r()-.5)*5,y:rooms[2].y+.5+(r()-.5)*4,k:'bone',p:r()*6});
+  for(const b of c.bosses||[]){const x=Math.floor(b[1]),y=Math.floor(b[2]);for(let j=y-1;j<=y+1;j++)for(let i=x-1;i<=x+1;i++)if(map[j]&&map[j][i]&&map[j][i].g!==6&&objs[j][i]!=='cwall')objs[j][i]=null}
+  CAVE.rooms=rooms;CAVE.poolD=poolD;CAVE.lavaF=lavaF;CAVE.id=c.id;CAVE.poolR=R0;
+  // 다 놓은 뒤 입구에서 걸어서 닿지 않는 바닥이 있으면: 돌기둥·수정을 치우고, 그래도 막히면 웅덩이·용암 줄기를 얕게(걸을 수 있게) 한다
+  const cut=()=>{const sn=[];for(let y=0;y<NH;y++)sn[y]=[];const q=[[mid,NH-3]];sn[NH-3][mid]=1;
+    while(q.length){const[x,y]=q.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=N||Y>=NH||sn[Y][X]||!walk(X,Y))continue;sn[Y][X]=1;q.push([X,Y])}}
+    let n=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===11&&!objs[y][x]&&!sn[y][x])n++;return n};
+  if(cut()){for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(objs[y][x]==='stalag'||objs[y][x]==='crystal')objs[y][x]=null;CAVE.cry=[]}
+  if(cut()){for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===2)map[y][x].g=11;CAVE.lava=[]}
+  if(!T.lava)CAVE.lava=[];else{CAVE.lava=[];for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===2)CAVE.lava.push(x,y)}
 }
 // 벽까지 거리(바닥 그늘용): 0이 벽, 4까지
 function caveWallDist(){const d=[];const q=[];for(let y=0;y<NH;y++){d[y]=[];for(let x=0;x<N;x++){const w=map[y][x].g===6;d[y][x]=w?0:9;if(w)q.push([x,y])}}
@@ -69,7 +86,7 @@ function bakeCave(th){
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
     const px=qx/k+X0,py=qy/k,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;if(gx<0||gy<0||gx>=N||gy>=NH)continue;
     const cell=map[Math.floor(gy)][Math.floor(gx)],n=fbm(gx*1.1,gy*1.1),grain=.9+hash(qx,qy)*.2;let R,G,B;
-    const pd=CAVE.poolD(gx,gy),lf=T.lava?CAVE.lavaF(gx,gy):1,liq=cell.g!==6&&(pd<3.6||cell.g===2&&lf<.026)?Math.max((3.6-pd)/3.6,T.lava&&cell.g===2?(.026-lf)/.026:0):0;
+    const pd=CAVE.poolD(gx,gy),lf=T.lava?CAVE.lavaF(gx,gy):1,R0=CAVE.poolR,liq=cell.g!==6&&(pd<R0||cell.g===2&&lf<.026)?Math.max((R0-pd)/R0,T.lava&&cell.g===2?(.026-lf)/.026:0):0;
     if(cell.g===6){const m=.6+n*.5;R=T.wall[0]*m;G=T.wall[1]*m;B=T.wall[2]*m}
     else if(liq>0&&T.lava){const f=fbm(gx*2,gy*2),hot=Math.min(1,liq*1.4)*(.5+f*.6),cr=fbm(gx*3.5,gy*3.5);
       R=150+105*hot;G=34+110*hot*hot;B=8+30*hot*hot*hot;if(cr>.55-liq*.12){const k=Math.min(1,(cr-.5)*6);R*=1-.75*k;G*=1-.8*k;B*=1-.8*k}if(liq<.12){R*=.6;G*=.5;B*=.5}}
@@ -208,4 +225,122 @@ hook('afterDark',()=>{if(!CAVE||!REGION().cave)return;const T=CAVE.T,dt=Math.min
     ctx.fillStyle='rgba(255,60,40,.8)';ctx.fillRect(x-1.5,y-1,1,1);ctx.fillRect(x+.5,y-1,1,1)}
   ctx.restore()});
 hook('regionGen',id=>{if(!REGIONS[id].cave){CAVE=null;return}if(CAVE&&CAVE.T.lava)WATER=[]});
-// 시안 지역 셋(cave_stone·cave_lava·cave_ice, 개봉 북쪽 시험용)은 기연동굴(g_gyc.js)이 이 생성기를 쓰게 되어 뺐다 (v157)
+// ================= 동굴 지역 만들기 =================
+const caveId=pid=>'cv_'+pid;
+const CAVE_SPOT={};   // 바깥 지역 id → 입구 {i,j(입구 바위 칸), fx,fy(앞 칸), th}
+// 동굴 지역 하나. c: {pid(바깥 지역), kind, th, n(이름), w, seed, bosses:[[종류,x,y,t]], sp:[[종류,수]] 또는 spawns}
+function caveRegion(c){const T=CAVE_TH[c.th],W=c.w,mid=Math.floor(W/2),id=caveId(c.pid),out=REGIONS[c.pid];c.id=id;c.h=W;
+  const deep=(x,y)=>y<W-8;   // 입구 방에는 몹을 내지 않는다
+  const R={name:c.n,in:1,cave:{dark:T.dark,dk:T.dk,kind:c.kind,th:c.th,pid:c.pid},theme:'dark',size:W,gen:()=>genCave(c),bake:()=>bakeCave(c.th),zone:()=>c.n,
+    spawns:c.spawns||(c.sp||[]).map(([k,n])=>[k,n,deep]),bosses:c.bosses||[],npcs:[],
+    gates:[{x:mid+.5,y:W-1.6,to:c.pid,get tx(){const s=caveSpotOf(c.pid)||CAVE_SPOT[c.pid];return s?s.fx+.5:caveFallback(c.pid).x},get ty(){const s=caveSpotOf(c.pid)||CAVE_SPOT[c.pid];return s?s.fy+.5:caveFallback(c.pid).y},label:`${out?out.name:'바깥'}(으)로`,door:1,caveOut:1}]};
+  REGIONS[id]=R;return R}
+const caveFallback=pid=>{const g=(REGIONS[pid].gates||[])[0];return g?{x:g.x,y:g.y}:{x:(REGIONS[pid].size||40)/2,y:(REGIONS[pid].h||REGIONS[pid].size||40)/2}};
+const caveTheme=(id,R)=>{const nm=R.lm?R.lm.n:R.name||'',T=terrOf(id)||{};if(R.theme==='snow'||/설|雪/.test(nm)||/snow/.test(T.key||''))return'ice';
+  if(new RegExp(CV.lavaName).test(nm))return'lava';if(R.theme==='canyon'&&hash(id.length*7,id.charCodeAt(id.length-1))<.34)return'lava';return'stone'};
+const CAVE_WAIT={};   // 아직 입구를 놓지 않은 바깥 지역 id → 동굴 정보 (처음 열 때 자리를 고른다)
+{const hqMain=new Set(Object.values(SECTS).map(s=>hqId(s)));const HQ=CV.hyeolgyo.hq;
+  for(const[id,R]of Object.entries(REGIONS)){if(R.in||R.hall||R.city||R.win||isPvFull(id)||id.startsWith('cv_')||id.startsWith('in_'))continue;
+    const sect=hqMain.has(id)?Object.values(SECTS).find(s=>hqId(s)===id):null,sec=sect&&CV.secret[sect.id];
+    if(id===HQ.reg){caveRegion({pid:id,kind:'hq',th:'blood',n:HQ.n,w:CV.size.hq,seed:9001,sp:HQ.sp,bosses:HQ.boss.map(([k,t],i)=>{const m=caveRooms(CV.size.hq,CV.size.hq)[i?5:2];return[k,m.x+.5,m.y+.5,t]})});CAVE_WAIT[id]='blood';continue}
+    if(sec){caveRegion({pid:id,kind:'secret',th:sec,n:`${sect.n} 비동`,w:CV.size.secret,seed:7000+id.length*13,spawns:[...ownSp(sect,(x,y)=>y<CV.size.secret-8,3,1),...(CV.wild[sec]||[]).map(([k,n])=>[k,Math.ceil(n/2),(x,y)=>y<CV.size.secret-8])]});CAVE_WAIT[id]=sec;continue}
+    if(!CV.mountain.includes(R.theme)||!(id.startsWith('lm_')||hqMain.has(id)||id==='sungsan'))continue;
+    const th=caveTheme(id,R);caveRegion({pid:id,kind:'wild',th,n:`${R.lm?R.lm.n:R.name} ${CAVE_TH[th].suf}`,w:CV.size.wild,seed:3000+[...id].reduce((a,ch)=>a*31+ch.charCodeAt(0)&65535,7),sp:CV.wild[th]});CAVE_WAIT[id]=th}}
+// 혈교 지부: 성 소굴(cave 표시) 한가운데. 소굴 자리는 부팅 때 정해져 있으니 출입구도 지금 붙인다
+for(const[k,list]of Object.entries(GD.PV_LAIRS)){const F=REGIONS[pvId(k)];if(!F||!F.lairs)continue;
+  for(const L of F.lairs){if(!L.cave)continue;const c=Math.floor(L.x/PV_W),r=Math.floor(L.y/PV_W),wid=pvWin(k,c,r),Wr=REGIONS[wid];if(!Wr)continue;
+    const lx=Math.floor(L.x)-c*PV_W,ly=Math.floor(L.y)-r*PV_W;
+    // 두목은 굴 안쪽 방으로
+    const bk=L.boss[0];F.bosses=F.bosses.filter(b=>!(b[0]===bk&&Math.hypot(b[1]-L.x,b[2]-L.y)<3));Wr.bosses=Wr.bosses.filter(b=>!(b[0]===bk&&Math.hypot(b[1]+c*PV_W-L.x,b[2]+r*PV_W-L.y)<3));
+    const W=CV.size.branch,m=caveRooms(W,W)[2],sp=CV.wild.blood;caveRegion({pid:wid,kind:'branch',th:L.cave,n:L.n,w:W,seed:5000+lx*7+ly*13,sp,bosses:[[bk,m.x+.5,m.y+.5,L.boss[1]]]});
+    CAVE_SPOT[wid]={i:lx-1,j:ly-2,fx:lx,fy:ly-1,th:L.cave,lair:1};
+    Wr.gates.push({x:lx+.5,y:ly-.5,to:caveId(wid),tx:Math.floor(W/2)+.5,ty:W-3.5,label:L.n,door:1});
+  }}
+// 바깥 맵을 열 때 입구 놓기: 자리는 처음 한 번 고르고 그 뒤엔 같은 자리
+const NATURAL=new Set(['rock','spire','pine','tree','bamboo','maple','plum']);
+function caveFindSpot(id){const R=REGIONS[id],GS=(R.gates||[]).filter(g=>!g.caveIn),r=rng(1+[...id].reduce((a,ch)=>a*33+ch.charCodeAt(0)&262143,5));
+  // 출입구에서 걸어 닿는 칸
+  const reach=[];for(let y=0;y<NH;y++)reach[y]=[];const q=[];
+  const seed=(x,y)=>{for(let d=0;d<4;d++)for(let j=-d;j<=d;j++)for(let i=-d;i<=d;i++){const a=Math.floor(x)+i,b=Math.floor(y)+j;if(walk(a,b)&&!reach[b][a]){reach[b][a]=1;q.push([a,b]);return}}};
+  for(const g of GS)seed(g.x,g.y);if(!q.length)seed(N/2,NH/2);
+  while(q.length){const[x,y]=q.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=N||Y>=NH||reach[Y][X]||!walk(X,Y))continue;reach[Y][X]=1;q.push([X,Y])}}
+  const busy=(x,y)=>GS.some(g=>Math.hypot(g.x-x,g.y-y)<6)||builds.some(b=>x>=b.x-2&&x<b.x+b.w+2&&y>=b.y-2&&y<b.y+b.h+3)||(R.npcs||[]).some(n=>Math.hypot(n.x-x,n.y-y)<3)||nodes.some(n=>Math.hypot(n.x-x-.5,n.y-y-.5)<1.5);
+  let best=null,bs=-1e9;
+  for(let j=2;j<NH-3;j++)for(let i=2;i<N-3;i++){const fx=i+1,fy=j+1;if(!reach[fy]||!reach[fy][fx]||busy(fx+.5,fy+.5)||map[j][i].g===2)continue;
+    const o=objs[j][i];if(o&&!NATURAL.has(o))continue;
+    let rock=0;for(const[dx,dy]of[[-1,-1],[0,-1],[-1,0],[1,-1],[-1,1],[1,0],[0,1]]){const v=objs[j+dy]&&objs[j+dy][i+dx];if(v&&NATURAL.has(v))rock+=v==='rock'||v==='spire'?2:1}
+    let cover=0;for(const[dx,dy]of[[1,2],[2,1],[2,2],[0,2],[2,0]]){const v=objs[j+dy]&&objs[j+dy][i+dx];if(v&&v!=='rock'&&!NATURAL.has(v))cover+=9}   // 입구 앞을 가리는 건물·가구 자리는 피한다
+    const sc=rock*3+(o?4:0)-cover-(i+j)/(N+NH)*10+r()*3;if(sc>bs){bs=sc;best={i,j,fx,fy}}}
+  return best}
+// 입구 자리: 그 맵을 따로 한 번 만들어 보고 고른다(지금 맵 상태는 그대로 둔다). 처음 물을 때 한 번, 그 뒤엔 기억한 자리
+function caveSpotOf(id){if(CAVE_SPOT[id]!==undefined)return CAVE_SPOT[id];if(!CAVE_WAIT[id])return null;
+  const sv=[N,NH,map,objs,lamps,builds,rails,nodes,plots,tents];let s=null;
+  try{const R=REGIONS[id];R.gen();
+    for(const g of R.gates)if(!g.door&&!g.caveIn)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}   // loadRegion과 같게
+    s=caveFindSpot(id);if(s)s.th=CAVE_WAIT[id]}
+  finally{[N,NH,map,objs,lamps,builds,rails,nodes,plots,tents]=sv}
+  return CAVE_SPOT[id]=s}
+// 바깥 맵 → 동굴 출입구: 부팅 때 붙여 두고, 자리는 처음 물을 때 정한다
+for(const id of Object.keys(CAVE_WAIT)){const C=REGIONS[caveId(id)],W=C.size;
+  REGIONS[id].gates.push({get x(){const s=caveSpotOf(id);return s?s.fx+.5:-99},get y(){const s=caveSpotOf(id);return s?s.fy+.5:-99},to:caveId(id),tx:Math.floor(W/2)+.5,ty:W-3.5,label:C.name,door:1,caveIn:1})}
+// 입구 바위와 둘레: 뒤쪽 세 칸은 바위 덩이, 앞 칸 양옆(화면에서 입구 좌우)도 바위로 감싼다. 앞 칸까지 길이 막히면 그 바위는 빼고
+function caveMouth(s){const{i,j,fx,fy}=s;objs[j][i]='cmouth';if(map[j][i].g===2)map[j][i].g=6;
+  const put=[[i-1,j-1],[i,j-1],[i+1,j-1],[i-1,j],[i+1,j],[i,j+1]];
+  for(const[x,y]of put)if(objs[y]&&objs[y][x]===null&&!(x===fx&&y===fy)&&map[y][x].g!==2){objs[y][x]='rock';
+    if(!walk(fx,fy)||!caveStillReach(fx,fy))objs[y][x]=null}
+  // 입구 바로 앞 두 줄의 키 큰 나무·봉우리는 걷어 굴 어귀가 보이게 (걸을 칸만 늘어난다)
+  for(const[dx,dy]of[[1,2],[2,1],[2,2],[0,2],[2,0]]){const x=i+dx,y=j+dy;if(objs[y]&&NATURAL.has(objs[y][x])&&objs[y][x]!=='rock')objs[y][x]=null}
+  objs[fy][fx]=null}
+function caveStillReach(fx,fy){const g=(REGION().gates||[]).find(g=>!g.caveOut&&g.to&&!g.to.startsWith('cv_'));if(!g)return true;const sn=new Set([fx+','+fy]),q=[[fx,fy]];
+  const gx=Math.floor(g.x),gy=Math.floor(g.y);while(q.length){const[x,y]=q.pop();if(Math.abs(x-gx)+Math.abs(y-gy)<=2)return true;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy,k=X+','+Y;if(sn.has(k)||!walk(X,Y))continue;sn.add(k);q.push([X,Y])}}return false}
+hook('regionGen',id=>{const R=REGIONS[id];
+  if(R.cave)return;CAVE=null;
+  if(R.win){const s=CAVE_SPOT[id];if(s&&s.lair)caveMouth(s);return}
+  const s=CAVE_WAIT[id]&&caveSpotOf(id);if(s)caveMouth(s)});
+// ---- 입구 그림 (테마마다) ----
+const MOUTH_SPR={};
+Object.defineProperty(SPRITES,'cmouth',{get:()=>{const s=CAVE_SPOT[REG],th=s?s.th:'stone';return MOUTH_SPR[th]||(MOUTH_SPR[th]=[mkMouth(CAVE_TH[th],th)])}});
+function mkMouth(T,th){const r=rng(th.length*97+11),w=150,h=124,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),B=h-14,cx=w/2;
+  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(cx,B+2,64,18,0,0,7);g.fill();
+  // 바위 언덕: 둥근 덩이 여럿을 겹친다 (뒤의 큰 것부터)
+  const lump=(x,y,rx,ry,k)=>{const gr=g.createLinearGradient(x-rx,y-ry,x+rx,y+ry);gr.addColorStop(0,rgbS(T.face[0],k));gr.addColorStop(.5,rgbS(T.face[1],k));gr.addColorStop(1,rgbS(T.face[2],k));
+    g.fillStyle=gr;g.beginPath();for(let a=0;a<=12;a++){const t=a/12*Math.PI*2,j=.86+r()*.2;g.lineTo(x+Math.cos(t)*rx*j,y+Math.sin(t)*ry*j)}g.closePath();g.fill();g.strokeStyle=rgbS(T.face[2],.6,.8);g.lineWidth=1;g.stroke()};
+  lump(cx-22,B-58,40,34,.85);lump(cx+26,B-52,38,32,.8);lump(cx,B-72,36,30,.95);lump(cx-44,B-26,30,24,1);lump(cx+46,B-24,30,22,.9);
+  // 결
+  g.lineCap='round';for(let q=0;q<12;q++){const x=cx-55+r()*110,y0=B-90+r()*40,y1=y0+12+r()*26;g.strokeStyle=rgbS(T.face[2],.7,.45);g.lineWidth=1+r();g.beginPath();g.moveTo(x,y0);g.lineTo(x+(r()-.5)*5,y1);g.stroke()}
+  // 굴 어귀: 아치 모양 검은 구멍, 안쪽으로 갈수록 더 검다
+  const aw=24,ah=40;g.save();g.beginPath();g.moveTo(cx-aw,B);g.lineTo(cx-aw,B-ah*.55);g.quadraticCurveTo(cx-aw,B-ah,cx,B-ah);g.quadraticCurveTo(cx+aw,B-ah,cx+aw,B-ah*.55);g.lineTo(cx+aw,B);g.closePath();
+  const ig=g.createRadialGradient(cx,B-8,2,cx,B-14,ah);ig.addColorStop(0,th==='lava'?'rgba(140,40,10,1)':th==='blood'?'rgba(70,6,8,1)':'rgba(6,6,8,1)');ig.addColorStop(1,'rgba(0,0,0,1)');g.fillStyle=ig;g.fill();g.restore();
+  g.strokeStyle=rgbS(T.face[0],1.1,.7);g.lineWidth=2;g.beginPath();g.moveTo(cx-aw,B);g.lineTo(cx-aw,B-ah*.55);g.quadraticCurveTo(cx-aw,B-ah,cx,B-ah);g.stroke();
+  // 어귀 위 종유석·고드름 이빨
+  for(let q=0;q<6;q++){const x=cx-aw+6+q*(aw*2-12)/5,y=B-ah+2+Math.abs(x-cx)*.35,l=4+r()*(T.ice?12:7);g.fillStyle=T.ice?'rgba(236,250,255,.9)':rgbS(T.face[0],.85);g.beginPath();g.moveTo(x-2.5,y);g.lineTo(x+2.5,y);g.lineTo(x,y+l);g.fill()}
+  // 테마 덧칠: 눈 모자, 이끼, 피 묻은 깃발과 해골
+  if(T.ice){g.fillStyle='rgba(244,248,255,.95)';for(const[x,y,rx]of[[cx,B-96,30],[cx-26,B-84,24],[cx+28,B-78,22]]){g.beginPath();g.ellipse(x,y,rx,9,0,Math.PI,0);g.fill()}}
+  else if(!T.lava){g.fillStyle=`rgba(${T.moss.join(',')},.7)`;for(let q=0;q<18;q++){g.beginPath();g.ellipse(cx-56+r()*112,B-90+r()*70,2+r()*4,1.2+r()*2,0,0,7);g.fill()}}
+  if(th==='blood'||th==='shadow'){for(const s of[-1,1]){const x=cx+s*(aw+10);g.strokeStyle='#2a1a10';g.lineWidth=2.4;g.beginPath();g.moveTo(x,B+2);g.lineTo(x,B-58);g.stroke();
+      g.fillStyle=th==='blood'?'#8a1010':'#3a1a5a';g.beginPath();g.moveTo(x,B-56);g.lineTo(x+s*14,B-52);g.lineTo(x+s*12,B-32);g.lineTo(x,B-36);g.closePath();g.fill()}
+    g.fillStyle='#d6ccb2';g.beginPath();g.ellipse(cx,B-ah-6,6,5,0,0,7);g.fill();g.fillStyle='#1a1410';g.fillRect(cx-3.5,B-ah-8,2.4,2.4);g.fillRect(cx+1,B-ah-8,2.4,2.4)}
+  return c}
+// 입구 앞: 굴에서 새어 나오는 기운 (테마 색), 밤에는 빛 구멍
+hook('drawList',list=>{const s=CAVE_SPOT[REG];if(!s||REGION().cave||objs[s.j]&&objs[s.j][s.i]!=='cmouth')return;const p=caveVis(s.i+.5,s.j+.5,120);if(!p)return;const T=CAVE_TH[s.th];
+  list.push({L:LY.FX,d:s.i+s.j+1.2,f:()=>{ctx.save();ctx.globalCompositeOperation='lighter';const k=.5+.2*Math.sin(time*1.6);ctx.globalAlpha=k*(T.lava||s.th==='blood'?.5:.25);
+    ctx.drawImage(caveGlow(T.lava?'255,120,40':s.th==='blood'?'220,40,30':T.fog),p.x-40,p.y-30,80,56);ctx.restore();
+    // 어귀에서 흘러나오는 안개 (얼음굴은 찬 김, 화굴은 열기)
+    ctx.fillStyle=`rgba(${T.fog},.18)`;for(let q=0;q<5;q++){const u=frac(time*.25+q/5),x=p.x+(q-2)*6+Math.sin(time+q)*4,y=p.y+6+u*14;ctx.globalAlpha=(1-u)*.8;ctx.beginPath();ctx.ellipse(x-u*10,y,6+u*12,3+u*4,0,0,7);ctx.fill()}ctx.globalAlpha=1}})});
+hook('darkLights',()=>{const s=CAVE_SPOT[REG];if(!s||REGION().cave)return;const T=CAVE_TH[s.th];if(!(T.lava||s.th==='blood'||s.th==='shadow'))return;const p=caveVis(s.i+.5,s.j+.5,160);if(p){lx.globalAlpha=.7;lx.drawImage(CAVE_LIGHT,p.x-90,p.y-110,180,180);lx.globalAlpha=1}});
+// ---- 동굴 보물상자: 한 생에 동굴마다 한 번 ----
+function caveChestOpen(n){P.caveGot=P.caveGot||{};if(P.caveGot[n.cave]){n.cd=99999;log('비어 있는 상자입니다.','info');return}
+  const C=REGIONS[n.cave],kind=C&&C.cave.kind||'wild',q=(CV.lootQ[kind]||1)*(.85+Math.random()*.3),e=wpick(CV.loot);let it=null;
+  if(e.t==='silver'){const v=Math.round(R1(e.n[0],e.n[1])*q);P.silver+=v;log(`동굴 상자에서 은자 ${v}을(를) 찾았다.`,'sys');addText(P.x,P.y,`은자 ${v}`,'#e8c66e')}
+  else if(e.t==='potion'){const v=R1(e.n[0],e.n[1]);addMat('금창약',v);log(`동굴 상자에서 금창약 ${v}개를 찾았다.`,'sys')}
+  else if(e.t==='ore'){const v=R1(e.n[0],e.n[1]);addMat('광석',v);log(`동굴 상자에서 광석 ${v}개를 찾았다.`,'sys')}
+  else if(e.t==='book'){const cls=P.eq&&P.eq.weapon?P.eq.weapon.cls:'권',ids=Object.keys(ARTS).filter(k=>ARTS[k].cls===cls&&ARTS[k].forms);const id=ids.length?pick(ids):null;it=id?mkBook(id,Math.floor(Math.random()*Math.min(2,ARTS[id].forms.length))):null}
+  if(e.t==='gear'||(e.t==='book'&&!it)){const cls=P.eq&&P.eq.weapon?P.eq.weapon.cls:'검',r=Math.random();it=r<.45?mkWeapon(cls,q,0):r<.75?mkGear('armor',pick(['마의','피갑','흑철갑']),q,{hp:26,def:4}):mkGear('acc',pick(['옥패','호신부','염주']),q,{qi:24,hm:5})}
+  if(it){if(P.bag.length>=24){log('행낭이 가득 찼다. 자리를 비우고 다시 열어라.','info');return}P.bag.push(it);log(`동굴 상자에서 ${itemLabel(it)}을(를) 찾았다.`,it.slot==='book'?'xp':'sys')}
+  P.caveGot[n.cave]=1;n.cd=99999;if(kind!=='wild')feat(`${C.name}의 보물상자를 열었다`)}
+function drawCaveChest(n){const p=toScreen(n.x,n.y),open=n.cd>0;ctx.save();ctx.translate(p.x,p.y);
+  if(!open){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.4+.2*Math.sin(time*3);ctx.drawImage(caveGlow('255,210,120'),-30,-44,60,60);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'}
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(0,0,14,6,0,0,7);ctx.fill();
+  poly([[-13,-1],[11,-1],[13,-14],[-11,-14]],lg(-13,13,'#6a4426','#2a180a'));
+  if(open)poly([[-11,-14],[13,-14],[11,-26],[-13,-24]],'#3a2210');else poly([[-11,-14],[13,-14],[11,-20],[-9,-20]],'#8a5a30');
+  ctx.strokeStyle='#5a5048';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-12,-8);ctx.lineTo(12,-8);ctx.stroke();ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-13,4,4);ctx.restore()}
