@@ -202,9 +202,10 @@ function interact(t){
   if(t.house){openHouse();return}
   if(t.plot){plotAction(t.plot);return}
   const n=t.node;if(!n)return;
-  if(n.cd>0){log(n.t==='chest'?'비어 있는 상자입니다.':n.t==='corpse'||n.t==='rubble'?'이미 뒤진 자리다.':'아직 다시 자라지 않았습니다.','info');return}
+  if(n.cd>0){log(n.t==='chest'||n.t==='cchest'?'비어 있는 상자입니다.':n.t==='corpse'||n.t==='rubble'?'이미 뒤진 자리다.':'아직 다시 자라지 않았습니다.','info');return}
   if(n.t==='vault'){P.chan={t:0,dur:sectPop(n.sect)<=0?VAULT.ruinDur:VAULT.steal.dur,label:vaultLabel(n),fn:()=>vaultOpen(n)};return}   // 문파 금고 (g_vault.js)
   if(n.t==='corpse'||n.t==='rubble'){P.chan={t:0,dur:RUIN.dur[n.t],label:n.t==='corpse'?'시체를 뒤진다':'잔해를 뒤진다',fn:()=>ruinLoot(n)};return}   // 폐허 약탈품 (g_ruin.js)
+  if(n.t==='cchest'){P.chan={t:0,dur:CV.open,label:'상자를 연다',fn:()=>caveChestOpen(n)};return}   // 동굴 보물상자 (g_cave.js)
   if(n.t==='chest'){if(P.chest){log('이번 생의 기연은 이미 얻었습니다.','info');return}P.chest=1;n.cd=99999;giyeon('chest');return}
   const L={herb:['약초를 캔다',1.2],ore:['광석을 캔다',1.8],wood:['나무를 벤다',1.6],fish:['잉어를 낚는다',2.2]}[n.t];
   P.chan={t:0,dur:L[1],label:L[0],fn:()=>{

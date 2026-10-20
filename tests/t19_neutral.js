@@ -19,8 +19,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   for(const l of L){
     await p.evaluate(l=>travel({to:'pv_henan',tx:l.x,ty:l.y+3}),l);await p.waitForTimeout(1500);
     const r=await p.evaluate(l=>{const w=REGION().win,lx=l.x-w.c*40,ly=l.y-w.r*40;P.x=lx+(lx<20?8:-8);P.y=ly;mobs=[];G.bossT={};for(let i=0;i<14;i++)spawnTick();
-      return{zone:regionAt(Math.floor(lx),Math.floor(ly)),kinds:[...new Set(mobs.filter(m=>Math.hypot(m.x-lx,m.y-ly)<7).map(m=>m.kind))].join('·'),walk:walkAt(lx,ly+1)}},l);
-    ok(`하남성 ${l.n}(${r.zone}): ${r.kinds}`,r.zone.includes(l.n)&&r.walk&&(l.n.includes('흑풍')?/산적/.test(r.kinds)&&/흑풍채주/.test(r.kinds):/혈교무인/.test(r.kinds)&&/혈교장로/.test(r.kinds)));
+      return{zone:regionAt(Math.floor(lx),Math.floor(ly)),kinds:[...new Set(mobs.filter(m=>Math.hypot(m.x-lx,m.y-ly)<7).map(m=>m.kind))].join('·'),walk:walkAt(lx,ly+1),caveBoss:(REGIONS[caveId(REG)]||{bosses:[]}).bosses.some(b=>b[0]==='혈교장로')}},l);
+    ok(`하남성 ${l.n}(${r.zone}): ${r.kinds}`,r.zone.includes(l.n)&&r.walk&&(l.n.includes('흑풍')?/산적/.test(r.kinds)&&/흑풍채주/.test(r.kinds):/혈교무인/.test(r.kinds)&&r.caveBoss));
     if(l.n.includes('흑풍')){await p.evaluate(()=>{const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(600);await p.screenshot({path:shot('henan_camp')})}}
   // 개봉 이정표에서 두 소굴까지 성 전체 그림에서 길이 이어진다
   ok('개봉 이정표에서 두 소굴까지 걸어서 간다',await p.evaluate(()=>{const F=REGIONS.pv_henan,C=pvFull('henan'),S=C.S,at=F.gates.find(g=>g.to==='gaebong'),sx=Math.floor(at.x)-2,sy=Math.floor(at.y),seen=new Set([sx+','+sy]),q=[[sx,sy]];
