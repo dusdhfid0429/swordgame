@@ -25,7 +25,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     Math.floor(r3.age)===28&&r3.ban.yrs===50&&Math.floor(r3.real)===78&&r3.cal===0&&r3.hp1>r3.hp0&&r3.ly===28&&r3.ui);
   await p.screenshot({path:shot('body_char')});
   // 해가 지나면 몸의 나이부터 다시 먹는다, 반로환동은 한 번만
-  const r4=await p.evaluate(()=>{closePanels();const a0=P.age;for(let i=0;i<YEAR_SEC*1.05*10;i++)update(.1);const a1=P.age;delete P.rfx[6];realmFxSync();return{d:a1-a0,again:P.age-a1}});
+  const r4=await p.evaluate(()=>{closePanels();const a0=P.age;for(let i=0;i<YEAR_SEC*1.05;i++)update(1);const a1=P.age;delete P.rfx[6];realmFxSync();return{d:a1-a0,again:P.age-a1}});
   ok(`한 해 뒤 +${r4.d.toFixed(2)}세, 다시 맞춰도 ${r4.again.toFixed(2)}`,r4.d>.9&&Math.abs(r4.again)<.01);
   // 3. 금강불괴: 남궁(정종) 환골탈태 몸이 지구력 40에 이르면
   const r5=await p.evaluate(()=>{const g0=!!P.gang;P.st.end=40;recalc();const g1=P.gang&&P.gang.why;

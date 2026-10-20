@@ -459,7 +459,7 @@ const RANKS=GD.RANKS;
 const REALM_QI=GD.REALM_QI;        // 경지 by 내공 (갑자) total
 const SIJIN=GD.SIJIN;
 const DAY_SEC=150;                                    // 낮밤 한 바퀴 = 150초
-const YEAR_SEC=DAY_SEC;                               // 하루가 지나면 한 살을 먹는다 (사용자 결정 2026-10-11)
+const YEAR_SEC=1800;                                  // 1년 = 실제 30분 = 낮밤 12바퀴, 하루가 한 달 (사용자 결정 2026-10-20, 전에는 하루=1년)
 const SEASONS=GD.SEASONS;
 // 정파/사파: base 내공 and the opposite 내공 수련 curves (official 10/11 per session; 첫 수련 300→30 scaled, +3 / 3, +4)
 const SIDES=GD.SIDES;
@@ -1955,7 +1955,7 @@ function pHelp(){
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
+  <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
@@ -1967,7 +1967,7 @@ function pHelp(){
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사 · J 임무(왼쪽 '맡은 임무' 글을 눌러도 된다). 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
+  <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
   <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
@@ -3602,10 +3602,10 @@ function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ri
   // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
   const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f&&!inAcad(),lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
-  P.inj=YEAR_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;
+  P.inj=DAY_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;   // 후유증은 실제 시간으로 예전 길이 그대로 (하루 = 한 달)
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
   recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
-  const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
+  const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 달 반':'보름'} 동안 힘을 다 쓰지 못합니다.`;
   log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');feat(`${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
 hook('trainTick',dt=>{
   if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
@@ -3623,7 +3623,7 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 한쪽만 키우면 벽에 닿지 못한다.</p>
     ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>
-    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/YEAR_SEC*12)}달 남음)</p>`:''}
+    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
     <p>내공 심법 <b class="gold">${simCur().n}</b> ${gradeTag(simCur().g)} · 수련 ${P.qiN}회 · 1회 +${simGain()} · 다음 수련에 활력 ${c}${simCur().tr&&simCur().tr.length?` · 특색 ${simTraitHtml(simCur())}`:''}</p>
     <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div>${jwaHtml()}</div>`}
 
@@ -3631,7 +3631,7 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
 // 사용자 요청(2026-10-12): "대성한 무공, 같은 무기 타입, 같은 등급 5개를 이용하여 한 단계 높은 무공을 창안하는 컨텐츠. 소비값은 무협스럽게."
 // - 재료: 같은 병기·같은 등급의 무공 다섯이 모두 숙련 100(사용자 2026-10-12: 대성 50 → 100). 기초권각·기연 무공은 재료가 못 된다. 창안한 무공은 다시 재료가 된다.
 // - 값: 다섯 무공을 모두 잊고 심득만 남긴다. 폐관수련처럼 문파 본산·내 집·산 정상에서만, 세월(등급+2년)과 활력(100+등급×60)을 쓰고, 끝나면 내공이 바닥난다.
-//   경지는 화경 이상(사용자 2026-10-12; 처음엔 등급마다 이류·일류·절정이었다). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못한다(무공은 남는다).
+//   경지는 화경 이상(사용자 2026-10-12; 처음엔 등급마다 이류·일류·절정이었다). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 보름 동안 힘을 다 쓰지 못한다(무공은 남는다).
 // - 결과: 다섯 무공의 초식 가운데 가장 강한 여섯을 골라 새 이름을 붙이고 한 등급 높은 공력(GMUL)으로 올린다. 필살기는 가장 높은 재료의 것을 잇는다.
 //   초식 여섯을 모두 아는 채로 시작하고(내가 지은 무공이다) 숙련 30(심득). 오성 가짓수에는 든다. 절정 위(천고)는 기연으로만 얻으므로 절정이 끝이다.
 // - 저장: 정의는 G.made(여러 생에 남는다)에, 숙련은 P.arts에. 불러올 때 G.made 순서대로 다시 만든다(gLoaded 훅).
@@ -3664,8 +3664,8 @@ function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mk
   const why=grp?mkWhy(g):'재료가 모자라다';if(why){log(`무공 창안이 끊겼습니다: ${why}.`,'info');return}
   const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);if(!passYears(yrs))return;
   P.qi=0;
-  if(Math.random()>=ch){P.inj=YEAR_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
-    log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
+  if(Math.random()>=ch){P.inj=DAY_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
+    log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 보름 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
     feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
   const a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
