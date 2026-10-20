@@ -57,6 +57,12 @@ def clean_qi(a, W, n):
         if len(ys):
             px = f[ys, xs, :3]
             f[ys, xs, :3] = cols[((px[:, None, :] - cols[None]) ** 2).sum(-1).argmin(1)]
+        if socks[-1]:   # 기운 빛에 씻겨 회색이 된 옷: 푸른 기를 되살려 문파 옷 색이 입혀지게 (v160)
+            r, g, b = f[..., 0], f[..., 1], f[..., 2]
+            l = r * .3 + g * .59 + b * .11
+            w = (f[..., 3] > 0) & (abs(r - g) < 10) & (abs(g - b) < 10) & (l > 50) & (l < 85)
+            f[..., 2] = np.where(w, np.minimum(255, b + 14), b)
+            f[..., 0] = np.where(w, np.maximum(0, r - 4), r)
         out.append(f)
     return out, socks
 

@@ -24,13 +24,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const fx=await p.evaluate(()=>{const run=n=>{for(let i=0;i<n;i++){time+=.03;trainTick(.03);draw()}};const r={};trnBusy=null;TFX=[];P.medit=true;run(30);r.med=[MED.k>.9,NG.k];P.medit=false;run(30);
     startTrain('neigong');run(20);r.ng=[MED.k,NG.k>.9,!!NG.h];run(40);
     P.vit=999;startTrain('qi');run(5);r.qi=[MED.k,NG.k,TFX.some(f=>f.k==='qi')];run(60);
-    P.sect='hwasan';const gb=heroGarb();r.garb=!!(gb&&gb.train2);P.sect=null;return r});
-  ok(`운기조식 MED ${fx.med[0]} NG ${fx.med[1]} · 내공 수련 MED ${fx.ng[0].toFixed(2)} NG ${fx.ng[1]} 손 자리 ${fx.ng[2]} · 본원진기 MED ${fx.qi[0].toFixed(2)} NG ${fx.qi[1].toFixed(2)} 생기 ${fx.qi[2]} · 문파 옷 ${fx.garb}`,
-    fx.med[0]&&fx.med[1]===0&&fx.ng[0]<.05&&fx.ng[1]&&fx.ng[2]&&fx.qi[0]<.05&&fx.qi[1]<.05&&fx.qi[2]&&fx.garb);
+    P.sect='hwasan';const gb=heroGarb();r.garb=!!(gb&&gb.train2);if(gb&&gb.train2){const W=SHEETS.train2.img.width,H=SHEETS.train2.img.height,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(SHEETS.train2.img,0,0);const o=x.getImageData(0,0,W,H).data,n=gb.train2.getContext('2d').getImageData(0,0,W,H).data;let op=0,ch=0;for(let i=0;i<o.length;i+=4)if(o[i+3]>=20){op++;if(o[i]!==n[i]||o[i+2]!==n[i+2])ch++}r.gpct=ch/op}else r.gpct=0;P.sect=null;return r});
+  ok(`운기조식 MED ${fx.med[0]} NG ${fx.med[1]} · 내공 수련 MED ${fx.ng[0].toFixed(2)} NG ${fx.ng[1]} 손 자리 ${fx.ng[2]} · 본원진기 MED ${fx.qi[0].toFixed(2)} NG ${fx.qi[1].toFixed(2)} 생기 ${fx.qi[2]} · 문파 옷 ${fx.garb} (물든 픽셀 ${(fx.gpct*100).toFixed(0)}%)`,
+    fx.med[0]&&fx.med[1]===0&&fx.ng[0]<.05&&fx.ng[1]&&fx.ng[2]&&fx.qi[0]<.05&&fx.qi[1]<.05&&fx.qi[2]&&fx.garb&&fx.gpct>.25);
   // 4. 장면 사진 (사람 눈으로 확인): 운기조식 · 내공 수련(모으기/갈무리) · 본원진기 · 근력 · 민첩 · 지구력
   const shot=async(name,fn)=>{await p.evaluate(fn);await p.evaluate(()=>{for(let i=0;i<4;i++){time+=.03;draw()}});const q=await p.evaluate(()=>{const o=toScreen(P.x,P.y),c=document.querySelector('canvas'),r=c.getBoundingClientRect(),sx=r.width/c.width;return{x:r.left+o.x*sx,y:r.top+o.y*sx}});
     await p.screenshot({path:require('path').resolve(__dirname,'shots/train2_'+name+'.png'),clip:{x:Math.max(0,q.x-110),y:Math.max(0,q.y-150),width:220,height:190}})};
-  await p.evaluate(()=>{paused=true;trnBusy=null;TFX=[];P.medit=false;P.qiTraining=false;closeTrain&&closeTrain();fx.length=0;texts.length=0;P.sect='mudang';NPCF=[];mobs.length=0});
+  await p.evaluate(()=>{paused=true;trnBusy=null;TFX=[];P.medit=false;P.qiTraining=false;closeTrain&&closeTrain();fx.length=0;texts.length=0;P.sect='hwasan';NPCF=[];mobs.length=0});
   const prep=`for(let i=0;i<40;i++){time+=.03;draw()}`;
   await shot('medit',`P.medit=true;${prep}`);
   await shot('neigong_a',`P.medit=false;MED.k=0;trnBusy={k:'neigong',t:.7,dur:1.6};P.qiTraining=true;${prep.replace('40','12')};trnBusy.t=.75`);
