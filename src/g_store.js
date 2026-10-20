@@ -2,7 +2,7 @@
 // 게임 코드는 STORE.get/set 만 쓴다. 기록은 먼저 기기 안(localStorage)에 바로 쓰고,
 // 등록된 바깥 저장소(토스 저장소, 나중의 서버 등)에 뒤따라 올린다. 바깥 저장소가 없으면 기기 안에만 남는다.
 //
-// 바깥 저장소 붙이기:  storeAdd({name:'toss', pull:async key=>문자열|null, push:async (key,문자열)=>{}})
+// 바깥 저장소 붙이기:  storeAdd({name:'toss', pull:async key=>문자열|null, push:async (key,문자열)=>{}, del:async key=>{}})
 //  - pull/push 는 실패해도 된다(오류는 삼킨다). 실패한 올리기는 다음 storeSync 때 다시 올린다.
 //  - 기록끼리 어느 쪽이 새것인지는 JSON 안의 t(저장한 시각, ms)로 정한다. t가 없으면 가장 옛것으로 친다.
 // storeSync(key): 기기 안과 바깥 저장소를 견주어 가장 새 기록을 기기 안에 두고, 뒤처진 바깥 저장소에 올린다.
@@ -12,7 +12,8 @@ const storeT=s=>{try{const d=JSON.parse(s);return d&&+d.t||0}catch(e){return-1}}
 const STORE={
   get(k){try{return localStorage.getItem(k)}catch(e){return null}},
   set(k,s,local){try{localStorage.setItem(k,s)}catch(e){}if(!local)for(const b of STORE_BACKENDS)storePush(b,k,s)},
-  del(k){try{localStorage.removeItem(k)}catch(e){}},
+  // 지우기는 바깥 저장소에도 알린다(del이 있으면). 없으면 storeSync가 바깥에 남은 기록을 다시 끌어온다 (v160)
+  del(k){try{localStorage.removeItem(k)}catch(e){}for(const b of STORE_BACKENDS){if(b.dirty)delete b.dirty[k];if(b.del)Promise.resolve().then(()=>b.del(k)).catch(()=>{})}},
 };
 function storePush(b,k,s){b.dirty=b.dirty||{};b.dirty[k]=s;
   return Promise.resolve().then(()=>b.push(k,s)).then(()=>{if(b.dirty[k]===s)delete b.dirty[k];return true},()=>false)}

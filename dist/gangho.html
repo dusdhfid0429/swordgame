@@ -336,7 +336,7 @@ function drawSheath(kind,wx,wy,flash){const c=kind==='검'?'검집':kind==='도'
 // 게임 코드는 STORE.get/set 만 쓴다. 기록은 먼저 기기 안(localStorage)에 바로 쓰고,
 // 등록된 바깥 저장소(토스 저장소, 나중의 서버 등)에 뒤따라 올린다. 바깥 저장소가 없으면 기기 안에만 남는다.
 //
-// 바깥 저장소 붙이기:  storeAdd({name:'toss', pull:async key=>문자열|null, push:async (key,문자열)=>{}})
+// 바깥 저장소 붙이기:  storeAdd({name:'toss', pull:async key=>문자열|null, push:async (key,문자열)=>{}, del:async key=>{}})
 //  - pull/push 는 실패해도 된다(오류는 삼킨다). 실패한 올리기는 다음 storeSync 때 다시 올린다.
 //  - 기록끼리 어느 쪽이 새것인지는 JSON 안의 t(저장한 시각, ms)로 정한다. t가 없으면 가장 옛것으로 친다.
 // storeSync(key): 기기 안과 바깥 저장소를 견주어 가장 새 기록을 기기 안에 두고, 뒤처진 바깥 저장소에 올린다.
@@ -346,7 +346,8 @@ const storeT=s=>{try{const d=JSON.parse(s);return d&&+d.t||0}catch(e){return-1}}
 const STORE={
   get(k){try{return localStorage.getItem(k)}catch(e){return null}},
   set(k,s,local){try{localStorage.setItem(k,s)}catch(e){}if(!local)for(const b of STORE_BACKENDS)storePush(b,k,s)},
-  del(k){try{localStorage.removeItem(k)}catch(e){}},
+  // 지우기는 바깥 저장소에도 알린다(del이 있으면). 없으면 storeSync가 바깥에 남은 기록을 다시 끌어온다 (v160)
+  del(k){try{localStorage.removeItem(k)}catch(e){}for(const b of STORE_BACKENDS){if(b.dirty)delete b.dirty[k];if(b.del)Promise.resolve().then(()=>b.del(k)).catch(()=>{})}},
 };
 function storePush(b,k,s){b.dirty=b.dirty||{};b.dirty[k]=s;
   return Promise.resolve().then(()=>b.push(k,s)).then(()=>{if(b.dirty[k]===s)delete b.dirty[k];return true},()=>false)}
@@ -3140,7 +3141,7 @@ function lightAt(x,y,r,a){if(a<=0)return;const g=lx.createRadialGradient(x,y,0,x
 
 // ================= title, 캐릭터 생성, 윤회 =================
 const scrEl=$('scr'),box=$('scrbox');
-// 제목 화면: 저장 칸 5개 목록. 칸을 고르면 그 칸의 이름·회차·나이·경지·문파·저장 시각과 단추(이어하기·새 생·강호사·지우기)가 나온다. 지우기는 confirm() 대신 화면 안에서 한 번 더 묻는다 (아티팩트·웹뷰에서 confirm이 막혀 '처음부터 새로'가 안 눌리던 문제, 사용자 보고 2026-10-14)
+// 제목 화면: 저장 칸 5개 목록. 칸을 고르면 그 칸의 이름·회차·나이·경지·문파·저장 시각과 단추(이어하기·새 생·강호사·처음부터 새로·삭제)가 나온다. 지우기는 confirm() 대신 화면 안에서 한 번 더 묻는다 (아티팩트·웹뷰에서 confirm이 막혀 '처음부터 새로'가 안 눌리던 문제, 사용자 보고 2026-10-14)
 let slotAsk=false;
 function slotInfo(i){const sv=loadSlot(i);if(!sv||!sv.G)return null;const p=sv.P||{},h=sv.G.history||[],last=h[h.length-1],alive=!!(sv.alive&&sv.P);
   const name=alive?p.name:last?last.name:'',life=alive?(p.lifeNo||(sv.G.lives||0)+1):(sv.G.lives||0);
@@ -3153,8 +3154,10 @@ function slotRow(i,sel){const s=slotInfo(i);const t=s?`<b>${i+1}번 · ${esc(s.n
 function slotPanel(){const i=SLOT,s=slotInfo(i);
   if(!s)return `<div class="card"><p>${i+1}번 칸은 비어 있다. 새 인생을 시작하면 이 칸에 기록된다.</p><div class="center"><button class="btn pri" data-s="new" type="button">새 인생</button></div></div>`;
   const body=s.alive?`<p><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · 경지 ${esc(s.realm)} · 문파 ${s.sect?esc(s.sect):'없음'}${s.when?` · 기록 ${s.when}`:''}</p>`:`<p>${s.lives}번의 생을 마쳤다. 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` · 기록 ${s.when}`:''}</p>`;
-  const btns=slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
-    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button></div>`;
+  // v160 (사용자 2026-10-20 "저장된 기록을 삭제 가능하게"): 삭제는 칸을 비우고 제목 화면에 남는다. 처음부터 새로는 지우고 바로 새 인생
+  const btns=slotAsk==='del'?`<p class="note">${i+1}번 칸의 기록(인물·세상·강호사)을 모두 지워 빈 칸으로 만든다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="del2" type="button">삭제한다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
+    :slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
+    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}<button class="btn${s.alive?'':' pri'}" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button><button class="btn" data-s="del" type="button" title="이 칸의 기록을 지워 빈 칸으로">삭제</button></div>`;
   return `<div class="card" id="slotinfo">${body}${btns}</div>`}
 // 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
 function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
@@ -3176,6 +3179,8 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s==='hist'){const sv=loadGame();if(sv)G=Object.assign(G,sv.G);box.innerHTML=`<h2 class="title" style="font-size:40px">강호사</h2>${pHist()}<div class="center"><button class="btn" data-s="back" type="button">돌아가기</button></div>`}
   else if(s==='back')showTitle();
   else if(s==='reset'){slotAsk=true;refreshSlots()}
+  else if(s==='del'){slotAsk='del';refreshSlots()}
+  else if(s==='del2'){STORE.del(SAVE_KEY);G=G0();slotAsk=false;refreshSlots()}
   else if(s==='noreset'){slotAsk=false;refreshSlots()}
   else if(s==='reset2'){STORE.del(SAVE_KEY);G=G0();slotAsk=false;showCreate()}
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
