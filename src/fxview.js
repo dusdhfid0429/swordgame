@@ -146,7 +146,7 @@ body.fxv #app{flex-direction:row}body.fxv .panel,body.fxv #mini,body.fxv .zone,b
 @media (max-width:760px){body.fxv #app{flex-direction:column}#fxv{width:auto;height:46%;border-left:0;border-top:1px solid #3a3128}#fxv header p{display:none}}`;
 document.head.appendChild(css);document.body.classList.add('fxv');
 const box=document.createElement('div');box.id='fxv';$('app').appendChild(box);
-let TAB='art';const EXT={};   // 덧붙는 탭 (3D 시범 fx3d.js 등): {n, html(), act(k,v,w)}
+let TAB='art';
 function btn(label,act,pressed,extra=''){return `<button type="button" data-a="${esc(act)}"${pressed!=null?` aria-pressed="${!!pressed}"`:''} ${extra}>${label}</button>`}
 function render(){if(!P)return;
   const arts=Object.values(ARTS).filter(a=>a.cls===V.cls&&!a.base);if(!V.art||!ARTS[V.art]||ARTS[V.art].cls!==V.cls)V.art=(arts[0]||{}).id;
@@ -173,14 +173,13 @@ function render(){if(!P)return;
       <h3>기운 그림 (r_fx.js)</h3><div class="grid">${PRIM.map(([n],i)=>btn(n,'prim:'+i)).join('')}</div>
       <h3>투사체</h3><div class="grid">${PROJ.map(k=>btn(PROJN[k],'proj:'+k)).join('')}${btn('기공탄 · 번개','proj:orb:1')}</div>
       <h3>기본 효과</h3><div class="grid">${BASIC.map(([n],i)=>btn(n,'basic:'+i)).join('')}</div>`;
-  }else if(EXT[TAB]){h+=EXT[TAB].html()
   }else{
     h+=`<h3>이동·특수</h3><div class="grid">${MOVE.map(([n],i)=>btn(n,'move:'+i)).join('')}</div>`;
   }
   box.innerHTML=`<header><h1>이펙트 뷰어</h1><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
     <div class="ctl">속도 ${[.25,.5,1].map(s=>btn(s+'×','spd:'+s,V.speed===s)).join('')} ${btn('반복','loop',V.loop)} 확대 ${[1,1.5,2].map(z=>btn(z+'×','zoom:'+z,V.zoom===z)).join('')} ${btn('밤','night',V.night)} ${btn('흔들림','shake',V.shake)}
       <select data-a="tier" style="width:auto">${TIERN.map((n,i)=>`<option value="${i}"${i===V.tier?' selected':''}>숙련 ${n}</option>`).join('')}</select> ${btn('다시','again')}</div>
-    <div class="tabs">${[['art','무공 초식'],['realm','경지·몸'],['qi','운기·수련'],['prim','기본 이펙트'],['move','이동·특수'],...Object.entries(EXT).map(([k,e])=>[k,e.n])].map(([k,n])=>btn(n,'tab:'+k,TAB===k)).join('')}</div>
+    <div class="tabs">${[['art','무공 초식'],['realm','경지·몸'],['qi','운기·수련'],['prim','기본 이펙트'],['move','이동·특수']].map(([k,n])=>btn(n,'tab:'+k,TAB===k)).join('')}</div>
     <div class="body">${h}</div><div id="fxvnow">${esc(V.last?V.last.label:'')}</div>`;
 }
 box.addEventListener('change',ev=>{const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
@@ -203,9 +202,8 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='prim'){const[n,f]=PRIM[+v];play(()=>{place();f()},n);return}
   if(k==='proj'){play(()=>shoot(v,w),PROJN[v]+(w?' · 번개':''));return}
   if(k==='basic'){const[n,f]=BASIC[+v];play(()=>{place();f()},n);return}
-  if(k==='move'){const[n,f]=MOVE[+v];play(f,n);return}
-  if(EXT[TAB]&&EXT[TAB].act)EXT[TAB].act(k,v,w)});
+  if(k==='move'){const[n,f]=MOVE[+v];play(f,n);return}});
 addEventListener('keydown',e=>{if(e.key===' '&&V.last){e.preventDefault();e.stopPropagation();play(V.last.fn,V.last.label)}},true);
-window.FXV={V,play,useArtFx,render,boot,EXT,tgt,place,note,btn,esc};
+window.FXV={V,play,useArtFx,render,boot};
 setTimeout(boot,50);
 })();
