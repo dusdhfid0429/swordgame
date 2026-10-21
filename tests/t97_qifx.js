@@ -11,12 +11,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 수련 동작은 예전 클립: 근력 strength_1, 지구력 endurance, 민첩 dash, 내공 수련·운기조식 meditate. train2 시트는 없다
   const st=await p.evaluate(()=>{const C=SHEETS.wuxia.clips,r={none:!SHEETS.train2},at=k=>{trnBusy={k,t:.3,dur:TRN_DUR[k]};const f=heroFrame();return f};P.satk=0;P.runT=0;P.medit=false;
     for(const[k,c]of[['str','strength_1'],['agi','dash'],['end','endurance']]){const f=at(k);r[k]=f[4]==='wuxia'&&C[c].f.includes(f[0])}
-    P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='wuxia'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
+    {const q=at('qi');r.qi=q[4]==='wuxia'&&C.meditate.f.includes(q[0])}P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='wuxia'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
     trnBusy=null;P.medit=true;const m=heroFrame();r.med=m[4]==='wuxia'&&C.meditate.f.includes(m[0]);P.medit=false;
     P.chan={t:.6,dur:1.6,label:'내공 수련',fn:()=>{}};r.ngp=ngProg();P.chan=null;
     trnBusy={k:'pg2',t:0,dur:9};P.qiTraining=true;r.pgNg=ngProg();trnBusy=null;P.qiTraining=false;return r});
-  ok(`train2 없음 ${st.none} · 근력 ${st.str} · 민첩 ${st.agi} · 지구력 ${st.end} · 내공 ${st.neigong} · 운기조식 ${st.med} · 인물창 내공 수련 진행도 ${st.ngp.toFixed(2)} · 폐관은 내공 연출 아님 ${st.pgNg}`,
-    st.none&&st.str&&st.agi&&st.end&&st.neigong&&st.med&&Math.abs(st.ngp-.375)<.01&&st.pgNg===-1);
+  ok(`train2 없음 ${st.none} · 근력 ${st.str} · 민첩 ${st.agi} · 지구력 ${st.end} · 본원진기 가부좌 ${st.qi} · 내공 ${st.neigong} · 운기조식 ${st.med} · 인물창 내공 수련 진행도 ${st.ngp.toFixed(2)} · 폐관은 내공 연출 아님 ${st.pgNg}`,
+    st.none&&st.str&&st.agi&&st.end&&st.qi&&st.neigong&&st.med&&Math.abs(st.ngp-.375)<.01&&st.pgNg===-1);
   // 2. 연출이 서로 다르다: 운기조식은 MED만, 내공 수련은 NG만, 본원진기는 TFX qi만 켜진다
   const fx=await p.evaluate(()=>{const run=n=>{for(let i=0;i<n;i++){time+=.03;trainTick(.03);draw()}};const r={};trnBusy=null;TFX=[];P.medit=true;run(30);r.med=[MED.k>.9,NG.k];P.medit=false;run(30);
     startTrain('neigong');run(20);r.ng=[MED.k,NG.k>.9,!!NG.h];run(40);
