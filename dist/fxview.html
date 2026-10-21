@@ -7623,7 +7623,7 @@ showTitle();requestAnimationFrame(loop);
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,cls:'검',art:null,col:'140,205,255',realm:0,sect:''};
+const V={shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,cls:'검',art:null,col:'140,205,255',realm:0,sect:''};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -7655,7 +7655,8 @@ const tgt=()=>{if(!mobs.includes(V.tg))place();return V.tg};
 
 // ---- 흐름: 속도, 시간 멈춤(나이·달력·낮밤), 다시 보기 ----
 const upd0=update;
-update=dt=>{const cal=G.cal,age=P&&P.age;upd0(dt*V.speed);G.cal=cal;if(P)P.age=age;tod=V.night?.92:.42;
+// 카메라는 연무장 한가운데에 고정한다 (사용자 2026-10-21: 재생마다 카메라가 따라가 눈이 아프다). 흔들림도 끌 수 있다
+update=dt=>{const cal=G.cal,age=P&&P.age;upd0(dt*V.speed);G.cal=cal;if(P)P.age=age;tod=V.night?.92:.42;const ct=iso(HOME.x,HOME.y-1.2);cam.x=ct.x;cam.y=ct.y;if(!V.shake)shake=0;
   if(P&&!P.leap&&Math.hypot(P.x-HOME.x,P.y-HOME.y)>4)place()};
 function play(fn,label){V.last={fn,label};clearTimeout(V.timer);try{fn()}catch(e){console.error(e);note('오류: '+e.message)}
   note(label);if(V.loop)V.timer=setTimeout(()=>{if(V.last&&V.last.fn===fn)play(fn,label)},2600/V.speed)}
@@ -7791,7 +7792,7 @@ function render(){if(!P)return;
     h+=`<h3>이동·특수</h3><div class="grid">${MOVE.map(([n],i)=>btn(n,'move:'+i)).join('')}</div>`;
   }
   box.innerHTML=`<header><h1>이펙트 뷰어</h1><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
-    <div class="ctl">속도 ${[.25,.5,1].map(s=>btn(s+'×','spd:'+s,V.speed===s)).join('')} ${btn('반복','loop',V.loop)} 확대 ${[1,1.5,2].map(z=>btn(z+'×','zoom:'+z,V.zoom===z)).join('')} ${btn('밤','night',V.night)}
+    <div class="ctl">속도 ${[.25,.5,1].map(s=>btn(s+'×','spd:'+s,V.speed===s)).join('')} ${btn('반복','loop',V.loop)} 확대 ${[1,1.5,2].map(z=>btn(z+'×','zoom:'+z,V.zoom===z)).join('')} ${btn('밤','night',V.night)} ${btn('흔들림','shake',V.shake)}
       <select data-a="tier" style="width:auto">${TIERN.map((n,i)=>`<option value="${i}"${i===V.tier?' selected':''}>숙련 ${n}</option>`).join('')}</select> ${btn('다시','again')}</div>
     <div class="tabs">${[['art','무공 초식'],['realm','경지·몸'],['qi','운기·수련'],['prim','기본 이펙트'],['move','이동·특수']].map(([k,n])=>btn(n,'tab:'+k,TAB===k)).join('')}</div>
     <div class="body">${h}</div><div id="fxvnow">${esc(V.last?V.last.label:'')}</div>`;
@@ -7803,6 +7804,7 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='spd'){V.speed=+v;render();return}
   if(k==='zoom'){V.zoom=+v;resize();render();return}
   if(k==='loop'){V.loop=!V.loop;if(!V.loop)clearTimeout(V.timer);render();return}
+  if(k==='shake'){V.shake=!V.shake;render();return}
   if(k==='night'){V.night=!V.night;render();return}
   if(k==='cls'){V.cls=v;V.art=null;setWeapon(v);render();return}
   if(k==='again'){if(V.last)play(V.last.fn,V.last.label);return}

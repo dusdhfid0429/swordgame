@@ -8,13 +8,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     await p.goto('file://'+require('path').resolve(__dirname,'../dist/fxview.html'));await p.waitForTimeout(1500);
     const st=await p.evaluate(()=>({reg:REG,play:playing,dummies:mobs.filter(m=>m.acadDummy).length,save:STORE.get(SAVE_KEY)}));
     ok(`${vp.width}px: 연무장(${st.reg})에서 시작, 목인장 ${st.dummies}개, 저장 없음`,st.reg==='fxv_arena'&&st.play&&st.dummies===6&&!st.save);
+    const cam0=await p.evaluate(()=>({...cam}));let drift=0;
     const tabs=await p.$$eval('#fxv button[data-a^="tab:"]',l=>l.map(x=>x.dataset.a));let n=0,made=0;
     for(const t of tabs){await p.click(`#fxv button[data-a="${t}"]`);
       const acts=await p.$$eval('#fxv .body button[data-a]',l=>l.map(x=>x.dataset.a).filter(a=>!a.startsWith('cls:')&&a!=='all'));
       for(const a of acts){await p.evaluate(()=>{fx=[];projs=[];TFX=[];sched=[];P.medit=P.qiTraining=false});
         await p.click(`#fxv button[data-a="${a}"]`);await p.waitForTimeout(60);
         const after=await p.evaluate(()=>fx.length+projs.length+TFX.length+(P.medit||P.qiTraining?1:0)+(P.leap?1:0)+sched.length);n++;if(after>0||a==='med:0')made++;else console.log('  변화 없음: '+a);
-        await p.waitForTimeout(240)}}
+        drift=Math.max(drift,await p.evaluate(c=>Math.hypot(cam.x-c.x,cam.y-c.y),cam0));await p.waitForTimeout(240)}}
+    ok(`${vp.width}px: 재생해도 카메라가 움직이지 않는다 (${drift.toFixed(2)})`,drift<.01);
     ok(`${vp.width}px: 단추 ${n}개 중 ${made}개가 이펙트를 냈다`,n>30&&made===n);
     // 병기마다 첫 무공의 필살기
     await p.click('#fxv button[data-a="tab:art"]');let ults=0;
