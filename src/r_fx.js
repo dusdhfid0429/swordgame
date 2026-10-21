@@ -120,6 +120,7 @@ function drawGlow2(f){
       for(const[w,c,al]of[[f.w*3,f.col,.25],[f.w,f.col,.8],[1.2,HI,.9]]){ctx.strokeStyle=rgba(c,al*k);ctx.lineWidth=w;path(pts);ctx.stroke()}}}
   else if(f.t==='zap'){const b=toScreen(f.ex,f.ey),bs=flick(f,()=>boltPts(p.x,p.y-28,b.x,b.y-28,Math.hypot(b.x-p.x,b.y-p.y)*.25,.25,0,[]));
     strokeBolts(bs,f.col,k,.8);glowDot(b.x,b.y-28,30,f.col,k)}
+  else if(f.t==='el')drawEl(f);   // 속성 재질 (r_elfx.js)
   else drawGlow(f);
   ctx.globalAlpha=1;
 }

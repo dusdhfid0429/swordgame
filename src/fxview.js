@@ -4,7 +4,7 @@
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,cls:'검',art:null,col:'140,205,255',realm:0,sect:''};
+const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,cls:'검',art:null,col:'140,205,255',realm:0,sect:''};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -45,6 +45,10 @@ function note(t){const el=$('fxvnow');if(el)el.textContent=t}
 
 // ---- 확대: 게임의 resize 뒤에 배율을 곱한다 ----
 const rs0=resize;resize=()=>{rs0();const r=C.getBoundingClientRect();S*=V.zoom;W=r.width/S;H=r.height/S};addEventListener('resize',()=>resize());
+
+// ---- 속성: 심법 속성을 골라 무공의 재질(불·물·번개…)을 바꿔 본다 ----
+const artEl0=artEl;artEl=a=>V.el||artEl0(a);
+const elSel=()=>typeof EL_FX==='undefined'?'':`<h3>속성 (심법)</h3><select data-a="el"><option value="">심법 그대로 (${esc(artEl0({}))})</option>${Object.entries(EL_FX).map(([k,e])=>`<option value="${esc(k)}"${k===V.el?' selected':''}>${esc(k)} · ${esc(e.n)}</option>`).join('')}</select>${V.el&&EL_FX[V.el]?`<p class="dim">${esc(EL_FX[V.el].d)}</p>`:''}`;
 
 // ---- 무공 초식 ----
 function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;return}if(!w||w.cls!==cls)P.eq.weapon=mkWeapon(cls,1,0)}
@@ -151,7 +155,7 @@ function render(){if(!P)return;
     h+=`<h3>병기</h3><div class="ctl" style="padding:0;border:0">${Object.keys(CLASS).map(c=>btn(c,'cls:'+c,V.cls===c)).join('')}</div>
       <h3>무공 (${arts.length})</h3><select data-a="art">${['정','사','마','중'].map(s=>{const l=arts.filter(x=>(x.side||'중')===s);return l.length?`<optgroup label="${s==='중'?'기타':s+'파'}">${l.map(x=>`<option value="${esc(x.id)}"${x.id===V.art?' selected':''}>${esc(x.n)}${x.sect&&SECTS[x.sect]?' · '+esc(SECTS[x.sect].n):''}${x.grade!=null&&typeof AGR!=='undefined'?' · '+esc(AGR[x.grade]||''):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
     if(a){h+=`<p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>${esc(a.d||'')} ${a.el?'· '+esc(a.el):''}${a.elc?' · 번개':''}</p>
-      <h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
+      ${elSel()}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
   }else if(TAB==='realm'){
@@ -164,7 +168,7 @@ function render(){if(!P)return;
       <h3>운기</h3><div class="grid">${btn('운기조식 켜기','med:1',P.medit)}${btn('내공 수련 켜기','med:qi',P.qiTraining)}${btn('끄기','med:0')}</div>
       <h3>기본기 수련 연출</h3><div class="grid">${TRAIN.map(([n,k])=>btn(n,'train:'+k)).join('')}</div>`;
   }else if(TAB==='prim'){
-    h+=`<h3>색</h3><select data-a="col">${colors().map(([n,c])=>`<option value="${c}"${c===V.col?' selected':''}>${esc(n)}</option>`).join('')}</select>
+    h+=`${elSel()}<h3>색</h3><select data-a="col">${colors().map(([n,c])=>`<option value="${c}"${c===V.col?' selected':''}>${esc(n)}</option>`).join('')}</select>
       <p class="dim">무공 탭의 숙련(입문~극성)이 겹 수에 반영된다: 대성은 넓은 잔광, 극성은 금빛 심이 더해진다.</p>
       <h3>기운 그림 (r_fx.js)</h3><div class="grid">${PRIM.map(([n],i)=>btn(n,'prim:'+i)).join('')}</div>
       <h3>투사체</h3><div class="grid">${PROJ.map(k=>btn(PROJN[k],'proj:'+k)).join('')}${btn('기공탄 · 번개','proj:orb:1')}</div>
@@ -179,7 +183,7 @@ function render(){if(!P)return;
     <div class="body">${h}</div><div id="fxvnow">${esc(V.last?V.last.label:'')}</div>`;
 }
 box.addEventListener('change',ev=>{const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
-  if(k==='art')V.art=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()});
+  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()});
 box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if(!b||!P)return;const[k,v,w]=b.dataset.a.split(':');
   if(k==='tab'){TAB=v;render();return}
   if(k==='spd'){V.speed=+v;render();return}

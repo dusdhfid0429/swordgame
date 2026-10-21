@@ -189,6 +189,7 @@ function spawnTick(){
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 //  panelOpen(id) 창을 연 뒤
 //  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
+//  glFx(o,X)     무공 이펙트 하나를 fx에 넣은 뒤 (X: 무공, 경지 효과 등은 없음). 속성 재질을 덧입힌다 (r_elfx.js)
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
