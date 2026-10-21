@@ -26,8 +26,8 @@ const isKick=f=>!!f&&/각|퇴|족|발/.test(f.n||'');
 function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag'][P.hc]}
   const w=heroCls();P.ss2=0;const row=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w;
   // v123: 핸드오프 시트의 공격 클립이 그 줄에 바인딩돼 있고 시트가 읽혔으면 그 장 배열을 쓴다 (P.ssh = 시트 이름)
-  P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],wc=wx&&wx[kind]&&sheetClip('wuxia',wx[kind]);
-  if(wc&&sheetOk('wuxia')){P.sset=wc.f;P.ssh='wuxia'}
+  P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],wc=wx&&wx[kind]&&sheetClip('act',wx[kind]);
+  if(wc&&sheetOk('act')){P.sset=wc.f;P.ssh='act'}
   else if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
     if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}
   if(!P.ss2&&!P.ssh)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];

@@ -17,7 +17,7 @@ function drawFighter(e,isP){
       if(P.hit>0){const h=Math.min(1,P.hit/.2);mdx-=5*h;mrot-=.07*h}if(mdx||mrot){ctx.translate(mdx,0);ctx.rotate(mrot)}}
     const gb=heroGarb();
     // v123 핸드오프 시트 장: 발 기준점이 캔버스에 박혀 있어 자리 보정 없이 그린다. 무기는 소켓이 확정될 때까지 안 그린다
-    if(sh){if(dc==='검'||dc==='도'){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawSheath(dc,155,263,flash);ctx.restore()}
+    if(sh){if(dc==='검'||dc==='도'){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawSheath(dc,...(SHEATH_AT[sh]||SHEATH_AT.wuxia),flash);ctx.restore()}
       drawSheet(sh,fi,k,flash,gb&&gb.wx);if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
       // v124: 소켓이 있는 장(검·도·창·봉 공격)은 손 자리에 코드 무기를 얹는다
       const wl=dc!=='권'&&dc!=='각'?sheetWeaponLine(sh,fi,dc):null;
