@@ -8,11 +8,17 @@ function arcHit(X,r,cos,m,kb,stun){for(const e of foes()){if(e.hp<=0)continue;co
 function lineHit(X,len,w,m,kb,stun){for(const e of foes()){if(e.hp<=0)continue;const dx=e.x-P.x,dy=e.y-P.y,t=dx*P.fx+dy*P.fy,q=Math.abs(dx*P.fy-dy*P.fx);if(t>-.2&&t<len&&q<w)hitE(X,e,m,kb,stun)}}
 
 // effects: tier 2 adds a wide afterglow copy, tier 3 adds a gold core copy
+// 같은 무공을 연달아 쓰면 앞선 시전의 이펙트는 흐리게 줄여 빨리 거둔다 (겹쳐 하얗게 뭉개지지 않게, data/elfx.json FX_OLD)
+const FX_OLD=GD.FX_OLD;
+function fadeOld(X){if(!X||!X.key)return;for(const f of fx)if(f.ck===X.key&&f.cx!==X&&!f.old){f.old=1;f.dim=(f.dim||1)*FX_OLD.dim;f.life=Math.min(f.life,FX_OLD.life)}}
+function tagCast(X,i0){if(X&&X.key)for(let i=i0;i<fx.length;i++){fx[i].cx=X;fx[i].ck=X.key}}
 function GL(o,X){
+  fadeOld(X);const i0=fx.length;
   const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;fx.push(o);
   if(t>=2)fx.push({...o,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:.35,r:o.r&&o.r*1.08});
   if(t>=3)fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
   runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)
+  tagCast(X,i0);
 }
 const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);runHooks('slashFx',o)};   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
@@ -22,7 +28,7 @@ const fBolt=(X,c,col,s=1)=>GL({t:'bolt',x:c.x,y:c.y,col,s,life:.5},X);
 const fStar=(X,c,col,s=1,life=.2)=>GL({t:'star',x:c.x,y:c.y,col,s:s*(1+.15*(X?X.t:0)),life},X);
 const fClaw=(X,c,col)=>GL({t:'claw',x:c.x,y:c.y,col,life:.3,side:(P.fx-P.fy)>=0?1:-1},X);
 function fParts(X,c,col,n,spd,shape,life=.7){n+=4*(X?X.t:0);const ps=[];for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=spd*(.4+Math.random()*.8);ps.push({vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6-spd*.5,r:Math.random()*6})}
-  fx.push({t:'parts',glow:true,x:c.x,y:c.y,col,ps,shape,life,max:life})}
+  fadeOld(X);fx.push({t:'parts',glow:true,x:c.x,y:c.y,col,ps,shape,life,max:life});tagCast(X,fx.length-1)}
 function fxHit(X,e,s=1){
   const c=X.art.c,w=X.art.cls;
   if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);

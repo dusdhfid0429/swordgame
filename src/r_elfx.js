@@ -52,13 +52,16 @@ hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key)continue;q.el
 // ---- 그리기 (r_fx.js drawGlow2 가 부른다. 더하기 합성이 기본, 돌·흙·잎·연기는 보통 합성) ----
 const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};
 const SPK=[];
-function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation;ctx.lineCap='round';
+// 살아 있는 재질 입자가 많을수록 하나하나를 흐리게 그린다 (겹치면 하얗게 타서 무공 모양이 묻힌다, EL_FX_N.dense)
+const ELD={t:-1,k:1};
+function elDense(){if(ELD.t===time)return ELD.k;let n=0;for(const f of fx)if(f.t==='el')n+=f.ps.length;ELD.t=time;return ELD.k=Math.min(1,Math.sqrt(EL_FX_N.dense/Math.max(1,n)))}
+function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation,ga=ctx.globalAlpha;ctx.globalAlpha=ga*elDense();ctx.lineCap='round';
   for(const q of f.ps){const a=T-q.d;if(a<0||a>q.L)continue;const u=a/q.L,fade=u<.1?u/.1:1-u*u;
     ctx.globalCompositeOperation=EL_SOLID[q.k]?'source-over':'lighter';
     const x0=p.x+q.ox,y0=p.y+q.oy,gr=p.y+q.gy,c=q.col;
     switch(q.k){
-      case'flame':{const x=x0+q.vx*a+Math.sin(a*14+q.r*6)*3,y=y0+q.vy*a,s=q.s*(1-u*.6),hot=u<.35?'255,235,170':u<.7?c:'210,60,25';
-        glowDot(x,y,s*2.4,hot,.55*fade);ctx.fillStyle=rgba(hot,.85*fade);ctx.beginPath();ctx.moveTo(x,y-s*1.7);ctx.quadraticCurveTo(x+s*.8,y,x,y+s*.6);ctx.quadraticCurveTo(x-s*.8,y,x,y-s*1.7);ctx.fill();break}
+      case'flame':{const x=x0+q.vx*a+Math.sin(a*14+q.r*6)*3,y=y0+q.vy*a,s=q.s*(1-u*.6),hot=u<.2?'255,225,150':u<.6?c:'210,60,25';
+        glowDot(x,y,s*1.5,hot,.25*fade);ctx.fillStyle=rgba(hot,.75*fade);ctx.beginPath();ctx.moveTo(x,y-s*1.7);ctx.quadraticCurveTo(x+s*.8,y,x,y+s*.6);ctx.quadraticCurveTo(x-s*.8,y,x,y-s*1.7);ctx.fill();break}
       case'ember':{const x=x0+q.vx*a+Math.sin(a*9+q.r*5)*5,y=y0+q.vy*a;ctx.fillStyle=rgba(c,fade);ctx.fillRect(x-q.s/2,y-q.s/2,q.s,q.s);break}
       case'drop':{const x=x0+q.vx*a,vy=q.vy+900*a,y=Math.min(gr,y0+q.vy*a+450*a*a);if(y>=gr&&vy>0){glowDot(x,gr,6,c,.4*fade,.4);break}
         ctx.strokeStyle=rgba(c,.9*fade);ctx.lineWidth=q.s;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-q.vx*.03,y-vy*.03);ctx.stroke();ctx.fillStyle=rgba(HI,fade);ctx.fillRect(x-.8,y-.8,1.6,1.6);break}
@@ -94,4 +97,4 @@ function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ct
   for(let k=0;k<4;k++){const L=SPK[k];if(!L)continue;const fade=(k+.5)/4;ctx.beginPath();
     for(let i=0;i<L.length;i+=4){const x0=L[i],y0=L[i+1],g=L[i+2];ctx.moveTo(x0+g[0],y0+g[1]);for(let j=2;j<g.length;j+=2)ctx.lineTo(x0+g[j],y0+g[j+1])}
     ctx.strokeStyle=rgba(L[3],.35*fade);ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=rgba(HI,fade);ctx.lineWidth=1.2;ctx.stroke()}
-  ctx.globalCompositeOperation=mode}
+  ctx.globalCompositeOperation=mode;ctx.globalAlpha=ga}
