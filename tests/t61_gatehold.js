@@ -14,6 +14,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 벗어나면 0부터 다시, 경공 중엔 세지 않는다
   const g2=await p.evaluate(()=>{const g=REGION().gates[0];P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(.5);const a=P.gateT;P.x=g.x+3;gateTick(.1);const b=P.gateT||0;P.x=g.x;P.leap={sx:P.x,sy:P.y,ex:P.x,ey:P.y,t:0,dur:.6,z0:0,z1:0,to:null};gateTick(1);gateTick(1);const c=P.gateT||0,trav=!!P.traveling;P.leap=null;P.x=g.x+3;gateTick(.1);return{a,b,c,trav}});
   ok(`벗어나면 초기화 (${g2.a}→${g2.b}), 경공 중 2초 지나도 안 넘어감 (${g2.c}, 이동 ${g2.trav})`,g2.a===.5&&g2.b===0&&g2.c===0&&!g2.trav);
+  // 공격 중 상태 (2026-10-20): 휘두르는 중이나 마지막 공격 뒤 1초 안에는 출입구에 서 있어도 세지 않는다
+  const g3=await p.evaluate(()=>{const g=REGION().gates[0],r0=REG;P.gateLock=0;P.x=g.x;P.y=g.y;P.path=null;P.lastAtk=time;const st=attacking();for(let i=0;i<5;i++)gateTick(.3);const a=P.gateT||0,trav=!!P.traveling;
+    P.lastAtk=time-2;P.swing=.2;const sw=attacking();gateTick(.5);const b=P.gateT||0;P.swing=0;const st2=attacking();gateTick(.5);const c=P.gateT;return{st,a,trav,sw,b,st2,c,r0}});
+  ok(`공격 중 ${g3.st}: 1.5초 서 있어도 0 (${g3.a}, 이동 ${g3.trav}), 휘두르는 중 ${g3.sw} 0 (${g3.b}), 끝나면 ${!g3.st2} 다시 셈 (${g3.c})`,g3.st&&g3.a===0&&!g3.trav&&g3.sw&&g3.b===0&&!g3.st2&&g3.c===.5);
+  await p.evaluate(()=>{P.x+=3;gateTick(.1)});
   // 강제공격: 같은 편 무인은 평소엔 공격 대상이 아니다
   const f1=await p.evaluate(()=>{mobs=[];P.target=null;const e=mkFac(pfac(),0,P.x+1.5,P.y);mobs.push(e);const a={peace:peaceful(e),near:nearest(5)===e,foe:foes().includes(e)};
     toggleForce();const b={on:forceAtk,peace:peaceful(e),near:nearest(5)===e,foe:foes().includes(e),hud:$('forceb').classList.contains('on'),t:$('t_force').classList.contains('on')};
