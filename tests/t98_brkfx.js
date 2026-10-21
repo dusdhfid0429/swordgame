@@ -1,4 +1,4 @@
-// v163: 폐관으로 벽을 깨면 오른 경지마다 다른 돌파 연출 (소주천 → 대주천 → 임독양맥 → 강기 → 오기조원 → 삼화취정 → 생사현관 → 천인합일)
+// v163: 폐관으로 벽을 깨면 오른 경지마다 다른 돌파 연출 (소주천 → 대주천 → 임독양맥 → 강기 → 삼화취정 → 오기조원 → 생사현관 → 천인합일)
 const {chromium}=require(process.env.PWPATH||'playwright');
 const shot=n=>__dirname+'/shots/'+n+'.png';
 (async()=>{
@@ -16,7 +16,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`경지마다 이름 ${r.map(q=>q.n).join(' · ')}`,r.slice(0,8).every(q=>q.n)&&new Set(r.slice(0,8).map(q=>q.n)).size===8&&r[8].r===8);
   ok(`높을수록 길다 ${r.map(q=>q.L).join(',')}`,r.slice(0,8).every((q,j)=>!j||q.L>=r[j-1].L));
   // 한 장씩: 경지마다 가장 볼 만한 때
-  const at=[0,.55,.5,.6,.5,.62,.84,.6,.55];
+  const at=[0,.55,.5,.6,.5,.35,.62,.6,.55];
   for(let i=1;i<=8;i++){await p.evaluate(([i,t])=>{fx.length=0;brkFx(i);const f=fx.find(q=>q.t==='brk');f.life=f.max*(1-t)},[i,at[i]]);await p.waitForTimeout(120);await p.screenshot({path:shot('brk_'+i)})}
   // 폐관 성공 → 돌파 연출과 배너
   const g=await p.evaluate(()=>{fx.length=0;P.realm=0;P.rfx={};const R=Math.random;pgWhy=()=>'';passYears=()=>true;Math.random=()=>0;pgFinish();Math.random=R;
