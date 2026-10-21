@@ -12,7 +12,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.sect=null;P.sim=null;const none=fxCol(null),nonePair=pFxPair()[0];
     P.sect='hwasan';const base=fxCol(null);
     const s=simOf('mudang')[0];P.sims={...P.sims,[s.id]:1};P.sim=s.id;const own=fxCol(null),pair=pFxPair();
-    const other=art('emei').c,dk=simOf('cheonma')[0];P.sims[dk.id]=1;P.sim=dk.id;P.sect='cheonma';const dark=isDark(pFxPair()[0]);
+    const other=fxCol(art('emei')),dk=simOf('cheonma')[0];P.sims[dk.id]=1;P.sim=dk.id;P.sect='cheonma';const dark=isDark(pFxPair()[0]);
     P.medit=1;for(let i=0;i<30;i++){time+=.03;draw()}P.medit=0;
     const distinct=new Set(Object.values(SECT_FX).map(x=>x[0])).size;
     return{all,none,nonePair,base,own,pair,other,dark,distinct,n:Object.keys(SECTS).length}});

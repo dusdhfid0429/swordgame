@@ -9,14 +9,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 모든 심법에 계열과 속성, 무공의 색·입자·뇌기는 getter (저장에 안 실림)
   const t=await p.evaluate(()=>{const all=Object.values(SIM),bad=all.filter(x=>!x.sc||!EL[x.el]).map(x=>x.id);const a=ARTS[P.cur];
     return{n:all.length,bad,base:SIM['N_base_정'].sc+SIM['N_base_정'].el,shop:SIM['N_shop_사'].sc+SIM['N_shop_사'].el,sl:SIM.N_shaolin_1.sc+SIM.N_shaolin_1.el,cm:SIM.N_cheonma_4.sc+SIM.N_cheonma_4.el,
-      json:JSON.stringify(a).includes('"c"'),c:a.c,el:pEl(),beats:[elMul('양','음'),elMul('음','뇌'),elMul('뇌','양'),elMul('양','뇌'),elMul('화','금'),elMul('금','화')]}});
+      json:JSON.stringify(a).includes('"c"'),c:fxCol(a),el:pEl(),beats:[elMul('양','음'),elMul('음','뇌'),elMul('뇌','양'),elMul('양','뇌'),elMul('화','금'),elMul('금','화')]}});
   console.log(JSON.stringify(t));
   ok(`심법 ${t.n}개 모두 계열·속성(없는 것 ${t.bad.length}) · 타고난 ${t.base} 잡화점 사 ${t.shop} 소림 ${t.sl} 천마 ${t.cm} · 색 getter(JSON에 없음 ${!t.json}) · 상극 ${t.beats.join(',')}`,
     t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공마'&&!t.json&&t.c==='255,214,120'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
   const SW_MU='170,210,255';   // v156: 색은 심법 계열이 아니라 심법의 문파 색 (SECT_FX)
   // 2. 심법을 바꾸면 같은 무공의 색·속성·뇌기가 바뀐다 (무당 양=도가 파랑, 천마 뇌=마공 보라+뇌기)
-  const sw=await p.evaluate(()=>{P.sims={N_mudang_2:1,N_cheonma_4:1,N_hwasan_1:1};const a=ARTS[P.cur],o={};P.sim='N_mudang_2';o.mu=[a.c,pEl(),a.elc,a.pt];P.sim='N_cheonma_4';o.cm=[a.c,pEl(),a.elc];
-    P.sim='N_hwasan_1';o.hw=[a.c,pEl(),SECT_FX.hwasan[0]];const s=ARTS[SECTS.shaolin.arts[0].id];o.other=[s.c,artEl(s)];return o});
+  const sw=await p.evaluate(()=>{P.sims={N_mudang_2:1,N_cheonma_4:1,N_hwasan_1:1};const a=ARTS[P.cur],o={};P.sim='N_mudang_2';o.mu=[fxCol(a),pEl(),a.elc,a.pt];P.sim='N_cheonma_4';o.cm=[fxCol(a),pEl(),a.elc];
+    P.sim='N_hwasan_1';o.hw=[fxCol(a),pEl(),SECT_FX.hwasan[0]];const s=ARTS[SECTS.shaolin.arts[0].id];o.other=[fxCol(s),artEl(s)];return o});
   ok(`무당 ${sw.mu.join('/')} · 천마 ${sw.cm.join('/')} · 화산 ${sw.hw.join('/')} · 남의 소림 무공은 소림 심법 색 ${sw.other.join('/')}`,
     sw.mu[0]===SW_MU&&sw.mu[1]==='양'&&sw.mu[2]===false&&sw.cm[0]==='28,6,40'&&sw.cm[1]==='마'&&sw.cm[2]===false&&sw.hw[0]===sw.hw[2]&&sw.hw[1]==='화'&&sw.other[0]==='255,200,90'&&sw.other[1]==='금');
   // 3. 적중 효과는 심법 속성: 무당(양)이면 화상+밀침, 천마(마)면 느려짐·흡수, 화산(화)이면 화상, 금(기초)이면 치명타 가산
