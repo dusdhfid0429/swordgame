@@ -34,9 +34,9 @@
       "wxPole": {"a": "act", "clip": "pole_balance", "pp": true, "fps": 6}
     },
     "hero": {
-      "_doc": "medit=운기조식·내공 수련, train.<수련 종류>=수련 창에서 수련하는 동안(str 근력·agi 민첩·end 지구력·neigong 내공·pg 폐관·mk 창안), dodge=피동 회피. 시트가 아직 안 읽혔으면 base·예전 클립으로 돌아간다",
+      "_doc": "medit=운기조식·내공 수련, train.<수련 종류>=수련 창에서 수련하는 동안(str 근력·agi 민첩·end 지구력·neigong 내공·qi 본원진기(v162 사용자: 내공처럼 앉는다)·pg 폐관·mk 창안), dodge=피동 회피. 시트가 아직 안 읽혔으면 base·예전 클립으로 돌아간다",
       "base": {"idle": "idleSword", "run": "run", "jump1": "jump1", "jump2": "jump2", "jump3": "jump3", "jumpNb": "jumpSword", "dodge": "dodge", "medit": "wxMeditate", "lk": "",
-        "train": {"str": "wxStrength", "agi": "wxDash", "end": "wxEndure", "neigong": "wxMeditate", "pg": "wxWaterfall", "mk": "wxPole"}},
+        "train": {"str": "wxStrength", "agi": "wxDash", "end": "wxEndure", "neigong": "wxMeditate", "qi": "wxMeditate", "pg": "wxWaterfall", "mk": "wxPole"}},
       "검": {},
       "도": {"idle": "idle도"},
       "창": {"idle": "idle창", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
