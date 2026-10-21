@@ -92,6 +92,7 @@ function drawNode(n){
     if(ready){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4+n.y)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-5);ctx.lineTo(1,-9);ctx.lineTo(5,-4);ctx.stroke()}}
   else if(n.t==='vault'){poly([[-14,-2],[12,-2],[14,-18],[-12,-18]],lg(-14,14,'#4a4a52','#1e1e24'));poly([[-12,-18],[14,-18],[12,-24],[-10,-24]],'#5a5a64');ctx.fillStyle='#c9a14a';ctx.fillRect(-3,-14,6,5);ctx.strokeStyle='#8a7a40';ctx.lineWidth=1;ctx.strokeRect(-11,-16,22,12);
     if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
+  else if(n.t==='cchest'){ctx.restore();drawCaveChest(n);return}
   else if(n.t==='chest'){if(!P.chest){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
     poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],P.chest?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
   ctx.restore();
@@ -238,19 +239,19 @@ function draw(){
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   terrSky();   // v155: 구름·모래바람·아지랑이
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
-  const w=REGION().hall?null:G.weather;
+  const w=REGION().hall||REGION().cave?null:G.weather;   // 동굴 속도 비·눈 없음
   if(w==='비'){ctx.strokeStyle='rgba(170,190,220,.35)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<140;i++){const x=(hash(i,7)*W+time*60*hash(i,3))%W,y=(hash(i,11)*H+time*(500+hash(i,5)*200))%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+12)}ctx.stroke();ctx.fillStyle='rgba(20,30,50,.15)';ctx.fillRect(0,0,W,H)}
   else if(w==='눈'){ctx.fillStyle='rgba(245,248,255,.8)';for(let i=0;i<120;i++){const x=(hash(i,7)*W+Math.sin(time+i)*20+time*15)%W,y=(hash(i,11)*H+time*(40+hash(i,5)*30))%H;ctx.beginPath();ctx.arc(x,y,1+hash(i,2)*1.6,0,7);ctx.fill()}}
   else if(w==='흐림'){ctx.fillStyle='rgba(60,64,72,.18)';ctx.fillRect(0,0,W,H)}
   else if(w==='폭염'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,170,60,.45)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   // night and the cave: darkness with holes cut by the hero's aura, lanterns and qi bursts
-  const cave=inCave(Math.floor(P.x),Math.floor(P.y));
-  const dark=Math.max(cave?.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
+  const cave=REGION().cave||inCave(Math.floor(P.x),Math.floor(P.y));
+  const dark=Math.max(cave?cave.dark||.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
     sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
   if(dusk>0){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(255,120,40,${.5*dusk})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   if(dark>.01){
     lx.setTransform(S*dpr,0,0,S*dpr,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);
-    lx.fillStyle=`rgba(4,8,22,${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
+    lx.fillStyle=`rgba(${cave&&cave.dk||'4,8,22'},${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
     for(const b of builds)if(b.kind!=='pavilion'){const q=scr(b.x+b.w/2,b.y+b.h+.3,20);lightAt(q[0],q[1],110,.8)}
     lightAt(pp.x,pp.y-20,240,1);
     for(const l of lamps){const p=toScreen(l.x,l.y);lightAt(p.x,p.y-30,150+Math.sin(time*9+l.p)*8,.95)}
@@ -259,11 +260,13 @@ function draw(){
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
     for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max)}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
+    runHooks('darkLights');   // 동굴 시안: 수정·횃불·용암 빛 (g_cave.js)
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
     ctx.globalCompositeOperation='lighter';
     for(const l of lamps){const p=toScreen(l.x,l.y),g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,120);g.addColorStop(0,`rgba(255,150,60,${.22*dark})`);g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.fillRect(p.x-120,p.y-150,240,240)}
     ctx.globalCompositeOperation='source-over';
   }
+  runHooks('afterDark');   // 동굴 시안: 어둠 위의 빛과 움직임 (g_cave.js)
   for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
@@ -289,7 +292,7 @@ function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&V
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='cwall'||objs[y][x]==='cvoid'?'#141210':objs[y][x]==='cmouth'?'#c9a14a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
