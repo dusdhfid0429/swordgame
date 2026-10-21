@@ -18,15 +18,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       const idle=heroFrame();heroAtk('flat');const atk=heroFrame();heroAtk('ult');const ult=heroFrame();P.satk=0;
       const inRow=(f,row)=>f[3]&&f[0]>=A2[row][0]&&f[0]<A2[row][0]+A2[row][1];
       // v123: 맨손 공격은 핸드오프 시트(wuxia)의 punches/combo 클립
-      const wx=(f,c)=>f[4]==='wuxia'&&SHEETS.wuxia.clips[c].f.includes(f[0]);
+      const wx=(f,c)=>f[4]==='act'&&SHEETS.act.clips[c].f.includes(f[0]);
       // v124: 도·봉·창 공격도 핸드오프 시트 클립 (소켓에 코드 무기). 궁만 두 번째 시트 줄
       const WX={권:['punches','combo'],도:['saber_whirlwind','saber_heavy'],봉:['staff_1','staff_2'],창:['spear_1','spear_1']}[w];
-      out[w]=WX?{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:wx(atk,WX[0]),ult:wx(ult,WX[1]),ss2:P.ssh==='wuxia'?1:0}:{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:inRow(atk,w),ult:inRow(ult,w),ss2:P.ss2}}
-    useCls('검');heroAtk('flat');const sw=heroFrame();P.satk=0;out.검={atk:!sw[3]&&sw[4]==='wuxia'&&SHEETS.wuxia.clips.sword_thrust.f.includes(sw[0]),ss2:P.ss2};return out});
+      out[w]=WX?{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:wx(atk,WX[0]),ult:wx(ult,WX[1]),ss2:P.ssh==='act'?1:0}:{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:inRow(atk,w),ult:inRow(ult,w),ss2:P.ss2}}
+    useCls('검');heroAtk('flat');const sw=heroFrame();P.satk=0;out.검={atk:!sw[3]&&sw[4]==='act'&&SHEETS.act.clips.sword_thrust.f.includes(sw[0]),ss2:P.ss2};return out});
   ok(`무기별 프레임: ${Object.entries(r).map(([k,v])=>k+(v.idle===undefined?'':v.idle?'·대기':'·대기X')+(v.atk?'·공격':'·공격X')).join(' ')}`,['도','봉','창','권','궁'].every(w=>r[w].sprite&&r[w].idle&&r[w].atk&&r[w].ult&&r[w].ss2===1)&&r.검.atk&&r.검.ss2===0);
   // 2b. 권 계열 발차기 초식은 각법 줄, 맨손 기본 공격은 권·각 줄을 오간다
   const k=await p.evaluate(()=>{useCls('권');heroAtk('flat',{n:'선풍각',p:'circle'});const a=heroFrame();heroAtk('flat',{n:'철권',p:'melee'});const b=heroFrame();
-    heroAtk('vert');const c=heroFrame();P.satk=0;const wx=(f,c)=>f[4]==='wuxia'&&SHEETS.wuxia.clips[c].f.includes(f[0]);return{kick:wx(a,'kicks'),fist:wx(b,'punches'),basic:wx(c,'kicks')}});
+    heroAtk('vert');const c=heroFrame();P.satk=0;const wx=(f,c)=>f[4]==='act'&&SHEETS.act.clips[c].f.includes(f[0]);return{kick:wx(a,'kicks'),fist:wx(b,'punches'),basic:wx(c,'kicks')}});
   ok(`발차기 초식은 kicks 클립 ${k.kick}, 주먹은 punches ${k.fist}, 맨손 기본기(세로) kicks ${k.basic} (v123 핸드오프 시트)`,k.kick&&k.fist&&k.basic);
   // 3. 경공 1단: 0.6초 동안 j줄 9장을 차례로, 검도 같은 동작
   const j=await p.evaluate(()=>{const seq=[];for(const t of[.6,.45,.3,.15,.01]){P.sj=t;seq.push(heroFrame())}P.sj=0;const s=A2.j;
@@ -39,7 +39,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`보법 대시 줄 ${bb.dash} (배율 ${bb.sc}), 피동 회피 측면 줄 ${bb.side}, 맨손 위빙 ${bb.wv}`,bb.ok1&&bb.dash&&bb.sc>.6&&bb.sc<.7&&bb.side&&bb.wv);
   // 3c. 달리기: 새 도트를 쓰지 않고 기존 몸통 아틀라스 41~48 (사용자 결정)
   const rn=await p.evaluate(()=>{const out={};for(const w of['검','도','봉','창','권','궁']){useCls(w);P.satk=0;P.runT=.14;const fs=new Set();for(let i=0;i<40;i++){P.runPh=i*.07;const f=heroFrame();if(f[3])fs.add(-1);else fs.add(f[0])}
-      out[w]=w==='권'?[...fs].every(f=>SHEETS.wuxia.clips.run.f.includes(f))&&fs.size===7:[...fs].every(f=>f>=41&&f<=48)&&fs.size===8}P.runT=0;return out});
+      out[w]=w==='권'?[...fs].every(f=>SHEETS.act.clips.run.f.includes(f))&&fs.size===7:[...fs].every(f=>f>=41&&f<=48)&&fs.size===8}P.runT=0;return out});
   ok(`달리기 줄: ${Object.entries(rn).map(([k,v])=>k+(v?'':'X')).join(' ')} (맨손은 v123 시트 run 7장)`,Object.values(rn).every(Boolean));
   // 4. 공격 중 그리기: 각 무기로 한 번씩 휘두르며 오류 없이 그려진다
   await p.evaluate(()=>{useCls('창');heroAtk('ult');mobs=[]});await p.waitForTimeout(250);await p.screenshot({path:shot('t49_spear')});

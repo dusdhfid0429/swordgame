@@ -28,9 +28,12 @@ open(os.path.join(ROOT, 'dist', 'gamedata-version.json'), 'w', encoding='utf8').
 import base64
 ASSETS = os.path.join(ROOT, 'assets')
 sheets = {}
+SKIP_SHEETS = {'wuxia'}   # v166: assets/act가 대신 그린다. wuxia는 act 소켓의 원본(tools/actsheet.py)으로만 남긴다
 if os.path.isdir(ASSETS):
     for name in sorted(os.listdir(ASSETS)):
         d = os.path.join(ASSETS, name)
+        if name in SKIP_SHEETS:
+            continue
         aj = os.path.join(d, name + '.atlas.json')
         if not os.path.isfile(aj):
             continue

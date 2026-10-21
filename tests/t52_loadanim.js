@@ -12,8 +12,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const st=await p.evaluate(()=>({dA:P.dA,bA:P.bA,ggc:P.ggc,next:ggNext(),t:+time.toFixed(1)}));
   ok(`이어 하기 뒤 회피 ${st.dA} 보법 ${st.bA} 연타 ${st.ggc} → 경공 1단부터(${st.next}) · 시계 ${st.t}`,st.dA===0&&st.bA===null&&st.ggc===null&&st.next===1);
   // 기초권각(맨손)이라 v123부터는 핸드오프 시트의 run 클립, 무기 무공이면 몸통 41~48
-  await p.keyboard.down('ArrowRight');const fr=[];for(let i=0;i<8;i++){await p.waitForTimeout(70);fr.push(await p.evaluate(()=>{const f=heroFrame();return f[4]==='wuxia'?'w'+f[0]:f[0]}))}await p.keyboard.up('ArrowRight');
-  const wxRun=await p.evaluate(()=>SHEETS.wuxia.clips.run.f),run=fr.every(i=>typeof i==='string'?wxRun.includes(+i.slice(1)):(i>=41&&i<=48)),uniq=new Set(fr).size;
+  await p.keyboard.down('ArrowRight');const fr=[];for(let i=0;i<8;i++){await p.waitForTimeout(70);fr.push(await p.evaluate(()=>{const f=heroFrame();return f[4]==='act'?'w'+f[0]:f[0]}))}await p.keyboard.up('ArrowRight');
+  const wxRun=await p.evaluate(()=>SHEETS.act.clips.run.f),run=fr.every(i=>typeof i==='string'?wxRun.includes(+i.slice(1)):(i>=41&&i<=48)),uniq=new Set(fr).size;
   ok(`이동 중 장 ${fr.join(',')} → 달리기 장(시트 run 또는 41~48) ${run}, ${uniq}가지`,run&&uniq>=3);
   // 그래도 시계보다 뒤인 시각이 들어오면 도트 고르기가 스스로 걸러낸다
   const g=await p.evaluate(()=>{P.eq.weapon=null;P.dA=time+500;P.bA={seq:[100,101],t0:time+500,dur:.6,move:.3};const f=heroFrame()[0];const o={f,bA:P.bA};P.dA=0;return o});
