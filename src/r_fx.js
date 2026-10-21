@@ -35,9 +35,11 @@ function boltPts(x0,y0,x1,y1,d,br,depth,out){
     boltPts(a[0],a[1],a[0]+Math.cos(g)*L,a[1]+Math.sin(g)*L,L*.35,br*.45,depth+1,out)}
   return out;
 }
-function strokeBolts(bs,col,k,s=1){
+// 굵기가 같은 가지끼리 한 경로로 모아 긋는다 (가지마다 따로 그으면 뇌 속성 필살기에서 획이 수천 번이라 끊겼다)
+function strokeBolts(bs,col,k,s=1){const ws=[...new Set(bs.map(b=>b.w))];
   for(const[lw,c,a]of[[16*s,col,.1],[7*s,col,.4],[3*s,col,.85],[1.4*s,HI,1]]){ctx.strokeStyle=rgba(c,a*k);
-    for(const b of bs){ctx.lineWidth=Math.max(.6,lw*b.w);path(b.pts);ctx.stroke()}}
+    for(const w of ws){ctx.lineWidth=Math.max(.6,lw*w);ctx.beginPath();
+      for(const b of bs)if(b.w===w)b.pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke()}}
 }
 const flick=(f,mk,rate=.045)=>{if(!f.geo||time-f.gt>rate){f.geo=mk();f.gt=time}return f.geo};
 const GLOWS={};

@@ -51,7 +51,8 @@ hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key)continue;q.el
 
 // ---- 그리기 (r_fx.js drawGlow2 가 부른다. 더하기 합성이 기본, 돌·흙·잎·연기는 보통 합성) ----
 const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};
-function drawEl(f){const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation;ctx.lineCap='round';
+const SPK=[];
+function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation;ctx.lineCap='round';
   for(const q of f.ps){const a=T-q.d;if(a<0||a>q.L)continue;const u=a/q.L,fade=u<.1?u/.1:1-u*u;
     ctx.globalCompositeOperation=EL_SOLID[q.k]?'source-over':'lighter';
     const x0=p.x+q.ox,y0=p.y+q.oy,gr=p.y+q.gy,c=q.col;
@@ -83,11 +84,14 @@ function drawEl(f){const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompo
         for(let i=0;i<3;i++){const g=q.rot+a*2+i*Math.PI/3;ctx.beginPath();ctx.moveTo(x-Math.cos(g)*s,y-Math.sin(g)*s);ctx.lineTo(x+Math.cos(g)*s,y+Math.sin(g)*s);ctx.stroke()}
         glowDot(x,y,s*1.6,c,.35*fade);break}
       case'mist':{const x=x0+q.vx*a,y=y0+q.vy*a;glowDot(x,y,q.s*(1+u),c,.3*Math.sin(u*Math.PI),.55);break}
-      case'spark':{   // 자잘한 번개: 가지 없는 꺾은선 하나를 두 번만 긋는다 (boltPts+strokeBolts 는 입자 수백 개에 너무 무거워 비선승천 같은 투사체 필살기에서 끊겼다)
+      case'spark':{   // 자잘한 번개: 가지 없는 꺾은선. 입자 수백 개라 따로 긋지 않고 밝기 네 단계로 모아 한 번에 긋는다 (아래 SPK)
         const g=flick(q,()=>{const a=Math.random()*6.283,dx=Math.cos(a)*q.s,dy=Math.sin(a)*q.s*.7,o=[0,0];for(let i=1;i<4;i++){const j=(Math.random()-.5)*q.s*.5;o.push(dx*i/4-dy/q.s*j,dy*i/4+dx/q.s*j)}o.push(dx,dy);return o},.07);
-        ctx.beginPath();ctx.moveTo(x0+g[0],y0+g[1]);for(let i=2;i<g.length;i+=2)ctx.lineTo(x0+g[i],y0+g[i+1]);
-        ctx.strokeStyle=rgba(c,.35*fade);ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=rgba(HI,fade);ctx.lineWidth=1.2;ctx.stroke();break}
+        (SPK[Math.min(3,fade*4|0)]||=[]).push(x0,y0,g,c);break}
       case'smoke':{const x=x0+q.vx*a+Math.sin(a*4+q.r*6)*6,y=y0+q.vy*a,r=q.s*(1+u*1.6);ctx.fillStyle=rgba(c,.55*(1-u));ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
         ctx.strokeStyle=rgba(HI_DARK,.35*(1-u));ctx.lineWidth=1;ctx.stroke();break}
     }}
+  ctx.globalCompositeOperation='lighter';
+  for(let k=0;k<4;k++){const L=SPK[k];if(!L)continue;const fade=(k+.5)/4;ctx.beginPath();
+    for(let i=0;i<L.length;i+=4){const x0=L[i],y0=L[i+1],g=L[i+2];ctx.moveTo(x0+g[0],y0+g[1]);for(let j=2;j<g.length;j+=2)ctx.lineTo(x0+g[j],y0+g[j+1])}
+    ctx.strokeStyle=rgba(L[3],.35*fade);ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=rgba(HI,fade);ctx.lineWidth=1.2;ctx.stroke()}
   ctx.globalCompositeOperation=mode}
