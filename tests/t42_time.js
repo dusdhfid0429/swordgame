@@ -9,6 +9,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 1년 = 실제 30분 (사용자 2026-10-20): 낮밤 한 바퀴(DAY_SEC)는 한 달, 열두 바퀴를 돌리면 나이가 꼭 한 살 는다
   const r=await p.evaluate(()=>{const a0=P.age,t0=tod,steps=1200;for(let i=0;i<steps;i++)update(DAY_SEC*12/steps);return{a0,a1:P.age,t0,t1:tod,ys:YEAR_SEC,ds:DAY_SEC}});
   ok(`1년 ${r.ys}초 = 낮밤(${r.ds}초) 열두 바퀴: 나이 ${r.a0.toFixed(2)} → ${r.a1.toFixed(2)}, 시각 ${r.t0.toFixed(2)} → ${r.t1.toFixed(2)}`,r.ys===1800&&r.ys===r.ds*12&&Math.abs(r.a1-r.a0-1)<.01&&Math.abs(r.t1-r.t0)<.01);
+  // 1b. 접속해 있는 동안만 흐른다 (사용자 2026-10-21): 화면을 가렸다 한 시간 뒤 돌아와도 한 프레임은 0.05초까지만, 창을 열면 멈춘다
+  const h=await p.evaluate(()=>{const a0=P.age;last=performance.now()-3600e3;loop(performance.now());const a1=P.age;openPanel('char');const a2=P.age;for(let i=0;i<60;i++)loop(performance.now()+i*16);const a3=P.age;closePanels();return{gap:(a1-a0)*YEAR_SEC,win:a3-a2}});
+  ok(`한 시간 뒤 돌아온 첫 프레임 ${h.gap.toFixed(3)}초만 흐름, 창을 연 동안 나이 +${h.win}`,h.gap<=.051&&h.win===0);
   // 2. 수명은 지구력(58+지구력×0.7+0~8)과 본원진기 보정으로만 정해진다: 60세 아래도 있을 수 있다
   const l=await p.evaluate(()=>{const out={now:P.life,end:P.st.end,qb:P.lifeQB,min:typeof LIFE_MIN};const q=P.st.qi;P.st.qi=0;recalc();out.afterQiDrop=P.life;P.st.qi=q;recalc();out.back=P.life;return out});
   ok(`수명 ${l.now}세 (지구력 ${l.end}, 본원진기 보정 +${l.qb}), 본원진기 0이면 ${l.afterQiDrop}세, 되돌리면 ${l.back}세 · 하한 상수 없음(${l.min})`,
