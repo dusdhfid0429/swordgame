@@ -83,7 +83,10 @@ function drawEl(f){const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompo
         for(let i=0;i<3;i++){const g=q.rot+a*2+i*Math.PI/3;ctx.beginPath();ctx.moveTo(x-Math.cos(g)*s,y-Math.sin(g)*s);ctx.lineTo(x+Math.cos(g)*s,y+Math.sin(g)*s);ctx.stroke()}
         glowDot(x,y,s*1.6,c,.35*fade);break}
       case'mist':{const x=x0+q.vx*a,y=y0+q.vy*a;glowDot(x,y,q.s*(1+u),c,.3*Math.sin(u*Math.PI),.55);break}
-      case'spark':{const bs=flick(q,()=>{const g=Math.random()*6.283;return boltPts(x0,y0,x0+Math.cos(g)*q.s,y0+Math.sin(g)*q.s*.7,6,.3,1,[])},.05);strokeBolts(bs,c,fade,.3);break}
+      case'spark':{   // 자잘한 번개: 가지 없는 꺾은선 하나를 두 번만 긋는다 (boltPts+strokeBolts 는 입자 수백 개에 너무 무거워 비선승천 같은 투사체 필살기에서 끊겼다)
+        const g=flick(q,()=>{const a=Math.random()*6.283,dx=Math.cos(a)*q.s,dy=Math.sin(a)*q.s*.7,o=[0,0];for(let i=1;i<4;i++){const j=(Math.random()-.5)*q.s*.5;o.push(dx*i/4-dy/q.s*j,dy*i/4+dx/q.s*j)}o.push(dx,dy);return o},.07);
+        ctx.beginPath();ctx.moveTo(x0+g[0],y0+g[1]);for(let i=2;i<g.length;i+=2)ctx.lineTo(x0+g[i],y0+g[i+1]);
+        ctx.strokeStyle=rgba(c,.35*fade);ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=rgba(HI,fade);ctx.lineWidth=1.2;ctx.stroke();break}
       case'smoke':{const x=x0+q.vx*a+Math.sin(a*4+q.r*6)*6,y=y0+q.vy*a,r=q.s*(1+u*1.6);ctx.fillStyle=rgba(c,.55*(1-u));ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
         ctx.strokeStyle=rgba(HI_DARK,.35*(1-u));ctx.lineWidth=1;ctx.stroke();break}
     }}
