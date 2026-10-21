@@ -7,7 +7,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
-  await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
+  await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForFunction(()=>playing&&P);await p.waitForTimeout(800);
   await p.evaluate(()=>{mobs=[];P.sect='namgung'});
   // 1. 경지 표가 아홉 단계이고 문턱이 오른다
   const r1=await p.evaluate(()=>({n:RANKS.length,top:RANKS.slice(-2),oe:REALM_NEED.oe.slice(-3),ne:REALM_NEED.ne.slice(-3),mu:REALM_NEED.mu.slice(-3),pg:PG_BASE.length,fx:REALM_FX.length,hs:BODY.hs.cut.length}));
