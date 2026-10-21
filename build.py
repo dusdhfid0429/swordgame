@@ -54,4 +54,13 @@ html = (head + '<script id="gamedata" type="application/json">' + packed.replace
         + '<script id="sheets" type="application/json">' + sheets_js.replace('</', '<\\/') + '</script>\n<script>\n'
         + js + '\n</script>\n</body></html>\n')
 open(os.path.join(ROOT, 'dist', 'gangho.html'), 'w', encoding='utf8').write(html)
+
+# 이펙트 뷰어 (2026-10-21): 같은 게임 코드에 src/fxview.js 를 붙이고 무관 없이 시작한다
+ACAD = 'const ACAD_OFF=/[?&#]noacad/.test(location.href);'
+assert html.count(ACAD) == 1, 'g_academy.js 의 ACAD_OFF 줄이 바뀌었습니다 (fxview 빌드)'
+tail = '\n</script>\n</body></html>\n'
+assert html.endswith(tail)
+fv = html.replace(ACAD, 'const ACAD_OFF=true;').replace('<title>', '<title>이펙트 뷰어 · ', 1)
+fv = fv[:-len(tail)] + '\n' + rd('fxview.js') + tail
+open(os.path.join(ROOT, 'dist', 'fxview.html'), 'w', encoding='utf8').write(fv)
 print('dist/gangho.html', len(html), 'chars ·', len(gd) - 1, 'data tables, data rev', gd['_meta']['rev'], '· sheets', ', '.join(f'{k} {len(v["frames"])}장' for k, v in sheets.items()))
