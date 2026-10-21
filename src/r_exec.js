@@ -12,6 +12,7 @@ function GL(o,X){
   const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;fx.push(o);
   if(t>=2)fx.push({...o,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:.35,r:o.r&&o.r*1.08});
   if(t>=3)fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
+  runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)
 }
 const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);runHooks('slashFx',o)};   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
