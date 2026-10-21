@@ -6,7 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:권"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
-  await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('wuxia')&&sheetOk('train2'),null,{timeout:10000});await p.waitForTimeout(200);
+  await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('wuxia'),null,{timeout:10000});await p.waitForTimeout(200);
   // 1. 시트가 묶여 들어왔다: 145장 22클립, 장마다 같은 캔버스(327×337)·발 기준점, 무기 클립엔 손 소켓
   const s=await p.evaluate(()=>{const S=SHEETS.wuxia,f=S.frames;return{n:f.length,clips:Object.keys(S.clips).length,canvas:f.every(x=>x.s[0]===327&&x.s[1]===337&&x.pv[1]===1),
     sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:!!S.white,k:sheetK('wuxia'),kStaff:sheetK('wuxia',S.clips.staff_1.f[0])/sheetK('wuxia'),kPunch:sheetK('wuxia',S.clips.punches.f[0])/sheetK('wuxia')}});
@@ -20,12 +20,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 3. 운기조식·수련·피동 회피·달리기(맨손)는 시트 장. 검은 운기조식만 시트, 회피·달리기는 예전 그대로
   const st=await p.evaluate(()=>{const r={};P.satk=0;P.runT=0;P.medit=true;r.med=heroFrame();P.medit=false;trnBusy={k:'str',t:0,dur:9};r.str=heroFrame();trnBusy={k:'pg2',t:0,dur:9};r.pg=heroFrame();trnBusy=null;
     P.dA=time-.1;r.dodge=heroFrame();P.dA=0;P.runT=.3;P.runPh=.2;r.run=heroFrame();P.runT=0;
-    const S=SHEETS.wuxia.clips,T=SHEETS.train2.clips;r.c={med:T.medit.f,str:T.lift.f,pg:S.waterfall_stance.f,dodge:S.dodge.f,run:S.run.f};
+    const S=SHEETS.wuxia.clips;r.c={med:S.meditate.f,str:S.strength_1.f,pg:S.waterfall_stance.f,dodge:S.dodge.f,run:S.run.f};
     const id=Object.keys(ARTS).find(k=>ARTS[k].cls==='검');P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=mkWeapon('검',1,0);recalc();
     P.medit=true;r.swMed=heroFrame();P.medit=false;P.dA=time-.1;r.swDodge=heroFrame();P.dA=0;P.runT=.3;r.swRun=heroFrame();P.runT=0;return r});
-  const inC=(f,c,n='wuxia')=>f[4]===n&&c.includes(f[0]);   // v159: 운기조식·근력 수련은 train2 시트(t97)
+  const inC=(f,c)=>f[4]==='wuxia'&&c.includes(f[0]);
   ok(`운기조식 ${JSON.stringify(st.med)} · 근력 수련 ${JSON.stringify(st.str)} · 폐관 ${JSON.stringify(st.pg)} · 회피 ${JSON.stringify(st.dodge)} · 달리기 ${JSON.stringify(st.run)} · 검: 운기 ${st.swMed[4]} 회피 ${st.swDodge[4]} 달리기 ${st.swRun[4]}`,
-    inC(st.med,st.c.med,'train2')&&inC(st.str,st.c.str,'train2')&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&inC(st.run,st.c.run)&&st.swMed[4]==='train2'&&!st.swDodge[4]&&!st.swRun[4]);
+    inC(st.med,st.c.med)&&inC(st.str,st.c.str)&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&inC(st.run,st.c.run)&&st.swMed[4]==='wuxia'&&!st.swDodge[4]&&!st.swRun[4]);
   // 4. 시트 장으로 그릴 때 오류 없고, 발 기준점이 맞다: 가부좌 장의 아래끝이 발(0) 근처, 위끝은 위로
   const d=await p.evaluate(()=>{P.medit=true;draw();P.medit=false;const S=SHEETS.wuxia,i=S.clips.meditate.f[0],f=S.frames[i],k=sheetK('wuxia'),[x,y]=sheetXY('wuxia',i,f.o[0],f.o[1],k);return{bottom:y+f.r[3]*k,top:sheetTop('wuxia',i,k),x}});
   ok(`그리기 오류 없음 · 가부좌 장 아래끝 ${d.bottom.toFixed(1)} 위끝 ${d.top.toFixed(1)} 왼끝 ${d.x.toFixed(1)}`,Math.abs(d.bottom-3)<1&&d.top<-50&&d.x<0&&d.x>-60);

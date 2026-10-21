@@ -68,10 +68,10 @@ function drawNgFx(front){
   const u=P?ngProg():-1;if(front){const dt=Math.min(.05,Math.max(0,time-NG.lt));NG.lt=time;NG.k=clamp(NG.k+(u>=0&&P.hp>0?dt/.25:-dt/.3),0,1);NG.u=u>=0?u:NG.u||1}
   if(NG.k<=0){NG.h=null;NG.sp.length=0;return}
   const col=pFxPair(),dk=isDark(col[0]),add=dk?'source-over':'lighter',p=toScreen(P.x,P.y),k=NG.k,v=NG.u,side=(P.fx-P.fy)>=0?1:-1;
-  // 손 사이 자리: 지금 장의 소켓 qi (없는 장이면 앞 자리 그대로, 처음이면 가슴 앞)
-  let hx=p.x+side*12,hy=p.y-40;try{const[fi,,,,sh]=heroFrame(),q=sh&&sheetSocket(sh,fi,'qi',sheetK(sh,fi));if(q){hx=p.x+q[0]*side;hy=p.y+q[1]}else if(NG.h){hx=p.x+NG.h[0];hy=p.y+NG.h[1]}}catch(e){}
+  // 손 사이 자리: 지금 장의 소켓 qi가 있으면 거기, 없으면 가부좌한 무릎 위 손 앞 (wuxia meditate 장)
+  let hx=p.x+side*9,hy=p.y-27;try{const[fi,,,,sh]=heroFrame(),q=sh&&sheetSocket(sh,fi,'qi',sheetK(sh,fi));if(q){hx=p.x+q[0]*side;hy=p.y+q[1]}else if(NG.h){hx=p.x+NG.h[0];hy=p.y+NG.h[1]}}catch(e){}
   NG.h=[hx-p.x,hy-p.y];
-  const sink=clamp((v-.78)/.22,0,1),dan={x:p.x,y:p.y-24},ox=hx+(dan.x-hx)*sink*sink,oy=hy+(dan.y-hy)*sink*sink,grow=clamp(v/.6,0,1);
+  const sink=clamp((v-.78)/.22,0,1),dan={x:p.x,y:p.y-21},ox=hx+(dan.x-hx)*sink*sink,oy=hy+(dan.y-hy)*sink*sink,grow=clamp(v/.6,0,1);
   ctx.save();
   // 소주천: 몸을 세로로 도는 고리. 등 쪽(뒤 그리기)은 흐리게, 앞쪽은 밝게. 머리(빛)가 한 바퀴를 돈다
   const cx=p.x-side*2,cy=p.y-36,rx=9,ry=24,ph=v*Math.PI*2*1.5-Math.PI/2;
