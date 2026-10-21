@@ -18,15 +18,15 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       const idle=heroFrame();heroAtk('flat');const atk=heroFrame();heroAtk('ult');const ult=heroFrame();P.satk=0;
       const inRow=(f,row)=>f[3]&&f[0]>=A2[row][0]&&f[0]<A2[row][0]+A2[row][1];
       // v123: 맨손 공격은 핸드오프 시트(wuxia)의 punches/combo 클립
-      const wx=(f,c)=>f[4]==='act'&&SHEETS.act.clips[c].f.includes(f[0]);
-      // v124: 도·봉·창 공격도 핸드오프 시트 클립 (소켓에 코드 무기). 궁만 두 번째 시트 줄
+      const wx=(f,c)=>f[4]==='actfx'&&SHEETS.actfx.clips[c].f.includes(f[0]);
+      // v124: 도·봉·창 공격도 핸드오프 시트 클립 (v167: 무기·이펙트가 그려진 actfx 시트). 궁만 두 번째 시트 줄
       const WX={권:['punches','combo'],도:['saber_whirlwind','saber_heavy'],봉:['staff_1','staff_2'],창:['spear_1','spear_1']}[w];
-      out[w]=WX?{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:wx(atk,WX[0]),ult:wx(ult,WX[1]),ss2:P.ssh==='act'?1:0}:{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:inRow(atk,w),ult:inRow(ult,w),ss2:P.ss2}}
-    useCls('검');heroAtk('flat');const sw=heroFrame();P.satk=0;out.검={atk:!sw[3]&&sw[4]==='act'&&SHEETS.act.clips.sword_thrust.f.includes(sw[0]),ss2:P.ss2};return out});
+      out[w]=WX?{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:wx(atk,WX[0]),ult:wx(ult,WX[1]),ss2:P.ssh==='actfx'?1:0}:{sprite:heroSprite(),idle:inRow(idle,'i'+w),atk:inRow(atk,w),ult:inRow(ult,w),ss2:P.ss2}}
+    useCls('검');heroAtk('flat');const sw=heroFrame();P.satk=0;out.검={atk:!sw[3]&&sw[4]==='actfx'&&SHEETS.actfx.clips.sword_thrust.f.includes(sw[0]),ss2:P.ss2};return out});
   ok(`무기별 프레임: ${Object.entries(r).map(([k,v])=>k+(v.idle===undefined?'':v.idle?'·대기':'·대기X')+(v.atk?'·공격':'·공격X')).join(' ')}`,['도','봉','창','권','궁'].every(w=>r[w].sprite&&r[w].idle&&r[w].atk&&r[w].ult&&r[w].ss2===1)&&r.검.atk&&r.검.ss2===0);
   // 2b. 권 계열 발차기 초식은 각법 줄, 맨손 기본 공격은 권·각 줄을 오간다
   const k=await p.evaluate(()=>{useCls('권');heroAtk('flat',{n:'선풍각',p:'circle'});const a=heroFrame();heroAtk('flat',{n:'철권',p:'melee'});const b=heroFrame();
-    heroAtk('vert');const c=heroFrame();P.satk=0;const wx=(f,c)=>f[4]==='act'&&SHEETS.act.clips[c].f.includes(f[0]);return{kick:wx(a,'kicks'),fist:wx(b,'punches'),basic:wx(c,'kicks')}});
+    heroAtk('vert');const c=heroFrame();P.satk=0;const wx=(f,c)=>f[4]==='actfx'&&SHEETS.actfx.clips[c].f.includes(f[0]);return{kick:wx(a,'kicks'),fist:wx(b,'punches'),basic:wx(c,'kicks')}});
   ok(`발차기 초식은 kicks 클립 ${k.kick}, 주먹은 punches ${k.fist}, 맨손 기본기(세로) kicks ${k.basic} (v123 핸드오프 시트)`,k.kick&&k.fist&&k.basic);
   // 3. 경공 1단: 0.6초 동안 j줄 9장을 차례로, 검도 같은 동작
   const j=await p.evaluate(()=>{const seq=[];for(const t of[.6,.45,.3,.15,.01]){P.sj=t;seq.push(heroFrame())}P.sj=0;const s=A2.j;

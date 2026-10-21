@@ -45,6 +45,8 @@ if os.path.isdir(ASSETS):
             r, o, ss, pv = f['rect'], f['offset'], f['sourceSize'], f['pivot']
             frames[f['index']] = {'r': [r['x'], r['y'], r['w'], r['h']], 'o': [o['x'], o['y']], 's': [ss['w'], ss['h']], 'pv': [pv['x'], pv['y']],
                                   'sk': {k['name']: [k['x'], k['y']] for k in f.get('sockets', [])}}
+            if 'charRect' in f:
+                c = f['charRect']; frames[f['index']]['cb'] = [c['x'], c['y'], c['w'], c['h']]
         assert all(frames), f'assets/{name}: index 가 비었습니다'
         sheets[name] = {'img': 'data:image/png;base64,' + png, 'frames': frames,
                         'clips': {k: {'f': v['frames'], 'fps': v.get('fps', 10), 'loop': v.get('loop', False)} for k, v in clips.items()}}
