@@ -10,7 +10,7 @@ const SHEETS={};
 const sheetOk=n=>{const s=SHEETS[n];return!!s&&s.img.complete&&s.img.naturalWidth>0};
 const sheetClip=(n,c)=>{const s=SHEETS[n];return s&&s.clips[c]||null};
 // 시트의 서 있는 키를 원본 주인공(155px × .47)과 맞춘 배율
-const SHEET_K={wuxia:.47*155/157,act:.47*155/157/1.035};   // 서 있는 장(punches 첫 장 등)이 158px 안팎. v166 act는 같은 원화를 3.5% 크게 잘라 냈다(tools/actsheet.py 겹침 배율)
+const SHEET_K={wuxia:.47*155/157,act:.47*155/157/1.035,actfx:.47*155/157/1.035};   // v167 actfx는 act와 같은 크기로 잘렸다(캐릭터 상자 높이 같음)   // 서 있는 장(punches 첫 장 등)이 158px 안팎. v166 act는 같은 원화를 3.5% 크게 잘라 냈다(tools/actsheet.py 겹침 배율)
 // v127: 장 번호 i를 주면 그 장이 속한 클립의 배율(data/anim.json ANIM.sheetK)도 곱한다 — 무기 공격 클립이 맨손 클립보다 작게 그려져 있어서
 const sheetK=(n,i)=>(SHEET_K[n]||.5)*(i==null?1:sheetClipK(n,i));
 const _CLIPK={};
@@ -39,5 +39,5 @@ function sheetWeaponDraw(kind,ln,lk,flash){if(!ln||!sheetOk('wpn'))return false;
 // 허리춤 칼집 (v125, 사용자: 검집·도집은 허리춤에 비스듬히): 입(grip)을 허리 뒤쪽에 두고 아래·뒤로 60도. 몸보다 먼저 그려 몸 뒤에 걸린다
 // 원본 검객 시트(검 대기·경공 장)는 그림에 칼집이 있어 부르지 않는다
 const SHEATH_DIR=[-.5,.87];
-const SHEATH_AT={wuxia:[155,263],act:[84,263]};   // 시트 캔버스 좌표의 허리 뒤 자리 (v166 act는 셀 186x348, 발 93,340)
+const SHEATH_AT={wuxia:[155,263],act:[84,263],actfx:[204,264]};   // 시트 캔버스 좌표의 허리 뒤 자리 (v166 act는 셀 186x348, 발 93,340)
 function drawSheath(kind,wx,wy,flash){const c=kind==='검'?'검집':kind==='도'?'도집':null;if(!c||!sheetOk('wpn')||!SHEETS.wpn.clips[c])return false;return sheetWeaponDraw(c,[wx,wy,wx+SHEATH_DIR[0]*30,wy+SHEATH_DIR[1]*30],'b',flash)}

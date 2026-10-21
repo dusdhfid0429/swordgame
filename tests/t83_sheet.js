@@ -6,26 +6,26 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:권"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
-  await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('act'),null,{timeout:10000});await p.waitForTimeout(200);
+  await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('act')&&sheetOk('actfx'),null,{timeout:10000});await p.waitForTimeout(200);
   // 1. 시트가 묶여 들어왔다: 147장 22클립, 장마다 같은 셀(186×348)·발 기준점(93,340), 무기 클립엔 손 소켓
   const s=await p.evaluate(()=>{const S=SHEETS.act,f=S.frames;return{n:f.length,clips:Object.keys(S.clips).length,canvas:f.every(x=>x.s[0]===186&&x.s[1]===348&&Math.abs(x.pv[1]*348-340)<.01),
     sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:!!S.white,k:sheetK('act'),kStaff:sheetK('act',S.clips.staff_1.f[0])/sheetK('act'),kPunch:sheetK('act',S.clips.punches.f[0])/sheetK('act')}});
   ok(`시트 ${s.n}장 ${s.clips}클립 · 같은 캔버스 ${s.canvas} · 창 클립 손 소켓 ${s.sock}장 · 맨손 클립 소켓 없음 ${s.noSock} · 번쩍 그림 ${s.white} · 배율 ${s.k.toFixed(3)}`,
     s.n===147&&s.clips===22&&s.canvas&&s.sock>=5&&s.noSock&&s.white&&s.k>.4&&s.k<.55&&s.kStaff>1.05&&s.kStaff<1.2&&s.kPunch===1);
-  // 2. 맨손 공격은 시트 클립(punches/kicks/combo/palm_strikes)을 쓰고 heroFrame이 시트 이름을 돌려준다. 발차기 무공은 각 줄(kicks)
+  // 2. (v167 공격은 이펙트 포함판 actfx) 맨손 공격은 시트 클립(punches/kicks/combo/palm_strikes)을 쓰고 heroFrame이 시트 이름을 돌려준다. 발차기 무공은 각 줄(kicks)
   const a=await p.evaluate(()=>{P.satk=0;P.runT=0;P.sj=0;const r={};heroAtk('flat',null);r.flat=[P.ssh,P.sset.join(','),heroFrame()];heroAtk('vert',null);r.vert=P.sset.join(',');heroAtk('palm',null);r.palm=P.sset.join(',');
-    heroAtk('flat',{n:'선풍각'});r.kick=P.sset.join(',');P.satk=0;const S=SHEETS.act.clips;r.c={punches:S.punches.f.join(','),kicks:S.kicks.f.join(','),palm:S.palm_strikes.f.join(',')};r.after=heroFrame();return r});
+    heroAtk('flat',{n:'선풍각'});r.kick=P.sset.join(',');P.satk=0;const S=SHEETS.actfx.clips;r.c={punches:S.punches.f.join(','),kicks:S.kicks.f.join(','),palm:S.palm_strikes.f.join(',')};r.after=heroFrame();return r});
   ok(`맨손 공격 ${a.flat[0]} ${a.flat[1]} (장 ${JSON.stringify(a.flat[2])}) · 세로 ${a.vert} · 장타 ${a.palm} · 발차기 무공 ${a.kick} · 공격 뒤 대기 ${JSON.stringify(a.after)}`,
-    a.flat[0]==='act'&&a.flat[1]===a.c.punches&&a.flat[2][4]==='act'&&a.flat[2][0]===+a.c.punches.split(',')[0]&&a.vert===a.c.kicks&&a.palm===a.c.palm&&a.kick===a.c.kicks&&!a.after[4]);
+    a.flat[0]==='actfx'&&a.flat[1]===a.c.punches&&a.flat[2][4]==='actfx'&&a.flat[2][0]===+a.c.punches.split(',')[0]&&a.vert===a.c.kicks&&a.palm===a.c.palm&&a.kick===a.c.kicks&&!a.after[4]);
   // 3. 운기조식·수련·피동 회피·달리기(맨손)는 시트 장. 검은 운기조식만 시트, 회피·달리기는 예전 그대로
   const st=await p.evaluate(()=>{const r={};P.satk=0;P.runT=0;P.medit=true;r.med=heroFrame();P.medit=false;trnBusy={k:'str',t:0,dur:9};r.str=heroFrame();trnBusy={k:'pg2',t:0,dur:9};r.pg=heroFrame();trnBusy=null;
     P.dA=time-.1;r.dodge=heroFrame();P.dA=0;P.runT=.3;P.runPh=.2;r.run=heroFrame();P.runT=0;
-    const S=SHEETS.act.clips;r.c={med:S.meditate.f,str:S.strength_1.f,pg:S.waterfall_stance.f,dodge:S.dodge.f,run:S.run.f};
+    const S=SHEETS.act.clips;r.c={med:S.meditate.f,str:SHEETS.actfx.clips.strength.f,pg:S.waterfall_stance.f,dodge:S.dodge.f,run:S.run.f};
     const id=Object.keys(ARTS).find(k=>ARTS[k].cls==='검');P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=mkWeapon('검',1,0);recalc();
     P.medit=true;r.swMed=heroFrame();P.medit=false;P.dA=time-.1;r.swDodge=heroFrame();P.dA=0;P.runT=.3;r.swRun=heroFrame();P.runT=0;return r});
   const inC=(f,c)=>f[4]==='act'&&c.includes(f[0]);
   ok(`운기조식 ${JSON.stringify(st.med)} · 근력 수련 ${JSON.stringify(st.str)} · 폐관 ${JSON.stringify(st.pg)} · 회피 ${JSON.stringify(st.dodge)} · 달리기 ${JSON.stringify(st.run)} · 검: 운기 ${st.swMed[4]} 회피 ${st.swDodge[4]} 달리기 ${st.swRun[4]}`,
-    inC(st.med,st.c.med)&&inC(st.str,st.c.str)&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&inC(st.run,st.c.run)&&st.swMed[4]==='act'&&!st.swDodge[4]&&!st.swRun[4]);
+    inC(st.med,st.c.med)&&st.str[4]==='actfx'&&st.c.str.includes(st.str[0])&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&inC(st.run,st.c.run)&&st.swMed[4]==='act'&&!st.swDodge[4]&&!st.swRun[4]);
   // 4. 시트 장으로 그릴 때 오류 없고, 발 기준점이 맞다: 가부좌 장의 아래끝이 발(0) 근처, 위끝은 위로
   const d=await p.evaluate(()=>{P.medit=true;draw();P.medit=false;const S=SHEETS.act,i=S.clips.meditate.f[0],f=S.frames[i],k=sheetK('act'),[x,y]=sheetXY('act',i,f.o[0],f.o[1],k);return{bottom:y+f.r[3]*k,top:sheetTop('act',i,k),x}});
   ok(`그리기 오류 없음 · 가부좌 장 아래끝 ${d.bottom.toFixed(1)} 위끝 ${d.top.toFixed(1)} 왼끝 ${d.x.toFixed(1)}`,Math.abs(d.bottom-3)<1&&d.top<-50&&d.x<0&&d.x>-60);
@@ -34,12 +34,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const has=(c,n)=>clips[c].frames.every(i=>FR[i].sockets.some(s=>s.name===n));
   const all=['sword_thrust','sword_slash','saber_heavy','saber_whirlwind','spear_1','spear_2','staff_1','staff_2'].every(c=>has(c,'hand')),pole=['spear_1','spear_2','staff_1','staff_2'].every(c=>has(c,'hand2')),one=['sword_thrust','sword_slash','saber_heavy','saber_whirlwind'].every(c=>has(c,'aim'));
   ok(`atlas.json 무기 클립 소켓: hand ${all} · 자루 hand2 ${pole} · 한손 aim ${one} · 소켓 있는 장 ${FR.filter(f=>f.sockets.length).length}`,all&&pole&&one&&FR.filter(f=>f.sockets.length).length===51);
-  // 6. 검·도·창·봉 공격은 시트 클립 + 소켓 무기 선: 창은 두 손 가운데에서 뒷손→앞손 방향, 검은 hand→aim. 그리기 오류 없음
+  // 6. (v167 사용자) 검·도·창·봉 공격은 무기·이펙트가 그려진 actfx 클립, 게임이 따로 그려 손에 붙이던 무기는 안 그린다(ANIM.heroHandWpn false). 대기·달리기도 손 무기 없음
   const wp=await p.evaluate(()=>{const useCls=w=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===w);P.arts[id]=P.arts[id]||{p:0,f:[true,false,false]};P.cur=id;P.eq.weapon=mkWeapon(w,1,0);recalc()};const r={};
-    for(const w of['검','도','창','봉']){useCls(w);heroAtk('flat',null);const f=heroFrame();r[w]={sheet:f[4],clip:ANIM.atk.wx[w].flat,inClip:SHEETS.act.clips[ANIM.atk.wx[w].flat].f.includes(f[0]),line:sheetWeaponLine('act',f[0],w)};P.satk=.3;draw();P.satk=0}
-    const i52=SHEETS.act.clips.spear_1.f[0],s=SHEETS.act.frames[i52].sk,l=sheetWeaponLine('act',i52,'창');r.spearMid=Math.abs(l[0]-(s.hand[0]+s.hand2[0])/2)<.01&&l[2]>l[0];const i123=SHEETS.act.clips.sword_thrust.f[0],k=SHEETS.act.frames[i123].sk,l2=sheetWeaponLine('act',i123,'검');r.sword=l2[0]===k.hand[0]&&l2[2]===k.aim[0];r.none=sheetWeaponLine('act',SHEETS.act.clips.punches.f[0],'검')===null;return r});
-  ok(`무기 공격: ${['검','도','창','봉'].map(w=>w+' '+wp[w].clip+(wp[w].sheet==='act'&&wp[w].inClip&&wp[w].line?' ✓':' ✗')).join(' · ')} · 창 가운데 ${wp.spearMid} · 검 hand→aim ${wp.sword} · 맨손 장 소켓 없음 ${wp.none}`,
-    ['검','도','창','봉'].every(w=>wp[w].sheet==='act'&&wp[w].inClip&&wp[w].line)&&wp.spearMid&&wp.sword&&wp.none);
+    let wd=0;const ow=drawWeapon;drawWeapon=function(){wd++;return ow.apply(this,arguments)};
+    for(const w of['검','도','창','봉']){useCls(w);heroAtk('flat',null);const f=heroFrame();r[w]={sheet:f[4],clip:ANIM.atk.wx[w].flat,inClip:SHEETS.actfx.clips[ANIM.atk.wx[w].flat].f.includes(f[0])};P.satk=.3;draw();P.satk=0;draw();P.runT=.3;draw();P.runT=0}
+    drawWeapon=ow;r.wd=wd;r.flag=ANIM.heroHandWpn;
+    const i52=SHEETS.act.clips.spear_1.f[0],s=SHEETS.act.frames[i52].sk,l=sheetWeaponLine('act',i52,'창');r.spearMid=Math.abs(l[0]-(s.hand[0]+s.hand2[0])/2)<.01&&l[2]>l[0];r.none=sheetWeaponLine('act',SHEETS.act.clips.punches.f[0],'검')===null;return r});
+  ok(`무기 공격: ${['검','도','창','봉'].map(w=>w+' '+wp[w].clip+(wp[w].sheet==='actfx'&&wp[w].inClip?' ✓':' ✗')).join(' · ')} · 손 무기 그림 ${wp.wd}번(끔 ${wp.flag===false}) · act 소켓 창 가운데 ${wp.spearMid} · 맨손 장 소켓 없음 ${wp.none}`,
+    ['검','도','창','봉'].every(w=>wp[w].sheet==='actfx'&&wp[w].inClip)&&wp.wd===0&&wp.flag===false&&wp.spearMid&&wp.none);
   // 7. 무기 파츠 시트 (v125): 무기 5종 36장 + 검집·도집 14장, 장마다 grip·tip·butt 소켓, 각도에 가장 가까운 장을 골라 손에 붙인다. 코드 무기 대신 시트가 그려진다. 칼집은 허리춤에
   await p.waitForFunction(()=>sheetOk('wpn'),null,{timeout:10000});
   const wp2=await p.evaluate(()=>{const S=SHEETS.wpn,r={n:S.frames.length,clips:Object.keys(S.clips).sort().join(','),sock:S.frames.every(f=>f.sk.grip&&f.sk.tip&&f.sk.butt)};

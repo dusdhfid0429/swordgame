@@ -8,10 +8,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
   await p.waitForFunction(()=>sheetOk('act'),null,{timeout:10000});await p.waitForTimeout(200);
-  // 1. 수련 동작은 예전 클립: 근력 strength_1, 지구력 endurance, 민첩 dash, 내공 수련·운기조식 meditate. train2 시트는 없다
-  const st=await p.evaluate(()=>{const C=SHEETS.act.clips,r={none:!SHEETS.train2},at=k=>{trnBusy={k,t:.3,dur:TRN_DUR[k]};const f=heroFrame();return f};P.satk=0;P.runT=0;P.medit=false;
-    for(const[k,c]of[['str','strength_1'],['agi','dash'],['end','endurance']]){const f=at(k);r[k]=f[4]==='act'&&C[c].f.includes(f[0])}
-    {const q=at('qi');r.qi=q[4]==='act'&&C.meditate.f.includes(q[0])}P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='act'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
+  // 1. 수련 동작 (v167 사용자): 근력 바위 들기, 민첩 통나무 위, 지구력 폭포 맞기, 본원진기 앉아 몸에 기운 원 = actfx 시트. 내공 수련·운기조식은 act meditate. train2 시트는 없다
+  await p.waitForFunction(()=>sheetOk('actfx'),null,{timeout:10000});
+  const st=await p.evaluate(()=>{const C=SHEETS.act.clips,X=SHEETS.actfx.clips,r={none:!SHEETS.train2},at=k=>{trnBusy={k,t:.3,dur:TRN_DUR[k]};const f=heroFrame();return f};P.satk=0;P.runT=0;P.medit=false;
+    for(const[k,c]of[['str','strength'],['agi','pole_balance'],['end','waterfall_hit']]){const f=at(k);r[k]=f[4]==='actfx'&&X[c].f.includes(f[0])}
+    {const q=at('qi');r.qi=q[4]==='actfx'&&X.meditate.f.includes(q[0])}P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='act'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
     trnBusy=null;P.medit=true;const m=heroFrame();r.med=m[4]==='act'&&C.meditate.f.includes(m[0]);P.medit=false;
     P.chan={t:.6,dur:1.6,label:'내공 수련',fn:()=>{}};r.ngp=ngProg();P.chan=null;
     trnBusy={k:'pg2',t:0,dur:9};P.qiTraining=true;r.pgNg=ngProg();trnBusy=null;P.qiTraining=false;return r});

@@ -2,8 +2,10 @@
   "ANIM": {
     "_doc": "v122 애니메이션 클립 데이터 (참고: Cocos 키우기류의 AnimationClip + AnimationGraphVariant 구조). clips: 이름 → {a: 아틀라스(hero=검객 원본, body=무기 지운 몸통, a2=두 번째 시트), f: 장 번호 배열 또는 row: A2 줄 이름(skip/max), fps, pp: 왕복, once: 끝에서 멈춤, lk: 코드 무기선 종류}. hero.base = 공용 상태 바인딩, hero.<무기> = 그 무기의 variant(클립만 바꿔 끼움; idleNb/jumpNb는 두 번째 시트가 없을 때). atk: 공격 종류별 장 배열 (sword=검 원본, body=몸통+코드 무기, a2=두 번째 시트 줄 안 번호)",
     "atkWeight": [0.3, 0.25, 0.3, 0.15],
+    "_heroHandWpn": "v167 사용자: 게임이 따로 그려 손에 붙이던 주인공 무기(무기 파츠 시트·코드 무기)를 일단 뺀다. true면 다시 그린다. 허리 칼집은 그대로",
+    "heroHandWpn": false,
     "_sheetK": "v127 시트 클립별 몸 배율. 핸드오프 시트의 무기 공격 클립은 맨손 클립보다 10~15% 작게 그려져(면적 1300 vs 1700) 공격 중 작아 보였다(사용자). 서 있는 장이 대기(70px)와 같아지도록 클립마다 곱한다. 무기는 WPN_K로 되돌려 크기 불변",
-    "sheetK": {"act": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}},
+    "sheetK": {"actfx": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}, "act": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}},
     "clips": {
       "idleSword": {"a": "hero", "f": [0, 1, 2, 3, 4, 5], "fps": 5},
       "idleBody": {"a": "body", "f": [0, 1, 2, 3, 5, 1], "fps": 5},
@@ -31,12 +33,18 @@
       "wxEndure": {"a": "act", "clip": "endurance", "pp": true, "fps": 6},
       "wxDash": {"a": "act", "clip": "dash", "fps": 9},
       "wxWaterfall": {"a": "act", "clip": "waterfall_stance", "pp": true, "fps": 6},
-      "wxPole": {"a": "act", "clip": "pole_balance", "pp": true, "fps": 6}
+      "wxPole": {"a": "act", "clip": "pole_balance", "pp": true, "fps": 6},
+      "_fx": "v167 이펙트·무기·소품 포함판(assets/actfx): 근력=바위 들기 13장, 민첩=통나무 위, 지구력=폭포 맞기, 본원진기=앉아 몸에 기운 원",
+      "fxStrength": {"a": "actfx", "clip": "strength", "fps": 6},
+      "fxPole": {"a": "actfx", "clip": "pole_balance", "fps": 6},
+      "fxWaterfall": {"a": "actfx", "clip": "waterfall_hit", "pp": true, "fps": 6},
+      "fxMeditate": {"a": "actfx", "clip": "meditate", "fps": 6}
     },
     "hero": {
       "_doc": "medit=운기조식·내공 수련, train.<수련 종류>=수련 창에서 수련하는 동안(str 근력·agi 민첩·end 지구력·neigong 내공·qi 본원진기(v162 사용자: 내공처럼 앉는다)·pg 폐관·mk 창안), dodge=피동 회피. 시트가 아직 안 읽혔으면 base·예전 클립으로 돌아간다",
       "base": {"idle": "idleSword", "run": "run", "jump1": "jump1", "jump2": "jump2", "jump3": "jump3", "jumpNb": "jumpSword", "dodge": "dodge", "medit": "wxMeditate", "lk": "",
-        "train": {"str": "wxStrength", "agi": "wxDash", "end": "wxEndure", "neigong": "wxMeditate", "qi": "wxMeditate", "pg": "wxWaterfall", "mk": "wxPole"}},
+        "train": {"str": "fxStrength", "agi": "fxPole", "end": "fxWaterfall", "neigong": "wxMeditate", "qi": "fxMeditate", "pg": "wxWaterfall", "mk": "wxPole"},
+        "trainNb": {"str": "wxStrength", "agi": "wxDash", "end": "wxEndure", "qi": "wxMeditate"}},
       "검": {},
       "도": {"idle": "idle도"},
       "창": {"idle": "idle창", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
@@ -46,6 +54,7 @@
     },
     "atk": {
       "_wx": "핸드오프 시트의 공격 클립(v123 맨손, v124 검·도·창·봉). 무기는 atlas.json 소켓(hand/hand2/aim) 자리에 코드로 그린다. palm은 예전 장 그대로",
+      "wxSheet": ["actfx", "act"],
       "wx": {
         "검": {"flat": "sword_thrust", "vert": "sword_slash", "diag": "sword_slash", "ult": "sword_slash"},
         "도": {"flat": "saber_whirlwind", "vert": "saber_heavy", "diag": "saber_whirlwind", "ult": "saber_heavy"},
