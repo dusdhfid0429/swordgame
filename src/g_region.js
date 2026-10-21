@@ -50,8 +50,12 @@ function travel(g){
 }
 // 출입구·가장자리에는 GATE_HOLD초 머물러야 넘어간다 (사용자 요청 2026-10-13: 지나가는 길에, 또는 경공으로 날다가 저절로 넘어가지 않게).
 // gateHold(dt,key)는 같은 자리(key)에 머문 시간을 P.gateT에 쌓고 다 찼으면 true. 그 틱에 아무도 부르지 않으면 gateTick 끝에서 0으로 돌아간다.
-const GATE_HOLD=1;   // 2초는 길다고 해서 1초 (사용자 2026-10-13)let gateSeen=false;
-function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key){P.gateAt=key;P.gateT=0}P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
+const GATE_HOLD=1;   // 2초는 길다고 해서 1초 (사용자 2026-10-13)
+let gateSeen=false;
+// 공격 중 상태: 휘두르는 동안과 마지막 공격 뒤 ATK_HOLD초. 이때는 출입구·가장자리에 서 있어도 이동을 세지 않는다 (사용자 2026-10-20)
+const ATK_HOLD=1;
+function attacking(){return !!P&&(P.swing>0||P.satk>0||(P.lastAtk>0&&time-P.lastAtk<ATK_HOLD))}
+function gateHold(dt,key){gateSeen=true;if(P.gateAt!==key||attacking()){P.gateAt=key;P.gateT=0}if(attacking())return false;P.gateT=(P.gateT||0)+(dt||0);return P.gateT>=GATE_HOLD}
 function gateTick(dt=0){gateSeen=false;const c={stop:false};runHooks('gate',c);if(!c.stop)gateBase(dt);runHooks('gateDone',dt);if(!gateSeen&&P){P.gateT=0;P.gateAt=null}}
 function gateBase(dt){
   if(!P||P.hp<=0||G.duel)return;
@@ -71,6 +75,7 @@ function drawGateHold(){
   ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y+25);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y+24);
 }
 function drawGate(g){
+  if(g.gyc!=null){drawGycMouth(g);return}   // 기연동굴 입구 (g_gyc.js)
   const p=toScreen(g.x,g.y);ctx.save();ctx.translate(p.x,p.y);
   // 땅에 빛나는 길표시
   const a=.45+.25*Math.sin(time*3);ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=2;

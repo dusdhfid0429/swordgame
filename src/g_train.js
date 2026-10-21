@@ -57,7 +57,41 @@ function trainTick(dt){
 let TFX=[];
 function trainFx(k){const n=k==='str'?26:k==='end'?3:k==='agi'?14:24;
   TFX.push({k,t:0,dur:TRN_DUR[k],p:Array.from({length:n},(_,i)=>({a:Math.random()*7,r:Math.random(),s:Math.random(),i}))})}
+// ---- v159 내공 수련 연출 (사용자: 운기·내공·본원진기 연출은 각각 달라야 한다) ----
+// 운기조식(g_draw drawMedit): 사방의 기운이 나선으로 단전에 빨려 들고 발밑 고리가 돈다
+// 내공 수련(여기): 두 손 사이에 심법 색 기운 구슬이 맺혀 자라고, 소주천(독맥으로 올라 임맥으로 내려오는) 빛이 몸을 돈 뒤 구슬이 단전으로 가라앉는다
+// 본원진기(drawTrainFx 'qi'): 땅의 초록 생기가 피어올라 몸에 스미고 심장처럼 고동친다
+// 진행도 0~1, 내공 수련 중이 아니면 -1. 수련 창(trnBusy), 인물창 운기(P.chan '내공 수련'), 인물창 안 잠깐 운기(P.qiTraining만)
+function ngProg(){if(trnBusy)return trnBusy.k==='neigong'?Math.min(1,trnBusy.t/trnBusy.dur):-1;if(P&&P.chan&&P.chan.label==='내공 수련')return Math.min(1,P.chan.t/P.chan.dur);return P&&P.qiTraining?.5:-1}
+const NG={k:0,lt:0,h:null,sp:[]};
+function drawNgFx(front){
+  const u=P?ngProg():-1;if(front){const dt=Math.min(.05,Math.max(0,time-NG.lt));NG.lt=time;NG.k=clamp(NG.k+(u>=0&&P.hp>0?dt/.25:-dt/.3),0,1);NG.u=u>=0?u:NG.u||1}
+  if(NG.k<=0){NG.h=null;NG.sp.length=0;return}
+  const col=pFxPair(),dk=isDark(col[0]),add=dk?'source-over':'lighter',p=toScreen(P.x,P.y),k=NG.k,v=NG.u,side=(P.fx-P.fy)>=0?1:-1;
+  // 손 사이 자리: 지금 장의 소켓 qi가 있으면 거기, 없으면 가부좌한 무릎 위 손 앞 (wuxia meditate 장)
+  let hx=p.x+side*9,hy=p.y-27;try{const[fi,,,,sh]=heroFrame(),q=sh&&sheetSocket(sh,fi,'qi',sheetK(sh,fi));if(q){hx=p.x+q[0]*side;hy=p.y+q[1]}else if(NG.h){hx=p.x+NG.h[0];hy=p.y+NG.h[1]}}catch(e){}
+  NG.h=[hx-p.x,hy-p.y];
+  const sink=clamp((v-.78)/.22,0,1),dan={x:p.x,y:p.y-21},ox=hx+(dan.x-hx)*sink*sink,oy=hy+(dan.y-hy)*sink*sink,grow=clamp(v/.6,0,1);
+  ctx.save();
+  // 소주천: 몸을 세로로 도는 고리. 등 쪽(뒤 그리기)은 흐리게, 앞쪽은 밝게. 머리(빛)가 한 바퀴를 돈다
+  const cx=p.x-side*2,cy=p.y-36,rx=9,ry=24,ph=v*Math.PI*2*1.5-Math.PI/2;
+  ctx.globalCompositeOperation=add;ctx.lineWidth=1.6;
+  for(let j=0;j<14;j++){const a=ph-j*.16,inFront=Math.cos(a)*side>0;if(inFront!==!!front)continue;const x=cx+Math.cos(a)*rx,y=cy+Math.sin(a)*ry,al=(1-j/14)*.85*k*(1-sink);
+    ctx.fillStyle=`rgba(${col[j%2]},${al})`;ctx.beginPath();ctx.arc(x,y,2.4-j*.12,0,7);ctx.fill()}
+  if(!front){ctx.strokeStyle=`rgba(${col[0]},${.18*k})`;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,7);ctx.stroke();ctx.restore();return}
+  // 모여드는 기운 알갱이: 손 둘레 먼 곳에서 구슬로
+  if(v<.8&&NG.sp.length<18&&Math.random()<.6)NG.sp.push({a:Math.random()*7,r:26+Math.random()*16,w:(Math.random()<.5?-1:1)*(2+Math.random()*2)});
+  for(const q of NG.sp){q.r-=(40+60*(1-q.r/42))*.016;q.a+=q.w*.016;const x=ox+Math.cos(q.a)*q.r,y=oy+Math.sin(q.a)*q.r*.7;ctx.fillStyle=`rgba(${col[1]},${.8*k})`;ctx.beginPath();ctx.arc(x,y,1.3,0,7);ctx.fill()}
+  NG.sp=NG.sp.filter(q=>q.r>3);
+  // 구슬: 자라며 맥동하고, 두 줄 기류가 겉을 감아 돈다. 끝에 단전으로 가라앉아 번쩍
+  const R=(3+6*grow)*(1-sink*.6)*(1+.12*Math.sin(time*9)),g=ctx.createRadialGradient(ox,oy,0,ox,oy,R*2.6);
+  g.addColorStop(0,`rgba(${dk?'20,0,30':'255,255,240'},${.85*k})`);g.addColorStop(.35,`rgba(${col[0]},${.7*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(ox,oy,R*2.6,0,7);ctx.fill();
+  ctx.lineWidth=1.3;for(let j=0;j<2;j++){const a0=time*6+j*Math.PI;ctx.strokeStyle=`rgba(${col[1]},${.75*k})`;ctx.beginPath();ctx.ellipse(ox,oy,R*1.5,R*.6,a0*.3+j*1.2,a0,a0+2.2);ctx.stroke()}
+  if(sink>.85){const f=(sink-.85)/.15,g2=ctx.createRadialGradient(dan.x,dan.y,0,dan.x,dan.y,26*f+6);g2.addColorStop(0,`rgba(${col[0]},${.6*(1-f*.5)*k})`);g2.addColorStop(1,`rgba(${col[0]},0)`);ctx.fillStyle=g2;ctx.beginPath();ctx.arc(dan.x,dan.y,26*f+6,0,7);ctx.fill()}
+  ctx.restore()}
 function drawTrainFx(front){
+  drawNgFx(front);
   const dt=front?Math.min(.05,Math.max(0,time-(drawTrainFx.lt??time))):0;if(front)drawTrainFx.lt=time;
   if(!TFX.length)return;const p=toScreen(P.x,P.y);ctx.save();
   for(const f of TFX){if(front)f.t+=dt;const u=Math.min(1,f.t/f.dur),col=TRN_COL[f.k],fade=u<.15?u/.15:u>.8?(1-u)/.2:1;

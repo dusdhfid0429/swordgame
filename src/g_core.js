@@ -99,6 +99,7 @@ function mkWeapon(c,q,made){const a=Math.round((c==='궁'?14:c==='창'?13:10)*q*
 function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(const k in o)it[k]=k==='spd'?+(o[k]*q).toFixed(2):Math.round(o[k]*q);it.price=Math.round(15*q*q+(it.hp||0)*.4+(it.qi||0)*.4+(it.hm||0));return it}
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
+function mkGPage(n,k){return{id:++itemId,slot:'gpage',page:n,n:k,name:`절세신공 잔결 · ${n} ${k}장`,price:60*k}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
 const SLOTN=GD.SLOTN;
 function itemDesc(it){
@@ -106,7 +107,7 @@ function itemDesc(it){
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
-  if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
+  if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='gpage')return `읽으면 절세신공 [${it.page}] ${it.n}장을 깨친다`;if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
   if(it.hp)a.push(`체력 +${it.hp}`);if(it.def)a.push(`받는 피해 -${it.def}%`);if(it.qi)a.push(`내공 +${it.qi}`);if(it.hm)a.push(`현묘도 +${it.hm}`);if(it.spd)a.push(`이동 +${it.spd}`);
   return a.join(' · ');
@@ -124,10 +125,12 @@ function readBlock(it){
   if(it.slot==='pbook')return P.pas&&P.pas[it.pas]?'이미 익힌 패시브 무공입니다.':null;
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
+  if(it.slot==='gpage')return null;
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(!artSideOk(a))return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
   if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
+  if(a.gy&&!s&&gyMine().length>=GY_MAX)return `천고의 기연 무공은 한 생에 ${GY_MAX}가지까지만 익힌다. 문파에 기증하거나 다음 생에 익힐 수 있다.`;
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
   if(P.vit<f.cost)return `활력이 부족합니다. (필요 ${f.cost}, 지금 ${P.vit})`;
   return null}
@@ -138,6 +141,7 @@ function readBook(it){
   if(it.slot==='pbook'){if(learnPas(it.pas,1))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
+  if(it.slot==='gpage'){P.sg.pages[it.page]=(P.sg.pages[it.page]||0)+it.n;P.bag.splice(P.bag.indexOf(it),1);log(`절세신공 [${it.page}] ${it.n}장을 익혀 깨쳤습니다. (${P.sg.pages[it.page]}/10)`,'xp');return}
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   P.vit-=f.cost;if(!s)P.arts[a.id]={p:0,f:a.forms.map(()=>false)};P.arts[a.id].f[it.form]=true;P.bag.splice(P.bag.indexOf(it),1);
   log(`${a.n}의 [${f.n}]을(를) 익혔습니다. (활력 -${f.cost})`,'xp');
@@ -189,6 +193,7 @@ function spawnTick(){
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 //  panelOpen(id) 창을 연 뒤
 //  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
+//  glFx(o,X)     무공 이펙트 하나를 fx에 넣은 뒤 (X: 무공, 경지 효과 등은 없음). 속성 재질을 덧입힌다 (r_elfx.js)
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
@@ -274,6 +279,7 @@ function hurtP(dm,src){
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
+  if(P.hp<=0&&!G.duel)runHooks('lethal',c);   // 생사경이 한 해에 한 번 버틴다 (g_beyond.js)
   if(P.hp<=0){if(G.duel){P.hp=1;duelEnd(false)}else{P.hp=0;die('전투')}}
   runHooks('hurtDone',c);
 }
@@ -374,12 +380,13 @@ function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp
 // ================= 기연 =================
 function giyeon(src){const c={src,done:false};runHooks('giyeon',c);if(c.done)return;giyeonBase(src);runHooks('giyeonDone',c)}
 function giyeonBase(src){
-  const r=Math.random(),k=pick(STATS).k,gy=gyRoll(src);
-  if(gy){const a=gyLearn(gy);feat(`기연으로 ${a.n}을(를) 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공`:'천고의 기연 무공');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
-  if(r<.25&&P.wis<10){P.wis++;log(`기연: 깨달음을 얻어 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}
-  else if(r<.5){P.st[k]+=2;recalc();log(`기연: 영약을 먹고 ${STATS.find(s=>s.k===k).n}이(가) 2 올랐습니다.`,'xp')}
-  else if(r<.7){P.qiBonus+=40;recalc();log('기연: 천년 영지를 먹어 내공이 40 늘었습니다.','xp')}
-  else if(r<.85){const n=pick(Object.keys(SHINGONG));const v=src==='chest'?2:1;P.sg.pages[n]=(P.sg.pages[n]||0)+v;log(`기연: 절세신공 [${n}] ${v}장을 얻었습니다.`,'xp')}
-  else{const b=randomBook();P.bag.push(b);log(`기연: 낡은 비급 [${b.name}]을(를) 발견했습니다.`,'xp')}
+  // v157 (사용자 2026-10-20): 기연으로 얻은 영약·비급은 바로 먹거나 익히지 않고 행낭에 들어온다. 쓰고 읽는 것은 플레이어가 한다
+  const r=Math.random(),gy=gyRoll(src);
+  if(gy){const a=gyGive(gy);feat(`기연으로 ${a.n}의 비급을 얻었다`);showBanner(a.n,a.made?`${AGR[a.grade]} 기연 무공 비급`:'천고의 기연 무공 비급');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});return}
+  if(r<.25&&P.wis<10){addMat('청명단');log('기연: 청명단을 얻었습니다. 먹으면 오성이 오릅니다. (행낭)','xp')}
+  else if(r<.5){const k=pick(Object.keys(GYC.fruits));addMat(k);log(`기연: 영과 [${k}]을(를) 얻었습니다. (행낭)`,'xp')}
+  else if(r<.7){addMat('천년영지');log('기연: 천년 영지를 얻었습니다. 먹으면 내공이 40 늡니다. (행낭)','xp')}
+  else if(r<.85){const n=pick(Object.keys(SHINGONG));P.bag.push(mkGPage(n,src==='chest'?2:1));log(`기연: 절세신공 [${n}]의 잔결을 얻었습니다. 행낭에서 읽으세요.`,'xp')}
+  else{const b=randomBook();P.bag.push(b);log(`기연: 낡은 비급 [${b.name}]을(를) 발견했습니다. (행낭)`,'xp')}
   feat(`기연을 만났다`);showBanner('기연','하늘이 내린 인연');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
 }

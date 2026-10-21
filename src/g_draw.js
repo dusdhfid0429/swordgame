@@ -92,8 +92,9 @@ function drawNode(n){
     if(ready){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4+n.y)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-5);ctx.lineTo(1,-9);ctx.lineTo(5,-4);ctx.stroke()}}
   else if(n.t==='vault'){poly([[-14,-2],[12,-2],[14,-18],[-12,-18]],lg(-14,14,'#4a4a52','#1e1e24'));poly([[-12,-18],[14,-18],[12,-24],[-10,-24]],'#5a5a64');ctx.fillStyle='#c9a14a';ctx.fillRect(-3,-14,6,5);ctx.strokeStyle='#8a7a40';ctx.lineWidth=1;ctx.strokeRect(-11,-16,22,12);
     if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
-  else if(n.t==='chest'){if(!P.chest){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
-    poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],P.chest?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
+  else if(n.t==='cchest'){ctx.restore();drawCaveChest(n);return}
+  else if(n.t==='chest'||n.t==='gybox'){const shut=n.t==='gybox'?n.cd>0:P.chest;if(!shut){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
+    poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],shut?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
   ctx.restore();
 }
 function drawPlot(pl){
@@ -132,7 +133,7 @@ const MED={k:0,parts:[],lt:0,pulse:0,spin:0};
 function medSpawn(){const r0=50+Math.random()*60;return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
   h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0}}
 function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
-  MED.k=clamp(MED.k+((P.medit||P.qiTraining||P.chan&&P.chan.label==='내공 수련')&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
+  MED.k=clamp(MED.k+((P.medit||P.qiTraining&&!(typeof ngProg==='function'&&ngProg()>=0))&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
   if(MED.k<=0){MED.parts.length=0;return}
   const want=Math.round(54*MED.k);while(MED.parts.length<want)MED.parts.push(medSpawn());
   for(const q of MED.parts){const near=1-q.r/q.r0;q.v+=dt*(50+220*near*near);q.r-=q.v*dt;q.a+=q.w*dt*(1+near*3);q.life+=dt;
@@ -238,19 +239,19 @@ function draw(){
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
   terrSky();   // v155: 구름·모래바람·아지랑이
   // weather (v121: 전각 안에서는 비·눈·흐림·폭염 연출을 그리지 않는다, 사용자 버그 보고 2026-10-16)
-  const w=REGION().hall?null:G.weather;
+  const w=REGION().hall||REGION().cave?null:G.weather;   // 동굴 속도 비·눈 없음
   if(w==='비'){ctx.strokeStyle='rgba(170,190,220,.35)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<140;i++){const x=(hash(i,7)*W+time*60*hash(i,3))%W,y=(hash(i,11)*H+time*(500+hash(i,5)*200))%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+12)}ctx.stroke();ctx.fillStyle='rgba(20,30,50,.15)';ctx.fillRect(0,0,W,H)}
   else if(w==='눈'){ctx.fillStyle='rgba(245,248,255,.8)';for(let i=0;i<120;i++){const x=(hash(i,7)*W+Math.sin(time+i)*20+time*15)%W,y=(hash(i,11)*H+time*(40+hash(i,5)*30))%H;ctx.beginPath();ctx.arc(x,y,1+hash(i,2)*1.6,0,7);ctx.fill()}}
   else if(w==='흐림'){ctx.fillStyle='rgba(60,64,72,.18)';ctx.fillRect(0,0,W,H)}
   else if(w==='폭염'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,170,60,.45)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   // night and the cave: darkness with holes cut by the hero's aura, lanterns and qi bursts
-  const cave=inCave(Math.floor(P.x),Math.floor(P.y));
-  const dark=Math.max(cave?.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
+  const cave=REGION().cave||inCave(Math.floor(P.x),Math.floor(P.y));
+  const dark=Math.max(cave?cave.dark||.55:0,Math.min(.85,darkLvl()+(REGION().in||REGION().hall?0:worldMul('dark',0)))),   // v153: 마교가 천하통일하면 하늘이 어둡다
     sunH=-Math.cos(tod*Math.PI*2),dusk=cave?0:Math.max(0,1-Math.abs(sunH)/.4);
   if(dusk>0){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(255,120,40,${.5*dusk})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   if(dark>.01){
     lx.setTransform(S*dpr,0,0,S*dpr,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);
-    lx.fillStyle=`rgba(4,8,22,${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
+    lx.fillStyle=`rgba(${cave&&cave.dk||'4,8,22'},${dark})`;lx.fillRect(0,0,W,H);lx.globalCompositeOperation='destination-out';
     for(const b of builds)if(b.kind!=='pavilion'){const q=scr(b.x+b.w/2,b.y+b.h+.3,20);lightAt(q[0],q[1],110,.8)}
     lightAt(pp.x,pp.y-20,240,1);
     for(const l of lamps){const p=toScreen(l.x,l.y);lightAt(p.x,p.y-30,150+Math.sin(time*9+l.p)*8,.95)}
@@ -259,11 +260,13 @@ function draw(){
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
     for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max)}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
+    runHooks('darkLights');   // 동굴 시안: 수정·횃불·용암 빛 (g_cave.js)
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
     ctx.globalCompositeOperation='lighter';
     for(const l of lamps){const p=toScreen(l.x,l.y),g=ctx.createRadialGradient(p.x,p.y-30,0,p.x,p.y-30,120);g.addColorStop(0,`rgba(255,150,60,${.22*dark})`);g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.fillRect(p.x-120,p.y-150,240,240)}
     ctx.globalCompositeOperation='source-over';
   }
+  runHooks('afterDark');   // 동굴 시안: 어둠 위의 빛과 움직임 (g_cave.js)
   for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
@@ -289,17 +292,18 @@ function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&V
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='cwall'||objs[y][x]==='cvoid'?'#141210':objs[y][x]==='cmouth'?'#c9a14a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
-  for(const g of REGION().gates){const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
+  for(const g of REGION().gates){if(g.gyc!=null&&!gycSeen(g))continue;const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
   for(const t of tombs()){if((t.reg||'gaebong')!==REG)continue;const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}
   const[x,y]=miniXY(P.x,P.y);mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(x,y,2.4,0,7);mctx.fill()}
 
 // ================= boot =================
+// 게임 시간은 접속해 화면을 보는 동안만 흐른다 (사용자 2026-10-21): 한 프레임 최대 0.05초, 화면을 가리면 requestAnimationFrame이 멈추고, 꺼져 있던 시간은 불러올 때 셈하지 않는다. 창을 열면 paused
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   try{if(playing&&!paused)update(dt);else time+=dt*.2;draw();if(playing){hud();drawMini()}}catch(err){console.error(err.stack||err);recoverFromError(err)}

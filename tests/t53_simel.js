@@ -23,8 +23,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const h=await p.evaluate(()=>{const mk=()=>({x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:30,hm:0,el:null,burn:0,slow:0,d:{},isMob:true});const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;
     const o={};P.sim='N_mudang_2';let e=mk();hitE(X,e,1,0,0);o.yang=[e.burn,!!e.kb,5000-e.hp];P.sim='N_cheonma_4';e=mk();hitE(X,e,1,0,0);o.noe=[e.slow,5000-e.hp];delete P.sims.N_cheonma_4;P.sim=null;e=mk();hitE(X,e,1,0,0);o.geum=5000-e.hp;
     P.sim='N_hwasan_1';e=mk();hitE(X,e,1,0,0);o.hwa=[e.burn,5000-e.hp];Math.random=window._rnd;return o});
+  // 새 인물의 공격력이 무작위라 금(방어 무시) 피해는 18~28: 방어 적용 피해(최소 1)보다 확실히 크면 된다
   ok(`양: 화상 ${h.yang[0]} 밀침 ${h.yang[1]} 피해 ${h.yang[2]} · 마(느려짐 ${h.noe[0]}, 방어 적용) ${h.noe[1]} · 금(방어 무시) ${h.geum} · 화: 화상 ${h.hwa[0]} 피해 ${h.hwa[1]}(방어 30 적용)`,
-    h.yang[0]===3&&h.yang[1]&&h.noe[0]===1.5&&Math.abs(h.noe[1]-h.hwa[1])<=1&&h.geum>h.hwa[1]+20&&h.hwa[0]===3);
+    h.yang[0]===3&&h.yang[1]&&h.noe[0]===1.5&&Math.abs(h.noe[1]-h.hwa[1])<=1&&h.geum>h.hwa[1]+10&&h.hwa[0]===3);
   // 4. 무공 창·문파 창에 오행 표시가 없고, 심법 창에는 계열·속성이 보인다
   const v=await p.evaluate(()=>{P.sim='N_mudang_2';closePanels();openPanel('arts');const w=$('win').innerText;closePanels();sectView='mudang';const s=allianceDlg('jeong');
     return{noEl:!/오행 [화수목금토]/.test(w)&&!/검법 · [화수목금토]/.test(w)&&!/권법 · [화수목금토]/.test(w),sim:w.includes('도가')&&w.includes('열양'),sect:!/오행/.test(s)}});

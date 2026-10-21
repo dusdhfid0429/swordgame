@@ -14,7 +14,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r=await p.evaluate(()=>({via:REGIONS.hq_cheonma_1.lmVia,reg:REG,N,zone:regionAt(Math.floor(P.x),Math.floor(P.y)),chain:REGION().chain.map(id=>REGIONS[id].name),gate:REGION().gates.map(g=>g.to),
     npc:Object.fromEntries(REGION().chain.map(id=>[REGIONS[id].name,npcsOf(id).length]))}));
   ok(`십만대산 맵 ${r.chain.length}개: ${r.chain.join(' → ')}`,r.reg==='hq_cheonma_1'&&r.chain.length===8&&r.gate.includes(r.via));
-  ok(`NPC: ${JSON.stringify(r.npc)}`,r.npc['마교 성읍']===4&&r.npc['오당 광장']===5&&r.npc['천마신전']>=1&&r.npc['장로원']===1);
+  ok(`NPC: ${JSON.stringify(r.npc)}`,r.npc['마교 성읍']===9&&r.npc['오당 광장']===5&&r.npc['천마신전']>=1&&r.npc['장로원']===1);
   const mg=await p.evaluate(()=>{const out=[];for(const id of REGION().chain){loadRegion(id);out.push(builds.filter(b=>b.mg).length===builds.length)}loadRegion('hq_cheonma_1');return out.every(Boolean)});
   ok('여덟 맵의 전각이 모두 검은 벽·붉은 기와',mg);
   await p.evaluate(()=>{P.reg='hq_cheonma_5';loadRegion('hq_cheonma_5');P.x=20.5;P.y=20.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;tod=.55});await p.waitForTimeout(900);

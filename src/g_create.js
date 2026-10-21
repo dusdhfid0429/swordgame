@@ -2,7 +2,7 @@
 // 사용자 요청(2026-10-12): "대성한 무공, 같은 무기 타입, 같은 등급 5개를 이용하여 한 단계 높은 무공을 창안하는 컨텐츠. 소비값은 무협스럽게."
 // - 재료: 같은 병기·같은 등급의 무공 다섯이 모두 숙련 100(사용자 2026-10-12: 대성 50 → 100). 기초권각·기연 무공은 재료가 못 된다. 창안한 무공은 다시 재료가 된다.
 // - 값: 다섯 무공을 모두 잊고 심득만 남긴다. 폐관수련처럼 문파 본산·내 집·산 정상에서만, 세월(등급+2년)과 활력(100+등급×60)을 쓰고, 끝나면 내공이 바닥난다.
-//   경지는 화경 이상(사용자 2026-10-12; 처음엔 등급마다 이류·일류·절정이었다). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못한다(무공은 남는다).
+//   경지는 화경 이상(사용자 2026-10-12; 처음엔 등급마다 이류·일류·절정이었다). 성공 85%(호법 +10%, 경지 여유 +5%). 실패하면 세월과 활력만 잃고 기혈이 뒤틀려 보름 동안 힘을 다 쓰지 못한다(무공은 남는다).
 // - 결과: 다섯 무공의 초식 가운데 가장 강한 여섯을 골라 새 이름을 붙이고 한 등급 높은 공력(GMUL)으로 올린다. 필살기는 가장 높은 재료의 것을 잇는다.
 //   초식 여섯을 모두 아는 채로 시작하고(내가 지은 무공이다) 숙련 30(심득). 오성 가짓수에는 든다. 절정 위(천고)는 기연으로만 얻으므로 절정이 끝이다.
 // - 저장: 정의는 G.made(여러 생에 남는다)에, 숙련은 P.arts에. 불러올 때 G.made 순서대로 다시 만든다(gLoaded 훅).
@@ -35,8 +35,8 @@ function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mk
   const why=grp?mkWhy(g):'재료가 모자라다';if(why){log(`무공 창안이 끊겼습니다: ${why}.`,'info');return}
   const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);if(!passYears(yrs))return;
   P.qi=0;
-  if(Math.random()>=ch){P.inj=YEAR_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
-    log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 반 년 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
+  if(Math.random()>=ch){P.inj=DAY_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
+    log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 보름 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
     feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
   const a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
@@ -57,7 +57,8 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   const names=new Set();const nm=()=>{let s;do{s=NA[Math.floor(r()*NA.length)]+NB[Math.floor(r()*NB.length)]}while(names.has(s));names.add(s);return s};
   const ua=srcs.slice().sort((x,y)=>(y.grade||0)-(x.grade||0)||(y.hi?1:0)-(x.hi?1:0))[0];
   const def={id,n,cls:grp.cls,el,grade:g,src:grp.ids.slice(),srcN:srcs.map(a=>a.n),forms:picks.map(x=>({a:x.a,i:x.i,n:nm()})),ult:{a:ua.id,n:UA[Math.floor(r()*UA.length)]+UB[Math.floor(r()*UB.length)]},by:P.name,life:P.lifeNo};
-  def.sect=P.sect&&P.sect!=='own'&&SECTS[P.sect]?P.sect:null;def.key=mkKey(def);def.reg=1;
+  // v157 (사용자 2026-10-20): 문파 제자라도 창안한 순간에는 등록하지 않는다. 문파 창에서 제자들에게 전수해야 그 문파 무공이 된다 (gycSectHtml, g_gyc.js). 무소속이면 예전처럼 기연에서 만나는 무공
+  const member=P.sect&&P.sect!=='own'&&SECTS[P.sect];def.sect=null;def.key=mkKey(def);def.reg=member?0:1;
   G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
   G.made[id]=def;const a=mkBuild(def);mkRegister(def);return a}
 const mkKey=def=>def.forms.map(x=>x.a+':'+x.i).sort().join(',')+'|'+def.ult.a;

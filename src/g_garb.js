@@ -63,11 +63,12 @@ function drawCape(pal,trail,wv,sc=1){
 
 // ---- 내 캐릭터(도트 그림)의 옷: 남색 겉옷 픽셀만 문파 색으로 바꿔 칠한 그림을 문파·직위(속가/정식)마다 만들어 둔다 ----
 const HERO_GARB={};
-function recolorAtlas(img,robe){
+// v160: tr=train2 시트. 그 옷은 푸른 기가 옅어(b-r 5~16) 기준 15로는 9%만 물들었다(사용자: 수련할 때 문파 색이 안 입혀짐). 푸른 기 5 이상·초록 기 없음(회색 바지 제외)·밝기 100 아래면 옷
+function recolorAtlas(img,robe,tr){
   const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
   const id=g.getImageData(0,0,c.width,c.height),d=id.data,B=hexRgb(robe),dark=B.map(v=>v*.22),light=B.map(v=>v+(255-v)*.38);
   for(let i=0;i<d.length;i+=4){if(d[i+3]<20)continue;const r=d[i],gg=d[i+1],b=d[i+2],l=r*.3+gg*.59+b*.11;
-    if(b-r<15||l>=140)continue;  // 겉옷(푸른 기가 도는 어두운 색)만. 머리카락·피부·흰 속옷·칼은 그대로
+    if(tr?(b-r<5||gg-r>5||l>=100):(b-r<15||l>=140))continue;  // 겉옷(푸른 기가 도는 어두운 색)만. 머리카락·피부·흰 속옷·칼은 그대로
     const u=Math.max(0,Math.min(1,(l-12)/108));let o;
     if(u<.42){const t=u/.42;o=dark.map((v,k)=>v+(B[k]-v)*t)}else{const t=(u-.42)/.58;o=B.map((v,k)=>v+(light[k]-v)*t)}
     d[i]=o[0];d[i+1]=o[1];d[i+2]=o[2]}

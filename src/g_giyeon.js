@@ -5,7 +5,7 @@
 // - 비급이 없다. 만나는 순간 1초식을 깨치고, 나머지 초식은 기초권각처럼 숙련이 차면 저절로 열린다.
 // - 정사 어느 쪽이든 익힐 수 있고, 오성이 정한 무공 가짓수에 들지 않는다. 제자에게 전수할 수 없다.
 // - 한 생에 최대 GY_MAX가지. 보물상자 기연은 GY_P.chest, 기연 터는 GY_P.spot 확률로 이 무공이 나온다.
-const GY_MAX=2,GY_P=GD.GY_P;
+const GY_MAX=2,GY_P=GD.GY_P,GYC=GD.GYC;   // GYC: 기연동굴 설정 (data/giyeon.json, g_gyc.js)
 const GY_ARTS=GD.GY_ARTS;
 // buildArts에서 부른다: 문파 무공과 같은 틀(초식 무늬 풀)로 만들되 등급은 천고(4)
 function addGiyeonArts(arts,pool,ults){
@@ -24,9 +24,14 @@ const gyMine=()=>Object.keys(GY_ARTS).filter(id=>P.arts[id]);
 // 이번 기연에서 무공을 만날 수 있으면 그 id. 지금 쥔 무기(맨손이면 펼치는 무공)의 무공을 반쯤 더 쳐 준다
 function gyRoll(src){
   if(gyMine().length>=GY_MAX||Math.random()>=(GY_P[src]||0))return null;
-  const left=Object.keys(GY_ARTS).filter(id=>!P.arts[id]);if(!left.length)return null;
+  const left=Object.keys(GY_ARTS).filter(id=>!P.arts[id]&&!gyInBag(id));if(!left.length)return null;
   const w=P.eq.weapon,c=w?w.cls:curCls(),mine=left.find(id=>GY_ARTS[id].cls===c);
   return mine&&Math.random()<.5?mine:pick(left)}
+const gyInBag=id=>P.bag.some(it=>it.slot==='book'&&it.art===id);
+// v157: 기연 무공은 비급으로 행낭에 들어온다 (첫 초식). 읽으면 익히고, 나머지 초식은 숙련이 차면 열린다. 강호에 전하는 기연 무공 기록(G.gyLog)은 손에 넣은 때 적는다
+function gyGive(id){const a=ARTS[id],b=mkBook(id,0);b.price=a.made?300:800;P.bag.push(b);
+  log(`기연: ${a.made?`${a.by}이(가) 창안한 ${AGR[a.grade]} 무공`:'천고의 무공'} [${a.n}]의 비급을 얻었습니다. 행낭에서 읽으면 첫 초식 [${a.forms[0].n}]을(를) 깨칩니다.`,'xp');
+  if(!a.made){if(!G.gyLog)G.gyLog=[];if(!G.gyLog.includes(id))G.gyLog.push(id)}return a}
 function gyLearn(id){const a=ARTS[id];
   P.arts[id]={p:0,f:a.forms.map((f,i)=>i===0)};
   log(`기연: 천고의 무공 [${a.n}]을(를) 만나 첫 초식 [${a.forms[0].n}]을(를) 깨쳤습니다. 나머지 초식은 숙련이 차면 열립니다.`,'xp');
@@ -35,4 +40,4 @@ function gyLearn(id){const a=ARTS[id];
   return a}
 // 무공 창 맨 아래 한 줄: 강호에 전하는 기연 무공 중 몇 가지를 만났나 (여러 생에 걸쳐)
 function gyNote(){const seen=G.gyLog||[];
-  return `<p class="note">기연 무공 ${seen.length}/${Object.keys(GY_ARTS).length} · ${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}. 기연 터와 보물상자의 기연에서만 만나며, 한 생에 ${GY_MAX}가지까지.</p>`}
+  return `<p class="note">기연 무공 ${seen.length}/${Object.keys(GY_ARTS).length} · ${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}. 소문을 따라 찾는 기연동굴에서 비급으로 얻으며, 한 생에 ${GY_MAX}가지까지 익힌다.</p>`}

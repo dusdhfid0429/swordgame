@@ -37,5 +37,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.reload();await p.waitForFunction(()=>typeof loadRegion==='function');await p.waitForTimeout(300);
   const t8=await p.evaluate(()=>({slot:SLOT,sel:box.querySelector('.slot[aria-pressed="true"]').dataset.s,cont:!!box.querySelector('[data-s="cont"]')}));
   ok(`다시 열면 3번 칸 고른 채 (${t8.sel}, 이어하기 ${t8.cont})`,t8.slot===2&&t8.sel==='slot:2'&&t8.cont);
+  // v160 삭제: 화면 안에서 묻고, 지우면 그 칸만 빈 칸이 되고 제목 화면에 남는다. 바깥 저장소(del)에도 알린다
+  const t9=await p.evaluate(()=>{const gone=[];storeAdd({name:'t',pull:async()=>null,push:async()=>{},del:async k=>gone.push(k)});window.__gone=gone;return{}});
+  await p.click('[data-s="del"]');await p.waitForTimeout(100);
+  const t10=await p.evaluate(()=>({ask:!!box.querySelector('[data-s="del2"]'),still:!!localStorage.getItem('ganghoyunhoe-save-v1-2')}));
+  await p.click('[data-s="del2"]');await p.waitForTimeout(150);
+  const t11=await p.evaluate(()=>({gone:!localStorage.getItem('ganghoyunhoe-save-v1-2'),row:box.querySelectorAll('.slot')[2].textContent,title:!!box.querySelector('.slots')&&!box.querySelector('[data-s="start"]'),newBtn:!!box.querySelector('[data-s="new"]'),told:window.__gone.join(',')}));
+  ok(`삭제 확인 ${t10.ask} (묻는 동안 기록 유지 ${t10.still}) → 3번 칸 삭제 ${t11.gone}, 빈 칸 ${/빈 칸/.test(t11.row)}, 제목 화면 그대로 ${t11.title}, 새 인생 단추 ${t11.newBtn}, 바깥 저장소에 알림 ${t11.told}`,
+    t10.ask&&t10.still&&t11.gone&&/빈 칸/.test(t11.row)&&t11.title&&t11.newBtn&&t11.told==='ganghoyunhoe-save-v1-2');
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

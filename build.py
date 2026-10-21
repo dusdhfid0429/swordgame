@@ -5,7 +5,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, 'src')
 PARTS = ['g_gamedata.js', 'r_sheet.js', 'g_store.js', 'r_noise.js', 'r_proto_arts.js', 'g_data.js', 'g_sect.js', 'g_giyeon.js', 'g_core.js', 'g_world.js', 'r_props.js',
          'r_exec.js', 'g_life.js', 'g_ui.js', 'g_quest.js', 'g_story.js', 'g_pop.js', 'r_draw1.js', 'r_atlas.js', 'r_atlas2.js', 'r_fighter.js', 'r_anim.js',
-         'r_build.js', 'r_furn.js', 'r_fx.js', 'g_screens.js', 'g_touch.js', 'g_train.js', 'g_realm.js', 'g_create.js', 'g_realmfx.js', 'g_body.js', 'g_save.js', 'g_tomb.js', 'g_region.js', 'g_garb.js', 'g_passive.js', 'g_simbeop.js', 'g_faction.js', 'g_landmark.js', 'g_province.js', 'g_height.js', 'g_stage.js', 'g_magyo.js', 'g_mara.js', 'g_magyo2.js', 'g_magyo3.js', 'g_lmmap.js', 'g_split.js', 'g_hall.js', 'g_city.js', 'g_gunbu.js', 'g_maeng.js', 'g_academy.js', 'g_bobeop.js', 'g_gyeong.js', 'g_balance.js', 'g_diff.js', 'g_loot.js', 'g_story2.js', 'g_story3.js', 'g_story4.js', 'g_story5.js', 'g_ruin.js', 'g_vault.js', 'g_guard.js', 'g_audio.js', 'g_terrain.js', 'g_draw.js']
+         'r_build.js', 'r_furn.js', 'r_fx.js', 'r_elfx.js', 'g_screens.js', 'g_touch.js', 'g_train.js', 'g_realm.js', 'g_create.js', 'g_realmfx.js', 'g_body.js', 'g_beyond.js', 'g_save.js', 'g_tomb.js', 'g_region.js', 'g_garb.js', 'g_passive.js', 'g_simbeop.js', 'g_faction.js', 'g_landmark.js', 'g_province.js', 'g_height.js', 'g_stage.js', 'g_magyo.js', 'g_mara.js', 'g_magyo2.js', 'g_magyo3.js', 'g_lmmap.js', 'g_split.js', 'g_hall.js', 'g_city.js', 'g_gunbu.js', 'g_maeng.js', 'g_academy.js', 'g_bobeop.js', 'g_gyeong.js', 'g_balance.js', 'g_diff.js', 'g_loot.js', 'g_story2.js', 'g_story3.js', 'g_story4.js', 'g_story5.js', 'g_ruin.js', 'g_vault.js', 'g_guard.js', 'g_audio.js', 'g_terrain.js', 'g_cave.js', 'g_gyc.js', 'g_intel.js', 'g_draw.js']
 rd = lambda p: open(os.path.join(SRC, p), encoding='utf8').read()
 js = '\n'.join(rd(p) for p in PARTS)
 os.makedirs(os.path.join(ROOT, 'dist'), exist_ok=True)
@@ -57,4 +57,13 @@ html = (head + '<script id="gamedata" type="application/json">' + packed.replace
         + '<script id="sheets" type="application/json">' + sheets_js.replace('</', '<\\/') + '</script>\n<script>\n'
         + js + '\n</script>\n</body></html>\n')
 open(os.path.join(ROOT, 'dist', 'gangho.html'), 'w', encoding='utf8').write(html)
+
+# 이펙트 뷰어 (2026-10-21): 같은 게임 코드에 src/fxview.js 를 붙이고 무관 없이 시작한다
+ACAD = 'const ACAD_OFF=/[?&#]noacad/.test(location.href);'
+assert html.count(ACAD) == 1, 'g_academy.js 의 ACAD_OFF 줄이 바뀌었습니다 (fxview 빌드)'
+tail = '\n</script>\n</body></html>\n'
+assert html.endswith(tail)
+fv = html.replace(ACAD, 'const ACAD_OFF=true;').replace('<title>', '<title>이펙트 뷰어 · ', 1)
+fv = fv[:-len(tail)] + '\n' + rd('fxview.js') + tail
+open(os.path.join(ROOT, 'dist', 'fxview.html'), 'w', encoding='utf8').write(fv)
 print('dist/gangho.html', len(html), 'chars ·', len(gd) - 1, 'data tables, data rev', gd['_meta']['rev'], '· sheets', ', '.join(f'{k} {len(v["frames"])}장' for k, v in sheets.items()))

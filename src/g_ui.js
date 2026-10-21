@@ -150,7 +150,7 @@ function pBag(){
   const sell=shopMode;
   const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
-  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook';
+  const bag=P.bag.length?P.bag.map(it=>{const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
       <div class="ib">${B((read?'read:':'eq:')+it.id,read?'읽기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
   const mats=Object.entries(P.mats).filter(([k,n])=>n>0).map(([k,n])=>`<div class="mat"><span>${k} <b class="num">${n}</b></span>${CONSUME[k]?`<button type="button" data-act="con:${k}" title="${CONSUME[k].d}">쓰기</button>`:''}${sell&&MAT_PRICE[k]?`<button type="button" data-act="sellm:${k}">팔기</button>`:''}</div>`).join('')||'<p class="note">재료가 없습니다.</p>';
@@ -180,7 +180,7 @@ function pLife(){
 function pHist(){
   const h=G.history.slice().reverse();
   return (h.length?h.map(e=>`<div class="card"><div class="row2"><h4>제${e.life}생 ${esc(e.name)}</h4><span class="tag">${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg}</span></div>
-    <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
+    <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='좌화'?`${e.realm}에 이르러 스스로 좌화했다`:e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
     ${e.arts.length?`<p>무공: ${e.arts.map(esc).join(', ')}</p>`:''}${e.sect?`<p>문파: ${esc(e.sect)}</p>`:''}${e.spouse?`<p>배우자 ${esc(e.spouse)}${e.children.length?' · 자식 '+e.children.map(esc).join(', '):''}</p>`:''}
     ${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');
 }
@@ -192,7 +192,7 @@ function pHelp(){
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
+  <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
@@ -204,7 +204,7 @@ function pHelp(){
   <p><b>소모품</b> 4 금창약 · 5 소환단. <b>운기조식</b> X.</p>
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사 · J 임무(왼쪽 '맡은 임무' 글을 눌러도 된다). 창이 열려 있는 동안 시간이 멈춘다.</p>
-  <p><b>나이</b> 낮밤 한 바퀴(150초)가 1년. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
+  <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
   <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
@@ -292,6 +292,7 @@ function act(s){
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(wpnNeed(ARTS[x].cls),'info');setArt(x);break;
     case'mode':toggleMode();break;
     case'trainwin':openTrain();return;
+    case'jwa':jwaAsk(x);break;case'jwa2':jwahwa();return;   // 좌화 (g_beyond.js)
     case'open':openPanel(x);return;
     case'wsel':wSel=x;break;
     case'bsel':bobInit();if(P.bob[x])P.bcur=x;break;
