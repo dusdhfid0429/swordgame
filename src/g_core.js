@@ -278,6 +278,7 @@ function hurtP(dm,src){
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
+  if(P.hp<=0&&!G.duel)runHooks('lethal',c);   // 생사경이 한 해에 한 번 버틴다 (g_beyond.js)
   if(P.hp<=0){if(G.duel){P.hp=1;duelEnd(false)}else{P.hp=0;die('전투')}}
   runHooks('hurtDone',c);
 }

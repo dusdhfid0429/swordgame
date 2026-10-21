@@ -64,6 +64,6 @@ function bodyHtml(){const B=BODY,row=(on,n,d,how)=>`<div class="it"><div>${on?'<
   return `<details${P.hgt||P.ban||P.gang||hsCut()>0?' open':''}><summary>몸의 변화</summary><div class="list">
     ${row(!!P.hgt,'환골탈태',B.hg.d+(P.hgt&&P.hgt.age!=null?` (${P.hgt.age}세, ${P.hgt.why==='영약'?'영약':'화경'})`:''),`화경에 오르거나, ${RANKS[B.hg.minR]} 이상에서 영약 내공이 1갑자를 넘으면 (지금 ${gapja(elixirQi())||'없음'})`)}
     ${row(!!P.ban,'반로환동',B.ban.d+(P.ban?` · 몸 ${Math.floor(P.age)}세, 살아온 해 ${ra}년`:''),`현경에 오르면 몸이 ${B.ban.to}세까지(최대 ${B.ban.max}년) 젊어진다`)}
-    ${row(hsCut()>0,'호신강기',`${B.hs.d}. 지금 받는 피해 -${Math.round(hsCut()*100)}%, 막은 피해 1당 내공 ${hsQi()}${P.hsBrk?' · <span class="bad">깨짐</span>':''}`,`${RANKS[B.hs.minR]}에 오르면 선다 (막는 피해 초절정 25%·화경 35%·현경 45%, 피해 1당 내공 0.6·0.4·0.2)`)}
+    ${row(hsCut()>0,'호신강기',`${B.hs.d}. 지금 받는 피해 -${Math.round(hsCut()*100)}%, 막은 피해 1당 내공 ${hsQi()}${P.hsBrk?' · <span class="bad">깨짐</span>':''}`,`${RANKS[B.hs.minR]}에 오르면 선다 (막는 피해 초절정 25%·화경 35%·현경 45%·생사경 50%·자연경 55%, 피해 1당 내공 0.6·0.4·0.2·0.15·0.1)`)}
     ${row(!!P.gang,'금강불괴',B.gang.d,`불가 계열로 화경에 오르거나, 환골탈태한 몸으로 지구력 ${B.gang.end} 이상 (지금 ${P.st.end})`)}
   </div></details>`}

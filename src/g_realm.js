@@ -3,7 +3,7 @@
 // 함께 다음 경지 문턱에 닿으면 "벽"에 막히고, 안전한 곳에서 폐관수련으로 벽을 깨야 오른다. 실패하면 주화입마.
 // 설계: docs/경지_설계.md
 const PILLARS=GD.PILLARS;
-const REALM_NEED={oe:[0,42,54,68,84,102,122],ne:REALM_QI,mu:[0,3,7,12,18,26,36]};
+const REALM_NEED={oe:[0,42,54,68,84,102,122,...GD.BEYOND.oe],ne:REALM_QI,mu:[0,3,7,12,18,26,36,...GD.BEYOND.mu]};   // 현경 위 생사경·자연경 문턱은 data/realm.json BEYOND (g_beyond.js)
 // 무공 하나의 깨달음: 입문 1·소성 2·대성 3·극성 4·돈오(숙련 100) 6, 등급(하승~천고)이 높을수록 무겁다. 기본 무공은 절반.
 const MU_W=GD.MU_W;
 const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
@@ -67,10 +67,10 @@ function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ri
   // 무거운 주화입마의 몫: 기본 30%(죽음 몫 포함), 마공 45%·사공 35%·도가 20% (죽음을 뺀 나머지 중)
   const f=DEV_HEAVY[school()]??(.3-death)/(1-death),heavy=(roll-death)/(1-death)<f&&!inAcad(),lost=Math.max(1,Math.ceil(P.qiN*(heavy?.2:.1)));P.qiN=Math.max(0,P.qiN-lost);qiAccAdd(-lost*qiGain());P.qiAcc=Math.max(0,P.qiAcc);
   if(P.qiX)P.qiX=Math.round(P.qiX*.85*10)/10;   // 심법이 덧쌓은 내공도 흩어진다
-  P.inj=YEAR_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;
+  P.inj=DAY_SEC*(heavy?1.5:.5);P.injS=heavy?2:1;   // 후유증은 실제 시간으로 예전 길이 그대로 (하루 = 한 달)
   let st='';if(heavy){const ks=STATS.filter(({k})=>P.st[k]>1),s=ks.length?pick(ks):null;if(s){P.st[s.k]--;st=`, ${s.n} -1`}}
   recalc();P.hp=Math.max(1,Math.round(P.hp*.5));P.qi=0;
-  const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 해 반':'반 년'} 동안 힘을 다 쓰지 못합니다.`;
+  const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 달 반':'보름'} 동안 힘을 다 쓰지 못합니다.`;
   log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');feat(`${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
 hook('trainTick',dt=>{
   if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
@@ -88,6 +88,6 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 한쪽만 키우면 벽에 닿지 못한다.</p>
     ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>
-    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/YEAR_SEC*12)}달 남음)</p>`:''}
+    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
     <p>내공 심법 <b class="gold">${simCur().n}</b> ${gradeTag(simCur().g)} · 수련 ${P.qiN}회 · 1회 +${simGain()} · 다음 수련에 활력 ${c}${simCur().tr&&simCur().tr.length?` · 특색 ${simTraitHtml(simCur())}`:''}</p>
-    <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div></div>`}
+    <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div>${jwaHtml()}</div>`}
