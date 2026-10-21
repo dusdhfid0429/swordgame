@@ -9,6 +9,9 @@ const MU_W=GD.MU_W;
 const artMu=id=>{const s=A(id);if(!s)return 0;const t=s.p>=100?6:tierOf(s.p)+1;return t*(id==='base'?.5:MU_W[artGrade(id)]||1)};
 // 무리에는 깨달음(P.enl, g_realmfx.js)이 더해진다
 const pillarVal=k=>k==='oe'?STATS.reduce((a,{k})=>a+P.st[k],0):k==='ne'?baseQi():Math.round((Object.keys(P.arts).reduce((a,id)=>a+artMu(id),0)+(P.enl||0))*10)/10;
+// v164 (사용자 2026-10-21): 벽은 고르게가 아니라 계단처럼 높아진다. 앞 경지 문턱과의 간격에 WALL_K[다음 경지]를 곱한다 (data/wall.json).
+// 일류→절정·초절정→화경·화경→현경 ×2, 현경→생사경 ×2.5 로 확 높고, 그 사이(초절정 ×1.1, 자연경 ×1.3)는 완만하다. 내공 기둥은 복사본이라 REALM_QI(옛 내공 경지)는 그대로다
+{const K=GD.WALL_K||[];for(const k in REALM_NEED){const a=REALM_NEED[k],o=[a[0]];for(let i=1;i<a.length;i++)o[i]=Math.round(o[i-1]+(a[i]-a[i-1])*(K[i]??K[K.length-1]??1));REALM_NEED[k]=o}}
 // 벽: 세 기둥이 모두 다음 경지 문턱에 닿았는데 경지가 아직 그대로인 상태
 const atWall=()=>realmIdx()<RANKS.length-1&&PILLARS.every(({k})=>pillarVal(k)>=REALM_NEED[k][realmIdx()+1]);
 const lacking=()=>{const r=realmIdx()+1;if(r>=RANKS.length)return[];return PILLARS.filter(({k})=>pillarVal(k)<REALM_NEED[k][r])};
@@ -57,8 +60,8 @@ function pgStart(k){
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;P.hob=0;
   if(!passYears(yrs))return;
-  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
-    log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
+  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;const bf=brkFx(r);if(!bf)fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);   // 경지마다 다른 돌파 연출 (r_fx.js, v163)
+    log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');if(bf)log(bf.d,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지${bf?' · '+bf.n:''}`);
     feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
   qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
