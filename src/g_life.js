@@ -16,8 +16,7 @@ function update(dt){
   if(Math.floor(P.age)>lastYear){lastYear=Math.floor(P.age);newYear()}
   runHooks('tick',dt);
   G.wT-=dt;if(G.wT<=0){G.wT=22+Math.random()*12;const tb=WEATHER[season()];let r=Math.random();for(const[w,p]of tb){if(r<p){if(w!==G.weather)log(`날씨가 ${w}(으)로 바뀌었습니다.`,'info');G.weather=w;break}r-=p}}
-  G.gT-=dt;if(G.gT<=0){if(G.giyeon){G.giyeon=null;G.gT=120+Math.random()*120}else{for(let t=0;t<40;t++){const x=2+Math.floor(Math.random()*(N-4)),y=2+Math.floor(Math.random()*(NH-4));if(walk(x,y)&&!inTown(x,y)&&!inFarm(x,y)&&dist({x,y},P)>6){G.giyeon={x:x+.5,y:y+.5};G.gT=45;log('어딘가에서 기이한 빛이 일렁입니다.','info');break}}}}
-  if(G.giyeon&&dist(G.giyeon,P)<.7){G.giyeon=null;G.gT=150+Math.random()*120;giyeon('spot')}
+  // 맵에 저절로 생기던 기연 터는 없앴다 (v157, 사용자 2026-10-20): 기연은 소문으로 찾는 기연동굴에서 만난다 (g_gyc.js)
   spawnT-=dt;if(spawnT<=0){spawnT=2;spawnTick()}
   saveT-=dt;if(saveT<=0){saveT=30;saveGame()}
   for(const p of GAE_PLOTS||plots)growPlot(p,dt);
@@ -206,6 +205,7 @@ function interact(t){
   if(n.t==='vault'){P.chan={t:0,dur:sectPop(n.sect)<=0?VAULT.ruinDur:VAULT.steal.dur,label:vaultLabel(n),fn:()=>vaultOpen(n)};return}   // 문파 금고 (g_vault.js)
   if(n.t==='corpse'||n.t==='rubble'){P.chan={t:0,dur:RUIN.dur[n.t],label:n.t==='corpse'?'시체를 뒤진다':'잔해를 뒤진다',fn:()=>ruinLoot(n)};return}   // 폐허 약탈품 (g_ruin.js)
   if(n.t==='cchest'){P.chan={t:0,dur:CV.open,label:'상자를 연다',fn:()=>caveChestOpen(n)};return}   // 동굴 보물상자 (g_cave.js)
+  if(n.t==='gybox'){gycOpen(n);return}   // 기연동굴 안쪽 상자 (g_gyc.js)
   if(n.t==='chest'){if(P.chest){log('이번 생의 기연은 이미 얻었습니다.','info');return}P.chest=1;n.cd=99999;giyeon('chest');return}
   const L={herb:['약초를 캔다',1.2],ore:['광석을 캔다',1.8],wood:['나무를 벤다',1.6],fish:['잉어를 낚는다',2.2]}[n.t];
   P.chan={t:0,dur:L[1],label:L[0],fn:()=>{

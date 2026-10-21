@@ -93,8 +93,8 @@ function drawNode(n){
   else if(n.t==='vault'){poly([[-14,-2],[12,-2],[14,-18],[-12,-18]],lg(-14,14,'#4a4a52','#1e1e24'));poly([[-12,-18],[14,-18],[12,-24],[-10,-24]],'#5a5a64');ctx.fillStyle='#c9a14a';ctx.fillRect(-3,-14,6,5);ctx.strokeStyle='#8a7a40';ctx.lineWidth=1;ctx.strokeRect(-11,-16,22,12);
     if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
   else if(n.t==='cchest'){ctx.restore();drawCaveChest(n);return}
-  else if(n.t==='chest'){if(!P.chest){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
-    poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],P.chest?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
+  else if(n.t==='chest'||n.t==='gybox'){const shut=n.t==='gybox'?n.cd>0:P.chest;if(!shut){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
+    poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],shut?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}
   ctx.restore();
 }
 function drawPlot(pl){
@@ -296,7 +296,7 @@ function bakeMini(){const c=document.createElement('canvas');c.width=150;c.heigh
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}
-  for(const g of REGION().gates){const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
+  for(const g of REGION().gates){if(g.gyc!=null&&!gycSeen(g))continue;const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
   for(const t of tombs()){if((t.reg||'gaebong')!==REG)continue;const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}

@@ -71,6 +71,7 @@ function drawGateHold(){
   ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y+25);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y+24);
 }
 function drawGate(g){
+  if(g.gyc!=null){drawGycMouth(g);return}   // 기연동굴 입구 (g_gyc.js)
   const p=toScreen(g.x,g.y);ctx.save();ctx.translate(p.x,p.y);
   // 땅에 빛나는 길표시
   const a=.45+.25*Math.sin(time*3);ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=2;

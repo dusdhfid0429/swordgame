@@ -10,7 +10,7 @@ const sectPop=sid=>{popInit();return G.pop[sid]||0};
 // 무학의 질: 고급 무공 수와 무공 수. 0~1
 const sectQ=s=>Math.min(1,(s.arts.filter(a=>a.hi).length*.4+s.arts.length*.1+(s.tier==='big'||s.tier==='one'?.2:s.tier==='mid'?.1:0)));
 // 세력의 힘 = 초기값 × (지금 인원×질 합) / (기준 인원×질 합)
-function facStrength(f,base){let v=0;for(const s of Object.values(SECTS))if(alFac(s.al)===f)v+=(base?popBase(s):sectPop(s.id))*(1+sectQ(s));return v}
+function facStrength(f,base){let v=0;for(const s of Object.values(SECTS))if(alFac(s.al)===f)v+=(base?popBase(s):sectPop(s.id)*(1+sectUp(s)))*(1+sectQ(s));return v}
 function popSync(){popInit();const w=G.W;if(!w)return;for(const f of FAC4){const b=facStrength(f,true);w.pow[f]=b?clamp(Math.round(STORY.INIT.pow[f]*facStrength(f)/b*10)/10,0,100):0}}
 // 한 세력의 문파 인원을 비율로 늘리거나 줄인다 (사건·전쟁의 효과)
 function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)G.pop[s.id]=Math.max(0,Math.round(G.pop[s.id]*m*10)/10);popSync()}
