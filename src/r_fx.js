@@ -183,15 +183,7 @@ function drawBrk(f){if(P){f.x=P.x;f.y=P.y}
     for(let j=1;j<=2;j++){ctx.strokeStyle=rgba(c,.35*a);ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(cx,p.y-H*j/3,rx*Math.sqrt(1-j*j/9),ry*Math.sqrt(1-j*j/9),0,0,PI2);ctx.stroke()}
     for(const[w,cc,al]of[[8,c,.3],[2.5,c,.85],[1.2,HI,1]]){ctx.strokeStyle=rgba(cc,al*a);ctx.lineWidth=w;ctx.beginPath();ctx.ellipse(cx,p.y,rx,H,0,Math.PI,PI2);ctx.stroke();ctx.beginPath();ctx.ellipse(cx,p.y,rx,ry,0,0,PI2);ctx.stroke()}
     glowDot(cx,p.y-H,16,c,a);end(.78)}
-  else if(r===5){// 삼화취정 (사용자 2026-10-21): 머리 위에 정·기·신 세 송이가 차례로 피었다가, 천천히 줄어들며 정수리로 스며든다
-    const hy=p.y-56,a=ez((t-.5)/.4),fl=[['255,170,190',-24,p.y-80],['255,225,150',0,p.y-92],['200,220,255',24,p.y-80]];
-    fl.forEach(([cc,dx,y],j)=>{const b=ez((t-.04-j*.1)/.2),x=cx+dx*(1-a),yy=y+(hy-y)*a,s=17*b*(1-a*.85),al=env*(1-a*.7);
-      if(b>0&&a>0){ctx.strokeStyle=rgba(cc,.5*al);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,yy);ctx.quadraticCurveTo(cx+dx*.3,(yy+hy)/2,cx,hy);ctx.stroke()}
-      brkLotus(cx+dx*(1-a),yy+Math.sin(time*2+j)*2*(1-a),s,cc,al,time*.7+j*1.3)});
-    glowDot(cx,hy,10+18*a,c,env*(.3+.6*a));
-    const k=cl01((t-.86)/.1);if(k>0){ctx.strokeStyle=rgba(c,.7*env*k);ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(cx,p.y-52,26*ez(k),0,PI2);ctx.stroke();glowDot(cx,p.y-52,30,c,.4*env*k)}
-    end(.86)}
-  else if(r===6){// 오기조원: 다섯 방위에서 오행의 기운이 나선을 그리며 단전으로 돌아가 하나가 된다
+  else if(r===5){// 오기조원: 다섯 방위에서 오행의 기운이 나선을 그리며 단전으로 돌아가 하나가 된다
     const[R,Ry]=isoR(2.6),dy=p.y-24;
     WUHAENG.forEach((cc,j)=>{const a0=-Math.PI/2+j*PI2/5,s=(t-.06-j*.05)/.5;
       if(s<1)glowDot(cx+Math.cos(a0)*R,p.y+Math.sin(a0)*Ry,16,cc,env*(1-cl01(s))*.9,.5);
@@ -200,6 +192,13 @@ function drawBrk(f){if(P){f.x=P.x;f.y=P.y}
     const k=cl01((t-.6)/.25);if(k>0){WUHAENG.forEach((cc,j)=>{const a=time*2+j*PI2/5;glowDot(cx+Math.cos(a)*14*(1-k),dy+Math.sin(a)*7*(1-k),14,cc,env)});glowDot(cx,dy,20+40*ez(k),c,env*(1-k*.4))}
     const k2=cl01((t-.62)/.3);if(k2>0)WUHAENG.forEach((cc,j)=>{const[rx,ry]=isoR(.5+k2*(2.6+j*.25));shock(cx,p.y,rx,ry,cc,(1-k2)*.7)});
     end(.85)}
+  else if(r===6){// 삼화취정: 정(하단전)·기(중단전)·신(상단전) 세 송이가 차례로 피고, 정수리 위로 모여 한 송이와 원광이 된다
+    const fl=[['255,170,190',p.y-22],['255,225,150',p.y-38],['200,220,255',p.y-54]],m=ez((t-.5)/.22),top=p.y-84;
+    fl.forEach(([cc,y],j)=>{const b=ez((t-.04-j*.14)/.18),yy=y+(top-y)*m;brkLotus(cx,yy,22*b*(1-m*.45),cc,env*(1-cl01((t-.72)/.05)),time*.8+j)});
+    const k=cl01((t-.7)/.15);if(k>0){brkLotus(cx,top,34*ez(k),c,env,time*.6);
+      ctx.strokeStyle=rgba(c,.7*env*k);ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,p.y-52,30*ez(k),0,PI2);ctx.stroke();glowDot(cx,p.y-52,30,c,.35*env*k);
+      for(let j=0;j<12;j++){const a=j*PI2/12+time*.3,L0=28,L1=28+(j%2?12:22)*k;ctx.strokeStyle=rgba(c,.6*env*k);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*L0,p.y-52+Math.sin(a)*L0);ctx.lineTo(cx+Math.cos(a)*L1,p.y-52+Math.sin(a)*L1);ctx.stroke()}}
+    end(.86)}
   else if(r===7){// 생사현관: 발밑에 음양이 돌고, 흰 기운은 오르고 검은 기운은 가라앉는다
     const[R,Ry]=isoR(1.7*ez(t/.25)),sp=time*1.3,mode=ctx.globalCompositeOperation;
     ctx.save();ctx.translate(cx,p.y);ctx.scale(1,Ry/R);ctx.rotate(sp);
