@@ -64,10 +64,12 @@ function drawCape(pal,trail,wv,sc=1){
 // ---- 내 캐릭터(도트 그림)의 옷: 남색 겉옷 픽셀만 문파 색으로 바꿔 칠한 그림을 문파·직위(속가/정식)마다 만들어 둔다 ----
 const HERO_GARB={};
 // v160: tr=train2 시트. 그 옷은 푸른 기가 옅어(b-r 5~16) 기준 15로는 9%만 물들었다(사용자: 수련할 때 문파 색이 안 입혀짐). 푸른 기 5 이상·초록 기 없음(회색 바지 제외)·밝기 100 아래면 옷
-function recolorAtlas(img,robe,tr){
+// rects=[[x,y,w,h]…]를 주면 그 상자 안 픽셀만 칠한다
+function recolorAtlas(img,robe,tr,rects){
   const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
   const id=g.getImageData(0,0,c.width,c.height),d=id.data,B=hexRgb(robe),dark=B.map(v=>v*.22),light=B.map(v=>v+(255-v)*.38);
-  for(let i=0;i<d.length;i+=4){if(d[i+3]<20)continue;const r=d[i],gg=d[i+1],b=d[i+2],l=r*.3+gg*.59+b*.11;
+  let inR=null;if(rects&&rects.length){inR=new Uint8Array(c.width*c.height);for(const[x,y,w,h]of rects)for(let yy=Math.max(0,y);yy<Math.min(c.height,y+h);yy++)inR.fill(1,yy*c.width+Math.max(0,x),yy*c.width+Math.min(c.width,x+w))}
+  for(let i=0;i<d.length;i+=4){if(d[i+3]<20||inR&&!inR[i>>2])continue;const r=d[i],gg=d[i+1],b=d[i+2],l=r*.3+gg*.59+b*.11;
     if(tr?(b-r<5||gg-r>5||l>=100):(b-r<15||l>=140))continue;  // 겉옷(푸른 기가 도는 어두운 색)만. 머리카락·피부·흰 속옷·칼은 그대로
     const u=Math.max(0,Math.min(1,(l-12)/108));let o;
     if(u<.42){const t=u/.42;o=dark.map((v,k)=>v+(B[k]-v)*t)}else{const t=(u-.42)/.58;o=B.map((v,k)=>v+(light[k]-v)*t)}
@@ -77,7 +79,9 @@ function heroGarb(){
   if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
   if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
   const imgs=HERO_GARB[key];if(!imgs)return null;if(!imgs.h2&&hero2Ok())imgs.h2=recolorAtlas(HERO2,rankRobe(L,rank));
-  if(!imgs.wx&&typeof sheetOk==='function'&&sheetOk('act'))imgs.wx=recolorAtlas(SHEETS.act.img,rankRobe(L,rank));
+  // 시트마다 옷 색 그림 (v167: actfx는 장마다 캐릭터 몸 상자 cb 안만 칠해 푸른 이펙트는 그대로)
+  imgs.sh=imgs.sh||{};if(typeof sheetOk==='function')for(const n of['act','actfx'])if(!imgs.sh[n]&&sheetOk(n))imgs.sh[n]=recolorAtlas(SHEETS[n].img,rankRobe(L,rank),false,SHEETS[n].frames.map(f=>f.cb).filter(Boolean));
+  imgs.wx=imgs.sh.act;
   // 내 캐릭터는 망토를 두르지 않는다 (사용자 2026-10-13 "플레이어의 직위 망토가 어색해"): 직위는 머리 위 문장 표식(mark)으로 보인다
   return{...imgs,rank,pal:{cape:null,capeLen:0,capeEdge:null,emb:null},mark:rank>=1?{sid:P.sect,pips:rank-1,gold:rank>=4,trim:L.trim,accent:L.accent}:null}}
 // 머리 위 직위 표식: 정식제자부터 작은 문장, 일대제자부터 문장 아래 점(직위−1개), 장로는 금테. 도트가 좌우 뒤집혀도 문장은 바로 보인다
