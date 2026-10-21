@@ -61,6 +61,9 @@ assert html.count(ACAD) == 1, 'g_academy.js 의 ACAD_OFF 줄이 바뀌었습니�
 tail = '\n</script>\n</body></html>\n'
 assert html.endswith(tail)
 fv = html.replace(ACAD, 'const ACAD_OFF=true;').replace('<title>', '<title>이펙트 뷰어 · ', 1)
-fv = fv[:-len(tail)] + '\n' + rd('fxview.js') + tail
+# 3D 카툰 이펙트 시범 (v166): three.js(MIT, vendor/) 를 뷰어에만 넣는다. 게임 본편(gangho.html)에는 들어가지 않는다
+three = open(os.path.join(ROOT, 'vendor', 'three.min.js'), encoding='utf8').read()
+assert '</script' not in three
+fv = fv[:-len(tail)] + '\n' + rd('fxview.js') + '\n' + three + '\n' + rd('fx3d.js') + tail
 open(os.path.join(ROOT, 'dist', 'fxview.html'), 'w', encoding='utf8').write(fv)
 print('dist/gangho.html', len(html), 'chars ·', len(gd) - 1, 'data tables, data rev', gd['_meta']['rev'], '· sheets', ', '.join(f'{k} {len(v["frames"])}장' for k, v in sheets.items()))
