@@ -57,8 +57,8 @@ function pgStart(k){
 function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;P.hob=0;
   if(!passYears(yrs))return;
-  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);
-    log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지`);
+  if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;const bf=brkFx(r);if(!bf)fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);   // 경지마다 다른 돌파 연출 (r_fx.js, v163)
+    log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');if(bf)log(bf.d,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지${bf?' · '+bf.n:''}`);
     feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
   qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
