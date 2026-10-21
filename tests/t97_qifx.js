@@ -1,5 +1,5 @@
 // v159–161: 운기조식·내공 수련·본원진기 연출은 서로 다르다 (MED=나선 기운+발밑 고리, NG=손 앞 기운 구슬+소주천, TFX qi=땅의 생기).
-// v161 (사용자 2026-10-21): 수련 동작은 예전 wuxia 시트 클립으로 되돌렸다. train2 시트는 빌드에 들어가지 않는다 (원본은 assets/train2/source_sheets)
+// v161 (사용자 2026-10-21): 수련 동작은 예전 wuxia 시트 클립으로 되돌렸다. train2 시트는 빌드에 들어가지 않는다 (원본은 assets/train2/source_sheets). v166부터 주인공은 act 시트
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:900,height:640}});const errs=[];
@@ -7,12 +7,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
-  await p.waitForFunction(()=>sheetOk('wuxia'),null,{timeout:10000});await p.waitForTimeout(200);
+  await p.waitForFunction(()=>sheetOk('act'),null,{timeout:10000});await p.waitForTimeout(200);
   // 1. 수련 동작은 예전 클립: 근력 strength_1, 지구력 endurance, 민첩 dash, 내공 수련·운기조식 meditate. train2 시트는 없다
-  const st=await p.evaluate(()=>{const C=SHEETS.wuxia.clips,r={none:!SHEETS.train2},at=k=>{trnBusy={k,t:.3,dur:TRN_DUR[k]};const f=heroFrame();return f};P.satk=0;P.runT=0;P.medit=false;
-    for(const[k,c]of[['str','strength_1'],['agi','dash'],['end','endurance']]){const f=at(k);r[k]=f[4]==='wuxia'&&C[c].f.includes(f[0])}
-    {const q=at('qi');r.qi=q[4]==='wuxia'&&C.meditate.f.includes(q[0])}P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='wuxia'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
-    trnBusy=null;P.medit=true;const m=heroFrame();r.med=m[4]==='wuxia'&&C.meditate.f.includes(m[0]);P.medit=false;
+  const st=await p.evaluate(()=>{const C=SHEETS.act.clips,r={none:!SHEETS.train2},at=k=>{trnBusy={k,t:.3,dur:TRN_DUR[k]};const f=heroFrame();return f};P.satk=0;P.runT=0;P.medit=false;
+    for(const[k,c]of[['str','strength_1'],['agi','dash'],['end','endurance']]){const f=at(k);r[k]=f[4]==='act'&&C[c].f.includes(f[0])}
+    {const q=at('qi');r.qi=q[4]==='act'&&C.meditate.f.includes(q[0])}P.qiTraining=true;const n=at('neigong');r.neigong=n[4]==='act'&&C.meditate.f.includes(n[0]);P.qiTraining=false;
+    trnBusy=null;P.medit=true;const m=heroFrame();r.med=m[4]==='act'&&C.meditate.f.includes(m[0]);P.medit=false;
     P.chan={t:.6,dur:1.6,label:'내공 수련',fn:()=>{}};r.ngp=ngProg();P.chan=null;
     trnBusy={k:'pg2',t:0,dur:9};P.qiTraining=true;r.pgNg=ngProg();trnBusy=null;P.qiTraining=false;return r});
   ok(`train2 없음 ${st.none} · 근력 ${st.str} · 민첩 ${st.agi} · 지구력 ${st.end} · 본원진기 가부좌 ${st.qi} · 내공 ${st.neigong} · 운기조식 ${st.med} · 인물창 내공 수련 진행도 ${st.ngp.toFixed(2)} · 폐관은 내공 연출 아님 ${st.pgNg}`,
