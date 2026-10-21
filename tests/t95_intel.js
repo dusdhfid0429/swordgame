@@ -14,8 +14,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const gw=Object.values(REGIONS).filter(R=>R.hall&&R.name==='관아').some(R=>R.npcs.some(n=>n.intel==='dongchang'));
     return{reg:REG,name:REGION().name,pat:ns.filter(n=>n.patron).length,org:ns.filter(n=>n.intel).map(n=>n.intel).sort().join(','),mg:mg&&REGIONS[mg].npcs.some(n=>n.intel==='magyo'),gw}});
   ok(`개봉 객잔 입구 ${r1.g} → ${r2.name}: 손님 ${r2.pat} · 창구 ${r2.org} · 객잔 ${r1.inns}곳 · 마교 객잔 천리당 ${r2.mg} · 관아 동창 ${r2.gw}`,r1.g&&r2.reg==='in_gaebong_0'&&r2.pat===4&&r2.org==='gaebang,haomun'&&r1.inns>10&&r2.mg&&r2.gw);
-  // 2. 손님들이 돌아가며 말풍선으로 이야기한다
-  const r3=await p.evaluate(()=>{for(const c of G.gyc.list)c.rumor=50;innT=0;for(let i=0;i<4;i++){innT=0;update(.05)}return{n:gycBub.length,t:gycBub.map(b=>b.txt),log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.startsWith('[객잔]')).length}});
+  // 2. 손님들이 돌아가며 말풍선으로 이야기한다 (기록은 log 호출로 센다: 소문을 들으면 다른 줄이 붙어 기록 창 14줄 밖으로 밀려날 수 있다)
+  const r3=await p.evaluate(()=>{for(const c of G.gyc.list)c.rumor=50;let nl=0;const l0=log;log=(t,c)=>{if(String(t).startsWith('[객잔]'))nl++;l0(t,c)};innT=0;for(let i=0;i<4;i++){innT=0;update(.05)}log=l0;return{n:gycBub.length,t:gycBub.map(b=>b.txt),log:nl}});
   ok(`손님 말풍선 ${r3.n}개 (${r3.t[0]}) · 기록 ${r3.log}`,r3.n>=2&&r3.log>=2);
   await p.waitForTimeout(200);await p.screenshot({path:shot('intel_inn')});
   // 3. 무소속: 하급만, 값을 낸다(하오문은 다른 편이라 1.5배). 사서 들으면 기연 소문이 쌓인다
