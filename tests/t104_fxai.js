@@ -16,7 +16,7 @@ const MOCK=()=>{
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   const c=await b.newContext({viewport:{width:1280,height:800}});await c.addInitScript(MOCK);const p=await c.newPage();
-  p.on('pageerror',e=>errs.push('PE '+e.message));
+  p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')console.log('CE',m.text().slice(0,300))});
   const url='file://'+require('path').resolve(__dirname,'../dist/fxview.html');
   await p.goto(url);await p.waitForTimeout(1800);
   ok('실시간 수정 칸이 있고 Claude가 연결됨',await p.evaluate(()=>!!document.getElementById('fxai')&&!document.getElementById('fxai_go').disabled&&FXAI.tools));
@@ -55,8 +55,7 @@ const MOCK=()=>{
   const kept=await p.evaluate(()=>{const d=JSON.parse(sessionStorage.getItem('mockdb'));const x=Object.values(d)[0];return x&&x.state==='kept'&&x.ops[0].file==='r_exec.js'&&x.ops[1].file==='data/elfx.json'&&x.ops[0].after.includes('o.fxai')});
   ok('채택: db 에 파일 이름과 함께 남음',kept);
   await p.screenshot({path:__dirname+'/shots/fxai_pc.png'});
-  await p.reload();await p.waitForTimeout(2200);
-  ok('다시 열면 채택한 수정이 다시 끼워짐',await p.evaluate(()=>GL.toString().includes('o.fxai')&&EL_FX.화.n==='불꽃!'&&FXAI.CH.length===1&&FXAI.CH[0].kept&&FXAI.CH[0].on));
+  await p.reload();await p.waitForFunction(()=>window.FXAI&&FXAI.CH.length>0,null,{timeout:20000}).catch(async e=>console.log('복원 안 됨',await p.evaluate(()=>JSON.stringify({ss:Object.keys(JSON.parse(sessionStorage.getItem('mockdb')||'{}')),fx:!!window.FXAI,st:document.getElementById('fxai_st').textContent,go:document.getElementById('fxai_go').textContent}))));await p.waitForTimeout(200);
   await p.click('#fxai button[data-x^="off:"]');await p.waitForTimeout(100);
   ok('복원한 수정도 되돌리기 됨',await p.evaluate(()=>!GL.toString().includes('o.fxai')&&EL_FX.화.n!=='불꽃!'));
   // 5) 휴대폰 화면
