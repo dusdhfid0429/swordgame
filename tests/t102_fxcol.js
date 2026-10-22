@@ -34,6 +34,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`마기 심지 ${r.hiD} (보랏빛+꽃), 밝은 심지 ${r.hiL}`,r.hiD!=='150,40,190'&&r.hiL!=='255,255,255');
   ok(`초식 효과에 보조색 ${r.c2ok}, 2단계 잔광은 보조색 ${r.after}, 투사체 ${r.pj}`,r.c2ok&&r.after&&r.pj);
   // 창안: 재료 다섯 무공의 특성을 세어 물려받는다
+  // v169b: 심법 재질 입자는 무공 보조색 쪽으로 물들고 진하기·크기가 줄어든다, 마기 연기는 검게 그대로
+  const h=await p.evaluate(()=>{const a=Object.values(ARTS).find(x=>artTr(x)[0]==='꽃'),X=mkX(a.id);fx=[];
+    elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'화');const f=fx.find(q=>q.t==='el'),raw=EL_FX['화'].parts.map(x=>x[2]);
+    fx=[];elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'마');const d=fx.find(q=>q.t==='el');
+    return{tinted:f.ps.every(q=>!raw.includes(q.col)),c2:f.c2===a.c2,dark:d.ps.every(q=>q.col===EL_FX['마'].parts[0][2]),harm:EL_HARM,purple:mixCol(HI_DARK,'150,225,50',.5,1)}});
+  ok(`재질 색이 무공 보조색에 물든다 ${h.tinted}, 심지도 보조색 ${h.c2}, 마기 연기는 검게 ${h.dark} (진하기 ${h.harm.alpha}, 크기 ${h.harm.size})`,h.tinted&&h.c2&&h.dark&&h.harm.alpha<1&&h.harm.size<1);
+  {const[r,g,bb]=h.purple.split(',').map(Number);ok(`보라+초록 테두리는 주황으로 새지 않는다 (${h.purple})`,!(r>g&&g>bb&&r>150))}
   const m=await p.evaluate(()=>{window.__noPrompt=1;
     const ids=Object.keys(ARTS).filter(k=>ARTS[k].cls==='검'&&!ARTS[k].sect&&!ARTS[k].gy&&!ARTS[k].base&&(ARTS[k].grade||0)===0).slice(0,5);
     for(const id of ids)P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)};

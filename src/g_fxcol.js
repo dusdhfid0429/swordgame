@@ -29,8 +29,12 @@ function toLch(c){const[r,g,b]=String(c).split(',').map(Number).map(s2l);
 function fromLch([L,C,H]){const A=C*Math.cos(H),B=C*Math.sin(H),l=(L+.3963377774*A+.2158037573*B)**3,m=(L-.1055613458*A-.0638541728*B)**3,s=(L-.0894841775*A-1.291485548*B)**3;
   return[l2s(4.0767416621*l-3.3077115913*m+.2309699292*s),l2s(-1.2684380046*l+2.6097574011*m-.3413193965*s),l2s(-.0041960863*l-.7034186147*m+1.707614701*s)].join(',')}
 const MIXC=new Map();
-function mixCol(a,b,t){if(t<=0||!b)return a;if(t>=1||!a)return b;const key=a+'|'+b+'|'+t;let r=MIXC.get(key);if(r)return r;
-  const p=toLch(a),q=toLch(b);let h;if(p[1]<.03)h=q[2];else if(q[1]<.03)h=p[2];else{let d=q[2]-p[2];if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;h=p[2]+d*t}
+function mixCol(a,b,t,lab){if(t<=0||!b)return a;if(t>=1||!a)return b;const key=a+'|'+b+'|'+t+(lab?'L':'');let r=MIXC.get(key);if(r)return r;
+  const p=toLch(a),q=toLch(b);let h;if(p[1]<.03)h=q[2];else if(q[1]<.03)h=p[2];else{let d=q[2]-p[2];if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;
+    // lab: 색상각이 120° 넘게 벌어지면(보라↔초록 등) 색상각을 돌릴 때 엉뚱한 셋째 색(주황)이 나온다 → Lab 에서 곧게 섞는다 (마기 테두리)
+    if(lab&&Math.abs(d)>2.1){const A=[p[1]*Math.cos(p[2]),p[1]*Math.sin(p[2])],B=[q[1]*Math.cos(q[2]),q[1]*Math.sin(q[2])],x=A[0]+(B[0]-A[0])*t,y=A[1]+(B[1]-A[1])*t;
+      r=fromLch([p[0]+(q[0]-p[0])*t,Math.hypot(x,y),Math.atan2(y,x)]);MIXC.set(key,r);return r}
+    h=p[2]+d*t}
   r=fromLch([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,h]);MIXC.set(key,r);return r}
 // 무공 색(보조색): 특성 색을 비중대로 섞는다
 function trCol(a){const tr=artTr(a);let c=FX_TR[tr[0]]?FX_TR[tr[0]].c:'235,240,250';
@@ -39,5 +43,5 @@ function trCol(a){const tr=artTr(a);let c=FX_TR[tr[0]]?FX_TR[tr[0]].c:'235,240,2
 // 주색: 심법·문파 색(fxCol) + 무공 색 물들임. 마기는 그대로
 function artMain(a){const base=fxCol(a);return isDark(base)?base:mixCol(base,trCol(a),FX_MIX.tint)}
 // 심지 색: 밝은 이펙트는 흰 심지를 보조색 쪽으로, 마기는 보랏빛 테두리에 보조색을
-const hiOf=(c,c2)=>isDark(c)?(c2?mixCol(HI_DARK,c2,FX_MIX.darkRim):HI_DARK):(c2?mixCol('255,255,255',c2,FX_MIX.hi):'255,255,255');
+const hiOf=(c,c2)=>isDark(c)?(c2?mixCol(HI_DARK,c2,FX_MIX.darkRim,1):HI_DARK):(c2?mixCol('255,255,255',c2,FX_MIX.hi):'255,255,255');
 const trHtml=a=>artTr(a).map(k=>`<b style="color:rgb(${textCol(FX_TR[k]?FX_TR[k].c:'235,240,250')})">${trName(k)}</b>`).join('·');

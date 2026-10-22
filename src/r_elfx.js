@@ -3,7 +3,10 @@
 // 모양(반달·회전·고리·직선·낙뢰…)과 색(문파 색)은 그대로 두고, 그 모양을 따라 속성의 재질 입자를 얹는다:
 //  화 불길·불티 / 수 물방울·물결 / 목 잎 / 금 쇳조각·칼빛 / 토 돌·흙먼지·갈라짐 / 양 햇살 / 음 서리꽃·찬 안개 / 뇌 잔번개 / 마 검은 연기
 // 표는 data/elfx.json EL_FX(속성마다 입자 종류·배율·색), r_exec.js GL 이 glFx 훅을 부르고, 투사체는 tick 훅에서 꼬리를 남긴다
-const EL_FX=GD.EL_FX,EL_FX_N=GD.EL_FX_N;
+const EL_FX=GD.EL_FX,EL_FX_N=GD.EL_FX_N,EL_HARM=GD.EL_HARM;
+// v169b (사용자 2026-10-22 "심법 영향 이펙트만 너무 강조되어 조화롭지 못하다, 무공 이펙트와 자연스럽게 섞이게"): 재질 입자의 색을 무공 보조색(a.c2) 쪽으로
+// EL_HARM.tint 만큼 물들이고, 크기(size)·진하기(alpha)를 줄인다. 심지(HI)도 무공 보조색을 따른다. 마기 연기는 검은색 그대로 둔다
+const elCol=(col,X)=>{const c2=X&&X.art&&X.art.c2;return c2&&!isDark(col)?mixCol(col,c2,EL_HARM.tint,1):col};
 const ELFX_SKIP={crackle:1,parts:1};   // 뇌기 잔번개(crackle)는 이미 속성 연출이다
 // 모양마다 입자가 날 자리: 기준점(o.x,o.y)의 화면 좌표에서 떨어진 ox,oy, 땅 높이 gy, 늦게 나는 시간 d
 function elEmit(o,n){const out=[],L=o.max||o.life,R=Math.random;
@@ -35,19 +38,19 @@ function elPart(k,e){const R=Math.random,a=R()*6.283,q={...e,k,r:R(),rot:R()*6.2
     case'mist':q.L=.8+R()*.4;q.vx=(R()-.5)*20;q.vy=-4;q.s=14+R()*12;break;
     case'spark':q.L=.18+R()*.18;q.s=16+R()*18;q.d+=R()*.15;break;
     case'smoke':q.L=.7+R()*.5;q.vx=(R()-.5)*24;q.vy=-(30+R()*40);q.s=6+R()*6;break}
-  return q}
+  q.s*=EL_HARM.size;return q}
 // 무공 이펙트 하나(o)에 속성 재질을 덧입힌다. X 가 없거나(경지 효과 등) 속성 표에 없으면 그냥 둔다
 function elFx(o,X,el){el=el||(X&&X.art&&typeof artEl==='function'?artEl(X.art):null);const E=EL_FX[el];if(!E||ELFX_SKIP[o.t])return;
   const t=X?X.t:0,base=(SWEEP[o.t]?EL_FX_N.sweep:EL_FX_N.burst)+EL_FX_N.tier*t,ps=[];
-  for(const[k,m,col]of E.parts){const n=Math.max(1,Math.round(base*m));for(const e of elEmit(o,n))ps.push({...elPart(k,e),col})}
-  const L=Math.max(...ps.map(q=>q.d+q.L));fx.push({t:'el',el,glow:true,dim:1,x:o.x,y:o.y,z:o.z,ps,life:L,max:L,col:'255,255,255'})}
+  for(const[k,m,c0]of E.parts){const n=Math.max(1,Math.round(base*m)),col=elCol(c0,X);for(const e of elEmit(o,n))ps.push({...elPart(k,e),col})}
+  const L=Math.max(...ps.map(q=>q.d+q.L));fx.push({t:'el',el,glow:true,dim:1,x:o.x,y:o.y,z:o.z,ps,life:L,max:L,col:'255,255,255',c2:X&&X.art&&X.art.c2})}
 hook('glFx',(o,X)=>elFx(o,X));
 // 투사체 꼬리: 날아가는 동안 조금씩 속성 입자를 흘린다
 hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key)continue;q.elT=(q.elT||0)-dt;if(q.elT>0)continue;q.elT=.06;
   const el=artEl(q.X.art),E=EL_FX[el];if(!E)continue;const ps=[];
-  for(const[k,m,col]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m));
+  for(const[k,m,c0]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m)),col=elCol(c0,q.X);
     for(let i=0;i<n;i++)ps.push({...elPart(k,{ox:(Math.random()-.5)*8,oy:-24+(Math.random()-.5)*8,gy:0,d:0}),col})}
-  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255'})}});
+  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:q.X.art.c2})}});
 
 // ---- 그리기 (r_fx.js drawGlow2 가 부른다. 더하기 합성이 기본, 돌·흙·잎·연기는 보통 합성) ----
 const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};
@@ -55,7 +58,7 @@ const SPK=[];
 // 살아 있는 재질 입자가 많을수록 하나하나를 흐리게 그린다 (겹치면 하얗게 타서 무공 모양이 묻힌다, EL_FX_N.dense)
 const ELD={t:-1,k:1};
 function elDense(){if(ELD.t===time)return ELD.k;let n=0;for(const f of fx)if(f.t==='el')n+=f.ps.length;ELD.t=time;return ELD.k=Math.min(1,Math.sqrt(EL_FX_N.dense/Math.max(1,n)))}
-function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation,ga=ctx.globalAlpha;ctx.globalAlpha=ga*elDense();ctx.lineCap='round';
+function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation,ga=ctx.globalAlpha;ctx.globalAlpha=ga*elDense()*EL_HARM.alpha;ctx.lineCap='round';
   for(const q of f.ps){const a=T-q.d;if(a<0||a>q.L)continue;const u=a/q.L,fade=u<.1?u/.1:1-u*u;
     ctx.globalCompositeOperation=EL_SOLID[q.k]?'source-over':'lighter';
     const x0=p.x+q.ox,y0=p.y+q.oy,gr=p.y+q.gy,c=q.col;
