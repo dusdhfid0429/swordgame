@@ -62,10 +62,10 @@ function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;rankRealmUp(
   if(r===5&&!hwangol('화경'))log('이미 환골탈태한 몸이라 화경에서는 상단전만 새로 열립니다.','info');
   if(r===6){const c=SC();P.life+=c.l6;if(c.l6)log(`현경: 수명 +${c.l6}년.`,'xp');banro()}
   if(r>=7)beyondGain(r);
-  if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');recalc();gangCheck()}
+  if(r>0)log(`${rk(r)}: ${fxOf(r).n}. ${fxOf(r).d}`,'xp');if(typeof bladeGain==='function')bladeGain(r);recalc();gangCheck()}
 function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r);bodySync()}
 
-// ---- 전투: 검기·검강·검사, 호신강기, 이기어검 ----
+// ---- 전투: 검기·검강·검사, 호신강기, 이기어검 (화경부터의 검환·어검술·심검·무형검은 g_blade.js, 검사의 기 실은 거기서 끝난다) ----
 hook('hit',c=>{const r=realmIdx();
   if(r>=4)c.m*=1.25;else if(r>=2)c.m*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)c.m*=1+SC().ult;
   if(sig('마공')&&P.hp<P.maxHp*.3)c.m*=1.25;
@@ -76,12 +76,12 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
   if(r>=4){fParts(null,e,RFX_COL.gang,8,80,'dot',.4);GL({t:'ring2',x:e.x,y:e.y,r:.75,col:RFX_COL.gang,w:4,life:.3})}
   else if(r===3)for(let i=0;i<2;i++)GL({t:'line',x:e.x+(Math.random()-.5)*.8,y:e.y+(Math.random()-.5)*.8,ex:e.x,ey:e.y,w:1,wavy:1,life:.22,col:RFX_COL.sa});
   else if(r===2)fParts(null,e,RFX_COL.gi,4,60,'dot',.35);
-  if(r>=3&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
+  if(r>=3&&r<5&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
     if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);for(let i=0;i<3;i++)GL({t:'line',x:P.x,y:P.y,ex:o.x+(i-1)*.15,ey:o.y,w:i===1?1.6:.8,wavy:1,life:.3,col:r>=4?RFX_COL.gang:RFX_COL.sa})}}});
 // 베기마다: 검기는 칼날 너머로 뻗는 푸른 반달, 검사는 반달 끝에서 뻗는 은빛 실 셋, 검강은 굵고 무거운 금빛 반달 두 겹
 const RFX_COL={gi:'140,205,255',sa:'215,245,255',gang:'255,212,105'};
 hook('slashFx',o=>{const r=realmIdx();if(r<2)return;const L=o.life,arc=(k)=>fx.push({...o,glow:true,el:false,max:L*(k.l||1),life:L*(k.l||1),st:null,...k});
-  if(r>=4){arc({col:RFX_COL.gang,r:o.r*1.4,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.32,w:o.w*1,spread:o.spread*1.05,dim:.95});return}
+  if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.4,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.32,w:o.w*1,spread:o.spread*1.05,dim:.95})}return}   // 심검·무형검은 강기를 드러내지 않는다 (g_blade.js)
   arc({col:RFX_COL.gi,r:o.r*1.35,w:o.w*.9,spread:o.spread*1.1,dim:.75,l:1.1});
   if(r===3){const a0=Math.atan2(P.fy,P.fx);for(const d of[-.5,0,.5]){const a=a0+d*o.spread*.6,L2=o.r*2.2;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,wavy:1,life:.28,col:RFX_COL.sa})}}});
 hook('hurt',c=>{const r=realmIdx(),src=c.src;
@@ -151,5 +151,5 @@ function realmCardExtra(){const ri=realmIdx(),s=school();
   const ladder=REALM_FX.map((_,i)=>fxOf(i)).map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${rk(i)} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
   const extra=`<p>내공 <b class="gold">${gapja(baseQi())}</b> (${baseQi()}) · ${danName()} · 심법 계열 <b class="gold">${s}</b> <small class="dim">${SCHOOL[s].d}</small></p>
     <p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>
-    <details><summary>경지의 길</summary><div class="list">${ladder}</div></details>${bodyHtml()}`;
+    ${typeof bladeHtml==='function'?bladeHtml():''}<details><summary>경지의 길</summary><div class="list">${ladder}</div></details>${bodyHtml()}`;
   return extra}
