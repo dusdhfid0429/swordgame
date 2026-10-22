@@ -124,7 +124,7 @@ async function send(){const req=$$('fxai_q').value.trim();if(busy)return;
   if(!V.last){status('먼저 왼쪽에서 고칠 이펙트나 동작을 한 번 재생해 주세요.');toast('먼저 고칠 이펙트를 재생해 고르세요');return}
   if(!sample){const t=conn==='wait'?'아직 Claude에 연결하는 중이에요. 몇 초 뒤에 다시 눌러 주세요.':'이 화면에서는 Claude에게 물을 수 없어요.';status(t);toast(t);return}
   const cur={id:++seq,target:V.last.label,targetInfo:target(),req,ops:[],on:true,kept:false,summary:'',at:Date.now(),t0:Date.now(),state:'run',phase:'',replay:{fn:V.last.fn,label:V.last.label,ctx:V.last.ctx}};
-  const ctl=new AbortController();busy=ctl;CH.push(cur);$$('fxai_q').value='';paint();$$('fxai_list').scrollTop=0;$$('fxai_go').textContent='Claude가 고치는 중… 0초';
+  const ctl=new AbortController();busy=ctl;CH.push(cur);document.body.dataset.fxai='run';if(F.narrow())F.drawer('r',false);$$('fxai_q').value='';paint();$$('fxai_list').scrollTop=0;$$('fxai_go').textContent='Claude가 고치는 중… 0초';
   phase(cur,'보냈어요. Claude가 받는 중… (처음이면 허락 창이 떠요)');
   const tick=setInterval(()=>{const s=Math.round((Date.now()-cur.t0)/1000)+'초';const e=document.querySelector(`#fxai .ch[data-id="${cur.id}"] .sec`);if(e)e.textContent=s;$$('fxai_go').textContent='Claude가 고치는 중… '+s},1000);
   let first=true;const think=setTimeout(()=>{if(first)phase(cur,'Claude가 코드를 살펴보며 생각하는 중… (보통 20초~1분)')},2500);
@@ -147,7 +147,7 @@ async function send(){const req=$$('fxai_q').value.trim();if(busy)return;
   }catch(e){const why=e.code==='cancelled'?'멈췄어요':e.code==='not_granted'||e.code==='sampling_disabled'?'Claude 사용이 허락되지 않았어요':e.code==='rate_limited'?'요청이 많아요. 잠시 뒤에 다시 보내 주세요':'Claude가 답하지 못했어요 ('+(e.code||e.message)+')';
     cur.state=cur.ops.length?'done':'fail';if(!cur.ops.length)cur.on=false;cur.err=why+(cur.ops.length?'. 그때까지 바뀐 것은 남아 있어요':'');end(cur,cur.err+'.')}
   finally{clearInterval(tick);clearTimeout(think);busy=null;paint()}}
-function end(c,t){c.sec=Math.round((Date.now()-c.t0)/1000);c.phase='';status(t,false);toast(t,false,c.state==='done'?'ok':c.state==='fail'?'bad':'')}
+function end(c,t){document.body.dataset.fxai=c.state==='done'?'done':c.state==='fail'?'fail':'';c.sec=Math.round((Date.now()-c.t0)/1000);c.phase='';status(t,false);toast(t,false,c.state==='done'?'ok':c.state==='fail'?'bad':'')}
 
 // ---- 되돌리기·다시 적용·채택 ----
 function revert(c){for(const op of[...c.ops].reverse())try{opRevert(op)}catch(e){console.error(e)}c.on=false;replayOf(c)}
@@ -172,27 +172,27 @@ async function restore(){if(!db)return;let snap;try{snap=await db.collection('fx
 
 // ---- 화면 ----
 const css=document.createElement('style');css.textContent=`
-#fxai{flex:none;border-top:1px solid #4a3e31;background:#191510;padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px;max-height:52%;min-height:0}
+#fxai{width:320px;border-left:1px solid #3a3128;background:#191510;color:#e9dfc8;font-size:13px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;box-sizing:border-box}
+#fxai button,#fxai select{font:inherit;color:#e9dfc8;background:#231d17;border:1px solid #4a3e31;border-radius:6px;padding:5px 8px;cursor:pointer;min-height:32px}
 #fxai .hd{display:flex;align-items:center;gap:6px}#fxai .hd b{color:#f3dfa8;font-size:13.5px;flex:1}
 #fxai .tg{font-size:12px;color:#c9a96a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#fxai .tg.none{color:#8d806b}
 #fxai textarea{font:inherit;color:#f1e8d4;background:#0f0d0a;border:1px solid #4a3e31;border-radius:6px;padding:6px 8px;resize:vertical;min-height:52px;width:100%;box-sizing:border-box}
 #fxai textarea:focus{outline:none;border-color:#d8a85a}
 #fxai .row{display:flex;gap:5px;align-items:center}#fxai .row select{width:auto;flex:none}#fxai .go{flex:1;background:#6b4b22;border-color:#d8a85a;color:#fff3d6;font-weight:600}
 #fxai .st{font-size:12px;color:#d9ccb1;white-space:pre-wrap;max-height:84px;overflow:auto;line-height:1.45}#fxai .st.run{color:#9fc6e8}
-#fxai .list{overflow:auto;min-height:0;display:flex;flex-direction:column;gap:5px}
+#fxai .list{flex:1;overflow-y:auto;min-height:60px;display:flex;flex-direction:column;gap:5px;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:8px}
 #fxai .ch{border:1px solid #3a3128;border-radius:6px;padding:6px 8px;background:#211b15}#fxai .ch.off{opacity:.55}#fxai .ch.kept{border-color:#7d9a4f}
 #fxai .ch p{margin:0 0 3px;font-size:12px}#fxai .ch .q{color:#f3dfa8}#fxai .ch .s{color:#b8ab92}#fxai .ch .w{color:#8d806b;font-size:11px}
-#fxai .ch .bt{display:flex;gap:4px;flex-wrap:wrap}#fxai .ch button{min-height:26px;padding:3px 8px;font-size:12px}
+#fxai .ch{flex:none}#fxai .ch .bt{display:flex;gap:5px;flex-wrap:wrap}#fxai .ch button{min-height:34px;padding:4px 10px;font-size:12.5px}#fxai .ch button[data-x^="keep"]{border-color:#7d9a4f;color:#d5ecb0}
 #fxai .ch.run{border-color:#d8a85a;box-shadow:0 0 0 1px #d8a85a55;animation:fxaiP 1.4s ease-in-out infinite}@keyframes fxaiP{50%{box-shadow:0 0 0 3px #d8a85a33}}
 #fxai .ch.fail{border-color:#a5523f}#fxai .ch .stt{font-size:11.5px;margin:0 0 3px;font-weight:600}#fxai .stt.run{color:#9fc6e8}#fxai .stt.done{color:#a9c27a}#fxai .stt.fail{color:#e48a72}#fxai .stt.none{color:#b8ab92}
 #fxai_toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-8px);max-width:min(560px,calc(100vw - 32px));z-index:60;background:#211b15ee;color:#f3dfa8;border:1px solid #d8a85a;border-radius:18px;padding:7px 14px;font-size:13px;box-shadow:0 4px 18px #0008;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #fxai_toast.on{opacity:1;transform:translate(-50%,0)}#fxai_toast.ok{border-color:#7d9a4f;color:#d5ecb0}#fxai_toast.bad{border-color:#a5523f;color:#f3c0b0}
-#fxai .bd{display:flex;flex-direction:column;gap:6px;min-height:0}#fxai.shut .bd{display:none}#fxai.shut{padding-bottom:8px}
-@media (max-width:760px){#fxai{max-height:60%}#fxai textarea{min-height:40px}}`;
+#fxai .bd{flex:1;display:flex;flex-direction:column;gap:6px;min-height:0}#fxai .st{flex:none}`;
 document.head.appendChild(css);
-const el=document.createElement('div');el.id='fxai';F.box.appendChild(el);
-const narrow=innerWidth<760;if(narrow)el.classList.add('shut');   // 휴대폰은 접어 두고 시작 (이펙트 단추 자리를 남긴다)
-el.innerHTML=`<div class="hd"><b>✦ Claude에게 고쳐 달라기</b><button type="button" id="fxai_undo" title="가장 최근 수정 되돌리기">되돌리기</button><button type="button" id="fxai_fold" aria-label="접기·펴기">${narrow?'펴기':'접기'}</button></div>
+// 오른쪽 칸 (좁은 화면에선 오른쪽 서랍, 아래 막대의 「✦ 수정」으로 연다)
+const el=document.createElement('div');el.id='fxai';$$('app').insertBefore(el,F.bar);
+el.innerHTML=`<div class="hd"><b>✦ Claude에게 고쳐 달라기</b><button type="button" id="fxai_undo" title="가장 최근 수정 되돌리기">되돌리기</button><button type="button" class="x" id="fxai_fold" aria-label="닫기">✕</button></div>
   <div class="bd">
   <div class="tg" id="fxai_tg"></div>
   <textarea id="fxai_q" rows="2" placeholder="예: 이 검기 반달을 더 크고 날카롭게, 끝에 불꽃이 튀게"></textarea>
@@ -215,12 +215,12 @@ function stt(c){if(!c.state)return'';const s=c.state==='run'?Math.round((Date.no
   return `<p class="stt ${c.state}">${c.state==='run'?'⏳ 보냄 · <span class="ph">'+esc(c.phase||'')+'</span> · <span class="sec">'+s+'초</span>':c.state==='done'?'✓ 적용됨 · '+s+'초':c.state==='fail'?'✗ 실패':'— 바뀐 것 없음'}</p>`}
 el.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;
   if(b.id==='fxai_go')return send();if(b.id==='fxai_stop'){busy&&busy.abort();return}if(b.id==='fxai_undo')return undoLast();
-  if(b.id==='fxai_fold'){el.classList.toggle('shut');b.textContent=el.classList.contains('shut')?'펴기':'접기';return}
+  if(b.id==='fxai_fold'){F.drawer('r',false);return}
   const[k,id]=(b.dataset.x||'').split(':'),c=CH.find(x=>x.id===+id);if(!c)return;
   if(k==='off'){revert(c);paint()}else if(k==='on'){reapply(c);paint()}else if(k==='see')replayOf(c);else if(k==='keep')keep(c);else if(k==='again'){$$('fxai_q').value=c.req;$$('fxai_q').focus()}else if(k==='unkeep')unkeep(c)});
 $$('fxai_q').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send()}});
 // 재생할 때마다 대상 줄을 고친다
-F.box.addEventListener('click',()=>setTimeout(paint,0));
+document.addEventListener('click',()=>setTimeout(paint,0));
 paint();status('왼쪽에서 이펙트나 동작을 재생해 고른 뒤, 바꾸고 싶은 점을 적어 보내세요. 바뀐 모습이 곧바로 재생돼요.');
 
 // ---- 능력 연결: sample(Claude에게 묻기), db(채택한 수정 남기기) ----

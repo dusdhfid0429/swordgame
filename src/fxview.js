@@ -41,7 +41,7 @@ update=dt=>{const cal=G.cal,age=P&&P.age;upd0(dt*V.speed);G.cal=cal;if(P)P.age=a
   if(P&&!P.leap&&Math.hypot(P.x-HOME.x,P.y-HOME.y)>4)place()};
 function play(fn,label,ctx){V.last={fn,label,ctx};clearTimeout(V.timer);try{fn()}catch(e){console.error(e);note('오류: '+e.message)}
   note(label);if(V.loop)V.timer=setTimeout(()=>{if(V.last&&V.last.fn===fn)play(fn,label,ctx)},2600/V.speed)}
-function note(t){const el=$('fxvnow');if(el)el.textContent=t}
+function note(t){const el=$('fxvnow');if(el)el.textContent='▶ '+t}
 
 // ---- 확대: 게임의 resize 뒤에 배율을 곱한다 ----
 const rs0=resize;resize=()=>{rs0();const r=C.getBoundingClientRect();S*=V.zoom;W=r.width/S;H=r.height/S};addEventListener('resize',()=>resize());
@@ -129,8 +129,17 @@ function colors(){const o=[['검기','140,205,255'],['검강','255,212,105']];fo
 
 // ---- 화면 ----
 const css=document.createElement('style');css.textContent=`
-body.fxv #app{flex-direction:row}body.fxv .panel,body.fxv #mini,body.fxv .zone,body.fxv #qtrack,body.fxv #chan,body.fxv [id^=t_],body.fxv #tui,body.fxv #tquick,body.fxv #tslots,body.fxv #joy,body.fxv .tjoy{display:none!important}
-#fxv{width:340px;flex:none;display:flex;flex-direction:column;background:#15120f;border-left:1px solid #3a3128;color:#e9dfc8;font-size:13px;min-height:0}
+body.fxv #app{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"l s r" "b b b"}
+body.fxv #stage{grid-area:s;min-width:0;min-height:0}#fxv{grid-area:l}#fxai{grid-area:r}#fxvbar{grid-area:b}body.fxv .panel,body.fxv #mini,body.fxv .zone,body.fxv #qtrack,body.fxv #chan,body.fxv [id^=t_],body.fxv #tui,body.fxv #tquick,body.fxv #tslots,body.fxv #joy,body.fxv .tjoy{display:none!important}
+#fxv{width:320px;display:flex;flex-direction:column;background:#15120f;border-right:1px solid #3a3128;color:#e9dfc8;font-size:13px;min-height:0}
+#fxv .x,#fxai .x{display:none}
+/* 아래 재생 막대 (영상 플레이어처럼): 지금 재생 중인 이름 + 조작 단추. 왼쪽 끝 '이펙트', 오른쪽 끝 'Claude 수정'이 양쪽 칸을 연다 */
+#fxvbar{display:flex;flex-direction:column;background:#120f0c;border-top:1px solid #3a3128;color:#e9dfc8;font-size:13px;padding:4px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+#fxvbar .now{color:#f3dfa8;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 4px 4px;min-height:16px}
+#fxvbar .rw{display:flex;align-items:center;gap:6px;min-width:0}#fxvbar .mid{flex:1;display:flex;align-items:center;gap:5px;overflow-x:auto;touch-action:pan-x;scrollbar-width:none;min-width:0}#fxvbar .mid::-webkit-scrollbar{display:none}
+#fxvbar button,#fxvbar select{font:inherit;color:#e9dfc8;background:#231d17;border:1px solid #4a3e31;border-radius:8px;padding:6px 10px;cursor:pointer;min-height:38px;flex:none;white-space:nowrap}
+#fxvbar button[aria-pressed=true]{background:#5b4326;border-color:#d8a85a;color:#fff3d6}#fxvbar .play{background:#6b4b22;border-color:#d8a85a;color:#fff3d6;font-weight:600;min-width:64px}
+#fxvbar .side{font-weight:600}#fxvbar label{display:flex;align-items:center;gap:3px;color:#9d907a;font-size:12px;flex:none}
 #fxv header{padding:10px 12px 6px;border-bottom:1px solid #2c251e}#fxv h1{font-size:17px;margin:0 0 2px;font-family:var(--display,serif);color:#f3dfa8}#fxv header p{margin:0;color:#9d907a;font-size:12px}
 #fxv .ctl{display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px;border-bottom:1px solid #2c251e;align-items:center}
 #fxv .tabs{display:flex;gap:2px;padding:6px 8px 0;flex-wrap:wrap}#fxv .tabs button{flex:1 1 auto}
@@ -142,12 +151,22 @@ body.fxv #app{flex-direction:row}body.fxv .panel,body.fxv #mini,body.fxv .zone,b
 #fxv h3{font-size:12px;color:#c9a96a;margin:12px 0 5px;font-weight:600}#fxv .dim{color:#8d806b;font-size:11.5px;margin:4px 0}
 #fxv .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 #fxvmain{flex:1;display:flex;flex-direction:column;min-height:0}
-#fxvnow{padding:6px 12px;border-top:1px solid #2c251e;color:#f3dfa8;min-height:18px;font-size:12.5px}
+
 #fxv .form b{display:block}#fxv .form small{color:#9d907a}
-@media (max-width:760px){body.fxv #app{flex-direction:column}#fxv{width:auto;height:46%;border-left:0;border-top:1px solid #3a3128}#fxv header p{display:none}}`;
+/* 좁은 화면(휴대폰·작은 창): 양쪽 칸은 서랍. 막대의 단추로 하나씩 열고, 열린 칸은 화면 높이 안에서 스크롤된다 */
+@media (max-width:999px){#fxv,#fxai{position:fixed;top:0;bottom:var(--barh,92px);width:min(86vw,340px);z-index:40;transition:transform .22s;box-shadow:0 0 24px #000c}
+  #fxv{left:0;transform:translateX(-105%)}#fxai{right:0;transform:translateX(105%)}body.fxv.dl #fxv,body.fxv.dr #fxai{transform:none}
+  #fxv .x,#fxai .x{display:inline-block}#fxv header p{display:none}}
+@media (min-width:1000px){body.fxv:not(.dl) #fxv,body.fxv:not(.dr) #fxai{display:none}}
+body[data-fxai=run] #fxvbar_r::after{content:' ⏳'}body[data-fxai=done] #fxvbar_r::after{content:' ✓';color:#a9c27a}body[data-fxai=fail] #fxvbar_r::after{content:' ✗';color:#e48a72}`;
 document.head.appendChild(css);document.body.classList.add('fxv');
 const box=document.createElement('div');box.id='fxv';$('app').appendChild(box);
-const main=document.createElement('div');main.id='fxvmain';box.appendChild(main);   // render()는 이 칸만 다시 그린다 (아래 실시간 수정 칸은 그대로 둔다)
+const main=document.createElement('div');main.id='fxvmain';box.appendChild(main);
+const bar=document.createElement('div');bar.id='fxvbar';$('app').appendChild(bar);
+const narrow=()=>innerWidth<1000;
+// 서랍: 'l' 이펙트 고르기, 'r' Claude 수정. 좁은 화면에선 한 번에 하나만 연다
+function drawer(k,on){const c=k==='l'?'dl':'dr';on=on==null?!document.body.classList.contains(c):on;document.body.classList.toggle(c,on);if(on&&narrow())document.body.classList.remove(k==='l'?'dr':'dl');paintBar();if(!narrow())setTimeout(resize,0)}
+const barH=()=>document.documentElement.style.setProperty('--barh',bar.offsetHeight+'px');addEventListener('resize',barH);   // render()는 이 칸만 다시 그린다 (아래 실시간 수정 칸은 그대로 둔다)
 let TAB='art';
 function btn(label,act,pressed,extra=''){return `<button type="button" data-a="${esc(act)}"${pressed!=null?` aria-pressed="${!!pressed}"`:''} ${extra}>${label}</button>`}
 function render(){if(!P)return;
@@ -178,15 +197,28 @@ function render(){if(!P)return;
   }else{
     h+=`<h3>이동·특수</h3><div class="grid">${MOVE.map(([n],i)=>btn(n,'move:'+i)).join('')}</div>`;
   }
-  main.innerHTML=`<header><h1>이펙트 뷰어</h1><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
-    <div class="ctl">속도 ${[.25,.5,1].map(s=>btn(s+'×','spd:'+s,V.speed===s)).join('')} ${btn('반복','loop',V.loop)} 확대 ${[1,1.5,2].map(z=>btn(z+'×','zoom:'+z,V.zoom===z)).join('')} ${btn('밤','night',V.night)} ${btn('흔들림','shake',V.shake)}
-      <select data-a="tier" style="width:auto">${TIERN.map((n,i)=>`<option value="${i}"${i===V.tier?' selected':''}>숙련 ${n}</option>`).join('')}</select> ${btn('다시','again')}</div>
+  main.innerHTML=`<header><div style="display:flex;align-items:center;gap:6px"><h1 style="flex:1">이펙트 고르기</h1><button type="button" class="x" data-a="drawer:l:0" aria-label="닫기">✕</button></div><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
     <div class="tabs">${[['art','무공 초식'],['realm','경지·몸'],['qi','운기·수련'],['prim','기본 이펙트'],['move','이동·특수']].map(([k,n])=>btn(n,'tab:'+k,TAB===k)).join('')}</div>
-    <div class="body">${h}</div><div id="fxvnow">${esc(V.last?V.last.label:'')}</div>`;
+    <div class="body">${h}</div>`;
+  paintBar();
 }
-box.addEventListener('change',ev=>{const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
-  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()});
-box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if(!b||!P)return;const[k,v,w]=b.dataset.a.split(':');
+function paintBar(){const B=document.body.classList,sel=(a,o,cur)=>`<select data-a="${a}" aria-label="${a}">${o.map(([v,n])=>`<option value="${v}"${v==cur?' selected':''}>${n}</option>`).join('')}</select>`;
+  bar.innerHTML=`<div class="now" id="fxvnow">${esc(V.last?'▶ '+V.last.label:'왼쪽 「이펙트」에서 재생할 것을 고르세요')}</div>
+    <div class="rw">${btn('☰ 이펙트','drawer:l',B.contains('dl'),'class="side"')}
+      <div class="mid">${btn('▶ 다시','again',null,'class="play"')}${btn('반복','loop',V.loop)}
+        <label>속도${sel('spd',[[.25,'0.25×'],[.5,'0.5×'],[1,'1×']],V.speed)}</label>${sel('tier',TIERN.map((n,i)=>[i,'숙련 '+n]),V.tier)}
+        <label>확대${sel('zoom',[[1,'1×'],[1.5,'1.5×'],[2,'2×']],V.zoom)}</label>${btn('밤','night',V.night)}${btn('흔들림','shake',V.shake)}</div>
+      ${btn('✦ 수정','drawer:r',B.contains('dr'),'class="side" id="fxvbar_r"')}</div>`;
+  barH()}
+function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
+  if(k==='spd'){V.speed=+v;render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
+  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
+box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
+// 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
+const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move']);
+function onClick(ev){const b=ev.target.closest('button[data-a]');if(!b||!P)return;const[k,v,w]=b.dataset.a.split(':');
+  if(k==='drawer'){drawer(v,w==null?null:w==='1');return}
+  if(PLAYK.has(k)&&narrow())drawer('l',false);
   if(k==='tab'){TAB=v;render();return}
   if(k==='spd'){V.speed=+v;render();return}
   if(k==='zoom'){V.zoom=+v;resize();render();return}
@@ -204,8 +236,10 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='prim'){const[n,f]=PRIM[+v];play(()=>{place();f()},n);return}
   if(k==='proj'){play(()=>shoot(v,w),PROJN[v]+(w?' · 번개':''));return}
   if(k==='basic'){const[n,f]=BASIC[+v];play(()=>{place();f()},n);return}
-  if(k==='move'){const[n,f]=MOVE[+v];play(f,n);return}});
+  if(k==='move'){const[n,f]=MOVE[+v];play(f,n);return}}
+box.addEventListener('click',onClick);bar.addEventListener('click',onClick);
 addEventListener('keydown',e=>{if(e.key===' '&&V.last&&!/^(TEXTAREA|INPUT|SELECT)$/.test((e.target||{}).tagName)){e.preventDefault();e.stopPropagation();play(V.last.fn,V.last.label,V.last.ctx)}},true);
-window.FXV={V,play,useArtFx,render,boot,again:()=>{if(V.last)play(V.last.fn,V.last.label,V.last.ctx)},box};
+window.FXV={V,play,useArtFx,render,boot,again:()=>{if(V.last)play(V.last.fn,V.last.label,V.last.ctx)},box,bar,drawer,narrow};
+if(!narrow())document.body.classList.add('dl','dr');
 setTimeout(boot,50);
 })();

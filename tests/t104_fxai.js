@@ -56,13 +56,22 @@ const MOCK=()=>{
   ok('채택: db 에 파일 이름과 함께 남음',kept);
   await p.screenshot({path:__dirname+'/shots/fxai_pc.png'});
   await p.reload();await p.waitForFunction(()=>window.FXAI&&FXAI.CH.length>0,null,{timeout:20000}).catch(async e=>console.log('복원 안 됨',await p.evaluate(()=>JSON.stringify({ss:Object.keys(JSON.parse(localStorage.getItem('mockdb')||'{}')),fx:!!window.FXAI,st:document.getElementById('fxai_st').textContent,go:document.getElementById('fxai_go').textContent}))));await p.waitForTimeout(200);
+  ok('다시 열면 채택한 수정이 다시 끼워짐',await p.evaluate(()=>GL.toString().includes('o.fxai')&&EL_FX.화.n==='불꽃!'&&FXAI.CH.length===1&&FXAI.CH[0].kept&&FXAI.CH[0].on));
   await p.click('#fxai button[data-x^="off:"]');await p.waitForTimeout(100);
   ok('복원한 수정도 되돌리기 됨',await p.evaluate(()=>!GL.toString().includes('o.fxai')&&EL_FX.화.n!=='불꽃!'));
   // 5) 휴대폰 화면
   const m=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await m.addInitScript(MOCK);const q=await m.newPage();
   q.on('pageerror',e=>errs.push('PE '+e.message));await q.goto(url);await q.waitForTimeout(1800);
-  ok('휴대폰: 처음엔 접혀 있음',await q.evaluate(()=>document.getElementById('fxai').classList.contains('shut')));await q.click('#fxai_fold');
+  const off=await q.evaluate(()=>{const a=document.getElementById('fxv').getBoundingClientRect(),b=document.getElementById('fxai').getBoundingClientRect();return a.right<=0&&b.left>=innerWidth});
+  ok('휴대폰: 양쪽 칸은 처음엔 닫힌 서랍',off);await q.click('#fxvbar_r');await q.waitForTimeout(350);
   const box=await q.evaluate(()=>{const r=document.getElementById('fxai').getBoundingClientRect(),g=document.getElementById('fxai_go').getBoundingClientRect();return{w:document.documentElement.scrollWidth,go:g.bottom<=innerHeight&&g.height>20}});
   ok('휴대폰: 가로로 넘치지 않고 보내기 단추가 보임',box.w<=390&&box.go);await q.screenshot({path:__dirname+'/shots/fxai_mobile.png'});
+  await q.evaluate(()=>{for(let i=0;i<8;i++)FXAI.CH.push({id:900+i,target:'충격파 고리',req:'요청 '+i,ops:[{k:'set',path:'GD.EL_FX.화.n'}],on:true,state:'done',sec:3,t0:0,summary:'요약 '+i});document.body.click()});await q.waitForTimeout(100);
+  const sc=await q.evaluate(()=>{const l=document.getElementById('fxai_list');l.scrollTop=1e5;const ks=[...l.querySelectorAll('button[data-x^="keep:"]')],k=ks[ks.length-1].getBoundingClientRect(),bar=document.getElementById('fxvbar').getBoundingClientRect();
+    return{can:l.scrollHeight>l.clientHeight,top:l.scrollTop,vis:k.top>=0&&k.bottom<=bar.top,n:ks.length}});
+  ok('휴대폰: 수정 목록이 스크롤되고 맨 아래 「게임에 넣기」까지 보임 '+JSON.stringify(sc),sc.can&&sc.top>0&&sc.vis&&sc.n===8);
+  await q.screenshot({path:__dirname+'/shots/fxai_mobile_list.png'});
+  await q.click('#fxvbar button[data-a="drawer:l"]');await q.waitForTimeout(350);await q.screenshot({path:__dirname+'/shots/fxv_mobile_left.png'});
+  ok('휴대폰: 이펙트 서랍을 열면 수정 서랍은 닫힘',await q.evaluate(()=>document.body.classList.contains('dl')&&!document.body.classList.contains('dr')));
   ok(`오류 없음 ${errs.slice(0,5).join(' | ')}`,errs.length===0);
   await b.close()})();
