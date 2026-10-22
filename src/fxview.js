@@ -39,8 +39,8 @@ const upd0=update;
 // 카메라는 연무장 한가운데에 고정한다 (사용자 2026-10-21: 재생마다 카메라가 따라가 눈이 아프다). 흔들림도 끌 수 있다
 update=dt=>{const cal=G.cal,age=P&&P.age;upd0(dt*V.speed);G.cal=cal;if(P)P.age=age;tod=V.night?.92:.42;const ct=iso(HOME.x,HOME.y-1.2);cam.x=ct.x;cam.y=ct.y;if(!V.shake)shake=0;
   if(P&&!P.leap&&Math.hypot(P.x-HOME.x,P.y-HOME.y)>4)place()};
-function play(fn,label){V.last={fn,label};clearTimeout(V.timer);try{fn()}catch(e){console.error(e);note('오류: '+e.message)}
-  note(label);if(V.loop)V.timer=setTimeout(()=>{if(V.last&&V.last.fn===fn)play(fn,label)},2600/V.speed)}
+function play(fn,label,ctx){V.last={fn,label,ctx};clearTimeout(V.timer);try{fn()}catch(e){console.error(e);note('오류: '+e.message)}
+  note(label);if(V.loop)V.timer=setTimeout(()=>{if(V.last&&V.last.fn===fn)play(fn,label,ctx)},2600/V.speed)}
 function note(t){const el=$('fxvnow');if(el)el.textContent=t}
 
 // ---- 확대: 게임의 resize 뒤에 배율을 곱한다 ----
@@ -141,11 +141,13 @@ body.fxv #app{flex-direction:row}body.fxv .panel,body.fxv #mini,body.fxv .zone,b
 #fxv .grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}#fxv .grid button{text-align:left}
 #fxv h3{font-size:12px;color:#c9a96a;margin:12px 0 5px;font-weight:600}#fxv .dim{color:#8d806b;font-size:11.5px;margin:4px 0}
 #fxv .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#fxvmain{flex:1;display:flex;flex-direction:column;min-height:0}
 #fxvnow{padding:6px 12px;border-top:1px solid #2c251e;color:#f3dfa8;min-height:18px;font-size:12.5px}
 #fxv .form b{display:block}#fxv .form small{color:#9d907a}
 @media (max-width:760px){body.fxv #app{flex-direction:column}#fxv{width:auto;height:46%;border-left:0;border-top:1px solid #3a3128}#fxv header p{display:none}}`;
 document.head.appendChild(css);document.body.classList.add('fxv');
 const box=document.createElement('div');box.id='fxv';$('app').appendChild(box);
+const main=document.createElement('div');main.id='fxvmain';box.appendChild(main);   // render()는 이 칸만 다시 그린다 (아래 실시간 수정 칸은 그대로 둔다)
 let TAB='art';
 function btn(label,act,pressed,extra=''){return `<button type="button" data-a="${esc(act)}"${pressed!=null?` aria-pressed="${!!pressed}"`:''} ${extra}>${label}</button>`}
 function render(){if(!P)return;
@@ -176,7 +178,7 @@ function render(){if(!P)return;
   }else{
     h+=`<h3>이동·특수</h3><div class="grid">${MOVE.map(([n],i)=>btn(n,'move:'+i)).join('')}</div>`;
   }
-  box.innerHTML=`<header><h1>이펙트 뷰어</h1><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
+  main.innerHTML=`<header><h1>이펙트 뷰어</h1><p>강호윤회록의 연출을 게임 코드 그대로 재생한다. 단추를 누르면 재생.</p></header>
     <div class="ctl">속도 ${[.25,.5,1].map(s=>btn(s+'×','spd:'+s,V.speed===s)).join('')} ${btn('반복','loop',V.loop)} 확대 ${[1,1.5,2].map(z=>btn(z+'×','zoom:'+z,V.zoom===z)).join('')} ${btn('밤','night',V.night)} ${btn('흔들림','shake',V.shake)}
       <select data-a="tier" style="width:auto">${TIERN.map((n,i)=>`<option value="${i}"${i===V.tier?' selected':''}>숙련 ${n}</option>`).join('')}</select> ${btn('다시','again')}</div>
     <div class="tabs">${[['art','무공 초식'],['realm','경지·몸'],['qi','운기·수련'],['prim','기본 이펙트'],['move','이동·특수']].map(([k,n])=>btn(n,'tab:'+k,TAB===k)).join('')}</div>
@@ -192,9 +194,9 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='shake'){V.shake=!V.shake;render();return}
   if(k==='night'){V.night=!V.night;render();return}
   if(k==='cls'){V.cls=v;V.art=null;setWeapon(v);render();return}
-  if(k==='again'){if(V.last)play(V.last.fn,V.last.label);return}
+  if(k==='again'){if(V.last)play(V.last.fn,V.last.label,V.last.ctx);return}
   if(k==='all'){V.last=null;playAll(V.art);return}
-  if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;play(()=>useArtFx(V.art,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`);return}
+  if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;const id=V.art;play(()=>useArtFx(id,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`,{art:id,form:i,tier:V.tier,el:V.el});return}
   if(k==='brk'){const d=BRK_FX[+v];play(()=>brk(+v),`경지 돌파 · ${RANKS[+v]||''} ${d.n}`);return}
   if(k==='flow'){const[n,f]=FLOW()[+v];play(f,n);return}
   if(k==='med'){medit(v!=='0',v);note(v==='0'?'운기 멈춤':v==='qi'?'내공 수련 중':'운기조식 중');render();return}
@@ -203,7 +205,7 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='proj'){play(()=>shoot(v,w),PROJN[v]+(w?' · 번개':''));return}
   if(k==='basic'){const[n,f]=BASIC[+v];play(()=>{place();f()},n);return}
   if(k==='move'){const[n,f]=MOVE[+v];play(f,n);return}});
-addEventListener('keydown',e=>{if(e.key===' '&&V.last){e.preventDefault();e.stopPropagation();play(V.last.fn,V.last.label)}},true);
-window.FXV={V,play,useArtFx,render,boot};
+addEventListener('keydown',e=>{if(e.key===' '&&V.last&&!/^(TEXTAREA|INPUT|SELECT)$/.test((e.target||{}).tagName)){e.preventDefault();e.stopPropagation();play(V.last.fn,V.last.label,V.last.ctx)}},true);
+window.FXV={V,play,useArtFx,render,boot,again:()=>{if(V.last)play(V.last.fn,V.last.label,V.last.ctx)},box};
 setTimeout(boot,50);
 })();

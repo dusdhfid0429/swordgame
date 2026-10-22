@@ -65,7 +65,17 @@ ACAD = 'const ACAD_OFF=/[?&#]noacad/.test(location.href);'
 assert html.count(ACAD) == 1, 'g_academy.js 의 ACAD_OFF 줄이 바뀌었습니다 (fxview 빌드)'
 tail = '\n</script>\n</body></html>\n'
 assert html.endswith(tail)
-fv = html.replace(ACAD, 'const ACAD_OFF=true;').replace('<title>', '<title>이펙트 뷰어 · ', 1)
-fv = fv[:-len(tail)] + '\n' + rd('fxview.js') + tail
+# 실시간 수정 (2026-10-22): 뷰어 안에서 Claude가 게임 함수를 바꿔 끼울 수 있게, 맨 앞 칸의 const 함수만 var 로 연다 (줄 수·동작은 그대로)
+import re
+fv_js = re.sub(r'^const ([A-Za-z_$][\w$]*)=(?=\(|async\b|function\b|[A-Za-z_$][\w$]*=>)', r'var \1=', js, flags=re.M)
+assert html.count(js) == 1
+fv = html.replace(js, fv_js).replace(ACAD, 'const ACAD_OFF=true;').replace('<title>', '<title>이펙트 뷰어 · ', 1)
+# 조각 파일마다 시작 줄 (스크립트 본문 기준, 맨 앞 빈 줄 다음이 1줄)과 데이터 표 → 파일 이름. Claude가 고친 곳을 저장소 파일로 되짚는다
+starts, ln = [], 2
+for p_ in PARTS:
+    starts.append([p_, ln]); ln += rd(p_).count('\n') + 1
+dfiles = {k: f for f in sorted(os.listdir(DATA)) if f.endswith('.json') and f != 'meta.json' for k in json.load(open(os.path.join(DATA, f), encoding='utf8'))}
+fv = (fv[:-len(tail)] + '\nconst FXV_FILES=' + json.dumps(starts) + ',FXV_DATA=' + json.dumps(dfiles, ensure_ascii=False) + ';\n'
+      + rd('fxview.js') + '\n' + rd('fxview_ai.js') + tail)
 open(os.path.join(ROOT, 'dist', 'fxview.html'), 'w', encoding='utf8').write(fv)
 print('dist/gangho.html', len(html), 'chars ·', len(gd) - 1, 'data tables, data rev', gd['_meta']['rev'], '· sheets', ', '.join(f'{k} {len(v["frames"])}장' for k, v in sheets.items()))
