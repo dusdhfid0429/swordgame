@@ -123,6 +123,7 @@ function drawGlow2(f){
   else if(f.t==='zap'){const b=toScreen(f.ex,f.ey),bs=flick(f,()=>boltPts(p.x,p.y-28,b.x,b.y-28,Math.hypot(b.x-p.x,b.y-p.y)*.25,.25,0,[]));
     strokeBolts(bs,f.col,k,.8);glowDot(b.x,b.y-28,30,f.col,k)}
   else if(f.t==='brk')drawBrk(f);
+  else if(f.t==='bt')drawBT(f);   // 화경 이후 병기 기운 (g_blade.js)
   else if(f.t==='el')drawEl(f);   // 속성 재질 (r_elfx.js)
   else drawGlow(f);
   ctx.globalAlpha=1;

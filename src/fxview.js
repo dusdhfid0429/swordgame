@@ -94,13 +94,17 @@ const BASIC=[
 ];
 
 // ---- 경지·몸·운기·수련·이동 ----
-const RFX=['','','검기 (푸른 반달)','검사 (은빛 실)','검강 (금빛 두 겹)'];
+const RFX=['','','검기 (푸른 반달)','검사 (은빛 실)','검강 (금빛 두 겹)','검환 (강기 구슬)','어검술 (나는 기검)','심검 (그 자리 베기)','무형검 (하늘의 기검)'];
 function strike(){place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;basicStrike(e)}
+// 화경 이후 병기 기운 (g_blade.js): 경지를 맞추고 한 번 베고, 확률을 기다리지 않고 바로 발동시킨다
+const bladeNameFor=r=>(BLADE.names[V.cls]||BLADE.names['검'])[r-2];
+const BLADES=()=>typeof BLADE==='undefined'?[]:[[5,()=>bladeOrb],[6,()=>bladeFly],[7,()=>bladeMind],[8,()=>bladeRain]];
+function bladeShow(r,f){place();const e=tgt();P.realm=r;P.bcd=0;P.gcd=0;P.bpT=P.mhT=time;basicStrike(e);f()(e)}
 // 경지 돌파 연출 (r_fx.js brkFx, data/brkfx.json): 이 빌드에 있을 때만
 const BRK=()=>typeof brkFx==='function'&&typeof BRK_FX!=='undefined'?BRK_FX.map((d,i)=>d&&[i,d]).filter(Boolean):[];
 function brk(i){place();P.realm=i;const d=brkFx(i);if(d&&d.n)showBanner(d.n,RANKS[i]||'')}
 const FLOW=()=>[
-  ['기본 공격 (경지에 따라 검기·검사·검강)',strike],
+  ['기본 공격 (고른 경지의 병기 기운)',strike],
   ['경지 상승 (기본 금빛 고리)',()=>{place();fx.push({t:'lvl',x:P.x,y:P.y,z:0,life:2});shake=.25}],
   ['호신강기 막기',()=>{place();GL({t:'ring2',x:P.x,y:P.y,r:.7,col:'255,224,140',w:3,life:.25});addText(P.x,P.y-.6,'호신강기','#ffe7a0')}],
   ['환골탈태',()=>{place();bodyFx('255,236,190',1);showBanner('환골탈태','뼈와 살이 새로 태어났다')}],
@@ -159,9 +163,10 @@ function render(){if(!P)return;
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
   }else if(TAB==='realm'){
-    h+=`<h3>경지</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${RFX[Math.min(i,4)]?' · '+RFX[Math.min(i,4)]:''}</option>`).join('')}</select>
-      <p class="dim">기본 공격은 경지에 따라 이류 검기, 일류 검사, 절정부터 검강이 덧붙는다.</p>
+    h+=`<h3>경지</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${RFX[i]?' · '+RFX[i]:''}</option>`).join('')}</select>
+      <p class="dim">기본 공격은 경지에 따라 일류 검기, 절정 검사, 초절정 검강, 화경 검환, 현경 어검술, 생사경 심검, 자연경 무형검이 덧붙는다. 이름은 병기마다 다르다(도강·창환·격공권 …).</p>
       <div class="grid">${FLOW().map(([n],i)=>btn(n,'flow:'+i)).join('')}</div>
+      ${BLADES().length?`<h3>화경 이후 병기 기운 (발동)</h3><div class="grid">${BLADES().map(([r])=>btn(`<span class="form"><b>${esc(bladeNameFor(r))}</b><small>${esc(RANKS[r])}${V.cls==='검'?' · '+esc(BLADE.hz[r-2]):''}</small></span>`,'blade:'+r)).join('')}</div>`:''}
       <h3>경지 돌파 연출</h3>${BRK().length?`<div class="grid">${BRK().map(([i,d])=>btn(`<span class="form"><b>${esc(d.n)}</b><small>${esc(RANKS[i]||'')}</small></span>`,'brk:'+i)).join('')}</div>`:'<p class="dim">경지 돌파 연출(작업 중인 PR)이 이 빌드에 합쳐지면 여기에 나온다.</p>'}`;
   }else if(TAB==='qi'){
     h+=`<h3>문파 (운기·무공 색)</h3><select data-a="sect"><option value="">문파 없음 (계열 색)</option>${Object.entries(SECTS).filter(([id])=>SECT_FX[id]).map(([id,s])=>`<option value="${esc(id)}"${id===V.sect?' selected':''}>${esc(s.n)}</option>`).join('')}</select>
@@ -197,6 +202,7 @@ box.addEventListener('click',ev=>{const b=ev.target.closest('button[data-a]');if
   if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;play(()=>useArtFx(V.art,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`);return}
   if(k==='brk'){const d=BRK_FX[+v];play(()=>brk(+v),`경지 돌파 · ${RANKS[+v]||''} ${d.n}`);return}
   if(k==='flow'){const[n,f]=FLOW()[+v];play(f,n);return}
+  if(k==='blade'){const[r,f]=BLADES().find(x=>x[0]===+v);play(()=>bladeShow(r,f),`${RANKS[r]} · ${bladeNameFor(r)}`);return}
   if(k==='med'){medit(v!=='0',v);note(v==='0'?'운기 멈춤':v==='qi'?'내공 수련 중':'운기조식 중');render();return}
   if(k==='train'){const t=TRAIN.find(x=>x[1]===v);play(()=>{place();trainFx(v)},t[0]);return}
   if(k==='prim'){const[n,f]=PRIM[+v];play(()=>{place();f()},n);return}
