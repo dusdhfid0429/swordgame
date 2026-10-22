@@ -14,8 +14,8 @@ function fadeOld(X){if(!X||!X.key)return;for(const f of fx)if(f.ck===X.key&&f.cx
 function tagCast(X,i0){if(X&&X.key)for(let i=i0;i<fx.length;i++){fx[i].cx=X;fx[i].ck=X.key}}
 function GL(o,X){
   fadeOld(X);const i0=fx.length;
-  const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;fx.push(o);
-  if(t>=2)fx.push({...o,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:.35,r:o.r&&o.r*1.08});
+  const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;if(X&&X.art&&!o.c2)o.c2=X.art.c2;fx.push(o);   // c2: 무공 특성 보조색 (g_fxcol.js, v169)
+  if(t>=2)fx.push({...o,col:o.c2||o.col,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:o.c2&&isDark(o.col)?.22:.35,r:o.r&&o.r*1.08});   // 잔광은 보조색 (마기는 검은 기운 둘레에 옅게)
   if(t>=3)fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
   runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)
   tagCast(X,i0);
@@ -28,7 +28,7 @@ const fBolt=(X,c,col,s=1)=>GL({t:'bolt',x:c.x,y:c.y,col,s,life:.5},X);
 const fStar=(X,c,col,s=1,life=.2)=>GL({t:'star',x:c.x,y:c.y,col,s:s*(1+.15*(X?X.t:0)),life},X);
 const fClaw=(X,c,col)=>GL({t:'claw',x:c.x,y:c.y,col,life:.3,side:(P.fx-P.fy)>=0?1:-1},X);
 function fParts(X,c,col,n,spd,shape,life=.7){n+=4*(X?X.t:0);const ps=[];for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=spd*(.4+Math.random()*.8);ps.push({vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6-spd*.5,r:Math.random()*6})}
-  fadeOld(X);fx.push({t:'parts',glow:true,x:c.x,y:c.y,col,ps,shape,life,max:life});tagCast(X,fx.length-1)}
+  fadeOld(X);fx.push({t:'parts',glow:true,x:c.x,y:c.y,col,c2:X&&X.art&&X.art.c2,ps,shape,life,max:life});tagCast(X,fx.length-1)}
 function fxHit(X,e,s=1){
   const c=X.art.c,w=X.art.cls;
   if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
@@ -49,7 +49,7 @@ function exec(f,e,X){
       const base=Math.atan2(P.fy,P.fx),sp=(f.spread||.3)*(n>f.cnt&&!f.full?1.2:1);
       for(let i=0;i<n;i++){const a=f.full?base+i/n*Math.PI*2:base+(n>1?(i/(n-1)-.5)*sp:0);
         projs.push({x:P.x,y:P.y,vx:Math.cos(a)*f.spd,vy:Math.sin(a)*f.spd,left:f.len*rm,m,kb,stun,pierce:f.pierce||t>=2,size:(f.size||1)*(1+.15*t),
-          wavy:f.wavy,hit:new Set,X,c,kind:X.pj||CLASS[X.art.cls].pj,trail:[],ph:Math.random()*6})}
+          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:X.pj||CLASS[X.art.cls].pj,trail:[],ph:Math.random()*6})}
       break}
     case'drop':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(Math.min(f.r,2));
       circleHit(X,ctr,f.rad*rm,m,kb,stun);fBolt(X,ctr,c,f.rad>2?1.6:1);fx.push({t:'puff',x:ctr.x,y:ctr.y,life:.6});fRing(X,ctr,f.rad*rm,c,4,.4);if(f.rad>2)shake=.3;break}

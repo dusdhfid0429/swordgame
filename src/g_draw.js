@@ -269,8 +269,9 @@ function draw(){
   runHooks('afterDark');   // 동굴 시안: 어둠 위의 빛과 움직임 (g_cave.js)
   for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
-  const fxMode=c=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=dk?HI_DARK:WH};
-  for(const f of fx)if(f.glow){fxMode(f.col);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c);atZ(q,()=>drawProj(q))}ctx.globalCompositeOperation='lighter';HI=WH;
+  // v169: 무공 이펙트(c2 있음)는 심지가 무공 특성 보조색 쪽으로 물든다 (g_fxcol.js hiOf)
+  const fxMode=(c,c2)=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=c2?hiOf(c,c2):dk?HI_DARK:WH};
+  for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);atZ(q,()=>drawProj(q))}ctx.globalCompositeOperation='lighter';HI=WH;
   for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';

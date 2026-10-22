@@ -108,9 +108,9 @@ function drawGlow(f){
   else if(f.t==='claw'){const pr=Math.min(1,(1-k)*4);for(let n=-1;n<=1;n++){const x0=p.x+(n*11-22)*f.side,y0=p.y-56+n*3,x1=p.x+(n*11+22)*f.side,y1=p.y-10+n*3,xm=x0+(x1-x0)*pr,ym=y0+(y1-y0)*pr;
     for(const[w,c,a]of[[9,f.col,.25],[4,f.col,.7],[1.5,HI,1]]){ctx.strokeStyle=rgba(c,a*k);ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo((x0+xm)/2+6*f.side,(y0+ym)/2-4,xm,ym);ctx.stroke()}}}
   else if(f.t==='parts'){const t=f.max-f.life;ctx.fillStyle=rgba(f.col,k);
-    for(const q of f.ps){const x=p.x+q.vx*t,y=p.y-28+q.vy*t+90*t*t;
-      if(f.shape==='petal'){ctx.beginPath();ctx.ellipse(x,y,3.4,1.7,q.r+t*7,0,7);ctx.fill()}
-      else{const vy=q.vy+180*t;ctx.strokeStyle=rgba(q.r<2?HI:f.col,k);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-q.vx*.05,y-vy*.05);ctx.stroke()}}}
+    f.ps.forEach((q,i)=>{const x=p.x+q.vx*t,y=p.y-28+q.vy*t+90*t*t,cc=f.c2&&i%2&&!isDark(f.col)?f.c2:f.col;   // 입자 절반은 보조색 (v169)
+      if(f.shape==='petal'){ctx.fillStyle=rgba(cc,k);ctx.beginPath();ctx.ellipse(x,y,3.4,1.7,q.r+t*7,0,7);ctx.fill()}
+      else{const vy=q.vy+180*t;ctx.strokeStyle=rgba(q.r<2?HI:cc,k);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-q.vx*.05,y-vy*.05);ctx.stroke()}})}
   else if(f.t==='crackle'){const bs=flick(f,()=>{const o=[];for(let i=0;i<3;i++){const a=rnd()*6.28,L=16+rnd()*20;boltPts(0,0,Math.cos(a)*L,Math.sin(a)*L*.8,10,.2,1,o)}return o},.06);
     ctx.save();ctx.translate(p.x,p.y-28);strokeBolts(bs,f.col,k,.45);ctx.restore()}
 }
@@ -131,7 +131,7 @@ function drawGlow2(f){
 function drawProj(q){
   const p=toScreen(q.x,q.y),t=q.X.t,s=q.size,ang=Math.atan2((q.vx+q.vy)*TH/2,(q.vx-q.vy)*TW/2);ctx.lineCap='round';
   for(let i=1;i<q.trail.length;i++){const a=toScreen(q.trail[i-1].x,q.trail[i-1].y),b=toScreen(q.trail[i].x,q.trail[i].y);
-    ctx.strokeStyle=rgba(q.c,i/q.trail.length*.3);ctx.lineWidth=(3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
+    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
   ctx.save();ctx.translate(p.x,p.y-24);ctx.rotate(ang);if(q.wavy)ctx.translate(0,Math.sin(time*25+q.ph)*7);
   if(q.kind!=='crescent'&&q.kind!=='blade'&&q.kind!=='arrow')glowDot(0,0,15*s,q.c,.45);
   if(q.kind==='crescent'||q.kind==='blade'){const r=Math.min(12*s,16);ctx.scale(.55,1);

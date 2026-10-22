@@ -56,7 +56,7 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   const rest=uniq.sort((x,y)=>y.base-x.base).slice(0,5).sort((x,y)=>x.f.cd-y.f.cd),picks=[first,...rest];
   const names=new Set();const nm=()=>{let s;do{s=NA[Math.floor(r()*NA.length)]+NB[Math.floor(r()*NB.length)]}while(names.has(s));names.add(s);return s};
   const ua=srcs.slice().sort((x,y)=>(y.grade||0)-(x.grade||0)||(y.hi?1:0)-(x.hi?1:0))[0];
-  const def={id,n,cls:grp.cls,el,grade:g,src:grp.ids.slice(),srcN:srcs.map(a=>a.n),forms:picks.map(x=>({a:x.a,i:x.i,n:nm()})),ult:{a:ua.id,n:UA[Math.floor(r()*UA.length)]+UB[Math.floor(r()*UB.length)]},by:P.name,life:P.lifeNo};
+  const def={id,n,cls:grp.cls,el,grade:g,src:grp.ids.slice(),srcN:srcs.map(a=>a.n),forms:picks.map(x=>({a:x.a,i:x.i,n:nm()})),tr:trOfSrc(grp.ids),ult:{a:ua.id,n:UA[Math.floor(r()*UA.length)]+UB[Math.floor(r()*UB.length)]},by:P.name,life:P.lifeNo};
   // v157 (사용자 2026-10-20): 문파 제자라도 창안한 순간에는 등록하지 않는다. 문파 창에서 제자들에게 전수해야 그 문파 무공이 된다 (gycSectHtml, g_gyc.js). 무소속이면 예전처럼 기연에서 만나는 무공
   const member=P.sect&&P.sect!=='own'&&SECTS[P.sect];def.sect=null;def.key=mkKey(def);def.reg=member?0:1;
   G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
@@ -78,7 +78,9 @@ function mkBuild(def){const g=def.grade,EC=EL[def.el];
   const forms=def.forms.map((x,i)=>{const a=ARTS[x.a],f=a&&a.forms[x.i];if(!f)return{...F(x.n,'melee',{m:1,cd:.4}),req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:1*(1+.06*i)*GMUL[g]};
     return{...f,n:x.n,req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m/((1+.06*x.i)*mkMul(a))*(1+.06*i)*GMUL[g]}});
   const ua=ARTS[def.ult.a],steps=ua?ua.ult.steps.slice(1).map(x=>({...x,m:(x.m||1)/mkUltMul(ua)*GULT[g][1]})):[];
-  ARTS[def.id]=artFx({id:def.id,side:null,cls:def.cls,el:def.el,n:def.n,forms,made:1,grade:g,
+  // v169: 이펙트 보조색은 재료 무공들의 특성을 물려받는다 (g_fxcol.js). 예전 저장은 재료에서 다시 센다
+  if(!def.tr)def.tr=trOfSrc(def.src||[]);
+  ARTS[def.id]=artFx({id:def.id,side:null,cls:def.cls,el:def.el,n:def.n,forms,made:1,grade:g,tr0:def.tr.length?def.tr:null,
     ult:{n:def.ult.n,steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...steps]},
     d:`${def.by}이(가) ${def.srcN.join('·')}의 심득을 모아 창안한 ${AGR[g]} 무공 · ${CLASS[def.cls].n}. 초식 ${forms.length}개와 필살기.`});
   return ARTS[def.id]}
