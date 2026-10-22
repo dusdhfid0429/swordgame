@@ -2,7 +2,7 @@
 // 오류 나는 수정은 저절로 되돌리고, 되돌리기·다시 적용·채택(db)·다시 열 때 복원이 되는지 본다
 const {chromium}=require(process.env.PWPATH||'playwright');
 const MOCK=()=>{
-  const store=JSON.parse(sessionStorage.getItem('mockdb')||'{}'),save=()=>sessionStorage.setItem('mockdb',JSON.stringify(store));
+  const store=JSON.parse(localStorage.getItem('mockdb')||'{}'),save=()=>localStorage.setItem('mockdb',JSON.stringify(store));
   const snap=(id,d)=>({id,exists:!!d,data:()=>d,metadata:{}});
   const db={collection:n=>({add:async d=>{const id='d'+Object.keys(store).length+Date.now();store[id]=JSON.parse(JSON.stringify(d));save();return{id}},
       where:(f,op,v)=>({get:async()=>{const docs=Object.entries(store).filter(([,d])=>d[f]===v).map(([id,d])=>snap(id,d));return{docs,size:docs.length,empty:!docs.length}}})}),
@@ -52,10 +52,10 @@ const MOCK=()=>{
   ok('다시 적용',await p.evaluate(()=>GL.toString().includes('o.fxai')&&EL_FX.화.n==='불꽃!'));
   // 4) 채택 → 다시 열면 복원
   await p.click('#fxai button[data-x^="keep:"]');await p.waitForTimeout(300);
-  const kept=await p.evaluate(()=>{const d=JSON.parse(sessionStorage.getItem('mockdb'));const x=Object.values(d)[0];return x&&x.state==='kept'&&x.ops[0].file==='r_exec.js'&&x.ops[1].file==='data/elfx.json'&&x.ops[0].after.includes('o.fxai')});
+  const kept=await p.evaluate(()=>{const d=JSON.parse(localStorage.getItem('mockdb'));const x=Object.values(d)[0];return x&&x.state==='kept'&&x.ops[0].file==='r_exec.js'&&x.ops[1].file==='data/elfx.json'&&x.ops[0].after.includes('o.fxai')});
   ok('채택: db 에 파일 이름과 함께 남음',kept);
   await p.screenshot({path:__dirname+'/shots/fxai_pc.png'});
-  await p.reload();await p.waitForFunction(()=>window.FXAI&&FXAI.CH.length>0,null,{timeout:20000}).catch(async e=>console.log('복원 안 됨',await p.evaluate(()=>JSON.stringify({ss:Object.keys(JSON.parse(sessionStorage.getItem('mockdb')||'{}')),fx:!!window.FXAI,st:document.getElementById('fxai_st').textContent,go:document.getElementById('fxai_go').textContent}))));await p.waitForTimeout(200);
+  await p.reload();await p.waitForFunction(()=>window.FXAI&&FXAI.CH.length>0,null,{timeout:20000}).catch(async e=>console.log('복원 안 됨',await p.evaluate(()=>JSON.stringify({ss:Object.keys(JSON.parse(localStorage.getItem('mockdb')||'{}')),fx:!!window.FXAI,st:document.getElementById('fxai_st').textContent,go:document.getElementById('fxai_go').textContent}))));await p.waitForTimeout(200);
   await p.click('#fxai button[data-x^="off:"]');await p.waitForTimeout(100);
   ok('복원한 수정도 되돌리기 됨',await p.evaluate(()=>!GL.toString().includes('o.fxai')&&EL_FX.화.n!=='불꽃!'));
   // 5) 휴대폰 화면
