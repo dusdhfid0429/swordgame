@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=4;
+const SAVE_VER=5;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -21,7 +21,20 @@ const MIGRATE=[
     const p=d.P;if(p&&!p.story){p.story={pick:{},open:null,done:{},flag:{}};for(const e of STORY.EV)if(e.age<=(p.age||0))p.story.pick[e.id]=-1}return d},
   // v3 → v4: 무관 (g_academy.js). 이미 살던 생은 무관 없이 강호에 있는 것으로 친다(P.acad=null)
   d=>{const p=d.P;if(p&&p.acad===undefined)p.acad=null;return d},
+  // v4 → v5: 같은 이름 무공 합치기 (g_sect.js linkSameArts). 기본 번호(정도0)로 익힌 것을 문파 무공(S_paeng_0)에 합친다: 숙련은 큰 쪽, 익힌 초식은 앞에서부터 개수만큼
+  d=>mergeArtAliases(d),
 ];
+function mergeArtAliases(d){const al=artAliases(),p=d.P;
+  if(p&&p.arts)for(const[o,c]of Object.entries(al)){const x=p.arts[o];if(!x)continue;delete p.arts[o];
+    const y=p.arts[c],cnt=v=>(v&&v.f||[]).filter(Boolean).length,k=Math.max(cnt(x),cnt(y));
+    p.arts[c]={...x,...(y||{}),p:Math.max(x.p||0,y?y.p||0:0),f:ARTS[c].forms.map((f,i)=>i<k||!!(y&&y.f&&y.f[i]))}}
+  let raw=JSON.stringify(d);for(const[o,c]of Object.entries(al))raw=raw.split(`"${o}"`).join(`"${c}"`);
+  d=JSON.parse(raw);
+  // 행낭·창고의 비급: 초식 수가 줄어 없는 초식을 가리키면 마지막 초식 비급으로
+  const walk=o=>{if(!o||typeof o!=='object')return;if(Array.isArray(o)){o.forEach(walk);return}
+    if(o.slot==='book'&&ARTS[o.art]&&ARTS[o.art].forms&&o.form>=ARTS[o.art].forms.length){const a=ARTS[o.art];o.form=a.forms.length-1;o.name=`${a.n} 비급 · ${a.forms[o.form].n}`}
+    for(const k in o)walk(o[k])};
+  walk(d);return d}
 // 저장 자료를 지금 형식으로 옮긴다. 이미 지금 형식이면 그대로 돌려준다(여러 번 불러도 같다).
 function migrateSave(d){if(!d||typeof d!=='object')return d;
   let v=d.v||0;if(v>SAVE_VER){console.warn(`저장 형식 ${v}이 게임(${SAVE_VER})보다 새것입니다`);return d}
