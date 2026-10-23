@@ -65,7 +65,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const frac=v=>v-Math.floor(v);
 
 function bakeGaebong(){
-  const gw=(N+NH)*TW/2,gh=(N+NH)*TH/2,c=document.createElement('canvas');c.width=gw;c.height=gh;
+  const gw=(N+NH)*TW/2,gh=(N+NH)*TH/2,c=document.createElement('canvas');c.width=gw;c.height=gh;c.sm={k:1,X0:-NH*TW/2,Y0:0,x0:0,y0:0,C:N,CH:NH};
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data;
   for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
     const a=(px-NH*TW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;

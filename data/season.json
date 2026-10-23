@@ -1,0 +1,13 @@
+{
+  "SEA": {
+    "_doc": "계절·날씨별 지형 모습 (v173, src/g_season.js). snowIn: 눈이 오면 몇 초에 다 쌓이나. snowOutW: 겨울에 눈이 그쳤을 때 다 녹는 데 걸리는 초(느리게), snowOut: 겨울 밖에서 녹는 초. wetIn/wetOut: 비에 젖는/마르는 초(폭염엔 세 배 빨리 마름). res: 계절 바닥 겹 그림 해상도(바닥 그림 대비). region: 지역 테마별 눈 배율·최소값",
+    "snowIn": 40, "snowOutW": 900, "snowOut": 60,
+    "wetIn": 25, "wetOut": 90,
+    "res": 0.5,
+    "region": {"snow": {"min": 0.85}, "sand": {"mul": 0.3}},
+    "thick": {"pine": [3, 6], "rock": [4, 7], "spire": [5, 10], "tree": [1, 3], "maple": [1, 3], "plum": [2, 5], "bamboo": [1, 3], "stupa": [2, 4]},
+    "leaves": 3, "flowers": 3,
+    "fall": [[8, 18], [20, 32], [34, 46]],
+    "tint": {"겨울": 0.35, "가을": 0.18}
+  }
+}
