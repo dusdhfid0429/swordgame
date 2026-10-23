@@ -28,7 +28,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`칠 준비하는 적 머리 위 '!!'`,t.includes('!!'));
   await p.screenshot({path:shot('danger_lethal')});
   const t2=await p.evaluate(()=>{__e.atk=1;P.hp=P.maxHp;dngScan=0;__e.aggro=true;runHooks('tick',.05);__e.aggro=true;const seen=[],f=ctx.fillText;ctx.fillText=function(x,...a){seen.push(x);return f.call(this,x,...a)};__e.wind=.2;draw();ctx.fillText=f;return{seen,lv:dngLvl}});
-  ok(`약한 적은 '!' 하나, 위험 풀림 (lv ${t2.lv})`,t2.seen.includes('!')&&!t2.seen.includes('!!')&&t2.lv===0);
+  ok(`쓰러지지 않을 공격에는 아무것도 띄우지 않고, 위험 풀림 (lv ${t2.lv})`,!t2.seen.includes('!')&&!t2.seen.includes('!!')&&t2.lv===0);
   await p.screenshot({path:shot('danger_warn')});
   // 5) 천마혈정·생사경처럼 버티는 수가 있으면 '쓰러진다'고 하지 않는다
   s=await p.evaluate(()=>{__e.atk=P.hp*10;P.chGuard=1;dngScan=0;__e.aggro=true;runHooks('tick',.05);const r={lv:dngLvl,L:__e.dngL};P.chGuard=0;return r});

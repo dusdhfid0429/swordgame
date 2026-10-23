@@ -1,7 +1,7 @@
 // ================= 피격·빈사 알림 (v172) =================
 // 사용자 2026-10-23: "데미지를 입는 타이밍을 인지하기 어렵다. 이걸 맞으면 죽을 수도 있다를 피드백으로 알 수 있으면"
 //  1) 맞는 순간: 화면 가장자리가 붉게 번쩍인다(많이 잃을수록 진하게). 큰 피해는 큰 숫자·센 흔들림·진동. 생명줄의 잃은 몫은 잠깐 하얗게 남았다가 줄어든다
-//  2) 나를 노리는 적이 칠 준비(e.wind)를 하면 머리 위 '!'와 좁혀 드는 고리(고리가 닫히면 맞는다). 그 한 방에 쓰러질 만하면 붉은 '!!'
+//  2) 나를 노리는 적이 칠 준비(e.wind)를 하고 그 한 방에 쓰러질 수 있으면 머리 위 붉은 '!!'와 좁혀 드는 고리(고리가 닫히면 맞는다). 쓰러지지 않을 공격에는 띄우지 않는다
 //  3) 생명이 낮으면 가장자리가 천천히 뛰고, 주변 적의 한 방이 남은 생명을 넘으면 '위험': 빠른 박동·심장 소리·생명줄 깜빡임
 // 수치는 data/danger.json (DANGER)
 const DG=GD.DANGER;
@@ -49,11 +49,13 @@ function redVig(){const w=Math.ceil(W),h=Math.ceil(H);if(RVIG&&RVIG.width===w&&R
 hook('drawHud',()=>{if(!P)return;
   const a=Math.min(1,dngF+(dngLvl===2?.42+.5*dngPulse:dngLvl===1?.16+.26*dngPulse:0));if(a<.01)return;
   ctx.globalAlpha=a;ctx.drawImage(redVig(),-30,-30,W+60,H+60);ctx.globalAlpha=1});
-// 적의 공격 예고: 나를 노리고 칠 준비를 하는 적 머리 위 ! 와, 닫히면 맞는 고리
-hook('drawTop',()=>{if(!P||P.hp<=0)return;
+// 적의 공격 예고: 나를 노리고 칠 준비를 하는 적 가운데, 그 한 방에 쓰러질 수 있는 적에게만 머리 위 !! 와 닫히면 맞는 고리를 띄운다
+// (사용자 2026-10-23: "모든 공격에 띄우지 말고 내가 죽을 수도 있는 공격에만"). 칠 준비는 0.4초뿐이라 0.2초마다 하는 훑기를 기다리지 않고 그 자리에서 어림한다
+hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
   for(const e of mobs){const sl=e.slam>0;if(!(e.wind>0||sl)||!dngAimsP(e))continue;
-    const p=toScreen(e.x,e.y),wm=e.d.boss?.5:.4,k=sl?1-e.slam/1.1:clamp(1-e.wind/wm,0,1),lt=sl?e.dngS:e.dngL,col=lt?'255,60,40':'255,200,90';
+    const lt=e.dngDemo?e.dngL:!saved&&(sl?hitEst(e,e.atk*1.6)>=P.hp&&dist(P,e.slamAt)<2.2:hitEst(e,e.atk)>=P.hp);if(!lt)continue;
+    const p=toScreen(e.x,e.y),wm=e.d.boss?.5:.4,k=sl?1-e.slam/1.1:clamp(1-e.wind/wm,0,1),col='255,60,40';
     p.y-=e.z||0;
-    if(!sl){const s=1.9-.9*k;ctx.strokeStyle=`rgba(${col},${.5+.5*k})`;ctx.lineWidth=lt?3:2;ctx.beginPath();ctx.ellipse(p.x,p.y,TW/2*s*.8,TH/2*s*.8,0,0,7);ctx.stroke()}
-    const t=lt?'!!':'!',sz=(lt?26:21)*(1+.18*Math.sin(time*(lt?28:18))),y=p.y-(e.d.boss?104:90);
-    ctx.font=`bold ${sz}px "Song Myung",serif`;ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText(t,p.x,y);ctx.fillStyle=`rgb(${col})`;ctx.fillText(t,p.x,y)}});
+    if(!sl){const s=1.9-.9*k;ctx.strokeStyle=`rgba(${col},${.5+.5*k})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y,TW/2*s*.8,TH/2*s*.8,0,0,7);ctx.stroke()}
+    const sz=26*(1+.18*Math.sin(time*28)),y=p.y-(e.d.boss?104:90);
+    ctx.font=`bold ${sz}px "Song Myung",serif`;ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText('!!',p.x,y);ctx.fillStyle=`rgb(${col})`;ctx.fillText('!!',p.x,y)}});
