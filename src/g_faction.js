@@ -193,6 +193,7 @@ const HQ_GRASS=GD.HQ_GRASS;
 // x0,y0,C,CH: 큰 지역은 C×CH칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모. 맵 전체면 N×NH
 function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&!y0?NH:C){
   const X0=(x0-y0-CH)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round((C+CH)*TW/2*k),gh=Math.round((C+CH)*TH/2*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+  c.sm={k,X0,Y0,x0,y0,C,CH,chunk:C!==N||CH!==NH||x0||y0};   // v173: 계절 겹(g_season.js)이 칸 좌표를 되찾는다
   const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,TR=th==='hall'||th==='dark'&&!(TP&&TP.key==='십만대산')?null:TP,gc=TR&&TR.grass||HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow',MI=TR&&TR.mist;   // v155: TR = 지역 지형(g_terrain.js)
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
     const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
@@ -247,7 +248,7 @@ function drawChunks(gr,o){
     let c=gr.cache.get(key);
     if(!c){if(budget<=0&&!near)continue;budget--;c=bakeHQ(gr.th,CHUNK_K,cx*C,cy*C,C,C);gr.n++}
     else gr.cache.delete(key);gr.cache.set(key,c);
-    if(near)ctx.drawImage(c,x,y,w,h)}
+    if(near){ctx.drawImage(c,x,y,w,h);seasonGround(c,x,y,w,h)}}
   while(gr.cache.size>CHUNK_KEEP)gr.cache.delete(gr.cache.keys().next().value)}
 // ---- 역참: 은자를 내고 말을 타 개봉과 모든 본산을 오간다 ----
 function postDlg(){
