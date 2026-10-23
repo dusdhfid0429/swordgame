@@ -16,12 +16,14 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 2) 계절마다 나무 그림이 바뀐다 (겨울 앙상, 가을 단풍, 여름 그대로), 눈 겹은 바위·소나무에 얹힌다
   const r2=await p.evaluate(()=>{enterRegion('gaebong',20,12);const at=q=>{G.cal=Math.floor(G.cal)+q;SM=seasonMix();let tr=null;
       for(let j=0;j<NH&&!tr;j++)for(let i=0;i<N;i++)if(objs[j][i]==='tree'){tr=[i,j];break}const s=seaSpr('tree',...tr),base=SPRITES.tree[(tr[0]*7+tr[1]*3)%3];
-      return{bare:BARE.includes(s.spr),same:s.spr===base,snow:!!s.snow}};
+      return{bare:BARE.includes(s.spr),same:s.spr===base&&s.L.length===1,snow:!!s.snow,top:s.L.length}};
     G.snow=1;const win=at(.87),sum=at(.37),fal=at(.6);G.snow=0;const fal0=at(.6);
-    G.snow=1;G.cal=Math.floor(G.cal)+.87;SM=seasonMix();const rk=seaSpr('rock',3,3),pn=seaSpr('pine',3,3);
+    G.snow=1;G.cal=Math.floor(G.cal)+.87;SM=seasonMix();const fx=[];for(let i=0;i<=20;i++){G.cal=Math.floor(G.cal)+.5+i*.01;SM=seasonMix();let n=0,mid=0;for(let j=0;j<NH;j++)for(let q=0;q<N;q++)if(objs[j][q]==='tree'){const L=seaSpr('tree',q,j).L;if(L.length>1){n++;if(L[L.length-1][1]<.95)mid++}}fx.push(mid)}
+    const rk=seaSpr('rock',3,3),pn=seaSpr('pine',3,3);
     const px=s=>{const d=s.getContext('2d').getImageData(0,0,s.width,s.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i]>100)n++;return n};
-    return{win,sum,fal,fal0,rk:px(rk.snow),pn:px(pn.snow)}});
+    return{win,sum,fal,fal0,rk:px(rk.snow),pn:px(pn.snow),fx}});
   ok(`겨울 나무 앙상 ${r2.win.bare}·눈 ${r2.win.snow}, 여름 그대로 ${r2.sum.same}, 가을 단풍 ${!r2.fal.same&&!r2.fal.bare}`,r2.win.bare&&r2.win.snow&&r2.sum.same&&!r2.fal.same&&!r2.fal.bare&&!r2.fal0.snow);
+  ok(`초가을에 단풍이 반쯤 든(겹쳐 바뀌는 중) 나무 수: ${r2.fx.join(',')}`,Math.max(...r2.fx)>0);
   ok(`눈 겹 픽셀: 바위 ${r2.rk}, 소나무 ${r2.pn}`,r2.rk>40&&r2.pn>150);
   // 3) 바닥 계절 겹: 겨울엔 눈 겹을 굽고, 관도(길 칸)도 눈에 덮인다. 그림자 같은 크기
   const r3=await p.evaluate(()=>{G.cal=Math.floor(G.cal)+.87;G.snow=1;G.weather='맑음';P.x=20;P.y=12;draw();const sl=ground._sl||{};

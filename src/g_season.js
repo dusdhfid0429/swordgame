@@ -16,6 +16,7 @@ function seasonMix(){const R=REGION();if(!R||R.in||R.hall||R.cave)return null;
   if(q===0){m.bare=1-ramp(p,0,.25);m.bloom=ramp(p,.05,.25)*(1-ramp(p,.8,1))}
   else if(q===2){m.fall=ramp(p,0,.3);m.bare=ramp(p,.75,1);m.leafG=ramp(p,.1,.4)}
   else if(q===3){m.bare=1;m.leafG=1-ramp(p,0,.3)}
+  m.tint=Math.min(ramp(p,0,.08),1-ramp(p,.92,1));   // 화면 색조도 계절 머리·끝에서 서서히 들고 빠진다
   return m}
 hook('tick',dt=>{const w=G.weather,win=season()==='겨울';
   G.snow=w==='눈'?Math.min(1,(G.snow||0)+dt/SEA.snowIn):Math.max(0,(G.snow||0)-dt/(win?SEA.snowOutW:SEA.snowOut));
@@ -70,12 +71,15 @@ function snowSpr(base,ob){return seaCache(base,'snow',()=>{const w=base.width,h=
       const i=(y*w+x)*4,sh=x>w*.56?-16:0,v=(dep?236-dep*5:250)+sh;d[i]=v-6;d[i+1]=v-1;d[i+2]=Math.min(255,v+8);d[i+3]=dep===tk-1?150:255;dep++}}
   g.putImageData(im,0,0);return c})}
 const SEA_SNOWY={tree:1,maple:1,plum:1,pine:1,bamboo:1,rock:1,spire:1,stupa:1};
-// 칸 하나의 그림: {spr, snow(덧그릴 눈 그림), sa(눈 투명도)}
-function seaSpr(ob,i,j){const set=SPRITES[ob],k=(i*7+j*3)%set.length,base=set[k];if(!SM)return{spr:base};
-  const h=hash(i*13+5,j*7+3);let spr=base;
-  if(ob==='tree'||ob==='maple'){if(SM.bare>h)spr=BARE[k%BARE.length];else if(SM.fall>h)spr=fallSpr(base,ob,k);else if(ob==='tree'&&SM.bloom>h)spr=bloomSpr(base,k)}
-  else if(ob==='bamboo'&&SM.fall>h)spr=fallSpr(base,ob,k);
-  return{spr,snow:SM.snow>.02&&SEA_SNOWY[ob]?snowSpr(spr,ob):null,sa:SM.snow}}
+// 칸 하나의 그림: {spr(크기·가림 기준), L(겹쳐 그릴 [그림, 투명도] 목록, 아래부터), snow(덧그릴 눈 그림), sa(눈 투명도)}
+// 사용자 2026-10-23 "페이드인 페이드아웃 느낌으로": 나무마다 SEA.fade 폭만큼 천천히 옛 모습이 사라지고 새 모습이 떠오른다
+// 잎이 지고 돋을 때는 앙상한 가지를 밑에 깔고 잎 그림의 투명도를, 단풍·새잎은 푸른 잎 위에 덧그린 투명도를 바꾼다
+function seaSpr(ob,i,j){const set=SPRITES[ob],k=(i*7+j*3)%set.length,base=set[k];if(!SM)return{spr:base,L:[[base,1]]};
+  const h=hash(i*13+5,j*7+3),w=SEA.fade,t=v=>{const x=clamp((v-h*(1-w))/w,0,1);return x*x*(3-2*x)},L=[];let spr=base,leaf=1;
+  if(ob==='tree'||ob==='maple'){const b=t(SM.bare);if(b>0){spr=BARE[k%BARE.length];L.push([spr,1]);leaf=1-b}
+    if(leaf>.01){L.push([base,leaf]);const f=t(SM.fall),s=ob==='tree'?t(SM.bloom):0;if(f>.01)L.push([fallSpr(base,ob,k),leaf*f]);if(s>.01)L.push([bloomSpr(base,k),leaf*s]);if(leaf>.5)spr=base}}
+  else{L.push([base,1]);if(ob==='bamboo'){const f=t(SM.fall);if(f>.01)L.push([fallSpr(base,ob,k),f])}}
+  return{spr,L,snow:SM.snow>.02&&SEA_SNOWY[ob]?snowSpr(spr,ob):null,sa:SM.snow}}
 
 // ---------- 바닥 계절 겹 ----------
 const SEA_TINT={snow:[236,241,248],fall:[158,116,48],bloom:[112,162,62]};

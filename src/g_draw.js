@@ -189,8 +189,8 @@ function draw(){
   const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else{const gx=o.x-NH*TW/2,gw=(N+NH)*TW/2,gh=(N+NH)*TH/2;ctx.drawImage(ground,gx,o.y,gw,gh);seasonGround(ground,gx,o.y,gw,gh)}
   if(typeof drawGore==='function')drawGore();   // 멸문 폐허의 핏자국 (g_ruin.js)
   const sea=P?season():'봄';
-  if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(240,245,255,${SEA.tint.겨울})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
-  else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(230,140,40,${SEA.tint.가을})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
+  if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(240,245,255,${SEA.tint.겨울*(SM?SM.tint:1)})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
+  else if(sea==='가을'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(230,140,40,${SEA.tint.가을*(SM?SM.tint:1)})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
   terrWater();   // v155: 모든 물 칸이 일렁인다 (g_terrain.js)
   if(!P)return;
   seasonWet();   // v173: 비 온 뒤 물웅덩이
@@ -207,9 +207,9 @@ function draw(){
     if(ob==='wall'||ob==='pillar'||ob==='screen'){const mg=REGION().hall&&REGION().hall.mg,fn=ob==='wall'?drawWall:ob==='pillar'?drawPillar:drawScreen;list.push({d:i+j+1,f:()=>fn(i,j,mg)});continue}
     if(FURN[ob]){const mg=REGION().hall&&REGION().hall.mg;list.push({d:i+j+1,f:()=>drawFurn(ob,i,j,mg)});continue}
     if(ob.startsWith('flag:')){if(REGION().dead)continue;list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
-    const{spr,snow,sa}=seaSpr(ob,i,j),tall=ob!=='rock';   // v173: 계절 그림 + 쌓인 눈 겹
+    const{spr,L,snow,sa}=seaSpr(ob,i,j),tall=ob!=='rock';   // v173: 계절 그림(겹쳐 서서히 바뀜) + 쌓인 눈 겹
     const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<(ob==='spire'?60:55)&&p.y-pp.y<spr.height-10&&p.y>pp.y;
-    list.push({d:i+j+1,f:()=>{const x=p.x-spr.width/2,y=p.y-spr.height+(tall?12:10),a=fade?.4:1;ctx.globalAlpha=a;ctx.drawImage(spr,x,y);if(snow){ctx.globalAlpha=a*Math.min(1,sa);ctx.drawImage(snow,x,y)}ctx.globalAlpha=1}})}
+    list.push({d:i+j+1,f:()=>{const x=p.x-spr.width/2,y=p.y-spr.height+(tall?12:10),a=fade?.4:1;for(const[s,al]of L){ctx.globalAlpha=a*al;ctx.drawImage(s,x,y)}if(snow){ctx.globalAlpha=a*Math.min(1,sa);ctx.drawImage(snow,x,y)}ctx.globalAlpha=1}})}
   for(const b of builds){const d=b.x+b.w-1+b.y+b.h-1+1,l=scr(b.x,b.y+b.h)[0]-20,r=scr(b.x+b.w,b.y)[0]+20,bt=scr(b.x+b.w,b.y+b.h)[1];
     if(r<-10||l>W+10||bt<-40||bt-600>H)continue;   // v154: 화면 밖 건물은 건너뛴다
     const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,f:()=>drawBuild(b,hide?.45:1)})}
