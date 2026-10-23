@@ -1,6 +1,6 @@
 // ================= 피격·빈사 알림 (v172) =================
 // 사용자 2026-10-23: "데미지를 입는 타이밍을 인지하기 어렵다. 이걸 맞으면 죽을 수도 있다를 피드백으로 알 수 있으면"
-//  1) 맞는 순간: 화면 가장자리가 붉게 번쩍인다(많이 잃을수록 진하게). 큰 피해는 큰 숫자·센 흔들림·진동. 생명줄의 잃은 몫은 잠깐 하얗게 남았다가 줄어든다
+//  1) 큰 피해를 맞는 순간: 화면 가장자리가 붉게 번쩍이고(많이 잃을수록 진하게) 큰 숫자·센 흔들림·진동. 생명줄의 잃은 몫은 잠깐 하얗게 남았다가 줄어든다
 //  2) 나를 노리는 적이 칠 준비(e.wind)를 하고 그 한 방에 쓰러질 수 있으면 머리 위 붉은 '!!'와 좁혀 드는 고리(고리가 닫히면 맞는다). 쓰러지지 않을 공격에는 띄우지 않는다
 //  3) 생명이 낮으면 가장자리가 천천히 뛰고, 주변 적의 한 방이 남은 생명을 넘으면 '위험': 빠른 박동·심장 소리·생명줄 깜빡임
 // 수치는 data/danger.json (DANGER)
@@ -38,8 +38,9 @@ hook('tick',dt=>{if(!P)return;
   const r=clamp(P.hp/P.maxHp,0,1);if(r>=dngGhost)dngGhost=r;else if(time>dngGhostT)dngGhost=Math.max(r,dngGhost-dt*1.2);
   const gi=$('hpg');if(gi&&gi._w!==(gi._w=Math.round(dngGhost*1000)))setW('hpg',dngGhost)});
 hook('hurtDone',c=>{const lost=c.hp0-Math.max(0,P.hp);if(lost<=0)return;const k=lost/P.maxHp;
-  dngF=Math.max(dngF,clamp(DG.flash+k*DG.flashK,DG.flash,1));dngGhostT=time+DG.ghostWait;dngScan=0;
-  const big=k>=DG.big;if(big){shake=Math.max(shake,.22);for(let i=texts.length-1;i>=0;i--)if(texts[i].c==='#e0675a'&&texts[i].x===P.x){texts[i].big=1;break}}
+  dngGhostT=time+DG.ghostWait;dngScan=0;
+  // 가장자리 번쩍임은 큰 피해일 때만 (사용자 2026-10-23 "큰 피해일 때만")
+  const big=k>=DG.big;if(big){dngF=Math.max(dngF,clamp(DG.flash+k*DG.flashK,DG.flash,1));shake=Math.max(shake,.22);for(let i=texts.length-1;i>=0;i--)if(texts[i].c==='#e0675a'&&texts[i].x===P.x){texts[i].big=1;break}}
   const v=big?DG.vib[0]:dngLvl===2?DG.vib[1]:0;if(v&&navigator.vibrate)try{navigator.vibrate(v)}catch(e){}});
 hook('loadRegion',()=>{dngF=0;dngScan=0});
 // 붉은 가장자리: 크기가 바뀔 때만 다시 그린다 (vignette 와 같은 까닭)

@@ -33,6 +33,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 5) 천마혈정·생사경처럼 버티는 수가 있으면 '쓰러진다'고 하지 않는다
   s=await p.evaluate(()=>{__e.atk=P.hp*10;P.chGuard=1;dngScan=0;__e.aggro=true;runHooks('tick',.05);const r={lv:dngLvl,L:__e.dngL};P.chGuard=0;return r});
   ok(`천마혈정이 있으면 위험 아님 (lv ${s.lv})`,s.lv!==2&&!s.L);
+  // 5b) 작은 피해에는 번쩍임이 없다 (사용자: 큰 피해일 때만)
+  s=await p.evaluate(()=>{mobs.length=0;P.hp=P.maxHp;P.inv=0;const R=Math.random;Math.random=()=>.99;dngF=0;
+    hurtP(P.maxHp*.05/(1-guard()),{});Math.random=R;return{F:dngF,lost:P.maxHp-P.hp}});
+  ok(`작은 피해(${s.lost}) → 번쩍임 없음 ${s.F}`,s.lost>0&&s.F===0);
   // 6) 큰 피해: 번쩍임, 큰 숫자, 생명줄 잔상
   s=await p.evaluate(()=>{mobs.length=0;P.hp=P.maxHp;P.inv=0;const R=Math.random;Math.random=()=>.99;dngF=0;
     hurtP(P.maxHp*.5/(1-guard()),{});Math.random=R;const tx=texts[texts.length-1];runHooks('tick',.05);draw();
