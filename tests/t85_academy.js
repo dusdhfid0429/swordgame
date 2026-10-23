@@ -161,8 +161,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`월반 뒤 병기(${r17.w})·심법(${r17.sim})·보법(${r17.b})·경공(${r17.g}) 고름, 다음 ${r17.k}`,r17.w==='창'&&r17.sim==='N_ac_jeong_1'&&r17.b0===null&&r17.g0===null&&r17.b==='b_basic'&&r17.g==='g_basic'&&r17.k==='quest');
   // 10. 사파는 패천관, 사공 심법 넷. 이어 하기는 무관에서. 옛 저장(v3)은 무관 없이(P.acad=null)
   const r18=await p.evaluate(()=>{saveGame(true);const sv=loadGame();const reg0=REG;loadRegion('gaebong');P.reg='gaebong';applySave(loadGame());startPlay(false);
-    const m=migrateSave({v:3,P:{name:'옛사람'},G:{}});return{reg:REG,reg0,acad:sv.P.acad.stage,mig:m.P.acad,v:m.v,sa:ACAD['사'].n,saReg:!!REGIONS['acad_sacheon']&&!!REGIONS['acad_sacheon_field']}});
-  ok(`이어 하기 → ${r18.reg}, 저장에 단계 ${r18.acad}, v3 저장 → v${r18.v} acad=${r18.mig}, 사파 ${r18.sa}`,r18.reg==='acad_jeong'&&r18.acad===3&&r18.mig===null&&r18.v===4&&r18.sa==='패천관'&&r18.saReg);
+    const m=migrateSave({v:3,P:{name:'옛사람'},G:{}});return{reg:REG,reg0,acad:sv.P.acad.stage,mig:m.P.acad,v:m.v,SV:SAVE_VER,sa:ACAD['사'].n,saReg:!!REGIONS['acad_sacheon']&&!!REGIONS['acad_sacheon_field']}});
+  ok(`이어 하기 → ${r18.reg}, 저장에 단계 ${r18.acad}, v3 저장 → v${r18.v} acad=${r18.mig}, 사파 ${r18.sa}`,r18.reg==='acad_jeong'&&r18.acad===3&&r18.mig===null&&r18.v===r18.SV&&r18.sa==='패천관'&&r18.saReg);
   // 10b. v138 윤회 때 무관 건너뛰기: 병기·하승 심법 고르는 창 → 개봉에서 바로 시작
   await p.evaluate(()=>{closePanels();die('건너뛰기')});await p.waitForSelector('[data-s="rebirth"]',{timeout:8000});await p.click('[data-s="rebirth"]');
   await p.evaluate(()=>{const b=document.querySelector('[data-s="noheir"]');if(b)b.click()});await p.click('[data-s="side:사"]');
