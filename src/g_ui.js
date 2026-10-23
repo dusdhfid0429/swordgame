@@ -77,7 +77,7 @@ function hud(){
   $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
-  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);
+  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}${P.binsa?' · 빈사':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);
   $t('mst',`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`);
   $t('res',`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`);
   $t('zone',regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':''));

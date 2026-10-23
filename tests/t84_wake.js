@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok('다른 앱·탭으로 가면 놓는다',await p.evaluate(()=>_wl.held===0&&_wl.rel===1));
   await p.evaluate(()=>{window._hid=false;document.dispatchEvent(new Event('visibilitychange'))});await p.waitForTimeout(400);
   ok('돌아오면 다시 잡는다',await p.evaluate(()=>_wl.held===1&&_wl.req>=2));
-  await p.evaluate(()=>{P.hp=1;const r0=Math.random;Math.random=()=>.99;hurtP(999,mkMob('늑대',P.x+1,P.y));Math.random=r0});   /* 회피 확률(3% 이상)에 걸리면 안 죽어 가끔 실패하던 것 */await p.waitForFunction(()=>!playing&&_wl.held===0,null,{timeout:8000}).catch(()=>{});   // 느린 CI에서 1.5초 고정 대기가 모자랐다
+  await p.evaluate(()=>{P.hp=1;const r0=Math.random;Math.random=()=>.99;hurtP(999,mkMob('늑대',P.x+1,P.y));P.inv=0;hurtP(999,mkMob('늑대',P.x+1,P.y));   /* v172: 첫 치명타는 빈사, 빈사 중 또 맞으면 쓰러진다 */Math.random=r0});   /* 회피 확률(3% 이상)에 걸리면 안 죽어 가끔 실패하던 것 */await p.waitForFunction(()=>!playing&&_wl.held===0,null,{timeout:8000}).catch(()=>{});   // 느린 CI에서 1.5초 고정 대기가 모자랐다
   const d=await p.evaluate(()=>({playing,held:_wl.held}));
   ok(`생이 끝나 게임이 멈추면 놓는다 (playing ${d.playing}, 잡음 ${d.held})`,!d.playing&&d.held===0);
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
