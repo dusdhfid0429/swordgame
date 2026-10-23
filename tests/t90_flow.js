@@ -20,13 +20,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`폐관 막기: ${r2.due}세 사건이 1년 안 → ${r2.w1}, 천하대전 중 ${r2.wWar}`,r2.w1===r2.due&&r2.wWar);
   const r2b=await p.evaluate(()=>{const s=pgWhy.toString();return s.includes('warOn')&&s.includes('storyDueIn')});
   ok(`폐관 조건에 천하대전·사건 확인이 들어 있다 ${r2b}`,r2b);
-  // 3. 반로환동 뒤: 사부 전수·임무 키는 살아온 해로 센다 (몸이 젊어져도 '올해 이미 배움'에 갇히지 않는다)
+  // 3. 반로환동 뒤: 임무 키는 살아온 해로 센다
   const r3=await p.evaluate(()=>{P.age=70.2;P.taught=70;const k0=sectMissions(SECTS.hwasan)[0].key;P.ban={from:70,yrs:45};P.age=25.2;
-    return{real:Math.floor(realAge()),key:sectMissions(SECTS.hwasan)[0].key===k0,can:P.taught<Math.floor(realAge()),stage:lifeStage()}});
-  ok(`반로환동 뒤 살아온 해 ${r3.real}, 임무 키 그대로 ${r3.key}, 그해 전수 막힘 유지 ${!r3.can}, 생애 단계 ${r3.stage}`,r3.real===70&&r3.key&&!r3.can);
-  // 3b. '올해는 이미 배웠다'에 다음 가르침까지 남은 분을 함께 보인다
-  const r3b=await p.evaluate(()=>{P.ban=null;P.age=30.5;P.taught=30;const h=teachHtml();return{h:h.includes('올해는 이미 배웠다 (다음 가르침까지 약 15분)'),w:teachWait()}});
-  ok(`가르침 대기 표시 ${r3b.h}, 남은 분 ${r3b.w}`,r3b.h&&r3b.w===15);
+    return{real:Math.floor(realAge()),key:sectMissions(SECTS.hwasan)[0].key===k0,stage:lifeStage()}});
+  ok(`반로환동 뒤 살아온 해 ${r3.real}, 임무 키 그대로 ${r3.key}, 생애 단계 ${r3.stage}`,r3.real===70&&r3.key);
+  // 3b. 사부 가르침은 한 해 한 번 제한이 없다 (사용자 2026-10-23): 같은 해에 두 초식을 잇달아 받는다
+  const r3b=await p.evaluate(()=>{P.ban=null;P.age=30.5;const a=art(),s=A(a.id);s.f=s.f.map((v,i)=>i===0);s.p=9999;
+    act('teach');const n1=s.f.filter(Boolean).length;const h=teachHtml();act('teach');const n2=s.f.filter(Boolean).length;return{n1,n2,h:!h.includes('이미 배웠다')}});
+  ok(`같은 해 가르침 두 번: 초식 ${r3b.n1} → ${r3b.n2}, 막힘 문구 없음 ${r3b.h}`,r3b.n2===r3b.n1+1&&r3b.n1>=2&&r3b.h);
   // 4. 10번 사건 '몸을 피한다': 결전 임무·습격이 오지 않는다. '앞장선다': 내 편 +10
   const r4=await p.evaluate(()=>{P.ban=null;P.age=27;P.quests=[];mobs=[];P.sect='hwasan';const s=PS();s.flag={hide:true};
     G.war={life:P.lifeNo,y:Math.floor(G.cal),plan:warPlan(),round:0,rounds:[],won:null};const me=mySide();warRound();const q=P.quests.some(q=>q.war),raid=mobs.some(m=>m.raid);
