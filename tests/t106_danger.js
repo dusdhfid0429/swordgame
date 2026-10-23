@@ -46,5 +46,15 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{for(let i=0;i<40;i++){time+=.05;runHooks('tick',.05)}});
   s=await p.evaluate(()=>({F:dngF,g:parseFloat($('hpg').style.width),hp:P.hp/P.maxHp*100}));
   ok(`번쩍임은 사라지고 잔상은 생명까지 줄어든다 (F ${s.F.toFixed(2)}, 잔상 ${s.g.toFixed(1)}% / 생명 ${s.hp.toFixed(1)}%)`,s.F<.01&&Math.abs(s.g-s.hp)<1.5);
+  // 7) 빈사: 생명이 0이 되면 1로 버티고, 싸울 수 없고 기어 다니며, 운기조식으로 되찾으면 벗어난다. 빈사 중 또 맞으면 쓰러진다
+  s=await p.evaluate(()=>{mobs.length=0;const e=mkMob('산적',P.x+1,P.y);e.aggro=true;e.tgt=P;mobs.push(e);P.hp=5;P.inv=0;P.binsa=null;const sp0=moveSpd();const R=Math.random;Math.random=()=>.99;
+    hurtP(500,e);Math.random=R;const r={hp:P.hp,b:!!P.binsa,play:playing,ag:e.aggro,lost:e.lost>time,inv:P.inv>0,sp:moveSpd()/sp0,hpt:$('hpt').textContent};
+    P.fcd=P.fcd.map(()=>0);P.gcd=0;r.form=useForm(0,true);hud();r.hpt=$('hpt').textContent;return r});
+  ok(`빈사: 생명 ${s.hp}, 빈사 ${s.b}, 살아 있음 ${s.play}, 적 물러섬 ${!s.ag&&s.lost}, 잠깐 무적 ${s.inv}, 기는 속도 ${s.sp.toFixed(2)}, 초식 막힘 ${s.form===false}, "${s.hpt}"`,s.hp===1&&s.b&&s.play&&!s.ag&&s.lost&&s.inv&&s.sp<.5&&s.form===false&&/빈사/.test(s.hpt));
+  s=await p.evaluate(()=>{mobs.length=0;P.inv=0;P.lastHit=5;P.medit=true;let t=0;while(P.binsa&&t<120){time+=.05;t+=.05;P.lastHit+=.05;update(.05);P.medit=true}
+    return{b:!!P.binsa,hp:P.hp/P.maxHp,t,log:document.body.innerText.includes('빈사에서 벗어났습니다')}});
+  ok(`운기조식 ${s.t.toFixed(1)}초 만에 생명 ${(s.hp*100).toFixed(0)}% → 빈사 벗어남 ${!s.b}`,!s.b&&s.hp>=.3&&s.log);
+  s=await p.evaluate(()=>{P.hp=3;P.inv=0;const R=Math.random;Math.random=()=>.99;hurtP(500,{});const b=!!P.binsa;P.inv=0;hurtP(500,{});Math.random=R;return{b,play:playing,hp:P.hp}});
+  ok(`빈사 중 또 맞으면 쓰러진다 (빈사 ${s.b} → 살아 있음 ${s.play})`,s.b&&!s.play);
   ok(`오류 없음 ${errs.join(' | ')}`,errs.length===0);
   await b.close()})();

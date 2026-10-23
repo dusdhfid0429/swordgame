@@ -60,3 +60,26 @@ hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
     if(!sl){const s=1.9-.9*k;ctx.strokeStyle=`rgba(${col},${.5+.5*k})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y,TW/2*s*.8,TH/2*s*.8,0,0,7);ctx.stroke()}
     const sz=26*(1+.18*Math.sin(time*28)),y=p.y-(e.d.boss?104:90);
     ctx.font=`bold ${sz}px "Song Myung",serif`;ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText('!!',p.x,y);ctx.fillStyle=`rgb(${col})`;ctx.fillText('!!',p.x,y)}});
+
+// ================= 빈사 (v172) =================
+// 사용자 2026-10-23: "빈사 상태를 넣어서 남은 hp가 0이 되면 1이 남게 되고, 운기조식으로 회복하면 빈사 상태를 벗어나게 (블레이드앤소울1)".
+// 블소1(2011 CBT)의 탈진: 생명이 바닥나면 기어서 안전한 곳까지 물러나고, 운기조식으로 회복한다. 운기조식 중 공격당하면 사망.
+// 여기서는: 생명이 0이 되면 1로 버티며 빈사에 든다(그 순간 잠깐 무적, 나를 노리던 적은 잠시 물러선다). 빈사 중에는 기어서만 움직이고 싸울 수 없다.
+// 빈사 중 또 맞아 0이 되면 쓰러진다. 운기조식으로 생명이 DANGER.binsa.out 까지 차면 벗어난다(회복약으로 채워도 벗어난다: 심법이 없어 운기를 못 하는 사람).
+// 생사경이 버텨 주는 해(g_beyond.js 'lethal')와 비무(G.duel)는 그쪽이 먼저다.
+const BS=DG.binsa;
+hook('lethal',()=>{if(P.hp>0||P.binsa||G.duel)return;
+  P.binsa={t:time};P.hp=1;P.inv=Math.max(P.inv||0,BS.inv);P.chan=null;P.poison=0;P.medit=false;P.target=null;P.path=null;P.leap=null;
+  for(const e of mobs)if(e.hp>0&&(e.tgt===P||e.aggro&&!e.tgt)){e.aggro=false;e.tgt=null;e.wind=0;e.slam=0;e.lost=time+BS.lose}
+  dngF=1;shake=Math.max(shake,.3);addText(P.x,P.y-.5,'빈사','#ff4a3a');sfx('heart',{v:1});
+  log(`빈사 상태입니다. 기어서 물러나 운기조식으로 생명을 ${Math.round(BS.out*100)}%까지 되찾으면 벗어납니다. 이대로 또 맞으면 쓰러집니다.`,'dmg');
+  if(typeof showBanner==='function')showBanner('빈사','운기조식으로 회복하라')});
+hook('tick',dt=>{if(!P||!P.binsa)return;
+  if(P.hp<=0){P.binsa=null;return}
+  // 빈사 중 운기조식은 생명을 더 빨리 되찾는다 (g_life.js 의 평소 회복에 (heal-1)배를 더한다)
+  if(P.medit&&P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.qi*.2)*3*(BS.heal-1)*dt);
+  if(P.hp>=P.maxHp*BS.out){P.binsa=null;addText(P.x,P.y-.5,'회복','#9fe0a0');log('기혈이 돌아와 빈사에서 벗어났습니다.','sys')}});
+// 빈사 중에는 싸울 수 없다: 공격·초식·필살·특기·보법·경공을 막는다
+{const block=name=>{const o=window[name];if(typeof o!=='function')return;window[name]=function(...a){if(P&&P.binsa){if(time-(P.binsaMsg||-9)>2){P.binsaMsg=time;log('빈사 상태라 싸울 수 없습니다. 물러나 운기조식을 하십시오.','info')}return false}return o.apply(this,a)}};
+  ['basicStrike','autoAttack','useForm','ultimate','special','bobeop','leap'].forEach(block)}
+hook('loadRegion',()=>{if(P&&P.binsa)P.binsa.t=time});
