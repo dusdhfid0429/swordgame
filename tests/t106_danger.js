@@ -51,6 +51,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     hurtP(500,e);Math.random=R;const r={hp:P.hp,b:!!P.binsa,play:playing,ag:e.aggro,lost:e.lost>time,inv:P.inv>0,sp:moveSpd()/sp0,hpt:$('hpt').textContent};
     P.fcd=P.fcd.map(()=>0);P.gcd=0;r.form=useForm(0,true);hud();r.hpt=$('hpt').textContent;return r});
   ok(`빈사: 생명 ${s.hp}, 빈사 ${s.b}, 살아 있음 ${s.play}, 적 물러섬 ${!s.ag&&s.lost}, 잠깐 무적 ${s.inv}, 기는 속도 ${s.sp.toFixed(2)}, 초식 막힘 ${s.form===false}, "${s.hpt}"`,s.hp===1&&s.b&&s.play&&!s.ag&&s.lost&&s.inv&&s.sp<.5&&s.form===false&&/빈사/.test(s.hpt));
+  // 회복약으로 채워도 운기조식 전에는 빈사 그대로
+  s=await p.evaluate(()=>{mobs.length=0;P.hp=P.maxHp*.8;P.medit=false;time+=.05;runHooks('tick',.05);const b=!!P.binsa;P.hp=1;return{b}});
+  ok(`회복약으로 채워도 운기조식 전엔 빈사 ${s.b}`,s.b);
   s=await p.evaluate(()=>{mobs.length=0;P.inv=0;P.lastHit=5;P.medit=true;let t=0;while(P.binsa&&t<120){time+=.05;t+=.05;P.lastHit+=.05;update(.05);P.medit=true}
     return{b:!!P.binsa,hp:P.hp/P.maxHp,t,log:document.body.innerText.includes('빈사에서 벗어났습니다')}});
   ok(`운기조식 ${s.t.toFixed(1)}초 만에 생명 ${(s.hp*100).toFixed(0)}% → 빈사 벗어남 ${!s.b}`,!s.b&&s.hp>=.3&&s.log);

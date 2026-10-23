@@ -65,7 +65,8 @@ hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
 // 사용자 2026-10-23: "빈사 상태를 넣어서 남은 hp가 0이 되면 1이 남게 되고, 운기조식으로 회복하면 빈사 상태를 벗어나게 (블레이드앤소울1)".
 // 블소1(2011 CBT)의 탈진: 생명이 바닥나면 기어서 안전한 곳까지 물러나고, 운기조식으로 회복한다. 운기조식 중 공격당하면 사망.
 // 여기서는: 생명이 0이 되면 1로 버티며 빈사에 든다(그 순간 잠깐 무적, 나를 노리던 적은 잠시 물러선다). 빈사 중에는 기어서만 움직이고 싸울 수 없다.
-// 빈사 중 또 맞아 0이 되면 쓰러진다. 운기조식으로 생명이 DANGER.binsa.out 까지 차면 벗어난다(회복약으로 채워도 벗어난다: 심법이 없어 운기를 못 하는 사람).
+// 빈사 중 또 맞아 0이 되면 쓰러진다. 운기조식 중에 생명이 DANGER.binsa.out 이상이면 벗어난다 (사용자: 운기조식으로만 풀린다. 회복약은 생명만 채운다).
+// 심법이 없어 운기조식을 못 하는 사람(무관 초반)도 빈사 중에는 앉아 기혈을 고를 수 있게 한다 (내공은 차지 않는다: qiRegen 이 심법을 본다).
 // 생사경이 버텨 주는 해(g_beyond.js 'lethal')와 비무(G.duel)는 그쪽이 먼저다.
 const BS=DG.binsa;
 hook('lethal',()=>{if(P.hp>0||P.binsa||G.duel)return;
@@ -78,8 +79,10 @@ hook('tick',dt=>{if(!P||!P.binsa)return;
   if(P.hp<=0){P.binsa=null;return}
   // 빈사 중 운기조식은 생명을 더 빨리 되찾는다 (g_life.js 의 평소 회복에 (heal-1)배를 더한다)
   if(P.medit&&P.lastHit>4)P.hp=Math.min(P.maxHp,P.hp+(1+P.st.qi*.2)*3*(BS.heal-1)*dt);
-  if(P.hp>=P.maxHp*BS.out){P.binsa=null;addText(P.x,P.y-.5,'회복','#9fe0a0');log('기혈이 돌아와 빈사에서 벗어났습니다.','sys')}});
+  if(P.medit&&P.hp>=P.maxHp*BS.out){P.binsa=null;addText(P.x,P.y-.5,'회복','#9fe0a0');log('기혈이 돌아와 빈사에서 벗어났습니다.','sys')}});
 // 빈사 중에는 싸울 수 없다: 공격·초식·필살·특기·보법·경공을 막는다
 {const block=name=>{const o=window[name];if(typeof o!=='function')return;window[name]=function(...a){if(P&&P.binsa){if(time-(P.binsaMsg||-9)>2){P.binsaMsg=time;log('빈사 상태라 싸울 수 없습니다. 물러나 운기조식을 하십시오.','info')}return false}return o.apply(this,a)}};
   ['basicStrike','autoAttack','useForm','ultimate','special','bobeop','leap'].forEach(block)}
 hook('loadRegion',()=>{if(P&&P.binsa)P.binsa.t=time});
+{const o=meditate;meditate=function(){if(P&&P.binsa&&!P.medit&&typeof simCur==='function'&&simCur().none){
+  if(inCombat()){log('싸움 중에는 운기조식을 할 수 없습니다.','info');return}P.path=null;P.target=null;P.medit=true;log('빈사: 앉아 기혈을 고른다. 생명이 돌아오면 빈사에서 벗어난다.','info');return}return o()}}
