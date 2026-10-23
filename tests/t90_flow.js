@@ -24,6 +24,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r3=await p.evaluate(()=>{P.age=70.2;P.taught=70;const k0=sectMissions(SECTS.hwasan)[0].key;P.ban={from:70,yrs:45};P.age=25.2;
     return{real:Math.floor(realAge()),key:sectMissions(SECTS.hwasan)[0].key===k0,can:P.taught<Math.floor(realAge()),stage:lifeStage()}});
   ok(`반로환동 뒤 살아온 해 ${r3.real}, 임무 키 그대로 ${r3.key}, 그해 전수 막힘 유지 ${!r3.can}, 생애 단계 ${r3.stage}`,r3.real===70&&r3.key&&!r3.can);
+  // 3b. '올해는 이미 배웠다'에 다음 가르침까지 남은 분을 함께 보인다
+  const r3b=await p.evaluate(()=>{P.ban=null;P.age=30.5;P.taught=30;const h=teachHtml();return{h:h.includes('올해는 이미 배웠다 (다음 가르침까지 약 15분)'),w:teachWait()}});
+  ok(`가르침 대기 표시 ${r3b.h}, 남은 분 ${r3b.w}`,r3b.h&&r3b.w===15);
   // 4. 10번 사건 '몸을 피한다': 결전 임무·습격이 오지 않는다. '앞장선다': 내 편 +10
   const r4=await p.evaluate(()=>{P.ban=null;P.age=27;P.quests=[];mobs=[];P.sect='hwasan';const s=PS();s.flag={hide:true};
     G.war={life:P.lifeNo,y:Math.floor(G.cal),plan:warPlan(),round:0,rounds:[],won:null};const me=mySide();warRound();const q=P.quests.some(q=>q.war),raid=mobs.some(m=>m.raid);
