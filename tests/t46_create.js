@@ -7,7 +7,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 하승 검 무공 다섯을 숙련 100으로 만들고 화산파 본산으로 간다
-  const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.arts['정검4'].p=99;const gLow=mkGroups().length;P.arts['정검4'].p=100;P.cur='정검0';P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;
+  const s0=await p.evaluate(()=>{for(let i=0;i<5;i++){const id=ARTS['정검'+i].id;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.arts[ARTS['정검4'].id].p=99;const gLow=mkGroups().length;P.arts[ARTS['정검4'].id].p=100;P.cur=ARTS['정검0'].id;P.wis=20;P.sect='hwasan';P.mtot={hwasan:0};P.realm=0;P.vit=800;P.silver=500;
     const g0=mkGroups();openTrain();const h0=TRN.innerText;postGo('hq_hwasan');return{g0:g0.map(g=>g.cls+g.g+':'+g.ids.length),gLow,h0:h0.includes('무공 창안')}});
   await p.waitForTimeout(1500);
   const s1=await p.evaluate(()=>{mobs=[];openTrain();   // 본산에 내려선 뒤 다가온 무인이 있으면 '싸움 중'으로 막힌다 (CI에서 가끔)
@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r=await p.evaluate(()=>{window.__noPrompt=1;const age=P.age,vit=P.vit,R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R};return{age,vit,busy:trnBusy&&trnBusy.k}});
   await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
   const d=await p.evaluate(()=>{window.__restore();const id=Object.keys(P.arts).find(k=>k.startsWith('mk_')),a=ARTS[id];
-    return{id,n:a&&a.n,g:a&&a.grade,nf:a&&a.forms.length,open:P.arts[id]&&P.arts[id].f.every(Boolean),p:P.arts[id]&&P.arts[id].p,left:['정검0','정검1','정검2','정검3','정검4'].filter(k=>P.arts[k]).length,age:P.age,vit:P.vit,qi:P.qi,maxQi:P.maxQi,cur:P.cur,
+    return{id,n:a&&a.n,g:a&&a.grade,nf:a&&a.forms.length,open:P.arts[id]&&P.arts[id].f.every(Boolean),p:P.arts[id]&&P.arts[id].p,left:['정검0','정검1','정검2','정검3','정검4'].filter(k=>P.arts[ARTS[k].id]).length,age:P.age,vit:P.vit,qi:P.qi,maxQi:P.maxQi,cur:P.cur,
       m0:a&&a.forms[0].m,ult:a&&a.ult.n,made:G.made&&Object.keys(G.made).length,log:logHist.slice(-1).map(l=>l.t||l)[0]}});
   ok(`창안 [${d.n}] ${AGRN(d.g)} 초식 ${d.nf}(모두 열림 ${d.open}, 숙련 ${d.p}) 필살기 ${d.ult} · 재료 남음 ${d.left} · 나이 +${(d.age-r.age).toFixed(1)} 활력 -${r.vit-d.vit} 내공 ${d.qi} · 펼치는 중 ${d.cur}`,
     d.id==='mk_1'&&d.g===1&&d.nf===6&&d.open&&d.p===30&&d.left===0&&Math.abs(d.age-r.age-2)<.1&&r.vit-d.vit===100&&d.qi<d.maxQi*.3&&d.cur==='mk_1'&&d.made===1);
@@ -32,7 +32,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const rg=await p.evaluate(()=>{const before=SECTS.hwasan.arts.some(q=>q.id==='mk_1');sectAct('mkteach','mk_1');return{before,inList:SECTS.hwasan.arts.some(q=>q.id==='mk_1'),sect:ARTS.mk_1.sect,cost:meritCost({id:'mk_1'},0),d:ARTS.mk_1.d}});
   ok(`창안 직후 미등록 ${!rg.before} → 전수하면 화산파 목록 등록 ${rg.inList} (sect ${rg.sect}, 비급 공적 ${rg.cost}) · ${rg.d.slice(-12)}`,!rg.before&&rg.inList&&rg.sect==='hwasan'&&rg.cost>0&&/전해진다/.test(rg.d));
   // 같은 구성으로 다시 창안하면 새것이 갈음한다
-  await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id='정검'+i;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R}});
+  await p.evaluate(()=>{closePanels();for(let i=0;i<5;i++){const id=ARTS['정검'+i].id;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.vit=800;P.inj=0;const R=Math.random;Math.random=()=>0;startTrain('mk:검:0');window.__restore=()=>{Math.random=R}});
   await p.waitForFunction(()=>!trnBusy,null,{timeout:60000});await p.waitForTimeout(200);
   const rp=await p.evaluate(()=>{window.__restore();sectAct('mkteach','mk_2');return{k1:G.made.mk_1.key,k2:G.made.mk_2&&G.made.mk_2.key,r1:G.made.mk_1.reg,r2:G.made.mk_2&&G.made.mk_2.reg,l1:SECTS.hwasan.arts.some(q=>q.id==='mk_1'),l2:SECTS.hwasan.arts.some(q=>q.id==='mk_2'),keep:!!P.arts.mk_1}});
   ok(`같은 구성(${rp.k1===rp.k2}) → mk_1 등록 ${rp.r1}·목록 ${rp.l1}, mk_2 등록 ${rp.r2}·목록 ${rp.l2}, 익힌 mk_1은 남음 ${rp.keep}`,rp.k1===rp.k2&&rp.r1===0&&rp.r2===1&&!rp.l1&&rp.l2&&rp.keep);

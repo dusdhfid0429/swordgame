@@ -38,13 +38,23 @@ function addSectArts(arts,pool,ults,formName,ultName){
     const pick=pickForms(pool[a.cls],r,k);
     // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
     const st=START[s.id],g=!a.hi&&st&&st.art===a.n?0:sectGrade(s,a.hi),mul=GMUL[g];
-    const forms=pick.map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
+    const off=OFFICIAL[a.n];   // 이름난 무공(양의검법 등)은 정해진 초식 이름을 쓴다. formName()은 그대로 불러 다른 무공의 초식 이름이 밀리지 않게 한다
+    const forms=pick.map((f,i)=>({...f,n:(n=>off&&off.forms[i]||n)(formName()),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];
     arts[a.id]=artFx({id:a.id,side,cls:a.cls,el:a.el,n:a.n,forms,sect:s.id,hi:a.hi,
-      grade:g,ult:{n:ultName(),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
+      grade:g,ult:{n:(n=>off?off.ult:n)(ultName()),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
       d:`${s.n}(${tierName(s)})의 ${AGR[g]} ${a.hi?'고급':'일반'} 무공 · ${CLASS[a.cls].n}. 초식 ${forms.length}개와 필살기.`});
   }
+  linkSameArts(arts);
 }
+// 같은 이름의 무공은 하나다 (사용자 2026-10-23): 정·사 계열 기본 무공(정도0 등)이 문파 무공(하북팽가 오호단문도 등)과 이름·성향·병기가 같으면
+// 문파 무공이 진짜다(고급 무공과 겹치던 기본 무공 태극혜검은 태청검법으로 이름을 바꿨다: 아무 데서나 절정 비급이 나오지 않게). 기본 번호는 문파 무공을 가리키는 별칭이 되어(열거되지 않게) 비급·무관·전리품이 모두 문파 무공 하나로 모인다.
+function linkSameArts(arts){
+  const sect={};for(const a of Object.values(arts))if(a.sect)sect[a.side+a.cls+a.n]=a;
+  for(const id of Object.keys(arts)){const a=arts[id],s=!a.sect&&!a.base&&sect[a.side+a.cls+a.n];
+    if(s)Object.defineProperty(arts,id,{value:s,enumerable:false,configurable:true,writable:true})}}
+// 별칭 번호 → 진짜 번호 (저장 옮기기에서 쓴다)
+const artAliases=()=>{const m={};for(const id of Object.getOwnPropertyNames(ARTS))if(ARTS[id]&&ARTS[id].id!==id)m[id]=ARTS[id].id;return m};
 // ---- 가입 조건 ----
 // 성향 문: 정의맹은 정파, 사천맹은 사파만. 마교는 정·사를 가리지 않는다 (사용자 2026-10-15 v102 "정파여도 마교에 가입할 수 있게").
 const sideOk=al=>al==='magyo'||P.side===ALLY[al].side;
@@ -96,7 +106,7 @@ function sectDetail(s,hq){
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   // 지난해에 맡아 아직 들고 있는 임무도 보고할 수 있다 (해가 바뀌어도 임무는 사라지지 않는다)
   const mis=same?missionRows(sectMissions(s),{take:qi=>'stake:'+s.id+':'+qi,lbl:'공적'}):'',old=same?oldMissionRows(q=>q.sect===s.id,sectMissions(s),'공적'):'';
-  const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}${donateHtml(s)}${gycSectHtml(s)}`
+  const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${rankHtml(s)}${typeof mobilHtml==='function'?mobilHtml(s):''}${donateHtml(s)}${gycSectHtml(s)}`
     :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}${!jb&&typeof sangongTxt==='function'&&startSet(s).sim?` <b class="bad">${sangongTxt(SIM[startSet(s).sim].sc)}</b>`:''}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${garbHtml(s)}
