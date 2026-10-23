@@ -192,6 +192,7 @@ function spawnTick(){
 //  giyeon(c) / giyeonDone(c)    기연. c.done=true면 기본 기연을 건너뛴다
 //  useCon(c)     먹는 것. c.done=true면 기본 처리를 건너뛴다
 //  panelOpen(id) 창을 연 뒤
+//  allyTick(a,dt) / allyDown(a)  동료 한 프레임 전 / 동료가 쓰러진 뒤 (a.hp<=0으로 만들면 그 프레임은 건너뛴다)
 //  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
 //  glFx(o,X)     무공 이펙트 하나를 fx에 넣은 뒤 (X: 무공, 경지 효과 등은 없음). 속성 재질을 덧입힌다 (r_elfx.js)
 const HOOKS={};
@@ -373,7 +374,7 @@ function tame(e){
 }
 function mkAlly(kind,k,x,y){
   if(kind==='pet'){const d=MOBS[k];return{kind,k,d,name:k,x,y,hp:d.hp*1.2,maxHp:d.hp*1.2,atk:d.atk||4,sp:d.sp,reach:1.2,age:R1(1,4),life:d.life,mode:'follow',cd:0,hit:0,fx:1,fy:1,moving:false,bob:Math.random()*6,swing:0}}
-  return{kind:'disciple',k:'제자',d:{pal:'disciple'},name:k,x,y,lv:1,xp:0,hp:120,maxHp:120,atk:9,sp:2.6,reach:1.3,mode:'follow',cd:0,hit:0,fx:1,fy:1,moving:false,bob:Math.random()*6,swing:0,wind:0};
+  return{kind:kind==='sect'?'sect':'disciple',k:'제자',d:{pal:'disciple'},name:k,x,y,lv:1,xp:0,hp:120,maxHp:120,atk:9,sp:2.6,reach:1.3,mode:'follow',cd:0,hit:0,fx:1,fy:1,moving:false,bob:Math.random()*6,swing:0,wind:0};
 }
 function discipleXp(a,v){a.xp+=v;if(a.xp>=a.lv*6){a.xp=0;a.lv++;a.maxHp+=30;a.hp=a.maxHp;a.atk+=3;gainVit(15);P.fame+=1;log(`제자 ${a.name}이(가) ${a.lv}단계로 성장했습니다. 사부로서 활력 +15`,'xp')}}
 

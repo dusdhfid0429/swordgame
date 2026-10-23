@@ -162,9 +162,9 @@ function updateEprojs(dt){
   eprojs=eprojs.filter(q=>q.left>0);
 }
 // ================= companions: tamed beasts and disciples =================
-function hurtAlly(a,dm){if(a.hp<=0||a===P.ride)return;a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1)}}
+function hurtAlly(a,dm){if(a.hp<=0||a===P.ride)return;a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1);runHooks('allyDown',a)}}
 function updateAlly(a,dt){
-  if(a.hp<=0||a===P.ride)return;a.hit=Math.max(0,a.hit-dt);if(a.swing>0&&a.swing<=dt)a.rec=.22;a.swing=Math.max(0,(a.swing||0)-dt);a.rec=Math.max(0,(a.rec||0)-dt);a.cd-=dt;
+  if(a.hp<=0||a===P.ride)return;runHooks('allyTick',a,dt);if(a.hp<=0)return;a.hit=Math.max(0,a.hit-dt);if(a.swing>0&&a.swing<=dt)a.rec=.22;a.swing=Math.max(0,(a.swing||0)-dt);a.rec=Math.max(0,(a.rec||0)-dt);a.cd-=dt;
   if(a.mode==='wait'){a.moving=false;a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.04*dt);return}
   a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.004*dt);
   let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
@@ -335,7 +335,7 @@ function saveGame(silent){
   if(!P)return;
   try{
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
-    const data={v:SAVE_VER,t:Date.now(),G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode})),
+    const data={v:SAVE_VER,t:Date.now(),G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode,...(a.kind==='sect'?{pal:a.pal,sect:a.sect,rank:a.rank,realm:a.realm,elite:a.elite,left:a.left,def:a.def,reach:a.reach,sp:a.sp}:{})})),
       plots:(GAE_PLOTS||plots).map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
     STORE.set(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
   }catch(e){}
@@ -348,6 +348,6 @@ function applySave(data){data=migrateSave(data);
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     // 시계(time)는 새로 시작하므로 지난 판의 시각이 적힌 연출 상태는 버린다. 안 버리면 회피 도트(P.dA)·보법 도트(P.bA)에 갇혀 이동 모션이 안 나오고 '장 번호 없음' 경고가 이어진다 (사용자 보고 2026-10-12)
     P.dA=0;P.bA=null;P.ggc=null;P.ggSpd=null;P.ss2=0;P.ssh=null;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
-    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);return Object.assign(a,s)});recalc();afterLoad(data);return true}
+    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);Object.assign(a,s);if(a.pal)a.d={pal:a.pal};return a});recalc();afterLoad(data);return true}
   return false;
 }
