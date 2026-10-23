@@ -8966,7 +8966,7 @@ function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s
   if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
 box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
 // 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
-const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move']);
+const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move','blade']);
 function onClick(ev){const b=ev.target.closest('button[data-a]');if(!b||!P)return;const[k,v,w]=b.dataset.a.split(':');
   if(k==='drawer'){drawer(v,w==null?null:w==='1');return}
   if(PLAYK.has(k)&&narrow())drawer('l',false);
