@@ -276,14 +276,16 @@ function draw(){
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center';
+  runHooks('drawTop');   // 화면 위 표시: 적의 공격 예고 (g_danger.js)
   drawGateHold();
   for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;p.y-=t.z||0;ctx.globalAlpha=Math.min(1,t.life*2);
-    const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
+    const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':t.big?'bold 22px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
   ctx.globalAlpha=1;
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;
     const mx=((m.x%1)+1)%1*W,my=m.y*H;if(dark>.3){ctx.fillStyle=`rgba(210,255,140,${(.35+.35*Math.sin(time*3+m.p))*dark})`;ctx.fillRect(mx,my,1.8*m.s,1.8*m.s)}
     else if(sea==='봄'||sea==='가을'){ctx.fillStyle=sea==='봄'?'rgba(245,200,215,.7)':'rgba(220,130,50,.7)';ctx.beginPath();ctx.ellipse(mx,my,2.6*m.s,1.3*m.s,time*2+m.p,0,7);ctx.fill()}}
   ctx.drawImage(vignette(),0,0,W,H);
+  runHooks('drawHud');   // 가장자리 붉은 번쩍임·빈사 박동 (g_danger.js)
 }
 // 화면 가장자리 어둡게: 크기가 바뀔 때만 다시 그린다 (매 프레임 화면 전체 방사형 그라디언트가 5ms쯤 들었다)
 let VIG=null;

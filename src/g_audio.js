@@ -76,6 +76,8 @@ function sfx(k,o={}){
       [1900,2850,4100].forEach((f,i)=>tone(D,t+.01,f,'sine',.08*v/(i+1),.002,.5,f*.99));break;
     case'miss':noise(D,t,.12*v,.01,.12,'highpass',2000,900);break;
     case'hurt':tone(D,t,95,'sine',.6,.003,.2,45);noise(D,t,.3,.002,.14,'lowpass',1400,300);tone(D,t,220,'sawtooth',.06,.01,.12,140);break;
+    // v172 빈사 심장 소리: 두 번 뛰는 낮은 박동 (g_danger.js)
+    case'heart':tone(D,t,58,'sine',.55*v,.004,.13,38);tone(D,t+.17,52,'sine',.38*v,.004,.15,34);break;
     case'dodge':noise(D,t,.16,.02,.16,'bandpass',1500,3500,1.5);break;
     case'kill':tone(D,t,200,'triangle',.3*v,.005,.35,55);noise(D,t+.05,.2*v,.01,.3,'lowpass',700,120);break;
     case'form':{const f=o.f||660;noise(D,t,.3,.01,.2,'bandpass',3000,900,1.4);tone(D,t,f,'sine',.12,.005,.4,f*1.5);tone(D,t+.06,f*1.5,'sine',.07,.005,.35);break}

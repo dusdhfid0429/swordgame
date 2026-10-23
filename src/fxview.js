@@ -127,10 +127,17 @@ function leapFx(st){place();ggInit();P.gk=P.gk||{};for(const id in GGS)P.gk[id]=
 function bobFx(t){place();bobInit();const id=Object.keys(BOBS).filter(k=>BOBS[k].t===t).sort((a,b)=>BOBS[b].g-BOBS[a].g)[0];if(!id)return;
   P.bob[id]=1;P.bcur=id;if(t==='flank'){const g=BG.fail[BOBS[id].g];BG.fail[BOBS[id].g]=0;P.target=tgt();bobeop();BG.fail[BOBS[id].g]=g}else{face(P.x-1,P.y);bobeop()}}
 function spec(k){place();if(k==='점혈'){const e=tgt();P.x=e.x;P.y=e.y+1.4;P.target=e}P.sp=P.sp||{};P.sp[k]=1;P.scd[k]=0;P.mats.비도=9;special(k)}
+// v172 피격·빈사 알림 (g_danger.js): 뷰어의 주인공은 다치지 않으므로 맞은 셈을 치고, 목인장이 칠 준비를 하는 셈을 친다
+function hitDemo(k){const dm=Math.max(1,Math.round(P.maxHp*k)),hp0=P.hp;P.hp=Math.max(1,P.hp-dm);P.hit=.2;shake=.12;addText(P.x,P.y,dm,'#e0675a');sfx('hurt');runHooks('hurtDone',{src:{},dm,hp0})}
+function windDemo(l){place();const e=tgt();e.dngDemo=1;e.dngL=l;e.wind=.4}
+hook('mobTick',e=>{if(e.dngDemo&&e.wind>0)e.stun=0});   // 목인장은 늘 기절해 있다(g_academy.js): 칠 준비하는 동안만 풀어 둔다
+hook('tick',dt=>{for(const m of mobs)if(m.dngDemo&&m.wind>0){m.wind-=dt;if(m.wind<=0){m.wind=0;m.swing=.24;hitDemo(m.dngL?.4:.1)}}});
 const MOVE=[
   ['경공 1단',()=>leapFx(1)],['경공 2단',()=>leapFx(2)],['경공 3단',()=>leapFx(3)],
   ['보법 · 직선',()=>bobFx('line')],['보법 · 간파 (등 뒤)',()=>bobFx('flank')],
   ['암기 (비도)',()=>spec('암기')],['독공',()=>spec('독공')],['점혈',()=>spec('점혈')],
+  ['피격 번쩍임 (보통)',()=>hitDemo(.08)],['피격 번쩍임 (큰 피해)',()=>hitDemo(.3)],
+  ['적 공격 예고 !',()=>windDemo(0)],['적 공격 예고 !! (맞으면 쓰러짐)',()=>windDemo(1)],['빈사 위험 박동',()=>{dngDemo=3}],
   ['두목 내려찍기',()=>{const c=at();fx.push({t:'warn',x:c.x,y:c.y,r:2,life:1.1,max:1.1});later(1.1,()=>{fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35)})}],
 ];
 

@@ -14,9 +14,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const tabs=await p.$$eval('#fxv button[data-a^="tab:"]',l=>l.map(x=>x.dataset.a));let n=0,made=0;
     for(const t of tabs){await cl(`#fxv button[data-a="${t}"]`);
       const acts=await p.$$eval('#fxv .body button[data-a]',l=>l.map(x=>x.dataset.a).filter(a=>!a.startsWith('cls:')&&a!=='all'));
-      for(const a of acts){await p.evaluate(()=>{fx=[];projs=[];TFX=[];sched=[];P.medit=P.qiTraining=false});
+      for(const a of acts){await p.evaluate(()=>{fx=[];projs=[];TFX=[];sched=[];P.medit=P.qiTraining=false;dngF=dngDemo=0});   // v172: 피격·빈사 단추는 dngF·dngDemo·목인장 wind 로 본다
         await cl(`#fxv button[data-a="${a}"]`);await p.waitForTimeout(60);
-        const after=await p.evaluate(()=>fx.length+projs.length+TFX.length+(P.medit||P.qiTraining?1:0)+(P.leap?1:0)+sched.length);n++;if(after>0||a==='med:0')made++;else console.log('  변화 없음: '+a);
+        const after=await p.evaluate(()=>fx.length+projs.length+TFX.length+(P.medit||P.qiTraining?1:0)+(P.leap?1:0)+sched.length+(dngF>0||dngDemo>0?1:0)+(mobs.some(m=>m.dngDemo&&m.wind>0)?1:0));n++;if(after>0||a==='med:0')made++;else console.log('  변화 없음: '+a);
         drift=Math.max(drift,await p.evaluate(c=>Math.hypot(cam.x-c.x,cam.y-c.y),cam0));await p.waitForTimeout(240)}}
     ok(`${vp.width}px: 재생해도 카메라가 움직이지 않는다 (${drift.toFixed(2)})`,drift<.01);
     ok(`${vp.width}px: 단추 ${n}개 중 ${made}개가 이펙트를 냈다`,n>30&&made===n);
