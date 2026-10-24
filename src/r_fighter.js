@@ -6,7 +6,7 @@ function drawFighter(e,isP){
   const jump=isP&&P.jump>0?Math.sin((1-P.jump/.35)*Math.PI)*28:0;
   ctx.save();ctx.translate(p.x,p.y);
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
-  if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
+  // v172: 칠 준비 고리는 g_danger.js drawTop 이 나를 노리는 치명 공격에만 그린다 (사용자 2026-10-24: 몹끼리 싸울 때는 없어야)
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
   if(isP&&heroSprite()){let[fi,useB,lk,a2,sh]=heroFrame(),f=sh?SHEETS[sh].frames[fi]:a2?HF2[fi]:HF[fi];
     // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
