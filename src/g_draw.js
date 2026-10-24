@@ -38,7 +38,7 @@ function drawBeast(e){
   if(e===P.ride)return;
   ctx.save();ctx.translate(p.x,p.y);
   ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,0,b.rx*s*1.1,5*s,0,0,7);ctx.fill();
-  if(e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*s,TH/2*s,0,0,7);ctx.stroke()}
+  // v172: 칠 준비 고리는 나를 노리는 치명 공격에만 (g_danger.js drawTop). 몹끼리 싸울 때·쓰러진 몹에는 없다 (사용자 2026-10-24)
   ctx.scale(side*s,s);
   // 공격: 예비에 움츠렸다가 휘두를 때 앞으로 덮친다. 피격은 눌린다 (r_anim.js)
   {const sw=e.swing||0,pr=sw>0?1-sw/.24:0,lunge=sw>0?Math.sin(pr*Math.PI):0,crouch=e.wind>0&&sw<=0?.5+.5*Math.sin(time*18):0;
@@ -122,6 +122,7 @@ function drawDrop(d){
 function drawGiyeon(g){const p=toScreen(g.x,g.y),k=.6+.4*Math.sin(time*5);glowDot(p.x,p.y-20,46,'255,225,140',k);
   ctx.strokeStyle=`rgba(255,240,190,${k})`;ctx.lineWidth=1.5;for(let i=0;i<5;i++){const a=time*2+i*1.26;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*8,p.y-20+Math.sin(a)*5);ctx.lineTo(p.x+Math.cos(a)*16,p.y-30+Math.sin(a)*8);ctx.stroke()}}
 function drawFx2(f){
+  if(f.t==='warn'&&f.src&&!warnShow(f))return;
   if(f.t==='warn'){const p=toScreen(f.x,f.y),k=1-f.life/f.max,[rx,ry]=isoR(f.r);ctx.fillStyle=`rgba(220,40,30,${.12+.2*k})`;ctx.beginPath();ctx.ellipse(p.x,p.y,rx*k,ry*k,0,0,7);ctx.fill();
     ctx.strokeStyle=`rgba(255,80,60,${.5+.4*Math.sin(time*25)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,rx,ry,0,0,7);ctx.stroke();return}
   drawFx(f);
