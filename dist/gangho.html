@@ -1586,7 +1586,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   // telegraphed heavy move for bosses and duelists
   if(d.boss||e.duel||d.elite){e.skT-=dt;if(e.skT<=0&&dd<6&&!e.wind){e.skT=5+Math.random()*3;mobFormCall(e);
     if(d.ranged||(e.duel&&e.d.ranged)){for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:'255,200,140'})}}
-    else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1})}}}
+    else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1,src:e})}}}   // src: 나에게 닿을 내려찍기만 보인다 (g_danger.js warnShow)
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35);
     if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
@@ -2707,7 +2707,7 @@ function drawFighter(e,isP){
   const jump=isP&&P.jump>0?Math.sin((1-P.jump/.35)*Math.PI)*28:0;
   ctx.save();ctx.translate(p.x,p.y);
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
-  if(!isP&&e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*sc,TH/2*sc,0,0,7);ctx.stroke()}
+  // v172: 칠 준비 고리는 g_danger.js drawTop 이 나를 노리는 치명 공격에만 그린다 (사용자 2026-10-24: 몹끼리 싸울 때는 없어야)
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
   if(isP&&heroSprite()){let[fi,useB,lk,a2,sh]=heroFrame(),f=sh?SHEETS[sh].frames[fi]:a2?HF2[fi]:HF[fi];
     // 안전망: 잘못된 장 번호(예전 저장의 공격 세트 등)면 기본 서기 장으로 그리고 한 번만 알린다
@@ -8556,7 +8556,12 @@ function hitEst(e,base){
   if(r>=8)dm*=1-BEY.jayeon.cut;
   if(e.d&&hsCut()>0&&!P.hsBrk)dm-=Math.min(dm*hsCut(),Math.max(0,P.qi)/hsQi());
   return Math.max(1,Math.round(dm*(1-guard())))}
-const dngAimsP=e=>e.hp>0&&(e.dngDemo||e.aggro&&(!e.tgt||e.tgt===P)&&(e.d.fac?mobFoeP(e):e.d.hostile));   // dngDemo: 이펙트 뷰어의 목인장
+// 나를 노리는 적만: 살아 있고, 나에게 적대하고, 실제 과녁이 나(e.tgt 가 없거나 나)인 몹. 다른 몹과 싸우는 몹은 빠진다 (사용자 2026-10-24)
+const dngAimsP=e=>e.hp>0&&!e.dead&&(e.dngDemo||e.aggro&&(!e.tgt||e.tgt===P)&&(e.d.fac?mobFoeP(e):e.d.hostile));   // dngDemo: 이펙트 뷰어의 목인장
+// 바닥의 빨간 경고원(두목·정예의 내려찍기): 내려찍기가 나에게 닿을 때만 보이고, 내려찍던 몹이 쓰러지거나 내려찍기가 끝나면 사라진다 (사용자 2026-10-24)
+const slamHitsP=e=>e.hp>0&&!e.dead&&e.slam>0&&!!e.slamAt&&(e.d.fac?mobFoeP(e):e.d.hostile)&&!P.perch&&dist(P,e.slamAt)<2.4;
+function warnShow(f){if(!P||P.hp<=0)return false;const e=f.src;if(e.hp<=0||e.dead||!(e.slam>0))f.life=0;return f.life>0&&slamHitsP(e)}
+{const off=e=>{if(e){e.wind=0;e.slam=0;e.dngL=e.dngS=0}};hook('kill',off);hook('mobKilled',off)}   // 쓰러진 몹(내가·몹이 쓰러뜨린)에 칠 준비가 남지 않게
 // 버티는 수(천마혈정·생사경)가 남아 있으면 '쓰러진다'고 하지 않는다
 const dngSaved=()=>!!P.chGuard&&!G.duel||ssReady();
 function dngScanMobs(){let top=0;const saved=dngSaved();
@@ -8594,7 +8599,7 @@ hook('drawHud',()=>{if(!P)return;
 // (사용자 2026-10-23: "모든 공격에 띄우지 말고 내가 죽을 수도 있는 공격에만"). 칠 준비는 0.4초뿐이라 0.2초마다 하는 훑기를 기다리지 않고 그 자리에서 어림한다
 hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
   for(const e of mobs){const sl=e.slam>0;if(!(e.wind>0||sl)||!dngAimsP(e))continue;
-    const lt=e.dngDemo?e.dngL:!saved&&(sl?hitEst(e,e.atk*1.6)>=P.hp&&dist(P,e.slamAt)<2.2:hitEst(e,e.atk)>=P.hp);if(!lt)continue;
+    const lt=e.dngDemo?e.dngL:!saved&&(sl?hitEst(e,e.atk*1.6)>=P.hp&&dist(P,e.slamAt)<2.2:(e.d.ranged||dist(e,P)<e.reach+.6)&&hitEst(e,e.atk)>=P.hp);if(!lt)continue;   // 닿지 않을 거리면 띄우지 않는다
     const p=toScreen(e.x,e.y),wm=e.d.boss?.5:.4,k=sl?1-e.slam/1.1:clamp(1-e.wind/wm,0,1),col='255,60,40';
     p.y-=e.z||0;
     if(!sl){const s=1.9-.9*k;ctx.strokeStyle=`rgba(${col},${.5+.5*k})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y,TW/2*s*.8,TH/2*s*.8,0,0,7);ctx.stroke()}
@@ -8667,7 +8672,7 @@ function drawBeast(e){
   if(e===P.ride)return;
   ctx.save();ctx.translate(p.x,p.y);
   ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,0,b.rx*s*1.1,5*s,0,0,7);ctx.fill();
-  if(e.wind>0){ctx.strokeStyle=`rgba(220,60,40,${.45+.4*Math.sin(time*30)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,TW/2*s,TH/2*s,0,0,7);ctx.stroke()}
+  // v172: 칠 준비 고리는 나를 노리는 치명 공격에만 (g_danger.js drawTop). 몹끼리 싸울 때·쓰러진 몹에는 없다 (사용자 2026-10-24)
   ctx.scale(side*s,s);
   // 공격: 예비에 움츠렸다가 휘두를 때 앞으로 덮친다. 피격은 눌린다 (r_anim.js)
   {const sw=e.swing||0,pr=sw>0?1-sw/.24:0,lunge=sw>0?Math.sin(pr*Math.PI):0,crouch=e.wind>0&&sw<=0?.5+.5*Math.sin(time*18):0;
@@ -8751,6 +8756,7 @@ function drawDrop(d){
 function drawGiyeon(g){const p=toScreen(g.x,g.y),k=.6+.4*Math.sin(time*5);glowDot(p.x,p.y-20,46,'255,225,140',k);
   ctx.strokeStyle=`rgba(255,240,190,${k})`;ctx.lineWidth=1.5;for(let i=0;i<5;i++){const a=time*2+i*1.26;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*8,p.y-20+Math.sin(a)*5);ctx.lineTo(p.x+Math.cos(a)*16,p.y-30+Math.sin(a)*8);ctx.stroke()}}
 function drawFx2(f){
+  if(f.t==='warn'&&f.src&&!warnShow(f))return;
   if(f.t==='warn'){const p=toScreen(f.x,f.y),k=1-f.life/f.max,[rx,ry]=isoR(f.r);ctx.fillStyle=`rgba(220,40,30,${.12+.2*k})`;ctx.beginPath();ctx.ellipse(p.x,p.y,rx*k,ry*k,0,0,7);ctx.fill();
     ctx.strokeStyle=`rgba(255,80,60,${.5+.4*Math.sin(time*25)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,rx,ry,0,0,7);ctx.stroke();return}
   drawFx(f);

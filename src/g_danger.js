@@ -16,7 +16,12 @@ function hitEst(e,base){
   if(r>=8)dm*=1-BEY.jayeon.cut;
   if(e.d&&hsCut()>0&&!P.hsBrk)dm-=Math.min(dm*hsCut(),Math.max(0,P.qi)/hsQi());
   return Math.max(1,Math.round(dm*(1-guard())))}
-const dngAimsP=e=>e.hp>0&&(e.dngDemo||e.aggro&&(!e.tgt||e.tgt===P)&&(e.d.fac?mobFoeP(e):e.d.hostile));   // dngDemo: 이펙트 뷰어의 목인장
+// 나를 노리는 적만: 살아 있고, 나에게 적대하고, 실제 과녁이 나(e.tgt 가 없거나 나)인 몹. 다른 몹과 싸우는 몹은 빠진다 (사용자 2026-10-24)
+const dngAimsP=e=>e.hp>0&&!e.dead&&(e.dngDemo||e.aggro&&(!e.tgt||e.tgt===P)&&(e.d.fac?mobFoeP(e):e.d.hostile));   // dngDemo: 이펙트 뷰어의 목인장
+// 바닥의 빨간 경고원(두목·정예의 내려찍기): 내려찍기가 나에게 닿을 때만 보이고, 내려찍던 몹이 쓰러지거나 내려찍기가 끝나면 사라진다 (사용자 2026-10-24)
+const slamHitsP=e=>e.hp>0&&!e.dead&&e.slam>0&&!!e.slamAt&&(e.d.fac?mobFoeP(e):e.d.hostile)&&!P.perch&&dist(P,e.slamAt)<2.4;
+function warnShow(f){if(!P||P.hp<=0)return false;const e=f.src;if(e.hp<=0||e.dead||!(e.slam>0))f.life=0;return f.life>0&&slamHitsP(e)}
+{const off=e=>{if(e){e.wind=0;e.slam=0;e.dngL=e.dngS=0}};hook('kill',off);hook('mobKilled',off)}   // 쓰러진 몹(내가·몹이 쓰러뜨린)에 칠 준비가 남지 않게
 // 버티는 수(천마혈정·생사경)가 남아 있으면 '쓰러진다'고 하지 않는다
 const dngSaved=()=>!!P.chGuard&&!G.duel||ssReady();
 function dngScanMobs(){let top=0;const saved=dngSaved();
@@ -54,7 +59,7 @@ hook('drawHud',()=>{if(!P)return;
 // (사용자 2026-10-23: "모든 공격에 띄우지 말고 내가 죽을 수도 있는 공격에만"). 칠 준비는 0.4초뿐이라 0.2초마다 하는 훑기를 기다리지 않고 그 자리에서 어림한다
 hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
   for(const e of mobs){const sl=e.slam>0;if(!(e.wind>0||sl)||!dngAimsP(e))continue;
-    const lt=e.dngDemo?e.dngL:!saved&&(sl?hitEst(e,e.atk*1.6)>=P.hp&&dist(P,e.slamAt)<2.2:hitEst(e,e.atk)>=P.hp);if(!lt)continue;
+    const lt=e.dngDemo?e.dngL:!saved&&(sl?hitEst(e,e.atk*1.6)>=P.hp&&dist(P,e.slamAt)<2.2:(e.d.ranged||dist(e,P)<e.reach+.6)&&hitEst(e,e.atk)>=P.hp);if(!lt)continue;   // 닿지 않을 거리면 띄우지 않는다
     const p=toScreen(e.x,e.y),wm=e.d.boss?.5:.4,k=sl?1-e.slam/1.1:clamp(1-e.wind/wm,0,1),col='255,60,40';
     p.y-=e.z||0;
     if(!sl){const s=1.9-.9*k;ctx.strokeStyle=`rgba(${col},${.5+.5*k})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y,TW/2*s*.8,TH/2*s*.8,0,0,7);ctx.stroke()}

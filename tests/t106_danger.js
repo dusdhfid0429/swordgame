@@ -30,6 +30,14 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const t2=await p.evaluate(()=>{__e.atk=1;P.hp=P.maxHp;dngScan=0;__e.aggro=true;runHooks('tick',.05);__e.aggro=true;const seen=[],f=ctx.fillText;ctx.fillText=function(x,...a){seen.push(x);return f.call(this,x,...a)};__e.wind=.2;draw();ctx.fillText=f;return{seen,lv:dngLvl}});
   ok(`쓰러지지 않을 공격에는 아무것도 띄우지 않고, 위험 풀림 (lv ${t2.lv})`,!t2.seen.includes('!')&&!t2.seen.includes('!!')&&t2.lv===0);
   await p.screenshot({path:shot('danger_warn')});
+  // 4b) 다른 몹과 싸우는 몹, 쓰러진 몹, 닿지 않는 몹에는 띄우지 않는다 (사용자 2026-10-24)
+  const t3=await p.evaluate(()=>{__e.atk=P.hp*10;const o=mkMob('산적',P.x+3,P.y);mobs.push(o);const look=()=>{const seen=[],f=ctx.fillText;ctx.fillText=function(x,...a){seen.push(x);return f.call(this,x,...a)};draw();ctx.fillText=f;return seen.includes('!!')};
+    __e.aggro=true;__e.tgt=o;__e.wind=.2;const other=look();__e.tgt=null;__e.x=P.x+4;__e.wind=.2;const far=look();__e.x=P.x+1;__e.wind=.2;__e.hp=0;const dead=look();__e.hp=__e.maxHp;__e.wind=.2;runHooks('mobKilled',__e,o);const w=__e.wind;mobs.splice(mobs.indexOf(o),1);return{other,far,dead,w}});
+  ok(`남과 싸우는 몹 ${t3.other}, 먼 몹 ${t3.far}, 쓰러진 몹 ${t3.dead} → 모두 안 띄움, 쓰러지면 칠 준비 지움 (${t3.w})`,!t3.other&&!t3.far&&!t3.dead&&t3.w===0);
+  // 4c) 바닥 경고원: 나에게 닿을 내려찍기만, 몹이 쓰러지면 사라진다
+  const t4=await p.evaluate(()=>{const e=__e,f={t:'warn',x:P.x+.5,y:P.y,r:2,life:1.1,max:1.1,src:e};e.slam=1;e.slamAt={x:P.x+.5,y:P.y};e.aggro=true;e.tgt=null;
+    const near=warnShow(f);e.slamAt={x:P.x+6,y:P.y};const far=warnShow(f);e.slamAt={x:P.x+.5,y:P.y};e.hp=0;const dead=warnShow(f),life=f.life;e.hp=e.maxHp;e.slam=0;return{near,far,dead,life}});
+  ok(`바닥 경고원: 내 자리 ${t4.near}, 먼 자리 ${t4.far}, 쓰러진 몹 ${t4.dead}(남은 시간 ${t4.life})`,t4.near&&!t4.far&&!t4.dead&&t4.life===0);
   // 5) 천마혈정·생사경처럼 버티는 수가 있으면 '쓰러진다'고 하지 않는다
   s=await p.evaluate(()=>{__e.atk=P.hp*10;P.chGuard=1;dngScan=0;__e.aggro=true;runHooks('tick',.05);const r={lv:dngLvl,L:__e.dngL};P.chGuard=0;return r});
   ok(`천마혈정이 있으면 위험 아님 (lv ${s.lv})`,s.lv!==2&&!s.L);
