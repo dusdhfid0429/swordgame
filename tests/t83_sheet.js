@@ -9,8 +9,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.waitForFunction(()=>typeof sheetOk==='function'&&sheetOk('act')&&sheetOk('actfx'),null,{timeout:10000});await p.waitForTimeout(200);
   // 1. 시트가 묶여 들어왔다: 147장 22클립, 장마다 같은 셀(186×348)·발 기준점(93,340), 무기 클립엔 손 소켓
   const s=await p.evaluate(()=>{const S=SHEETS.act,f=S.frames;return{n:f.length,clips:Object.keys(S.clips).length,canvas:f.every(x=>x.s[0]===186&&x.s[1]===348&&Math.abs(x.pv[1]*348-340)<.01),
-    sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:!!S.white,k:sheetK('act'),kStaff:sheetK('act',S.clips.staff_1.f[0])/sheetK('act'),kPunch:sheetK('act',S.clips.punches.f[0])/sheetK('act')}});
-  ok(`시트 ${s.n}장 ${s.clips}클립 · 같은 캔버스 ${s.canvas} · 창 클립 손 소켓 ${s.sock}장 · 맨손 클립 소켓 없음 ${s.noSock} · 번쩍 그림 ${s.white} · 배율 ${s.k.toFixed(3)}`,
+    sock:S.clips.spear_1.f.filter(i=>f[i].sk.hand).length,noSock:S.clips.punches.f.every(i=>!f[i].sk.hand),white:(()=>{const fr=f[S.clips.punches.f[0]],w=whiteRect(S.img,...fr.r);if(!w)return false;const d=w.getContext('2d').getImageData(0,0,w.width,w.height).data;let ok=true,n=0;for(let i=0;i<d.length;i+=4)if(d[i+3]>0){n++;if(d[i]<250||d[i+1]<250||d[i+2]<250)ok=false}return ok&&n>50&&whiteRect(S.img,...fr.r)===w})(),k:sheetK('act'),kStaff:sheetK('act',S.clips.staff_1.f[0])/sheetK('act'),kPunch:sheetK('act',S.clips.punches.f[0])/sheetK('act')}});
+  ok(`시트 ${s.n}장 ${s.clips}클립 · 같은 캔버스 ${s.canvas} · 창 클립 손 소켓 ${s.sock}장 · 맨손 클립 소켓 없음 ${s.noSock} · 번쩍 그림(장 하나만 흰색, 한 번 굽기) ${s.white} · 배율 ${s.k.toFixed(3)}`,
     s.n===147&&s.clips===22&&s.canvas&&s.sock>=5&&s.noSock&&s.white&&s.k>.4&&s.k<.55&&s.kStaff>1.05&&s.kStaff<1.2&&s.kPunch===1);
   // 2. (v167 공격은 이펙트 포함판 actfx) 맨손 공격은 시트 클립(punches/kicks/combo/palm_strikes)을 쓰고 heroFrame이 시트 이름을 돌려준다. 발차기 무공은 각 줄(kicks)
   const a=await p.evaluate(()=>{P.satk=0;P.runT=0;P.sj=0;const r={};heroAtk('flat',null);r.flat=[P.ssh,P.sset.join(','),heroFrame()];heroAtk('vert',null);r.vert=P.sset.join(',');heroAtk('palm',null);r.palm=P.sset.join(',');

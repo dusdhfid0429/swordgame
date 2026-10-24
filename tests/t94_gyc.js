@@ -17,7 +17,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`입구 ${r2.a} (목표에서 ${r2.d.toFixed(1)}칸) 걸을 수 있음 ${r2.w} · 다시 열어도 같음 ${r2.same}`,r2.w&&r2.same&&r2.g[0]===r2.a[0]+.5);
   // 3. 말풍선: 입구가 있는 맵 근처 성도 NPC 곁에 가면 소문을 흘리고 임무창에 남는다
   const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;NPCF=[{n:'나무꾼',x:P.x+1,y:P.y,npc:1,d:{pal:'npc'}}];
-    gycBT=0;for(const k in gycTalked)delete gycTalked[k];const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
+    gycBT=0;gycBub.length=0;for(const k in gycTalked)delete gycTalked[k];   // 앞서 저절로 뜬 말풍선(다른 소문)이 남아 있으면 그것을 읽게 된다
+    const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
     return{bub:gycBub.length&&gycBub[0].txt,heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
   ok(`말풍선 "${r3.bub}" · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,!!r3.bub&&r3.bub.includes(await p.evaluate(()=>REGIONS[G.gyc.list[0].host].name))&&/쪽에/.test(r3.bub)&&r3.heard===2&&r3.card.includes('기연 소문')&&r3.log>0);
   await p.waitForTimeout(200);await p.evaluate(()=>closePanels());await p.screenshot({path:shot('gyc_bubble')});

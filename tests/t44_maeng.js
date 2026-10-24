@@ -21,10 +21,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const m=await p.evaluate(()=>{const a={reg:REG,zone:REGION().zone(P.x,P.y)};
     const st=npcsOf('maeng_jeong').find(n=>n.id==='msteward');openPanel('npc',st);a.btns=[...document.querySelectorAll('[data-act]')].map(b=>b.dataset.act).filter(x=>/^m/.test(x));
     act('mjoin:jeong');a.maeng=P.maeng;P.age=13;act('mtake:jeong:0');const q=P.quests[0];a.q=q&&q.n;q.cnt=q.need;q.done=1;act('qdone:0');a.mpt=P.mpt.jeong;a.r0=maengRankName('jeong');
+    // 당주 넷의 창이 열린다 (2026-10-24: 천마신교 오당 창이 맹 당주(dang 1~3)를 가로채 오류가 났다)
+    a.dangDlg=[0,1,2,3].map(k=>{const n=npcsOf('maeng_jeong').find(n=>n.id==='mdang'+k);try{closePanels();openNpc(n);return panel==='npc'&&$('wbody').innerText.includes('당')}catch(e){return e.message}});
     P.mpt.jeong=300;a.r1=maengRankName('jeong');act('mdang:jeong:1');a.dang=P.mdang&&P.mdang.k;a.pae=P.bag.some(i=>/당패/.test(i.name));
     P.mpt.jeong=1300;a.r2=maengRankName('jeong');const s0=P.silver;act('mgift:jeong');a.gift=P.silver-s0;
     openPanel('char');a.char=/정의맹 장로/.test(document.body.innerText);a.blk=maengJoinBlock('sacheon');return a});
   ok(`총단 도착(${m.reg} · ${m.zone}) · 총관 단추 ${m.btns.join(',')}`,m.reg==='maeng_jeong'&&m.btns.includes('mjoin:jeong')&&m.btns.includes('mtake:jeong:0'));
+  ok(`당주 창 ${m.dangDlg.join(',')}`,m.dangDlg.every(x=>x===true));
   ok(`입맹 ${m.maeng} · 임무 ${m.q} 보고 → 맹 공적 ${m.mpt} ${m.r0} → 300이면 ${m.r1}(당 ${m.dang}, 당패 ${m.pae}) → 1300이면 ${m.r2}, 하사 은자 ${m.gift}, 인물창 ${m.char}, 사천맹은 "${m.blk}"`,
     m.maeng==='jeong'&&m.mpt===35&&m.r0==='맹원'&&m.r1==='당주'&&m.dang===1&&m.pae&&m.r2==='장로'&&m.gift===300&&m.char&&!!m.blk);
   // 4. 문파 제자: 문파 임무 보고가 문파 입지를 올리고, 서열 1위 문파는 공적 보정 1.15

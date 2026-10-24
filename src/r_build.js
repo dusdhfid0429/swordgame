@@ -68,7 +68,7 @@ function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.gl
 const BCACHE=[],BC_MAX=24;
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
-function drawBuild(b,alpha){const dpr=devicePixelRatio,k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}`;
+function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}`;
   let c=BCACHE.find(o=>o.b===b);
   if(!c||c.key!==key){const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
     const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);

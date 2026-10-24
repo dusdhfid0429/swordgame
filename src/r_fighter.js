@@ -24,11 +24,11 @@ function drawFighter(e,isP){
       if(wl&&ANIM.heroHandWpn){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawWeapon(dc,wl,dc==='창'||dc==='봉'?'p':'b',flash);ctx.restore()}
       if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
       ctx.restore();WPN_K=.47;return}
-    const img=a2?(flash&&HERO2W?HERO2W:gb&&gb.h2?gb.h2:HERO2):useB?(flash&&HBODYW?HBODYW:gb?gb.body:HBODY):(flash&&HEROW?HEROW:gb?gb.hero:HERO);
+    const img=flash?(a2?HERO2:useB?HBODY:HERO):a2?(gb&&gb.h2?gb.h2:HERO2):useB?(gb?gb.body:HBODY):(gb?gb.hero:HERO);
     const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
     // v125 칼집: 검객 원본 시트가 아닌 장(몸통·두 번째 시트)에서 검·도를 들었으면 허리 뒤에 걸린 칼집을 몸보다 먼저
     if((a2||useB)&&(dc==='검'||dc==='도')){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawSheath(dc,f[3]-6,f[2]*.55,flash);ctx.restore()}
-    ctx.drawImage(img,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
+    drawPart(img,flash,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
     // 직위 표식 (망토 대신, 사용자 결정 2026-10-13): 머리 위 문장 + 점
     if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,-f[2]*k+3-f[4]*k-10);
     if(!ANIM.heroHandWpn){}   // v167 사용자: 따로 그려 손에 붙이던 무기는 일단 뺀다 (시트 그림의 무기만)

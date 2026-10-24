@@ -182,7 +182,7 @@ const LY={BACK:0,ENT:1,FX:2,OVER:3,TOP:4};
 function tagZ(){const z=P&&P.z||0;for(const arr of[fx,texts,projs])for(const f of arr)if(f.z===undefined)f.z=z>0&&Math.abs(f.x-P.x)<.8&&Math.abs(f.y-P.y)<.8?z:0}
 const atZ=(f,g)=>{if(f.z){ctx.save();ctx.translate(0,-f.z);g();ctx.restore()}else g()};
 function draw(){
-  const dpr=devicePixelRatio;tagZ();
+  const dpr=C.width/Math.max(1,W*S);tagZ();
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle=terrBg();ctx.fillRect(-30,-30,W+60,H+60);
