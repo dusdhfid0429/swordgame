@@ -187,7 +187,9 @@ const sndBtns=()=>`<div class="sndrow">${B('snd:m',`배경음악 ${SND.m?'켬':'
 let wakeLock=null,wakeBusy=false;
 async function wakeOn(){if(!('wakeLock' in navigator)||wakeLock||wakeBusy||document.hidden||!playing)return;wakeBusy=true;try{const l=await navigator.wakeLock.request('screen');l.addEventListener('release',()=>{if(wakeLock===l)wakeLock=null});if(playing&&!document.hidden)wakeLock=l;else l.release()}catch(e){}wakeBusy=false}
 function wakeOff(){if(wakeLock){try{wakeLock.release()}catch(e){}wakeLock=null}}
-function wakeTick(){if(playing&&!document.hidden)wakeOn();else wakeOff()}
-for(const ev of['pointerdown','keydown','touchend','click'])addEventListener(ev,()=>{setTimeout(()=>{if(playing)wakeOn()},0)},{capture:true,passive:true});
-document.addEventListener('visibilitychange',()=>{wakeTick();if(!document.hidden&&playing)wakeOn()});
+// 발열·배터리 (2026-10-24): 5분 동안 손길이 없으면 놓아 휴대폰이 제 설정대로 화면을 끌 수 있게 한다. 다시 만지면 바로 잡는다
+const WAKE_IDLE=5*60e3;let wakeIn=Date.now();
+function wakeTick(){if(playing&&!document.hidden&&Date.now()-wakeIn<WAKE_IDLE)wakeOn();else wakeOff()}
+for(const ev of['pointerdown','keydown','touchend','click'])addEventListener(ev,()=>{wakeIn=Date.now();setTimeout(()=>{if(playing)wakeOn()},0)},{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>{wakeTick();if(!document.hidden){wakeIn=Date.now();if(playing)wakeOn()}});
 setInterval(wakeTick,1000);

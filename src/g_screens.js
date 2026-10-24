@@ -143,7 +143,7 @@ const C=$('game');let ctx=C.getContext('2d');  // let: 문파 옷 미리보기�
 const L=document.createElement('canvas'),lx=L.getContext('2d');
 // 그리는 해상도는 화면 배율 2까지만 (사용자 2026-10-24 "게임이 자꾸 꺼져"): 배율 3 휴대폰에서 화면 크기 캔버스(본 화면·빛 겹·합성 사본) 한 장이 12MB씩이라
 // 메모리가 모자라 웹뷰가 꺼질 수 있다. 2배면 한 장 5MB, 칠할 픽셀도 절반 아래로 준다
-const DPR_MAX=2;
+let DPR_MAX=2;   // 절전이면 1.5 (g_power.js)
 function resize(){const r=C.getBoundingClientRect(),d=Math.min(DPR_MAX,devicePixelRatio||1);S=Math.max(.8,Math.min(1.3,r.width/900));W=r.width/S;H=r.height/S;C.width=L.width=Math.round(r.width*d);C.height=L.height=Math.round(r.height*d)}
 addEventListener('resize',resize);
 function pickAt(ev){
