@@ -36,8 +36,9 @@ function dangDlg(n){const D=MDANG[n.dang],a=ARTS[D.art],s=SECTS.cheonma,mine=P.d
     <div class="list"><div class="it"><div style="color:rgb(${a.ct})">${a.n} ${gradeTag(a.grade)} <small class="dim">${D.n} 무공</small><span>${CLASS[a.cls].n} · 초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${blk?` · ${blk}`:mine?' · 비급 공적 30% 할인':''}</span></div></div></div>
     <p class="note">비급은 천마신전의 교주에게서 공적으로 받는다.</p>${mgOrgHtml()}`}
 hook('hqDlg',c=>{if(c.n.hq==='cheonma')c.html+=mgOrgHtml()});
-hook('npcDlg',c=>{if(c.html==null&&c.n.dang)c.html=dangDlg(c.n)});
-hook('sectAct',c=>{if(c.a==='mdang'){mgJoinDang(c.x);c.done=true;c.r=true}});
+// 맹(g_maeng.js)의 당주 NPC도 dang(번호)·'mdang' 단추를 쓴다. 천마신교 오당(MDANG에 있는 것)만 여기서 받는다 (2026-10-24: 맹 당주 창을 열면 오류가 났고, 맹 당에 들 수 없었다)
+hook('npcDlg',c=>{if(c.html==null&&c.n.dang&&!c.n.maeng&&MDANG[c.n.dang])c.html=dangDlg(c.n)});
+hook('sectAct',c=>{if(c.a==='mdang'&&MDANG[c.x]){mgJoinDang(c.x);c.done=true;c.r=true}});
 hook('sectActDone',c=>{
   if(c.a==='sjoin'&&c.x==='cheonma'&&P.sect==='cheonma')setTimeout(()=>log('오당 광장의 다섯 전각 가운데 한 곳을 골라 당에 드세요.','sys'),80);
   if(P.sect!=='cheonma')P.dang=null});
