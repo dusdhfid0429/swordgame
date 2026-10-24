@@ -5425,6 +5425,10 @@ for(const R of Object.values(REGIONS)){const g=R.gen;R.gen=()=>{N=R.size||40;NH=
 
 // ================= 천하 지도 창 =================
 const provOfReg=id=>{const R=REGIONS[id];return R&&R.prov};
+// 성에 속하지 않은 곳(전각 안·본산·동굴·맹 총단 등)에서는 마지막으로 지난 성을 지금 성으로 친다 (2026-10-24: 이런 곳에서 정세 창을 열면 오류가 났다)
+let pvLast='henan';
+hook('regionLoaded',id=>{const p=provOfReg(id);if(p)pvLast=p});
+const provHere=()=>provOfReg(REG)||pvLast;
 // 고른 성(또는 개봉). 지도에서 성을 누르면 바뀌고, 다른 성으로 옮기면 지금 성으로 돌아온다
 let wSel=null,wSelAt=null;
 const PV_NB=k=>[...new Set(PV_LINKS.flatMap(([a,,,b])=>a===k?[b]:b===k?[a]:[]))].concat(k==='henan'?['gaebong']:[]);
@@ -5435,7 +5439,7 @@ function pvRoute(from,to){if(!from||from===to)return[from];const prev={[from]:nu
 const pvName=k=>k==='gaebong'?'개봉':PROV[k].n;
 const facCls=s=>'wf-'+(alFac(s.al)==='정'?'j':alFac(s.al)==='마'?'m':alFac(s.al)==='관'?'g':'s');
 function pvInfo(k){
-  const here=REG==='gaebong'?'gaebong':provOfReg(REG),route=pvRoute(here,k);
+  const here=REG==='gaebong'?'gaebong':provHere(),route=pvRoute(here,k);
   const way=!route?'':route.length<2?'<b class="gold">지금 여기 있다</b>':`가는 길: ${route.map(pvName).join(' → ')} <small class="dim">(성 ${route.length-1}곳 이동)</small>`;
   const nb=PV_NB(k==='gaebong'?'henan':k).filter(n=>n!==k).map(n=>`<button type="button" class="btn" data-act="wsel:${n}">${pvName(n)}</button>`).join(' ');
   if(k==='gaebong'){
@@ -5459,7 +5463,7 @@ function pvInfo(k){
     ${lmInfo(R)}
     <p class="note">이웃 성: ${nb}</p></div>`}
 function pWorld(){
-  const here=provOfReg(REG),cur0=REG==='gaebong'?'gaebong':here;
+  const here=provHere(),cur0=REG==='gaebong'?'gaebong':here;
   if(wSelAt!==REG){wSelAt=REG;wSel=cur0}const sel=wSel||cur0,X=v=>(v-300)*.44,Y=v=>(v-330)*.44;
   const lines=PV_LINKS.map(([a,,,b])=>{const A=PROV[a].map,Bm=PROV[b].map;return `<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(Bm[0])}" y2="${Y(Bm[1])}"/>`}).join('');
   const nodes=Object.entries(PROV).map(([k,p])=>{const[x,y]=p.map,me=k===here&&REG!=='gaebong';

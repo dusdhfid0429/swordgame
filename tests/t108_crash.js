@@ -13,6 +13,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(600);
   const r=await p.evaluate(()=>({cw:C.width,css:C.getBoundingClientRect().width}));
   ok(`배율 3 화면도 2배로만 그린다 (${r.cw} = ${r.css}×2)`,Math.abs(r.cw-r.css*2)<=1);
+  // 전수 점검에서 찾은 것: 성에 속하지 않은 곳(전각 안·본산)에서 정세 창을 열면 오류가 났다
+  const wv=await p.evaluate(()=>{const out=[];for(const id of[Object.keys(REGIONS).find(k=>REGIONS[k].hall),'hq_hwasan','maeng_jeong']){if(!REGIONS[id]){out.push(id+' 없음');continue}
+    try{regionJump(id,Math.min(N-2,6),Math.min(NH-2,6));openPanel('world');out.push(id+':'+(panel==='world'&&$('wbody').innerText.includes('이웃')));closePanels()}catch(e){out.push(id+' '+e.message)}}regionJump('gaebong',20,20);return out});
+  ok(`전각·본산·맹 총단에서 정세 창 (${wv.join(', ')})`,wv.every(x=>/:true$/.test(x)));
   await p.evaluate(()=>{openPanel('bag');console.error('시험 오류 하나')});await p.evaluate(()=>{const b=document.querySelector('#wx');b&&b.click()});await p.waitForTimeout(2300);
   // 웹뷰가 죽은 것처럼: 앞 페이지가 pagehide 없이 '켜져 있는 채'로 남긴 기록을 다음 페이지가 읽는다
   const old=p;p=await c.newPage();p.on('pageerror',e=>errs.push('PE '+e.message));await p.goto(URL);await p.waitForTimeout(1500);

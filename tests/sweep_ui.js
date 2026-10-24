@@ -11,7 +11,7 @@ const FROM=+(process.env.FROM||0),TO=+(process.env.TO||9999);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(600);
   // SECT=문파 id 면 그 문파 제자(높은 경지·공적)로 시작한다. FILTER=정규식이면 그 지역만
-  if(process.env.SECT)await p.evaluate(s=>{const S=SECTS[s];P.side=alFac(S.al)==='마'?'사':alFac(S.al)||P.side;P.sect=s;P.realm=5;P.age=30;(P.mpt=P.mpt||{});for(const k in MAENG)P.mpt[k]=5000;try{recalc()}catch(e){}},process.env.SECT);
+  if(process.env.SECT)await p.evaluate(s=>{const S=SECTS[s];{const f=alFac(S.al);P.side=f==='마'?'사':f==='관'?P.side:f}P.sect=s;P.realm=5;P.age=30;(P.mpt=P.mpt||{});for(const k in MAENG)P.mpt[k]=5000;try{recalc()}catch(e){}},process.env.SECT);
   await p.evaluate(()=>{window.__boost=()=>{P.silver=99999;P.vit=99999;P.hp=P.maxHp;P.qi=P.maxQi;P.merit=P.merit||{};for(const k in SECTS)P.merit[k]=99999;if(P.bag.length>20)P.bag.length=20};__boost()});
   const regs=await p.evaluate(()=>Object.keys(REGIONS));
   const SKIP=/^(totitle|save|new|del|load|slot|jwa2|ctl|snd|wsel)/;
