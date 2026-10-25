@@ -29,6 +29,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r5=await p.evaluate(()=>{P.realm=4;const e=mkMob('산적',P.x+2,P.y);mobs=[e];updateMob(e,.05);const f1=e.flee>0&&!e.aggro;
     P.realm=5;P.sect='namgung';realmFxSync();const e2=mkMob('산적',P.x+2,P.y);mobs=[e2];updateMob(e2,.05);P.sect=null;return{f1,f2:e2.flee>0,a2:e2.aggro,sense:senseText(mkMob('혈교장로',0,0))}});
   ok(`하수는 달아남 ${r5.f1}, 반박귀진이면 겁먹지 않음 ${!r5.f2}, 혈교장로 기도 '${r5.sense}'`,r5.f1&&!r5.f2);
+  // 같은 편 세력 무인은 경지 차이로 달아나지 않고, 적 세력 무인은 달아난다 (사용자 2026-10-25)
+  const r5b=await p.evaluate(()=>{P.realm=4;P.side='정';P.sect=null;realmFxSync();const a=mkMob('정파 무인',P.x+2,P.y);const f=mkMob('사파 무인',P.x+2,P.y+1);mobs=[a,f];updateMob(a,.05);updateMob(f,.05);return{a:a.flee>0||!!a.cowed,f:f.flee>0}});
+  ok(`같은 편 정파 무인 달아남 ${r5b.a}, 적 사파 무인 달아남 ${r5b.f}`,!r5b.a&&r5b.f);
   // 화경·현경은 심법 계열마다 이름과 고유 특성이 다르고 수치는 같다
   const sm=await p.evaluate(()=>{const names={};for(const[sid,k]of[['namgung','정종'],['mudang','도가'],['shaolin','불가'],['podal','사불'],['mandok','사공'],['cheonma','마공']]){P.sect=sid;P.realm=5;const a=realmName();P.realm=6;names[k]=a+'/'+realmName()}
     P.realm=5;const R=Math.random;Math.random=()=>.99;const hit=(sid)=>{P.sect=sid;P.gang=null;gangCheck();P.inv=0;P.hp=P.maxHp;P.qi=P.maxQi;P.hsBrk=0;const e=mkMob('혈교장로',P.x+1,P.y);e.hp=99999;mobs=[e];hurtP(100,e);return{took:P.maxHp-P.hp,refl:99999-e.hp}};

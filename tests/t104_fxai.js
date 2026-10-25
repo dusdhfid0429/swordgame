@@ -2,12 +2,12 @@
 // 오류 나는 수정은 저절로 되돌리고, 되돌리기·다시 적용·채택(db)·다시 열 때 복원이 되는지 본다
 const {chromium}=require(process.env.PWPATH||'playwright');
 const MOCK=()=>{
-  // 저장소는 처음 쓸 때 읽는다 (다시 열기 전에 시험이 넣어 둔 씨앗이 먼저 들어가도록)
-  let st=null;const S=()=>st||(st=JSON.parse(localStorage.getItem('mockdb')||'{}')),save=()=>localStorage.setItem('mockdb',JSON.stringify(S()));
+  // 부를 때마다 localStorage에서 읽는다: 다시 열기 전에 심어 둔 씨앗(아래 seed)이 페이지 첫 호출에 보이도록
+  const load=()=>JSON.parse(localStorage.getItem('mockdb')||'{}'),save=st=>localStorage.setItem('mockdb',JSON.stringify(st));
   const snap=(id,d)=>({id,exists:!!d,data:()=>d,metadata:{}});
-  const db={collection:n=>({add:async d=>{const store=S(),id='d'+Object.keys(store).length+Date.now();store[id]=JSON.parse(JSON.stringify(d));save();return{id}},
-      where:(f,op,v)=>({get:async()=>{const docs=Object.entries(S()).filter(([,d])=>d[f]===v).map(([id,d])=>snap(id,d));return{docs,size:docs.length,empty:!docs.length}}})}),
-    doc:p=>({delete:async()=>{delete S()[p.split('/')[1]];save()}})};
+  const db={collection:n=>({add:async d=>{const st=load(),id='d'+Object.keys(st).length+Date.now();st[id]=JSON.parse(JSON.stringify(d));save(st);return{id}},
+      where:(f,op,v)=>({get:async()=>{const docs=Object.entries(load()).filter(([,d])=>d[f]===v).map(([id,d])=>snap(id,d));return{docs,size:docs.length,empty:!docs.length}}})}),
+    doc:p=>({delete:async()=>{const st=load();delete st[p.split('/')[1]];save(st)}})};
   // 가짜 Claude: window.__script 의 도구 호출을 차례로 하고, 결과를 window.__log 에 남긴다
   const sample=async(input,o)=>{window.__prompt=input;window.__log=[];if(window.__delay)await new Promise(r=>setTimeout(r,window.__delay));for(const[name,arg]of window.__script||[]){const t=o.tools.find(x=>x.name===name);
       try{window.__log.push(['ok',name,await t.execute(arg,{signal:new AbortController().signal})])}catch(e){window.__log.push(['err',name,e.message])}}
@@ -56,8 +56,8 @@ const MOCK=()=>{
   const kept=await p.evaluate(()=>{const d=JSON.parse(localStorage.getItem('mockdb'));const x=Object.values(d)[0];return x&&x.state==='kept'&&x.ops[0].file==='r_exec.js'&&x.ops[1].file==='data/elfx.json'&&x.ops[0].after.includes('o.fxai')});
   ok('채택: db 에 파일 이름과 함께 남음',kept);
   await p.screenshot({path:__dirname+'/shots/fxai_pc.png'});
-  // 바쁜 CI에서는 file:// localStorage 쓰기가 다시 열기 전에 남지 않을 때가 있어(main에서도 6번에 2번), 채택한 db를 씨앗으로 다시 넣어 둔다
-  const seed=await p.evaluate(()=>localStorage.getItem('mockdb'));await c.addInitScript(s=>{if(!localStorage.getItem('mockdb'))localStorage.setItem('mockdb',s)},seed);
+  // 부하가 크면 Chromium이 localStorage 쓰기를 다 넘기기 전에 다시 열어 db가 비는 일이 있어(CI), 다시 열기 전에 내용을 씨앗으로 심는다
+  await c.addInitScript(s=>{if(s&&!localStorage.getItem('mockdb'))localStorage.setItem('mockdb',s)},await p.evaluate(()=>localStorage.getItem('mockdb')));
   await p.reload();await p.waitForFunction(()=>window.FXAI&&FXAI.CH.length>0,null,{timeout:20000}).catch(async e=>console.log('복원 안 됨',await p.evaluate(()=>JSON.stringify({ss:Object.keys(JSON.parse(localStorage.getItem('mockdb')||'{}')),fx:!!window.FXAI,st:document.getElementById('fxai_st').textContent,go:document.getElementById('fxai_go').textContent}))));await p.waitForTimeout(200);
   ok('다시 열면 채택한 수정이 다시 끼워짐',await p.evaluate(()=>GL.toString().includes('o.fxai')&&EL_FX.화.n==='불꽃!'&&FXAI.CH.length===1&&FXAI.CH[0].kept&&FXAI.CH[0].on));
   await p.click('#fxai button[data-x^="off:"]');await p.waitForTimeout(100);
