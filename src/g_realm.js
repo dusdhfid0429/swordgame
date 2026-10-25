@@ -91,6 +91,6 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 한쪽만 키우면 벽에 닿지 못한다.</p>
     ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>
-    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 내공 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
+    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 운기조식 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
     <p>내공 심법 <b class="gold">${simCur().n}</b> ${gradeTag(simCur().g)} · 수련 ${P.qiN}회 · 1회 +${simGain()} · 다음 수련에 활력 ${c}${simCur().tr&&simCur().tr.length?` · 특색 ${simTraitHtml(simCur())}`:''}</p>
     <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (T)':'수련 창에서 수련')}</div>${jwaHtml()}</div>`}

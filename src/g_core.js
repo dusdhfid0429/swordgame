@@ -60,11 +60,12 @@ function gainVit(v,inh){if(!inh&&typeof diffVit==='function')v=diffVit(v);v=Math
 // 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
 const qiRealm=(p=P)=>{const q=baseQi(p);let i=0;REALM_QI.forEach((v,j)=>{if(q>=v)i=j});return i};
 const realmIdx=()=>P.realm??qiRealm();
-// 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
+// 주화입마로 경맥이 상하면 한동안 공격력과 운기조식 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1)*(P.weakT>0?.8:1)*(P.binsa?GD.DANGER.binsa.sp:1);   // 혈마단 뒤 30초 둔화 (g_magyo2.js)
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
+// 내공은 운기조식(P.medit) 중에만 찬다(g_life.js). 아래 배율(운기 효율 패시브·순환 특색·경지)도 모두 운기조식 회복량에만 걸린다
 const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul()*(P.thirst?.5:1);   // 마교 영약 중독의 갈증 (g_magyo2.js)
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
