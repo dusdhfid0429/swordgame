@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 강호윤회록 안드로이드 설치판 (직접 설치용). build_apk.py 가 versionCode/versionName 을 채운다 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.github.dusdhfid0429.gangho"
+    android:versionCode="@VCODE@"
+    android:versionName="@VNAME@">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+    <!-- 온라인 목록(초대 코드 끄기)을 받을 때만 쓴다 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        android:label="강호윤회록"
+        android:icon="@drawable/ic_launcher"
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="sensorPortrait"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|smallestScreenSize|uiMode"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
