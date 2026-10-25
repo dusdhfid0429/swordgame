@@ -102,8 +102,13 @@ function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비�
 function mkGPage(n,k){return{id:++itemId,slot:'gpage',page:n,n:k,name:`절세신공 잔결 · ${n} ${k}장`,price:60*k}}
 function mkTBook(j){return{id:++itemId,slot:'tbook',job:j,name:`기술서 · ${JOBS[j].n}`,price:25}}
 const SLOTN=GD.SLOTN;
-function itemDesc(it){
-  if(it.slot==='book'){const a=ARTS[it.art],f=a.forms[it.form];return `${AGR[a.grade||0]} · ${SIDES[a.side].n} ${CLASS[a.cls].n} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+// 행낭·창고·장비 칸이 그리는 물건 설명. 데이터에 없는 물건(지운 무공 등)이 섞여도 창이 막히지 않게 이름만 남기고 넘어간다
+function itemDesc(it){try{return itemDesc0(it)}catch(e){return '알 수 없는 물건 · 버리지 않으면 그대로 남는다'}}
+const itemArtOk=it=>!!(ARTS[it.art]&&ARTS[it.art].forms[it.form]);
+function itemDesc0(it){
+  if(it.slot==='book'){if(!itemArtOk(it))return '알 수 없는 비급 · 지금 강호에 전하지 않는 무공이라 읽을 수 없다';const a=ARTS[it.art],f=a.forms[it.form];
+    // 기연·창안 무공은 side가 없다 (정사 공용). v157 기연동굴부터 이런 비급이 행낭에 들어와 SIDES[null]에서 행낭이 열리지 않았다
+    return `${AGR[a.grade||0]} · ${SIDES[a.side]?SIDES[a.side].n:'정사 공용'} ${CLASS[a.cls]?CLASS[a.cls].n:''} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
@@ -113,8 +118,12 @@ function itemDesc(it){
   return a.join(' · ');
 }
 const itemLabel=it=>it.q?`[${QN(it.q)}] ${it.name}`:it.name;
-const itemCol=it=>it.q?QC(it.q):it.slot==='book'?(ARTS[it.art].side===P.side?'#e8c66e':'#9a8d72'):'#e8d9a8';
+const itemCol=it=>it.q?QC(it.q):it.slot==='book'?(!ARTS[it.art]?'#7a7060':!ARTS[it.art].side||ARTS[it.art].side===P.side?'#e8c66e':'#9a8d72'):'#e8d9a8';
 const addMat=(k,n=1)=>{P.mats[k]=(P.mats[k]||0)+n};
+// 받은 물건은 사라지지 않는다: 행낭이 차면 창고로, 창고도 차면 행낭에 넘치게 둔다
+function giveItem(it){if(P.bag.length<24){P.bag.push(it);return 'bag'}
+  if(G.storage&&G.storage.bag.length<(typeof STORE_MAX!=='undefined'?STORE_MAX:60)){G.storage.bag.push(it);log(`행낭이 가득 차 ${itemLabel(it)}은(는) 창고에 맡겨 두었다.`,'info');return 'store'}
+  P.bag.push(it);return 'bag'}
 const hasMats=need=>Object.entries(need).every(([k,n])=>(P.mats[k]||0)>=n);
 const useMats=need=>{for(const[k,n]of Object.entries(need))P.mats[k]-=n};
 
@@ -126,6 +135,8 @@ function readBlock(it){
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   if(it.slot==='gpage')return null;
+  if(it.slot!=='book')return null;
+  if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(!artSideOk(a))return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
   if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;

@@ -341,6 +341,14 @@ function saveGame(silent){
   }catch(e){}
 }
 function loadGame(){return loadSlot(SLOT)}
+// 불러올 때 물건 고치기 (지우지 않는다): 빈 칸만 걷어내고, 번호가 겹치면 새 번호를 줘 버리기·읽기가 다른 물건을 건드리지 않게 하고, itemId를 가장 큰 번호 위로 올린다
+function repairItems(){const seen=new Set(),all=[];
+  const fix=arr=>{if(!Array.isArray(arr))return[];return arr.filter(it=>it&&typeof it==='object')};
+  P.bag=fix(P.bag);if(G.storage){G.storage.bag=fix(G.storage.bag);if(!G.storage.mats)G.storage.mats={}}
+  if(!P.mats||typeof P.mats!=='object')P.mats={};
+  for(const it of[...P.bag,...Object.values(P.eq||{}).filter(Boolean),...(G.storage?G.storage.bag:[])])all.push(it);
+  for(const it of all)if(typeof it.id==='number'&&it.id>itemId)itemId=it.id;
+  for(const it of all){if(typeof it.id!=='number'||seen.has(it.id))it.id=++itemId;seen.add(it.id);if(!it.name)it.name='이름 없는 물건';if(!(it.price>=0))it.price=0}}
 function applySave(data){data=migrateSave(data);
   G=Object.assign(G,data.G);runHooks('gLoaded',data);itemId=data.itemId||0;tod=data.tod||.3;
   if(G.house&&G.house.built)buildHouse();
@@ -348,6 +356,6 @@ function applySave(data){data=migrateSave(data);
   if(data.alive&&data.P){P=Object.assign(P||{},data.P);P.traveling=0;P.perch=null;P.z=0;P.target=null;P.path=null;P.chan=null;P.leap=null;P.ride=null;P.talk=null;P.goal=null;
     // 시계(time)는 새로 시작하므로 지난 판의 시각이 적힌 연출 상태는 버린다. 안 버리면 회피 도트(P.dA)·보법 도트(P.bA)에 갇혀 이동 모션이 안 나오고 '장 번호 없음' 경고가 이어진다 (사용자 보고 2026-10-12)
     P.dA=0;P.bA=null;P.ggc=null;P.ggSpd=null;P.ss2=0;P.ssh=null;P.satk=0;P.sj=0;P.sjSt=0;P.lastAtk=0;P.runT=0;P.runPh=0;P.inv=0;
-    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);Object.assign(a,s);if(a.pal)a.d={pal:a.pal};return a});recalc();afterLoad(data);return true}
+    allies=(data.allies||[]).map(s=>{const a=mkAlly(s.kind,s.kind==='pet'?s.k:s.name,P.x+.5,P.y+.5);Object.assign(a,s);if(a.pal)a.d={pal:a.pal};return a});repairItems();recalc();afterLoad(data);return true}
   return false;
 }
