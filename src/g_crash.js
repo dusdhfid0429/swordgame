@@ -21,7 +21,7 @@ addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-a
 addEventListener('pagehide',()=>crashWrite(0));
 document.addEventListener('visibilitychange',()=>crashWrite(document.hidden?0:1));
 setInterval(()=>{CRL.fps=CRL.fr/2;CRL.fr=0;if(!document.hidden)crashWrite(1)},2000);
-(function crashFrame(){CRL.fr++;requestAnimationFrame(crashFrame)})();
+// 초당 그림 수는 loop가 그린 장마다 CRL.fr을 센다 (g_draw.js)
 crashWrite(1);
 // 보여 줄 글
 function crashText(d){if(!d)return'';const ago=Math.round((Date.now()-d.t)/60000);

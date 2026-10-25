@@ -311,9 +311,11 @@ function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,
 // ================= boot =================
 // 게임 시간은 접속해 화면을 보는 동안만 흐른다 (사용자 2026-10-21): 한 프레임 최대 0.05초, 화면을 가리면 requestAnimationFrame이 멈추고, 꺼져 있던 시간은 불러올 때 셈하지 않는다. 창을 열면 paused
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+// 발열·배터리 (g_power.js): 120Hz 화면에서도 정해진 장수만 그린다. 차례가 아닌 rAF는 그냥 넘긴다(dt는 그린 장 사이로 잰다)
+function loop(now){requestAnimationFrame(loop);if(!pwrDue(now))return;
+  const dt=Math.min(.05,(now-last)/1000);last=now;const t0=performance.now();
   try{if(playing&&!paused)update(dt);else time+=dt*.2;draw();if(playing){hud();drawMini()}}catch(err){console.error(err.stack||err);recoverFromError(err)}
-  requestAnimationFrame(loop)}
+  CRL.fr++;pwrFrame(performance.now()-t0)}
 // 한 프레임이 오류로 끊겨도 게임이 멈춰 버리지 않게: 어디서 났는지 적고, 좌표가 망가진 것들을 치운 뒤 다음 프레임을 돈다
 // (같은 자리에서 매 프레임 되풀이되면 그 자리를 벗어나도록 인물을 도착 자리로 돌려 놓는다)
 const okN=v=>typeof v==='number'&&isFinite(v);
