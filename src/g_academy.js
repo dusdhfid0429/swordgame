@@ -179,7 +179,7 @@ function acadPick(cls){const a=P.acad;if(!acadPickOpen()||!CLS.includes(cls)||ac
   for(const id of a.items||[]){const k=P.bag.findIndex(it=>it.id===id);if(k>=0)P.bag.splice(k,1);if(P.eq.weapon&&P.eq.weapon.id===id)P.eq.weapon=null}
   a.items=[];a.cls=cls;P.startCls=cls;
   if(cls==='권'){if(P.eq.weapon&&P.bag.length<24){P.bag.push(P.eq.weapon);P.eq.weapon=null}}
-  else{const w=mkWeapon(cls,P.status>=2?1.15:.85,0);w.name=`연습용 ${w.name}`;w.dur=Math.round(w.maxDur*.6);if(P.eq.weapon&&P.bag.length<24)P.bag.push(P.eq.weapon);P.eq.weapon=w;a.items.push(w.id)}
+  else{const w=mkWeapon(cls,P.status>=2?1.15:.85,0);w.name=`연습용 ${w.name}`;w.dur=Math.round(w.maxDur*.6);if(P.eq.weapon)giveItem(P.eq.weapon);P.eq.weapon=w;a.items.push(w.id)}
   const b0=mkBook(P.side+cls+'0',0);P.bag.push(b0);a.items.push(b0.id);
   if(P.status>=2){const b1=mkBook(P.side+cls+'1',0);P.bag.push(b1);a.items.push(b1.id)}
   recalc();log(`${CLASS[cls].n}을(를) 골랐습니다. ${cls==='권'?'맨손으로 싸운다.':'연습 병기를 찼다(날이 무뎌 있다).'} 행낭의 비급을 읽어 첫 초식을 익히자.`,'xp');showBanner(CLASS[cls].n,'병기를 고르다');acadCheck()}
@@ -204,7 +204,7 @@ function acadReport(){const a=P.acad;if(!acadOn()||a.stage>=4||!acadAllDone())re
 function acadGradeOf(){const a=P.acad,w=a.c.finalWin||0;return ACAD_GRADE.find(g=>P.age<=g.need&&w>=g.win)||ACAD_GRADE[ACAD_GRADE.length-1]}
 function acadGraduate(){const a=P.acad;if(!acadOn()||a.stage!==4||!acadAllDone())return;const A=acadOf(P.side),g=acadGradeOf();
   a.grad=1;a.grade=g.n;a.gradAge=Math.floor(P.age);G.acadN=(G.acadN||0)+1;P.silver+=g.silver;P.fame+=g.fame;
-  const tok=mkGear('acc',`${A.n} 졸업 증표 (${g.n})`,g.n==='수석'?1.4:g.n==='우등'?1.2:1,{qi:10,hm:2});if(P.bag.length<24)P.bag.push(tok);
+  const tok=mkGear('acc',`${A.n} 졸업 증표 (${g.n})`,g.n==='수석'?1.4:g.n==='우등'?1.2:1,{qi:10,hm:2});giveItem(tok);
   log(`${A.n}을(를) ${g.n}(으)로 졸업했습니다. 은자 ${g.silver}, 명성 ${g.fame}, 졸업 증표. 관주에게 추천서를 받자.`,'xp');showBanner(`${A.n} 졸업`,`${g.n} · ${Math.floor(P.age)}세`);
   feat(`${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
   // 사파 무관을 악업이 무겁게 졸업하면 마교 밀사가 길을 일러 준다 (가입은 지금처럼 본산에서)
