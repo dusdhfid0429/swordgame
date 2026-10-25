@@ -5,10 +5,12 @@
     android:versionCode="@VCODE@"
     android:versionName="@VNAME@">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+    <!-- 온라인 목록(초대 코드 끄기)을 받을 때만 쓴다 -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="강호윤회록"
         android:icon="@drawable/ic_launcher"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">

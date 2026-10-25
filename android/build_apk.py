@@ -1,16 +1,18 @@
 """강호윤회록 안드로이드 설치판(APK)을 만든다. 직접 설치용(출처를 알 수 없는 앱)이라 자체 서명 키로 서명한다.
 
-  python3 android/build_apk.py --keystore <키 파일 경로> [--out <apk 경로>]
+  python3 android/build_apk.py --keystore <키 파일 경로> [--issue-key <초대 코드 비밀 키>] [--out <apk 경로>]
 
 키 파일이 없으면 새로 만들고, 비밀번호는 키 파일 옆 <키 파일>.pass 에 적는다. 키와 .pass 는 저장소에 넣지 않는다.
 같은 키로 서명해야 이미 설치한 사람이 지우지 않고(=저장 기록을 잃지 않고) 새 판으로 덮어 깔 수 있다.
+시험판 잠금: 초대 코드 비밀 키(기본은 키 파일 옆 gangho-issue.pem, 없으면 만든다)의 공개 키와 android/lock.json 의
+list_url 을 앱에 넣는다. 게임 파일은 서명 인증서에 묶인 키로 암호화한다(Guard.java). 코드 발급은 issue_code.py.
 
-필요한 것: JDK(javac·keytool), 안드로이드 빌드 도구 aapt·dx(d8)·zipalign·apksigner, android.jar.
+필요한 것: JDK(javac·keytool), Python cryptography, 안드로이드 빌드 도구 aapt·dx(d8)·zipalign·apksigner, android.jar.
   우분투: apt install aapt dalvik-exchange zipalign apksigner android-sdk-platform-23
   안드로이드 SDK가 있으면 ANDROID_JAR, BUILD_TOOLS 환경 변수로 그 경로를 준다.
 있으면 더 좋은 것: fontTools·brotli(글꼴을 게임에 쓰는 글자만 남겨 넣는다), Pillow(아이콘을 그린다).
 """
-import argparse, os, re, secrets, shutil, subprocess, sys, urllib.request, zipfile
+import argparse, base64, gzip, hashlib, json, os, re, secrets, shutil, subprocess, sys, urllib.request, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -126,8 +128,13 @@ def keystore(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--keystore', required=True)
+    ap.add_argument('--issue-key')
     ap.add_argument('--out', default=os.path.join(BUILD, 'gangho.apk'))
     a = ap.parse_args()
+    a.issue_key = a.issue_key or os.path.join(os.path.dirname(os.path.abspath(a.keystore)), 'gangho-issue.pem')
+    sys.path.insert(0, HERE)
+    import issue_code
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
     run(sys.executable, os.path.join(ROOT, 'build.py'))
     shutil.rmtree(os.path.join(BUILD, 'stage'), ignore_errors=True)
@@ -157,11 +164,43 @@ def main():
     man = open(os.path.join(HERE, 'AndroidManifest.xml'), encoding='utf8').read().replace('@VCODE@', str(vcode)).replace('@VNAME@', vname)
     open(os.path.join(stage, 'AndroidManifest.xml'), 'w', encoding='utf8').write(man)
 
-    # 3) 묶기 → 코드 → dex → 줄 맞춤 → 서명
+    # 3) 잠금·암호화: 서명 인증서 SHA-256 에 묶인 키로 assets 를 assets/g/*.bin 으로 바꾼다
+    pw = keystore(a.keystore)
+    pem = subprocess.run(['keytool', '-exportcert', '-rfc', '-keystore', a.keystore, '-storepass', pw, '-alias', 'gangho'],
+                         capture_output=True, text=True, check=True).stdout
+    der = base64.b64decode(''.join(l for l in pem.splitlines() if l and not l.startswith('-----')))
+    cert = hashlib.sha256(der).digest()
+    salt = secrets.token_bytes(16)
+    aead = AESGCM(hashlib.sha256(cert + salt).digest())
+    enc = os.path.join(stage, 'enc', 'g')
+    os.makedirs(enc)
+    for dp, _, fs in os.walk(assets):
+        for f in fs:
+            rel = os.path.relpath(os.path.join(dp, f), assets).replace(os.sep, '/')
+            nonce = secrets.token_bytes(12)
+            raw = gzip.compress(open(os.path.join(dp, f), 'rb').read(), 9, mtime=0)   # 암호문은 안 줄어드니 먼저 줄인다
+            open(os.path.join(enc, rel.replace('/', '_') + '.bin'), 'wb').write(nonce + aead.encrypt(nonce, raw, None))
+    ik = issue_code.load_key(a.issue_key, create=True)
+    lock = json.load(open(os.path.join(HERE, 'lock.json'))) if os.path.exists(os.path.join(HERE, 'lock.json')) else {}
+    fill = {'@PUBKEY@': issue_code.pubkey_b64(ik), '@LISTURL@': lock.get('list_url', ''), '@CERTSHA@': cert.hex(), '@SALT@': base64.b64encode(salt).decode()}
+    jsrc = os.path.join(stage, 'java')
+    srcs = []
+    for dp, _, fs in os.walk(os.path.join(HERE, 'src')):
+        for f in fs:
+            if f.endswith('.java'):
+                t = open(os.path.join(dp, f), encoding='utf8').read()
+                for k, v in fill.items():
+                    t = t.replace(k, v)
+                d = os.path.join(jsrc, os.path.relpath(dp, os.path.join(HERE, 'src')))
+                os.makedirs(d, exist_ok=True)
+                srcs.append(os.path.join(d, f))
+                open(srcs[-1], 'w', encoding='utf8').write(t)
+    print('잠금: 목록 주소', fill['@LISTURL@'] or '(없음: 초대 코드 기한만 검사)')
+
+    # 4) 묶기 → 코드 → dex → 줄 맞춤 → 서명
     unsigned = os.path.join(stage, 'unsigned.apk')
-    run(tool('aapt'), 'package', '-f', '-M', os.path.join(stage, 'AndroidManifest.xml'), '-S', res, '-A', assets, '-I', AJAR, '-F', unsigned)
-    srcs = [os.path.join(dp, f) for dp, _, fs in os.walk(os.path.join(HERE, 'src')) for f in fs if f.endswith('.java')]
-    run('javac', '-source', '8', '-target', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-bootclasspath', AJAR, '-d', cls, *srcs)
+    run(tool('aapt'), 'package', '-f', '-M', os.path.join(stage, 'AndroidManifest.xml'), '-S', res, '-A', os.path.join(stage, 'enc'), '-I', AJAR, '-F', unsigned)
+    run('javac', '-g:none', '-source', '8', '-target', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-bootclasspath', AJAR, '-d', cls, *srcs)
     dx = os.path.join(BT, 'd8')
     if os.path.exists(dx):
         run(dx, '--min-api', '24', '--lib', AJAR, '--output', stage, *[os.path.join(dp, f) for dp, _, fs in os.walk(cls) for f in fs])
@@ -171,7 +210,6 @@ def main():
         z.write(os.path.join(stage, 'classes.dex'), 'classes.dex')
     aligned = os.path.join(stage, 'aligned.apk')
     run(tool('zipalign'), '-f', '-p', '4', unsigned, aligned)
-    pw = keystore(a.keystore)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     run(tool('apksigner'), 'sign', '--ks', a.keystore, '--ks-pass', 'pass:' + pw, '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true',
         '--out', a.out, aligned)
