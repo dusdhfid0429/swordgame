@@ -23,11 +23,13 @@ function qsSet(s){if(!P)return;const v=clamp(Math.round(s),1,QS.n);if(v===P.qs)r
 function qsHud(){const c=$('qsc');if(!c||!P)return;const s=qsCur();if(c.dataset.s==s)return;c.dataset.s=s;
   txt(c,`${s}성`);c.title=`초식 내공 ${s}성: 초식마다 정해진 비율의 ${Math.round(s/QS.n*100)}%를 쓴다 (눌러서 바꾸기 · [ ] 키)`;
   $('qsr').querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('on',i<s);b.classList.toggle('cur',i===s-1)})}
-function qsOpen(on){const r=$('qsr'),c=$('qsc');if(!r)return;r.hidden=!on;c.setAttribute('aria-expanded',on)}
+function qsOpen(on){const r=$('qsr'),c=$('qsc');if(!r)return;r.hidden=!on;c.setAttribute('aria-expanded',on);document.body.classList.toggle('qs-on',!!on)}
 {const c=$('qsc'),r=$('qsr');if(c&&r){r.innerHTML=Array.from({length:QS.n},(_,i)=>`<button type="button" data-q="${i+1}">${i+1}</button>`).join('');
   c.addEventListener('click',e=>{e.stopPropagation();qsOpen(r.hidden)});
   r.addEventListener('click',e=>{e.stopPropagation();const t=e.target.closest('[data-q]');if(!t)return;qsSet(+t.dataset.q);qsOpen(false)});
   for(const el of[c,r])el.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')qsOpen(false)});
-  addEventListener('pointerdown',e=>{if(!r.hidden&&!r.contains(e.target)&&e.target!==c)qsOpen(false)},true)}}
+  // 칸 밖을 눌러 닫을 때 그 탭이 밑의 기록 줄·알림을 눌러 창을 열지 않게 바로 뒤 click 하나를 삼킨다
+  let eat=0;addEventListener('pointerdown',e=>{if(!r.hidden&&!r.contains(e.target)&&e.target!==c){qsOpen(false);eat=performance.now()}},true);
+  addEventListener('click',e=>{if(eat&&performance.now()-eat<600){eat=0;if(e.target.closest&&e.target.closest('#log,.sysmsg')){e.stopPropagation();e.preventDefault()}}else eat=0},true)}}
 addEventListener('keydown',e=>{if(!playing||!P||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
   if(e.code==='BracketLeft'){e.preventDefault();qsSet(qsCur()-1)}else if(e.code==='BracketRight'){e.preventDefault();qsSet(qsCur()+1)}});
