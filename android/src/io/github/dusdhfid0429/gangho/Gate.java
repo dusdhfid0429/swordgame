@@ -157,6 +157,16 @@ final class Gate {
         prefs(c).edit().putString(K_CODE, code).apply();
     }
 
+    // 받아 둔(서명 확인된) 목록. 없으면 null
+    static JSONObject list(Context c) {
+        try {
+            String js = prefs(c).getString(K_LIST, null);
+            return js == null ? null : new JSONObject(js);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
     }

@@ -23,6 +23,18 @@ node android/test_apk.js                                                        
 **키 파일과 .pass 는 저장소에 넣지 않습니다.** 다음 판도 같은 키로 서명해야 덮어 깔 수 있습니다.
 안드로이드 SDK 가 있으면 `BUILD_TOOLS=<sdk>/build-tools/<판> ANDROID_JAR=<sdk>/platforms/android-<판>/android.jar` 로 그 도구를 씁니다.
 
+## 켤 때 최신화
+
+```sh
+python3 android/build_apk.py --keystore <키> --publish <gangho-access 폴더> [--min-app <versionCode>]
+# 그 다음 gangho-access 에서 git add -A && git commit && git push
+```
+
+- 게임 묶음 `game/<판>.bin`(서명 인증서에 묶인 키로 암호화, 해시는 서명된 목록에)과 `apk/gangho.apk` 를 올리고 `access.txt` 의 `game`·`app` 칸을 바꿉니다.
+- 앱은 켤 때 목록을 받아 더 새 게임 묶음이 있으면 받아 둡니다. 첫 화면이면 바로, 놀이 중이면 다음에 켤 때 바뀝니다. 앱을 다시 깔 필요가 없습니다.
+- 앱 판이 `app.latest` 보다 낮으면 받기 안내, `--min-app` 보다 낮으면 실행을 막고 받기만 보여 줍니다(안드로이드는 직접 깐 앱을 몰래 바꿔 깔 수 없습니다).
+- 묶음은 `gangho-content.salt`(키 폴더) 로 암호화합니다. 이 파일을 잃으면 예전 앱이 새 묶음을 못 풉니다. `MainActivity`·`apk_bridge.js` 이음을 깨는 변경이면 `build_apk.py` 의 `SHELL` 을 올립니다.
+
 ## 초대 코드
 
 ```sh

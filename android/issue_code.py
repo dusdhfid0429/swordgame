@@ -40,6 +40,18 @@ def code_id(code):
     return hashlib.sha256(re.sub(r'\s', '', code).encode()).hexdigest()[:16]
 
 
+def load_state(home):
+    p = os.path.join(home, 'list_state.json')
+    return json.load(open(p)) if os.path.exists(p) else {'off': False, 'msg': '', 'revoked': []}
+
+
+def write_list(k, home, st, out):
+    """상태를 저장하고 서명한 목록 파일을 쓴다. st 의 game(게임 묶음)·app(앱 판) 칸은 build_apk.py --publish 가 채운다"""
+    json.dump(st, open(os.path.join(home, 'list_state.json'), 'w'), ensure_ascii=False, indent=1)
+    body = json.dumps({'t': int(time.time() * 1000), **st}, ensure_ascii=False, separators=(',', ':'))
+    open(out, 'w').write(sign(k, body.encode()) + '\n')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--key', required=True)
@@ -78,17 +90,14 @@ def main():
         print(f'코드 번호 {cid} ({a.name}, {dev}, {a.until}까지)', file=sys.stderr)
         return
 
-    st_path = os.path.join(home, 'list_state.json')
-    st = json.load(open(st_path)) if os.path.exists(st_path) else {'off': False, 'msg': '', 'revoked': []}
+    st = load_state(home)
     rv = [x for x in st['revoked'] if x not in a.unrevoke] + [x for x in a.revoke if x not in st['revoked']]
     st['revoked'] = rv
     if a.off is not None:
         st['off'], st['msg'] = True, a.off
     if a.on:
         st['off'], st['msg'] = False, ''
-    json.dump(st, open(st_path, 'w'), ensure_ascii=False, indent=1)
-    body = json.dumps({'t': int(time.time() * 1000), **st}, ensure_ascii=False, separators=(',', ':'))
-    open(a.out, 'w').write(sign(k, body.encode()) + '\n')
+    write_list(k, home, st, a.out)
     print(f'{a.out}: 끈 코드 {len(rv)}개, 전체 {"닫힘" if st["off"] else "열림"}')
 
 
