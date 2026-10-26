@@ -266,7 +266,7 @@ function postDlg(){
   // 내 문파 본산은 맨 위에 따로 (성도·맹 총단 훅은 첫 '</div><h4' 뒤에 끼므로 이 칸과 겹치지 않는다)
   const my=P.sect&&SECTS[P.sect];
   let h=`<p class="note">"어디로 모실까? 길은 멀어도 말은 빠르오."</p>`+(my?`<h4 style="margin:0">내 문파</h4><div class="list">${row(hqId(my),hqPlace(my),`${my.n} 본산`,POST_FEE)}</div>`:'')+`<div class="list">${row('gaebong','개봉','성내 역참',10)}</div>`;
-  for(const al of['jeong','sacheon','magyo','gunbu'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+Object.values(SECTS).filter(s=>s.al===al&&s!==my)
+  for(const al of['jeong','sacheon','magyo','gunbu'])h+=`<h4 style="margin:0">${ALLY[al].n}</h4><div class="list">`+liveSects().filter(s=>s.al===al&&s!==my)
     .map(s=>row(hqId(s),hqPlace(s),`${s.n} 본산${!sideOk(al)?' · 다른 성향':''}`,POST_FEE)).join('')+'</div>';
   return h}
 function postGo(id){

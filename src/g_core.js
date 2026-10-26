@@ -110,7 +110,8 @@ function itemDesc0(it){
   if(it.slot==='book'){if(!itemArtOk(it))return '알 수 없는 비급 · 지금 강호에 전하지 않는 무공이라 읽을 수 없다';const a=ARTS[it.art],f=a.forms[it.form];
     // 기연·창안 무공은 side가 없다 (정사 공용). v157 기연동굴부터 이런 비급이 행낭에 들어와 SIDES[null]에서 행낭이 열리지 않았다
     return `${AGR[a.grade||0]} · ${SIDES[a.side]?SIDES[a.side].n:'정사 공용'} ${CLASS[a.cls]?CLASS[a.cls].n:''} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
-  if(it.slot==='leaf')return leafDesc(it);   // 비급 낱장 (g_mkmat.js)
+  if(it.slot==='leaf')return leafDesc(it);
+  if(it.slot==='lib')return libDesc(it);   // 장경각 비급·최후의 비전 (g_remnant.js)   // 비급 낱장 (g_mkmat.js)
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
@@ -138,6 +139,7 @@ function readBlock(it){
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   if(it.slot==='gpage')return null;
   if(it.slot==='leaf')return leafBlock(it);
+  if(it.slot==='lib')return null;
   if(it.slot!=='book')return null;
   if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
@@ -156,6 +158,7 @@ function readBook(it){
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
   if(it.slot==='leaf'){leafBind(it);return}
+  if(it.slot==='lib'){libOpen(it);return}
   if(it.slot==='gpage'){P.sg.pages[it.page]=(P.sg.pages[it.page]||0)+it.n;P.bag.splice(P.bag.indexOf(it),1);log(`절세신공 [${it.page}] ${it.n}장을 익혀 깨쳤습니다. (${P.sg.pages[it.page]}/10)`,'xp');return}
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(it.tu)tuRead(a);   // 견식·낱장 사본: 다른 계열이면 정파는 악업 (g_mkmat.js)

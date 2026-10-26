@@ -18,7 +18,7 @@ const maengRank=al=>Math.min(maengRaw(al),rankCap());   // v153: 맹 직위도 �
 const maengRankName=(al,i)=>MRANK[al][i??maengRank(al)];
 // ---- 문파 입지와 서열 ----
 function sectStanding(al,s){const base=MSEAT[s.tier]||50,j=(s.i*37)%40;return base+j+(((G.mst||{})[al]||{})[s.id]||0)}
-function maengSeats(al){return Object.values(SECTS).filter(s=>s.al===al).map(s=>({s,v:sectStanding(al,s)})).sort((a,b)=>b.v-a.v)}
+function maengSeats(al){return liveSects().filter(s=>s.al===al).map(s=>({s,v:sectStanding(al,s)})).sort((a,b)=>b.v-a.v)}
 function seatOf(al,sid){return maengSeats(al).findIndex(q=>q.s.id===sid)+1}
 // 서열 1위 문파 제자는 공적 +15%, 2~3위는 +5% (g_faction.js addMerit)
 function maengSeatMul(sid){const s=SECTS[sid];if(!s||!MAENG[s.al]||P.sect!==sid)return 1;const k=seatOf(s.al,sid);return k===1?1.15:k<=3?1.05:1}

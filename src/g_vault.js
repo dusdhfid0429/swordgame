@@ -46,7 +46,7 @@ hook('newYear',()=>{if(!G.ndead)return;const y=Math.floor(G.cal);for(const key i
     h=h.replace(`${s.n} <small class="dim">`,`${s.n} <small class="gold">금고 ${v}</small>${dead?` <small class="bad">공석 ${dead}</small>`:''} <small class="dim">`)}return h}}
 // ---- 문파 기부 (v153, 사용자): 은자를 금고에 넣으면 공적(직위)과 문파 인원·명성이 는다. STORY2.DONATE ----
 function donateHtml(s){const D=S2.DONATE;return `<div class="row2"><span class="note">기부: 은자 100마다 공적 ${Math.round(100*D.merit)}, 인원 +${Math.round(100*D.pop*10)/10}. 금고 ${sectVault(s.id)}</span><span>${D.amt.map(a=>B(`sgive:${s.id}:${a}`,`은자 ${a}`,{d:P.silver<a})).join(' ')}</span></div>`}
-function donate(sid,a){const s=SECTS[sid],D=S2.DONATE;if(!s||P.sect!==sid||!D.amt.includes(a)||P.silver<a)return;vaultInit();popInit();
+function donate(sid,a){const s=SECTS[sid],D=S2.DONATE;if(!s||sectGone(sid)||P.sect!==sid||!D.amt.includes(a)||P.silver<a)return;vaultInit();popInit();
   P.silver-=a;G.vault[sid]=(G.vault[sid]||0)+a;const m=addMerit(sid,Math.round(a*D.merit));G.pop[sid]=Math.min(popBase(s)*POP.max,Math.round(((G.pop[sid]||0)+a*D.pop)*10)/10);popSync();
   const f=Math.round(a*D.fame);P.fame+=f;log(`${s.n}에 은자 ${a}을(를) 기부했다. 공적 +${m}, 인원 +${Math.round(a*D.pop*10)/10}${f?`, 명성 +${f}`:''}.`,'xp');if(a>=1000)feat(`${s.n}에 은자 ${a}을(를) 기부했다`)}
 hook('sectAct',c=>{if(c.a!=='sgive')return;c.done=true;c.r=true;donate(c.x,+c.y)});

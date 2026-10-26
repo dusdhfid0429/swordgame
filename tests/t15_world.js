@@ -8,7 +8,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
-  let PROV_N;const g=await p.evaluate(()=>{const bad=[];let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){n++;const T=REGIONS[gt.to];const me=R.win?'pv_'+R.win.k:id;if(!T||!T.gates.some(b=>b.to===id||b.to===me))bad.push(id+'→'+gt.to)}
+  let PROV_N;const g=await p.evaluate(()=>{const bad=[];let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){if(R.tn)continue;n++;   // 문주전 비밀 지하도는 촛대를 풀어야 문주전 쪽 문이 생긴다 (t119_remnant)
+const T=REGIONS[gt.to];const me=R.win?'pv_'+R.win.k:id;if(!T||!T.gates.some(b=>b.to===id||b.to===me))bad.push(id+'→'+gt.to)}
     const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>{const first=(REGIONS[hqId(s)].chain||[hqId(s)])[0];return Object.values(REGIONS).filter(R=>R.prov&&!R.hq&&!R.win&&R.gates.some(q=>q.to===first)).length===1});
     return{bad,n,pv:pv.length,mn:Math.min(...sizes),mx:Math.max(...sizes),themes:new Set(pv.map(k=>PROV[k].th)).size,placed,gae:REGIONS.gaebong.gates.map(q=>q.label).join('·')}});
   ok(`성 ${g.pv}곳, 크기 ${g.mn}~${g.mx}칸, 지형 ${g.themes}가지`,g.pv===22&&g.mn<g.mx&&g.themes>=12);
@@ -17,7 +18,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`출입구 ${g.n}개가 모두 양방향 ${g.bad.join(',')}`,!g.bad.length);ok('본산 49곳이 모두 성 하나 안에 있다',g.placed);ok(`개봉 출입구: ${g.gae}`,g.gae==='숭산 산중·하남성·결전장·객잔');
   // 모든 지역: 도착 자리에서 모든 출입구까지 걸어서 간다 (지역 크기도 맞게)
   const bfs=await p.evaluate(()=>{const bad=[],cur=REG,sz={};
-    for(const[id,R]of Object.entries(REGIONS)){REG=id;R.gen();sz[id]=N;if(N!==(R.size||40)||NH!==(R.h||R.size||40))bad.push(id+' 크기');
+    for(const[id,R]of Object.entries(REGIONS)){if(R.tn)continue;REG=id;R.gen();sz[id]=N;if(N!==(R.size||40)||NH!==(R.h||R.size||40))bad.push(id+' 크기');
       for(const g of R.gates)for(let j=Math.floor(g.y)-2;j<=Math.floor(g.y)+2;j++)for(let i=Math.floor(g.x)-2;i<=Math.floor(g.x)+2;i++)if(j>=0&&i>=0&&j<NH&&i<N){objs[j][i]=null;if(map[j][i].g===2)map[j][i].g=1}
       runHooks('regionGen',id);   // loadRegion처럼: 기연동굴 입구 자리(무작위 목표 → 걸어 닿는 칸)와 동굴 어귀는 이 훅에서 정해진다
       let st=null;for(const o of Object.values(REGIONS))for(const q of o.gates)if(q.to===id&&!st)st={x:q.tx,y:q.ty};if(!st&&R.win)continue;

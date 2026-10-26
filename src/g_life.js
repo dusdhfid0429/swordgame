@@ -205,6 +205,7 @@ function interact(t){
   if(t.plot){plotAction(t.plot);return}
   const n=t.node;if(!n)return;
   if(n.cd>0){log(n.t==='chest'||n.t==='cchest'?'비어 있는 상자입니다.':n.t==='corpse'||n.t==='rubble'?'이미 뒤진 자리다.':'아직 다시 자라지 않았습니다.','info');return}
+  if(typeof remnNode==='function'&&remnNode(n))return;   // 장경각 서가·문주전 촛대·지하도 출구 (g_remnant.js)
   if(n.t==='vault'){P.chan={t:0,dur:sectPop(n.sect)<=0?VAULT.ruinDur:VAULT.steal.dur,label:vaultLabel(n),fn:()=>vaultOpen(n)};return}   // 문파 금고 (g_vault.js)
   if(n.t==='corpse'||n.t==='rubble'){P.chan={t:0,dur:RUIN.dur[n.t],label:n.t==='corpse'?'시체를 뒤진다':'잔해를 뒤진다',fn:()=>ruinLoot(n)};return}   // 폐허 약탈품 (g_ruin.js)
   if(n.t==='cchest'){P.chan={t:0,dur:CV.open,label:'상자를 연다',fn:()=>caveChestOpen(n)};return}   // 동굴 보물상자 (g_cave.js)

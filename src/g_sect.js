@@ -90,7 +90,7 @@ function allianceDlg(alId){
   const al=ALLY[alId],mine=P.sect&&SECTS[P.sect];
   if(sectView&&SECTS[sectView]&&SECTS[sectView].al===alId)return sectDetail(SECTS[sectView]);
   const row=s=>{const m=P.merit[s.id]||0;return `<div class="it"><div>${embImg(s.id,20)} ${s.n}${P.sect===s.id?' <small class="good">내 문파</small>':''}<span>${AGR[Math.min(...s.arts.map(a=>artGrade(a.id)))]}~${AGR[Math.max(...s.arts.map(a=>artGrade(a.id)))]} 무공 · ${[...new Set(s.arts.map(a=>CLASS[a.cls].n))].join('·')} · 주력 ${startSet(s).w}${m?` · 공적 ${m}`:''}</span></div><div class="ib">${B('sview:'+s.id,'보기')}</div></div>`};
-  const list=Object.values(SECTS).filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
+  const list=liveSects().filter(s=>s.al===alId),big=list.filter(s=>(s.tier==='big'||s.tier==='one')&&!isFive(s)),five=list.filter(isFive),mid=list.filter(s=>s.tier==='mid'),small=list.filter(s=>s.tier==='small');
   const head=!sideOk(alId)?`<p class="note">"${facName()} 사람이군. 우리 맹의 문은 그대에게 열려 있지 않다. 구경만 하시오."</p>`
     :`<p class="note">"${al.n}에 온 것을 환영하오."</p>`;
   return `${head}<p class="note">${al.d}</p>${mine?`<p class="note">지금 소속: <b>${mine.n}</b> (${ALLY[mine.al].n})</p>`:''}
