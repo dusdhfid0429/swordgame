@@ -162,9 +162,9 @@ function pBag(){
     <p class="note">무기 공격력은 같은 계열 무공을 펼칠 때만 붙는다. 내구가 0이면 공격력이 반으로 준다. 다른 계열 내공의 비급은 읽을 수 없지만 팔 수는 있다.${sell?' 지금은 상인 앞이라 팔 수 있다.':''}</p>`;
 }
 // 행낭 한 줄. 물건 하나가 잘못돼도 행낭 전체가 안 열리는 일이 없게 pBag이 줄마다 감싼다
-function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf';
+function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf'||it.slot==='lib';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]||''}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
-      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':'읽기'):'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
+      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':'읽기'):'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
 function pAlly(){
   const pets=allies.filter(a=>a.kind==='pet').map(a=>`<div class="it"><div><b>${esc(a.name)}</b> <small class="dim">${a.k} · ${a.age}/${a.life}살</small><span>생명 ${Math.ceil(a.hp)}/${Math.round(a.maxHp)} · 공격 ${a.atk} · ${a.mode==='wait'?'기다리는 중 (빠르게 회복)':'따라오는 중'}${P.ride===a?' · 타는 중':''}</span></div>
     <div class="ib">${B('pmode:'+allies.indexOf(a),a.mode==='wait'?'따라와':'기다려')}${B('feed:'+allies.indexOf(a),'먹이 · 고기',{d:!(P.mats.고기>0)})}${B('rename:'+allies.indexOf(a),'이름')}${a.d.ride?B('ride','타기/내리기'):''}${B('free:'+allies.indexOf(a),'풀어주기')}</div></div>`).join('')||'<p class="note">길들인 짐승이 없습니다. 짐승을 오른쪽 클릭하거나 선택하고 F를 누르면 활력을 써서 길들인다. 성공률은 내공(갑자)에 달려 있다. 토끼와 양은 길들일 수 없다.</p>';

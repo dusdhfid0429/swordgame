@@ -92,6 +92,7 @@ function drawNode(n){
     if(ready){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4+n.y)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-5);ctx.lineTo(1,-9);ctx.lineTo(5,-4);ctx.stroke()}}
   else if(n.t==='vault'){poly([[-14,-2],[12,-2],[14,-18],[-12,-18]],lg(-14,14,'#4a4a52','#1e1e24'));poly([[-12,-18],[14,-18],[12,-24],[-10,-24]],'#5a5a64');ctx.fillStyle='#c9a14a';ctx.fillRect(-3,-14,6,5);ctx.strokeStyle='#8a7a40';ctx.lineWidth=1;ctx.strokeRect(-11,-16,22,12);
     if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
+  else if(n.t==='lib'||n.t==='plaque'||n.t==='mech'||n.t==='tnexit'){ctx.restore();drawRemnNode(n);return}   // g_remnant.js
   else if(n.t==='cchest'){ctx.restore();drawCaveChest(n);return}
   else if(n.t==='chest'||n.t==='gybox'){const shut=n.t==='gybox'?n.cd>0:P.chest;if(!shut){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
     poly([[-12,-2],[10,-2],[12,-14],[-10,-14]],lg(-12,12,'#8a5a30','#3a2210'));poly([[-10,-14],[12,-14],[10,-20],[-8,-20]],shut?'#3a2210':'#a06a38');ctx.fillStyle='#c9a14a';ctx.fillRect(-2,-12,4,4)}

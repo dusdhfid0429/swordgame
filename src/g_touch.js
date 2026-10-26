@@ -76,7 +76,7 @@ function specPick(){
   return null}   // 암기(비도)는 퀵슬롯 칸이 따로 있어 여기서는 고르지 않는다
 function specMsg(){return P.sg.name||P.sp.독공||P.sp.점혈?'지금 쓸 수 있는 비기가 없습니다.':'특수무공을 아직 익히지 못했습니다. 잡화상에서 비급을 구하세요.'}
 // 상황 버튼: 가까이 있는 것에 맞춰 대화·채집·농사·집·길들이기·말·운기로 바뀐다
-const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기',vault:'금고'};
+const NODEL={herb:'채집',ore:'채광',wood:'벌목',fish:'낚시',chest:'열기',corpse:'뒤지기',rubble:'뒤지기',vault:'금고',lib:'서가',plaque:'현판',mech:'촛대',tnexit:'출구'};
 function ctxPick(){
   if(P.perch)return{l:'내려가기',fn:()=>perchDrop()};
   const t=nearestThing();

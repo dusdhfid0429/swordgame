@@ -1,0 +1,62 @@
+{
+  "REMN": {
+    "lib": {
+      "dur": 3.0,
+      "price": 400
+    },
+    "band": {
+      "big": 7,
+      "one": 7,
+      "geumgun": 6,
+      "mid": 5,
+      "small": 4
+    },
+    "leadRank": 3,
+    "leadRealm": 1,
+    "leadHp": 2.2,
+    "leadAtk": 1.3,
+    "hops": [
+      1,
+      4
+    ],
+    "escape": {
+      "t": 9,
+      "gate": 1.4
+    },
+    "regroup": 2,
+    "fame": 40,
+    "rumor": 0.12,
+    "tunnel": {
+      "w": 40,
+      "spike": {
+        "n": 10,
+        "up": 0.9,
+        "down": 1.7,
+        "dm": 0.1,
+        "cd": 0.8
+      },
+      "arrow": {
+        "n": 6,
+        "warn": 0.45,
+        "dm": 0.16,
+        "len": 7
+      },
+      "exit": 1.5,
+      "keep": 6
+    },
+    "mech": {
+      "names": [
+        "해",
+        "달",
+        "별"
+      ],
+      "words": {
+        "해": "해가 뜨고",
+        "달": "달이 지고",
+        "별": "별이 잠긴다"
+      },
+      "turn": 0.6,
+      "fail": 0.08
+    }
+  }
+}

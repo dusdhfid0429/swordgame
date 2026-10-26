@@ -7,6 +7,9 @@ const POP=STORY.POP;
 const popBase=s=>POP.base[s.id]||POP.base[s.tier]||60;
 function popInit(){if(!G.mdead)G.mdead={};if(G.pop){if(!G.popPrev)G.popPrev=JSON.parse(JSON.stringify(G.pop));return}G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s);G.popPrev=JSON.parse(JSON.stringify(G.pop))}   // popPrev: 올해 첫날 인원. 첫해에도 '사망이 추가보다 많다'를 셀 수 있게 처음부터 둔다
 const sectPop=sid=>{popInit();return G.pop[sid]||0};
+// 잔당까지 모두 죽은 문파 (g_remnant.js): 이번 판에서 사라져 목록에 나오지 않고 인원이 다시 차지 않는다. 전체 재시작(G0)에서만 돌아온다
+function sectGone(sid){return !!(G&&G.gone&&G.gone[sid])}
+const liveSects=()=>Object.values(SECTS).filter(s=>!sectGone(s.id));
 // 무학의 질: 고급 무공 수와 무공 수. 0~1
 const sectQ=s=>Math.min(1,(s.arts.filter(a=>a.hi).length*.4+s.arts.length*.1+(s.tier==='big'||s.tier==='one'?.2:s.tier==='mid'?.1:0)));
 // 세력의 힘 = 초기값 × (지금 인원×질 합) / (기준 인원×질 합)
@@ -49,7 +52,7 @@ hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.hq||!SECTS[R.hq])return;i
 // ---- 본산 대화·정세 창 ----
 hook('hqDlg',c=>{const s=SECTS[c.n.hq];if(sectPop(s.id)>0)return;c.html=`<p class="note">폐허 속에 ${masterTitle(s)}의 위패만 남았다. ${s.n}은(는) 멸문했다.</p>`});
 const popTrend=sid=>{const a=G.popPrev&&G.popPrev[sid];if(a==null)return '';const d=sectPop(sid)-a;return d>0?'<span class="good">▲</span>':d<0?'<span class="bad">▼</span>':'·'};
-function popCard(){popInit();const list=Object.values(SECTS).map(s=>({s,p:sectPop(s.id),b:popBase(s)})).sort((a,b)=>b.p-a.p);
+function popCard(){popInit();const list=liveSects().map(s=>({s,p:sectPop(s.id),b:popBase(s)})).sort((a,b)=>b.p-a.p);
   const mine=P.sect&&SECTS[P.sect]?list.find(x=>x.s.id===P.sect):null;const top=list.slice(0,12);if(mine&&!top.includes(mine))top.push(mine);
   const row=x=>{const f=alFac(x.s.al),live=liveMaps(x.s),n=(REGIONS[hqId(x.s)]||{}).chain?REGIONS[hqId(x.s)].chain.length:1,q=sectQ(x.s);
     return `<div class="it"><div>${x.s.n} <small class="dim">${FAC4N[f]}</small> <b class="num ${x.p<=0?'bad':''}">${Math.round(x.p)}</b> ${popTrend(x.s.id)}<span>${x.p<=0?'멸문':`기준 ${x.b} · 본산 ${live}/${n}장${G.seal[x.s.id]?' · 봉문':''}${G.occ[x.s.id]?' · 점령':''}${G.mdead[x.s.id]?` · <span class="bad">${masterTitle(x.s)} 공석</span>`:sectWeak(x.s)?` · <span class="bad">쇠퇴 · ${masterTitle(x.s)} 출전</span>`:''} · 고수 비율 ${Math.round((.25+.35*q)*100)}%`}</span></div></div>`};
@@ -74,8 +77,8 @@ function facSpawn(k,cap,test,mk,n){if(!FACK)FACK=new Set(Object.values(FAC_KIND)
   mobs.push(e)}return true}
 hook('regionLoaded',id=>{const R=REGIONS[id];if(R)R._fs={}});
 // 세력의 힘을 바로 맞춘다(인원을 비율로 바꿔서). 테스트·디버그용
-function setPow(f,v){const w=wld();if(!(w.pow[f]>0)){for(const s of Object.values(SECTS))if(alFac(s.al)===f&&!(G.pop[s.id]>0))G.pop[s.id]=popBase(s);popSync()}popScale(f,v/Math.max(.1,w.pow[f]))}
-function popReset(){G.pop=null;popInit();popSync()}
+function setPow(f,v){const w=wld();if(!(w.pow[f]>0)){for(const s of liveSects())if(alFac(s.al)===f&&!(G.pop[s.id]>0))G.pop[s.id]=popBase(s);popSync()}popScale(f,v/Math.max(.1,w.pow[f]))}
+function popReset(){G.pop=null;popInit();for(const s of Object.values(SECTS))if(sectGone(s.id))G.pop[s.id]=0;popSync()}
 
 // ---- 쇠퇴한 문파의 장문인은 싸울 수 있다 (사용자 요청 2026-10-13) ----
 // 인원이 기준의 50% 이하이거나 지난해보다 줄었으면(사망이 증가보다 많음) 쇠퇴. 그때 장문인 NPC 자리에 싸우는 우두머리가 선다(생명 3배, 공격 1.3배, 장로급 직위).
