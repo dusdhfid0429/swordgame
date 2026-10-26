@@ -2142,6 +2142,9 @@ function act(s){
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
     case'totitle':toTitle();return;
+    case'quit':quitAsk=!quitAsk;renderOpen();{const q=$('quitask');if(q&&q.scrollIntoView)q.scrollIntoView({block:'nearest'})}return;
+    case'quitno':quitAsk=false;break;
+    case'quitapp':quitApp();return;
     case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
@@ -3434,6 +3437,15 @@ function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=nu
   P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
   for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
   showTitle()}
+// 메뉴 → 종료 (사용자 2026-10-26): '저장소 선택'은 toTitle, '완전 종료'는 기록하고 앱을 닫는다.
+// 안드로이드 설치판은 껍데기의 AndroidApp.exit, 브라우저는 window.close 를 해 보고 안 닫히면(스크립트가 연 창이 아니면 막힌다) 첫 화면으로 가서 알린다
+let quitAsk=false;hook('panelOpen',()=>{if(quitAsk){quitAsk=false;renderOpen()}});
+const quitCard=()=>quitAsk?`<div class="card" id="quitask"><p>어떻게 끝낼까요? 지금까지의 진행은 이 칸에 기록해 둡니다.</p><div class="center">${B('totitle','저장소 선택',{pri:1,t:'기록하고 저장 칸 고르는 첫 화면으로'})} ${B('quitapp','완전 종료',{t:'기록하고 게임을 닫는다'})} ${B('quitno','그만둔다')}</div></div>`:'';
+function quitApp(){quitAsk=false;if(P)saveGame(true);
+  const A=window.AndroidApp;if(A&&typeof A.exit==='function'){A.exit();return}
+  try{window.close()}catch(e){}
+  setTimeout(()=>{if(window.closed)return;if(P)toTitle();else showTitle();
+    box.insertAdjacentHTML('afterbegin','<p class="card note" id="quitnote" style="text-align:center">기록해 두었습니다. 브라우저에서는 게임이 창을 직접 닫을 수 없으니 이 탭을 닫아 끝내 주세요.</p>')},250)}
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
@@ -3715,7 +3727,7 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('totitle','저장 칸 고르기')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')}</span></div>`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')} ${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
 }
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
