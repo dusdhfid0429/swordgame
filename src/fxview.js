@@ -86,7 +86,7 @@ const PRIM=[
   ['소용돌이 (vortex)',()=>GL({t:'vortex',x:P.x,y:P.y,r:2.6,col:V.col,w:3,life:.7},{t:V.tier,art:{}})],
   ['연쇄 번개 (zap)',()=>{let a={x:P.x,y:P.y};mobs.slice(0,5).forEach((m,i)=>{const s=a;later(i*.08,()=>GL({t:'zap',x:s.x,y:s.y,ex:m.x,ey:m.y,col:V.col,w:3,life:.3},{t:V.tier,art:{}}));a={x:m.x,y:m.y}})}],
 ];
-const PROJ=['crescent','blade','arrow','spear','ring','orb'],PROJN={crescent:'검기 반달',blade:'비도',arrow:'화살',spear:'창기',ring:'기환',orb:'기공탄'};
+const PROJ=['crescent','blade','needle','star','arrow','spear','ring','orb'],PROJN={crescent:'검기 반달',blade:'비도',needle:'비침',star:'표창',arrow:'화살',spear:'창기',ring:'기환',orb:'기공탄'};
 function shoot(kind,elc){place();const e=tgt();face(e.x,e.y);heroAtk('flat');
   const X={art:{c:V.col,cls:'검',pt:'spark',elc:!!elc,el:null},key:null,t:V.tier,mul:1,combo:1};
   for(const d of[-.25,0,.25]){const a=Math.atan2(P.fy,P.fx)+d;projs.push({x:P.x,y:P.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:6,m:0,kb:0,stun:0,pierce:1,size:1+.15*V.tier,hit:new Set,X,c:V.col,kind,trail:[],ph:Math.random()*6})}}

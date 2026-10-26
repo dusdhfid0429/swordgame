@@ -68,7 +68,7 @@ function sfx(k,o={}){
   const lim={hit:.04,crit:.06,swing:.05,ehit:.05,kill:.06,coin:.05,step:.1}[k]||.02;if(t-(sfxLast[k]||0)<lim)return;sfxLast[k]=t;
   const v=o.v==null?1:o.v;
   switch(k){
-    case'swing':{const c=o.cls||'검',hi=c==='검'?1:c==='창'||c==='봉'?.7:c==='도'?.8:c==='궁'?1.2:.5;
+    case'swing':{const c=o.cls||'검',hi=c==='검'?1:c==='창'||c==='봉'?.7:c==='도'?.8:c==='궁'?1.2:c==='암'?1.35:.5;
       noise(D,t,.28*v,.01,.16,'bandpass',2600*hi,700*hi,1.2);if(c==='검')tone(D,t+.02,2800,'sine',.03*v,.002,.25,2700);break}
     case'bow':tone(D,t,180,'triangle',.25*v,.002,.12,90);noise(D,t,.15*v,.002,.25,'bandpass',3000,1200,2);break;
     case'hit':noise(D,t,.4*v,.001,.07,'bandpass',1800,600,.8);tone(D,t,150,'sine',.5*v,.002,.13,60);break;

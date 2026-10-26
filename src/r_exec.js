@@ -29,6 +29,8 @@ const fStar=(X,c,col,s=1,life=.2)=>GL({t:'star',x:c.x,y:c.y,col,s:s*(1+.15*(X?X.
 const fClaw=(X,c,col)=>GL({t:'claw',x:c.x,y:c.y,col,life:.3,side:(P.fx-P.fy)>=0?1:-1},X);
 function fParts(X,c,col,n,spd,shape,life=.7){n+=4*(X?X.t:0);const ps=[];for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=spd*(.4+Math.random()*.8);ps.push({vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6-spd*.5,r:Math.random()*6})}
   fadeOld(X);fx.push({t:'parts',glow:true,x:c.x,y:c.y,col,c2:X&&X.art&&X.art.c2,ps,shape,life,max:life});tagCast(X,fx.length-1)}
+// 암기술 비(낙화우 등): 번개 대신 비침 몇 가닥이 위에서 꽂힌다
+const needleRain=(X,pt,c)=>{for(let i=0;i<3;i++)GL({t:'needle',x:pt.x+(Math.random()-.5)*.5,y:pt.y+(Math.random()-.5)*.5,col:c,life:.28},X)};
 function fxHit(X,e,s=1){
   const c=X.art.c,w=X.art.cls;
   if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
@@ -49,13 +51,13 @@ function exec(f,e,X){
       const base=Math.atan2(P.fy,P.fx),sp=(f.spread||.3)*(n>f.cnt&&!f.full?1.2:1);
       for(let i=0;i<n;i++){const a=f.full?base+i/n*Math.PI*2:base+(n>1?(i/(n-1)-.5)*sp:0);
         projs.push({x:P.x,y:P.y,vx:Math.cos(a)*f.spd,vy:Math.sin(a)*f.spd,left:f.len*rm,m,kb,stun,pierce:f.pierce||t>=2,size:(f.size||1)*(1+.15*t),
-          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:X.pj||CLASS[X.art.cls].pj,trail:[],ph:Math.random()*6})}
+          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:f.pj||X.pj||CLASS[X.art.cls].pj,psn:f.psn,trail:[],ph:Math.random()*6})}   // f.pj·psn: 암기술 초식의 모양과 독 (v181)
       break}
     case'drop':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(Math.min(f.r,2));
       circleHit(X,ctr,f.rad*rm,m,kb,stun);fBolt(X,ctr,c,f.rad>2?1.6:1);fx.push({t:'puff',x:ctr.x,y:ctr.y,life:.6});fRing(X,ctr,f.rad*rm,c,4,.4);if(f.rad>2)shake=.3;break}
     case'rain':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(2),n=f.cnt+(t>=1?2:0)+(t>=3?3:0);
       for(let i=0;i<n;i++)later(i*.06,()=>{const a=Math.random()*Math.PI*2,d=Math.sqrt(Math.random())*f.rad*rm,pt={x:ctr.x+Math.cos(a)*d,y:ctr.y+Math.sin(a)*d};
-        circleHit(X,pt,.8,m,.2,stun);fBolt(X,pt,c,.7);fRing(X,pt,.8,c,3,.3);if(X.art.pt==='petal')fParts(X,pt,c,6,50,'petal',.6)});break}
+        circleHit(X,pt,.8,m,.2,stun);if(X.art.cls==='암')needleRain(X,pt,c);else fBolt(X,pt,c,.7);fRing(X,pt,.8,c,3,.3);if(X.art.pt==='petal')fParts(X,pt,c,6,50,'petal',.6)});break}
     case'pull':{anim(.3);const o={x:P.x,y:P.y},R=f.rad*rm;
       for(const en of foes())if(en.hp>0&&dist(en,o)<R){hitE(X,en,m,0,stun);en.kb={x:(o.x-en.x)*1.4,y:(o.y-en.y)*1.4}}
       GL({t:'vortex',x:o.x,y:o.y,r:R,col:c,w:3,life:.5},X);break}
@@ -79,6 +81,6 @@ function updateProjs(dt){
   for(const q of projs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;q.trail.push({x:q.x,y:q.y});if(q.trail.length>8)q.trail.shift();
     if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
     if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
-    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);hitE(q.X,e,q.m,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(!q.pierce){q.left=0;break}}}
+    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);hitE(q.X,e,q.m,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
   projs=projs.filter(q=>q.left>0);
 }

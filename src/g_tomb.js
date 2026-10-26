@@ -23,7 +23,7 @@ function makeTomb(cause){
 }
 function tombGhostPal(cls){const k='ghost'+cls;if(!PAL[k])PAL[k]={...PAL.hero,robe:['#c8d6ee','#7a8cb0'],robeB:'#6a7a9c',inner:'#3a4a78',sash:'#3a4a78',hairband:'#6a7ac8',weapon:CLASS[cls].draw,anim:CLASS[cls].anim};return k}
 function tombWake(t){
-  t.awake=1;const ranged=t.cls==='궁';
+  t.awake=1;const ranged=rangedCls(t.cls);
   const e=mkMob(`${t.name}의 망령`,t.x,t.y+1.2,{hp:t.hp,atk:t.atk,def:t.def,hm:t.hm,sp:2,reach:ranged?5:CLASS[t.cls].reach,ranged,el:t.el,pal:tombGhostPal(t.cls),hostile:1,boss:1,aggro:9,xp:t.xp,big:1.1});
   e.tomb=t.id;e.ghost=1;e.wcls=t.cls;e.aggro=true;mobs.push(e);
   for(const dx of[-1.4,1.4]){const g=mkMob('강시',t.x+dx,t.y+.6);g.name='무덤을 지키는 강시';g.tombGuard=t.id;g.aggro=true;mobs.push(g)}

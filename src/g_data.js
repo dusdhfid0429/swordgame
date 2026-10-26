@@ -15,6 +15,7 @@ const STATUS=GD.STATUS;
 
 // 무기 계열: 현묘도 (명중+회피) trades against 공격·방어
 const CLS=GD.CLS;
+const rangedCls=c=>c==='궁'||c==='암';   // 멀리서 쏘는 병기: 궁법·암기술 (v181)
 const CLASS=GD.CLASS;
 const WEAP=CLASS;
 // 오행·음양·뇌기: 속성은 무공이 아니라 운용 중인 심법(내공)의 것이다 (사용자 결정 2026-10-13). 무공의 el 은 생성 씨앗(초식 수·이름·id)으로만 남고, 전투·색·입자는 심법 속성과 계열을 따른다.
@@ -48,16 +49,17 @@ const UA=GD.UA,UB=GD.UB;
 // 궁법 forms (new); the other classes reuse the hand-made 초식 of the earlier prototype as their pattern pool (각 folds into 권법 as 권각)
 const BOW=GD.BOW;
 const BOWU=GD.BOWU;
+// 암기술 forms (v181, 사용자 2026-10-26): 비도·표창·비침, 독침
 function buildArts(){
   const pool={},ults={};
   for(const c of CLS){pool[c]=[];ults[c]=[]}
   for(const k in PROTO){const c=k==='각'?'권':k;for(const a of PROTO[k]){pool[c].push(...a.forms);ults[c].push(a.ult)}}
-  pool.궁=BOW;ults.궁=BOWU;
+  pool.궁=BOW;ults.궁=BOWU;pool.암=GD.AMGI;ults.암=GD.AMGIU;
   const R=rng(4242),combos=[];for(const a of NA)for(const b of NB)combos.push(a+b);
   for(let i=combos.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[combos[i],combos[j]]=[combos[j],combos[i]]}
   const uc=[];for(const a of UA)for(const b of UB)uc.push(a+b);
   let ci=0,ui=0;const arts={};
-  for(const side of['정','사'])CLS.forEach(c=>ELS.forEach((el,ei)=>{
+  const basic=(side,c)=>ELS.forEach((el,ei)=>{
     const n=ART_NAMES[side][c][ei],k=FORMN[el],r=rng(7+n.charCodeAt(0)*31+n.charCodeAt(1)*7+ei);
     const pick=pickForms(pool[c],r,k);
     const off=OFFICIAL[n];
@@ -67,10 +69,12 @@ function buildArts(){
     arts[id]=artFx({id,side,cls:c,el,n,forms,
       ult:{n:off?off.ult:uc[ui++%uc.length],steps:[F('','circle',{rad:2.8,m:1.5,stun:.3}),...u.steps.map(s=>({...s,delay:(s.delay||0)+.18}))]},
       d:`${SIDES[side].base} 계열 ${CLASS[c].n}. 초식 ${forms.length}개와 필살기.`});
-  }));
+  });
+  for(const side of['정','사'])CLS.forEach(c=>{if(c!=='암')basic(side,c)});
   addSectArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);
   addGiyeonArts(arts,pool,ults);
   addRecluseArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);   // 은거기인의 중승 무공 (g_mkmat.js). 맨 끝에 불러 다른 무공의 초식 이름이 밀리지 않는다
+  for(const side of['정','사'])basic(side,'암');   // 암기술 기본 무공(v181)도 나중에 넣은 계열이라 맨 끝
   arts.base=artFx({id:'base',side:null,cls:'권',el:null,n:'기초권각',base:1,
     forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qp:GD.QSTAR.base[0]},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qp:GD.QSTAR.base[1]},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qp:GD.QSTAR.base[2]}],
     ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'});
