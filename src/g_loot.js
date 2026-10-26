@@ -27,7 +27,7 @@ function mobKitLabel(e){const a=ARTS[e.art];if(!a)return'';const q=e.eq&&e.eq.we
   return `${a.n}${q?` · ${QN(q.q)} ${q.name}`:''}${e.eq&&e.eq.armor?` · ${e.eq.armor.name}`:''}`}
 // 정예·보스가 큰 기술을 쓸 때 초식 이름을 외친다
 function mobFormCall(e){const a=ARTS[e.art];if(!a||!e.known)return;const f=a.forms[Math.floor(Math.random()*e.known)];
-  texts.push({x:e.x,y:e.y,t:`${a.n} · ${f.n}`,c:`rgb(${a.ct})`,life:.9,call:1})}
+  texts.push({x:e.x,y:e.y,t:`${a.n} · ${f.n}`,c:`rgb(${a.ct})`,life:.9,call:1});runHooks('formCall',e,f)}
 // 전리품
 function mobLoot(e){
   const d=e.d,out=[];

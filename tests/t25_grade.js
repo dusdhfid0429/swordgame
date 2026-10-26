@@ -11,7 +11,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
       const st=START[s.id],want=!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?2:(a.hi?3:2);if(g!==want)bad.push(a.n)}
     const starts=Object.values(SECTS).filter(s=>s.arts.length).map(s=>artGrade(startSet(s).art.id));cnt.start=starts.length;cnt.start0=starts.every(g=>g===0);
-    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy).every(a=>(a.grade||0)===0);
+    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy&&!a.rc).every(a=>(a.grade||0)===0);
     // 같은 무기·같은 초식 자리의 위력 견주기: 화산 낙안검법(대·일반 상승) vs 매화검법(입문공 하승), 이십사수매화검(대·고급 절정) vs 회풍낙안검(소·고급 상승)
     return{cnt,bad,gen,mul:[GMUL[artGrade('S_hwasan_1')],GMUL[artGrade('S_hwasan_0')],GMUL[artGrade('S_hwasan_2')],GMUL[artGrade('S_hyeongsan_1')]],
       cost:[meritCost({id:'S_hwasan_2'},0),meritCost({id:'S_hyeongsan_1'},0),meritCost({id:'S_hwasan_1'},0),meritCost({id:'S_hwasan_0'},0)],

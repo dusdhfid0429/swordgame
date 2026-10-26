@@ -13,8 +13,8 @@ const MK_N=5,MK_TOP=3,MK_MAST=100,MK_REALM=5;   // 재료 수, 창안으로 닿�
 const MK_GYW=[0,1,.7,.45];   // 기연에서 만날 확률 = GY_P × 등급 가중(중승 1, 상승 .7, 절정 .45)
 const MK_PRE={금:['파천','벽력','금강','섬광'],목:['청풍','유성','송학','춘뢰'],수:['한월','유수','창해','빙백'],화:['열양','적염','화룡','삼매'],토:['태산','반석','후토','황룡']};
 const MK_SUF={검:'검법',도:'도법',창:'창법',봉:'봉법',권:'권법',궁:'궁술'};
-const mkMul=a=>a.sect||a.gy||a.made?GMUL[a.grade||0]:(a.forms.length<=3?1.25:1);   // 초식 m에 이미 곱해진 등급 보정
-const mkUltMul=a=>a.sect||a.gy||a.made?GULT[a.grade||0][1]:1;
+const mkMul=a=>a.sect||a.gy||a.made||a.rc?GMUL[a.grade||0]:(a.forms.length<=3?1.25:1);   // 초식 m에 이미 곱해진 등급 보정
+const mkUltMul=a=>a.sect||a.gy||a.made||a.rc?GULT[a.grade||0][1]:1;
 // 재료가 될 수 있는 무공 묶음: {cls,g,ids} (대성 이상 다섯 넘는 것만)
 function mkGroups(){const by={};
   for(const id of learnedArts()){const a=ARTS[id],s=A(id);if(!a||a.base||a.gy||(a.grade||0)>=MK_TOP||s.p<MK_MAST)continue;

@@ -110,6 +110,7 @@ function itemDesc0(it){
   if(it.slot==='book'){if(!itemArtOk(it))return '알 수 없는 비급 · 지금 강호에 전하지 않는 무공이라 읽을 수 없다';const a=ARTS[it.art],f=a.forms[it.form];
     // 기연·창안 무공은 side가 없다 (정사 공용). v157 기연동굴부터 이런 비급이 행낭에 들어와 SIDES[null]에서 행낭이 열리지 않았다
     return `${AGR[a.grade||0]} · ${SIDES[a.side]?SIDES[a.side].n:'정사 공용'} ${CLASS[a.cls]?CLASS[a.cls].n:''} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
+  if(it.slot==='leaf')return leafDesc(it);   // 비급 낱장 (g_mkmat.js)
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
@@ -136,10 +137,11 @@ function readBlock(it){
   if(it.slot==='sbook')return P.sp[it.sk]?'이미 익힌 특수무공입니다.':null;
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   if(it.slot==='gpage')return null;
+  if(it.slot==='leaf')return leafBlock(it);
   if(it.slot!=='book')return null;
   if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
-  if(!artSideOk(a))return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
+  if(!artSideOk(a)&&!it.tu)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
   if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if(a.gy&&!s&&gyMine().length>=GY_MAX)return `천고의 기연 무공은 한 생에 ${GY_MAX}가지까지만 익힌다. 문파에 기증하거나 다음 생에 익힐 수 있다.`;
@@ -153,8 +155,10 @@ function readBook(it){
   if(it.slot==='pbook'){if(learnPas(it.pas,1))P.bag.splice(P.bag.indexOf(it),1);return}
   if(it.slot==='sbook'){P.sp[it.sk]=1;P.bag.splice(P.bag.indexOf(it),1);log(`특수무공 [${it.sk}]을(를) 익혔습니다.`,'xp');return}
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
+  if(it.slot==='leaf'){leafBind(it);return}
   if(it.slot==='gpage'){P.sg.pages[it.page]=(P.sg.pages[it.page]||0)+it.n;P.bag.splice(P.bag.indexOf(it),1);log(`절세신공 [${it.page}] ${it.n}장을 익혀 깨쳤습니다. (${P.sg.pages[it.page]}/10)`,'xp');return}
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
+  if(it.tu)tuRead(a);   // 견식·낱장 사본: 다른 계열이면 정파는 악업 (g_mkmat.js)
   P.vit-=f.cost;if(!s)P.arts[a.id]={p:0,f:a.forms.map(()=>false)};P.arts[a.id].f[it.form]=true;P.bag.splice(P.bag.indexOf(it),1);
   log(`${a.n}의 [${f.n}]을(를) 익혔습니다. (활력 -${f.cost})`,'xp');
   if(allLearned(a.id))log(`${a.n}의 모든 초식을 익혀 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다. (S / 키패드 5)`,'xp');
@@ -206,6 +210,7 @@ function spawnTick(){
 //  panelOpen(id) 창을 연 뒤
 //  allyTick(a,dt) / allyDown(a)  동료 한 프레임 전 / 동료가 쓰러진 뒤 (a.hp<=0으로 만들면 그 프레임은 건너뛴다)
 //  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
+//  formCall(e,f)  정예·두목·비무 상대가 초식을 외칠 때 (g_loot.js mobFormCall). 견식이 쌓인다 (g_mkmat.js)
 //  glFx(o,X)     무공 이펙트 하나를 fx에 넣은 뒤 (X: 무공, 경지 효과 등은 없음). 속성 재질을 덧입힌다 (r_elfx.js)
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);

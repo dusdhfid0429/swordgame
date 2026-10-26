@@ -68,7 +68,8 @@ function intelCard(){const L=P.intel||[];if(!L.length)return'';return `<div clas
 // ---- 객잔 손님들의 이야기 ----
 function innLine(){const T=INTEL.chatter,r=Math.random();
   if(r<.45){const g=gycRumorFor(.4);if(g){gycHear(g.c,Math.min(2,Math.floor(g.L)),g.txt);return g.txt}}
-  if(r>=.45&&r<.62&&typeof cvRumor==='function'){const t=cvRumor();if(t)return t}   // v176: 표국·상단 행렬 소식 (g_caravan.js)
+  if(r>=.45&&r<.62&&typeof cvRumor==='function'){const t=cvRumor();if(t)return t}
+  if(r>=.62&&r<.72&&typeof rcRumor==='function'){const t=rcRumor();if(t)return t}   // 은거기인 소문 (g_mkmat.js)   // v176: 표국·상단 행렬 소식 (g_caravan.js)
   const t=pick(T),w=G.W&&G.W.pow||{},f=pick(FAC4.filter(x=>w[x]>0).length?FAC4.filter(x=>w[x]>0):['정']),bs=Object.keys(MOBS).filter(m=>MOBS[m].boss),b=pick(bs);
   const weak=typeof sectPop==='function'?Object.values(SECTS).filter(s=>sectPop(s.id)>0).sort((a,c)=>sectPop(a.id)/popBase(a)-sectPop(c.id)/popBase(c))[0]:null;
   return josa(t.replace('{boss}',b).replace('{bossAt}',mobWhere(b)||'어딘가').replace('{fac}',FAC4N[f]).replace('{pow}',Math.round(w[f]||0)).replace('{weak}',weak?weak.n:'어느 문파')

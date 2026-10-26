@@ -68,6 +68,7 @@ function gycLoot(c,n){n.cd=99999;c.done=1;c.by='me';c.who=P.name;const got=[];
   const art=c.art&&ARTS[c.art]&&!P.arts[c.art]&&!gyInBag(c.art)&&!gycDonOwner(c.art)?c.art:typeof mkGyRoll==='function'?mkGyRoll('cave'):null;
   if(art)got.push(gyGive(art).n+' 비급');
   for(const[k,m]of GYC.loot){const kk=k==='주과'?null:k;for(let j=0;j<m;j++){const nm=kk||pick(Object.keys(GYC.fruits));addMat(nm);got.push(nm)}}
+  {const id=leafPick({cls:myCls(),minG:2})||leafPick({minG:2});if(id){const n=R1(LEAF.gyc[0],LEAF.gyc[1]);giveLeaf(id,n,c.name);got.push(`${ARTS[id].n} 낱장 ${n}장`)}}   // 비급 낱장 (g_mkmat.js)
   if(!art){const b=randomBook();P.bag.push(b);got.push(b.name);const sg=pick(Object.keys(SHINGONG));P.bag.push(mkGPage(sg,2));got.push(`절세신공 잔결 ${sg}`)}
   log(`${c.name}의 기연: ${got.join(' · ')}을(를) 얻었다. 모두 행낭에 넣었다.`,'xp');showBanner(c.name,art?`${ARTS[art].n} 비급`:'기연의 보물');
   feat(`${c.name}에서 기연을 얻었다${art?` (${ARTS[art].n})`:''}`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.6});runHooks('giyeonDone',{src:'cave'});saveGame(true)}

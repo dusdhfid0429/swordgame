@@ -34,6 +34,7 @@ function ruinLoot(n){const s=SECTS[n.sect];if(!s)return;G.looted=G.looted||{};(G
   if(e.t==='silver'){const v=R1(e.n[0],e.n[1]);P.silver+=v;log(`${where}에서 은자 ${v}을(를) 찾았다.`,'sys');addText(P.x,P.y,`은자 ${v}`,'#e8c66e');return}
   if(e.t==='potion'){const v=R1(e.n[0],e.n[1]);addMat('금창약',v);log(`${where}에서 금창약 ${v}개를 찾았다.`,'sys');return}
   if(e.t==='ash'){log('타다 남은 재와 깨진 기왓장뿐이다.','info');return}
+  if(e.t==='leaf'){const id=leafPick({sects:[s.id]});if(id){giveLeaf(id,1,where);return}it=ruinRelic(s)}   // 비급 낱장 (g_mkmat.js)
   if(e.t==='gear')it=ruinGear(s);else if(e.t==='relic')it=ruinRelic(s);else if(e.t==='book')it=ruinBook(s,false)||ruinRelic(s);else if(e.t==='hibook')it=ruinBook(s,true)||ruinRelic(s);
   if(!it)return;if(P.bag.length>=24){log('행낭이 가득 찼다. 자리를 비우고 다시 뒤져라.','info');delete G.looted[REG][n.key];n.cd=0;return}
   P.bag.push(it);log(`${where}에서 ${itemLabel(it)}을(를) 찾았다.${it.relic?` ${s.n}의 유물이다.`:e.t==='hibook'?` 멸문한 ${s.n}의 절기가 폐허에서 흘러나왔다.`:''}`,it.slot==='book'||it.relic?'xp':'sys');

@@ -334,6 +334,7 @@ function caveChestOpen(n){P.caveGot=P.caveGot||{};if(P.caveGot[n.cave]){n.cd=999
   if(e.t==='silver'){const v=Math.round(R1(e.n[0],e.n[1])*q);P.silver+=v;log(`동굴 상자에서 은자 ${v}을(를) 찾았다.`,'sys');addText(P.x,P.y,`은자 ${v}`,'#e8c66e')}
   else if(e.t==='potion'){const v=R1(e.n[0],e.n[1]);addMat('금창약',v);log(`동굴 상자에서 금창약 ${v}개를 찾았다.`,'sys')}
   else if(e.t==='ore'){const v=R1(e.n[0],e.n[1]);addMat('광석',v);log(`동굴 상자에서 광석 ${v}개를 찾았다.`,'sys')}
+  else if(e.t==='leaf'){const id=leafPick({cls:myCls(),minG:2})||leafPick({minG:2});if(id)giveLeaf(id,R1(LEAF.caveN[0],LEAF.caveN[1]),'동굴 상자')}   // 상승 이상 문파 무공의 낱장 (g_mkmat.js)
   else if(e.t==='book'){const cls=P.eq&&P.eq.weapon?P.eq.weapon.cls:'권',ids=Object.keys(ARTS).filter(k=>ARTS[k].cls===cls&&ARTS[k].forms);const id=ids.length?pick(ids):null;it=id?mkBook(id,Math.floor(Math.random()*Math.min(2,ARTS[id].forms.length))):null}
   if(e.t==='gear'||(e.t==='book'&&!it)){const cls=P.eq&&P.eq.weapon?P.eq.weapon.cls:'검',r=Math.random();it=r<.45?mkWeapon(cls,q,0):r<.75?mkGear('armor',pick(['마의','피갑','흑철갑']),q,{hp:26,def:4}):mkGear('acc',pick(['옥패','호신부','염주']),q,{qi:24,hm:5})}
   if(it){if(P.bag.length>=24){log('행낭이 가득 찼다. 자리를 비우고 다시 열어라.','info');return}P.bag.push(it);log(`동굴 상자에서 ${itemLabel(it)}을(를) 찾았다.`,it.slot==='book'?'xp':'sys')}
