@@ -39,7 +39,7 @@ function addSectArts(arts,pool,ults,formName,ultName){
     // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
     const st=START[s.id],g=!a.hi&&st&&st.art===a.n?0:sectGrade(s,a.hi),mul=GMUL[g];
     const off=OFFICIAL[a.n];   // 이름난 무공(양의검법 등)은 정해진 초식 이름을 쓴다. formName()은 그대로 불러 다른 무공의 초식 이름이 밀리지 않게 한다
-    const forms=pick.map((f,i)=>({...f,n:(n=>off&&off.forms[i]||n)(formName()),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
+    const forms=pick.map((f,i)=>({...f,n:(n=>off&&off.forms[i]||n)(formName()),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];
     arts[a.id]=artFx({id:a.id,side,cls:a.cls,el:a.el,n:a.n,forms,sect:s.id,hi:a.hi,
       grade:g,ult:{n:(n=>off?off.ult:n)(ultName()),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},

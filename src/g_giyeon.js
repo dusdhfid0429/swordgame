@@ -13,7 +13,7 @@ function addGiyeonArts(arts,pool,ults){
   Object.entries(GY_ARTS).forEach(([id,a],ai)=>{
     const r=rng(911+a.n.charCodeAt(0)*13+a.n.charCodeAt(1)*3+ai);
     const pick=pickForms(pool[a.cls],r,a.forms.length);
-    const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*mul}));
+    const forms=pick.map((f,i)=>({...f,n:a.forms[i],req:REQ[i],cost:0,bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][ai%ults[a.cls].length],EC=EL[a.el];
     arts[id]=artFx({id,side:null,cls:a.cls,el:a.el,n:a.n,forms,gy:1,grade:g,
       ult:{n:a.ult,steps:[F('','circle',{rad:3,m:GULT[g][0],stun:.4}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},

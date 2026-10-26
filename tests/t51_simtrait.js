@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const u=await p.evaluate(()=>{P.sims={N_shaolin_3:1,N_cheongseong_2:1,N_kunlun_3:1,N_jegal_3:1};P.sim=null;const o={};o.def0=simTv('def');
     const sp0=moveSpd(),lp0=leapRange(),hm0=hmv();P.sim='N_shaolin_3';o.def=simTv('def');o.sp_same=moveSpd()===sp0;
     P.sim='N_cheongseong_2';o.spd=Math.round((moveSpd()/sp0-1)*1000)/10;P.sim='N_kunlun_3';o.leap=Math.round((leapRange()/lp0-1)*1000)/10;
-    P.sim='N_jegal_3';P.maxQi=P.qi=500;const wp=P.eq.weapon;P.eq.weapon=null;const f=art().forms[0];const q0=P.qi;P.fcd=[0,0,0,0,0,0];P.gcd=0;const w=mkMob('늑대',P.x+1,P.y);mobs.push(w);P.target=w;o.used=useForm(0,true);o.qcost=q0-P.qi;o.fq=f.qi;P.target=null;mobs=mobs.filter(m=>m!==w);P.eq.weapon=wp;o.hm_same=hmv()===hm0;
+    P.sim='N_jegal_3';P.maxQi=P.qi=500;const wp=P.eq.weapon;P.eq.weapon=null;const f=art().forms[0];const q0=P.qi;P.fcd=[0,0,0,0,0,0];P.gcd=0;const w=mkMob('늑대',P.x+1,P.y);mobs.push(w);P.target=w;o.used=useForm(0,true);o.qcost=q0-P.qi;o.fq=formQi(f);P.target=null;mobs=mobs.filter(m=>m!==w);P.eq.weapon=wp;o.hm_same=hmv()===hm0;
     P.sim='N_shaolin_3';o.dmgTxt=document.body.innerText;return o});
   ok(`기초 0 → 소림 절정 금강 ${u.def}% (이동 그대로 ${u.sp_same}) · 청성 이동 +${u.spd}% · 곤륜 경공 +${u.leap}% · 제갈 절정 초식 내공 ${u.qcost}/${u.fq}`,
     u.def0===0&&Math.abs(u.def-10.8)<1e-9&&u.sp_same&&Math.abs(u.spd-8.4)<.05&&Math.abs(u.leap-21.6)<.05&&u.used&&u.fq>0&&u.qcost===Math.round(u.fq*(1-.216))&&u.hm_same);

@@ -61,7 +61,7 @@ function buildArts(){
     const n=ART_NAMES[side][c][ei],k=FORMN[el],r=rng(7+n.charCodeAt(0)*31+n.charCodeAt(1)*7+ei);
     const pick=pickForms(pool[c],r,k);
     const off=OFFICIAL[n];
-    const forms=pick.map((f,i)=>({...f,n:off?off.forms[i]:combos[ci++%combos.length],req:REQ[i],cost:COST[i],bonus:BONUS[i],qi:4+i*4,m:f.m*(1+.06*i)*(k<=3?1.25:1)}));
+    const forms=pick.map((f,i)=>({...f,n:off?off.forms[i]:combos[ci++%combos.length],req:REQ[i],cost:COST[i],bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*(k<=3?1.25:1)}));
     const u=ults[c][(ei+(side==='사'?1:0))%ults[c].length];
     const id=side+c+ei;
     arts[id]=artFx({id,side,cls:c,el,n,forms,
@@ -71,7 +71,7 @@ function buildArts(){
   addSectArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);
   addGiyeonArts(arts,pool,ults);
   arts.base=artFx({id:'base',side:null,cls:'권',el:null,n:'기초권각',base:1,
-    forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qi:2},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qi:4},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qi:8}],
+    forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qp:GD.QSTAR.base[0]},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qp:GD.QSTAR.base[1]},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qp:GD.QSTAR.base[2]}],
     ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'});
   return arts;
 }
