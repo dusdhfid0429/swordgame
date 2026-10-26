@@ -9078,23 +9078,29 @@ hook('loadRegion',()=>{if(P&&P.binsa)P.binsa.t=time});
 // - 화면이 가려지거나 페이지를 닫으면 '정상'으로 적는다. 다음에 켰을 때 마지막 기록이 '켜져 있는 채'면 갑자기 꺼진 것으로 보고
 //   제목 화면에 알림과 '기록 복사' 단추를 띄운다. 복사한 글을 그대로 보내 주면 어디서 꺼졌는지 볼 수 있다. ☰ 메뉴에서도 볼 수 있다.
 const CRASH_KEY='ganghoyunhoe-crash',CRASH_LAST='ganghoyunhoe-crash-last';
-const CRL={on:1,acts:[],errs:[],fr:0,fps:0,t0:Date.now()};
+const CRL={on:1,away:false,acts:[],errs:[],fr:0,fps:0,t0:Date.now()};
 let crashPrev=null;
 try{const s=STORE.get(CRASH_KEY);if(s){const d=JSON.parse(s);if(d&&d.on){crashPrev=d;STORE.set(CRASH_LAST,s,1)}}}catch(e){}
 function crashMem(){const m=performance.memory;return m?Math.round(m.usedJSHeapSize/1e6)+'/'+Math.round(m.jsHeapSizeLimit/1e6)+'MB':''}
 function crashWrite(on){CRL.on=on;try{STORE.set(CRASH_KEY,JSON.stringify({on,t:Date.now(),up:Math.round((Date.now()-CRL.t0)/1000),reg:typeof REG!=='undefined'?REG:'',
   panel:typeof panel!=='undefined'?panel:'',playing:typeof playing!=='undefined'&&playing,fps:CRL.fps,mem:crashMem(),
   scr:`${innerWidth}x${innerHeight}@${devicePixelRatio}`,ua:navigator.userAgent.slice(0,160),acts:CRL.acts,errs:CRL.errs}),1)}catch(e){}}
-const crashAct=s=>{CRL.acts.push(Math.round((Date.now()-CRL.t0)/100)/10+'s '+String(s).slice(0,60));if(CRL.acts.length>30)CRL.acts.shift();crashWrite(1)};
-const crashErr=s=>{CRL.errs.push(String(s).slice(0,300));if(CRL.errs.length>10)CRL.errs.shift();crashWrite(1)};
+const crashAct=s=>{CRL.away=false;CRL.acts.push(Math.round((Date.now()-CRL.t0)/100)/10+'s '+String(s).slice(0,60));if(CRL.acts.length>30)CRL.acts.shift();crashWrite(1)};
+const crashErr=s=>{CRL.errs.push(String(s).slice(0,300));if(CRL.errs.length>10)CRL.errs.shift();crashWrite(CRL.away||document.hidden?0:1)};
 addEventListener('error',e=>crashErr((e.message||'error')+' @'+(e.filename||'').split('/').pop()+':'+e.lineno));
 addEventListener('unhandledrejection',e=>crashErr('promise: '+(e.reason&&e.reason.message||e.reason)));
 {const ce=console.error;console.error=function(...a){try{crashErr(a.map(String).join(' '))}catch(e){}return ce.apply(this,a)}}
 // 누른 단추: 창 안(data-act), 제목(data-s), 화면 단추(id)
 addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act],[data-s],button');if(b)crashAct(b.dataset.act||b.dataset.s||b.id||b.textContent.trim().slice(0,12))},{capture:true,passive:true});
 addEventListener('pagehide',()=>crashWrite(0));
-document.addEventListener('visibilitychange',()=>crashWrite(document.hidden?0:1));
-setInterval(()=>{CRL.fps=CRL.fr/2;CRL.fr=0;if(!document.hidden)crashWrite(1)},2000);
+document.addEventListener('visibilitychange',()=>crashWrite(document.hidden||CRL.away?0:1));
+// 창이 초점을 잃으면(안드로이드 최근 앱 화면·알림창, 다른 창) '자리 비움'으로 적는다 (사용자 2026-10-26 꺼짐 기록):
+// 최근 앱 화면에서 밀어 끄면 visibilitychange·pagehide 없이 프로세스가 죽어서, 끄기 직전까지 '켜져 있음'으로 남아 꺼짐으로 잘못 보였다.
+// 안드로이드 설치판은 껍데기가 onPause·onResume 때 crashAway 를 직접 부른다(MainActivity.java)
+function crashAway(a){CRL.away=!!a;crashWrite(a||document.hidden?0:1)}
+addEventListener('blur',()=>crashAway(1));
+addEventListener('focus',()=>crashAway(0));
+setInterval(()=>{CRL.fps=CRL.fr/2;CRL.fr=0;if(!document.hidden&&!CRL.away)crashWrite(1)},2000);
 // 초당 그림 수는 loop가 그린 장마다 CRL.fr을 센다 (g_draw.js)
 crashWrite(1);
 // 보여 줄 글
