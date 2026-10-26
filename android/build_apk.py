@@ -22,6 +22,7 @@ FONTS = {  # Google Fonts (SIL OFL). 웹뷰는 오프라인이라 게임 안에 
     'Song Myung': 'https://fonts.gstatic.com/s/songmyung/v23/1cX2aUDWAJH5-EIC7DIhr1E.ttf',
     'Gowun Dodum': 'https://fonts.gstatic.com/s/gowundodum/v12/3Jn5SD_00GqwlBnWc1TUJF0F.ttf',
 }
+SHELL = 1   # 껍데기 판 (Updater.SHELL). MainActivity·apk_bridge.js 사이 이음을 바꿔 예전 앱이 새 게임 묶음을 못 돌리게 되면 올린다
 BT = os.environ.get('BUILD_TOOLS', '/usr/lib/android-sdk/build-tools/debian')
 AJAR = os.environ.get('ANDROID_JAR', '/usr/lib/android-sdk/platforms/android-23/android.jar')
 
@@ -130,6 +131,8 @@ def main():
     ap.add_argument('--keystore', required=True)
     ap.add_argument('--issue-key')
     ap.add_argument('--out', default=os.path.join(BUILD, 'gangho.apk'))
+    ap.add_argument('--publish', metavar='gangho-access 폴더', help='게임 묶음·apk 를 올리고 목록(access.txt)을 새로 쓴다. 커밋·푸시는 따로')
+    ap.add_argument('--min-app', type=int, help='이보다 낮은 앱 판(versionCode)은 실행을 막는다')
     a = ap.parse_args()
     a.issue_key = a.issue_key or os.path.join(os.path.dirname(os.path.abspath(a.keystore)), 'gangho-issue.pem')
     sys.path.insert(0, HERE)
@@ -170,7 +173,10 @@ def main():
                          capture_output=True, text=True, check=True).stdout
     der = base64.b64decode(''.join(l for l in pem.splitlines() if l and not l.startswith('-----')))
     cert = hashlib.sha256(der).digest()
-    salt = secrets.token_bytes(16)
+    sp = os.path.join(os.path.dirname(os.path.abspath(a.keystore)), 'gangho-content.salt')   # 판이 바뀌어도 같아야 한다 (Updater)
+    if not os.path.exists(sp):
+        open(sp, 'wb').write(secrets.token_bytes(16))
+    salt = open(sp, 'rb').read()
     aead = AESGCM(hashlib.sha256(cert + salt).digest())
     enc = os.path.join(stage, 'enc', 'g')
     os.makedirs(enc)
@@ -182,7 +188,8 @@ def main():
             open(os.path.join(enc, rel.replace('/', '_') + '.bin'), 'wb').write(nonce + aead.encrypt(nonce, raw, None))
     ik = issue_code.load_key(a.issue_key, create=True)
     lock = json.load(open(os.path.join(HERE, 'lock.json'))) if os.path.exists(os.path.join(HERE, 'lock.json')) else {}
-    fill = {'@PUBKEY@': issue_code.pubkey_b64(ik), '@LISTURL@': lock.get('list_url', ''), '@CERTSHA@': cert.hex(), '@SALT@': base64.b64encode(salt).decode()}
+    fill = {'@PUBKEY@': issue_code.pubkey_b64(ik), '@LISTURL@': lock.get('list_url', ''), '@CERTSHA@': cert.hex(), '@SALT@': base64.b64encode(salt).decode(),
+            '@GAMEREV@': str(vcode), '@SHELL@': str(SHELL)}
     jsrc = os.path.join(stage, 'java')
     srcs = []
     for dp, _, fs in os.walk(os.path.join(HERE, 'src')):
@@ -215,6 +222,31 @@ def main():
         '--out', a.out, aligned)
     run(tool('apksigner'), 'verify', '--print-certs', a.out)
     print(f'완성: {a.out} ({os.path.getsize(a.out) / 1e6:.1f} MB, {vname}, versionCode {vcode})')
+    if a.publish:
+        publish(a, ik, vcode, os.path.join(enc, 'index.html.bin'), lock.get('list_url', ''))
+
+
+def publish(a, ik, vcode, game_bin, list_url):
+    """켤 때 최신화(Updater): game/<판>.bin 과 apk/gangho.apk 를 올리고, 목록의 game·app 칸을 이 판으로 바꿔 다시 서명한다"""
+    import issue_code
+    if not list_url:
+        raise SystemExit('android/lock.json 에 list_url 이 없습니다')
+    base = list_url.rsplit('/', 1)[0] + '/'
+    d = a.publish
+    os.makedirs(os.path.join(d, 'game'), exist_ok=True)
+    os.makedirs(os.path.join(d, 'apk'), exist_ok=True)
+    for f in os.listdir(os.path.join(d, 'game')):   # 묵은 묶음은 지운다 (저장소가 커지지 않게)
+        os.remove(os.path.join(d, 'game', f))
+    b = open(game_bin, 'rb').read()
+    open(os.path.join(d, 'game', f'{vcode}.bin'), 'wb').write(b)
+    shutil.copy(a.out, os.path.join(d, 'apk', 'gangho.apk'))
+    home = os.path.dirname(os.path.abspath(a.issue_key))
+    st = issue_code.load_state(home)
+    st['game'] = {'rev': vcode, 'url': base + f'game/{vcode}.bin', 'sha256': hashlib.sha256(b).hexdigest(), 'shell': SHELL}
+    app = st.get('app', {})
+    st['app'] = {'latest': vcode, 'min': a.min_app if a.min_app is not None else app.get('min', 0), 'url': base + 'apk/gangho.apk'}
+    issue_code.write_list(ik, home, st, os.path.join(d, 'access.txt'))
+    print(f'올릴 준비: {d} (게임 {vcode}, 앱 최소 {st["app"]["min"]})')
 
 
 if __name__ == '__main__':

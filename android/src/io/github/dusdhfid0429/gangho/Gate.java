@@ -23,7 +23,7 @@ import java.util.Calendar;
 import java.util.Locale;
 
 // 시험판 잠금: 서버 없이 기한 있는 활성화 코드를 검사한다.
-// 코드 = base64url("v1|기기 번호 또는 *|만료일 yyyy-MM-dd|이름") + "." + base64url(ECDSA P-256 서명).
+// 코드 = base64url("v1|기기 번호|만료일 yyyy-MM-dd|이름") + "." + base64url(ECDSA P-256 서명).
 // 서명 키는 저장소 밖에 있고(android/issue_code.py), 앱에는 공개 키만 들어간다(build_apk.py 가 PUBKEY 를 채운다).
 // LIST_URL 이 있으면 같은 키로 서명한 온라인 목록({"t","off","msg","revoked":[코드 번호]})으로 코드를 끄거나 전체를 닫는다.
 // 목록을 GRACE_DAYS 넘게 못 받으면 인터넷 연결을 요구한다.
@@ -157,6 +157,16 @@ final class Gate {
         prefs(c).edit().putString(K_CODE, code).apply();
     }
 
+    // 받아 둔(서명 확인된) 목록. 없으면 null
+    static JSONObject list(Context c) {
+        try {
+            String js = prefs(c).getString(K_LIST, null);
+            return js == null ? null : new JSONObject(js);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
     }
@@ -170,7 +180,7 @@ final class Gate {
         String payload = new String(p, StandardCharsets.UTF_8);
         String[] f = payload.split("\\|", 4);
         if (f.length < 4 || !"v1".equals(f[0])) return new Result(false, "이 판에서 쓸 수 없는 코드입니다.", null, null, 0);
-        if (!"*".equals(f[1]) && !f[1].equals(deviceCode(c)))
+        if (!f[1].equals(deviceCode(c)))   // 코드 하나는 기기 하나 (사용자 2026-10-26). 예전의 '*'(아무 기기) 코드도 받지 않는다
             return new Result(false, "다른 기기용 코드입니다. 이 기기 번호로 다시 받아 주세요.", f[3], f[2], 0);
         long end;
         try {

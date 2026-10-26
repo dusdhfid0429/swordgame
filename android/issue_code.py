@@ -1,7 +1,7 @@
 """시험판 초대 코드 발급과 온라인 목록 만들기. 비밀 키(--key)는 저장소 밖에 둔다.
 
   초대 코드:  python3 android/issue_code.py --key K code --name 홍길동 --until 2026-11-30 --device ABCD-EFGH
-              (--device 대신 --any 면 아무 기기에서나 되는 코드. 퍼지면 막기 어려우니 되도록 기기 번호로)
+              코드 하나는 기기 하나에서만 열린다 (사용자 2026-10-26: 코드는 한 개당 한 명만)
   목록 만들기: python3 android/issue_code.py --key K list --out access.txt [--revoke 번호 ...] [--unrevoke 번호 ...] [--off "알림 글" | --on]
 
 코드를 낼 때마다 키 옆 issued.csv 에 이름·기기·기한·코드 번호를 적는다. 코드를 끄려면 그 번호를 --revoke 로 넣고
@@ -40,6 +40,18 @@ def code_id(code):
     return hashlib.sha256(re.sub(r'\s', '', code).encode()).hexdigest()[:16]
 
 
+def load_state(home):
+    p = os.path.join(home, 'list_state.json')
+    return json.load(open(p)) if os.path.exists(p) else {'off': False, 'msg': '', 'revoked': []}
+
+
+def write_list(k, home, st, out):
+    """상태를 저장하고 서명한 목록 파일을 쓴다. st 의 game(게임 묶음)·app(앱 판) 칸은 build_apk.py --publish 가 채운다"""
+    json.dump(st, open(os.path.join(home, 'list_state.json'), 'w'), ensure_ascii=False, indent=1)
+    body = json.dumps({'t': int(time.time() * 1000), **st}, ensure_ascii=False, separators=(',', ':'))
+    open(out, 'w').write(sign(k, body.encode()) + '\n')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--key', required=True)
@@ -47,9 +59,7 @@ def main():
     c = sub.add_parser('code')
     c.add_argument('--name', required=True)
     c.add_argument('--until', required=True, help='만료일 yyyy-mm-dd (그날 끝까지)')
-    g = c.add_mutually_exclusive_group(required=True)
-    g.add_argument('--device', help='잠금 화면의 기기 번호 XXXX-XXXX')
-    g.add_argument('--any', action='store_true')
+    c.add_argument('--device', required=True, help='잠금 화면의 기기 번호 XXXX-XXXX')
     l = sub.add_parser('list')
     l.add_argument('--out', required=True)
     l.add_argument('--revoke', nargs='*', default=[])
@@ -62,8 +72,8 @@ def main():
 
     if a.cmd == 'code':
         datetime.date.fromisoformat(a.until)
-        dev = '*' if a.any else a.device.strip().upper()
-        if dev != '*' and not re.fullmatch(r'[A-Z2-9]{4}-[A-Z2-9]{4}', dev):
+        dev = a.device.strip().upper()
+        if not re.fullmatch(r'[A-Z2-9]{4}-[A-Z2-9]{4}', dev):
             raise SystemExit('기기 번호는 XXXX-XXXX 모양입니다')
         if '|' in a.name:
             raise SystemExit('이름에 | 를 쓸 수 없습니다')
@@ -80,17 +90,14 @@ def main():
         print(f'코드 번호 {cid} ({a.name}, {dev}, {a.until}까지)', file=sys.stderr)
         return
 
-    st_path = os.path.join(home, 'list_state.json')
-    st = json.load(open(st_path)) if os.path.exists(st_path) else {'off': False, 'msg': '', 'revoked': []}
+    st = load_state(home)
     rv = [x for x in st['revoked'] if x not in a.unrevoke] + [x for x in a.revoke if x not in st['revoked']]
     st['revoked'] = rv
     if a.off is not None:
         st['off'], st['msg'] = True, a.off
     if a.on:
         st['off'], st['msg'] = False, ''
-    json.dump(st, open(st_path, 'w'), ensure_ascii=False, indent=1)
-    body = json.dumps({'t': int(time.time() * 1000), **st}, ensure_ascii=False, separators=(',', ':'))
-    open(a.out, 'w').write(sign(k, body.encode()) + '\n')
+    write_list(k, home, st, a.out)
     print(f'{a.out}: 끈 코드 {len(rv)}개, 전체 {"닫힘" if st["off"] else "열림"}')
 
 
