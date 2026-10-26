@@ -23,6 +23,15 @@ function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=nu
   P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
   for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
   showTitle()}
+// 메뉴 → 종료 (사용자 2026-10-26): '저장소 선택'은 toTitle, '완전 종료'는 기록하고 앱을 닫는다.
+// 안드로이드 설치판은 껍데기의 AndroidApp.exit, 브라우저는 window.close 를 해 보고 안 닫히면(스크립트가 연 창이 아니면 막힌다) 첫 화면으로 가서 알린다
+let quitAsk=false;hook('panelOpen',()=>{if(quitAsk){quitAsk=false;renderOpen()}});
+const quitCard=()=>quitAsk?`<div class="card" id="quitask"><p>어떻게 끝낼까요? 지금까지의 진행은 이 칸에 기록해 둡니다.</p><div class="center">${B('totitle','저장소 선택',{pri:1,t:'기록하고 저장 칸 고르는 첫 화면으로'})} ${B('quitapp','완전 종료',{t:'기록하고 게임을 닫는다'})} ${B('quitno','그만둔다')}</div></div>`:'';
+function quitApp(){quitAsk=false;if(P)saveGame(true);
+  const A=window.AndroidApp;if(A&&typeof A.exit==='function'){A.exit();return}
+  try{window.close()}catch(e){}
+  setTimeout(()=>{if(window.closed)return;if(P)toTitle();else showTitle();
+    box.insertAdjacentHTML('afterbegin','<p class="card note" id="quitnote" style="text-align:center">기록해 두었습니다. 브라우저에서는 게임이 창을 직접 닫을 수 없으니 이 탭을 닫아 끝내 주세요.</p>')},250)}
 function showTitle(){
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
   box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
