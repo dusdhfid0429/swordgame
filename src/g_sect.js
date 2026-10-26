@@ -29,7 +29,7 @@ const isFive=s=>FIVE.includes(s.id),tierName=s=>isFive(s)?'오대세가':TIERN[s
 const AGR=GD.AGR,AGR_C=GD.AGR_C;
 const GMUL=GD.GMUL,GULT=GD.GULT,GCOST=GD.GCOST,GMAST=GD.GMAST;
 const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):s.tier==='mid'?2:(hi?3:2);
-// v180 (사용자 2026-10-26 "문파에도 중승무공 추가해"): 문파마다 주력 병기의 중승 일반 무공 하나(data/sects.json 넷째 칸 'm'). 입문공(하승) → 중승 → 상승·절정
+// v180 (사용자 2026-10-26 "문파에도 중승무공 추가해"): 문파마다 그 문파에 없는 병기로 중승 일반 무공 하나(맹마다 병기가 고르게)(data/sects.json 넷째 칸 'm'). 입문공(하승) → 중승 → 상승·절정
 const artGradeOf=(s,a)=>a.mid?1:!a.hi&&START[s.id]&&START[s.id].art===a.n?0:sectGrade(s,a.hi);
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
