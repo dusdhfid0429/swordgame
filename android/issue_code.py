@@ -1,7 +1,7 @@
 """시험판 초대 코드 발급과 온라인 목록 만들기. 비밀 키(--key)는 저장소 밖에 둔다.
 
   초대 코드:  python3 android/issue_code.py --key K code --name 홍길동 --until 2026-11-30 --device ABCD-EFGH
-              (--device 대신 --any 면 아무 기기에서나 되는 코드. 퍼지면 막기 어려우니 되도록 기기 번호로)
+              코드 하나는 기기 하나에서만 열린다 (사용자 2026-10-26: 코드는 한 개당 한 명만)
   목록 만들기: python3 android/issue_code.py --key K list --out access.txt [--revoke 번호 ...] [--unrevoke 번호 ...] [--off "알림 글" | --on]
 
 코드를 낼 때마다 키 옆 issued.csv 에 이름·기기·기한·코드 번호를 적는다. 코드를 끄려면 그 번호를 --revoke 로 넣고
@@ -47,9 +47,7 @@ def main():
     c = sub.add_parser('code')
     c.add_argument('--name', required=True)
     c.add_argument('--until', required=True, help='만료일 yyyy-mm-dd (그날 끝까지)')
-    g = c.add_mutually_exclusive_group(required=True)
-    g.add_argument('--device', help='잠금 화면의 기기 번호 XXXX-XXXX')
-    g.add_argument('--any', action='store_true')
+    c.add_argument('--device', required=True, help='잠금 화면의 기기 번호 XXXX-XXXX')
     l = sub.add_parser('list')
     l.add_argument('--out', required=True)
     l.add_argument('--revoke', nargs='*', default=[])
@@ -62,8 +60,8 @@ def main():
 
     if a.cmd == 'code':
         datetime.date.fromisoformat(a.until)
-        dev = '*' if a.any else a.device.strip().upper()
-        if dev != '*' and not re.fullmatch(r'[A-Z2-9]{4}-[A-Z2-9]{4}', dev):
+        dev = a.device.strip().upper()
+        if not re.fullmatch(r'[A-Z2-9]{4}-[A-Z2-9]{4}', dev):
             raise SystemExit('기기 번호는 XXXX-XXXX 모양입니다')
         if '|' in a.name:
             raise SystemExit('이름에 | 를 쓸 수 없습니다')
