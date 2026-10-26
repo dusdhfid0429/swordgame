@@ -178,7 +178,7 @@ function spawnTick(){
     if(typeof facSpawn==='function'&&facSpawn(k,cap,test,mk,n))continue;   // 세력 무인: 60%만 먼저 세우고, 죽으면 출입구에서 충원 (g_pop.js)
     for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
       y=big?Math.max(1,Math.min(NH-2,Math.floor(P.y+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(NH-2));
-      if(!test(x,y)||!walk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
+      if(!test(x,y)||!walk(x,y)||!elevSpawnOk(x,y))continue;if(k!=='양민'&&Math.hypot(x+.5-P.x,y+.5-P.y)<8)continue;mobs.push(mk?mk(x+.5,y+.5):mkMob(k,x+.5,y+.5));break}}
   for(const[k,x,y,t]of REGION().bosses){
     if(mobs.some(m=>m.kind===k))continue;G.bossT[k]=(G.bossT[k]??20)-2;
     if(G.bossT[k]<=0&&Math.hypot(x-P.x,y-P.y)>7){mobs.push(mkMob(k,x,y));G.bossT[k]=t;log(`${k}이(가) 모습을 드러냈다는 소문이 돕니다.`,'dmg')}}
@@ -217,7 +217,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
+  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}

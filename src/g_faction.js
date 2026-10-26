@@ -179,7 +179,7 @@ function genHQ(s,th){
   const bs=[{x:19,y:5,w:3,h:2,kind:'temple'},{x:14,y:8,w:2,h:2},{x:25,y:8,w:2,h:2}];
   if(th==='manor')bs.push({x:10,y:22,w:3,h:2},{x:27,y:24,w:3,h:2});
   const st=GD.SECT_STYLE[s.id]||{};
-  for(const b of bs){b.rc=st.roof;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
+  for(const b of bs){b.rc=st.roof;b.wc=st.wall;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of[[16,6],[24,6],[14,14],[26,14]]){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   // 문파 특색: 화산의 매화, 청성의 대숲, 불가의 석탑 (data/world.json SECT_STYLE)
   if(st.tree)for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const o=objs[y][x];if((o==='tree'||o==='pine')&&r()<.6)objs[y][x]=st.tree}

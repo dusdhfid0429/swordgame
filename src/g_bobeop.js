@@ -24,7 +24,7 @@ function mkBBook(id){const b=BOBS[id];return{id:++itemId,slot:'bbook',bob:id,nam
 
 // ---- 자리 찾기 ----
 // 가는 길이 막히지 않았나 (적은 빠져나가고, 벽·물·나무·바위에서 막힌다)
-function bobClear(x0,y0,x1,y1){const l=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(l/.3));for(let i=1;i<=n;i++){const t=i/n;if(!walkAt(x0+(x1-x0)*t,y0+(y1-y0)*t))return false}return true}
+function bobClear(x0,y0,x1,y1){const l=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(l/.3));let px=x0,py=y0;for(let i=1;i<=n;i++){const t=i/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t;if(!walkAt(x,y)||!hstep(px,py,x,y))return false;px=x;py=y}return true}
 // v142 (사용자): 직선 보법은 적을 뚫고 지나가며 무조건 나간다. 적과 겹치지 않는 가장 먼 자리 → 없으면 적 곁이라도 가장 먼 자리 → 벽에 붙어 있으면 제자리 회피(무적은 그대로)
 function bobLine(b,dx,dy){const L=BG.len[b.g];let best=null,any=null;
   for(let d=L;d>=.15;d-=.15){const x=P.x+dx*d,y=P.y+dy*d;if(!walkAt(x,y)||!bobClear(P.x,P.y,x,y))continue;

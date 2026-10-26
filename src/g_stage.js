@@ -54,7 +54,7 @@ function genStage(c){
   // 산문 벽: 길만 터 두고 가로로 막는다. 길 양옆에 망루
   for(const w of[].concat(c.wall||[])){const rx=road(w);for(let y=w;y<=w+1;y++)for(let x=1;x<N-1;x++)if(Math.abs(x-rx-.5)>1.5){objs[y][x]='rock';if(map[y][x].g===2)map[y][x].g=6}
     c.builds=[...(c.builds||[]),{x:rx-4,y:w-1,w:2,h:2},{x:rx+4,y:w-1,w:2,h:2}]}
-  for(const b0 of c.builds||[]){const b={...b0,mg:c.mg,rc:b0.rc||c.rc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  for(const b0 of c.builds||[]){const b={...b0,mg:c.mg,rc:b0.rc||c.rc,wc:b0.wc||c.wc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
   for(const[x,y]of c.lamps||[])if(objs[y][x]==null&&!onRoad(x,y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   if(c.flags)placeFlags(c.s.id,c.flags);
   stageFlavor(c,r,{road,onRoad,inYard,yd,yEnd});
@@ -66,7 +66,7 @@ function genStage(c){
 }
 // 맵 하나를 지역으로 등록한다
 function stageRegion(c){
-  {const st=c.s&&GD.SECT_STYLE[c.s.id];if(st){c.rc=c.rc||st.roof;c.tree=c.tree||st.tree;c.props=c.props||st.props}}
+  {const st=c.s&&GD.SECT_STYLE[c.s.id];if(st){c.rc=c.rc||st.roof;c.wc=c.wc||st.wall;c.tree=c.tree||st.tree;c.props=c.props||st.props}}
   const R={name:c.name,hq:c.s.id,theme:c.th,size:c.w||40,h:c.h||40,stage:c,gen:()=>genStage(c),bake:()=>bakeHQ(c.th),zone:c.zone||(()=>c.name),
     spawns:c.spawns||[],bosses:[],gates:[],npcs:c.npcs||[]};
   REGIONS[c.id]=R;return R}

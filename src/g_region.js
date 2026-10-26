@@ -35,7 +35,7 @@ const FADE=document.createElement('div');FADE.className='fade';$('stage').append
 function enterRegion(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
   loadRegion(id);P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
   allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
-  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y}
+  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-gH(P.x,P.y)}
 function travel(g){
   {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
