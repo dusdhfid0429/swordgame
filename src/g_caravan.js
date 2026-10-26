@@ -124,6 +124,7 @@ function cvSaved(cv){if(cv.robbed)return;if(!cv.help){log(`${cv.name} 행렬이(
   if(cv.type==='pyo')P.pyo=(P.pyo||0)+R.pyo;P.cvSaveN=(P.cvSaveN||0)+1;if(P.cvSaveN===1)feat(`습격당한 ${cv.name} 행렬을 구했다`);
   cvNews('save',cv);showBanner('행렬을 구했다',`${cv.name} · 은자 +${s}`);
   log(`${cv.name}의 ${cv.T.lead}: "은혜는 잊지 않겠소!" 사례금 은자 ${s}, 명성 +${R.fame}, 선업 +${R.good}${cv.type==='pyo'?`, 표국 신용 +${R.pyo}`:''}.`,'xp');
+  if(Math.random()<LEAF.cvSave)cvLeaf(`${cv.name} 행렬의 사례`);   // 비급 낱장 (g_mkmat.js)
   if(!cv.q&&Math.random()<R.offer&&P.quests.length<4)cvOffer(cv)}
 // 구해 준 행렬 우두머리가 일감을 청한다
 function cvOffer(cv){const L=CARV.offers.filter(o=>o.k!=='rest'||cv.i/cv.len<.7),o=pick(L);if(!o)return;cvAsk={cv,o};
@@ -162,6 +163,7 @@ function cvLoot(cv){const L=cv.T.loot,c=cv.cart,lo=cvDanger(cvProv()),out=[];
   for(const[k,n]of L.mats)if(Math.random()<.6)out.push({mat:k,n:R1(1,n)});
   if(Math.random()<L.item){const cls=pick(CLS.filter(x=>x!=='권'));out.push({item:mkWeapon(cls,1+Math.random()*.6+lo*.15,0)})}
   if(Math.random()<.05)out.push({mat:'대환단',n:1});
+  if(Math.random()<LEAF.cvRob)cvLeaf('부서진 수레');   // 비급 낱장 (g_mkmat.js)
   out.forEach((it,i)=>drops.push({x:c.x+(i%3-1)*.35,y:c.y+Math.floor(i/3)*.35,it,t:Math.random()*6}));
   P.cvRob=(P.cvRob||0)+1;if(P.cvRob===1)feat(`${cv.name} 행렬을 털었다`);if(cv.robbed&&!P.wanted)P.wanted=1;
   for(const q of P.quests)if(q.kind==='rob'&&(q.have||0)<q.cnt){q.have=(q.have||0)+1;if(q.have>=q.cnt)log(`[${q.n}] 완료. 의뢰처에 보고하세요.`,'xp')}

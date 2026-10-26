@@ -13,7 +13,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.keyboard.press('Escape');
   // 2. 의뢰판 처치 임무 + 납품 임무 + 문파 임무를 맡고 상세 확인
   const t1=await p.evaluate(()=>{P.quests=[];P.quests.push({...QUESTS.find(q=>q.mob&&q.mob[0]==='혈교무인'),have:1});P.quests.push({...QUESTS.find(q=>q.kind==='give'&&q.mat==='가죽'),have:0});P.mats.가죽=2;
-    P.sect='hwasan';const sq=sectMissions(SECTS.hwasan)[0];P.quests.push({...sq,have:0});openPanel('quest');return{body:$('wbody').textContent,cards:document.querySelectorAll('#wbody .card').length,bars:document.querySelectorAll('#wbody .mbar').length,drops:document.querySelectorAll('[data-act^="qdrop:"]').length,sq:sq.n}});
+    P.sect='hwasan';const sq=sectMissions(SECTS.hwasan)[0];P.quests.push({...sq,have:0});openPanel('quest');return{body:$('wbody').textContent,cards:[...document.querySelectorAll('#wbody .card')].filter(c=>c.querySelector('[data-act^="qdrop:"]')||/임무를 맡는 곳/.test(c.textContent)).length,bars:document.querySelectorAll('#wbody .mbar').length,drops:document.querySelectorAll('[data-act^="qdrop:"]').length,sq:sq.n}});
   ok(`임무 셋 카드 ${t1.cards-1}장, 진행 막대 ${t1.bars}, 포기 단추 ${t1.drops}`,t1.cards===4&&t1.bars===3&&t1.drops===3);
   ok('처치 임무: 대상과 나오는 곳(혈교 지부), 진행 1/3, 보고 장소',t1.body.includes('혈교무인')&&t1.body.includes('혈교')&&t1.body.includes('지부')&&t1.body.includes('1/3')&&t1.body.includes('개봉 관아 앞 의뢰판'));
   ok('납품 임무: 재료 얻는 곳과 가진 것',t1.body.includes('가죽')&&t1.body.includes('호랑이를 잡는다')&&t1.body.includes('가진 것 2')&&t1.body.includes('2/3'));

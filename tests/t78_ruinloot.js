@@ -17,10 +17,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`시체 뒤지기 (${l.label}, ${l.dur}초): ${JSON.stringify(l.kinds)} ${l.items.join(' · ')} · 다 뒤짐 ${l.cd} 기록 ${l.looted} 다시 ${l.again}`,l.label==='시체를 뒤진다'&&l.dur===1.4&&!l.kinds.none&&l.cd&&l.looted>=6&&l.again);
   // 3. 잔해: 100번 뽑아 유물·절기 비급(hibook)·은자·재가 모두 나온다. 유물은 그 문파 이름의 장신구, 절기 비급은 화산파 고급 무공
   const r=await p.evaluate(()=>{const o={kinds:{},relic:null,hi:null};const n=nodes.find(x=>x.t==='rubble');for(let i=0;i<100;i++){n.cd=0;delete G.looted[REG][n.key];const s0=P.silver,b0=P.bag.length,lg=$('log').textContent.length;ruinLoot(n);
-      const it=P.bag.length>b0?P.bag[P.bag.length-1]:null;const k=P.silver>s0?'silver':it?(it.relic?'relic':'hibook'):'ash';o.kinds[k]=(o.kinds[k]||0)+1;if(it&&it.relic&&!o.relic)o.relic=it;if(it&&!it.relic&&!o.hi)o.hi={name:it.name,art:it.art,hi:SECTS.hwasan.arts.find(a=>a.id===it.art)&&SECTS.hwasan.arts.find(a=>a.id===it.art).hi};P.bag=[]}
+      const it=P.bag.length>b0?P.bag[P.bag.length-1]:null;const k=P.silver>s0?'silver':it?(it.relic?'relic':it.slot==='leaf'?'leaf':'hibook'):'ash';o.kinds[k]=(o.kinds[k]||0)+1;if(it&&it.relic&&!o.relic)o.relic=it;if(it&&it.slot==='book'&&!o.hi)o.hi={name:it.name,art:it.art,hi:SECTS.hwasan.arts.find(a=>a.id===it.art)&&SECTS.hwasan.arts.find(a=>a.id===it.art).hi};P.bag=[]}
     o.feat=P.feats.some(f=>/폐허에서/.test(f));return o});
   ok(`잔해 100번: ${JSON.stringify(r.kinds)} · 유물 ${r.relic&&r.relic.name} (현묘 +${r.relic&&r.relic.hm}, 값 ${r.relic&&r.relic.price}) · 절기 ${r.hi&&r.hi.name} 고급 ${r.hi&&r.hi.hi} 업적 ${r.feat}`,
-    r.kinds.silver>0&&r.kinds.relic>0&&r.kinds.hibook>0&&r.kinds.ash>0&&r.relic&&/화산파 유물/.test(r.relic.name)&&r.relic.hm>=8&&r.hi&&r.hi.hi===true&&r.feat);
+    r.kinds.silver>0&&r.kinds.relic>0&&r.kinds.hibook>0&&r.kinds.ash>0&&r.kinds.leaf>0&&r.relic&&/화산파 유물/.test(r.relic.name)&&r.relic.hm>=8&&r.hi&&r.hi.hi===true&&r.feat);
   // 4. 전각 안에도 시체 1~3·잔해 1~2. 문파가 살아나면 자리가 사라지고 G.looted 도 지워진다
   const h=await p.evaluate(()=>{const hid=REGION().halls[0].id;regionJump(hid,7,6);const o={c:nodes.filter(n=>n.t==='corpse').length,r:nodes.filter(n=>n.t==='rubble').length};const n=nodes.find(x=>x.t==='corpse');ruinLoot(n);o.looted=!!(G.looted[hid]&&G.looted[hid][n.key]);
     G.pop.hwasan=popBase(SECTS.hwasan);popSync();regionJump(hid,7,6);o.after=nodes.filter(n=>n.t==='corpse'||n.t==='rubble').length;o.cleared=!G.looted[hid];return o});

@@ -70,6 +70,7 @@ function buildArts(){
   }));
   addSectArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);
   addGiyeonArts(arts,pool,ults);
+  addRecluseArts(arts,pool,ults,()=>combos[ci++%combos.length],()=>uc[ui++%uc.length]);   // 은거기인의 중승 무공 (g_mkmat.js). 맨 끝에 불러 다른 무공의 초식 이름이 밀리지 않는다
   arts.base=artFx({id:'base',side:null,cls:'권',el:null,n:'기초권각',base:1,
     forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qp:GD.QSTAR.base[0]},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qp:GD.QSTAR.base[1]},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qp:GD.QSTAR.base[2]}],
     ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'});

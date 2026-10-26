@@ -10,6 +10,7 @@ function questFrom(q){
   if(q.story)return{n:'강호 정세',at:'정세 창(N)의 사건 카드에서 바로 보고',merit:''};
   if(q.war)return{n:'천하대전',at:'정세 창(N)의 천하대전 카드에서 바로 보고',merit:''};
   if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
+  if(q.rc&&typeof RC!=='undefined'&&RC[q.rc]){const rc=RC[q.rc];return{n:`은거기인 ${rc.n}`,at:`${REGIONS[rc.reg].name} 정상의 ${rc.n}`,merit:'은혜 +1'}}
   if(q.cvLive)return{n:'구해 준 행렬',at:'행렬이 길목에 닿으면 그 자리에서 (g_caravan.js)',merit:''};
   if(q.pyo)return{n:q.pyoN||'표국',at:q.pyo==='any'?'어느 성읍이든 역참 옆 표국':`${q.pyoAt||'성읍'} 역참 옆 ${q.pyoN||'표국'}`,merit:q.sect?`${SECTS[q.sect].n} 공적 +${q.merit}`:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}

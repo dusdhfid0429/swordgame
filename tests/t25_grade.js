@@ -5,18 +5,18 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const b=await chromium.launch();const errs=[];
   const c=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await c.newPage();
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});p.on('dialog',d=>d.accept());
-  const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
+  const SECTS_N=Object.fromEntries(require('../data/sects.json').SECT_DATA.map(x=>[x[0],1]));const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
-      const st=START[s.id],want=!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?2:(a.hi?3:2);if(g!==want)bad.push(a.n)}
+      const st=START[s.id],want=a.mid?1:!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?2:(a.hi?3:2);if(g!==want)bad.push(a.n)}
     const starts=Object.values(SECTS).filter(s=>s.arts.length).map(s=>artGrade(startSet(s).art.id));cnt.start=starts.length;cnt.start0=starts.every(g=>g===0);
-    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy).every(a=>(a.grade||0)===0);
+    const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy&&!a.rc).every(a=>(a.grade||0)===0);
     // 같은 무기·같은 초식 자리의 위력 견주기: 화산 낙안검법(대·일반 상승) vs 매화검법(입문공 하승), 이십사수매화검(대·고급 절정) vs 회풍낙안검(소·고급 상승)
     return{cnt,bad,gen,mul:[GMUL[artGrade('S_hwasan_1')],GMUL[artGrade('S_hwasan_0')],GMUL[artGrade('S_hwasan_2')],GMUL[artGrade('S_hyeongsan_1')]],
       cost:[meritCost({id:'S_hwasan_2'},0),meritCost({id:'S_hyeongsan_1'},0),meritCost({id:'S_hwasan_1'},0),meritCost({id:'S_hwasan_0'},0)],
       ult:[ARTS.S_hwasan_2.ult.steps[0].m,ARTS.S_hyeongsan_1.ult.steps[0].m]}});
-  ok(`등급 수: ${JSON.stringify(r.cnt)}, 어긋난 무공 ${r.bad.length}`,r.bad.length===0&&r.cnt['절정']>0&&r.cnt['상승']>0&&r.cnt['하승']>0&&!r.cnt['중승']);
+  ok(`등급 수: ${JSON.stringify(r.cnt)}, 어긋난 무공 ${r.bad.length}`,r.bad.length===0&&r.cnt['절정']>0&&r.cnt['상승']>0&&r.cnt['하승']>0&&r.cnt['중승']===Object.keys(SECTS_N).length);
   ok(`입문공 ${r.cnt.start}개 모두 하승`,r.cnt.start>0&&r.cnt.start0);
   ok('문파 밖 무공은 하승',r.gen);
   ok(`위력 배수: 대·일반 ${r.mul[0]} > 입문공 ${r.mul[1]}, 대·고급 ${r.mul[2]} > 소·고급 ${r.mul[3]}`,r.mul[0]>r.mul[1]&&r.mul[2]>r.mul[3]&&r.mul[3]===r.mul[0]);
