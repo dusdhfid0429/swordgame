@@ -59,8 +59,10 @@ const walk=(x,y)=>x>=0&&y>=0&&x<N&&y<NH&&map[y][x].g!==2&&!objs[y][x];
 const walkAt=(fx,fy)=>walk(Math.floor(fx),Math.floor(fy));
 const tileG=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return map[y][x].g};
 const iso=(gx,gy)=>({x:(gx-gy)*TW/2,y:(gx+gy)*TH/2});
-const toScreen=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2}};
-function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;const a=wx/(TW/2),b=wy/(TH/2);return{x:(a+b)/2,y:(b-a)/2}}
+// v179: 그 자리 땅 높이(gH, g_elev.js)만큼 올려 그린다. 바닥 그림은 toScreen0
+const toScreen=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2-gH(gx,gy)}};
+const toScreen0=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2}};
+function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;return elevPick(wx,wy,(wx,wy)=>{const a=wx/(TW/2),b=wy/(TH/2);return{x:(a+b)/2,y:(b-a)/2}})}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const frac=v=>v-Math.floor(v);
 

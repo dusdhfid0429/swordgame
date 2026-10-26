@@ -35,7 +35,7 @@ function drawBuildVec(b,alpha){
   if(pav){quad([scr(x,y,5),scr(X1,y,5),scr(X1,Y1,5),scr(x,Y1,5)],'#b4ad9e');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,5),scr(x,Y1,5)],'#8f897c');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,5),scr(X1,Y1,5)],'#77716a');
     for(const[i,j]of[[x+.2,y+.2],[X1-.2,y+.2],[x+.2,Y1-.2],[X1-.2,Y1-.2]]){const q=scr(i,j,5);seg([q,up(q,WH-5)],4,'#7a2416')}
     const t=scr(x+w/2,y+h/2,5);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(t[0],t[1]-6,9,4.5,0,0,7);ctx.fill();ctx.strokeStyle=OUT;ctx.stroke()}
-  else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.mg?'#2a2020':'#c3b69b',false,b)}
+  else{wallFace(scr(x,Y1),scr(X1,Y1),w,WH,b.wc?b.wc[0]:b.mg?'#3a2e2c':'#e4d9c0',true,b);wallFace(scr(X1,Y1),scr(X1,y),h,WH,b.wc?b.wc[1]:b.mg?'#2a2020':'#c3b69b',false,b)}
   const RC=ru?['#2c2724','#242120','#332c28','#3b322c']:b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
   if(ru&&!pav){ctx.fillStyle='rgba(20,14,10,.45)';quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,WH),scr(x,Y1,WH)],'rgba(20,14,10,.42)',null);quad([scr(X1,Y1),scr(X1,y),scr(X1,y,WH),scr(X1,Y1,WH)],'rgba(20,14,10,.5)',null);
     ctx.strokeStyle='#1a1512';ctx.lineWidth=1.5;for(const t of[.22,.58,.8]){const q=up(lerp2(scr(x,Y1),scr(X1,Y1),t),WH);ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+3,q[1]+WH*.35);ctx.lineTo(q[0]-2,q[1]+WH*.6);ctx.lineTo(q[0]+2,q[1]+WH*.85);ctx.stroke()}}
@@ -68,17 +68,17 @@ function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.gl
 const BCACHE=[],BC_MAX=24;
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
-function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}`;
+function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}`;
   let c=BCACHE.find(o=>o.b===b);
-  if(!c||c.key!==key){const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
+  if(!c||c.key!==key){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
     const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);
     const cv=c&&c.cv&&c.cv.width===cw&&c.cv.height===chh?c.cv:document.createElement('canvas');cv.width=cw;cv.height=chh;const g=cv.getContext('2d');g.clearRect(0,0,cw,chh);g.setTransform(k,0,0,k,-x0*k,-y0*k);
     const keep=ctx;ctx=g;try{drawBuildVec(b,1)}finally{ctx=keep}
     if(c){c.key=key;c.cv=cv;c.ox=x0-a.x;c.oy=y0-a.y;c.w=cw/k;c.h=chh/k;BCACHE.splice(BCACHE.indexOf(c),1)}else c={b,key,cv,ox:x0-a.x,oy:y0-a.y,w:cw/k,h:chh/k};
-    BCACHE.push(c);if(BCACHE.length>BC_MAX)BCACHE.shift()}
+    BCACHE.push(c);if(BCACHE.length>BC_MAX)BCACHE.shift()}finally{GHB=null}}
   const a=toScreen(b.x,b.y),px=Math.round((a.x+c.ox)*k)/k,py=Math.round((a.y+c.oy)*k)/k;
   ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(c.cv,px,py,c.w,c.h);ctx.restore();
-  if(b.kind==='inn'&&!ru)drawInnFlag(b,alpha)}
+  if(b.kind==='inn'&&!ru){GHB=gH(b.x+.5,b.y+.5);try{drawInnFlag(b,alpha)}finally{GHB=null}}}
 function drawStall(i,j){
   const c=map[j][i].cloth,x=i+.15,y=j+.15,X1=i+.85,Y1=j+.85;
   quad([scr(x,y,10),scr(X1,y,10),scr(X1,Y1,10),scr(x,Y1,10)],'#9a7048');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,10),scr(x,Y1,10)],'#6e4c2e');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,10),scr(X1,Y1,10)],'#5a3c22');

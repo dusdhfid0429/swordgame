@@ -187,7 +187,8 @@ function draw(){
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle=terrBg();ctx.fillRect(-30,-30,W+60,H+60);
   SM=P?seasonMix():null;SL_BUDGET=1;   // v173: 계절·날씨 (g_season.js)
-  const o=toScreen(0,0);if(ground.chunked)drawChunks(ground,o);else{const gx=o.x-NH*TW/2,gw=(N+NH)*TW/2,gh=(N+NH)*TH/2;ctx.drawImage(ground,gx,o.y,gw,gh);seasonGround(ground,gx,o.y,gw,gh)}
+  const o=toScreen0(0,0);if(ground.chunked)drawChunks(ground,o);else if(ground.elev){const pw=ground.padW;ctx.drawImage(ground,o.x-NH*TW/2,o.y-pw,(N+NH)*TW/2,(N+NH)*TH/2+pw)}   // v179: 높낮이 맵은 위로 키운 바닥 그림 (g_elev.js)
+  else{const gx=o.x-NH*TW/2,gw=(N+NH)*TW/2,gh=(N+NH)*TH/2;ctx.drawImage(ground,gx,o.y,gw,gh);seasonGround(ground,gx,o.y,gw,gh)}
   if(typeof drawGore==='function')drawGore();   // 멸문 폐허의 핏자국 (g_ruin.js)
   const sea=P?season():'봄';
   if(REGION().in){}else if(sea==='겨울'){ctx.globalCompositeOperation='soft-light';ctx.fillStyle=`rgba(240,245,255,${SEA.tint.겨울*(SM?SM.tint:1)})`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}
@@ -200,7 +201,7 @@ function draw(){
   const list=[],pp=toScreen(P.x,P.y),vis=(x,y,m=90)=>{const p=toScreen(x,y);return p.x>-m&&p.x<W+m&&p.y>-40&&p.y<H+200};
   // 큰 지역은 사람 둘레만 살핀다
   const vr=Math.ceil(W/TW+H/TH)+4,j0=Math.max(0,Math.floor(P.y)-vr),j1=Math.min(NH,Math.floor(P.y)+vr),i0=Math.max(0,Math.floor(P.x)-vr),i1=Math.min(N,Math.floor(P.x)+vr);
-  for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B')continue;
+  for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){const ob=objs[j][i];if(!ob||ob==='lamp'||ob==='B'||ob==='cliff')continue;
     const p=toScreen(i+.5,j+.5);if(p.x<-90||p.x>W+90||p.y<-20||p.y>H+190)continue;
     if(ob==='stall'){list.push({d:i+j+1,f:()=>drawStall(i,j)});continue}
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
@@ -210,33 +211,33 @@ function draw(){
     if(ob.startsWith('flag:')){if(REGION().dead)continue;list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const{spr,L,snow,sa}=seaSpr(ob,i,j),tall=ob!=='rock';   // v173: 계절 그림(겹쳐 서서히 바뀜) + 쌓인 눈 겹
     const fade=tall&&!(P.perch&&P.perch.i===i&&P.perch.j===j)&&i+j+1>P.x+P.y&&Math.abs(p.x-pp.x)<(ob==='spire'?60:55)&&p.y-pp.y<spr.height-10&&p.y>pp.y;
-    list.push({d:i+j+1,f:()=>{const x=p.x-spr.width/2,y=p.y-spr.height+(tall?12:10),a=fade?.4:1;for(const[s,al]of L){ctx.globalAlpha=a*al;ctx.drawImage(s,x,y)}if(snow){ctx.globalAlpha=a*Math.min(1,sa);ctx.drawImage(snow,x,y)}ctx.globalAlpha=1}})}
+    list.push({x:i+.5,y:j+.5,hw:spr.width/2,ht:spr.height,d:i+j+1,f:()=>{const x=p.x-spr.width/2,y=p.y-spr.height+(tall?12:10),a=fade?.4:1;for(const[s,al]of L){ctx.globalAlpha=a*al;ctx.drawImage(s,x,y)}if(snow){ctx.globalAlpha=a*Math.min(1,sa);ctx.drawImage(snow,x,y)}ctx.globalAlpha=1}})}
   for(const b of builds){const d=b.x+b.w-1+b.y+b.h-1+1,l=scr(b.x,b.y+b.h)[0]-20,r=scr(b.x+b.w,b.y)[0]+20,bt=scr(b.x+b.w,b.y+b.h)[1];
     if(r<-10||l>W+10||bt<-40||bt-600>H)continue;   // v154: 화면 밖 건물은 건너뛴다
-    const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,f:()=>drawBuild(b,hide?.45:1)})}
+    const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,b,f:()=>drawBuild(b,hide?.45:1)})}
   for(const rl of rails)list.push({d:rl.x+rl.y+.5,f:()=>drawRail(rl)});
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
-  for(const n of nodes)if(vis(n.x,n.y))list.push({d:n.x+n.y-.2,f:()=>drawNode(n)});
+  for(const n of nodes)if(vis(n.x,n.y))list.push({x:n.x,y:n.y,d:n.x+n.y-.2,f:()=>drawNode(n)});
   for(const pl of plots)if(pl.crop&&vis(pl.x,pl.y))list.push({d:pl.x+pl.y+.9,f:()=>drawPlot(pl)});
   for(const t of tombs())if((t.reg||'gaebong')===REG&&vis(t.x,t.y))list.push({d:t.x+t.y-.3,f:()=>drawTomb(t)});
-  for(const d of drops)list.push({d:d.x+d.y-.1,f:()=>drawDrop(d)});
+  for(const d of drops)list.push({x:d.x,y:d.y,d:d.x+d.y-.1,f:()=>drawDrop(d)});
   if(G.giyeon)list.push({d:G.giyeon.x+G.giyeon.y,f:()=>drawGiyeon(G.giyeon)});
   for(const g of REGION().gates)if(vis(g.x,g.y))list.push({d:g.x+g.y-.4,f:()=>drawGate(g)});
   for(const m of lmHints())list.push({L:LY.OVER,d:9999,f:()=>drawLmName(m)});
   if(REGION().edges)for(const h of pvEdgeHints())list.push({d:h.x+h.y-.4,f:()=>drawEdgeHint(h)});
-  for(const n of NPCF)if(vis(n.x,n.y))list.push({d:n.x+n.y,f:()=>drawFighter(n,false)});
+  for(const n of NPCF)if(vis(n.x,n.y))list.push({x:n.x,y:n.y,d:n.x+n.y,f:()=>drawFighter(n,false)});
   if(REG==='gaebong'&&P.spouse&&G.house&&G.house.built){const s=spousePos();list.push({d:s.x+s.y,f:()=>drawFighter({npc:1,n:P.spouse.name,...s,d:{pal:'spouse'},fx:0,fy:1,hp:1,maxHp:1,bob:3,swing:0,wind:0,stun:0,hit:0,sp:0},false)})}
-  for(const c of corpses)if(vis(c.x,c.y))list.push({L:LY.BACK,d:c.x+c.y-.05,f:()=>drawCorpse(c)});
+  for(const c of corpses)if(vis(c.x,c.y))list.push({x:c.x,y:c.y,L:LY.BACK,d:c.x+c.y-.05,f:()=>drawCorpse(c)});
   if(REGION().dead&&REGION().gore)for(const b of REGION().gore)if(b.k==='body'&&vis(b.x,b.y))list.push({L:LY.BACK,d:b.x+b.y-.05,f:()=>drawBody(b)});
-  for(const e of mobs)if(vis(e.x,e.y))list.push({d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
-  for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
+  for(const e of mobs)if(vis(e.x,e.y))list.push({x:e.x,y:e.y,d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
+  for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({x:a.x,y:a.y,d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
     // 높은 곳에 있거나 그리로 뛰는 중이면 그 지붕·나무보다 나중에 그린다
     const pd=P.perch?perchD():lt&&P.leap.t/P.leap.dur>.45?(lt.k==='roof'?lt.b.x+lt.b.w+lt.b.y+lt.b.h-1+.6:lt.i+lt.j+1.1):P.leap&&P.leap.z0>0&&P.leap.t/P.leap.dur<.5?P.x+P.y+3:P.x+P.y;
     if(P.perch&&joy.on){const a=leapAim();if(a){const s=toScreen(a.x,a.y),az=a.q.z,k=(time*2)%1;list.push({L:LY.TOP,d:99999,f:()=>{ctx.strokeStyle=`rgba(190,220,255,${.9-k*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(s.x,s.y-az,8+k*8,4+k*4,0,0,7);ctx.stroke()}})}}
-    if(z>2){const g=toScreen(P.x,P.y);list.push({d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
-    list.push({d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
-  for(const f of fx)if(!f.glow){const gnd=!f.z&&(f.t==='ring'||f.t==='warn');list.push({L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>atZ(f,()=>drawFx2(f))})}
+    if(z>2){const g=toScreen(P.x,P.y);list.push({x:P.x,y:P.y,d:P.x+P.y-.05,f:()=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(g.x,g.y,10,5,0,0,7);ctx.fill()}})}
+    list.push({x:P.x,y:P.y,d:pd,f:()=>{ctx.save();ctx.translate(0,-z);drawMedit(0);drawTrainFx(0);if(P.ride){drawMount();ctx.save();ctx.translate(0,-16);drawFighter(P,true);ctx.restore()}else drawFighter(P,true);drawMedit(1);drawTrainFx(1);ctx.restore()}})}
+  for(const f of fx)if(!f.glow){const gnd=!f.z&&(f.t==='ring'||f.t==='warn');list.push({x:f.x,y:f.y,L:gnd?LY.BACK:LY.FX,d:f.x+f.y+(gnd?-5:.1),f:()=>atZ(f,()=>drawFx2(f))})}
   // 소팅 레이어(v122, 참고 게임의 Map→Map_Fx→Entity_Back→Entity→Fx→Overhead→Top 구조): 레이어 먼저, 같은 레이어 안에서는 x+y(깊이) 순
   runHooks('drawList',list);   // drawList: 그릴 목록에 더 얹기 (g_academy.js 과제 표시)
   list.sort((a,b)=>((a.L??LY.ENT)-(b.L??LY.ENT))||(a.d-b.d)).forEach(o=>o.f());
@@ -298,7 +299,7 @@ function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&V
 // minimap: baked terrain + live dots
 const MINI=$('mini'),mctx=MINI.getContext('2d');let miniBase=null;
 function bakeMini(){const c=document.createElement('canvas');c.width=150;c.height=84;const g=c.getContext('2d');const col=['#3e5a2a','#8a7454','#2a4a5a','#7a5a3a','#8a8678','#5a4430','#3a3634','#6a5a44','#d8dde4','#4a4a30','#8a4a32','#2a2626','#c8a870','#7a5a3a'];
-  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='cwall'||objs[y][x]==='cvoid'?'#141210':objs[y][x]==='cmouth'?'#c9a14a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}miniBase=c}
+  for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const[px,py]=miniXY(x+.5,y+.5),ms=80/(N+NH);g.fillStyle=objs[y][x]&&objs[y][x]!=='lamp'?(objs[y][x]==='B'||objs[y][x]==='tent'?'#c9b48a':objs[y][x]==='wall'||objs[y][x]==='pillar'||objs[y][x]==='screen'||objs[y][x]==='stupa'?'#8a8678':FURN[objs[y][x]]?'#6a4a2a':objs[y][x]==='cwall'||objs[y][x]==='cvoid'?'#141210':objs[y][x]==='cmouth'?'#c9a14a':objs[y][x]==='spire'?'#7a766e':objs[y][x]==='plum'?'#6a3a4a':objs[y][x]==='maple'?'#6a3a1a':'#26381a'):col[map[y][x].g];g.fillRect(px-1.5*ms,py-ms,3.2*ms,2.2*ms)}elevMini(g);miniBase=c}
 const miniXY=(x,y)=>[75+((x-y)-(N-NH)/2)*148/(N+NH),2+(x+y)*80/(N+NH)];   // 가로 N 세로 NH 마름모를 150×84 안에
 function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,84);mctx.drawImage(miniBase,0,0);
   for(const m of mobs){const[x,y]=miniXY(m.x,m.y);mctx.fillStyle=m.d.boss?'#ff5040':m.d.fac&&peaceful(m)?'#7ab0e0':m.d.hostile?'#d06050':m.d.villager?'#c8c0a8':'#a0c080';mctx.fillRect(x-1,y-1,m.d.boss?3:2,m.d.boss?3:2)}

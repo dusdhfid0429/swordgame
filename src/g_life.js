@@ -31,7 +31,7 @@ function update(dt){
   if(sched.length){for(const q of sched)q.t-=dt;if(sched.some(q=>q.t<=0)){const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f())}}
   for(const f of fx)f.life-=dt;prune(fx,f=>f.life>0);
   for(const t of texts)t.life-=dt;prune(texts,t=>t.life>0);
-  const t=iso(P.x,P.y);cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
+  const t=iso(P.x,P.y);t.y-=gH(P.x,P.y);cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
 }
 function updateP(dt){
   for(let i=0;i<6;i++)P.fcd[i]=Math.max(0,P.fcd[i]-dt);for(const k in P.scd)P.scd[k]=Math.max(0,P.scd[k]-dt);
@@ -49,7 +49,7 @@ function updateP(dt){
   if(keys.arrowup){kx--;ky--}if(keys.arrowdown){kx++;ky++}if(keys.arrowleft){kx--;ky++}if(keys.arrowright){kx++;ky--}
   if(joy.on){kx+=joy.gx;ky+=joy.gy}
   P.moving=false;const sp=moveSpd()*dt;P.runT=Math.max(0,(P.runT||0)-dt);
-  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e;
+  if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e+elevLeapZ(L,e);
     if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:'170,200,255'});
     if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L);ggLand(L)}}
   else if(P.perch){perchMove(kx,ky,sp)}
@@ -58,7 +58,7 @@ function updateP(dt){
     if(P.target){const e=P.target;
       if(e.hp<=0)P.target=null;
       else{const rr=P.mode==='auto'?autoReach():CLASS[hasWeaponFor(curCls())?curCls():'권'].reach;
-        if(dist(e,P)<rr-.05){P.path=null;face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
+        if(dist(e,P)<rr-.05&&(rr>=4||!elevGap(P,e))){P.path=null;face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
         else if(!P.path||!P.path.length||P.repath<=0){P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(e.x),Math.floor(e.y));P.repath=.35}
         P.repath-=dt}}
     if(P.talk&&dist(P.talk,P)<1.7){const n=P.talk;P.talk=null;P.path=null;openNpc(n)}
@@ -80,7 +80,7 @@ function autoAttack(e){
   for(let i=0;i<a.forms.length;i++){if(live&&i<=ch.last)continue;if(s.f[i]&&formReady(i)&&dist(e,P)<engage(a.forms[i])+.2){useForm(i,true);return}}
   basicStrike(e);
 }
-function moveEnt(e,dx,dy){const r=.22;if(walkAt(e.x+dx+Math.sign(dx)*r,e.y))e.x+=dx;if(walkAt(e.x,e.y+dy+Math.sign(dy)*r))e.y+=dy}
+function moveEnt(e,dx,dy){const r=.22,ax=e.x+dx+Math.sign(dx)*r,ay=e.y+dy+Math.sign(dy)*r;if(walkAt(ax,e.y)&&hstep(e.x,e.y,ax,e.y))e.x+=dx;if(walkAt(e.x,ay)&&hstep(e.x,e.y,e.x,ay))e.y+=dy}   // v179: 높이가 다른 칸은 계단으로만 (g_elev.js)
 function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*NH/1600);
   if(!walk(tx,ty)){let best=null,bd=9;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]])if(walk(tx+a,ty+b)){const d=Math.hypot(tx+a-sx,ty+b-sy);if(d<bd){bd=d;best=[tx+a,ty+b]}}if(!best)return null;[tx,ty]=best}
   const k=(x,y)=>y*N+x,g=new Map([[k(sx,sy),0]]),came=new Map,closed=new Set,open=[[sx,sy,0]];let it=0;
@@ -90,7 +90,7 @@ function findPath(sx,sy,tx,ty,lim=1400){lim*=Math.max(1,N*NH/1600);
     if(x===tx&&y===ty){const p=[];let c=ck;while(c!==k(sx,sy)){p.unshift({x:c%N+.5,y:Math.floor(c/N)+.5});c=came.get(c)}return p}
     closed.add(ck);
     for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
-      const nx=x+dx,ny=y+dy,nk=k(nx,ny);if(!walk(nx,ny)||closed.has(nk))continue;if(dx&&dy&&(!walk(x+dx,y)||!walk(x,y+dy)))continue;
+      const nx=x+dx,ny=y+dy,nk=k(nx,ny);if(!walk(nx,ny)||closed.has(nk)||!hpath(x,y,nx,ny))continue;if(dx&&dy&&(!walk(x+dx,y)||!walk(x,y+dy)))continue;
       const ng=g.get(ck)+(dx&&dy?1.414:1);if(ng<(g.get(nk)??1e9)){came.set(nk,ck);g.set(nk,ng);open.push([nx,ny,ng+Math.hypot(tx-nx,ty-ny)])}}
   }
   return null;
@@ -113,7 +113,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   e.hit=Math.max(0,e.hit-dt);if(e.swing>0&&e.swing<=dt)e.rec=.22;e.swing=Math.max(0,e.swing-dt);e.rec=Math.max(0,(e.rec||0)-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
   if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
   if(e.psn>0){e.psn-=dt;e.hp-=e.psnD*dt;if(Math.random()<dt*6)fParts(null,e,'120,220,90',2,30,'dot',.5);if(e.hp<=0){onKill(e);return}}
-  e.x+=e.kb.x*dt*6;e.y+=e.kb.y*dt*6;if(!walkAt(e.x,e.y)){e.x-=e.kb.x*dt*6;e.y-=e.kb.y*dt*6}e.kb.x*=.8;e.kb.y*=.8;
+  {const ox=e.x,oy=e.y;e.x+=e.kb.x*dt*6;e.y+=e.kb.y*dt*6;if(!walkAt(e.x,e.y)||!hstep(ox,oy,e.x,e.y)){e.x=ox;e.y=oy}}e.kb.x*=.8;e.kb.y*=.8;
   if(e.stun>0){e.stun-=dt;e.wind=0;e.moving=false;return}
   const spd=e.sp*(e.slow>0?.6:1)*(e.bind>0?.15:1);
   if(e.flee>0){e.flee-=dt;const f=e.fleeFrom||P,dx=e.x-f.x,dy=e.y-f.y,l=Math.hypot(dx,dy)||1;e.fx=dx/l;e.fy=dy/l;moveEnt(e,e.fx*spd*1.1*dt,e.fy*spd*1.1*dt);e.moving=true;return}
@@ -132,6 +132,9 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(!e.aggro){if(!e.nohe)e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.02*dt);wander(e,dt);return}
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
+  // v179: 높이가 다른 상대에게는 근접이 닿지 않는다: 계단으로 돌아 오르고, 길이 없으면 기다리다 돌아간다 (g_elev.js)
+  if(!d.ranged&&!e.wind&&!(e.slam>0)&&!P.perch&&elevGap(e,tg)&&elevChase(e,tg,dt,spd))return;
+  if(e.epath)e.epath=null;
   // 높은 곳의 사람에게는 맨손·병장기가 닿지 않는다: 아래에서 맴돌다 오래 못 닿으면 돌아간다
   if(tg===P&&P.perch&&!d.ranged&&!e.wind&&!(e.slam>0)){e.perchT=(e.perchT||0)+dt;
     if(e.perchT>6&&!d.boss){e.aggro=false;e.tgt=null;e.perchT=0;e.giveUp=time+10;e.goal={x:e.home.x,y:e.home.y};return}
@@ -146,7 +149,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
       if(d.ranged){const ux=dd>1e-3?(tg.x-e.x)/dd:(e.fx||1),uy=dd>1e-3?(tg.y-e.y)/dd:(e.fy||0);eprojs.push({x:e.x,y:e.y,vx:ux*10,vy:uy*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'})}   // 겹쳐 선 상대(dd 0)는 바라보는 쪽으로: NaN 화살 방지
-      else if(dist(e,tg)<reach+.3){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
+      else if(dist(e,tg)<reach+.3&&!elevGap(e,tg)){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
     return}
   e.cd-=dt;e.moving=false;
   if(dd<reach){if(e.cd<=0)e.wind=d.boss?.5:.4;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}
@@ -188,7 +191,7 @@ function leap(){
   const LEAP=leapRange()*GG_LEN[ggOf().g]*ggLenMul()*(st===2?1.4:st===3?2:1);let land=null,to=null;
   // 지붕·나무 위로 (말을 탔으면 못 오른다). v154 (사용자): 오르는 건 1단뿐, 2·3단은 이동기라 나무·지붕을 노리지 않고 땅으로 뛴다
   if(!P.ride&&st===1){const pc=leapPerch(LEAP);if(pc){land={x:pc.x,y:pc.y};to=pc.q}}
-  const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2);
+  const ok=(nx,ny)=>nx>.3&&ny>.3&&nx<N-.3&&ny<NH-.3&&walkAt(nx,ny)&&walkAt(nx+.2,ny)&&walkAt(nx-.2,ny)&&walkAt(nx,ny+.2)&&walkAt(nx,ny-.2)&&elevLeapOk(P.x,P.y,nx,ny)&&hLv(nx+.2,ny)===hLv(nx,ny)&&hLv(nx,ny+.2)===hLv(nx,ny)&&hLv(nx-.2,ny)===hLv(nx,ny)&&hLv(nx,ny-.2)===hLv(nx,ny);
   for(let d=LEAP;d>(P.perch?.6:.2)&&!land;d-=.1)for(const o of[0,.5,-.5,.9,-.9]){const nx=P.x+P.fx*d-P.fy*o,ny=P.y+P.fy*d+P.fx*o;if(ok(nx,ny)){land={x:nx,y:ny};break}}
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
   const dur=heroSprite()?[.6,.7,.5][st-1]:.42;P.qi-=qi;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=P.sjMax=dur;P.sjSt=st;P.satk=0}else{P.jump=.35}

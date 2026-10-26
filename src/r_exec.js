@@ -68,12 +68,12 @@ function exec(f,e,X){
     case'blinkMulti':{const list=foes().filter(o=>o.hp>0&&dist(o,P)<6).sort((a,b)=>dist(a,P)-dist(b,P)).slice(0,f.cnt+(t>=2?1:0));
       list.forEach((tg,i)=>later(i*.13,()=>{if(tg.hp<=0)return;blinkTo(X,tg);anim(.12);hitE(X,tg,m,.4,stun,P,true);fxHit(X,tg,1.1)}));
       if(!list.length)fArc(X,1,1.4,c,3,.2);break}
-    case'dash':{for(let s=0;s<Math.round(f.dist*4);s++){const nx=P.x+P.fx*.25,ny=P.y+P.fy*.25;if(!walkAt(nx,ny))break;if(s%2===0)fx.push({t:'ghost',x:P.x,y:P.y,life:.3,col:c});P.x=nx;P.y=ny}
+    case'dash':{for(let s=0;s<Math.round(f.dist*4);s++){const nx=P.x+P.fx*.25,ny=P.y+P.fy*.25;if(!walkAt(nx,ny)||!hstep(P.x,P.y,nx,ny))break;if(s%2===0)fx.push({t:'ghost',x:P.x,y:P.y,life:.3,col:c});P.x=nx;P.y=ny}
       P.inv=Math.max(P.inv,.2);P.path=null;exec(f.then,e,X);break}
   }
 }
 function blinkTo(X,tg){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col:X.art.c});const dx=tg.x-P.x,dy=tg.y-P.y,l=Math.hypot(dx,dy)||1;
-  let nx=tg.x+dx/l*.7,ny=tg.y+dy/l*.7;if(!walkAt(nx,ny)){nx=tg.x-dx/l*.7;ny=tg.y-dy/l*.7}if(walkAt(nx,ny)){P.x=nx;P.y=ny}face(tg.x,tg.y);P.path=null}
+  let nx=tg.x+dx/l*.7,ny=tg.y+dy/l*.7;if(!walkAt(nx,ny)||!hstep(tg.x,tg.y,nx,ny)){nx=tg.x-dx/l*.7;ny=tg.y-dy/l*.7}if(walkAt(nx,ny)&&hstep(tg.x,tg.y,nx,ny)){P.x=nx;P.y=ny}face(tg.x,tg.y);P.path=null}
 const blockedAt=(x,y)=>{const i=Math.floor(x),j=Math.floor(y);return i<0||j<0||i>=N||j>=NH||!!objs[j][i]};
 function updateProjs(dt){
   for(const q of projs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;q.trail.push({x:q.x,y:q.y});if(q.trail.length>8)q.trail.shift();

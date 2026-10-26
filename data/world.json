@@ -2614,7 +2614,8 @@
    "props": "stupa"
   },
   "mudang": {
-   "roof": "green"
+   "roof": "green",
+   "wall": ["#a8402a", "#86301f"]
   },
   "hwasan": {
    "roof": "green",
