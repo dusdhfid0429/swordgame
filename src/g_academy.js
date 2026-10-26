@@ -148,10 +148,10 @@ const acadSparOk=kind=>{const a=P.acad;if(!acadOn()||!inAcad())return false;
   return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&realmIdx()>=1&&(a.c.final||0)<3&&acadCurK()==='final':false};
 function acadSpar(kind){if(G.duel||P.hp<=0||!acadSparOk(kind))return;const a=P.acad,A=acadOf(P.side);let o;
   if(kind==='final'){const i=a.c.final||0,s=ACAD_SPAR.final[i];if(!s)return;const mt=A.mates[i];o={n:mt[0],...acadSparStat(s),cls:CLS[(i*2+(P.side==='사'?1:0))%5]}}
-  else{const s=ACAD_SPAR[kind];o={n:kind==='inst'?A.inst[1]:A.master,...acadSparStat(s),cls:kind==='inst'?(a.cls==='궁'?'검':a.cls||'검'):'검'}}
+  else{const s=ACAD_SPAR[kind];o={n:kind==='inst'?A.inst[1]:A.master,...acadSparStat(s),cls:kind==='inst'?(rangedCls(a.cls)?'검':a.cls||'검'):'검'}}
   closePanels();G.duel=true;G.acadDuel={kind};for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}
   P.x=19.5;P.y=23.5;P.path=null;P.target=null;P.leap=null;P.hp=P.maxHp;P.qi=P.maxQi;
-  const e=mkMob(o.n,22.5,23.5,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:o.cls==='궁'?5:1.4,ranged:o.cls==='궁'?1:0,el:null,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
+  const e=mkMob(o.n,22.5,23.5,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:rangedCls(o.cls)?5:1.4,ranged:rangedCls(o.cls)?1:0,el:null,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
   Object.assign(e,{hp:o.hp,maxHp:o.hp,atk:o.atk,def:o.def,hm:o.hm,duel:1,aggro:true,acadSpar:kind,wcls:o.cls});e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':'chief'});
   mobs.push(e);P.target=e;showBanner(kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':'대련',o.n);log(`${kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':'대련'} 시작: ${o.n} (${CLASS[o.cls].n})`,'sys')}
 // 대련 중에 기록된 저장을 불러오면 대련은 없던 것으로

@@ -27,7 +27,7 @@ function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag
   const w=heroCls();P.ss2=0;const row=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w;
   // v123: 핸드오프 시트의 공격 클립이 그 줄에 바인딩돼 있고 시트가 읽혔으면 그 장 배열을 쓴다 (P.ssh = 시트 이름)
   // v167: 이펙트·무기 그림이 든 actfx 시트가 읽혔으면 그것, 아니면 act
-  P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],sn=(ANIM.atk.wxSheet||[]).find(n=>sheetOk(n)&&wx&&wx[kind]&&sheetClip(n,wx[kind]))||'act',wc=wx&&wx[kind]&&sheetClip(sn,wx[kind]);
+  P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],sn=(wx&&wx.sheet?[wx.sheet]:ANIM.atk.wxSheet||[]).find(n=>sheetOk(n)&&wx&&wx[kind]&&sheetClip(n,wx[kind]))||'act',wc=wx&&wx[kind]&&sheetClip(sn,wx[kind]);
   if(wc&&sheetOk(sn)){P.sset=wc.f;P.ssh=sn}
   else if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
     if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}

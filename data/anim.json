@@ -50,7 +50,8 @@
       "창": {"idle": "idle창", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
       "봉": {"idle": "idle봉", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
       "권": {"idle": "idle권", "idleNb": "idleBody", "run": "wxRun", "runNb": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"},
-      "궁": {"idle": "idle궁", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"}
+      "궁": {"idle": "idle궁", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"},
+      "암": {"idle": "idle권", "idleNb": "idleBody", "run": "wxRun", "runNb": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"}
     },
     "atk": {
       "_wx": "핸드오프 시트의 공격 클립(v123 맨손, v124 검·도·창·봉). 무기는 atlas.json 소켓(hand/hand2/aim) 자리에 코드로 그린다. palm은 예전 장 그대로",
@@ -61,7 +62,9 @@
         "창": {"flat": "spear_1", "vert": "spear_2", "diag": "spear_2", "ult": "spear_1"},
         "봉": {"flat": "staff_1", "vert": "staff_2", "diag": "staff_2", "ult": "staff_2"},
         "권": {"flat": "punches", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"},
-        "각": {"flat": "kicks", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"}
+        "각": {"flat": "kicks", "vert": "kicks", "diag": "combo", "palm": "palm_strikes", "ult": "combo"},
+        "_암": "암기술(v181, 사용자 2026-10-26): 검객 공격 동작에서 검만 지운 장. act 시트의 검 클립은 검을 그리지 않았으니 sheet 로 act 를 고른다. 비도·비침은 r_exec 투사체가 손 앞에서 날아간다",
+        "암": {"flat": "sword_thrust", "vert": "sword_slash", "diag": "sword_slash", "ult": "sword_slash", "sheet": "act"}
       },
       "sword": {"flat": [13, 14, 14, 16], "vert": [18, 19, 20, 21, 22], "diag": [26, 27, 28, 29], "palm": [30, 30], "ult": [23, 24, 25, 26, 27, 28, 29], "jump": [32, 33, 34, 35, 36, 37, 38, 39, 40]},
       "body": {

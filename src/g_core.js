@@ -96,7 +96,7 @@ function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t
 // ================= items =================
 const QN=q=>q>=1.35?'명품':q>=1.1?'상품':q>=.85?'중품':'하품';
 const QC=q=>q>=1.35?'#c58bff':q>=1.1?'#6aa8ff':q>=.85?'#7fd16a':'#d8d2c2';
-function mkWeapon(c,q,made){const a=Math.round((c==='궁'?14:c==='창'?13:10)*q*(1+Math.random()*.15));return{id:++itemId,slot:'weapon',cls:c,name:WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made}}
+function mkWeapon(c,q,made){const a=Math.round((c==='궁'?14:c==='창'?13:c==='암'?11:10)*q*(1+Math.random()*.15));return{id:++itemId,slot:'weapon',cls:c,name:WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made}}
 function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(const k in o)it[k]=k==='spd'?+(o[k]*q).toFixed(2):Math.round(o[k]*q);it.price=Math.round(15*q*q+(it.hp||0)*.4+(it.qi||0)*.4+(it.hm||0));return it}
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
@@ -322,7 +322,7 @@ function useForm(i,silent){
 function basicStrike(e){
   if(P.bcd>0||P.gcd>0||!e)return;const useArt=hasWeaponFor(curCls())?P.cur:'base',a=ARTS[useArt];const X=mkX(useArt);X.pj=CLASS[a.cls].pj;
   P.bcd=.8*cdMul();face(e.x,e.y);heroAtk();P.lastAtk=time;
-  if(a.cls==='궁'&&useArt!=='base'){projs.push({x:P.x,y:P.y,vx:P.fx*14,vy:P.fy*14,left:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:'arrow',trail:[],ph:0})}
+  if(rangedCls(a.cls)&&useArt!=='base'){const am=a.cls==='암';projs.push({x:P.x,y:P.y,vx:P.fx*(am?16:14),vy:P.fy*(am?16:14),left:am?5.5:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:am?'blade':'arrow',trail:[],ph:0})}
   else{anim(.2);hitE(X,e,.75,.25,0);fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}
 }
 function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
@@ -342,7 +342,7 @@ function special(k){
   if(P.scd[k]>0)return;const s=SPEC[k];if(P.qi<s.qi){log('내공이 부족합니다.','info');return}
   const e=P.target&&P.target.hp>0?P.target:nearest(k==='점혈'?2.5:7);
   if(k==='암기'){if(!(P.mats.비도>0)){log('비도가 없습니다. 대장간에서 사거나 만드세요.','info');return}if(!e){log('던질 상대가 없습니다.','info');return}
-    P.mats.비도--;face(e.x,e.y);heroAtk('flat');const X={art:{c:'225,230,240',cls:'궁',pt:'spark',elc:false,el:null},key:null,t:0,mul:1+P.st.agi/40,combo:1};
+    P.mats.비도--;face(e.x,e.y);heroAtk('flat');const X={art:{c:'225,230,240',cls:'암',pt:'spark',elc:false,el:null},key:null,t:0,mul:1+P.st.agi/40,combo:1};
     projs.push({x:P.x,y:P.y,vx:P.fx*16,vy:P.fy*16,left:8,m:.85,kb:.1,stun:0,pierce:0,size:.8,hit:new Set,X,c:X.art.c,kind:'blade',trail:[],ph:0})}
   else if(k==='독공'){const c=e?{x:e.x,y:e.y}:front(1.5);heroAtk('palm');P.palm=.35;
     for(const o of foes())if(dist(o,c)<1.7){o.psn=5;o.psnD=Math.max(2,atk()*.22*(P.side==='사'?1.5:1));o.aggro=true}

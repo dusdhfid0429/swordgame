@@ -111,6 +111,9 @@ function drawGlow(f){
     f.ps.forEach((q,i)=>{const x=p.x+q.vx*t,y=p.y-28+q.vy*t+90*t*t,cc=f.c2&&i%2&&!isDark(f.col)?f.c2:f.col;   // 입자 절반은 보조색 (v169)
       if(f.shape==='petal'){ctx.fillStyle=rgba(cc,k);ctx.beginPath();ctx.ellipse(x,y,3.4,1.7,q.r+t*7,0,7);ctx.fill()}
       else{const vy=q.vy+180*t;ctx.strokeStyle=rgba(q.r<2?HI:cc,k);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-q.vx*.05,y-vy*.05);ctx.stroke()}})}
+  else if(f.t==='needle'){const pr=Math.min(1,(1-k)*3),hy=p.y-90+90*pr,a=f.a??(f.a=(rnd()-.5)*.5),dx=Math.sin(a)*14;   // 암기술 비: 비침이 비스듬히 내리꽂힌다 (v181)
+    ctx.strokeStyle=rgba(f.col,.5*k);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x+dx*(1-pr)-dx*.9,hy-28);ctx.lineTo(p.x+dx*(1-pr),hy);ctx.stroke();
+    ctx.strokeStyle=rgba(HI,k);ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(p.x+dx*(1-pr)-dx*.3,hy-9);ctx.lineTo(p.x+dx*(1-pr),hy);ctx.stroke();if(pr>=1)glowDot(p.x,p.y,6,f.col,k)}
   else if(f.t==='crackle'){const bs=flick(f,()=>{const o=[];for(let i=0;i<3;i++){const a=rnd()*6.28,L=16+rnd()*20;boltPts(0,0,Math.cos(a)*L,Math.sin(a)*L*.8,10,.2,1,o)}return o},.06);
     ctx.save();ctx.translate(p.x,p.y-28);strokeBolts(bs,f.col,k,.45);ctx.restore()}
 }
@@ -131,9 +134,9 @@ function drawGlow2(f){
 function drawProj(q){
   const p=toScreen(q.x,q.y),t=q.X.t,s=q.size,ang=Math.atan2((q.vx+q.vy)*TH/2,(q.vx-q.vy)*TW/2);ctx.lineCap='round';
   for(let i=1;i<q.trail.length;i++){const a=toScreen(q.trail[i-1].x,q.trail[i-1].y),b=toScreen(q.trail[i].x,q.trail[i].y);
-    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
+    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'||q.kind==='needle'||q.kind==='star'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
   ctx.save();ctx.translate(p.x,p.y-24);ctx.rotate(ang);if(q.wavy)ctx.translate(0,Math.sin(time*25+q.ph)*7);
-  if(q.kind!=='crescent'&&q.kind!=='blade'&&q.kind!=='arrow')glowDot(0,0,15*s,q.c,.45);
+  if(!['crescent','blade','arrow','needle','star'].includes(q.kind))glowDot(0,0,15*s,q.c,.45);
   if(q.kind==='blade'){// 비도: 검기 반달과 달리 빛무리 없이 쇠 단도 한 자루. 칼끝을 앞으로 날아가며 칼등에 번뜩임이 스치고, 자루 끝 붉은 술이 나부낀다
     ctx.scale(s,s);ctx.strokeStyle=rgba(HI,.35);ctx.lineWidth=.8;for(const k of[-1.6,1.6]){ctx.beginPath();ctx.moveTo(-6,k);ctx.lineTo(-30,k*.6);ctx.stroke()}
     const fl=Math.sin(time*30+q.ph);ctx.strokeStyle='rgba(200,50,40,.85)';ctx.lineWidth=1.4;
@@ -142,6 +145,13 @@ function drawProj(q){
     ctx.fillStyle='#c9d2dc';ctx.beginPath();ctx.moveTo(-1.6,-2.2);ctx.lineTo(9,-1);ctx.lineTo(14,0);ctx.lineTo(9,1);ctx.lineTo(-1.6,2.2);ctx.closePath();ctx.fill();
     ctx.strokeStyle='#f4f8ff';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-1,0);ctx.lineTo(13,0);ctx.stroke();
     const gl=(time*3+q.ph)%1;if(gl<.35){const gx=-1+gl/.35*14;glowDot(gx,0,4,'255,255,255',1-gl/.35*.6)}}
+  else if(q.kind==='needle'){// 비침: 가늘고 긴 바늘 한 가닥. 독침(psn)은 끝이 푸르다
+    ctx.scale(s,s);ctx.strokeStyle=rgba(q.c,.35);ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(-26,0);ctx.lineTo(-4,0);ctx.stroke();
+    ctx.strokeStyle='#dfe6ee';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(10,0);ctx.stroke();
+    ctx.fillStyle=q.psn?'#7ee06a':'#ffffff';ctx.beginPath();ctx.arc(10,0,1.3,0,7);ctx.fill()}
+  else if(q.kind==='star'){// 표창: 네 날 별 모양이 돌며 날아간다
+    ctx.scale(s,s*.6);ctx.rotate(time*26+q.ph);for(let n=0;n<4;n++){ctx.rotate(Math.PI/2);ctx.fillStyle=n%2?'#aeb8c4':'#d8e0ea';ctx.beginPath();ctx.moveTo(0,-2.2);ctx.lineTo(9,0);ctx.lineTo(0,2.2);ctx.closePath();ctx.fill()}
+    ctx.fillStyle='#4a3a2c';ctx.beginPath();ctx.arc(0,0,1.8,0,7);ctx.fill()}
   else if(q.kind==='crescent'){const r=Math.min(12*s,16);ctx.scale(.55,1);
     ctx.fillStyle=rgba(q.c,.5);ctx.beginPath();ctx.arc(-r*.4,0,r,-1.3,1.3);ctx.arc(-r*1.1,0,r*1.05,1.05,-1.05,true);ctx.closePath();ctx.fill();
     for(let i=0;i<4;i++){const a=-.9+i*.6;ctx.strokeStyle=rgba(i%2?HI:q.c,.45);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.4+Math.cos(a)*r*.85,Math.sin(a)*r*.85);ctx.lineTo(-r*2.6,Math.sin(a)*r*.6);ctx.stroke()}

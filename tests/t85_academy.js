@@ -1,5 +1,6 @@
 // 무관(사관학교) 시작점 (2026-10-17): 정파 청운무관·사파 패천관에서 시작, 5단계 과제, 병기·하승 심법 고르기, 이류 졸업, 추천서, 월반, 맹에서 남은 심법
 const {chromium}=require(process.env.PWPATH||'playwright');
+const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v181 암기술로 7)
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
   p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
@@ -176,12 +177,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r21=await p.evaluate(()=>{P.mpt={sacheon:100};P.maeng='sacheon';const n=Object.values(REGIONS).flatMap(R=>R.npcs||[]).find(n=>n.maeng==='sacheon'&&n.role==='steward');if(!n)return{none:1};openNpc(n);
     const o=ACAD_SIM['사'].find(x=>!simKnown(x.id));act('acbuy:'+o.id);return{known:simKnown(o.id)}});
   ok(`건너뛰기 창: 병기 ${s20.cls}개·사파 심법 ${s20.sim.length}개, 돌아가기 (${back}), 봉 선택 ${pr} → ${r20.reg}에서 ${r20.w}·${r20.sim} 들고 시작, 무관 없음, 맹 총관 심법 (${JSON.stringify(r21)})`,
-    s20.cls===6&&s20.sim.length===4&&s20.sim.every(id=>id.startsWith('N_ac_sa'))&&back===1&&pr==='true'&&r20.reg==='gaebong'&&r20.acad===null&&r20.skip===1&&r20.w==='봉'&&r20.sim===s20.sim[2]&&!r20.on&&r20.past&&r21.known&&r20.bob==='b_hoe'&&r20.gk==='g_basic'&&!r20.base);
+    s20.cls===CLS_N&&s20.sim.length===4&&s20.sim.every(id=>id.startsWith('N_ac_sa'))&&back===1&&pr==='true'&&r20.reg==='gaebong'&&r20.acad===null&&r20.skip===1&&r20.w==='봉'&&r20.sim===s20.sim[2]&&!r20.on&&r20.past&&r21.known&&r20.bob==='b_hoe'&&r20.gk==='g_basic'&&!r20.base);
   // 11. ?noacad: 옛 방식 (생성 화면 무기, 개봉 시작)
   await p.evaluate(()=>localStorage.clear());await p.goto(url+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');await p.click('[data-s="new"]');   // 살아 있는 칸에는 '새 생'이 없으므로 기록을 먼저 지운다 (v161)
   const n19=await p.$$eval('[data-s^="cls:"]',x=>x.length);await p.click('[data-s="cls:도"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   const r19=await p.evaluate(()=>({reg:REG,acad:P.acad,w:P.eq.weapon&&P.eq.weapon.cls,on:acadOn()}));
-  ok(`?noacad: 무기 단추 ${n19}개, ${r19.reg}에서 ${r19.w} 들고 시작, 무관 없음`,n19===6&&r19.reg==='gaebong'&&r19.w==='도'&&r19.acad===null&&!r19.on);
+  ok(`?noacad: 무기 단추 ${n19}개, ${r19.reg}에서 ${r19.w} 들고 시작, 무관 없음`,n19===CLS_N&&r19.reg==='gaebong'&&r19.w==='도'&&r19.acad===null&&!r19.on);
   ok('오류 없음: '+errs.join(' | ').slice(0,300),errs.length===0);
   await b.close();
 })();
