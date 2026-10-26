@@ -290,7 +290,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (web != null) web.onPause();
+        if (web == null) return;
+        // 최근 앱 화면에서 밀어 끄면 웹 쪽에 아무 신호 없이 죽으므로, 꺼짐 기록에 '자리 비움'을 먼저 적어 둔다 (g_crash.js)
+        web.evaluateJavascript("try{crashAway(1)}catch(e){}", null);
+        web.onPause();
     }
 
     @Override
@@ -303,6 +306,7 @@ public class MainActivity extends Activity {
             return;
         }
         web.onResume();
+        web.evaluateJavascript("try{crashAway(0)}catch(e){}", null);
         hideBars();
         refreshList();
     }
