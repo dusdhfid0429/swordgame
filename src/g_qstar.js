@@ -19,10 +19,15 @@ function fxPw(f,X,thin=true){if(!f||!X||X.fs==null||X.fs>=1||f.pw)return;const s
   const k=F.w+(1-F.w)*s;if(f.w)f.w*=k;if(f.s)f.s*=k;if(f.t==='parts'&&f.ps)f.ps.length=Math.max(1,Math.round(f.ps.length*(F.p+(1-F.p)*s)))}
 const qsGlow=(X,g)=>!X||X.qs==null||X.qs>=g;   // 대성 잔광·극성 금빛 심이 붙을 만큼의 성인가
 function qsSet(s){if(!P)return;const v=clamp(Math.round(s),1,QS.n);if(v===P.qs)return;P.qs=v;qsHud();addText(P.x,P.y-.6,`${v}성`,'#9fd0ff')}
-function qsHud(){const b=$('qsr');if(!b||!P)return;const s=qsCur();if(b.dataset.s==s)return;b.dataset.s=s;
-  $t('qst',`${s}성`);b.querySelectorAll('.qsp i').forEach((p,i)=>p.classList.toggle('on',i<s));b.title=`초식 내공 ${s}성: 초식마다 정해진 비율의 ${Math.round(s/QS.n*100)}%를 쓴다 ([ ] 키)`}
-{const b=$('qsr');if(b){b.querySelector('.qsp').innerHTML=Array.from({length:QS.n},(_,i)=>`<i data-q="${i+1}"></i>`).join('');
-  b.addEventListener('click',e=>{const t=e.target.closest('[data-q]');if(!t)return;e.stopPropagation();const v=t.dataset.q;qsSet(v==='-'?qsCur()-1:v==='+'?qsCur()+1:+v)});
-  b.addEventListener('keydown',e=>e.stopPropagation())}}
+// HUD (사용자 2026-10-26: 따로 줄을 두니 이질적이고 크다): 내공 막대 오른쪽 끝에 "N성" 글자만, 누르면 막대 곁에 12칸이 떴다가 고르면 닫힌다
+function qsHud(){const c=$('qsc');if(!c||!P)return;const s=qsCur();if(c.dataset.s==s)return;c.dataset.s=s;
+  txt(c,`${s}성`);c.title=`초식 내공 ${s}성: 초식마다 정해진 비율의 ${Math.round(s/QS.n*100)}%를 쓴다 (눌러서 바꾸기 · [ ] 키)`;
+  $('qsr').querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('on',i<s);b.classList.toggle('cur',i===s-1)})}
+function qsOpen(on){const r=$('qsr'),c=$('qsc');if(!r)return;r.hidden=!on;c.setAttribute('aria-expanded',on)}
+{const c=$('qsc'),r=$('qsr');if(c&&r){r.innerHTML=Array.from({length:QS.n},(_,i)=>`<button type="button" data-q="${i+1}">${i+1}</button>`).join('');
+  c.addEventListener('click',e=>{e.stopPropagation();qsOpen(r.hidden)});
+  r.addEventListener('click',e=>{e.stopPropagation();const t=e.target.closest('[data-q]');if(!t)return;qsSet(+t.dataset.q);qsOpen(false)});
+  for(const el of[c,r])el.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')qsOpen(false)});
+  addEventListener('pointerdown',e=>{if(!r.hidden&&!r.contains(e.target)&&e.target!==c)qsOpen(false)},true)}}
 addEventListener('keydown',e=>{if(!playing||!P||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
   if(e.code==='BracketLeft'){e.preventDefault();qsSet(qsCur()-1)}else if(e.code==='BracketRight'){e.preventDefault();qsSet(qsCur()+1)}});
