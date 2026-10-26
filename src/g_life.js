@@ -72,7 +72,7 @@ function updateP(dt){
   if(G.duel&&!G.ldDuel&&!G.acadDuel&&!G.rtDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
-  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=f.qi)r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
+  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
 // 자동초식: chain the learned forms in order, falling back to a plain strike.
 // 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){

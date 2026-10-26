@@ -77,7 +77,7 @@ function hud(){
   $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
-  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}${P.binsa?' · 빈사':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);
+  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}${P.binsa?' · 빈사':''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);if(typeof qsHud==='function')qsHud();
   $t('mst',`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`);
   $t('res',`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`);
   $t('zone',regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':''));
@@ -86,7 +86,7 @@ function hud(){
   const ch=P.chain,live=time-ch.t<1.7;
   for(let i=0;i<6;i++){const b=$('b_f'+i),f=a.forms[i];if(!f){b.classList.add('off');txt(qc(b,'.nm'),'');txt(qc(b,'em'),'');sty(qc(b,'.cd'),'height','0');tip(b,'');continue}
     const on=s.f[i];const tag=f.n+on;if(b.dataset.n!==tag){b.dataset.n=tag;txt(qc(b,'.nm'),f.n);tip(b,`${f.n} · ${plabel(f)} · 연속기 +${f.bonus}%${on?'':` · 미습득 (숙련 ${f.req}, 활력 ${f.cost})`}`)}
-    txt(qc(b,'em'),on?(f.qi||''):'');b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<f.qi||!hasWeaponFor(a.cls)));
+    txt(qc(b,'em'),on?formQi(f):'');b.classList.toggle('off',!on);b.classList.toggle('lock',on&&(P.qi<formQi(f)||!hasWeaponFor(a.cls)));
     sty(qc(b,'.cd'),'height',(on?P.fcd[i]/P.fmax[i]*100:0)+'%');b.classList.toggle('used',live&&ch.last===i)}
   const u=$('b_ult');txt(qc(u,'.nm'),a.ult.n);u.classList.toggle('off',!allLearned(a.id));sty(qc(u,'.cd'),'height',(P.ucd/8*100)+'%');tip(u,`필살기 ${a.ult.n} · 초식을 모두 익혀야 쓸 수 있다`);
   for(const k of['암기','독공','점혈']){const b=$('b_'+k);txt(qc(b,'.nm'),k);b.classList.toggle('off',!P.sp[k]);sty(qc(b,'.cd'),'height',(P.scd[k]/SPEC[k].cd*100)+'%');
@@ -133,7 +133,7 @@ function pChar(){
 }
 function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
-    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qi} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
+    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
     return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 특성 ${trHtml(a)} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
       <p>${a.d}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>

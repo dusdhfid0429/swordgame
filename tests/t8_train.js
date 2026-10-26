@@ -28,7 +28,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     ok(`${tag}: 다시 그려도 스크롤 자리 유지 (${keep.skip?'목록이 다 보여 생략':`${keep.s0} → ${keep.s1} → 수련 뒤 ${keep.s2}`})`,keep.skip||(keep.s0>0&&keep.s1===keep.s0&&keep.s2===keep.s0));
     await p.evaluate(()=>{TRN.querySelector('.tlist').scrollTop=0;trnBusy=null;renderTrain.h='';renderTrain()});await p.waitForTimeout(1700);
     // v129 (사용자): HUD 왼쪽 위 정보창을 누르면 인물 창
-    await tap('#pstat');await p.waitForTimeout(200);
+    await tap('#pstat .who');   // v178: 가운데에 내공 성 칸이 있다await p.waitForTimeout(200);
     const pc=await p.evaluate(()=>({panel,win:!$('win').hidden,trn:!TRN.hidden,title:$('wtitle').textContent}));
     ok(`${tag}: 정보창을 누르면 인물 창이 열린다 (${pc.title})`,pc.panel==='char'&&pc.win&&!pc.trn);
     await p.evaluate(()=>closePanels());if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyT');await p.waitForTimeout(200);

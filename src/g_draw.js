@@ -261,7 +261,7 @@ function draw(){
     for(const d of drops)if(d.it.item||d.it.page){const p=toScreen(d.x,d.y);lightAt(p.x,p.y-10,60,.8)}
     if(G.giyeon){const p=toScreen(G.giyeon.x,G.giyeon.y);lightAt(p.x,p.y-20,120,.9)}
     for(const f of fx)if(f.t==='ring'||f.t==='lvl'){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-(f.z||0),220,.8*f.life/(f.max||1.2))}
-    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max)}
+    for(const f of fx)if(f.glow&&!f.dim&&f.t!=='parts'&&!isDark(f.col)){const p=toScreen(f.x,f.y);lightAt(p.x,p.y-20-(f.z||0),f.t==='bolt'?200:120,.6*f.life/f.max*(f.pw||1))}
     for(const q of projs)if(!isDark(q.c)){const p=toScreen(q.x,q.y);lightAt(p.x,p.y-24,70*q.size,.7)}
     runHooks('darkLights');   // 동굴 시안: 수정·횃불·용암 빛 (g_cave.js)
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0);ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
@@ -270,11 +270,11 @@ function draw(){
     ctx.globalCompositeOperation='source-over';
   }
   runHooks('afterDark');   // 동굴 시안: 어둠 위의 빛과 움직임 (g_cave.js)
-  for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k;ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
+  for(const f of fx)if(f.glow&&!f.dim&&DARKEN[f.t]){const p=toScreen(f.x,f.y),k=f.life/f.max,r=DARKEN[f.t]*(f.s||f.r||1);ctx.globalAlpha=.42*k*(f.pw||1);ctx.drawImage(glowSpr('dark'),p.x-r,p.y-30-r-(f.z||0),r*2,r*2)}ctx.globalAlpha=1;
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   // v169: 무공 이펙트(c2 있음)는 심지가 무공 특성 보조색 쪽으로 물든다 (g_fxcol.js hiOf)
   const fxMode=(c,c2)=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=c2?hiOf(c,c2):dk?HI_DARK:WH};
-  for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);atZ(q,()=>drawProj(q))}ctx.globalCompositeOperation='lighter';HI=WH;
+  for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);const s=q.X&&q.X.fs;ctx.globalAlpha=s!=null&&s<1?QS.fx.a+(1-QS.fx.a)*s:1;atZ(q,()=>drawProj(q));ctx.globalAlpha=1}   // 낮은 성의 시전은 옅게 (g_qstar.js)ctx.globalCompositeOperation='lighter';HI=WH;
   for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';

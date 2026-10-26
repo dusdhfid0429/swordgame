@@ -50,7 +50,7 @@ hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key)continue;q.el
   const el=artEl(q.X.art),E=EL_FX[el];if(!E)continue;const ps=[];
   for(const[k,m,c0]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m)),col=elCol(c0,q.X);
     for(let i=0;i<n;i++)ps.push({...elPart(k,{ox:(Math.random()-.5)*8,oy:-24+(Math.random()-.5)*8,gy:0,d:0}),col})}
-  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:q.X.art.c2})}});
+  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:q.X.art.c2});fxPw(fx[fx.length-1],q.X,false)}});
 
 // ---- 그리기 (r_fx.js drawGlow2 가 부른다. 더하기 합성이 기본, 돌·흙·잎·연기는 보통 합성) ----
 const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};

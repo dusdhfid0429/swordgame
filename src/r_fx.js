@@ -79,7 +79,7 @@ function ribbon(f,p,k,o={}){
   const tip=outer[n];if(k>.5)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
 }
 function drawGlow(f){
-  const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=f.dim||1;
+  const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
   if(f.t==='arc')ribbon(f,p,k);
   else if(f.t==='spin'){const a=-time*0;ribbon(f,p,k,{flat:1,spread:5.6,lift:3,h:16,fast:.45,a0:f.a0??(f.a0=rnd()*6.28)});ribbon(f,p,k,{flat:1,spread:5.6,lift:2,h:30,fast:.5,thick:5,a0:f.a0+3.14});
     if(!f.sp)f.sp=mkSparks(10,150,.3);sparks(f,p.x,p.y-16,f.col,k);shock(p.x,p.y,isoR(f.r)[0]*(1.1-k*.3),isoR(f.r)[1]*(1.1-k*.3),f.col,k)}
@@ -116,7 +116,7 @@ function drawGlow(f){
 }
 const DARKEN={bolt:150,zap:90,vortex:80,spin:70,arc:50,crackle:40};
 function drawGlow2(f){
-  const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=f.dim||1;
+  const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
   if(f.t==='vortex'){const[rx,ry]=isoR(f.r*(.3+.7*k));glowDot(p.x,p.y-10,rx*.5,f.col,k,.5);
     for(let arm=0;arm<3;arm++){const pts=[];for(let n=0;n<=30;n++){const t=n/30,a=-time*9+arm*2.09+t*5;pts.push([p.x+Math.cos(a)*rx*t,p.y-10+Math.sin(a)*ry*t])}
       for(const[w,c,al]of[[f.w*3,f.col,.25],[f.w,f.col,.8],[1.2,HI,.9]]){ctx.strokeStyle=rgba(c,al*k);ctx.lineWidth=w;path(pts);ctx.stroke()}}}

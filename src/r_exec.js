@@ -11,16 +11,16 @@ function lineHit(X,len,w,m,kb,stun){for(const e of foes()){if(e.hp<=0)continue;c
 // 같은 무공을 연달아 쓰면 앞선 시전의 이펙트는 흐리게 줄여 빨리 거둔다 (겹쳐 하얗게 뭉개지지 않게, data/elfx.json FX_OLD)
 const FX_OLD=GD.FX_OLD;
 function fadeOld(X){if(!X||!X.key)return;for(const f of fx)if(f.ck===X.key&&f.cx!==X&&!f.old){f.old=1;f.dim=(f.dim||1)*FX_OLD.dim;f.life=Math.min(f.life,FX_OLD.life)}}
-function tagCast(X,i0){if(X&&X.key)for(let i=i0;i<fx.length;i++){fx[i].cx=X;fx[i].ck=X.key}}
+function tagCast(X,i0,thin=true){if(X&&X.key)for(let i=i0;i<fx.length;i++){fx[i].cx=X;fx[i].ck=X.key;fxPw(fx[i],X,thin)}}   // fxPw: 낮은 성은 옅고 가늘게 (g_qstar.js)
 function GL(o,X){
   fadeOld(X);const i0=fx.length;
   const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;if(X&&X.art&&!o.c2)o.c2=X.art.c2;fx.push(o);   // c2: 무공 특성 보조색 (g_fxcol.js, v169)
-  if(t>=2)fx.push({...o,col:o.c2||o.col,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:o.c2&&isDark(o.col)?.22:.35,r:o.r&&o.r*1.08});   // 잔광은 보조색 (마기는 검은 기운 둘레에 옅게)
-  if(t>=3)fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
+  if(t>=2&&qsGlow(X,QS.fx.g2))fx.push({...o,col:o.c2||o.col,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:o.c2&&isDark(o.col)?.22:.35,r:o.r&&o.r*1.08});   // 잔광은 보조색 (마기는 검은 기운 둘레에 옅게)
+  if(t>=3&&qsGlow(X,QS.fx.g3))fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
   runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)
   tagCast(X,i0);
 }
-const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);runHooks('slashFx',o)};   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
+const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
 const fRing=(X,c,r,col,w,life)=>GL({t:'ring2',x:c.x,y:c.y,r,col,w,life},X);
 const fLine=(X,len,col,w,life,wavy,off=0)=>{const e=rot(len,off);GL({t:'line',x:P.x,y:P.y,ex:e.x,ey:e.y,col,w,life,wavy},X)};

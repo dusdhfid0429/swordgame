@@ -75,8 +75,8 @@ function mkGyLearn(id){const a=ARTS[id];P.arts[id]={p:0,f:a.forms.map((f,i)=>i==
 {const r0=gyRoll,l0=gyLearn;gyRoll=src=>r0(src)||mkGyRoll(src);gyLearn=id=>ARTS[id]&&ARTS[id].made?mkGyLearn(id):l0(id)}
 // 정의로 무공을 만든다 (창안할 때와 불러올 때). 재료 무공이 ARTS에 있어야 한다
 function mkBuild(def){const g=def.grade,EC=EL[def.el];
-  const forms=def.forms.map((x,i)=>{const a=ARTS[x.a],f=a&&a.forms[x.i];if(!f)return{...F(x.n,'melee',{m:1,cd:.4}),req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:1*(1+.06*i)*GMUL[g]};
-    return{...f,n:x.n,req:REQ[i],cost:0,bonus:BONUS[i],qi:4+i*4,m:f.m/((1+.06*x.i)*mkMul(a))*(1+.06*i)*GMUL[g]}});
+  const forms=def.forms.map((x,i)=>{const a=ARTS[x.a],f=a&&a.forms[x.i];if(!f)return{...F(x.n,'melee',{m:1,cd:.4}),req:REQ[i],cost:0,bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:1*(1+.06*i)*GMUL[g]};
+    return{...f,n:x.n,req:REQ[i],cost:0,bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m/((1+.06*x.i)*mkMul(a))*(1+.06*i)*GMUL[g]}});
   const ua=ARTS[def.ult.a],steps=ua?ua.ult.steps.slice(1).map(x=>({...x,m:(x.m||1)/mkUltMul(ua)*GULT[g][1]})):[];
   // v169: 이펙트 보조색은 재료 무공들의 특성을 물려받는다 (g_fxcol.js). 예전 저장은 재료에서 다시 센다
   if(!def.tr)def.tr=trOfSrc(def.src||[]);

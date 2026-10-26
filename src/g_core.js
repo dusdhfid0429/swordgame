@@ -217,7 +217,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
+  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(P.perch&&from===P?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
@@ -302,17 +302,17 @@ function hurtP(dm,src){
 function engage(f){switch(f.p){case'melee':case'multi':return CLASS[curCls()].reach;case'arc':return f.rad*.9;case'circle':return f.rad*.85;case'line':return f.len*.9;
   case'proj':return f.full?f.len*.8:f.len*.9;case'pull':return f.rad;case'dash':return f.dist+1.2;case'blinkMulti':return 5;default:return f.r||4}}
 const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
-function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=f.qi&&P.gcd<=0&&hasWeaponFor(a.cls)}
+function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}
 function useForm(i,silent){
   if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
   if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. 비급이 필요합니다.`,'info');return false}
   if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
-  if(P.fcd[i]>0||P.gcd>0)return false;if(P.qi<f.qi){if(!silent)log('내공이 부족합니다.','info');return false}
+  if(P.fcd[i]>0||P.gcd>0)return false;const q=formQi(f);if(P.qi<q){if(!silent)log('내공이 부족합니다.','info');return false}
   // 연속기: forms entered in order inside the window stack their 추가 공력
   const ch=P.chain;if(time-ch.t<1.7&&i>ch.last){ch.sum+=f.bonus;ch.n++}else{ch.sum=f.bonus;ch.n=1}ch.last=i;ch.t=time;
-  const X=mkX(a.id,1+ch.sum/100),r=engage(f),e=P.target&&P.target.hp>0&&dist(P.target,P)<r?P.target:nearest(r);
-  P.qi-=Math.round(f.qi*(1-simTv('qcost')/100));P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
-  texts.push({x:P.x,y:P.y,t:ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n,c:`rgb(${a.ct})`,life:.9,call:1});exec(f,e,X);return true;
+  const X=mkX(a.id,1+ch.sum/100);qsX(X,f);const r=engage(f),e=P.target&&P.target.hp>0&&dist(P.target,P)<r?P.target:nearest(r);
+  P.qi-=Math.round(q*(1-simTv('qcost')/100));P.fcd[i]=P.fmax[i]=(f.cd*2.2+i*.35)*(X.t>=2?.9:1)*cdMul();P.gcd=.2;P.lastAtk=time;heroAtk(HKIND[f.p],f);if(e)face(e.x,e.y);P.chan=null;P.medit=false;
+  texts.push({x:P.x,y:P.y,t:(ch.n>1?`${f.n} · 연속기 ${ch.n} (${100+ch.sum}%)`:f.n)+(X.qs<QS.n?` · ${X.qs}성`:''),c:`rgb(${a.ct})`,life:.9,call:1});exec(f,e,X);return true;
 }
 function basicStrike(e){
   if(P.bcd>0||P.gcd>0||!e)return;const useArt=hasWeaponFor(curCls())?P.cur:'base',a=ARTS[useArt];const X=mkX(useArt);X.pj=CLASS[a.cls].pj;
