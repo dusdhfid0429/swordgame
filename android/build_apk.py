@@ -133,6 +133,7 @@ def main():
     ap.add_argument('--out', default=os.path.join(BUILD, 'gangho.apk'))
     ap.add_argument('--publish', metavar='gangho-access 폴더', help='게임 묶음·apk 를 올리고 목록(access.txt)을 새로 쓴다. 커밋·푸시는 따로')
     ap.add_argument('--min-app', type=int, help='이보다 낮은 앱 판(versionCode)은 실행을 막는다')
+    ap.add_argument('--new-app', action='store_true', help='앱 껍데기(자바·매니페스트)가 바뀌었다: 깔린 앱에 새 판 받기 안내를 띄운다. 게임만 바뀌면 빼고 (묶음으로 충분)')
     a = ap.parse_args()
     a.issue_key = a.issue_key or os.path.join(os.path.dirname(os.path.abspath(a.keystore)), 'gangho-issue.pem')
     sys.path.insert(0, HERE)
@@ -244,7 +245,7 @@ def publish(a, ik, vcode, game_bin, list_url):
     st = issue_code.load_state(home)
     st['game'] = {'rev': vcode, 'url': base + f'game/{vcode}.bin', 'sha256': hashlib.sha256(b).hexdigest(), 'shell': SHELL}
     app = st.get('app', {})
-    st['app'] = {'latest': vcode, 'min': a.min_app if a.min_app is not None else app.get('min', 0), 'url': base + 'apk/gangho.apk'}
+    st['app'] = {'latest': vcode if a.new_app or 'latest' not in app else app['latest'], 'min': a.min_app if a.min_app is not None else app.get('min', 0), 'url': base + 'apk/gangho.apk'}
     issue_code.write_list(ik, home, st, os.path.join(d, 'access.txt'))
     print(f'올릴 준비: {d} (게임 {vcode}, 앱 최소 {st["app"]["min"]})')
 
