@@ -17,7 +17,8 @@ const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='func
 // v176: 표국·상단 행렬을 턴 수배자(P.wanted, g_caravan.js)도 해가 바뀔 때까지 관군이 쫓는다
 const outlaw=()=>!!P&&(P.good-P.evil<=-100||P.wanted>0)&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
-const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac())||(e.d.fac==='관'&&outlaw());
+// v182: 세력·문파 우호도(g_rep.js)가 적대 단계면 적. 우호도를 올리면 적 세력도 먼저 덤비지 않는다
+const mobFoeP=e=>e.angry||(e.d.fac==='관'&&outlaw())||(typeof repFoe==='function'?repFoe(e):facFoe(e.d.fac,pfac()));
 // 강제공격 (사용자 요청 2026-10-13, 리니지식 토글): 켜면 같은 편 무인도 공격 대상이 되고 범위 초식에도 맞는다 (치면 그대로 배신·악업). 양민은 켜고 직접 눌러야 맞는다.
 // PC는 T 키·HUD '강제' 단추, 터치는 오른쪽 세로 열의 네모 단추. 불러오기·새 생에서는 꺼져 있다.
 let forceAtk=false;
@@ -64,15 +65,19 @@ function mobHurt(t,dm,src){
 }
 // 같은 편 무인을 친 대가: 악업, 그 무인과 주변 동도가 등을 돌린다
 function facBetray(e){
-  if(e.angry)return;e.angry=1;e.aggro=true;e.tgt=null;P.evil+=P.side==='정'?6:2;
+  if(e.angry)return;
+  if(typeof repStE==='function'&&repStE(e)===0){e.angry=1;e.aggro=true;return}   // v182: 이미 원수가 된(적대) 문파는 배신이 아니다
+  e.angry=1;e.aggro=true;e.tgt=null;P.evil+=P.side==='정'?6:2;if(typeof repHit==='function')repHit(e);
   for(const o of mobs)if(o!==e&&o.hp>0&&o.d.fac===e.d.fac&&dist(o,e)<6){o.angry=1;o.aggro=true;o.tgt=null}
   log(`같은 편인 ${e.name}을(를) 공격했습니다. 악업이 쌓이고 주변 동도가 등을 돌립니다.`,'dmg');
 }
 // 플레이어가 무인을 쓰러뜨렸을 때: 적 세력이면 문파 공적, 같은 편이면 악업
 function facKill(e){
-  if(!e.d.fac)return;
-  if(facFoe(e.d.fac,pfac())){if(P.sect&&SECTS[P.sect]){const v=addMerit(P.sect,e.d.elite?6:2);log(`${SECTS[P.sect].n} 공적 +${v}`,'xp')}}
+  if(!e.d.fac)return;const foe=facFoe(e.d.fac,pfac()),grudge=!foe&&typeof repStE==='function'&&repStE(e)===0;
+  if(foe){if(P.sect&&SECTS[P.sect]){const v=addMerit(P.sect,e.d.elite?6:2);log(`${SECTS[P.sect].n} 공적 +${v}`,'xp')}}
+  else if(grudge)log(`원수가 된 ${e.name}을(를) 쓰러뜨렸습니다.`,'info');   // v182: 적대 단계라 먼저 덤빈 상대. 악업은 없다
   else{P.evil+=P.side==='정'?10:4;log(`동도 ${e.name}을(를) 죽였습니다. 무거운 악업이 쌓였습니다.`,'dmg')}
+  if(typeof repKill==='function')repKill(e,foe);
 }
 // 세력 대립 임무 (기존 임무 풀에 더한다)
 SMIS.jeong.push({n:'사파 무인 소탕',kind:'kill',mob:['사파 무인','사파 고수'],cnt:5,merit:20,silver:35},{n:'마교도 토벌',kind:'kill',mob:['마교도','마교 고수'],cnt:4,merit:25,silver:45});

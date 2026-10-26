@@ -14,6 +14,7 @@ function mobilWhy(){
   if(G.seal&&G.seal[s.id])return'봉문 중이라 문파원이 산문을 나서지 못한다';
   if(G.occ&&G.occ[s.id])return'본산이 점령당해 부를 문파원이 없다';
   if(p.n<=0)return'문파 인원이 너무 적어 보낼 사람이 없다';
+  if(typeof repSect==='function'&&repStageOf(repSect(s.id))<2)return`문파가 당신을 믿지 않는다 (우호도 ${repName(repSect(s.id))})`;   // v182
   if(mobilOut().length)return'이미 문파원이 곁에 있다';
   if(P.mobY===Math.floor(realAge()))return'올해는 이미 문파원을 불렀다';
   if(G.duel||P.jail||(typeof inAcad==='function'&&inAcad()))return'지금은 문파원을 부를 수 없다';

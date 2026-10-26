@@ -211,6 +211,7 @@ function spawnTick(){
 //  allyTick(a,dt) / allyDown(a)  동료 한 프레임 전 / 동료가 쓰러진 뒤 (a.hp<=0으로 만들면 그 프레임은 건너뛴다)
 //  drawList(list) 그리기 목록을 정렬하기 전, {L,d,f}를 얹는다
 //  formCall(e,f)  정예·두목·비무 상대가 초식을 외칠 때 (g_loot.js mobFormCall). 견식이 쌓인다 (g_mkmat.js)
+//  questDone(q)  의뢰·임무 보상을 받은 뒤      cvRob(cv) / cvSaved(cv)  표국·상단 행렬을 털기 시작 / 구해 준 뒤 (g_caravan.js)
 //  glFx(o,X)     무공 이펙트 하나를 fx에 넣은 뒤 (X: 무공, 경지 효과 등은 없음). 속성 재질을 덧입힌다 (r_elfx.js)
 const HOOKS={};
 const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
