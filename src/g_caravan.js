@@ -122,7 +122,7 @@ function cvAmbush(cv,esc){const c=cv.cart,k=cvProv(),fs=[...new Set((PROV[k]&&PR
 function cvSaved(cv){if(cv.robbed)return;if(!cv.help){log(`${cv.name} 행렬이(가) 습격을 물리치고 다시 길을 떠납니다.`,'info');return}
   const R=CARV.rescue,lo=cvDanger(cvProv()),s=Math.round(R1(R.silver[0],R.silver[1])*(1+lo*.3));P.silver+=s;P.fame+=R.fame;P.good+=R.good;
   if(cv.type==='pyo')P.pyo=(P.pyo||0)+R.pyo;P.cvSaveN=(P.cvSaveN||0)+1;if(P.cvSaveN===1)feat(`습격당한 ${cv.name} 행렬을 구했다`);
-  cvNews('save',cv);showBanner('행렬을 구했다',`${cv.name} · 은자 +${s}`);
+  runHooks('cvSaved',cv);cvNews('save',cv);showBanner('행렬을 구했다',`${cv.name} · 은자 +${s}`);
   log(`${cv.name}의 ${cv.T.lead}: "은혜는 잊지 않겠소!" 사례금 은자 ${s}, 명성 +${R.fame}, 선업 +${R.good}${cv.type==='pyo'?`, 표국 신용 +${R.pyo}`:''}.`,'xp');
   if(Math.random()<LEAF.cvSave)cvLeaf(`${cv.name} 행렬의 사례`);   // 비급 낱장 (g_mkmat.js)
   if(!cv.q&&Math.random()<R.offer&&P.quests.length<4)cvOffer(cv)}
@@ -156,7 +156,7 @@ function cvCartDown(cv){if(!CVS.includes(cv))return;
 function cvRob(cv,hated){if(cv.robbed)return;cv.robbed=1;const RB=CARV.rob,f=pfac();
   for(const m of cv.mem){m.angry=1;if(m.cvRole==='guard'){m.aggro=true;m.tgt=null}}
   if(hated){log(`${cv.name}의 표사들이 당신을 알아보고 칼을 뽑습니다! 표물을 털던 자를 잊지 않았다.`,'dmg');return}
-  P.evil+=RB.evil[f]||5;P.wanted=Math.min(RB.wantedMax,(P.wanted||0)+RB.wanted);if(cv.type==='pyo')P.pyo=(P.pyo||0)+RB.pyo;
+  runHooks('cvRob',cv);P.evil+=RB.evil[f]||5;P.wanted=Math.min(RB.wantedMax,(P.wanted||0)+RB.wanted);if(cv.type==='pyo')P.pyo=(P.pyo||0)+RB.pyo;
   showBanner('약탈',`${cv.name} 행렬`);log(`${cv.name} 행렬을(를) 털기 시작했습니다. 악업이 쌓이고 관아가 당신을 수배합니다(관군이 덤빈다).`,'dmg')}
 function cvLoot(cv){const L=cv.T.loot,c=cv.cart,lo=cvDanger(cvProv()),out=[];
   out.push({silver:Math.round(R1(L.silver[0],L.silver[1])*(1+lo*.4)*worldMul('loot'))});
