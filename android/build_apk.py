@@ -162,6 +162,9 @@ def main():
     icon(res)
 
     # 2) 판 번호: versionCode 는 커밋 수(늘 커진다), versionName 은 마지막 vNNN + 커밋
+    # 얕은 복제(clone --depth)에서는 커밋 수가 적게 나와 판 번호가 거꾸로 갈 수 있다
+    if git('rev-parse', '--is-shallow-repository') == 'true':
+        raise SystemExit('얕은 복제입니다. git fetch --unshallow origin 뒤에 다시 빌드하세요 (versionCode 가 커밋 수라서)')
     vcode = int(git('rev-list', '--count', 'HEAD') or 1)
     m = re.search(r'\bv(\d{2,4})\b', git('log', '-200', '--format=%s'))
     vname = (f'v{m.group(1)} ' if m else '') + (git('rev-parse', '--short', 'HEAD') or 'dev')
