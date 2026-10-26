@@ -21,7 +21,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const h=await p.evaluate(()=>{const o={};P.mara=0;const a0=atk();const sim=P.sim;P.sim=null;P.sims={};useCon('혈마단');o.noMa=P.mats.혈마단===1;P.sims={N_cheonma_1:1};P.sim=sim;
     useCon('혈마단');o.left=P.mats.혈마단;o.atk=atk()/a0;o.mara=P.mara;const sp0=moveSpd();P.hyeolT=.05;update(.1);o.weak=P.weakT>0&&P.buff.atkV<0;o.spd=moveSpd()/sp0;o.thirst=!!P.thirst;P.weakT=0;P.buff.atk=0;return o});
   ok(`마공 아닐 때 못 먹음 ${h.noMa} · 혈마단: 공격 ×${h.atk.toFixed(2)}, 마성 ${h.mara}, 끝난 뒤 둔화 ${h.weak} 이동 ×${h.spd.toFixed(2)}, 갈증 없음 ${!h.thirst}`,h.noMa&&h.left===0&&Math.abs(h.atk-1.3)<.03&&h.mara===25&&h.weak&&Math.abs(h.spd-.8)<.02&&!h.thirst);
-  // 4. 흡정환: 정혈 1 + 수련 5회분, 마성 +15, 악업 +10. 4번째부터 중독·갈증(내공 회복 절반), 탈마면 중독 해제
+  // 4. 흡정환: 정혈 1 + 수련 5회분, 마성 +15, 악업 +10. 4번째부터 중독·갈증(운기조식 회복 절반), 탈마면 중독 해제
   const s=await p.evaluate(()=>{const o={};P.mara=0;P.evil=0;P.qiN=0;P.qiAcc=0;P.mats.흡정환=4;P.mats.정혈=4;const q=qiRegen();useCon('흡정환');o.qiN=P.qiN;o.acc=Math.round(P.qiAcc);o.g=qiGain();o.mara=P.mara;o.evil=P.evil;o.bl=P.mats.정혈;
     useCon('흡정환');useCon('흡정환');o.noAdd=!P.addict;useCon('흡정환');o.add=!!(P.addict&&P.addict.흡정환);o.thirst=!!P.thirst;const q1=qiRegen();P.thirst=0;o.reg=q1/qiRegen();P.thirst=1;P.realm=6;talmaGain(6);o.cleared=!P.addict&&!P.thirst;P.realm=0;P.mara=0;return o});
   ok(`흡정환: 수련 ${s.qiN}회분 (내공 ${s.acc} = 5×${s.g}), 마성 ${s.mara}, 악업 ${s.evil}, 정혈 4 → ${s.bl} · 3번째까지 중독 없음 ${s.noAdd}, 4번째 중독 ${s.add} 갈증 ${s.thirst} 회복 ×${s.reg.toFixed(2)} · 탈마로 해제 ${s.cleared}`,

@@ -3,7 +3,7 @@
 // - 정혈: 마공 운용 중 정·사 무인을 죽이면 가끔 떨어진다 (양민·짐승은 안 나온다). 마교 영약의 재료.
 // - 영약 세 가지, 모두 마공 운용 중에만 삭인다: 혈마단(혈마당, 공적+정혈: 60초 공격 +30%, 뒤에 30초 공격·이동 -20%, 마성 +25),
 //   흡정환(암혈당, 공적: 정혈 1을 삼켜 내공 수련 5회분, 마성 +15, 악업 +10), 천마혈정(교주, 장로 이상·공적 100·한 생에 한 번: 치명타를 한 번 버티고 생명 40%, 5초 폭주, 마성 +40).
-//   같은 영약을 한 생에 3번 넘게 먹으면 중독: 효과가 끝날 때마다 갈증(내공 회복 -50%)이 다음 복용까지. 탈마에 이르면 풀린다. 탈마 뒤엔 영약의 마성이 오르지 않는다(maraAdd).
+//   같은 영약을 한 생에 3번 넘게 먹으면 중독: 효과가 끝날 때마다 갈증(운기조식 회복 -50%)이 다음 복용까지. 탈마에 이르면 풀린다. 탈마 뒤엔 영약의 마성이 오르지 않는다(maraAdd).
 // - 죄값 P.sin (마교도만): 같은 편 마교도 살해 +10 (폭주 중 포함), 추살조에게서 달아남 +5, 연행조를 물리침 +10, 배교 뒤 재입교 +30. 해마다 -5.
 //   30에 닿으면 마교 땅에 들어설 때 연행되어 흑혈옥에 갇히고, 마교 밖이면 해마다 연행조가 덮쳐 제압당하면 갇힌다.
 // - 흑혈옥(hq_cheonma_9, 천마동 아래): 죄값 10당 1년 형기. 옥 안에서는 운기조식(마성 감소 두 배)·수련만. 출구는 옥주가 막는다. '복역'으로 세월을 바로 보내거나,
@@ -33,9 +33,9 @@ hook('useCon',c=>{const k=c.k,E=EL2[k];if(!E)return;c.done=true;
   else if(k==='흡정환'){if(!(P.mats.정혈>0)){log('흡정환은 정혈 한 방울과 함께 삼켜야 한다.','info');return}P.mats.정혈--;for(let i=0;i<E.n;i++){qiAccAdd(qiGain());P.qiN++}P.evil+=E.evil;recalc();log(`정혈을 삼켜 남의 공력을 빨아들였습니다. 내공 수련 ${E.n}회분이 한 번에 쌓이고 악업이 ${E.evil} 쌓입니다.`,'xp')}
   else if(k==='혈마단'){P.buff.atk=E.dur;P.buff.atkV=E.atk;P.hyeolT=E.dur;P.weakT=0;log(`혈마단의 피가 끓어 ${E.dur}초 동안 공격 +${Math.round(E.atk*100)}%. 끝나면 ${E.weak}초 동안 몸이 무거워진다.`,'xp')}
   P.mats[k]--;P.elixirN=P.elixirN||{};P.elixirN[k]=(P.elixirN[k]||0)+1;P.thirst=0;
-  if(P.elixirN[k]>MAGYO2.addictN&&k!=='천마혈정'){P.addict=P.addict||{};if(!P.addict[k])log(`${k}에 중독되었습니다. 효험이 끝날 때마다 갈증이 내공 회복을 반으로 줄인다. 탈마에 이르면 풀린다.`,'dmg');P.addict[k]=1;if(k==='흡정환')thirst(k)}
+  if(P.elixirN[k]>MAGYO2.addictN&&k!=='천마혈정'){P.addict=P.addict||{};if(!P.addict[k])log(`${k}에 중독되었습니다. 효험이 끝날 때마다 갈증이 운기조식 회복을 반으로 줄인다. 탈마에 이르면 풀린다.`,'dmg');P.addict[k]=1;if(k==='흡정환')thirst(k)}
   maraAdd(E.mara,k);addText(P.x,P.y,k,'#d8a0ff');fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:.8});showBanner(k,'마교의 영약');renderOpen()});
-function thirst(k){if(!(P.addict&&P.addict[k])||isTalma())return;P.thirst=1;log(`${k}의 갈증이 밀려옵니다. 내공 회복 -50% (다음 복용까지).`,'dmg')}
+function thirst(k){if(!(P.addict&&P.addict[k])||isTalma())return;P.thirst=1;log(`${k}의 갈증이 밀려옵니다. 운기조식 회복 -50% (다음 복용까지).`,'dmg')}
 hook('tick',dt=>{if(!P||!playing)return;
   if(P.hyeolT>0){P.hyeolT-=dt;if(P.hyeolT<=0){P.hyeolT=0;P.weakT=EL2.혈마단.weak;P.buff.atk=EL2.혈마단.weak;P.buff.atkV=-EL2.혈마단.weakV;log(`혈마단의 기운이 빠져 ${EL2.혈마단.weak}초 동안 공격·이동 -${Math.round(EL2.혈마단.weakV*100)}%.`,'info');thirst('혈마단')}}
   if(P.weakT>0)P.weakT=Math.max(0,P.weakT-dt);
@@ -72,7 +72,7 @@ function regionJump(id,x,y){P.chan=null;P.medit=false;P.burst=null;enterRegion(i
 function jailEnter(why){if(!P||P.jail)return;const yrs=Math.max(1,Math.ceil((P.sin||0)/J2.perYear));P.jail={t:yrs,sin:P.sin||0};
   regionJump(JAIL_ID,20.5,20.5);showBanner('흑혈옥',`형기 ${yrs}년`);log(`${why}. 천마동 아래 흑혈옥에 갇혔습니다. 형기 ${yrs}년: 해를 넘기거나 옥주에게 복역을 청하면 풀려난다. 옥주를 치고 나가면 배교자다.`,'dmg');
   feat(`교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
-function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1}
+function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1;if(P.srank)P.srank.cheonma=i-1}
   log(`형기를 다 채워 흑혈옥에서 나왔습니다. 죄값은 지워졌지만 직위는 ${rankName('cheonma')}(으)로 한 단계 내려갔습니다.`,'xp');showBanner('출옥','흑혈옥의 문이 열렸다');
   if(REG===JAIL_ID)regionJump('hq_cheonma_8',20.5,22)}
 // 복역: 남은 형기만큼 세월을 바로 보낸다

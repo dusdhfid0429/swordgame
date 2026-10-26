@@ -48,7 +48,8 @@
     {"n":"가죽 납품","kind":"give","mat":"가죽","cnt":3,"silver":45,"vit":35,"fame":2,"good":2},
     {"n":"쌀 납품","kind":"give","mat":"쌀","cnt":4,"silver":40,"vit":40,"fame":3,"good":4},
     {"n":"혈교 무인 추적","kind":"kill","mob":["혈교무인"],"cnt":3,"silver":90,"vit":150,"fame":15,"good":6},
-    {"n":"황하 잉어 납품","kind":"give","mat":"잉어","cnt":2,"silver":40,"vit":30,"fame":2,"good":2}
+    {"n":"황하 잉어 납품","kind":"give","mat":"잉어","cnt":2,"silver":40,"vit":30,"fame":2,"good":2},
+    {"n":"표행 호위","kind":"escort","cnt":1,"silver":55,"vit":60,"fame":6,"good":4}
   ],
   "NPCS": [
     {"id":"inn","n":"객잔 주인 왕씨","x":16.5,"y":17.6,"pal":"keeper"},

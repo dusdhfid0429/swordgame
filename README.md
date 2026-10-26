@@ -58,6 +58,8 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 | `assets/wuxia/` | 핸드오프 주인공 시트(145장 22클립)와 원본 시트, `tools/` 는 시트 제작 툴(spritify·autosheet). 설명: docs/스프라이트_핸드오프.md |
 | `assets/wpn/` | 무기 파츠 시트(v125, 검·도·창·봉·궁 36장, 초록 마커→grip 소켓). `tools/weaponsheet.py`로 잘라낸다. 주인공 코드 무기를 대체 |
 | `g_guard.js` | 문파 구성(v118): 문지기·순찰조·전각 당원/시종(data/guard.json), 결전장 16 대 20 + 증원 파도 |
+| `g_caravan.js` | 표국·상단 행렬(v176): 성 지도 길을 오가는 행렬, 습격·구출·이어지는 일감, 약탈·수배, 성읍 표국(문파 운영/독립)과 호위 일감·표국 신용, 객잔 별미, 행렬 소문. 데이터 `data/caravan.json`, 설계 docs/표국_설계.md |
+| `g_ranktest.js` | 승급 시험(v176): 직위는 공적·경지가 닿은 뒤 본산에서 시험관과 비무해 이겨야 오른다(`P.srank`). 데이터 `data/ranktest.json` |
 | `g_vault.js` | 문파 재화·침투·전각 NPC 순환(v117): 금고 누적(data/vault.json), 몰래 털기/멸문 금고, 장로·당주·집사 처치와 3년 뒤 후임 |
 | `g_ruin.js` | 멸문 폐허(v115): 인원 0인 문파의 본산·전각 안은 들어갈 수 있는 폐허(그을린 건물·꺼진 지붕·핏자국·시체, NPC 없음). v116 폐허 약탈품: 시체·잔해 뒤지기(data/ruin.json) |
 | `g_diff.js` | 난이도(v110): 완전 새로 시작할 때 다섯 단계(입문·보통·어려움·고수·지옥) 중 고른다. 적 생명·공격, 받는 피해, 활력, 마성, 추살조 인원 배율. 표 `data/difficulty.json`, 시뮬 `tests/sim_balance.js` |

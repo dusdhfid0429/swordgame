@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=5;
+const SAVE_VER=6;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -23,6 +23,9 @@ const MIGRATE=[
   d=>{const p=d.P;if(p&&p.acad===undefined)p.acad=null;return d},
   // v4 → v5: 같은 이름 무공 합치기 (g_sect.js linkSameArts). 기본 번호(정도0)로 익힌 것을 문파 무공(S_paeng_0)에 합친다: 숙련은 큰 쪽, 익힌 초식은 앞에서부터 개수만큼
   d=>mergeArtAliases(d),
+  // v5 → v6: 직위는 승급 시험으로 (g_ranktest.js). 문파에 든 사람은 지금 직위(누적 공적·경지 상한)를 시험에 붙은 직위로 적는다
+  d=>{const p=d.P;if(!p||p.srank||!p.sect||!SECTS[p.sect])return d;const s=SECTS[p.sect],t=(p.mtot||{})[s.id]||0,mx=SRANK[s.al].length-1;let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;
+    p.srank={[s.id]:Math.max(0,Math.min(i,(p.realm??0)+GD.RANK_CAP.plus))};return d},
 ];
 function mergeArtAliases(d){const al=artAliases(),p=d.P;
   if(p&&p.arts)for(const[o,c]of Object.entries(al)){const x=p.arts[o];if(!x)continue;delete p.arts[o];

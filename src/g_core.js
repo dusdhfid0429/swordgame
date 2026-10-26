@@ -60,11 +60,12 @@ function gainVit(v,inh){if(!inh&&typeof diffVit==='function')v=diffVit(v);v=Math
 // 예전 방식(내공만으로 정한 경지). 지금 경지는 P.realm에 있고 폐관수련으로 벽을 깨야 오른다 (g_realm.js)
 const qiRealm=(p=P)=>{const q=baseQi(p);let i=0;REALM_QI.forEach((v,j)=>{if(q>=v)i=j});return i};
 const realmIdx=()=>P.realm??qiRealm();
-// 주화입마로 경맥이 상하면 한동안 공격력과 내공 회복이 떨어진다
+// 주화입마로 경맥이 상하면 한동안 공격력과 운기조식 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
 const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1)*(P.weakT>0?.8:1)*(P.binsa?GD.DANGER.binsa.sp:1);   // 혈마단 뒤 30초 둔화 (g_magyo2.js)
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
+// 내공은 운기조식(P.medit) 중에만 찬다(g_life.js). 아래 배율(운기 효율 패시브·순환 특색·경지)도 모두 운기조식 회복량에만 걸린다
 const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul()*(P.thirst?.5:1);   // 마교 영약 중독의 갈증 (g_magyo2.js)
 const wisMul=()=>.5+P.wis*.1;
 const artCap=()=>2+Math.floor(P.wis/2);
@@ -190,7 +191,7 @@ function spawnTick(){
 //  hitDone(c)    내 공격이 맞은 뒤. c.hp0 = 맞기 전 상대 생명
 //  hurt(c)       내가 맞을 때, 회피 판정 전. c={src,dm 피해,hm 상대 현묘도}
 //  hurtDone(c)   맞은 뒤. c.hp0 = 맞기 전 내 생명
-//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}
+//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}       struck(e,from) 몹이 맞을 때(damage 첫머리, 배신 판정 전)
 //  recalc()      능력치를 다시 셈한 뒤          mobMade(m,kind,extra) / facMade(e)  몹·세력 무인을 만든 뒤
 //  mobTick(e,dt) 몹 한 프레임 전                kill(e)        몹을 처치한 뒤(보상 뒤)
 //  mastDone(c)   숙련이 오른 뒤. c={id,s,before} trainTick(dt)  매 프레임 (수련 창)
@@ -248,6 +249,7 @@ function damage(e,d,kb,stun,from=P,crit){
   e.hp-=d;e.hit=.12;e.hurtAt=time;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
+  runHooks('struck',e,from);   // v176: 표국·상단 행렬을 치면 약탈이 된다 (g_caravan.js). 같은 편 배신 판정보다 먼저
   if(e.d.fac&&!e.angry&&!facFoe(e.d.fac,pfac()))facBetray(e);
   if(e.d.villager&&!e.angry){e.angry=1;e.flee=4;P.evil+=P.side==='정'?10:4;log('양민을 해쳤습니다. 악업이 쌓입니다.','dmg')}
   else if(e.d.passive)e.flee=3,e.fleeFrom=from;

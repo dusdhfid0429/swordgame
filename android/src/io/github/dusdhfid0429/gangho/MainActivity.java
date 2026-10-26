@@ -1,6 +1,10 @@
 package io.github.dusdhfid0429.gangho;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -40,6 +44,7 @@ public class MainActivity extends Activity {
     private WebView web;
     private final HashMap<String, byte[]> files = new HashMap<>();
     private int gen;   // 잠금 화면 ↔ 게임 전환 세대 (늦게 온 목록 확인 결과가 엉뚱한 화면을 바꾸지 않게)
+    private boolean askedApp;   // 새 앱 판 안내는 켤 때마다 한 번만
 
     @Override
     protected void onCreate(Bundle saved) {
@@ -61,10 +66,53 @@ public class MainActivity extends Activity {
             showGate(null, bad, false);
             return;
         }
+        if (Updater.appState(this, myVersion()) == 2) {   // 받아 둔 목록이 이 판을 막았다
+            showGate(null, "이 판은 이제 쓸 수 없습니다.", false);
+            askApp(true);
+            refreshList();
+            return;
+        }
         Gate.Result r = Gate.full(this, Gate.saved(this));
         if (r.ok) startGame(r);
         else showGate(r, r.msg, true);
         refreshList();
+    }
+
+    private int myVersion() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // 새 앱(apk) 판 안내. block 이면 받기 아니면 끝내기뿐
+    private void askApp(final boolean block) {
+        final String url = Updater.appUrl(this);
+        if (url.isEmpty()) return;
+        AlertDialog.Builder b = new AlertDialog.Builder(this)
+                .setTitle(block ? "새 판을 받아 주세요" : "새 판이 나왔어요")
+                .setMessage(block ? "이 판은 더 이상 쓸 수 없습니다. 새 판을 받아 덮어 설치하면 기록은 그대로 남습니다."
+                        : "받아서 덮어 설치하면 기록은 그대로 남습니다.")
+                .setCancelable(!block)
+                .setPositiveButton("받기", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        if (web != null) web.evaluateJavascript("try{if(playing)saveGame(true)}catch(e){}", null);
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                        } catch (Exception e) {
+                        }
+                        if (block) finish();
+                    }
+                })
+                .setNegativeButton(block ? "끝내기" : "나중에", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        if (block) finish();
+                    }
+                });
+        b.show();
     }
 
     // 온라인 목록을 받아 다시 따져 본다. 게임 중이면 막히면 잠금 화면으로, 잠금 화면이면 풀리면 게임으로
@@ -75,10 +123,23 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 final String err = Gate.fetchList(MainActivity.this);
+                final boolean got = err == null && Updater.fetch(MainActivity.this);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (g != gen || isFinishing()) return;
+                        if (isFinishing()) return;
+                        int app = Updater.appState(MainActivity.this, myVersion());
+                        if (app == 2) {
+                            showGate(null, "이 판은 이제 쓸 수 없습니다.", false);
+                            askApp(true);
+                            return;
+                        }
+                        if (app == 1 && !askedApp) {
+                            askedApp = true;
+                            askApp(false);
+                        }
+                        if (got) newGame();
+                        if (g != gen) return;
                         Gate.Result r = Gate.full(MainActivity.this, Gate.saved(MainActivity.this));
                         if (web != null && !r.ok) showGate(r, r.msg, true);
                         else if (web == null && r.ok) startGame(r);
@@ -202,6 +263,25 @@ public class MainActivity extends Activity {
         Toast.makeText(this, label + "를 복사했습니다", Toast.LENGTH_SHORT).show();
     }
 
+    // 새 게임 판을 받았다: 첫 화면이면 바로 다시 띄우고, 놀이 중이면 다음에 켤 때 쓴다
+    private void newGame() {
+        synchronized (files) {
+            files.remove("index.html.bin");
+        }
+        if (web == null) return;
+        web.evaluateJavascript("typeof playing!=='undefined'&&playing?1:0", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String v) {
+                if (web == null) return;
+                if ("0".equals(v)) {
+                    web.reload();
+                    Toast.makeText(MainActivity.this, "새 판으로 바꿨습니다", Toast.LENGTH_SHORT).show();
+                } else
+                    Toast.makeText(MainActivity.this, "새 판을 받았습니다. 다음에 켤 때 바뀝니다", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     private void startGame(Gate.Result r) {
         gen++;
         if (r != null && r.daysLeft <= 3)
@@ -249,7 +329,8 @@ public class MainActivity extends Activity {
             b = files.get(name);
             if (b == null) {
                 try {
-                    b = Guard.open(this, name);
+                    if ("index.html.bin".equals(name)) b = Updater.game(this);   // 받아 둔 새 판이 있으면 그것
+                    if (b == null) b = Guard.open(this, name);
                 } catch (Exception e) {
                     return new WebResourceResponse("text/plain", "utf-8", 404, "not found", null, new ByteArrayInputStream(new byte[0]));
                 }

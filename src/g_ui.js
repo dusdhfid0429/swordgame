@@ -16,7 +16,7 @@ let qtrackKey='';
 // v149 (사용자): 정세 줄을 누르면 정세창, 다른 줄은 임무창
 $('qtrack').addEventListener('click',e=>{if(!playing||!P)return;openPanel(e.target.closest('[data-story]')?'story':'quest')});
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
-  const rows=qs.map(q=>{const kill=q.kind==='kill',have=kill?q.have:Math.min(q.cnt,P.mats[q.mat]||0),done=have>=q.cnt,what=kill?q.mob.join('·')+' 처치':q.mat+' 납품';return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
+  const rows=qs.map(q=>{const pr=questProg(q),have=pr.have,done=pr.done,g=qGoal(q),what=q.kind==='kill'?g.plain+' 처치':g.plain+' '+g.v;return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
   const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)
   // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
@@ -211,7 +211,8 @@ function pHelp(){
   <p><b>행동</b> F: 가까운 사람과 대화, 채집, 밭, 집. 짐승을 오른쪽 클릭하면 길들이기. M 말 타기.</p>
   <p><b>창</b> K 인물 · B 무공 · I 행낭 · P 동료 · L 생활 · H 강호사 · J 임무(왼쪽 '맡은 임무' 글을 눌러도 된다). 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 8세에 태어나 늙으면 죽고, 업보에 따라 다시 태어난다. 20세부터 강호의 사건이 잇따르고 26세에 천하대전이 터진다(정세 창 N). 싸움에서 쓰러져도 생이 끝난다. 비무는 목숨을 걸지 않는다.</p>
-  <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p></div>
+  <p><b>양민</b>은 Shift+클릭으로만 공격한다. 해치면 악업이 쌓인다.</p>
+  <p><b>표국·상단 행렬</b>이 성 지도의 길을 오간다. 습격당한 행렬을 거들면 사례와 일감을 받고, 강제공격(T)이나 Shift+클릭으로 직접 털 수도 있다(악업·관아 수배). 성읍 역참 옆 표국에서 호위 일을 맡는다.</p></div>
   <div class="center">${B('ctl:t','터치 조작으로 바꾸기')}</div>`;
 }
 // ================= NPC dialogs =================
@@ -261,8 +262,8 @@ function pNpcBase(n){
       <p class="note">혼인하면 가족 유대로 활력을 10% 더 얻고, 해마다 자식이 생길 수 있다. 자식은 다음 생으로 이어 살 몸이 된다.</p>
       <div class="row2"><span class="note">${P.age<18?'아직 어리다':''}</span>${B('marry','혼례 올리기 · 은자 200',{pri:1,d:!ok})}</div>`}
   if(n.id==='board'){
-    const act=P.quests.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} 처치 ${q.have}/${q.cnt}`:`${q.mat} ${P.mats[q.mat]||0}/${q.cnt} 납품`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame}</span></div><div class="ib">${B('qdone:'+i,'보상 받기',{pri:1,d:q.kind==='kill'?q.have<q.cnt:(P.mats[q.mat]||0)<q.cnt})}${B('qdrop:'+i,'포기')}</div></div>`).join('');
-    const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='kill'?`${mobTxt(q.mob)} ${q.cnt}`:`${q.mat} ${q.cnt}개`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
+    const act=P.quests.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='give'?`${q.mat} ${P.mats[q.mat]||0}/${q.cnt} 납품`:`${qGoal(q).w} ${qGoal(q).v} ${q.have||0}/${q.cnt}${q.fail?' · 실패':''}`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame}</span></div><div class="ib">${B('qdone:'+i,'보상 받기',{pri:1,d:!questProg(q).done||!!(q.pyo||q.cvLive)})}${B('qdrop:'+i,'포기')}</div></div>`).join('');
+    const av=G.board.map((q,i)=>`<div class="it"><div>${q.n}<span>${q.kind==='give'?`${q.mat} ${q.cnt}개`:`${qGoal(q).w} ${qGoal(q).v} ${q.cnt}`} · 은자 ${q.silver} · 활력 ${q.vit} · 명성 ${q.fame} · 선업 ${q.good}</span></div><div class="ib">${B('qtake:'+i,'맡기',{d:P.quests.length>=3})}</div></div>`).join('');
     return `<p class="note">개봉 관아와 상인들이 붙인 방. 한 번에 셋까지 맡을 수 있다. 해가 바뀌면 새 방이 붙는다.</p><div class="row2"><h4 style="margin:0">맡은 의뢰</h4>${B('open:quest','임무창 · 상세')}</div><div class="list">${act||'<p class="note">없음</p>'}</div><h4 style="margin:0">붙은 방</h4><div class="list">${av||'<p class="note">새 방이 붙기를 기다리시오.</p>'}</div>`}
   if(n.id==='arena'){const o=DUELISTS[P.duel];
     return `<p class="note">"비무는 실력을 겨루는 자리. 목숨은 걸지 않소. 비무대 밖으로 나가면 지는 것이오."</p>${o?`<div class="card"><h4>${o.n} <small class="gold">${o.realm!=null?RANKS[o.realm]:''}</small></h4><p>${CLASS[o.cls].n} · 내공 ${o.el}속성 · 생명 ${o.hp} · 이기면 명성 +${o.fame}, 은자 +${o.silver}</p></div>${B('duel','비무 신청',{pri:1})}`:'<p class="note">개봉의 비무대에는 더 이상 당신의 상대가 없소. 천하제일이라 불러도 되겠구려.</p>'}
@@ -309,6 +310,9 @@ function act(s){
     case'run':closePanels();toggleRun();return;
     case'save':closePanels();saveGame();return;
     case'totitle':toTitle();return;
+    case'quit':quitAsk=!quitAsk;renderOpen();{const q=$('quitask');if(q&&q.scrollIntoView)q.scrollIntoView({block:'nearest'})}return;
+    case'quitno':quitAsk=false;break;
+    case'quitapp':quitApp();return;
     case'ctl':closePanels();setTouch(x==='t');return;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}

@@ -22,7 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
 // 마음먹고 기억 장치를 뜯는 사람까지 막지는 못한다. 그냥 풀어 보고 고쳐 퍼뜨리는 것을 막는 정도.
 final class Guard {
     static final String CERT = "@CERTSHA@";   // 서명 인증서 SHA-256 (build_apk.py 가 채운다)
-    static final String SALT = "@SALT@";
+    static final String SALT = "@SALT@";   // 키 폴더의 gangho-content.salt (판이 바뀌어도 같아야 받아 온 게임 묶음이 풀린다)
 
     static byte[] certSha(Context c) {
         try {
@@ -44,13 +44,17 @@ final class Guard {
     }
 
     static byte[] open(Context c, String name) throws Exception {
+        return decrypt(c, read(c.getAssets().open("g/" + name)));
+    }
+
+    // nonce(12) + AES-GCM(gzip(본문)). 받아 온 게임 묶음(Updater)도 같은 모양·같은 키
+    static byte[] decrypt(Context c, byte[] all) throws Exception {
         byte[] h = certSha(c);
         if (h == null) throw new SecurityException("cert");
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(h);
         md.update(Base64.decode(SALT, Base64.DEFAULT));
         byte[] key = md.digest();
-        byte[] all = read(c.getAssets().open("g/" + name));
         Cipher ci = Cipher.getInstance("AES/GCM/NoPadding");
         ci.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, all, 0, 12));
         return read(new GZIPInputStream(new ByteArrayInputStream(ci.doFinal(all, 12, all.length - 12))));
@@ -62,7 +66,7 @@ final class Guard {
         return s.toString();
     }
 
-    private static byte[] read(InputStream in) throws Exception {
+    static byte[] read(InputStream in) throws Exception {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
         byte[] buf = new byte[65536];
         int n;
