@@ -945,7 +945,7 @@ function readBlock(it){
   if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(!artSideOk(a)&&!it.tu)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
-  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다. 무공 창에서 하나를 잊으면 칸이 빈다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if(a.gy&&!s&&gyMine().length>=GY_MAX)return `천고의 기연 무공은 한 생에 ${GY_MAX}가지까지만 익힌다. 문파에 기증하거나 다음 생에 익힐 수 있다.`;
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
@@ -2179,14 +2179,29 @@ function pChar(){
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
       <p>${Object.keys(SHINGONG).map(k=>`${k} ${P.sg.pages[k]||0}/10`).join(' · ')}</p></div>`;
 }
+// 무공 잊기 (v184, 사용자 2026-10-26): 익힌 무공을 지워 오성이 정한 칸을 비운다. 숙련과 초식이 모두 사라지고 되돌릴 수 없어 한 번 더 묻는다
+let forgetAsk=null;hook('panelOpen',()=>{forgetAsk=null});
+function forgetWhy(id){const a=ARTS[id];if(!a||!A(id))return'익히지 않은 무공';if(id==='base'||a.base)return'기본 무공은 잊을 수 없다';
+  if(typeof acadOn==='function'&&acadOn()){const m=acadMainArt();if(m&&m.id===id)return'무관에서 닦는 무공은 졸업한 뒤에 잊을 수 있다'}
+  return null}
+function forgetNote(id){const a=ARTS[id],s=A(id),o=[`숙련 ${Math.floor(s.p)}과 익힌 초식 ${s.f.filter(Boolean).length}개가 모두 사라진다`];
+  const mu=typeof artMu==='function'?Math.round(artMu(id)*10)/10:0;if(mu>0)o.push(`경지의 무리가 ${mu} 줄어든다`);
+  if(P.sect&&SECTS[P.sect]&&a.sect===P.sect&&(START[P.sect]||{}).art===a.n)o.push('문파 입문공이라 사부도 다시 처음부터 가르쳐 주지 않는다');
+  if(a.gy)o.push('기연 무공이라 다시 만나기 어렵다');
+  o.push('다시 익히려면 첫 초식 비급부터 읽어야 한다');return o.join('. ')+'.'}
+function forgetArt(id){if(forgetWhy(id))return false;const a=ARTS[id];delete P.arts[id];
+  if(P.cur===id||!A(P.cur))setArt('base');recalc();runHooks('artForget',id);
+  log(`[${a.n}]을(를) 잊었습니다. 익힌 무공 ${capArts().length}/${artCap()}`,'sys');return true}
 function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
     return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 특성 ${trHtml(a)} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
       <p>${a.d}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
-      <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}</div></div>`}).join('');
-  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
+      <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
+      ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
+      ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
+  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다 · 칸이 차면 '잊기'로 비운다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${list}
     ${gyNote()}
     ${typeof gsHtml==='function'?gsHtml():''}
@@ -2347,6 +2362,9 @@ function act(s){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
     case'setart':if(!hasWeaponFor(ARTS[x].cls))log(wpnNeed(ARTS[x].cls),'info');setArt(x);break;
     case'mode':toggleMode();break;
+    case'forget':forgetAsk=forgetAsk===x?null:x;renderOpen();{const q=$('forgetask');if(q&&q.scrollIntoView)q.scrollIntoView({block:'nearest'})}return;
+    case'forgetno':forgetAsk=null;break;
+    case'forgetok':forgetAsk=null;forgetArt(x);break;
     case'trainwin':openTrain();return;
     case'jwa':jwaAsk(x);break;case'jwa2':jwahwa();return;   // 좌화 (g_beyond.js)
     case'open':openPanel(x);return;

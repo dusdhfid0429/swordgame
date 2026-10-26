@@ -144,7 +144,7 @@ function readBlock(it){
   if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(!artSideOk(a)&&!it.tu)return `${SIDES[a.side].base} 계열 무공이라 ${SIDES[P.side].base}을(를) 익힌 몸으로는 읽을 수 없습니다. 팔 수는 있습니다.`;
-  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다.`;
+  if(!s&&capArts().length>=artCap())return `오성 ${P.wis}로는 무공을 ${artCap()}가지까지만 익힐 수 있습니다. 무공 창에서 하나를 잊으면 칸이 빈다.`;
   if(s&&s.f[it.form])return '이미 익힌 초식입니다.';
   if(a.gy&&!s&&gyMine().length>=GY_MAX)return `천고의 기연 무공은 한 생에 ${GY_MAX}가지까지만 익힌다. 문파에 기증하거나 다음 생에 익힐 수 있다.`;
   if((s?s.p:0)<f.req)return `${a.n} 숙련도 ${f.req}이(가) 필요합니다. (지금 ${Math.floor(s?s.p:0)}) 이 무공으로 싸워 숙련을 올리세요.`;
