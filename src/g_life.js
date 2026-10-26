@@ -72,7 +72,7 @@ function updateP(dt){
   if(G.duel&&!G.ldDuel&&!G.acadDuel&&!G.rtDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
-  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,a.cls==='궁'?6:3)}
+  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
 // 자동초식: chain the learned forms in order, falling back to a plain strike.
 // 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){
@@ -307,7 +307,7 @@ function duelStart(){
   for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}
   P.x=ARENA.x-1;P.y=ARENA.y;P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;
   const e=mkMob(o.n,ARENA.x+1,ARENA.y,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:o.ranged?5:1.4,ranged:o.ranged,el:o.el,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
-  e.duel=1;e.aggro=true;e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':o.cls==='궁'?'tang':'chief',ranged:o.ranged});e.el=o.el;e.wcls=o.cls;mobs.push(e);P.target=e;
+  e.duel=1;e.aggro=true;e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':rangedCls(o.cls)?'tang':'chief',ranged:o.ranged});e.el=o.el;e.wcls=o.cls;mobs.push(e);P.target=e;
   showBanner('비무',`${o.n}`);log(`비무 시작: ${o.n} (${CLASS[o.cls].n}·${o.el})`,'sys');
   runHooks('duelStart',o,e);
 }

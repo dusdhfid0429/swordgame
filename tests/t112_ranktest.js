@@ -33,8 +33,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`경지가 모자라면 못 청함 ("${r5}")`,/이상이어야/.test(r5));
   // 6. 옛 저장: 지금 직위(공적·경지 상한)를 그대로 시험에 붙은 직위로 옮긴다
   const r6=await p.evaluate(()=>{const d={v:5,G:{},P:{sect:'hwasan',mtot:{hwasan:RANK_PTS[3]+1},realm:1}};const m=migrateSave(d);const d2={v:5,G:{},P:{sect:null,mtot:{}}};
-    return{sr:m.P.srank&&m.P.srank.hwasan,v:m.v,sv:SAVE_VER,none:migrateSave(d2).P.srank}});
-  ok(`옛 저장의 직위 유지 (공적 기준 3, 경지 상한 2 → ${r6.sr})`,r6.sr===2&&r6.v===r6.sv&&r6.none===undefined);
+    return{SAVE_VER,sr:m.P.srank&&m.P.srank.hwasan,v:m.v,none:migrateSave(d2).P.srank}});
+  ok(`옛 저장의 직위 유지 (공적 기준 3, 경지 상한 2 → ${r6.sr})`,r6.sr===2&&r6.v===r6.SAVE_VER&&r6.none===undefined);
   await p.screenshot({path:shot('t112_ranktest')});
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

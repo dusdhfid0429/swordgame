@@ -52,9 +52,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{card:h.includes('세력·문파 우호도')&&h.includes('개방')&&h.includes('적대'),c0,c1}});
   ok(`인물창에 우호도 카드, 우호 단계 비급 공적 ${r11.c0} → ${r11.c1}`,r11.card&&r11.c1<r11.c0);
   // 12) 저장 v7: 옛 저장(v6)은 빈 우호도를 받고, 지금 저장은 그대로 돌아온다
-  const r12=await p.evaluate(()=>{const old=migrateSave({v:6,P:{sect:null}});saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));
+  const r12=await p.evaluate(()=>{const old=migrateSave({v:7,P:{sect:null}});saveGame(true);const d=JSON.parse(localStorage.getItem(SAVE_KEY));
     return{ver:SAVE_VER,old:JSON.stringify(old.P.rep),cur:d.P.rep&&d.P.rep.sect.gaebang}});
-  ok(`저장 형식 ${r12.ver}: 옛 저장 rep ${r12.old}, 지금 저장 개방 ${r12.cur}`,r12.ver===7&&r12.old==='{"fac":{},"sect":{},"gift":{}}'&&r12.cur===-45);
+  ok(`저장 형식 ${r12.ver}: 옛 저장 rep ${r12.old}, 지금 저장 개방 ${r12.cur}`,r12.ver===8&&r12.old==='{"fac":{},"sect":{},"gift":{}}'&&r12.cur===-45);
   // 13) 윤회: 새 생은 우호도가 비어 있다
   const r13=await p.evaluate(()=>{newLife({name:'윤회',side:'정',gg:0,wis:5,status:0,cls:'검'});return{rep:JSON.stringify(P.rep||null),gb:repSect('gaebang')}});
   ok(`윤회하면 우호도가 처음부터 (${r13.rep}, 개방 ${r13.gb})`,r13.gb===30);

@@ -8,7 +8,7 @@
 // - 오르는 길: 문파·맹 임무(남의 문파 임무가 더 크다), 표국 임무, 행렬 구출(관), 그 세력의 적 처치(세력 값 30까지), 본산·연락관 예물.
 //   내리는 길: 같은 편을 치거나 죽이기(그 문파·세력), 무인 처치(그 문파), 행렬 약탈(관). 해마다 조금씩 0으로 돌아간다(원한 10%, 은혜 5%).
 // - 문파에 진 원한(세력 값 + 문파 값)이 -20 아래면 가입·임무·동원을 거절한다. 다른 성향의 문파도 경계 이상이면 객원으로 임무를 준다.
-// 데이터 data/rep.json (REP), 테스트 tests/t117_rep.js, 설계 docs/세력_문파_설계.md 37장
+// 데이터 data/rep.json (REP), 테스트 tests/t118_rep.js, 설계 docs/세력_문파_설계.md 37장
 const REP=GD.REP,REPF=['정','사','마','관'];
 function repD(){if(!P.rep)P.rep={fac:{},sect:{},gift:{}};const r=P.rep;r.fac=r.fac||{};r.sect=r.sect||{};r.gift=r.gift||{};return r}
 const repStageOf=v=>v<REP.stage[0]?0:v<REP.stage[1]?1:v<REP.stage[2]?2:3;

@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=7;
+const SAVE_VER=8;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -26,9 +26,13 @@ const MIGRATE=[
   // v5 → v6: 직위는 승급 시험으로 (g_ranktest.js). 문파에 든 사람은 지금 직위(누적 공적·경지 상한)를 시험에 붙은 직위로 적는다
   d=>{const p=d.P;if(!p||p.srank||!p.sect||!SECTS[p.sect])return d;const s=SECTS[p.sect],t=(p.mtot||{})[s.id]||0,mx=SRANK[s.al].length-1;let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;
     p.srank={[s.id]:Math.max(0,Math.min(i,(p.realm??0)+GD.RANK_CAP.plus))};return d},
-  // v6 → v7: 세력·문파 우호도 (g_rep.js). 옛 생은 빈 우호도로 시작한다(바탕만: 내 문파·세력, 적 세력)
+  // v6 → v7: 암기술 계열 (v181). 활 계열이던 당가·하오문·장강수로채 비도 무공이 암기술로 옮겨 갔다. 익힌 사람은 불러온 뒤 유엽비도 한 자루를 받는다(afterLoad)
+  d=>{const p=d.P;if(!p||!p.arts)return d;const mv=AMGI_MOVED.filter(k=>p.arts[k]&&ARTS[k]);
+    if(mv.length){p.amgiGift=1;d.notes.push(`${mv.map(k=>ARTS[k].n).join('·')}은(는) 이제 암기술입니다. 활이 아니라 비도를 차야 펼칠 수 있어 유엽비도 한 자루를 넣어 두었습니다.`)}return d},
+  // v7 → v8: 세력·문파 우호도 (g_rep.js). 옛 생은 빈 우호도로 시작한다(바탕만: 내 문파·세력, 적 세력)
   d=>{const p=d.P;if(p&&!p.rep)p.rep={fac:{},sect:{},gift:{}};return d},
 ];
+const AMGI_MOVED=['S_dang_0','S_dang_1','S_janggang_1','S_haomun_1'];
 function mergeArtAliases(d){const al=artAliases(),p=d.P;
   if(p&&p.arts)for(const[o,c]of Object.entries(al)){const x=p.arts[o];if(!x)continue;delete p.arts[o];
     const y=p.arts[c],cnt=v=>(v&&v.f||[]).filter(Boolean).length,k=Math.max(cnt(x),cnt(y));
@@ -48,4 +52,5 @@ function migrateSave(d){if(!d||typeof d!=='object')return d;
   return d}
 // 불러온 뒤 한 번: 옮기면서 생긴 알림을 띄우고, 경지 효과처럼 저장에서 다시 계산하는 것을 맞춘다
 function afterLoad(d){realmFxSync();P.vit=Math.round(P.vit||0);if(P.vitCarry)P.vitCarry=Math.round(P.vitCarry);   /* 예전 저장에 남은 소수점 활력 */
+  if(P.amgiGift){delete P.amgiGift;const w=P.eq.weapon;if(!(w&&w.cls==='암')&&!P.bag.some(i=>i.slot==='weapon'&&i.cls==='암'))giveItem(mkWeapon('암',1,0))}
   for(const n of d.notes||[])setTimeout(()=>log(n,'sys'),600);d.notes=[]}

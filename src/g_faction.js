@@ -38,9 +38,9 @@ function facPal(fac,cls,elite,sid){
 // 무인 하나를 만든다. sid를 주면 그 문파 제자, 없으면 그 세력의 아무 문파
 function mkFac(fac,elite,x,y,sid){
   const s=SECTS[sid]||pick(Object.values(SECTS).filter(q=>alFac(q.al)===fac)),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
-  const e=mkMob(kind,x,y),bow=cls==='궁';
+  const e=mkMob(kind,x,y),bow=rangedCls(cls);
   const sel=typeof simSectEl==='function'?simSectEl(s.id):a.el;   // 무인의 속성은 문파 심법의 것 (천마신교 = 마, v101)
-  e.d={...e.d,el:sel,ranged:bow?1:0};e.el=sel;e.art=a.id;e.reach=bow?5:cls==='창'?1.8:cls==='봉'?1.6:1.3;
+  e.d={...e.d,el:sel,ranged:bow?1:0};e.el=sel;e.art=a.id;e.reach=bow?(cls==='암'?4:5):cls==='창'?1.8:cls==='봉'?1.6:1.3;
   // 직위: 제자는 속가·정식, 고수는 일대·호법(당주). 옷과 이름이 직위를 따른다
   const rank=typeof popRank==='function'?popRank(s,elite):elite?(Math.random()<.65?2:3):(Math.random()<.35?0:1);e.rank=rank;   // 직위 분포는 문파 인원·무학을 따른다 (g_pop.js)
   e.pal=sectPal(s.id,rank,cls,{elite})||facPal(fac,cls,elite,s.id);e.sect=s.id;e.name=`${s.n} ${rankName(s.id,rank)}`;
