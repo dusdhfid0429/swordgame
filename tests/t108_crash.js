@@ -31,4 +31,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 흰 그림은 장 하나 크기, 한 번만 굽는다
   const w=await p.evaluate(()=>{const S=SHEETS.act,f=S.frames[0];const a=whiteRect(S.img,...f.r),b2=whiteRect(S.img,...f.r);return{w:a.width,h:a.height,fw:f.r[2],same:a===b2,sheet:S.img.width}});
   ok(`흰 그림 ${w.w}×${w.h} (시트 폭 ${w.sheet})`,w.same&&w.w===Math.ceil(w.fw)&&w.w<w.sheet);
+  // 최근 앱 화면에서 밀어 끈 것은 꺼짐이 아니다 (사용자 2026-10-26 기록): 초점을 잃으면 '자리 비움'이라 2초 박동도 '켜짐'으로 되돌리지 않는다
+  const rec=()=>p.evaluate(()=>JSON.parse(localStorage.getItem(CRASH_KEY)).on);
+  await p.evaluate(()=>dispatchEvent(new Event('blur')));await p.waitForTimeout(2300);const a1=await rec();
+  await p.evaluate(()=>dispatchEvent(new Event('focus')));await p.waitForTimeout(100);const a2=await rec();
+  await p.evaluate(()=>crashAway(1));await p.waitForTimeout(2300);const a3=await rec();
+  ok(`초점 잃음 ${a1} → 돌아옴 ${a2} → 껍데기 onPause ${a3}`,a1===0&&a2===1&&a3===0);
+  const left=p;p=await c.newPage();await p.goto(URL);await p.waitForTimeout(1200);
+  ok('자리 비운 채 죽으면 꺼짐 알림 없음',await p.evaluate(()=>!document.querySelector('#scrbox .crashcard')));await left.close();
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no errors');await b.close()})();
