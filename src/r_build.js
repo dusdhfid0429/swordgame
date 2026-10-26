@@ -29,6 +29,7 @@ function roofFace(eave0,eave1,r0,r1,fill,lines){
 }
 function curl(p,dx){ctx.strokeStyle='#22262c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...p);ctx.quadraticCurveTo(p[0]+dx*.6,p[1],p[0]+dx,p[1]-8);ctx.stroke()}
 function drawBuildVec(b,alpha){
+  if(b.fl>1&&!REGION().dead)return drawTowerVec(b,alpha);
   const{x,y,w,h}=b,X1=x+w,Y1=y+h,pav=b.kind==='pavilion',ru=!!REGION().dead,WH=pav?(ru?22:34):(ru?26:38),o=.38;   // ru: 멸문 폐허 (g_ruin.js) - 낮고 그을린 담, 꺼진 지붕
   ctx.save();ctx.globalAlpha=alpha;
   quad([scr(x+.3,Y1+.25),scr(X1+.3,Y1+.25),scr(X1+.3,y+.25),scr(X1,y),scr(X1,Y1),scr(x,Y1)],'rgba(0,0,0,.22)',null);
@@ -59,6 +60,44 @@ function drawBuildVec(b,alpha){
     ctx.fillStyle=darkLvl()>.25?'#ff6a3a':'#c4301e';ctx.beginPath();ctx.ellipse(q[0],q[1]+10,4,5.5,0,0,7);ctx.fill();ctx.fillStyle='#e0b050';ctx.fillRect(q[0]-2.5,q[1]+4,5,1.5)}
   ctx.restore();
 }
+// ---- v179 여러 층 누각 (사용자 2026-10-26, 상해 예원 누각 사진): b.fl층. 층마다 처마(腰檐)를 두르고 위층은 조금씩 안으로 들인다 ----
+// 아래층은 붉은 나무 벽, 위층은 흰 회벽과 난간, 꼭대기 층 앞에 금테 편액, 맨 위는 우진각 지붕. 안은 층마다 전각 맵 (g_tower.js)
+function towerDims(b){const T=GD.TOWER.look,n=b.fl,hb=[],top=[],s=[];let h=0;
+  for(let k=0;k<n;k++){hb.push(h);s.push(k*T.inset);h+=k?T.wh:T.wh0;top.push(h);h+=T.skirt}
+  const S=s[n-1],H0=top[n-1],RH=H0+T.roof+8*Math.min(b.w-2*S,b.h-2*S);return{n,hb,top,s,H0,RH}}
+function drawTowerVec(b,alpha){const{x,y,w,h}=b,X1=x+w,Y1=y+h,T=GD.TOWER.look,D=towerDims(b),o=.38,RC=b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
+  ctx.save();ctx.globalAlpha=alpha;
+  quad([scr(x+.5,Y1+.4),scr(X1+.5,Y1+.4),scr(X1+.5,y+.4),scr(X1,y),scr(X1,Y1),scr(x,Y1)],'rgba(0,0,0,.26)',null);
+  const C=(k,hh,dd=0)=>{const q=D.s[k]-dd;return{t:scr(x+q,y+q,hh),r:scr(X1-q,y+q,hh),b:scr(X1-q,Y1-q,hh),l:scr(x+q,Y1-q,hh)}};
+  const noDoor={kind:'pavilion'};
+  for(let k=0;k<D.n;k++){const q=D.s[k],hb=D.hb[k],wh=D.top[k]-hb,A=scr(x+q,Y1-q,hb),B=scr(X1-q,Y1-q,hb),Bk=scr(X1-q,y+q,hb);
+    const wc=k?T.upper:b.wc||(b.mg?['#3a2e2c','#2a2020']:T.ground);
+    wallFace(A,B,w,wh,wc[0],!k,k?noDoor:b);wallFace(B,Bk,h,wh,wc[1],false,b);
+    if(k){// 난간: 위층 벽 앞 한 뼘
+      const R0=scr(x+q-.12,Y1-q+.12,hb),R1=scr(X1-q+.12,Y1-q+.12,hb),R2=scr(X1-q+.12,y+q,hb);ctx.strokeStyle=T.rail;ctx.lineWidth=1.5;
+      for(const[P0,P1,m]of[[R0,R1,w*3],[R1,R2,h*3]]){for(let i=0;i<=m;i++){const t=lerp2(P0,P1,i/m);ctx.beginPath();ctx.moveTo(...t);ctx.lineTo(...up(t,10));ctx.stroke()}
+        ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(...up(P0,10));ctx.lineTo(...up(P1,10));ctx.stroke();ctx.lineWidth=1.5}}
+    if(k===D.n-1&&D.n>1){// 금테 편액
+      const P0=lerp2(A,B,.36),P1=lerp2(A,B,.64);quad([up(P0,13),up(P1,13),up(P1,28),up(P0,28)],'#241a12','#c9a14a');
+      ctx.fillStyle='#e0b850';for(const t of[.25,.5,.75]){const m=up(lerp2(P0,P1,t),20.5);ctx.fillRect(m[0]-1.6,m[1]-2.6,3.2,5.2)}}
+    if(k<D.n-1){// 층 사이 처마: 바깥(아래 가장자리) → 위층 벽 밑동
+      const O=C(k,D.top[k]-2,o),I=C(k+1,D.hb[k+1]),L=Math.max(4,w*4);
+      roofFace(O.t,O.r,I.t,I.r,RC[0],L);roofFace(O.t,O.l,I.t,I.l,RC[1],L);roofFace(O.r,O.b,I.r,I.b,RC[2],L);roofFace(O.l,O.b,I.l,I.b,RC[3],L);
+      curl(O.l,-9);curl(O.b,0);curl(O.r,9);
+      if(!k)for(const t of[.08,.92]){const q2=up(lerp2(scr(x-o*.6,Y1+o*.6),scr(X1+o*.6,Y1+o*.6),t),D.top[0]-4);ctx.strokeStyle='#22262c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q2[0],q2[1]);ctx.lineTo(q2[0],q2[1]+5);ctx.stroke();
+        ctx.fillStyle=darkLvl()>.25?'#ff6a3a':'#c4301e';ctx.beginPath();ctx.ellipse(q2[0],q2[1]+10,4,5.5,0,0,7);ctx.fill();ctx.fillStyle='#e0b050';ctx.fillRect(q2[0]-2.5,q2[1]+4,5,1.5)}}}
+  // 맨 위 우진각 지붕
+  const S=D.s[D.n-1],xa=x+S,ya=y+S,xb=X1-S,yb=Y1-S,ww=xb-xa,hh=yb-ya,H0=D.H0,RH=D.RH;
+  const Et=scr(xa-o,ya-o,H0),Er=scr(xb+o,ya-o,H0),Eb=scr(xb+o,yb+o,H0),El=scr(xa-o,yb+o,H0);let R1,R2;
+  if(ww>=hh){const d=(hh+2*o)/2,cy=(ya+yb)/2;R1=scr(xa-o+d,cy,RH);R2=scr(xb+o-d,cy,RH);
+    roofFace(Et,Er,R1,R2,RC[0],10);roofFace(Et,El,R1,null,RC[1],6);roofFace(Er,Eb,R2,null,RC[2],6);roofFace(El,Eb,R1,R2,RC[3],Math.round(ww*5))}
+  else{const d=(ww+2*o)/2,cx=(xa+xb)/2;R1=scr(cx,ya-o+d,RH);R2=scr(cx,yb+o-d,RH);
+    roofFace(Et,El,R1,R2,RC[1],10);roofFace(Et,Er,R1,null,RC[0],6);roofFace(El,Eb,R2,null,RC[3],6);roofFace(Er,Eb,R1,R2,RC[2],Math.round(hh*5))}
+  curl(El,-11);curl(Eb,0);curl(Er,11);
+  ctx.strokeStyle='#22262c';ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(...R1);ctx.lineTo(...R2);ctx.stroke();
+  for(const R of[R1,R2]){ctx.beginPath();ctx.moveTo(R[0],R[1]);ctx.quadraticCurveTo(R[0],R[1]-8,R[0]+(R===R1?-5:5),R[1]-11);ctx.stroke()}
+  ctx.fillStyle='#c9a14a';const m=lerp2(R1,R2,.5);ctx.beginPath();ctx.arc(m[0],m[1]-5,3.2,0,7);ctx.fill();
+  ctx.restore()}
 // 객잔 깃발: 바람에 흔들려 매 프레임 그린다 (건물 그림 캐시 밖)
 function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.globalAlpha=alpha;seg([f,up(f,62)],2,'#5a3a22');const fl=up(f,60),wv=Math.sin(time*2)*1.5;
   quad([fl,[fl[0]+14+wv,fl[1]+2],[fl[0]+13+wv,fl[1]+40],[fl[0],fl[1]+38]],'#b8291f');
@@ -68,9 +107,9 @@ function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.gl
 const BCACHE=[],BC_MAX=24;
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
-function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}`;
+function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}`;
   let c=BCACHE.find(o=>o.b===b);
-  if(!c||c.key!==key){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
+  if(!c||c.key!==key){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=b.fl>1&&!ru?towerDims(b).RH:H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
     const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);
     const cv=c&&c.cv&&c.cv.width===cw&&c.cv.height===chh?c.cv:document.createElement('canvas');cv.width=cw;cv.height=chh;const g=cv.getContext('2d');g.clearRect(0,0,cw,chh);g.setTransform(k,0,0,k,-x0*k,-y0*k);
     const keep=ctx;ctx=g;try{drawBuildVec(b,1)}finally{ctx=keep}

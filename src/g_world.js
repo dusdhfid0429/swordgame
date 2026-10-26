@@ -37,7 +37,7 @@ function genGaebong(){
   for(let y=0;y<=8;y++)for(let x=1;x<=11;x++){const ring=x===1||x===11||y===0||y===8;if(ring&&!(y===8&&(x===6||x===7)))objs[y][x]='rock';else if(!ring)objs[y][x]=null}
   for(const[x,y]of[[4,3],[8,5],[3,6]])objs[y][x]='rock';
   // town buildings, each with a keeper standing at its door
-  for(const b of[{x:15,y:15,w:3,h:2,kind:'inn'},{x:22,y:15,w:3,h:2,kind:'smith'},{x:25,y:15,w:2,h:2,kind:'hall'},{x:15,y:22,w:2,h:3,kind:'house'},{x:22,y:22,w:2,h:2,kind:'house'},{x:25,y:22,w:2,h:3,kind:'temple'}]){
+  for(const b of[{x:15,y:15,w:3,h:2,kind:'inn',fl:GD.TOWER.floors.gaebong},{x:22,y:15,w:3,h:2,kind:'smith'},{x:25,y:15,w:2,h:2,kind:'hall'},{x:15,y:22,w:2,h:3,kind:'house'},{x:22,y:22,w:2,h:2,kind:'house'},{x:25,y:22,w:2,h:3,kind:'temple'}]){
     for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]='B';builds.push(b)}
   [[18,22,'#a3271c'],[17,18,'#2f5f8f']].forEach(([x,y,c])=>{objs[y][x]='stall';map[y][x].cloth=c});
   objs[18][21]='board';

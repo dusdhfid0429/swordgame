@@ -1,7 +1,7 @@
 // ---------- 전각 안 가구: 용도에 맞게 (2026-10-10 사용자: 건물 안에 용도에 어울리는 가구) ----------
 // 한 칸짜리 물건을 그린다. 종류: table 탁자, jar 술독·약항아리, counter 계산대, forge 화로, anvil 모루, shelf 서가,
 // cabinet 약장, bolts 포목 선반, chest 궤짝, rack 병기 걸이, altar 제단·향로, bed 침상, desk 서탁, seat 의자, kettle 가마솥
-const FURN={table:1,jar:1,counter:1,forge:1,anvil:1,shelf:1,cabinet:1,bolts:1,chest:1,rack:1,altar:1,bed:1,desk:1,seat:1,kettle:1};
+const FURN={table:1,jar:1,counter:1,forge:1,anvil:1,shelf:1,cabinet:1,bolts:1,chest:1,rack:1,altar:1,bed:1,desk:1,seat:1,kettle:1,stairU:1,stairD:1};   // v179 누각 계단: stairU 올라가는 계단, stairD 내려가는 계단 구멍 (g_tower.js)
 // 칸 (i,j) 안의 작은 상자: x0..x1, y0..y1 은 칸 안 비율, h 높이
 function fbox(i,j,x0,y0,x1,y1,h,top,front,side){const a=scr(i+x0,j+y1),b=scr(i+x1,j+y1),c=scr(i+x1,j+y0),d=scr(i+x0,j+y0);
   quad([a,b,up(b,h),up(a,h)],front);quad([b,c,up(c,h),up(b,h)],side);quad([up(d,h),up(c,h),up(b,h),up(a,h)],top)}
@@ -9,6 +9,13 @@ function fshadow(i,j,rx=12,ry=6){const p=scr(i+.5,j+.5);ctx.fillStyle='rgba(0,0,
 function drawFurn(kind,i,j,mg){const r=rng(i*31+j*17+kind.length),p=scr(i+.5,j+.5),dk=mg;
   const wood=dk?['#4a3028','#3a2420','#2e1c18']:['#8a6a44','#6e5234','#4e3824'];   // 윗면·앞면·옆면
   switch(kind){
+  case'stairU':{const n=6,sh=8,sd=[];for(let k=0;k<n;k++){const yf=j+1-k/n,yb=j+1-(k+1)/n,h1=(k+1)*sh;
+      quad([scr(i,yf,h1-sh),scr(i+1,yf,h1-sh),scr(i+1,yf,h1),scr(i,yf,h1)],wood[1]);quad([scr(i,yf,h1),scr(i+1,yf,h1),scr(i+1,yb,h1),scr(i,yb,h1)],wood[0]);sd.push(scr(i+1,yf,h1),scr(i+1,yb,h1))}
+    quad([scr(i+1,j+1,0),...sd,scr(i+1,j,0)],wood[2]);ctx.strokeStyle='#5a1c12';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(...scr(i+1,j+1,16));ctx.lineTo(...scr(i+1,j,n*sh+16));ctx.stroke();break}
+  case'stairD':{quad([scr(i+.04,j+.04),scr(i+.96,j+.04),scr(i+.96,j+.96),scr(i+.04,j+.96)],'#140e0a');
+    for(let k=0;k<4;k++){const y0=j+.1+k*.21,y1=y0+.12,c=`rgba(${150-k*30},${110-k*24},${70-k*16},1)`;quad([scr(i+.1,y0),scr(i+.9,y0),scr(i+.9,y1),scr(i+.1,y1)],c,null)}
+    ctx.strokeStyle='#6a2216';ctx.lineWidth=2;for(const[a0,a1]of[[[i,j+1],[i+1,j+1]],[[i+1,j],[i+1,j+1]]]){const p0=scr(a0[0],a0[1]),p1=scr(a1[0],a1[1]);
+      for(const q of[p0,p1,lerp2(p0,p1,.5)]){ctx.beginPath();ctx.moveTo(...q);ctx.lineTo(...up(q,13));ctx.stroke()}ctx.beginPath();ctx.moveTo(...up(p0,13));ctx.lineTo(...up(p1,13));ctx.stroke()}break}
   case'table':fshadow(i,j);fbox(i,j,.15,.2,.85,.8,14,wood[0],wood[1],wood[2]);
     for(const[dx,dy]of[[.1,.5],[.9,.5]]){const q=scr(i+dx,j+dy);ctx.fillStyle=wood[1];ctx.beginPath();ctx.ellipse(q[0],q[1]-4,5,2.5,0,0,7);ctx.fill();ctx.fillStyle=wood[0];ctx.beginPath();ctx.ellipse(q[0],q[1]-8,5,2.5,0,0,7);ctx.fill()}
     {const t=scr(i+.5,j+.5,14);ctx.fillStyle='#d8d0b8';ctx.beginPath();ctx.ellipse(t[0]-3,t[1]-1,4,2,0,0,7);ctx.fill();ctx.fillStyle='#b8402a';ctx.beginPath();ctx.ellipse(t[0]+5,t[1]+1,3,1.6,0,0,7);ctx.fill()}break;

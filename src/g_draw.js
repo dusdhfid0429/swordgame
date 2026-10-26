@@ -214,7 +214,7 @@ function draw(){
     list.push({x:i+.5,y:j+.5,hw:spr.width/2,ht:spr.height,d:i+j+1,f:()=>{const x=p.x-spr.width/2,y=p.y-spr.height+(tall?12:10),a=fade?.4:1;for(const[s,al]of L){ctx.globalAlpha=a*al;ctx.drawImage(s,x,y)}if(snow){ctx.globalAlpha=a*Math.min(1,sa);ctx.drawImage(snow,x,y)}ctx.globalAlpha=1}})}
   for(const b of builds){const d=b.x+b.w-1+b.y+b.h-1+1,l=scr(b.x,b.y+b.h)[0]-20,r=scr(b.x+b.w,b.y)[0]+20,bt=scr(b.x+b.w,b.y+b.h)[1];
     if(r<-10||l>W+10||bt<-40||bt-600>H)continue;   // v154: 화면 밖 건물은 건너뛴다
-    const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-160;list.push({d,b,f:()=>drawBuild(b,hide?.45:1)})}
+    const hide=!(P.perch&&P.perch.b===b)&&!(P.leap&&P.leap.to&&P.leap.to.b===b)&&P.x+P.y<d&&pp.x>l&&pp.x<r&&pp.y<bt&&pp.y>bt-(b.fl>1?towerDims(b).RH+40:160);list.push({d,b,f:()=>drawBuild(b,hide?.45:1)})}
   for(const rl of rails)list.push({d:rl.x+rl.y+.5,f:()=>drawRail(rl)});
   for(const l of lamps)if(vis(l.x,l.y))list.push({d:l.x+l.y,f:()=>drawLamp(l)});
   for(const n of nodes)if(vis(n.x,n.y))list.push({x:n.x,y:n.y,d:n.x+n.y-.2,f:()=>drawNode(n)});
