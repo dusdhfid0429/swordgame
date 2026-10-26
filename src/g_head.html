@@ -57,7 +57,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .qsr button{height:22px;padding:0;border:1px solid #4a3c27;background:#120e0a;color:var(--paper-dim);font:11px var(--body);cursor:pointer}
 .qsr button.on{border-color:#5d8ee0;color:#cfe2ff;background:#16243f}.qsr button.cur{border-color:var(--exp);color:#f6e7b8;background:#2a2114}
 .touch .qsc{font-size:10px;line-height:12px}
-.touch .qsr{top:calc(100% + 5px);bottom:auto;grid-template-columns:repeat(6,28px)}.touch .qsr button{height:28px;font-size:12px}
+.touch .qsr{top:calc(100% + 5px);bottom:auto;right:auto;left:0;grid-template-columns:repeat(6,28px)}
+/* 사용자 2026-10-26: 세로 화면에서 성 고르는 칸이 시스템 알림·기록 줄(왼쪽 위)과 겹쳐 누르면 기록 창이 열렸다. 칸이 떠 있는 동안 둘을 감추고 터치도 막는다 */.touch.qs-on .sysmsg,.touch.qs-on #log{visibility:hidden;pointer-events:none}.touch.qs-on #log p,.touch.qs-on .sysmsg p{pointer-events:none}.touch .qsr button{height:28px;font-size:12px}
 .ms i{background:linear-gradient(#b98ae8,#7a4fb3 60%,#3b2160)}
 .ma i{background:linear-gradient(#6a1a8a,#2a0a3a 60%,#0a0210)}
 .ma.tm{border-color:#b8902c}.ma.tm i{background:linear-gradient(#c8a040,#6a4a10 60%,#2a1a04)}
