@@ -4,7 +4,7 @@
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:''};
+const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:'',dum:6};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -25,8 +25,9 @@ function boot(){
   render();resize();
 }
 function arena(){
-  mobs=mobs.filter(m=>m.acadDummy&&DUMMY.some(([x,y])=>m.home.x===x&&m.home.y===y));
-  for(const[x,y]of DUMMY){if(mobs.some(m=>m.home.x===x&&m.home.y===y))continue;
+  const D=DUMMY.slice(0,V.dum);   // 목인장 수: 암기 조준이 적 수에 따라 바뀌는 것을 본다 (r_exec.js amgiAim)
+  mobs=mobs.filter(m=>m.acadDummy&&D.some(([x,y])=>m.home.x===x&&m.home.y===y));
+  for(const[x,y]of D){if(mobs.some(m=>m.home.x===x&&m.home.y===y))continue;
     const e=mkMob('목인장',x,y,{hp:99999,atk:0,def:0,hm:0,sp:0,pal:'villager',o:{acadDummy:1,fixed:'dummy'}});e.hp=e.maxHp=99999;e.atk=0;mobs.push(e)}
   allies=[];place();
 }
@@ -226,11 +227,11 @@ function paintBar(){const B=document.body.classList,sel=(a,o,cur)=>`<select data
     <div class="rw">${btn('☰ 이펙트','drawer:l',B.contains('dl'),'class="side"')}
       <div class="mid">${btn('▶ 다시','again',null,'class="play"')}${btn('반복','loop',V.loop)}
         <label>속도${sel('spd',[[.25,'0.25×'],[.5,'0.5×'],[1,'1×']],V.speed)}</label>${sel('tier',TIERN.map((n,i)=>[i,'숙련 '+n]),V.tier)}${sel('qs',Array.from({length:QS.n},(_,i)=>[QS.n-i,`내공 ${QS.n-i}성`]),V.qs)}
-        <label>확대${sel('zoom',[[1,'1×'],[1.5,'1.5×'],[2,'2×']],V.zoom)}</label>${btn('밤','night',V.night)}${btn('흔들림','shake',V.shake)}</div>
+        <label>목인장${sel('dum',[[1,'1'],[2,'2'],[3,'3'],[6,'6']],V.dum)}</label><label>확대${sel('zoom',[[1,'1×'],[1.5,'1.5×'],[2,'2×']],V.zoom)}</label>${btn('밤','night',V.night)}${btn('흔들림','shake',V.shake)}</div>
       ${btn('✦ 수정','drawer:r',B.contains('dr'),'class="side" id="fxvbar_r"')}</div>`;
   barH()}
 function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
-  if(k==='spd'){V.speed=+v;render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
+  if(k==='spd'){V.speed=+v;render();return}if(k==='dum'){V.dum=+v;arena();render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
   if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
 box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
 // 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
