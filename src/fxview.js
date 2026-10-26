@@ -4,7 +4,7 @@
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:''};
+const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:''};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -20,7 +20,7 @@ hook('regionGen',id=>{if(id!=='fxv_arena')return;for(let y=0;y<NH;y++)for(let x=
 function boot(){
   G=G0();showCreate();CR.side='정';CR.opts=rollGG('정');CR.gg=CR.opts[0];CR.cls='검';CR.name='시연';beginLife();
   closePanels();enterRegion('fxv_arena',HOME.x,HOME.y);arena();
-  P.mode='manual';P.inv=1e9;P.maxQi=Math.max(P.maxQi,9999);P.qi=P.maxQi;
+  P.mode='manual';P.inv=1e9;P.qi=P.maxQi;   // 내공은 0.2초마다 다시 채운다 (최대 내공을 부풀리면 초식 피해가 부푼다, v178)
   setInterval(()=>{if(!P)return;P.hp=P.maxHp;P.qi=P.maxQi;P.inv=1e9;P.mode='manual';P.target=null;P.fcd=P.fcd.map(()=>0);P.gcd=0;P.bcd=0;P.ucd=0},200);
   render();resize();
 }
@@ -63,7 +63,7 @@ function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);P.arts=P.arts||{};if(!
   P.cur=id;P.arts[id].p=TIERP[V.tier];place();const e=tgt(),X=mkX(id,1);X.t=V.tier;
   if(i==='ult'){heroAtk('ult');showBanner(a.ult.n,`${a.n} 필살기`);P.flash=.5;P.flashCol=a.c;shake=.35;
     a.ult.steps.forEach(st=>exec({...st},e,X));return}
-  const f=a.forms[i];heroAtk(HKIND[f.p],f);texts.push({x:P.x,y:P.y,t:f.n,c:`rgb(${a.ct||'255,240,200'})`,life:.9,call:1});exec(f,e,X)}
+  const f=a.forms[i];P.qs=V.qs;qsX(X,f,V.qs);heroAtk(HKIND[f.p],f);texts.push({x:P.x,y:P.y,t:f.n+(V.qs<QS.n?` · ${V.qs}성`:''),c:`rgb(${a.ct||'255,240,200'})`,life:.9,call:1});exec(f,e,X)}
 function playAll(id){const a=ARTS[id],steps=[...a.forms.map((_,i)=>i),'ult'];let k=0;clearTimeout(V.timer);
   const go=()=>{if(k>=steps.length)return;const i=steps[k++];useArtFx(id,i);note(`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`);V.timer=setTimeout(go,(i==='ult'?2200:1300)/V.speed)};go()}
 
@@ -225,13 +225,13 @@ function paintBar(){const B=document.body.classList,sel=(a,o,cur)=>`<select data
   bar.innerHTML=`<div class="now" id="fxvnow">${esc(V.last?'▶ '+V.last.label:'왼쪽 「이펙트」에서 재생할 것을 고르세요')}</div>
     <div class="rw">${btn('☰ 이펙트','drawer:l',B.contains('dl'),'class="side"')}
       <div class="mid">${btn('▶ 다시','again',null,'class="play"')}${btn('반복','loop',V.loop)}
-        <label>속도${sel('spd',[[.25,'0.25×'],[.5,'0.5×'],[1,'1×']],V.speed)}</label>${sel('tier',TIERN.map((n,i)=>[i,'숙련 '+n]),V.tier)}
+        <label>속도${sel('spd',[[.25,'0.25×'],[.5,'0.5×'],[1,'1×']],V.speed)}</label>${sel('tier',TIERN.map((n,i)=>[i,'숙련 '+n]),V.tier)}${sel('qs',Array.from({length:QS.n},(_,i)=>[QS.n-i,`내공 ${QS.n-i}성`]),V.qs)}
         <label>확대${sel('zoom',[[1,'1×'],[1.5,'1.5×'],[2,'2×']],V.zoom)}</label>${btn('밤','night',V.night)}${btn('흔들림','shake',V.shake)}</div>
       ${btn('✦ 수정','drawer:r',B.contains('dr'),'class="side" id="fxvbar_r"')}</div>`;
   barH()}
 function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
   if(k==='spd'){V.speed=+v;render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
-  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
+  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
 box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
 // 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
 const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move','blade']);
@@ -247,7 +247,7 @@ function onClick(ev){const b=ev.target.closest('button[data-a]');if(!b||!P)retur
   if(k==='cls'){V.cls=v;V.art=null;setWeapon(v);render();return}
   if(k==='again'){if(V.last)play(V.last.fn,V.last.label,V.last.ctx);return}
   if(k==='all'){V.last=null;playAll(V.art);return}
-  if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;const id=V.art;play(()=>useArtFx(id,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`,{art:id,form:i,tier:V.tier,el:V.el});return}
+  if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;const id=V.art;play(()=>useArtFx(id,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`,{art:id,form:i,tier:V.tier,qs:V.qs,el:V.el});return}
   if(k==='brk'){const d=BRK_FX[+v];play(()=>brk(+v),`경지 돌파 · ${RANKS[+v]||''} ${d.n}`);return}
   if(k==='flow'){const[n,f]=FLOW()[+v];play(f,n);return}
   if(k==='blade'){const[r,f]=BLADES().find(x=>x[0]===+v);play(()=>bladeShow(r,f),`${RANKS[r]} · ${bladeNameFor(r)}`);return}
