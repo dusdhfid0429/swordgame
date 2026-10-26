@@ -275,7 +275,7 @@ function draw(){
   // 밝은 이펙트는 더하기 합성, 어두운(마기) 이펙트는 보통 합성으로 검게. 심지 색(HI)도 그에 맞춘다
   // v169: 무공 이펙트(c2 있음)는 심지가 무공 특성 보조색 쪽으로 물든다 (g_fxcol.js hiOf)
   const fxMode=(c,c2)=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=c2?hiOf(c,c2):dk?HI_DARK:WH};
-  for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);const s=q.X&&q.X.fs;ctx.globalAlpha=s!=null&&s<1?QS.fx.a+(1-QS.fx.a)*s:1;atZ(q,()=>drawProj(q));ctx.globalAlpha=1}   // 낮은 성의 시전은 옅게 (g_qstar.js)ctx.globalCompositeOperation='lighter';HI=WH;
+  for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);const s=q.X&&q.X.fs;ctx.globalAlpha=s!=null&&s<1?QS.fx.a+(1-QS.fx.a)*s:1;atZ(q,()=>drawProj(q));ctx.globalAlpha=1}ctx.globalCompositeOperation='lighter';HI=WH;   // 투사체: 낮은 성의 시전은 옅게 (g_qstar.js)
   for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
