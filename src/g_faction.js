@@ -14,7 +14,8 @@ const FAC_FOE={'정':['사','마'],'사':['정','마','관'],'마':['정','사',
 // 천하대전 중에는 구도(G.war.plan)가 적·아군을 정한다 (g_story.js warFoe). 구도에 없는 세력은 평소 표를 따른다
 const facFoe=(a,b)=>{if(!a||!b||a===b)return false;const w=typeof warFoe==='function'?warFoe(a,b):null;return w!=null?w:!!FAC_FOE[a]&&FAC_FOE[a].includes(b)};
 // 업보가 -100 아래로 떨어진 사람은 조정이 쫓는 죄인: 관군이 편을 가리지 않고 덤빈다
-const outlaw=()=>!!P&&P.good-P.evil<=-100&&pfac()!=='관';
+// v176: 표국·상단 행렬을 턴 수배자(P.wanted, g_caravan.js)도 해가 바뀔 때까지 관군이 쫓는다
+const outlaw=()=>!!P&&(P.good-P.evil<=-100||P.wanted>0)&&pfac()!=='관';
 // 이 무인이 플레이어에게 적인가: 다른 편이거나, 같은 편이라도 공격당해 등을 돌렸으면 적
 const mobFoeP=e=>e.angry||facFoe(e.d.fac,pfac())||(e.d.fac==='관'&&outlaw());
 // 강제공격 (사용자 요청 2026-10-13, 리니지식 토글): 켜면 같은 편 무인도 공격 대상이 되고 범위 초식에도 맞는다 (치면 그대로 배신·악업). 양민은 켜고 직접 눌러야 맞는다.
@@ -89,19 +90,23 @@ const HI_RANK=GD.HI_RANK;   // 고급 무공 n번째 초식 비급에 필요한 
 // v153 (사용자): 직위는 경지+1 단까지만 (RANK_CAP). 공적이 넘쳐도 경지가 오르면 그때 오른다 (rankRealmUp)
 const rankCap=()=>P?realmIdx()+GD.RANK_CAP.plus:99;
 function rankRaw(sid=P.sect){const t=(P.mtot||{})[sid]||0,mx=rankTop(sid);let i=0;while(i<mx&&t>=RANK_PTS[i+1])i++;return i}
-const rankIdx=(sid=P.sect)=>Math.min(rankRaw(sid),rankCap());
+// v176 (사용자): 직위는 공적만으로 오르지 않는다. 공적·경지가 닿으면 본산에서 승급 시험을 청해 이겨야 오른다 (g_ranktest.js, P.srank[문파]).
+// P.srank는 본산에서 가입할 때 생긴다(옛 저장은 g_save.js v6이 지금 직위로 채운다). P.srank가 없을 때만 옛 규칙(공적·경지로 저절로)을 따른다: 테스트가 문파를 바로 정할 때
+const rankIdx=(sid=P.sect)=>P.srank?Math.min(P.srank[sid]||0,rankTop(sid)):Math.min(rankRaw(sid),rankCap());
 const capNeed=i=>rk(Math.max(0,i-GD.RANK_CAP.plus));
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
   if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1)*(G.unified&&G.unified.by===alFac(SECTS[sid].al)?worldMul('merit'):1));   // v153: 천하통일한 세력의 문파   // 맹 서열 1위 문파 +15% (g_maeng.js)
   P.merit[sid]=(P.merit[sid]||0)+v;
-  if(member){P.mtot=P.mtot||{};const b=rankIdx(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
-    if(a===b&&rankRaw(sid)>a&&P.capN!==sid+a){P.capN=sid+a;log(`공적은 ${rankName(sid,a+1)}에 닿았지만 경지가 모자라 직위가 오르지 않는다 (${capNeed(a+1)} 이상).`,'info')}
+  if(member){P.mtot=P.mtot||{};const b=rankIdx(sid),rb=rankRaw(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
+    if(P.srank&&rankRaw(sid)>rb&&typeof rtNotice==='function')rtNotice(sid);
+    if(!P.srank&&a===b&&rankRaw(sid)>a&&P.capN!==sid+a){P.capN=sid+a;log(`공적은 ${rankName(sid,a+1)}에 닿았지만 경지가 모자라 직위가 오르지 않는다 (${capNeed(a+1)} 이상).`,'info')}
     if(a>b){const n=rankName(sid),s=SECTS[sid];showBanner(`${s.n} ${n}`,'직위가 올랐습니다');log(`${s.n}의 ${n}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${n}이(가) 되었다`);log(`${n}의 의복으로 갈아입었습니다. ${['','문파 색 옷과 띠','금테와 문파 마크를 단 어깨 망토','허리까지 오는 망토','땅에 끌리는 장로의 망토','붉은 안감을 댄 호법의 망토','부교주의 검붉은 대망토'][a]}.`,'sys')}}
   return v}
 // 경지가 오르면 막혀 있던 직위가 오른다 (g_realmfx.js realmGain이 부른다)
 function rankRealmUp(r){const was=r-1+GD.RANK_CAP.plus;
-  if(P.sect&&SECTS[P.sect]){const a=rankIdx(),s=SECTS[P.sect];if(a>was&&rankRaw()>was){showBanner(`${s.n} ${rankName()}`,'경지에 걸맞은 직위');log(`경지가 올라 ${s.n}의 ${rankName()}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${rankName()}이(가) 되었다`)}}
+  if(P.sect&&SECTS[P.sect]&&P.srank&&typeof rtNotice==='function')rtNotice(P.sect);
+  if(P.sect&&SECTS[P.sect]&&!P.srank){const a=rankIdx(),s=SECTS[P.sect];if(a>was&&rankRaw()>was){showBanner(`${s.n} ${rankName()}`,'경지에 걸맞은 직위');log(`경지가 올라 ${s.n}의 ${rankName()}(으)로 올랐습니다. ${rankPerk(a)}`,'xp');feat(`${s.n}의 ${rankName()}이(가) 되었다`)}}
   const al=typeof maengOf==='function'&&maengOf();if(al){const a=maengRank(al);if(a>was&&maengRaw(al)>was){log(`경지가 올라 ${MAENG[al].short}의 ${maengRankName(al)}(으)로 올랐습니다.`,'xp');feat(`${MAENG[al].short}의 ${maengRankName(al)}이(가) 되었다`)}}}
 function rankPerk(i){return['','고급 무공 둘째 초식 비급을 받을 수 있습니다.','비급 공적 20% 할인, 고급 무공 셋째·넷째 초식.','고급 무공 다섯째 초식.','고급 무공 마지막 초식.','사대호법: 교주를 곁에서 지킨다.','부교주: 천마 다음 자리. 교 안에서 가장 높은 직위.'][i]||''}
 const rankDisc=sid=>P.sect===sid&&rankIdx(sid)>=2?.8:1;
@@ -110,7 +115,7 @@ function rankStipend(){const s=P.sect&&SECTS[P.sect];if(!s)return;const i=rankId
 function rankHtml(s){
   const i=rankIdx(s.id),t=(P.mtot||{})[s.id]||0,nx=i<rankTop(s.id)?RANK_PTS[i+1]:0;
   return `<div class="card"><h4>직위 <b>${rankName(s.id)}</b></h4><p>누적 공적 ${t}${nx?` / ${nx} (다음 ${rankName(s.id,i+1)}${i+1>rankCap()?` · <b class="bad">${capNeed(i+1)} 이상</b>`:''})`:' · 최고 직위'} · 공적 획득 +${i*10}% · 녹봉 해마다 은자 ${i*15}${i>=2?' · 비급 공적 20% 할인':''}</p>
-    <p class="dim">${SRANK[s.al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p></div>`}
+    <p class="dim">${SRANK[s.al].map((n,k)=>k===i?`<b>${n}</b>`:n).join(' → ')}</p>${P.srank&&typeof rtHtml==='function'?rtHtml(s):''}</div>`}
 
 // ================= 문파 본산 지역 =================
 // [지형, 지명]. 지형: peak 산봉우리, snow 설산, forest 숲, lake 호수, manor 장원, swamp 늪, canyon 붉은 협곡, dark 검은 땅

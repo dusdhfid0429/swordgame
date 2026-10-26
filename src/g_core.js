@@ -190,7 +190,7 @@ function spawnTick(){
 //  hitDone(c)    내 공격이 맞은 뒤. c.hp0 = 맞기 전 상대 생명
 //  hurt(c)       내가 맞을 때, 회피 판정 전. c={src,dm 피해,hm 상대 현묘도}
 //  hurtDone(c)   맞은 뒤. c.hp0 = 맞기 전 내 생명
-//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}
+//  mobHurt(c)    몹끼리 칠 때. c={t,src,dm}       struck(e,from) 몹이 맞을 때(damage 첫머리, 배신 판정 전)
 //  recalc()      능력치를 다시 셈한 뒤          mobMade(m,kind,extra) / facMade(e)  몹·세력 무인을 만든 뒤
 //  mobTick(e,dt) 몹 한 프레임 전                kill(e)        몹을 처치한 뒤(보상 뒤)
 //  mastDone(c)   숙련이 오른 뒤. c={id,s,before} trainTick(dt)  매 프레임 (수련 창)
@@ -248,6 +248,7 @@ function damage(e,d,kb,stun,from=P,crit){
   e.hp-=d;e.hit=.12;e.hurtAt=time;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
+  runHooks('struck',e,from);   // v176: 표국·상단 행렬을 치면 약탈이 된다 (g_caravan.js). 같은 편 배신 판정보다 먼저
   if(e.d.fac&&!e.angry&&!facFoe(e.d.fac,pfac()))facBetray(e);
   if(e.d.villager&&!e.angry){e.angry=1;e.flee=4;P.evil+=P.side==='정'?10:4;log('양민을 해쳤습니다. 악업이 쌓입니다.','dmg')}
   else if(e.d.passive)e.flee=3,e.fleeFrom=from;
