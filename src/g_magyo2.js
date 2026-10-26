@@ -72,7 +72,7 @@ function regionJump(id,x,y){P.chan=null;P.medit=false;P.burst=null;enterRegion(i
 function jailEnter(why){if(!P||P.jail)return;const yrs=Math.max(1,Math.ceil((P.sin||0)/J2.perYear));P.jail={t:yrs,sin:P.sin||0};
   regionJump(JAIL_ID,20.5,20.5);showBanner('흑혈옥',`형기 ${yrs}년`);log(`${why}. 천마동 아래 흑혈옥에 갇혔습니다. 형기 ${yrs}년: 해를 넘기거나 옥주에게 복역을 청하면 풀려난다. 옥주를 치고 나가면 배교자다.`,'dmg');
   feat(`교율을 어겨 흑혈옥에 갇혔다`);if(typeof saveGame==='function')saveGame(true)}
-function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1}
+function jailRelease(){if(!P.jail)return;P.jail=null;P.sin=0;const i=rankIdx('cheonma');if(i>0){P.mtot=P.mtot||{};P.mtot.cheonma=RANK_PTS[i]-1;if(P.srank)P.srank.cheonma=i-1}
   log(`형기를 다 채워 흑혈옥에서 나왔습니다. 죄값은 지워졌지만 직위는 ${rankName('cheonma')}(으)로 한 단계 내려갔습니다.`,'xp');showBanner('출옥','흑혈옥의 문이 열렸다');
   if(REG===JAIL_ID)regionJump('hq_cheonma_8',20.5,22)}
 // 복역: 남은 형기만큼 세월을 바로 보낸다

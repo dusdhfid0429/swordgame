@@ -41,8 +41,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     cost:[meritCost({id:'S_cheonma_0'},0),meritCost({id:'S_cheonma_1'},0)],again:mgJoinDang('maryeong')}));
   ok(`혈마당 입당 → 혈마장 첫 초식, 다른 당 무공은 '${d.other}', 비급 공적 ${d.cost[0]} < ${d.cost[1]}, 당은 못 바꿈`,d.dang==='hyeolma'&&d.art&&d.own===''&&d.other.includes('장로부터')&&d.cost[0]<d.cost[1]&&d.again===false);
   // 일곱 단 직위
-  const rk=await p.evaluate(()=>{const out=[];for(const t of[0,400,800,1400,2200,9999]){P.mtot.cheonma=t;out.push(rankName('cheonma'))}P.mtot.cheonma=800;const el=mgArtBlock({id:'S_cheonma_1'});
-    P.mtot.cheonma=2200;const pal=sectPal('cheonma',rankIdx('cheonma'),'권',{});const html=rankHtml(SECTS.cheonma);P.sect=null;P.mtot.hwasan=99999;const other=rankIdx('hwasan');P.sect='cheonma';
+  const rk=await p.evaluate(()=>{const out=[];for(const t of[0,400,800,1400,2200,9999]){P.mtot.cheonma=t;if(P.srank)P.srank.cheonma=Math.min(rankRaw('cheonma'),rankCap());   /* v176: 직위는 승급 시험으로 (t112) */out.push(rankName('cheonma'))}P.mtot.cheonma=800;if(P.srank)P.srank.cheonma=Math.min(rankRaw('cheonma'),rankCap());const el=mgArtBlock({id:'S_cheonma_1'});
+    P.mtot.cheonma=2200;if(P.srank)P.srank.cheonma=Math.min(rankRaw('cheonma'),rankCap());const pal=sectPal('cheonma',rankIdx('cheonma'),'권',{});const html=rankHtml(SECTS.cheonma);P.sect=null;P.mtot.hwasan=99999;if(P.srank)P.srank.hwasan=99;const other=rankIdx('hwasan');P.sect='cheonma';
     return{out,el,pal:!!pal,html:!html.includes('undefined'),other}});
   ok(`직위 ${rk.out.join('→')}, 장로면 다른 당 무공 열림, 다른 세력은 다섯 단(${rk.other})`,rk.out.join()==='교도,당주,장로,호법,부교주,부교주'&&rk.el===''&&rk.pal&&rk.html&&rk.other===4);
   // 저장
