@@ -4,7 +4,7 @@
 const ALLY=GD.ALLY;
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=GD.SECT_DATA;
-const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h'}))}});
+const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h',mid:a[3]==='m'}))}});
 // 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식, 등급은 항상 하승 · addSectArts) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
 // 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
 const START=GD.START||{};
@@ -29,15 +29,17 @@ const isFive=s=>FIVE.includes(s.id),tierName=s=>isFive(s)?'오대세가':TIERN[s
 const AGR=GD.AGR,AGR_C=GD.AGR_C;
 const GMUL=GD.GMUL,GULT=GD.GULT,GCOST=GD.GCOST,GMAST=GD.GMAST;
 const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):s.tier==='mid'?2:(hi?3:2);
+// v180 (사용자 2026-10-26 "문파에도 중승무공 추가해"): 문파마다 주력 병기의 중승 일반 무공 하나(data/sects.json 넷째 칸 'm'). 입문공(하승) → 중승 → 상승·절정
+const artGradeOf=(s,a)=>a.mid?1:!a.hi&&START[s.id]&&START[s.id].art===a.n?0:sectGrade(s,a.hi);
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
 // buildArts에서 부른다: 문파 무공을 일반 무공과 같은 틀(초식 무늬 풀)로 만든다
 function addSectArts(arts,pool,ults,formName,ultName){
   for(const s of Object.values(SECTS))for(const a of s.arts){
-    const side=ALLY[s.al].side,k=a.hi?6:Math.max(3,Math.min(4,FORMN[a.el])),r=rng(31+a.n.charCodeAt(0)*17+a.n.charCodeAt(a.n.length-1)*5+s.i);
+    const side=ALLY[s.al].side,k=a.hi?6:a.mid?5:Math.max(3,Math.min(4,FORMN[a.el])),r=rng(31+a.n.charCodeAt(0)*17+a.n.charCodeAt(a.n.length-1)*5+s.i);
     const pick=pickForms(pool[a.cls],r,k);
     // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
-    const st=START[s.id],g=!a.hi&&st&&st.art===a.n?0:sectGrade(s,a.hi),mul=GMUL[g];
+    const g=artGradeOf(s,a),mul=GMUL[g];
     const off=OFFICIAL[a.n];   // 이름난 무공(양의검법 등)은 정해진 초식 이름을 쓴다. formName()은 그대로 불러 다른 무공의 초식 이름이 밀리지 않게 한다
     const forms=pick.map((f,i)=>({...f,n:(n=>off&&off.forms[i]||n)(formName()),req:REQ[i],cost:Math.round(COST[i]*(a.hi?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
     const u=ults[a.cls][(s.i+a.n.length)%ults[a.cls].length],EC=EL[a.el];

@@ -14,7 +14,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
 
   // 2. 견식: 맞고·보고·쓰러뜨리면 쌓이고, 아는 초식까지만, 정리하면 사본 비급
   const g=await p.evaluate(()=>{mobs=[];P.gs={};P.realm=1;const id=ARTS['사도1'].id,e=mkMob('산적',P.x+2,P.y);e.art=id;e.known=2;e.d={...e.d,elite:1};
-    hurtP(3,e);const hit=P.gs[id]&&P.gs[id].p;mobFormCall(e);const see=P.gs[id].p-hit;
+    P.inv=0;const R0=Math.random;Math.random=()=>.99;hurtP(3,e);Math.random=R0;const hit=P.gs[id]&&P.gs[id].p;mobFormCall(e);const see=P.gs[id].p-hit;
     const far=mkMob('산적',P.x+20,P.y);far.art=id;far.known=2;mobFormCall(far);const seeFar=P.gs[id].p-hit-see;
     for(let i=0;i<10;i++)runHooks('kill',e);const st={...P.gs[id]},need0=gsNeed(ARTS[id],0);
     openPanel('arts');const t=document.querySelector('#wbody')?document.querySelector('#wbody').innerText:document.body.innerText;
