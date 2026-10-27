@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     heroAtk('flat',{n:'선풍각'});r.kick=P.sset.join(',');P.satk=0;const S=SHEETS.actfx.clips;r.c={punches:S.punches.f.join(','),kicks:S.kicks.f.join(','),palm:S.palm_strikes.f.join(',')};r.after=heroFrame();return r});
   ok(`맨손 공격 ${a.flat[0]} ${a.flat[1]} (장 ${JSON.stringify(a.flat[2])}) · 세로 ${a.vert} · 장타 ${a.palm} · 발차기 무공 ${a.kick} · 공격 뒤 대기 ${JSON.stringify(a.after)}`,
     a.flat[0]==='actfx'&&a.flat[1]===a.c.punches&&a.flat[2][4]==='actfx'&&a.flat[2][0]===+a.c.punches.split(',')[0]&&a.vert===a.c.kicks&&a.palm===a.c.palm&&a.kick===a.c.kicks&&!a.after[4]);
-  // 3. 운기조식·수련·피동 회피·달리기(맨손)는 시트 장. 검은 운기조식만 시트, 회피·달리기는 예전 그대로
+  // 3. 운기조식·수련·피동 회피(맨손)는 시트 장, 맨손 달리기는 v189부터 검 달리기 장에서 검·검집을 지운 몸통 장(body 41~48). 검은 운기조식만 시트, 회피·달리기는 예전 그대로
   const st=await p.evaluate(()=>{const r={};P.satk=0;P.runT=0;P.medit=true;r.med=heroFrame();P.medit=false;trnBusy={k:'str',t:0,dur:9};r.str=heroFrame();trnBusy={k:'pg2',t:0,dur:9};r.pg=heroFrame();trnBusy=null;
     P.dA=time-.1;r.dodge=heroFrame();P.dA=0;P.runT=.3;P.runPh=.2;r.run=heroFrame();P.runT=0;
     const S=SHEETS.act.clips;r.c={med:S.meditate.f,str:SHEETS.actfx.clips.strength.f,pg:S.waterfall_stance.f,dodge:S.dodge.f,run:S.run.f};
@@ -25,7 +25,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.medit=true;r.swMed=heroFrame();P.medit=false;P.dA=time-.1;r.swDodge=heroFrame();P.dA=0;P.runT=.3;r.swRun=heroFrame();P.runT=0;return r});
   const inC=(f,c)=>f[4]==='act'&&c.includes(f[0]);
   ok(`운기조식 ${JSON.stringify(st.med)} · 근력 수련 ${JSON.stringify(st.str)} · 폐관 ${JSON.stringify(st.pg)} · 회피 ${JSON.stringify(st.dodge)} · 달리기 ${JSON.stringify(st.run)} · 검: 운기 ${st.swMed[4]} 회피 ${st.swDodge[4]} 달리기 ${st.swRun[4]}`,
-    inC(st.med,st.c.med)&&st.str[4]==='actfx'&&st.c.str.includes(st.str[0])&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&inC(st.run,st.c.run)&&st.swMed[4]==='act'&&!st.swDodge[4]&&!st.swRun[4]);
+    inC(st.med,st.c.med)&&st.str[4]==='actfx'&&st.c.str.includes(st.str[0])&&inC(st.pg,st.c.pg)&&inC(st.dodge,st.c.dodge)&&st.run[1]&&st.run[0]>=41&&st.run[0]<=48&&!st.run[4]&&st.swMed[4]==='act'&&!st.swDodge[4]&&!st.swRun[4]);
   // 4. 시트 장으로 그릴 때 오류 없고, 발 기준점이 맞다: 가부좌 장의 아래끝이 발(0) 근처, 위끝은 위로
   const d=await p.evaluate(()=>{P.medit=true;draw();P.medit=false;const S=SHEETS.act,i=S.clips.meditate.f[0],f=S.frames[i],k=sheetK('act'),[x,y]=sheetXY('act',i,f.o[0],f.o[1],k);return{bottom:y+f.r[3]*k,top:sheetTop('act',i,k),x}});
   ok(`그리기 오류 없음 · 가부좌 장 아래끝 ${d.bottom.toFixed(1)} 위끝 ${d.top.toFixed(1)} 왼끝 ${d.x.toFixed(1)}`,Math.abs(d.bottom-3)<1&&d.top<-50&&d.x<0&&d.x>-60);

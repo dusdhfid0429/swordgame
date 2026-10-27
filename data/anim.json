@@ -8,6 +8,7 @@
     "sheetK": {"actfx": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}, "act": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}},
     "clips": {
       "idleSword": {"a": "hero", "f": [0, 1, 2, 3, 4, 5], "fps": 5},
+      "_bare": "v189 사용자(2026-10-27): 맨손(권·암·무기 없음) 대기·이동은 검을 든 대기 idleSword·달리기 run 장에서 검과 검집을 지운 몸통 장(HBODY, tools/barehand.py)",
       "idleBody": {"a": "body", "f": [0, 1, 2, 3, 5, 1], "fps": 5},
       "run": {"a": "hero", "f": [41, 42, 43, 44, 45, 46, 47, 48]},
       "runBody": {"a": "body", "f": [41, 42, 43, 44, 45, 46, 47, 48]},
@@ -49,9 +50,9 @@
       "도": {"idle": "idle도"},
       "창": {"idle": "idle창", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
       "봉": {"idle": "idle봉", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "lk": "p"},
-      "권": {"idle": "idle권", "idleNb": "idleBody", "run": "wxRun", "runNb": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"},
+      "권": {"idle": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"},
       "궁": {"idle": "idle궁", "idleNb": "idleBody", "run": "runBody", "jumpNb": "jumpBody"},
-      "암": {"idle": "idle권", "idleNb": "idleBody", "run": "wxRun", "runNb": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"}
+      "암": {"idle": "idleBody", "run": "runBody", "jumpNb": "jumpBody", "dodge": "wxDodge"}
     },
     "atk": {
       "_wx": "핸드오프 시트의 공격 클립(v123 맨손, v124 검·도·창·봉). 무기는 atlas.json 소켓(hand/hand2/aim) 자리에 코드로 그린다. palm은 예전 장 그대로",
