@@ -33,7 +33,7 @@ function fParts(X,c,col,n,spd,shape,life=.7){n+=4*(X?X.t:0);const ps=[];for(let 
 const needleRain=(X,pt,c)=>{for(let i=0;i<3;i++)GL({t:'needle',x:pt.x+(Math.random()-.5)*.5,y:pt.y+(Math.random()-.5)*.5,col:c,life:.28},X)};
 function fxHit(X,e,s=1){
   const c=X.art.c,w=X.art.cls;
-  if(w==='단')dagHitFx(X,e);   // 단검술: 손에 쥔 단도가 휘둘러진다 (g_amgi.js)
+  if(w==='단'||w==='편')dagHitFx(X,e);   // 단검술·절편술: 손에 쥔 단도가 휘둘러진다 (g_amgi.js)
   if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
   if(X.art.elc)GL({t:'crackle',x:e.x,y:e.y,col:c,life:.3},X);
   fParts(X,e,c,5,60,X.art.pt==='petal'||X.art.pt==='leaf'?'petal':'dot',.6);

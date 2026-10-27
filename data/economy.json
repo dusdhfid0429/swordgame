@@ -27,7 +27,7 @@
     "요리": {"n":"요리사","npc":"inn"},
     "약재": {"n":"약재사","npc":"pharm"}
   },
-  "WNAME": {"검":"철검","도":"박도","창":"장창","봉":"철곤","권":"철권갑","궁":"각궁","암":"유엽비도","단":"단도"},
+  "WNAME": {"검":"철검","도":"박도","창":"장창","봉":"철곤","권":"철권갑","궁":"각궁","암":"가죽 요대","단":"단도","편":"절편"},
   "CROPS": {
     "쌀": {"seed":"볍씨","t":40,"like":{"비":1.9,"맑음":1,"흐림":0.9,"폭염":0.6,"눈":0},"col":"#c8b45a","d":"비를 좋아한다"},
     "보리": {"seed":"보리씨","t":32,"like":{"비":1.1,"맑음":1,"흐림":1,"폭염":0.7,"눈":0.6},"col":"#d8c070","d":"눈에도 견딘다"},
@@ -77,7 +77,7 @@
     {"job":"대장","n":"철곤 단조","need":{"광석":3,"목재":1},"make":{"kind":"weapon","cls":"봉"},"at":"smith"},
     {"job":"대장","n":"철권갑 단조","need":{"광석":3,"목재":1},"make":{"kind":"weapon","cls":"권"},"at":"smith"},
     {"job":"대장","n":"각궁 단조","need":{"목재":3,"가죽":1},"make":{"kind":"weapon","cls":"궁"},"at":"smith"},
-    {"job":"대장","n":"유엽비도 단조","need":{"광석":2,"가죽":1},"make":{"kind":"weapon","cls":"암"},"at":"smith"},
+    {"job":"대장","n":"가죽 요대 제작","need":{"가죽":2,"광석":1},"make":{"kind":"weapon","cls":"암"},"at":"smith"},
     {"job":"대장","n":"철갑 단조","need":{"광석":4,"가죽":1},"make":{"kind":"gear","slot":"armor","name":"철갑","o":{"hp":30,"def":6}},"at":"smith"},
     {"job":"대장","n":"비도 10자루","need":{"광석":1},"make":{"kind":"mat","mat":"비도","n":10,"perQ":4},"at":"smith"},
     {"job":"직물","n":"무명 무복","need":{"목화":2},"make":{"kind":"gear","slot":"armor","name":"무명 무복","o":{"hp":24,"def":2}}},
@@ -95,7 +95,7 @@
   ],
   "SHOP": {
     "inn": [["주먹밥","mat",8],["보리죽","mat",8],["고기볶음","mat",20],["tbook:요리","tbook",60]],
-    "smith": [["weapon:검","weapon",45],["weapon:도","weapon",45],["weapon:창","weapon",45],["weapon:봉","weapon",45],["weapon:궁","weapon",45],["weapon:암","weapon",45],["weapon:권","weapon",35],["비도","mat10",20],["매화침","mat10",24],["회선표","mat10",28],["독사침","mat10",30],["벽력자","mat10",40],["weapon:단","weapon",30],["weapon:단:절편","weapon",30],["belt","gear",30],["tbook:대장","tbook",60]],
+    "smith": [["weapon:검","weapon",45],["weapon:도","weapon",45],["weapon:창","weapon",45],["weapon:봉","weapon",45],["weapon:궁","weapon",45],["weapon:암","weapon",45],["weapon:권","weapon",35],["비도","mat10",20],["매화침","mat10",24],["회선표","mat10",28],["독사침","mat10",30],["벽력자","mat10",40],["weapon:단","weapon",30],["weapon:편","weapon",30],["tbook:대장","tbook",60]],
     "pharm": [["금창약","mat",15],["소환단","mat",20],["해독단","mat",10],["대환단","mat",400,2],["만년설삼","mat",1500,3],["공청석유","mat",4000,4],["tbook:약재","tbook",60]],
     "cloth": [["armor","gear",40],["boots","gear",30],["목화씨","mat",5],["tbook:직물","tbook",60]],
     "gen": [["볍씨","mat",5],["보리씨","mat",5],["배추씨","mat",5],["목화씨","mat",5],["sbook:암기","sbook",100],["sbook:독공","sbook",100],["sbook:점혈","sbook",100],["pbook:P_spd","pbook",60],["pbook:P_hp","pbook",60],["pbook:P_qi","pbook",60],["pbook:P_atk","pbook",60],["pbook:P_def","pbook",60],["pbook:P_crit","pbook",60],["pbook:P_hreg","pbook",60],["pbook:P_qreg","pbook",60],["bbook:b_seom","bbook",180],["bbook:b_chil","bbook",180],["gbook:g_yeonun","gbook",180],["gbook:g_cheongpung","gbook",180]]

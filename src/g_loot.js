@@ -15,7 +15,6 @@ function mobKit(e){
   if(Math.random()<o.armor)e.eq.armor=mkGear('armor',pick(['마의','피갑','흑철갑']),q(),{hp:26,def:4});
   if(Math.random()<o.acc)e.eq.acc=mkGear('acc',pick(['옥패','호신부','염주']),q(),{qi:24,hm:5});
   if(Math.random()<o.boots)e.eq.boots=mkGear('boots',pick(['짚신','무혜','운리혜']),q(),{spd:.12,hm:4});
-  if(a.cls==='암'&&Math.random()<.5)e.eq.belt=mkBelt(q(),Math.floor(Math.random()*BELTS.length));   // 암기 쓰는 적은 요대를 찬다 (g_amgi.js)
   // 장비가 능력치에 보태는 몫: 병기 공격력의 1/4, 갑옷 방어의 절반·생명의 절반, 장신구·신발의 현묘도
   const w=e.eq.weapon,ar=e.eq.armor;e.atk+=Math.round(w.atk*.25);
   if(ar){e.def+=Math.round(ar.def*.5);e.maxHp+=Math.round(ar.hp*.5);e.hp=e.maxHp}
