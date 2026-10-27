@@ -54,6 +54,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{pyo:P.pyo,jobs:G.pyoJobs,hired:q.hired,dep:q.dep>nowS(),sect:'pyoSect'in q||'merit'in q||'pyoC'in q,kc:'pyoC'in k,txt:questWhere(q)}});
   ok(`옛 저장 옮기기: 신용 ${r7c.pyo}, 맡은 호위 → 따라나선 표행 (${r7c.txt.replace(/<[^>]+>/g,'').slice(0,40)})`,r7c.pyo===undefined&&!r7c.jobs&&r7c.hired===1&&r7c.dep&&!r7c.sect&&!r7c.kc);
   await p.evaluate(()=>{P.quests=[]});
+  // 5-3. 표물을 세력의 문파·맹에 보내면 받는 곳의 적 세력이 습격한다 (사용자 2026-10-27)
+  const r7d=await p.evaluate(()=>{P.sect=null;P.side='정';loadRegion('gaebong');const L=pyoRuns(PYO.gaebong);L[0].to={n:'사천맹 총단',fac:'사',al:'sacheon'};
+    openNpc(NPCS.find(q=>q.pyo==='gaebong'));const h=$('wbody').innerHTML;act('pyojoin:gaebong:0');closePanels();const q=P.quests.find(q=>q.hired);
+    const g=REGIONS.gaebong.gates.find(g=>g.to==='pv_henan');travel(g);return{h:h.includes('사천맹 총단')&&h.includes('노리는 자'),to:q&&q.to&&q.to.n,foes:pyoFoes(q.to)}});
+  await p.waitForTimeout(900);
+  const r7e=await p.evaluate(()=>{const cv=CVS.find(c=>c.q&&c.q.hired);if(!cv)return{none:1};cvAmbush(cv,true);const facs=[...new Set(cv.raid.map(e=>e.d.fac))];const foes=cv.foes;
+    for(const c of CVS.slice())cvEnd(c,true);mobs=[];P.quests=[];return{facs,foes}});
+  ok(`사천맹에 가는 표물: 창에 받는 곳·노리는 자, 정파 플레이어면 ${r7d.foes.join('·')}이 습격 (습격자 ${r7e.facs})`,r7d.h&&r7d.to==='사천맹 총단'&&!r7d.foes.includes('정')&&!r7e.none&&r7e.facs.length===1&&r7e.foes.includes(r7e.facs[0]));
+  const r7f=await p.evaluate(()=>{const s0=P.side;P.side='사';const a=pyoFoes({fac:'정'});P.side=s0;return{a,b:pyoFoes({fac:'사'})}});
+  ok(`받는 곳 세력의 적만 습격 (정파에 가면 ${r7f.a}, 사파에 가면 ${r7f.b})`,r7f.a.join()==='마'&&r7f.b.every(f=>['마','관'].includes(f)));
   // 6. 행렬이 습격당하고, 거들어 물리치면 사례금과 이어지는 일감
   await p.evaluate(()=>{enterRegion('pv_henan',24.5,24.5);mobs=[]});
   const r8=await p.evaluate(()=>{const cv=cvSpawn('sang');if(!cv)return{none:1};P.x=cv.cart.x+1;P.y=cv.cart.y;cvAmbush(cv,false);const n=cv.raid.length,tg=cv.raid.every(r=>r.tgt&&r.tgt.cv===cv);

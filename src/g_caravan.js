@@ -57,9 +57,15 @@ function cvToward(ex,dst){if(!dst)return[];const hit=to=>!!to&&pvBase(to)===pvId
   return[]}
 // 출발을 앞둔 표행: 표국마다 CARV.recruit.runs개. 떠난 표행은 지우고 새 표행을 건다
 function pyoMkRun(p,dep){const RC=CARV.recruit,E=CARV.escort,lo=cvDanger(p.k),c=pick(CARV.cargo),nb=PV_NB(p.k).filter(n=>n!==p.k&&PROV[n]),dst=nb.length?pick(nb):null;
-  const need=R1(RC.need[0],RC.need[1]);
-  return{id:`${p.id}:${Math.round(dep)}:${Math.floor(Math.random()*1e4)}`,cargo:c.k,dst,dep,t0:nowS(),need,got:R1(0,Math.max(0,need-3)),
-    silver:Math.round(R1(E.silver[0],E.silver[1])*(1+lo*.35)*c.mul),vit:E.vit+lo*20,fame:E.fame,good:E.good}}
+  const need=R1(RC.need[0],RC.need[1]),to=Math.random()<RC.facTo?pyoFacTo(dst):null;
+  return{id:`${p.id}:${Math.round(dep)}:${Math.floor(Math.random()*1e4)}`,cargo:c.k,dst,dep,t0:nowS(),need,got:R1(0,Math.max(0,need-3)),to,
+    silver:Math.round(R1(E.silver[0],E.silver[1])*(1+lo*.35)*c.mul*(to?RC.facMul:1)),vit:E.vit+lo*20,fame:E.fame,good:E.good}}
+// 표물을 받는 곳이 세력의 문파나 맹이면(사용자 2026-10-27) 그 세력의 적 세력이 표행을 노린다. 표국은 여전히 어느 편도 아니다
+function pyoFacTo(dst){const L=[];for(const sid of(PROV[dst]&&PROV[dst].sects||[]))if(SECTS[sid])L.push({n:SECTS[sid].n,fac:alFac(SECTS[sid].al),sid});
+  for(const al of Object.keys(ALLY))L.push({n:typeof MAENG!=='undefined'&&MAENG[al]?MAENG[al].n:ALLY[al].n,fac:alFac(al),al});
+  return L.length?pick(L.filter(o=>FAC_FOE[o.fac])):null}
+// 습격할 세력: 받는 곳의 적 세력 가운데, 되도록 플레이어 편이 아닌 쪽
+const pyoFoes=to=>{if(!to||!FAC_FOE[to.fac])return[];const all=FAC_FOE[to.fac],f=pfac(),o=all.filter(x=>x!==f);return o.length?o:all};
 function pyoRuns(p){G.pyoRuns=G.pyoRuns||{};const RC=CARV.recruit,t=nowS();const L=(G.pyoRuns[p.id]||[]).filter(r=>r.me||r.dep>t);
   for(const r of L)if(!r.me)r.got=Math.max(r.got,Math.min(r.need-1,Math.floor(r.need*Math.min(1,(t-r.t0)/Math.max(1,r.dep-r.t0)))));   // 떠날 날이 다가올수록 사람이 찬다(한 자리는 남긴다)
   while(L.filter(r=>!r.me).length<RC.runs){const last=Math.max(t,...L.map(r=>r.dep));L.push(pyoMkRun(p,last+(L.length?R1(RC.gap[0],RC.gap[1]):R1(RC.dep[0],RC.dep[1]))))}
@@ -70,7 +76,8 @@ const dstN=k=>k&&PROV[k]?PROV[k].n:'이웃 성';
 function pyoRunHtml(p,r,i){const c=cargoOf(r.cargo),T=CARV.types.pyo,left=r.dep-nowS(),why=r.me?'':pyoWhy(p,r);
   return `<div class="card pyorun"><div class="row2"><h4>${esc(c.n)} 표행 <small class="dim">${esc(p.town)} → ${esc(dstN(r.dst))}</small></h4><span class="tag">${left>0?`출발까지 <b>${fmtLeft(left)}</b>`:'<b class="bad">곧 떠난다</b>'}</span></div>
     <p><b>목적지</b> ${esc(PROV[p.k].n)} 성 지도를 지나 ${esc(dstN(r.dst))} 쪽 길목까지. ${esc(p.town)} 성문 밖에서 모여 떠난다</p>
-    <p><b>표물</b> ${esc(c.d)} · ${esc(dstN(r.dst))}의 ${esc(c.to)}에게${c.boss?' · <b class="bad">값진 표물이라 산적두목이 노린다</b>':''}</p>
+    <p><b>표물</b> ${esc(c.d)} · ${r.to?`<b>${esc(r.to.n)}</b>(${FACN[r.to.fac]})에게`:`${esc(dstN(r.dst))}의 ${esc(c.to)}에게`}${c.boss?' · <b class="bad">값진 표물이라 산적두목이 노린다</b>':''}</p>
+    ${r.to?`<p class="bad"><b>노리는 자</b> ${pyoFoes(r.to).map(f=>FACN[f]).join('·')} 무인이 ${esc(r.to.n)}에 가는 표물을 친다. 임금 ×${CARV.recruit.facMul}</p>`:''}
     <p><b>일행</b> ${T.lead} 1 · ${T.guard} ${T.nGuard[0]}~${T.nGuard[1]} · 모집 <b>${r.got+(r.me?1:0)}/${r.need}</b>명 · 가는 길에 습격 두 번쯤</p>
     <p><b>성공하면</b> 은자 <b class="gold">${r.silver}</b> · 활력 ${r.vit} · 명성 ${r.fame} · 선업 ${r.good} <small class="dim">길목에 닿으면 ${T.lead}가 그 자리에서 치른다. 수레가 부서지면 품삯은 없다</small></p>
     <div class="row2"><span class="${why?'bad':'note'}">${r.me?'<b class="gold">따라나서기로 했다.</b> 성문 밖 성 지도로 나가면 바로 떠난다':why||'가입할 필요 없다. 이번 한 번 품을 판다'}</span>${r.me?'':B(`pyojoin:${p.id}:${i}`,'참여하기',{pri:!why,d:!!why})}</div></div>`}
@@ -85,7 +92,7 @@ function pyoDlg(n){const p=PYO[n.pyo];if(!p)return'';
 hook('npcDlg',c=>{if(c.html==null&&c.n.pyo)c.html=pyoDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='pyojoin')return;c.done=true;c.r=true;const p=PYO[c.x],L=p&&pyoRuns(p),r=L&&L[+c.y];if(!r||r.me||pyoWhy(p,r)||r.dep<=nowS())return;
   r.me=1;const cg=cargoOf(r.cargo);
-  P.quests.push({n:`${cg.n} 표행 · ${p.town} → ${dstN(r.dst)}`,kind:'escort',cnt:1,have:0,hired:1,run:r.id,reg:pvId(p.k),dst:r.dst,dep:r.dep,cargo:r.cargo,hands:Math.min(2,r.got),
+  P.quests.push({n:`${cg.n} 표행 · ${p.town} → ${dstN(r.dst)}`,kind:'escort',cnt:1,have:0,hired:1,run:r.id,reg:pvId(p.k),dst:r.dst,dep:r.dep,cargo:r.cargo,hands:Math.min(2,r.got),to:r.to||null,
     silver:r.silver,vit:r.vit,fame:r.fame,good:r.good,pyo:p.id,pyoN:p.n,pyoAt:p.town,key:`pyo:${r.id}`});
   log(`[${p.n}] ${cg.n} 표행에 따라나서기로 했습니다. ${fmtLeft(r.dep-nowS())} 안에 ${p.town} 성문 밖 ${PROV[p.k].n} 성 지도로 나가세요.`,'info')});
 function pyoRunDone(q){const L=G.pyoRuns&&G.pyoRuns[q.pyo];if(L)G.pyoRuns[q.pyo]=L.filter(r=>r.id!==q.run)}
@@ -130,7 +137,7 @@ function cvSpawn(type,o={}){if(!onPv())return null;const T=CARV.types[type],rt=c
   let n=0;cvMk(cv,'표두',...at(n++),'guard',`${name} ${T.lead}`);
   for(let i=R1(T.nGuard[0],T.nGuard[1]);i>0;i--)cvMk(cv,T.guard,...at(n++),'guard',T.guard);   // 이름표가 겹치지 않게 호위·상인은 짧은 이름
   if(o.escort&&o.escort.hired){o.escort.went=1;for(let i=o.escort.hands||0;i>0;i--)cvMk(cv,T.guard,...at(n++),'guard','모집 표사');   // 같이 모집된 사람들
-    if(cargoOf(o.escort.cargo).boss)cv.boss=1}
+    if(cargoOf(o.escort.cargo).boss)cv.boss=1;if(o.escort.to)cv.foes=pyoFoes(o.escort.to)}
   if(T.merchant)for(let i=R1(T.nMerch[0],T.nMerch[1]);i>0;i--)cvMk(cv,T.merchant,...at(n++),'merch',T.merchant);
   CVS.push(cv);
   if(o.escort){showBanner('표행 출발',`${name} → ${cv.dest.label}`);if(o.escort.hired)log(`${name} ${T.lead}: "모두 모였군. 출발하오!"`,'info');log(`약속한 ${name} 표행이 기다리고 있었습니다. ${cv.dest.label} 길목까지 지켜 주세요. 너무 멀어지면 표행이 멈춰 기다립니다.`,'info')}
@@ -141,7 +148,7 @@ function cvEnd(cv,rm){const i=CVS.indexOf(cv);if(i>=0)CVS.splice(i,1);if(rm)mobs
 
 // ---- 습격 ----
 function cvAmbush(cv,esc){const c=cv.cart,k=cvProv(),fs=[...new Set((PROV[k]&&PROV[k].sects||[]).map(s=>alFac(SECTS[s].al)))].filter(f=>f==='사'||f==='마');
-  const fac=fs.length&&Math.random()<CARV.ambush.facChance?pick(fs):null;
+  const fac=cv.foes&&cv.foes.length?pick(cv.foes):fs.length&&Math.random()<CARV.ambush.facChance?pick(fs):null;   // 세력에 가는 표물은 그 적 세력이 친다
   const ahead=cv.path[Math.min(cv.path.length-1,cv.i+6)]||c;
   const spot=()=>{for(let t=0;t<30;t++){const a=Math.random()*6.28,r=1.5+Math.random()*2.5,x=ahead.x+Math.cos(a)*r,y=ahead.y+Math.sin(a)*r;if(walkAt(x,y))return[x,y]}return[c.x+.5,c.y+.5]};
   const made=[];
