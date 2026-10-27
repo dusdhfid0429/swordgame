@@ -6,7 +6,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad&touch');await p.waitForFunction(()=>typeof loadRegion==='function');await p.evaluate(()=>localStorage.clear());
   await p.click('[data-s="slot:0"]');await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);
   const r=await p.evaluate(()=>{
-    const id='사암1';P.eq.weapon=mkWeapon('암',1,0);P.arts[id]={p:0,f:ARTS[id].forms.map(()=>true)};P.cur=id;recalc();P.fx=1;P.fy=0;
+    const id='사암1';P.eq.weapon=mkWeapon('암',1,0);P.arts[id]={p:0,f:ARTS[id].forms.map(()=>true)};P.cur=id;recalc();P.eq.belt=null;   // 요대 암기(v186, t122)는 빼고 초식 본래 모양을 본다
+    P.fx=1;P.fy=0;
     const X=()=>{const x=mkX(id);x.t=0;return x};
     // 적을 놓고 초식을 쓴 뒤 미뤄 둔 연사까지 다 쏘고, 각 투사체가 어느 적을 향하는지 센다
     const run=(f,offs,x=X())=>{mobs=[];projs=[];sched=[];const es=offs.map(([dx,dy])=>{const e=mkMob('산적',P.x+dx,P.y+dy);e.hp=e.maxHp=1e6;mobs.push(e);return e});

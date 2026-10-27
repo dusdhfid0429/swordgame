@@ -134,9 +134,9 @@ function drawGlow2(f){
 function drawProj(q){
   const p=toScreen(q.x,q.y),t=q.X.t,s=q.size,ang=Math.atan2((q.vx+q.vy)*TH/2,(q.vx-q.vy)*TW/2);ctx.lineCap='round';
   for(let i=1;i<q.trail.length;i++){const a=toScreen(q.trail[i-1].x,q.trail[i-1].y),b=toScreen(q.trail[i].x,q.trail[i].y);
-    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'||q.kind==='needle'||q.kind==='star'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
+    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'||q.kind==='needle'||q.kind==='star'||q.kind==='pellet'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
   ctx.save();ctx.translate(p.x,p.y-24);ctx.rotate(ang);if(q.wavy)ctx.translate(0,Math.sin(time*25+q.ph)*7);
-  if(!['crescent','blade','arrow','needle','star'].includes(q.kind))glowDot(0,0,15*s,q.c,.45);
+  if(!['crescent','blade','arrow','needle','star','pellet'].includes(q.kind))glowDot(0,0,15*s,q.c,.45);
   if(q.kind==='blade'){// 비도: 검기 반달과 달리 빛무리 없이 쇠 단도 한 자루. 칼끝을 앞으로 날아가며 칼등에 번뜩임이 스치고, 자루 끝 붉은 술이 나부낀다
     ctx.scale(s,s);ctx.strokeStyle=rgba(HI,.35);ctx.lineWidth=.8;for(const k of[-1.6,1.6]){ctx.beginPath();ctx.moveTo(-6,k);ctx.lineTo(-30,k*.6);ctx.stroke()}
     const fl=Math.sin(time*30+q.ph);ctx.strokeStyle='rgba(200,50,40,.85)';ctx.lineWidth=1.4;
@@ -152,6 +152,11 @@ function drawProj(q){
   else if(q.kind==='star'){// 표창: 네 날 별 모양이 돌며 날아간다
     ctx.scale(s,s*.6);ctx.rotate(time*26+q.ph);for(let n=0;n<4;n++){ctx.rotate(Math.PI/2);ctx.fillStyle=n%2?'#aeb8c4':'#d8e0ea';ctx.beginPath();ctx.moveTo(0,-2.2);ctx.lineTo(9,0);ctx.lineTo(0,2.2);ctx.closePath();ctx.fill()}
     ctx.fillStyle='#4a3a2c';ctx.beginPath();ctx.arc(0,0,1.8,0,7);ctx.fill()}
+  else if(q.kind==='pellet'){// 벽력자 (요대 암기, g_amgi.js): 검은 쇠구슬에 도화선 불똥이 튄다. 맞거나 떨어지면 터진다
+    ctx.scale(s,s);ctx.rotate(-ang);const fl=Math.sin(time*40+q.ph);
+    ctx.fillStyle='#2a2622';ctx.beginPath();ctx.arc(0,0,4.2,0,7);ctx.fill();ctx.fillStyle='rgba(200,190,170,.55)';ctx.beginPath();ctx.arc(-1.4,-1.4,1.3,0,7);ctx.fill();
+    ctx.strokeStyle='#8a6a40';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(1.5,-3.6);ctx.quadraticCurveTo(4,-7,2.5+fl,-9);ctx.stroke();
+    glowDot(2.5+fl,-9,6+fl*1.5,'255,190,90',.9);ctx.fillStyle='#fff6d0';ctx.beginPath();ctx.arc(2.5+fl,-9,1.1,0,7);ctx.fill()}
   else if(q.kind==='crescent'){const r=Math.min(12*s,16);ctx.scale(.55,1);
     ctx.fillStyle=rgba(q.c,.5);ctx.beginPath();ctx.arc(-r*.4,0,r,-1.3,1.3);ctx.arc(-r*1.1,0,r*1.05,1.05,-1.05,true);ctx.closePath();ctx.fill();
     for(let i=0;i<4;i++){const a=-.9+i*.6;ctx.strokeStyle=rgba(i%2?HI:q.c,.45);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.4+Math.cos(a)*r*.85,Math.sin(a)*r*.85);ctx.lineTo(-r*2.6,Math.sin(a)*r*.6);ctx.stroke()}
