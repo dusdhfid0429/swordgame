@@ -47,17 +47,22 @@ function exec(f,e,X){
     case'arc':for(let i=0;i<hits;i++)later(i*.12,()=>{anim(.24);arcHit(X,f.rad*rm,Math.cos(f.spread/2),m,kb,stun);fArc(X,f.rad*rm,f.spread,c,6,.28)});break;
     case'circle':for(let i=0;i<hits;i++)later(i*.13,()=>{anim(.26);circleHit(X,P,f.rad*rm,m,kb,stun);fSpin(X,P,f.rad*rm,c,5,.32)});break;
     case'line':anim(.22);lineHit(X,f.len*rm,f.w,m,kb,stun);fLine(X,f.len*rm,c,f.len>5?10:5,.3,f.wavy);break;
-    case'proj':{anim(.22);let n=f.cnt;if(f.full)n=Math.round(n*(t>=1?1.5:1));else if(t>=1)n+=1;
+    case'proj':{if(X.art.cls==='암'&&amgiBare()){amgiStab(f,e,X);break}   // 요대가 비면 비도를 쥐고 근접 (g_amgi.js, v190)
+      const fire=()=>{anim(.22);let n=f.cnt;if(f.full)n=Math.round(n*(t>=1?1.5:1));else if(t>=1)n+=1;
       const base=Math.atan2(P.fy,P.fx),sp=(f.spread||.3)*(n>f.cnt&&!f.full?1.2:1),dirs=[];
       for(let i=0;i<n;i++)dirs.push(f.full?base+i/n*Math.PI*2:base+(n>1?(i/(n-1)-.5)*sp:0));
       const am=X.art.cls==='암',vol=am?new Map:null,shot=(a,tg)=>{if(tg)a=Math.atan2(tg.y-P.y,tg.x-P.x)+(Math.random()-.5)*.04;
         projs.push({x:P.x,y:P.y,vx:Math.cos(a)*f.spd,vy:Math.sin(a)*f.spd,left:f.len*rm,m,kb,stun,pierce:f.pierce||t>=2,size:(f.size||1)*(1+.15*t),
-          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:f.pj||X.pj||CLASS[X.art.cls].pj,psn:f.psn,trail:[],ph:Math.random()*6,vol});if(am)amgiLoad(projs[projs.length-1])};   // 요대 암기를 싣는다 (g_amgi.js)   // f.pj·psn: 암기술 초식의 모양과 독 (v181)
-      if(am)amgiAim(dirs,e,f.len*rm).forEach(s=>s.d?later(s.d,()=>shot(s.a,s.tg.hp>0?s.tg:null)):shot(s.a,s.tg));else dirs.forEach(a=>shot(a));
+          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:f.pj||X.pj||CLASS[X.art.cls].pj,psn:f.psn,trail:[],ph:Math.random()*6,vol});
+        if(am&&!amgiLoad(projs[projs.length-1])&&!AMGI_FREE){projs.pop();return null}return projs[projs.length-1]};   // 요대 암기를 싣는다, 다 떨어진 발은 안 나간다 (g_amgi.js)   // f.pj·psn: 암기술 초식의 모양과 독 (v181)
+      if(am){const L=amgiAim(dirs,e,f.len*rm),aim=L.some(s=>s.tg)?null:amgiAimPt(f.len*rm);   // 궤적 f.path (v190): 조준한 적(tg)을 나선·호·꺾임·소용돌이로 쫓는다
+        L.forEach((s,i)=>{const go=()=>{const tg=s.tg&&s.tg.hp>0?s.tg:null,q=shot(s.a,tg);if(q&&f.path)amgiFly(q,f.path,dirs[i%n],tg,aim,i,n)};s.d?later(s.d,go):go()})}
+      else dirs.forEach(a=>shot(a))};
+      if(f.path==='bullet'){anim(.15);amgiCharge(X,c);later(APATH.bullet.charge,fire)}else fire();   // 회전 일격: 기를 모았다 던진다
       break}
     case'drop':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(Math.min(f.r,2));
       circleHit(X,ctr,f.rad*rm,m,kb,stun);fBolt(X,ctr,c,f.rad>2?1.6:1);fx.push({t:'puff',x:ctr.x,y:ctr.y,life:.6});fRing(X,ctr,f.rad*rm,c,4,.4);if(f.rad>2)shake=.3;break}
-    case'rain':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(2),n=f.cnt+(t>=1?2:0)+(t>=3?3:0);
+    case'rain':{if(X.art.cls==='암'&&amgiBare()){amgiStab(f,e,X);break}anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(2),n=f.cnt+(t>=1?2:0)+(t>=3?3:0);
       for(let i=0;i<n;i++)later(i*.06,()=>{const a=Math.random()*Math.PI*2,d=Math.sqrt(Math.random())*f.rad*rm,pt={x:ctr.x+Math.cos(a)*d,y:ctr.y+Math.sin(a)*d};
         circleHit(X,pt,.8,m,.2,stun);if(X.art.cls==='암')needleRain(X,pt,c);else fBolt(X,pt,c,.7);fRing(X,pt,.8,c,3,.3);if(X.art.pt==='petal')fParts(X,pt,c,6,50,'petal',.6)});break}
     case'pull':{anim(.3);const o={x:P.x,y:P.y},R=f.rad*rm;
@@ -93,10 +98,10 @@ function blinkTo(X,tg){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col:X.art.c});con
   let nx=tg.x+dx/l*.7,ny=tg.y+dy/l*.7;if(!walkAt(nx,ny)||!hstep(tg.x,tg.y,nx,ny)){nx=tg.x-dx/l*.7;ny=tg.y-dy/l*.7}if(walkAt(nx,ny)&&hstep(tg.x,tg.y,nx,ny)){P.x=nx;P.y=ny}face(tg.x,tg.y);P.path=null}
 const blockedAt=(x,y)=>{const i=Math.floor(x),j=Math.floor(y);return i<0||j<0||i>=N||j>=NH||!!objs[j][i]};
 function updateProjs(dt){
-  for(const q of projs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt;q.trail.push({x:q.x,y:q.y});if(q.trail.length>8)q.trail.shift();
+  for(const q of projs){if(q.path)amgiMove(q,dt);else{q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt}q.trail.push({x:q.x,y:q.y,z:q.hz});   // 암기 궤적 (g_amgi.js)if(q.trail.length>8)q.trail.shift();
     if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
     if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
-    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
+    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.path==='bullet')amgiImpact(q,e);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
   for(const q of projs)if(q.left<=0&&q.boom)amgiBoom(q);   // 벽력자는 맞거나 떨어진 자리에서 터진다
   projs=projs.filter(q=>q.left>0);
 }

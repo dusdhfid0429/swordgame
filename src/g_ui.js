@@ -100,7 +100,7 @@ function hud(){
 function plabel(f){
   const m={melee:'단일',multi:`${f.hits}연타`,arc:'부채꼴',circle:'주변 전체',line:'직선 관통',drop:'원격 낙하',rain:'광역 낙하',pull:'끌어당김',chain:'연쇄',blink:'순간이동',blinkMulti:'연속 순간이동',dash:'돌진'};
   let s=f.p==='proj'?(f.full?`${f.cnt}방향 원격`:f.cnt>1?`원격 ${f.cnt}발`:'원격'):m[f.p];
-  if(f.p==='dash')s+=' + '+plabel(f.then);if(f.hits>1&&f.p!=='multi')s+=` ×${f.hits}`;if(f.stun)s+=' · 기절';if(f.p==='proj'&&f.pierce)s+=' · 관통';return s}
+  if(f.p==='dash')s+=' + '+plabel(f.then);if(f.hits>1&&f.p!=='multi')s+=` ×${f.hits}`;if(f.stun)s+=' · 기절';if(f.p==='proj'&&f.pierce)s+=' · 관통';if(f.path&&typeof PATH_N!=='undefined')s+=' · '+PATH_N[f.path];return s}
 
 // ================= windows =================
 let panel=null;

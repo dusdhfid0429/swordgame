@@ -127,15 +127,16 @@ function drawGlow2(f){
     strokeBolts(bs,f.col,k,.8);glowDot(b.x,b.y-28,30,f.col,k)}
   else if(f.t==='brk')drawBrk(f);
   else if(f.t==='bt')drawBT(f);   // 화경 이후 병기 기운 (g_blade.js)
-  else if(f.t==='el')drawEl(f);   // 속성 재질 (r_elfx.js)
+  else if(f.t==='el')drawEl(f);
+  else if(f.t==='dag')drawDag(f);   // 손에 쥔 비도 (g_amgi.js)   // 속성 재질 (r_elfx.js)
   else drawGlow(f);
   ctx.globalAlpha=1;
 }
 function drawProj(q){
-  const p=toScreen(q.x,q.y),t=q.X.t,s=q.size,ang=Math.atan2((q.vx+q.vy)*TH/2,(q.vx-q.vy)*TW/2);ctx.lineCap='round';
+  const p=toScreen(q.x,q.y),t=q.X.t,s=q.size,vx=q.dvx??q.vx,vy=q.dvy??q.vy,ang=Math.atan2((vx+vy)*TH/2,(vx-vy)*TW/2);ctx.lineCap='round';   // dvx: 휘는 암기는 실제로 움직인 쪽 (g_amgi.js)
   for(let i=1;i<q.trail.length;i++){const a=toScreen(q.trail[i-1].x,q.trail[i-1].y),b=toScreen(q.trail[i].x,q.trail[i].y);
-    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'||q.kind==='needle'||q.kind==='star'||q.kind==='pellet'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24);ctx.lineTo(b.x,b.y-24);ctx.stroke()}
-  ctx.save();ctx.translate(p.x,p.y-24);ctx.rotate(ang);if(q.wavy)ctx.translate(0,Math.sin(time*25+q.ph)*7);
+    ctx.strokeStyle=rgba(q.c2&&!isDark(q.c)?q.c2:q.c,i/q.trail.length*.35);ctx.lineWidth=(q.kind==='blade'||q.kind==='needle'||q.kind==='star'||q.kind==='pellet'?1.2:3+t)*s*i/q.trail.length;ctx.beginPath();ctx.moveTo(a.x,a.y-24-(q.trail[i-1].z||0));ctx.lineTo(b.x,b.y-24-(q.trail[i].z||0));ctx.stroke()}
+  ctx.save();ctx.translate(p.x,p.y-24-(q.hz||0));ctx.rotate(ang);if(q.path==='bullet')drawBulletSpin(q,s);if(q.wavy)ctx.translate(0,Math.sin(time*25+q.ph)*7);
   if(!['crescent','blade','arrow','needle','star','pellet'].includes(q.kind))glowDot(0,0,15*s,q.c,.45);
   if(q.kind==='blade'){// 비도: 검기 반달과 달리 빛무리 없이 쇠 단도 한 자루. 칼끝을 앞으로 날아가며 칼등에 번뜩임이 스치고, 자루 끝 붉은 술이 나부낀다
     ctx.scale(s,s);ctx.strokeStyle=rgba(HI,.35);ctx.lineWidth=.8;for(const k of[-1.6,1.6]){ctx.beginPath();ctx.moveTo(-6,k);ctx.lineTo(-30,k*.6);ctx.stroke()}
