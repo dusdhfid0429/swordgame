@@ -65,9 +65,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   // 잡화점 비급과 문파 보법
   const s6=await p.evaluate(()=>{P.silver=999;const i=SHOP.gen.findIndex(q=>q[0]==='bbook:b_seom');buy('gen',i);const it=P.bag.find(q=>q.slot==='bbook');readBook(it);return{has:!!P.bob.b_seom,cur:P.bcur}});
   ok('잡화점에서 섬전보(중승) 비급을 사서 읽으면 익히고 바로 쓴다',s6.has&&s6.cur==='b_seom');
-  const s7=await p.evaluate(()=>{delete P.bob.b_yuun;P.sect=null;const a=bobBlock('b_yuun',1);P.sect='hwasan';P.mtot={hwasan:0};P.merit={hwasan:500};const r0=bobBlock('b_yuun',1);
-    P.mtot.hwasan=60;learnBob('b_yuun',1);const r1=bobBlock('b_ilwi',1);return{a,r0,learned:!!P.bob.b_yuun,merit:P.merit.hwasan,r1,shop:bobBlock('b_ilwi')}});
-  ok(`상승·절정은 문파에서: "${s7.a}", "${s7.r0}" → 익힘(공적 500→${s7.merit}), 절정 "${s7.r1}", 상점으로는 "${s7.shop}"`,s7.a==='문파 제자만'&&s7.r0==='정식제자 이상'&&s7.learned&&s7.merit===400&&s7.r1==='호법 이상'&&s7.shop==='문파에서');
+  // v187: 상승·절정은 문파마다 고유한 보법 (g_sectmove.js, 자세한 시험은 t123_sectmove). 옛 공용 유운보는 더 이상 가르치지 않는다
+  const s7=await p.evaluate(()=>{P.sect=null;const a=bobBlock('B_hwasan_2',1);P.sect='hwasan';P.srank={hwasan:0};P.merit={hwasan:500};P.bob.B_hwasan_1=1;const r0=bobBlock('B_hwasan_2',1);
+    P.srank.hwasan=1;learnBob('B_hwasan_2',1);const r1=bobBlock('B_hwasan_3',1);return{a,r0,learned:!!P.bob.B_hwasan_2,merit:P.merit.hwasan,r1,shop:bobBlock('B_hwasan_3'),old:bobBlock('b_yuun',1)}});
+  ok(`문파 보법은 본산에서: "${s7.a}", "${s7.r0}" → 익힘(공적 500→${s7.merit}), 절정 "${s7.r1}", 상점으로는 "${s7.shop}", 옛 유운보 "${s7.old}"`,s7.a==='화산파 제자만'&&/이상/.test(s7.r0)&&s7.learned&&s7.merit===400&&/이상/.test(s7.r1)&&s7.shop==='문파에서'&&s7.old==='문파에서 익히지 않는다');
   await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(200);
   ok('무공 창에 보법 목록과 바꾸기',await p.evaluate(()=>$('wbody').textContent.includes('보법')&&!!document.querySelector('#wbody [data-act^="bsel:"]')));
   await p.evaluate(()=>act('bsel:b_basic'));ok('바꾸면 그 보법을 쓴다',await p.evaluate(()=>P.bcur==='b_basic'));

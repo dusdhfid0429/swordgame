@@ -9,7 +9,9 @@ const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,
 // 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
 const START=GD.START||{};
 function startSet(s){const st=START[s.id]||{};const art=s.arts.find(a=>a.n===st.art&&!a.hi)||s.arts.find(a=>!a.hi)||s.arts[0];
-  return{w:st.w||art.cls,art,bob:st.bob&&typeof BOBS!=='undefined'&&BOBS[st.bob]?st.bob:null,gg:st.gg&&typeof GGS!=='undefined'&&GGS[st.gg]?st.gg:null,sim:typeof SIM!=='undefined'&&SIM[`N_${s.id}_1`]?`N_${s.id}_1`:null}}
+  // v187: 보법·경공은 문파마다 고유한 것의 입문(중승) 단계 (g_sectmove.js). 없으면 START의 공용 비급
+  const sb=typeof BOBS!=='undefined'&&BOBS[`B_${s.id}_1`]?`B_${s.id}_1`:null,sg=typeof GGS!=='undefined'&&GGS[`G_${s.id}_1`]?`G_${s.id}_1`:null;
+  return{w:st.w||art.cls,art,bob:sb||(st.bob&&typeof BOBS!=='undefined'&&BOBS[st.bob]?st.bob:null),gg:sg||(st.gg&&typeof GGS!=='undefined'&&GGS[st.gg]?st.gg:null),sim:typeof SIM!=='undefined'&&SIM[`N_${s.id}_1`]?`N_${s.id}_1`:null}}
 function startSetTxt(s){const k=startSet(s),n=[`[${k.art.n}]`];if(k.bob)n.push(`보법 [${BOBS[k.bob].n}]`);if(k.gg)n.push(`경공 [${GGS[k.gg].n}]`);if(k.sim)n.push(`심법 [${SIM[k.sim].n}]`);return n.join(' · ')}
 function giveStartSet(s){const k=startSet(s),got=[];
   if(!P.arts[k.art.id]){P.arts[k.art.id]={p:0,f:ARTS[k.art.id].forms.map((f,i)=>i===0)};got.push(`${k.art.n} · ${ARTS[k.art.id].forms[0].n}`)}

@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=8;
+const SAVE_VER=9;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -31,7 +31,24 @@ const MIGRATE=[
     if(mv.length){p.amgiGift=1;d.notes.push(`${mv.map(k=>ARTS[k].n).join('·')}은(는) 이제 암기술입니다. 활이 아니라 비도를 차야 펼칠 수 있어 유엽비도 한 자루를 넣어 두었습니다.`)}return d},
   // v7 → v8: 세력·문파 우호도 (g_rep.js). 옛 생은 빈 우호도로 시작한다(바탕만: 내 문파·세력, 적 세력)
   d=>{const p=d.P;if(p&&!p.rep)p.rep={fac:{},sect:{},gift:{}};return d},
+  // v8 → v9: 문파 보법·경공 (v187, g_sectmove.js). 문파에 든 사람은 내 문파 보법·경공을 받는다: 옛 공용 상승·절정(유운보·제운종 등) 가운데 가장 높은 등급을
+  //   문파 상한까지 문파 것으로 바꾸고(넘는 것은 그대로 남김), 하나도 없으면 입문(중승) 단계. 경공 숙련은 큰 쪽을 넘긴다
+  d=>{const p=d.P;if(!p||!p.sect||!SECTS[p.sect]||!SECT_MOVE[p.sect])return d;const got=[];
+    for(const k of['b','g']){const r=smMigrate(p,k);if(r)got.push(r)}
+    if(got.length)d.notes.push(`${SECTS[p.sect].n}에는 이 문파만의 보법·경공이 있습니다. ${got.join(', ')}(으)로 바꿔 두었습니다.`);return d},
 ];
+// 저장 자료(p)의 보법(k='b')·경공(k='g')을 문파 것으로. 바뀐 것이 있으면 알림 글, 없으면 null
+function smMigrate(p,k){const sid=p.sect,top=smTop(sid),own=k==='b'?p.bob:p.gk;if(!own||!top)return null;
+  const T=k==='b'?BOBS:GGS,mk=k==='b'?smBid:smGid,cur=k==='b'?'bcur':'gkcur',m=k==='g'?(p.ggm=p.ggm||{}):null;
+  const legacy=Object.keys(own).filter(id=>T[id]&&!T[id].sect&&T[id].g>=2);
+  let have=0;for(let g=1;g<=top;g++)if(own[mk(sid,g)])have=g;
+  let want=Math.max(have,1);for(const id of legacy)want=Math.max(want,Math.min(top,T[id].g));
+  const nid=mk(sid,want);if(have===want&&!legacy.some(id=>T[id].g<=want))return null;
+  own[nid]=1;
+  for(let g=1;g<want;g++){const lo=mk(sid,g);if(m){m[nid]=Math.max(m[nid]||0,m[lo]||0);delete m[lo]}delete own[lo];if(p[cur]===lo)p[cur]=nid}
+  const gone=[];for(const id of legacy)if(T[id].g<=want){if(m){m[nid]=Math.max(m[nid]||0,m[id]||0);delete m[id]}delete own[id];gone.push(T[id].n);if(p[cur]===id)p[cur]=nid}
+  const c=T[p[cur]];if(!c||!own[p[cur]]||(!c.sect&&c.g<=want))p[cur]=nid;
+  return `${k==='b'?'보법':'경공'} [${T[nid].n}](${BGRADE[want]})${gone.length?` ← ${gone.join('·')}`:''}`}
 const AMGI_MOVED=['S_dang_0','S_dang_1','S_janggang_1','S_haomun_1'];
 function mergeArtAliases(d){const al=artAliases(),p=d.P;
   if(p&&p.arts)for(const[o,c]of Object.entries(al)){const x=p.arts[o];if(!x)continue;delete p.arts[o];
