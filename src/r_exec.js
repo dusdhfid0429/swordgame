@@ -98,8 +98,14 @@ function amgiAim(dirs,e,len){
 function blinkTo(X,tg){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col:X.art.c});const dx=tg.x-P.x,dy=tg.y-P.y,l=Math.hypot(dx,dy)||1;
   let nx=tg.x+dx/l*.7,ny=tg.y+dy/l*.7;if(!walkAt(nx,ny)||!hstep(tg.x,tg.y,nx,ny)){nx=tg.x-dx/l*.7;ny=tg.y-dy/l*.7}if(walkAt(nx,ny)&&hstep(tg.x,tg.y,nx,ny)){P.x=nx;P.y=ny}face(tg.x,tg.y);P.path=null}
 const blockedAt=(x,y)=>{const i=Math.floor(x),j=Math.floor(y);return i<0||j<0||i>=N||j>=NH||!!objs[j][i]};
+// 나무·지붕 위에서 쏜 투사체는 주인공 높이에서 출발해 겨눈 적(없으면 날아갈 끝)에 닿을 때 땅 높이로 내려온다
+function projDrop(q){const z=q.z!==undefined?q.z:(P.z||0)>0&&Math.abs(q.x-P.x)<.8&&Math.abs(q.y-P.y)<.8?P.z:0;q.z=q.z0=z;if(!z)return;
+  q.ox=q.x;q.oy=q.y;const v=Math.hypot(q.vx,q.vy)||1,ux=q.vx/v,uy=q.vy/v;let zd=Math.max(1,q.left||1),bs=1e9;
+  for(const e of foes()){if(e.hp<=0)continue;const dx=e.x-q.x,dy=e.y-q.y,a=dx*ux+dy*uy,off=Math.abs(dx*uy-dy*ux);if(a>.3&&a<=zd+1&&off<Math.max(1.2,a*.35)&&off+a*.1<bs){bs=off+a*.1;zd=a}}
+  q.zd=Math.max(.8,zd)}
 function updateProjs(dt){
-  for(const q of projs){if(q.path)amgiMove(q,dt);else{q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt}q.trail.push({x:q.x,y:q.y,z:q.hz});if(q.trail.length>8)q.trail.shift();   // 암기 궤적 (g_amgi.js)
+  for(const q of projs){if(q.z0===undefined)projDrop(q);
+    if(q.path)amgiMove(q,dt);else{q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt}if(q.z0)q.z=q.z0*Math.max(0,1-Math.hypot(q.x-q.ox,q.y-q.oy)/q.zd);q.trail.push({x:q.x,y:q.y,z:q.hz,zz:q.z||0});if(q.trail.length>8)q.trail.shift();   // 암기 궤적 (g_amgi.js)
     if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
     if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
     for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.path==='bullet')amgiImpact(q,e);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
