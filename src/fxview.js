@@ -4,7 +4,7 @@
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:'',dum:6};
+const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:'',dum:6,ammo:''};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -60,7 +60,9 @@ const trSel=a=>{const t=artTr0(a),o=(k,v)=>`<option value="${esc(k)}"${k===v?' s
 
 // ---- 무공 초식 ----
 function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;return}if(!w||w.cls!==cls)P.eq.weapon=mkWeapon(cls,1,0)}
-function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);P.arts=P.arts||{};if(!P.arts[id])P.arts[id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
+// 요대 암기 (g_amgi.js): 고른 암기를 요대에 넣고 넉넉히 채운다. 없음이면 요대를 푼다
+function setAmmo(){P.beltGift=1;if(!V.ammo){P.eq.belt=null;return}if(!P.eq.belt)P.eq.belt=mkBelt(1);P.eq.belt.am=V.ammo;P.mats[V.ammo]=99}
+function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);setAmmo();P.arts=P.arts||{};if(!P.arts[id])P.arts[id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
   P.cur=id;P.arts[id].p=TIERP[V.tier];place();const e=tgt(),X=mkX(id,1);X.t=V.tier;
   if(i==='ult'){heroAtk('ult');showBanner(a.ult.n,`${a.n} 필살기`);P.flash=.5;P.flashCol=a.c;shake=.35;
     a.ult.steps.forEach(st=>exec({...st},e,X));return}
@@ -87,7 +89,7 @@ const PRIM=[
   ['소용돌이 (vortex)',()=>GL({t:'vortex',x:P.x,y:P.y,r:2.6,col:V.col,w:3,life:.7},{t:V.tier,art:{}})],
   ['연쇄 번개 (zap)',()=>{let a={x:P.x,y:P.y};mobs.slice(0,5).forEach((m,i)=>{const s=a;later(i*.08,()=>GL({t:'zap',x:s.x,y:s.y,ex:m.x,ey:m.y,col:V.col,w:3,life:.3},{t:V.tier,art:{}}));a={x:m.x,y:m.y}})}],
 ];
-const PROJ=['crescent','blade','needle','star','arrow','spear','ring','orb'],PROJN={crescent:'검기 반달',blade:'비도',needle:'비침',star:'표창',arrow:'화살',spear:'창기',ring:'기환',orb:'기공탄'};
+const PROJ=['crescent','blade','needle','star','pellet','arrow','spear','ring','orb'],PROJN={crescent:'검기 반달',blade:'비도',needle:'비침',star:'표창',pellet:'벽력자',arrow:'화살',spear:'창기',ring:'기환',orb:'기공탄'};
 function shoot(kind,elc){place();const e=tgt();face(e.x,e.y);heroAtk('flat');
   const X={art:{c:V.col,cls:'검',pt:'spark',elc:!!elc,el:null},key:null,t:V.tier,mul:1,combo:1};
   for(const d of[-.25,0,.25]){const a=Math.atan2(P.fy,P.fx)+d;projs.push({x:P.x,y:P.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:6,m:0,kb:0,stun:0,pierce:1,size:1+.15*V.tier,hit:new Set,X,c:V.col,kind,trail:[],ph:Math.random()*6})}}
@@ -195,7 +197,7 @@ function render(){if(!P)return;
     h+=`<h3>병기</h3><div class="ctl" style="padding:0;border:0">${Object.keys(CLASS).map(c=>btn(c,'cls:'+c,V.cls===c)).join('')}</div>
       <h3>무공 (${arts.length})</h3><select data-a="art">${['정','사','마','중'].map(s=>{const l=arts.filter(x=>(x.side||'중')===s);return l.length?`<optgroup label="${s==='중'?'기타':s+'파'}">${l.map(x=>`<option value="${esc(x.id)}"${x.id===V.art?' selected':''}>${esc(x.n)}${x.sect&&SECTS[x.sect]?' · '+esc(SECTS[x.sect].n):''}${x.grade!=null&&typeof AGR!=='undefined'?' · '+esc(AGR[x.grade]||''):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
     if(a){h+=`<p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>${esc(a.d||'')} ${a.el?'· '+esc(a.el):''}${a.elc?' · 번개':''}</p>
-      ${trSel(a)}${elSel()}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
+      ${trSel(a)}${elSel()}${a.cls==='암'&&typeof AMMO!=='undefined'?`<h3>요대 암기</h3><select data-a="ammo"><option value="">없음 (초식 본래 모양)</option>${Object.entries(AMMO).map(([k,m])=>`<option value="${esc(k)}"${k===V.ammo?' selected':''}>${esc(k)} · ${esc(m.d)}</option>`).join('')}</select>`:''}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
   }else if(TAB==='realm'){
@@ -232,7 +234,7 @@ function paintBar(){const B=document.body.classList,sel=(a,o,cur)=>`<select data
   barH()}
 function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
   if(k==='spd'){V.speed=+v;render();return}if(k==='dum'){V.dum=+v;arena();render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
-  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
+  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='ammo')V.ammo=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
 box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
 // 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
 const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move','blade']);

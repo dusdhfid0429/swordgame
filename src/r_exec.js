@@ -52,7 +52,7 @@ function exec(f,e,X){
       for(let i=0;i<n;i++)dirs.push(f.full?base+i/n*Math.PI*2:base+(n>1?(i/(n-1)-.5)*sp:0));
       const am=X.art.cls==='암',vol=am?new Map:null,shot=(a,tg)=>{if(tg)a=Math.atan2(tg.y-P.y,tg.x-P.x)+(Math.random()-.5)*.04;
         projs.push({x:P.x,y:P.y,vx:Math.cos(a)*f.spd,vy:Math.sin(a)*f.spd,left:f.len*rm,m,kb,stun,pierce:f.pierce||t>=2,size:(f.size||1)*(1+.15*t),
-          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:f.pj||X.pj||CLASS[X.art.cls].pj,psn:f.psn,trail:[],ph:Math.random()*6,vol})};   // f.pj·psn: 암기술 초식의 모양과 독 (v181)
+          wavy:f.wavy,hit:new Set,X,c,c2:X.art.c2,kind:f.pj||X.pj||CLASS[X.art.cls].pj,psn:f.psn,trail:[],ph:Math.random()*6,vol});if(am)amgiLoad(projs[projs.length-1])};   // 요대 암기를 싣는다 (g_amgi.js)   // f.pj·psn: 암기술 초식의 모양과 독 (v181)
       if(am)amgiAim(dirs,e,f.len*rm).forEach(s=>s.d?later(s.d,()=>shot(s.a,s.tg.hp>0?s.tg:null)):shot(s.a,s.tg));else dirs.forEach(a=>shot(a));
       break}
     case'drop':{anim(.3);const ctr=f.self?{x:P.x,y:P.y}:e?{x:e.x,y:e.y}:front(Math.min(f.r,2));
@@ -97,5 +97,6 @@ function updateProjs(dt){
     if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
     if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
     for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
+  for(const q of projs)if(q.left<=0&&q.boom)amgiBoom(q);   // 벽력자는 맞거나 떨어진 자리에서 터진다
   projs=projs.filter(q=>q.left>0);
 }

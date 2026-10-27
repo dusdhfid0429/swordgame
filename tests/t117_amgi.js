@@ -18,7 +18,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`날아가는 모양 셋 (${d.pj}), 독침 있음`,d.pj==='blade,needle,star'&&d.psn);
   ok(`병기 ${d.w}, 대장간에서 판다`,d.w==='유엽비도'&&d.smith);
   // 2. 싸움: 유엽비도를 차고 암기 무공 기본 공격은 비도가 날아가고, 독침은 중독시킨다
-  const f=await p.evaluate(()=>{const id='사암1',a=ARTS[id];P.eq.weapon=mkWeapon('암',1,0);P.arts[id]={p:100,f:a.forms.map(()=>true)};P.cur=id;recalc();
+  const f=await p.evaluate(()=>{const id='사암1',a=ARTS[id];P.eq.weapon=mkWeapon('암',1,0);P.arts[id]={p:100,f:a.forms.map(()=>true)};P.cur=id;recalc();P.eq.belt=null;   // 요대 암기(v186, t122)는 빼고 초식 본래 모양을 본다
+    
     const e=mkMob('산적',P.x+2,P.y);e.hp=e.maxHp=99999;mobs.push(e);P.target=e;projs=[];P.bcd=P.gcd=0;basicStrike(e);const k0=projs.map(q=>q.kind).join(',');
     projs=[];const X=mkX(id);exec({p:'proj',cnt:1,spd:19,len:7,m:.8,pj:'needle',psn:4},e,X);const q=projs[0];face(e.x,e.y);
     for(let i=0;i<40&&projs.length;i++)updateProjs(1/60);return{k0,kind:q&&q.kind,psn:e.psn,reach:autoReach(),hero:heroCls(),...(heroAtk('flat'),{ssh:P.ssh,set:(P.sset||[]).length})}});
