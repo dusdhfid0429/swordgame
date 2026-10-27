@@ -38,13 +38,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 6. 무공창 경공 카드에 특징 글
   const r7=await p.evaluate(()=>{P.gkcur='g_basic';openPanel('arts');return $('wbody').textContent});
   ok('무공창 경공 카드에 특징 설명',r7.includes('연타')&&r7.includes('이어 뛰기 여유')&&r7.includes('내공 소모 -25%'));
-  // 7. 가입: 화산파 본산 장문인 앞에서 가입하면 매화검법 첫 초식 + 섬전보 + 청풍답월 + 자하심법. 고급 무공은 안 받는다
+  // 7. 가입: 화산파 본산 장문인 앞에서 가입하면 매화검법 첫 초식 + 매화보 + 암향표(v187 문파 고유, 중승) + 자하심법. 고급 무공은 안 받는다
   await p.evaluate(()=>{closePanels();P.gk={g_basic:1};P.gkcur='g_basic';P.bob={b_basic:1};P.bcur='b_basic';P.age=17;P.fame=0;P.evil=0;loadRegion('hq_hwasan');openNpc(hqNpc('hq_hwasan'))});await p.waitForTimeout(200);
   const t0=await p.evaluate(()=>$('wbody').textContent);
-  ok('가입 창에 입문공 세트 안내',t0.includes('입문공 세트')&&t0.includes('매화검법')&&t0.includes('섬전보')&&t0.includes('청풍답월')&&t0.includes('자하심법')&&t0.includes('공적으로 받는다'));
+  ok('가입 창에 입문공 세트 안내',t0.includes('입문공 세트')&&t0.includes('매화검법')&&t0.includes('매화보')&&t0.includes('암향표')&&t0.includes('자하심법')&&t0.includes('공적으로 받는다'));
   await p.click('[data-act="sjoin:hwasan"]');await p.waitForTimeout(250);
-  const j=await p.evaluate(()=>{const s=SECTS.hwasan,hi=s.arts.find(a=>a.hi),k=startSet(s);return{sect:P.sect,w:k.w,art:k.art.n,f:P.arts[k.art.id]&&P.arts[k.art.id].f.filter(Boolean).length,hi:!!P.arts[hi.id],bob:P.bob.b_seom,bcur:P.bcur,gg:P.gk.g_cheongpung,gkcur:P.gkcur,sim:P.sim,known:simKnown('N_hwasan_1'),wpn:P.eq.weapon&&P.eq.weapon.cls}});
-  ok(`화산파 가입: 주력 ${j.w} [${j.art}] 초식 ${j.f}개, 섬전보 ${j.bob}, 청풍답월 ${j.gg}, 심법 ${j.sim}, 고급 무공 ${j.hi?'받음':'안 받음'}`,j.sect==='hwasan'&&j.w==='검'&&j.art==='매화검법'&&j.f===1&&!j.hi&&j.bob===1&&j.bcur==='b_seom'&&j.gg===1&&j.gkcur==='g_cheongpung'&&j.sim==='N_hwasan_1'&&j.known&&j.wpn==='검');
+  const j=await p.evaluate(()=>{const s=SECTS.hwasan,hi=s.arts.find(a=>a.hi),k=startSet(s);return{sect:P.sect,w:k.w,art:k.art.n,f:P.arts[k.art.id]&&P.arts[k.art.id].f.filter(Boolean).length,hi:!!P.arts[hi.id],bob:P.bob.B_hwasan_1,bcur:P.bcur,gg:P.gk.G_hwasan_1,gkcur:P.gkcur,sim:P.sim,known:simKnown('N_hwasan_1'),wpn:P.eq.weapon&&P.eq.weapon.cls}});
+  ok(`화산파 가입: 주력 ${j.w} [${j.art}] 초식 ${j.f}개, 매화보 ${j.bob}, 암향표 ${j.gg}, 심법 ${j.sim}, 고급 무공 ${j.hi?'받음':'안 받음'}`,j.sect==='hwasan'&&j.w==='검'&&j.art==='매화검법'&&j.f===1&&!j.hi&&j.bob===1&&j.bcur==='B_hwasan_1'&&j.gg===1&&j.gkcur==='G_hwasan_1'&&j.sim==='N_hwasan_1'&&j.known&&j.wpn==='검');
   // 8. 권 문파(소림)는 수련용 병기를 안 주고, 도 문파(팽가)는 박도를 준다
   const r8=await p.evaluate(()=>{P.sect=null;P.arts={};P.bag=[];const got=giveStartSet(SECTS.paeng);const w=P.bag.find(it=>it.slot==='weapon');P.bag=[];P.sect=null;const got2=giveStartSet(SECTS.shaolin);return{got,w:w&&w.cls,n2:P.bag.filter(it=>it.slot==='weapon').length,got2}});
   ok(`팽가 입문공 ${r8.got.join('·')} (병기 ${r8.w}), 소림 입문공 ${r8.got2.join('·')} (병기 ${r8.n2}개)`,r8.w==='도'&&r8.got.some(n=>n.startsWith('오호단문도'))&&r8.n2===0&&r8.got2.some(n=>n.startsWith('나한권')));
