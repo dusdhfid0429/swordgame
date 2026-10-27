@@ -7921,8 +7921,8 @@ function pyoMkRun(p,dep){const RC=CARV.recruit,E=CARV.escort,lo=cvDanger(p.k),c=
 function pyoFacTo(dst){const L=[];for(const sid of(PROV[dst]&&PROV[dst].sects||[]))if(SECTS[sid])L.push({n:SECTS[sid].n,fac:alFac(SECTS[sid].al),sid});
   for(const al of Object.keys(ALLY))L.push({n:typeof MAENG!=='undefined'&&MAENG[al]?MAENG[al].n:ALLY[al].n,fac:alFac(al),al});
   return L.length?pick(L.filter(o=>FAC_FOE[o.fac])):null}
-// 습격할 세력: 받는 곳의 적 세력 가운데, 되도록 플레이어 편이 아닌 쪽
-const pyoFoes=to=>{if(!to||!FAC_FOE[to.fac])return[];const all=FAC_FOE[to.fac],f=pfac(),o=all.filter(x=>x!==f);return o.length?o:all};
+// 습격할 세력: 받는 곳의 적 세력 가운데, 되도록 플레이어 편이 아닌 쪽. 관군은 표행을 노리지 않는다(사용자 2026-10-27)
+const pyoFoes=to=>{if(!to||!FAC_FOE[to.fac])return[];const all=FAC_FOE[to.fac].filter(x=>x!=='관'),f=pfac(),o=all.filter(x=>x!==f);return o.length?o:all};
 function pyoRuns(p){G.pyoRuns=G.pyoRuns||{};const RC=CARV.recruit,t=nowS();const L=(G.pyoRuns[p.id]||[]).filter(r=>r.me||r.dep>t);
   for(const r of L)if(!r.me)r.got=Math.max(r.got,Math.min(r.need-1,Math.floor(r.need*Math.min(1,(t-r.t0)/Math.max(1,r.dep-r.t0)))));   // 떠날 날이 다가올수록 사람이 찬다(한 자리는 남긴다)
   while(L.filter(r=>!r.me).length<RC.runs){const last=Math.max(t,...L.map(r=>r.dep));L.push(pyoMkRun(p,last+(L.length?R1(RC.gap[0],RC.gap[1]):R1(RC.dep[0],RC.dep[1]))))}

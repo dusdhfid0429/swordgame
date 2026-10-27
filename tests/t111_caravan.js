@@ -63,7 +63,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     for(const c of CVS.slice())cvEnd(c,true);mobs=[];P.quests=[];return{facs,foes}});
   ok(`사천맹에 가는 표물: 창에 받는 곳·노리는 자, 정파 플레이어면 ${r7d.foes.join('·')}이 습격 (습격자 ${r7e.facs})`,r7d.h&&r7d.to==='사천맹 총단'&&!r7d.foes.includes('정')&&!r7e.none&&r7e.facs.length===1&&r7e.foes.includes(r7e.facs[0]));
   const r7f=await p.evaluate(()=>{const s0=P.side;P.side='사';const a=pyoFoes({fac:'정'});P.side=s0;return{a,b:pyoFoes({fac:'사'})}});
-  ok(`받는 곳 세력의 적만 습격 (정파에 가면 ${r7f.a}, 사파에 가면 ${r7f.b})`,r7f.a.join()==='마'&&r7f.b.every(f=>['마','관'].includes(f)));
+  ok(`받는 곳 세력의 적만, 관군은 빼고 습격 (정파에 가면 ${r7f.a}, 사파에 가면 ${r7f.b})`,r7f.a.join()==='마'&&r7f.b.join()==='마'&&!r7d.foes.includes('관'));
   // 6. 행렬이 습격당하고, 거들어 물리치면 사례금과 이어지는 일감
   await p.evaluate(()=>{enterRegion('pv_henan',24.5,24.5);mobs=[]});
   const r8=await p.evaluate(()=>{const cv=cvSpawn('sang');if(!cv)return{none:1};P.x=cv.cart.x+1;P.y=cv.cart.y;cvAmbush(cv,false);const n=cv.raid.length,tg=cv.raid.every(r=>r.tgt&&r.tgt.cv===cv);
