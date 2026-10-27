@@ -125,9 +125,12 @@ const FLOW=()=>[
 function medit(on,kind){place();P.medit=false;P.qiTraining=false;if(on){if(kind==='qi')P.qiTraining=true;else P.medit=true}}
 const TRAIN=[['근력 수련','str'],['민첩 수련','agi'],['지구력 수련','end'],['본원진기 수련','qi']];
 function setSect(id){V.sect=id;P.sect=id||null;recalc();if(typeof garbSync==='function')try{garbSync()}catch(e){}}
-function leapFx(st){place();ggInit();P.gk=P.gk||{};for(const id in GGS)P.gk[id]=1;P.gkcur=Object.keys(GGS).sort((a,b)=>GGS[b].g-GGS[a].g)[0];
+// v187: 문파를 고르면 그 문파 경공·보법(가장 높은 단계, 잔상이 문파 색), 아니면 공용 가운데 가장 높은 것
+const smPick=(T,sec,t)=>{const ids=Object.keys(T).filter(k=>(sec?T[k].sect===V.sect:!T[k].sect)&&(!t||T[k].t===t));return ids.sort((a,b)=>T[b].g-T[a].g)[0]};
+function leapFx(st,sec){place();ggInit();P.gk=P.gk||{};const id=(sec||V.sect)&&smPick(GGS,1)||smPick(GGS,0);P.gk[id]=1;P.gkcur=id;
   P.ggm=P.ggm||{};P.ggm[P.gkcur]=100;face(P.x+(st===1?-1:1),P.y-1);if(st>1)P.ggc={n:st-1,until:time+2};else P.ggc=null;leap()}
-function bobFx(t){place();bobInit();const id=Object.keys(BOBS).filter(k=>BOBS[k].t===t).sort((a,b)=>BOBS[b].g-BOBS[a].g)[0];if(!id)return;
+function bobFx(t){place();bobInit();if(t==='sect'){const id=V.sect&&smPick(BOBS,1);if(!id){addText(P.x,P.y-.6,'문파를 고르세요','#ffd36a');return}t=BOBS[id].t}
+  const id=V.sect&&smPick(BOBS,1,t)||smPick(BOBS,0,t);if(!id)return;
   P.bob[id]=1;P.bcur=id;if(t==='flank'){const g=BG.fail[BOBS[id].g];BG.fail[BOBS[id].g]=0;P.target=tgt();bobeop();BG.fail[BOBS[id].g]=g}else{face(P.x-1,P.y);bobeop()}}
 function spec(k){place();if(k==='점혈'){const e=tgt();P.x=e.x;P.y=e.y+1.4;P.target=e}P.sp=P.sp||{};P.sp[k]=1;P.scd[k]=0;P.mats.비도=9;special(k)}
 // v172 피격·빈사 알림 (g_danger.js): 뷰어의 주인공은 다치지 않으므로 맞은 셈을 치고, 목인장이 칠 준비를 하는 셈을 친다
@@ -137,7 +140,7 @@ hook('mobTick',e=>{if(e.dngDemo&&e.wind>0)e.stun=0});   // 목인장은 늘 기�
 hook('tick',dt=>{for(const m of mobs)if(m.dngDemo&&m.wind>0){m.wind-=dt;if(m.wind<=0){m.wind=0;m.swing=.24;hitDemo(m.dngL?.4:.1)}}});
 const MOVE=[
   ['경공 1단',()=>leapFx(1)],['경공 2단',()=>leapFx(2)],['경공 3단',()=>leapFx(3)],
-  ['보법 · 직선',()=>bobFx('line')],['보법 · 간파 (등 뒤)',()=>bobFx('flank')],
+  ['보법 · 직선',()=>bobFx('line')],['보법 · 간파 (등 뒤)',()=>bobFx('flank')],['문파 보법 (고른 문파)',()=>bobFx('sect')],
   ['암기 (비도)',()=>spec('암기')],['독공',()=>spec('독공')],['점혈',()=>spec('점혈')],
   ['피격 번쩍임 (큰 피해)',()=>hitDemo(.3)],
   ['적 공격 예고 !! (맞으면 쓰러짐)',()=>windDemo(1)],['빈사 위험 박동',()=>{dngDemo=3}],

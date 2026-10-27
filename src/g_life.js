@@ -50,7 +50,7 @@ function updateP(dt){
   if(joy.on){kx+=joy.gx;ky+=joy.gy}
   P.moving=false;const sp=moveSpd()*dt;P.runT=Math.max(0,(P.runT||0)-dt);
   if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e+elevLeapZ(L,e);
-    if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:'170,200,255'});
+    if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:(typeof smLeapCol==='function'&&smLeapCol(L))||'170,200,255'});
     if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L);ggLand(L)}}
   else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
@@ -196,7 +196,7 @@ function leap(){
   if(!land){log('뛰어내릴 곳이 없습니다.','info');return}
   const dur=heroSprite()?[.6,.7,.5][st-1]:.42;P.qi-=qi;P.inv=dur;P.path=null;P.target=null;P.chan=null;if(heroSprite()&&!P.ride){P.sj=P.sjMax=dur;P.sjSt=st;P.satk=0}else{P.jump=.35}
   P.leap={sx:P.x,sy:P.y,ex:land.x,ey:land.y,t:0,dur,z0:P.z||0,z1:to?to.z:0,to,st};ggUsed(st,dur);
-  if(st>=2){addText(P.x,P.y-.4,`경공 ${st}단`,st===3?'#8fd0ff':'#cfe3ff');for(let i=0;i<3;i++)fx.push({t:'ghost',x:P.x,y:P.y,life:.3+i*.1,col:st===3?'80,160,255':'190,220,255'})}P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
+  if(st>=2){addText(P.x,P.y-.4,`경공 ${st}단`,st===3?'#8fd0ff':'#cfe3ff');for(let i=0;i<3;i++)fx.push({t:'ghost',x:P.x,y:P.y,life:.3+i*.1,col:(typeof smLeapCol==='function'&&smLeapCol(P.leap))||(st===3?'80,160,255':'190,220,255')})}P.perch=null;P.medit=false;fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});
 }
 // ================= 생활: gathering, farming, crafting =================
 function interact(t){
