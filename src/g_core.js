@@ -37,9 +37,9 @@ const curCls=()=>art().cls;
 const eqList=()=>Object.values(P.eq).filter(Boolean);
 const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]||0)),0);
 // 무공은 그 병기를 차야 펼친다. 권법은 맨손이거나 권갑(철권갑)을 찼을 때만: 검을 찬 채 권법은 못 쓴다
-const hasWeaponFor=c=>{const w=P.eq.weapon;return c==='권'?!w||w.cls==='권':!!(w&&w.cls===c)};
-const wpnNeed=c=>c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
-const weaponAtk=()=>{const w=P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
+const hasWeaponFor=c=>{const w=P.eq.weapon;if(c==='단')return !!beltMw();return c==='권'?!w||w.cls==='권':!!(w&&w.cls===c)};   // 단검술은 요대에 찬 단도·절편 (g_amgi.js, v191)
+const wpnNeed=c=>c==='단'?'단검술은 요대에 단도나 절편을 차야 펼칠 수 있습니다.':c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
+const weaponAtk=()=>{const w=curCls()==='단'?beltMw():P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0)+simTv('hm'));
@@ -96,7 +96,8 @@ function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t
 // ================= items =================
 const QN=q=>q>=1.35?'명품':q>=1.1?'상품':q>=.85?'중품':'하품';
 const QC=q=>q>=1.35?'#c58bff':q>=1.1?'#6aa8ff':q>=.85?'#7fd16a':'#d8d2c2';
-function mkWeapon(c,q,made){const a=Math.round((c==='궁'?14:c==='창'?13:c==='암'?11:10)*q*(1+Math.random()*.15));return{id:++itemId,slot:'weapon',cls:c,name:WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made}}
+function mkWeapon(c,q,made,nm){const dw=c==='단'&&GD.DAG_W[nm||WNAME[c]],a=Math.round((c==='궁'?14:c==='창'?13:c==='암'?11:c==='단'?9:10)*q*(1+Math.random()*.15)*(dw?dw.atk:1));   // 단: 요대 근접 무기 단도·절편 (v191)
+  const w={id:++itemId,slot:'weapon',cls:c,name:nm||WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made};if(dw&&dw.hm)w.hm=dw.hm;return w}
 function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(const k in o)it[k]=k==='spd'?+(o[k]*q).toFixed(2):Math.round(o[k]*q);it.price=Math.round(15*q*q+(it.hp||0)*.4+(it.qi||0)*.4+(it.hm||0));return it}
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
@@ -111,7 +112,8 @@ function itemDesc0(it){
     // 기연·창안 무공은 side가 없다 (정사 공용). v157 기연동굴부터 이런 비급이 행낭에 들어와 SIDES[null]에서 행낭이 열리지 않았다
     return `${AGR[a.grade||0]} · ${SIDES[a.side]?SIDES[a.side].n:'정사 공용'} ${CLASS[a.cls]?CLASS[a.cls].n:''} · ${it.form+1}초식 · 숙련 ${f.req} · 활력 ${f.cost} · 연속기 +${f.bonus}%`}
   if(it.slot==='leaf')return leafDesc(it);
-  if(it.slot==='lib')return libDesc(it);   // 장경각 비급·최후의 비전 (g_remnant.js)   // 비급 낱장 (g_mkmat.js)
+  if(it.slot==='lib')return libDesc(it);
+  if(it.slot==='bp')return bpDesc(it);   // 문파 비전 암기 설계도첩 (g_amgi.js)   // 장경각 비급·최후의 비전 (g_remnant.js)   // 비급 낱장 (g_mkmat.js)
   if(it.slot==='bbook'){const b=BOBS[it.bob];return `${BGRADE[b.g]} ${b.t==='line'?'직선':'간파'} 보법 · 읽으면 익힌다 · ${b.d}`}
   if(it.slot==='gbook'){const g=GGS[it.gg];return `${BGRADE[g.g]} 경공 · ${GG_MAX[g.g]}단까지 · 읽으면 익힌다 · ${g.d}${g.tr&&g.tr.length?' · '+ggTraitTxt(g):''}`}
   if(it.slot==='pbook'){const p=PAS[it.pas];return `${PTYPE[p.type].n} 공용 패시브 · 읽으면 익힌다 · ${p.d}`}
@@ -123,7 +125,7 @@ function itemDesc0(it){
 }
 const itemLabel=it=>it.q?`[${QN(it.q)}] ${it.name}`:it.name;
 const itemCol=it=>it.q?QC(it.q):it.slot==='book'?(!ARTS[it.art]?'#7a7060':!ARTS[it.art].side||ARTS[it.art].side===P.side?'#e8c66e':'#9a8d72'):'#e8d9a8';
-const addMat=(k,n=1)=>{P.mats[k]=(P.mats[k]||0)+n};
+const addMat=(k,n=1)=>{P.mats[k]=(P.mats[k]||0)+n;if(n>0&&GD.AMMO[k])beltReg(k)};   // 암기는 요대에 등록된다 (g_amgi.js, v191)
 // 받은 물건은 사라지지 않는다: 행낭이 차면 창고로, 창고도 차면 행낭에 넘치게 둔다
 function giveItem(it){if(P.bag.length<24){P.bag.push(it);return 'bag'}
   if(G.storage&&G.storage.bag.length<(typeof STORE_MAX!=='undefined'?STORE_MAX:60)){G.storage.bag.push(it);log(`행낭이 가득 차 ${itemLabel(it)}은(는) 창고에 맡겨 두었다.`,'info');return 'store'}
@@ -140,7 +142,7 @@ function readBlock(it){
   if(it.slot==='tbook')return P.jobs[it.job].on?'이미 익힌 기술입니다.':null;
   if(it.slot==='gpage')return null;
   if(it.slot==='leaf')return leafBlock(it);
-  if(it.slot==='lib')return null;
+  if(it.slot==='lib'||it.slot==='bp')return null;
   if(it.slot!=='book')return null;
   if(!itemArtOk(it))return '지금 강호에 전하지 않는 무공의 비급이라 읽을 수 없습니다. 버리지 않으면 그대로 남습니다.';
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
@@ -160,6 +162,7 @@ function readBook(it){
   if(it.slot==='tbook'){P.jobs[it.job].on=1;P.bag.splice(P.bag.indexOf(it),1);log(`${JOBS[it.job].n}의 기술을 익혔습니다.`,'xp');return}
   if(it.slot==='leaf'){leafBind(it);return}
   if(it.slot==='lib'){libOpen(it);return}
+  if(it.slot==='bp'){bpRead(it);return}
   if(it.slot==='gpage'){P.sg.pages[it.page]=(P.sg.pages[it.page]||0)+it.n;P.bag.splice(P.bag.indexOf(it),1);log(`절세신공 [${it.page}] ${it.n}장을 익혀 깨쳤습니다. (${P.sg.pages[it.page]}/10)`,'xp');return}
   const a=ARTS[it.art],f=a.forms[it.form],s=A(a.id);
   if(it.tu)tuRead(a);   // 견식·낱장 사본: 다른 계열이면 정파는 악업 (g_mkmat.js)
@@ -251,7 +254,7 @@ function gainMast(id,v){
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
-  if(a.base||a.gy||(a.made&&!a.sect))a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
+  if(a.base||a.gy||a.dag||(a.made&&!a.sect))a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
   runHooks('mastDone',{id,s,before});
 }
@@ -309,7 +312,7 @@ function hurtP(dm,src){
 }
 
 // ================= 초식, 연속기, 필살기 =================
-function engage(f){if((f.p==='proj'||f.p==='rain')&&curCls()==='암'&&amgiBare())return ABARE.r*.9;   // 요대가 비면 비도를 쥐고 근접 (g_amgi.js, v190)
+function engage(f){
   switch(f.p){case'melee':case'multi':return CLASS[curCls()].reach;case'arc':return f.rad*.9;case'circle':return f.rad*.85;case'line':return f.len*.9;
   case'proj':return f.full?f.len*.8:f.len*.9;case'pull':return f.rad;case'dash':return f.dist+1.2;case'blinkMulti':return 5;default:return f.r||4}}
 const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
@@ -328,7 +331,8 @@ function useForm(i,silent){
 function basicStrike(e){
   if(P.bcd>0||P.gcd>0||!e)return;const useArt=hasWeaponFor(curCls())?P.cur:'base',a=ARTS[useArt];const X=mkX(useArt);X.pj=CLASS[a.cls].pj;
   P.bcd=.8*cdMul();face(e.x,e.y);heroAtk();P.lastAtk=time;
-  if(rangedCls(a.cls)&&useArt!=='base'){const am=a.cls==='암';projs.push({x:P.x,y:P.y,vx:P.fx*(am?16:14),vy:P.fy*(am?16:14),left:am?5.5:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:am?'blade':'arrow',trail:[],ph:0})}
+  if(rangedCls(a.cls)&&useArt!=='base'){const am=a.cls==='암';projs.push({x:P.x,y:P.y,vx:P.fx*(am?16:14),vy:P.fy*(am?16:14),left:am?5.5:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:am?'blade':'arrow',trail:[],ph:0});
+    if(am&&!AMGI_FREE&&!amgiLoad(projs[projs.length-1])){projs.pop();amgiOut()}}   // v191: 평타도 요대 암기를 하나씩 쓴다. 다 떨어지면 단검술·권각으로 (g_amgi.js)
   else{anim(.2);hitE(X,e,.75,.25,0);fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}
 }
 function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다

@@ -177,9 +177,9 @@ function pBag(){
     <p class="note">무기 공격력은 같은 계열 무공을 펼칠 때만 붙는다. 내구가 0이면 공격력이 반으로 준다. 다른 계열 내공의 비급은 읽을 수 없지만 팔 수는 있다.${sell?' 지금은 상인 앞이라 팔 수 있다.':''}</p>`;
 }
 // 행낭 한 줄. 물건 하나가 잘못돼도 행낭 전체가 안 열리는 일이 없게 pBag이 줄마다 감싼다
-function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf'||it.slot==='lib';
+function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf'||it.slot==='lib'||it.slot==='bp';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]||''}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
-      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':'읽기'):'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
+      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':it.slot==='bp'?'살펴보기':'읽기'):it.slot==='weapon'&&it.cls==='단'?'요대에 차기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
 function pAlly(){
   const pets=allies.filter(a=>a.kind==='pet').map(a=>`<div class="it"><div><b>${esc(a.name)}</b> <small class="dim">${a.k} · ${a.age}/${a.life}살</small><span>생명 ${Math.ceil(a.hp)}/${Math.round(a.maxHp)} · 공격 ${a.atk} · ${a.mode==='wait'?'기다리는 중 (빠르게 회복)':'따라오는 중'}${P.ride===a?' · 타는 중':''}</span></div>
     <div class="ib">${B('pmode:'+allies.indexOf(a),a.mode==='wait'?'따라와':'기다려')}${B('feed:'+allies.indexOf(a),'먹이 · 고기',{d:!(P.mats.고기>0)})}${B('rename:'+allies.indexOf(a),'이름')}${a.d.ride?B('ride','타기/내리기'):''}${B('free:'+allies.indexOf(a),'풀어주기')}</div></div>`).join('')||'<p class="note">길들인 짐승이 없습니다. 짐승을 오른쪽 클릭하거나 선택하고 F를 누르면 활력을 써서 길들인다. 성공률은 내공(갑자)에 달려 있다. 토끼와 양은 길들일 수 없다.</p>';
@@ -240,8 +240,9 @@ const SHOP=GD.SHOP;
 function shopList(id){
   return SHOP[id].map(([k,t,p0,mr],i)=>{const p=worldPrice(p0);   // v153: 천하통일 세상의 물가 (g_story5.js). mr = 살 수 있는 최소 경지
     if(mr!=null&&realmIdx()<mr)return shopRow(k,`${CONSUME[k]?CONSUME[k].d+' · ':''}${rk(mr)} 이상`,p,`buy:${id}:${i}`,true);
-    if(t==='mat'||t==='mat10'){const nm=t==='mat10'?`${k} 10${AMMO[k]?AMMO[k].unit:'자루'}`:k;return shopRow(nm,AMMO[k]?`요대 암기 · ${AMMO[k].d}`:CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
-    if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}`,p,`buy:${id}:${i}`)}
+    // mat10: 암기 한 묶음 (v191부터 PACK=100개, 값은 그대로)
+    if(t==='mat'||t==='mat10'){const nm=t==='mat10'?`${k} ${PACK}${AMMO[k]?AMMO[k].unit:'자루'}`:k;return shopRow(nm,AMMO[k]?`요대 암기 · ${AMMO[k].d}`:CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
+    if(t==='weapon'){const[,c,wn]=k.split(':');return shopRow(`${wn||WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${c==='단'?`요대에 차는 근접 무기 · ${GD.DAG_W[wn||WNAME[c]].d}`:CLASS[c].d}`,p,`buy:${id}:${i}`)}
     if(t==='gear')return shopRow(k==='armor'?'무명 무복':k==='belt'?BELTS[0]:'짚신',k==='armor'?'생명 +24':k==='belt'?`요대 · 고른 암기를 암기 초식에 싣는다 · 현묘도 +${GD.BELT_HM}`:'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
     if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
@@ -254,7 +255,7 @@ function buy(id,i){
   const[k,t,p1,mr]=SHOP[id][i];if(mr!=null&&realmIdx()<mr)return;const p0=worldPrice(p1),p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?worldPrice(60):p0;if(P.silver<p)return;
   if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook'||t==='bbook'||t==='gbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
-  if(t==='mat')addMat(k);else if(t==='mat10')addMat(k,10);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
+  if(t==='mat')addMat(k);else if(t==='mat10')addMat(k,PACK);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0,k.split(':')[2]));
   else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):k==='belt'?mkBelt(1):mkGear('boots','짚신',1,{spd:.12,hm:3}));
   else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else if(t==='gbook')P.bag.push(mkGBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
@@ -334,7 +335,6 @@ function act(s){
     case'quitno':quitAsk=false;break;
     case'quitapp':quitApp();return;
     case'ctl':closePanels();setTouch(x==='t');return;
-    case'amk':if(P.eq.belt&&AMMO[x]){P.eq.belt.am=x;log(`요대 암기를 ${x}(으)로 바꿨습니다.`,'sys')}break;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}

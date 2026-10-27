@@ -150,6 +150,10 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .it span{display:block;font-size:11px;color:var(--paper-dim)}
 .ib{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .ib .btn{font-size:12px;padding:3px 8px}
+.bring{position:relative;width:210px;height:210px;margin:6px auto 8px;border-radius:50%;border:1px dashed rgba(232,198,110,.35)}
+.bring .bslot{position:absolute;transform:translate(-50%,-50%);width:62px;min-height:40px;padding:3px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;line-height:1.15;border-radius:10px;background:#16110c;border:1px solid #4a3c27;color:#e8d9a8;cursor:pointer}.bring .bslot:disabled{cursor:default;color:#6a5e4a}
+.bring .bslot b{font-weight:600;font-size:11px;white-space:nowrap}.bring .bslot.on{border-color:var(--gold,#e8c66e);box-shadow:0 0 0 2px rgba(232,198,110,.45)}.bring .bslot.out{opacity:.5}
+.bring .bcen{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;display:flex;flex-direction:column;gap:2px;pointer-events:none}.bring .bcen b{font-size:14px}
 .mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:4px}
 .mat{background:#0a0806e6;border:1px solid #4a3c27;padding:4px 6px;font-size:12px;display:flex;justify-content:space-between;gap:4px;align-items:center}
 .mat button{font:11px var(--body);background:#3a2c1a;color:var(--paper);border:1px solid var(--bronze);padding:1px 5px;cursor:pointer}

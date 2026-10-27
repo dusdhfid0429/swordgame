@@ -78,6 +78,9 @@ function buildArts(){
   arts.base=artFx({id:'base',side:null,cls:'권',el:null,n:'기초권각',base:1,
     forms:[{...F('정권','melee',{m:1,cd:.3}),req:0,cost:0,bonus:10,qp:GD.QSTAR.base[0]},{...F('연환퇴','multi',{hits:2,m:.55,cd:.45}),req:20,cost:0,bonus:20,qp:GD.QSTAR.base[1]},{...F('소퇴','arc',{spread:2,rad:1.5,m:.9,cd:.55}),req:45,cost:0,bonus:30,qp:GD.QSTAR.base[2]}],
     ult:{n:'선풍퇴',steps:[F('','circle',{rad:2.4,m:1.4,kb:1})]},d:'누구나 아는 기초 권각. 숙련도 20·45에 저절로 초식이 열린다. 오성 제한에 들지 않는다.'});
+  // 단검술 (v191): 요대의 단도·절편으로 펼친다. 암기가 떨어지면 암기 무공 대신 저절로 든다 (g_amgi.js). 초식은 숙련에 저절로 열린다
+  {const D=GD.DAGGER;arts[D.id]=artFx({id:D.id,side:null,cls:'단',el:null,n:D.n,dag:1,c0:D.c,
+    forms:D.forms.map((f,i)=>({...f,cost:0,qp:GD.QSTAR.pct[i]})),ult:D.ult,d:'요대에 찬 단도·절편으로 붙어 싸우는 단검 무공. 숙련이 오르면 초식이 저절로 열린다.'})}
   return arts;
 }
 

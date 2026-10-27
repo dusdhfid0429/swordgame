@@ -50,7 +50,7 @@ function mobLoot(e){
     if(d.boss&&have.length>1&&Math.random()<.5){const it=gear();if(!out.some(o=>o.item===it))out.push({item:it})}
   }
   if(d.hostile&&!d.beast&&Math.random()<.12)out.push({mat:pick(['금창약','소환단','비도']),n:1});
-  if(a&&a.cls==='암'&&Math.random()<.35)out.push({mat:pick(Object.keys(AMMO)),n:3+Math.floor(Math.random()*6)});   // 암기 쓰던 적은 암기 몇 개를 흘린다
+  if(a&&a.cls==='암'&&Math.random()<.35)out.push({mat:pick(AMMO_COMMON),n:3+Math.floor(Math.random()*6)});   // 암기 쓰던 적은 암기 몇 개를 흘린다
   if(d.boss&&realmIdx()>=5){const sg=P.sg.name||pick(Object.keys(SHINGONG));out.push({page:sg})}
   if(d.boss&&Math.random()<.25)out.push({item:mkSBook(pick(['암기','독공','점혈']))});
   out.forEach((it,i)=>drops.push({x:e.x+(i%3-1)*.3,y:e.y+Math.floor(i/3)*.3,it,t:Math.random()*6}));
