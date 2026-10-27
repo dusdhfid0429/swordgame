@@ -60,10 +60,9 @@ const trSel=a=>{const t=artTr0(a),o=(k,v)=>`<option value="${esc(k)}"${k===v?' s
 
 // ---- 무공 초식 ----
 function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;return}
-  if(cls==='단'){if(!P.eq.belt)P.eq.belt=mkBelt(1);if(!P.eq.belt.mw)P.eq.belt.mw=mkWeapon('단',1,0);return}   // 단검술(v191)은 요대의 단도로 펼친다
   if(!w||w.cls!==cls)P.eq.weapon=mkWeapon(cls,1,0)}
-// 요대 암기 (g_amgi.js): 고른 암기를 요대에 등록하고 넉넉히 채운다. '' 초식 본래 모양(암기 없이도 던짐). v191: 요대 빔 근접은 없어지고 단검술(병기 '단')로 따로 본다
-function setAmmo(){P.beltGift=1;P.dagGift=1;if(V.cls==='단'){AMGI_FREE=true;return}AMGI_FREE=!V.ammo;if(!V.ammo){P.eq.belt=null;return}if(!P.eq.belt)P.eq.belt=mkBelt(1);const b=P.eq.belt;b.reg=[V.ammo];b.am=V.ammo;P.mats[V.ammo]=99}
+// 요대 암기 (g_amgi.js): 고른 암기를 요대에 등록하고 넉넉히 채운다. '' 초식 본래 모양(암기 없이도 던짐). v192: 요대는 무기 칸의 암기 병기. 단검술·절편술은 병기 '단'·'편'으로 따로 본다
+function setAmmo(){P.beltGift=1;P.dagGift=1;const b=P.eq.weapon&&P.eq.weapon.cls==='암'?P.eq.weapon:null;AMGI_FREE=!V.ammo||!b;if(!b)return;b.reg=V.ammo?[V.ammo]:[];b.regInit=1;b.am=V.ammo||null;if(V.ammo)P.mats[V.ammo]=99}
 function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);setAmmo();P.arts=P.arts||{};if(!P.arts[id])P.arts[id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
   P.cur=id;P.arts[id].p=TIERP[V.tier];place();const e=tgt(),X=mkX(id,1);X.t=V.tier;
   if(i==='ult'){heroAtk('ult');showBanner(a.ult.n,`${a.n} 필살기`);P.flash=.5;P.flashCol=a.c;shake=.35;

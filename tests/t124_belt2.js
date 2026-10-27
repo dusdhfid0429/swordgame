@@ -12,8 +12,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const all=Object.values(ASECT).flat();o.counts=Object.values(ASECT).map(l=>l.length);o.uniq=new Set(all).size===all.length&&all.every(k=>AMMO[k]);
     o.notSmith=!SHOP.smith.some(x=>all.includes(x[0]));
     // 2. 암기 병기를 들면 요대·비도·단도·단검술
-    P.eq.belt=null;P.beltGift=0;P.dagGift=0;delete P.arts.dag;P.mats={};P.eq.weapon=mkWeapon('암',1,0);recalc();const B0=P.eq.belt;
-    o.gift=[B0&&B0.reg.join(','),B0&&B0.mw&&B0.mw.name,!!A('dag'),ARTS.dag.cls];
+    P.beltGift=0;P.dagGift=0;delete P.arts.dag;delete P.arts.jeol;P.mats={};P.eq.weapon=mkWeapon('암',1,0);recalc();const B0=P.eq.weapon;
+    o.gift=[B0.reg.join(','),B0.mw&&B0.mw.name,!!A('dag'),ARTS.dag.cls,B0.name,P.eq.belt===undefined];
     // 3. 암기를 얻으면 등록, 칸이 차면 더는 안 됨
     addMat('매화침',2);addMat('회선표',1);addMat('독사침',1);addMat('벽력자',5);o.reg=B0.reg.join(',');o.cap=beltCap(B0);
     // 4. 시계방향: 비도를 다 쓰면 매화침 → 회선표 → 독사침 → 벽력자
@@ -29,11 +29,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     addMat('비도',3);runHooks('tick',1);o.back=P.cur;
     // 8. 요대에 단검이 없으면 권각
     const mw=B0.mw;B0.mw=null;for(const k of B0.reg)P.mats[k]=0;runHooks('tick',1);o.fist=P.cur;B0.mw=mw;addMat('비도',1);runHooks('tick',1);
-    // 9. 행낭의 절편을 '장착'하면 요대로 간다, 대장간에서 단도·절편
-    const si=SHOP.smith.findIndex(x=>x[0]==='weapon:단:절편');P.silver=9999;buy('smith',si);const jp=P.bag[P.bag.length-1];o.jp=[jp.name,jp.cls,jp.hm];
-    act('eq:'+jp.id);o.eqd=[B0.mw.name,P.eq.weapon.cls,P.bag.includes(mw)];o.shop=shopList('smith').includes('절편')&&shopList('smith').includes('단도');
+    // 9. 대장간 절편을 요대에 차면(「요대에 차기」) 암기가 떨어졌을 때 절편술 (v192)
+    const si=SHOP.smith.findIndex(x=>x[0]==='weapon:편');P.silver=9999;buy('smith',si);const jp=P.bag[P.bag.length-1];o.jp=[jp.name,jp.cls];
+    o.beqBtn=pBag().includes('beq:'+jp.id);act('beq:'+jp.id);for(const k of B0.reg)P.mats[k]=0;P.cur=id;runHooks('tick',1);o.jeol=[B0.mw.name,P.cur,ARTS.jeol&&ARTS.jeol.cls,P.bag.includes(mw)];
+    o.shop=shopList('smith').includes('절편')&&shopList('smith').includes('단도')&&shopList('smith').includes('가죽 요대');
+    addMat('비도',2);runHooks('tick',1);o.back2=P.cur;
     // 10. 등록 빼기·넣기
     act('amr:독사침');o.rm=B0.reg.includes('독사침');P.mats.독사침=4;act('ama:독사침');o.add=B0.reg.includes('독사침');
+    // 9b. 단도를 무기 칸에 바로 들면 단검술을 바로 펼친다. 요대는 행낭으로
+    act('eq:'+mw.id);act('setart:dag');o.direct=[P.eq.weapon.cls,P.cur,hasWeaponFor('단'),weaponAtk()===mw.atk,P.bag.includes(B0)];
+    act('eq:'+B0.id);
     // 11. 문파 대장장이: 당문 외원 암기방, 문도에게만 비전 암기
     const O=REGIONS.hq_dang_outer,hl=(O.halls||[]).find(h=>/암기방/.test(h.n));o.hall=hl&&REGIONS[hl.id].npcs.some(n=>n.asmith==='dang');
     const n={id:'asmith',asmith:'dang',n:'당문 암기방 대장장이'};P.sect=null;let h=asmithDlg(n);o.locked=/문도에게만/.test(h);
@@ -44,11 +49,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     runHooks('kill',e);o.once=P.bag.filter(i=>i.slot==='bp').length;
     h=asmithDlg(n);o.give=h.includes('bpgive:');act(`bpgive:${bp.id}:dang`);o.given=[G.bpAt.dang.length,P.bag.includes(bp)];
     P.sect=null;const y0=P.mats.유성추||0;act('abuy:dang:유성추');o.bpBuy=(P.mats.유성추||0)-y0;
+    // 14. 옛 저장(v9) 옮기기
+    {const d=migrateSave({v:9,P:{eq:{weapon:{slot:'weapon',cls:'암',name:'유엽비도',atk:12,q:1,dur:50,maxDur:60,id:5},belt:{slot:'belt',name:'쇠고리 요대',q:1.2,hm:4,reg:['비도'],am:'비도',mw:{slot:'weapon',cls:'단',name:'절편',atk:8,id:7},id:6}},bag:[{slot:'belt',name:'가죽 요대',q:1,hm:3,id:8}]},G:{}});
+      const w=d.P.eq.weapon;o.mig=[w.cls,w.name,w.atk,w.reg.join(','),w.mw.cls,'belt' in d.P.eq,d.P.bag[0].cls,d.notes.some(n=>/무기 칸/.test(n))]}
     // 13. 적이 흘리는 암기는 대장간 암기만
     o.loot=AMMO_COMMON.length===5&&!AMMO_COMMON.some(k=>all.includes(k));
     return o});
   ok(`암기 문파 = 주력 무공 암기 (${r.sects}), 비전 암기 ${r.counts}가지, 겹침 없음 ${r.uniq}, 대장간에 없음 ${r.notSmith}`,r.sects&&r.counts.every(n=>n>=10)&&r.uniq&&r.notSmith);
-  ok(`암기 병기를 들면 요대(${r.gift[0]})·단도(${r.gift[1]})·단검술(${r.gift[2]}, ${r.gift[3]})`,r.gift[0]==='비도'&&r.gift[1]==='단도'&&r.gift[2]&&r.gift[3]==='단');
+  ok(`무기 칸 요대 ${r.gift[4]}(${r.gift[0]})·단도(${r.gift[1]})·단검술(${r.gift[2]}, ${r.gift[3]}), 요대 칸 없음 ${r.gift[5]}`,r.gift[0]==='비도'&&r.gift[1]==='단도'&&r.gift[2]&&r.gift[3]==='단'&&r.gift[4]==='가죽 요대'&&r.gift[5]);
   ok(`얻은 암기가 차례로 등록, 가죽 요대 ${r.cap}칸 (${r.reg})`,r.reg==='비도,매화침,회선표,독사침'&&r.cap===4);
   ok(`다 쓰면 시계방향 다음 암기 (${r.seq})`,r.seq==='비도,매화침,매화침,회선표,독사침,-');
   ok(`요대에서 고른 암기부터 (${r.pick})`,r.pick[0]==='회선표'&&r.pick[1]==='회선표');
@@ -56,7 +64,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`평타가 공짜 비도를 던지지 않음 (${r.noFree})`,r.noFree[0]===0&&r.noFree[1]==='dag');
   ok(`암기를 다시 얻으면 암기 무공으로 (${r.back})`,r.back==='사암1');
   ok(`요대에 단검이 없으면 권각 (${r.fist})`,r.fist==='base');
-  ok(`대장간 절편 (${r.jp}) → '장착'하면 요대로 (${r.eqd}), 진열 ${r.shop}`,r.jp[0]==='절편'&&r.jp[1]==='단'&&r.jp[2]===6&&r.eqd[0]==='절편'&&r.eqd[1]==='암'&&r.eqd[2]&&r.shop);
+  ok(`대장간 절편 (${r.jp}), 「요대에 차기」 ${r.beqBtn} → 암기가 떨어지면 절편술 (${r.jeol}), 진열 ${r.shop}, 암기 얻으면 돌아감 ${r.back2}`,r.jp[0]==='절편'&&r.jp[1]==='편'&&r.beqBtn&&r.jeol[0]==='절편'&&r.jeol[1]==='jeol'&&r.jeol[2]==='편'&&r.jeol[3]&&r.shop&&r.back2==='사암1');
+  ok(`단도를 손에 들면 단검술 바로 (${r.direct})`,r.direct[0]==='단'&&r.direct[1]==='dag'&&r.direct[2]&&r.direct[3]&&r.direct[4]);
+  ok(`옛 저장: 요대+유엽비도 → 무기 칸 요대 하나 (${r.mig})`,r.mig[0]==='암'&&r.mig[1]==='쇠고리 요대'&&r.mig[2]===12&&r.mig[3]==='비도'&&r.mig[4]==='편'&&r.mig[5]===false&&r.mig[6]==='암'&&r.mig[7]);
   ok(`요대 빼기·넣기 (${r.rm}→${r.add})`,r.rm===false&&r.add===true);
   ok(`당문 외원 암기방 대장장이 ${r.hall}, 문도 아니면 못 삼 (${r.locked},${r.noBuy}), 문도는 100개 (${r.buy})`,r.hall&&r.locked&&r.noBuy&&r.buy[0]===100&&r.buy[1]>0);
   ok(`하오문 멸문 → 설계도첩 (${r.bp}), 한 번만 (${r.once})`,r.bp[0]===0&&r.bp[1]==='하오문 비전 암기 설계도첩'&&r.bp[2]&&r.once===1);

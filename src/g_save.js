@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=9;
+const SAVE_VER=10;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -36,7 +36,22 @@ const MIGRATE=[
   d=>{const p=d.P;if(!p||!p.sect||!SECTS[p.sect]||!SECT_MOVE[p.sect])return d;const got=[];
     for(const k of['b','g']){const r=smMigrate(p,k);if(r)got.push(r)}
     if(got.length)d.notes.push(`${SECTS[p.sect].n}에는 이 문파만의 보법·경공이 있습니다. ${got.join(', ')}(으)로 바꿔 두었습니다.`);return d},
+  // v9 → v10: 요대가 무기 칸으로 (v192, g_amgi.js). 차고 있던 요대와 유엽비도는 요대 하나(암기 병기)로 합치고, 행낭·창고의 요대·유엽비도도 암기 병기 요대로.
+  //   절편(단 계열이던 것)은 편 계열로
+  d=>beltMigrate(d),
 ];
+// 옛 요대(slot belt)·유엽비도(암 병기) → 무기 칸의 요대. 공격력·내구는 유엽비도 것, 이름·등록 암기·근접 무기·현묘도는 요대 것
+function beltMigrate(d){const p=d.P;if(!p)return d;
+  const fixMw=w=>{if(w&&w.slot==='weapon'&&w.cls==='단'&&w.name==='절편')w.cls='편';return w};
+  const asBelt=(b,w)=>{const q=(b&&b.q)||(w&&w.q)||1,a=w?w.atk:Math.round(11*q);
+    return{...(w||{}),id:(w||b).id,slot:'weapon',cls:'암',q,name:b?b.name:GD.BELTS[0],atk:a,dur:w?w.dur:Math.round(60*q),maxDur:w?w.maxDur:Math.round(60*q),price:Math.max((w&&w.price)||0,(b&&b.price)||0),
+      hm:(b?b.hm:0)||Math.round(GD.BELT_HM*q),reg:b&&Array.isArray(b.reg)?b.reg:b&&b.am?[b.am]:[],am:b?b.am||null:null,mw:fixMw(b?b.mw||null:null),regInit:1}};
+  const fixBag=L=>(L||[]).map(it=>!it?it:it.slot==='belt'?asBelt(it,null):it.slot==='weapon'&&it.cls==='암'&&!Array.isArray(it.reg)?asBelt(null,it):fixMw(it));
+  const eq=p.eq||{},b=eq.belt,w=eq.weapon;
+  if(w&&w.cls==='암'&&!Array.isArray(w.reg))eq.weapon=asBelt(b,w);else{fixMw(w);if(b)(p.bag=p.bag||[]).push(asBelt(b,null))}
+  delete eq.belt;p.bag=fixBag(p.bag);if(d.G&&d.G.storage)d.G.storage.bag=fixBag(d.G.storage.bag);
+  if(b||w&&w.cls==='암')d.notes.push('요대는 이제 무기 칸에 차는 암기술 병기입니다. 차고 있던 요대와 유엽비도를 요대 하나로 합쳤습니다.');
+  return d}
 // 저장 자료(p)의 보법(k='b')·경공(k='g')을 문파 것으로. 바뀐 것이 있으면 알림 글, 없으면 null
 function smMigrate(p,k){const sid=p.sect,top=smTop(sid),own=k==='b'?p.bob:p.gk;if(!own||!top)return null;
   const T=k==='b'?BOBS:GGS,mk=k==='b'?smBid:smGid,cur=k==='b'?'bcur':'gkcur',m=k==='g'?(p.ggm=p.ggm||{}):null;

@@ -168,7 +168,7 @@ function pArts(){
 let shopMode=null;
 function pBag(){
   const sell=shopMode;
-  const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발',belt:'요대'}).map(([k,n])=>{const it=P.eq[k];
+  const eq=Object.entries({weapon:'무기',armor:'의복',acc:'장신구',boots:'신발'}).map(([k,n])=>{const it=P.eq[k];
     return `<button type="button" class="eq" data-act="uneq:${k}"${it?'':' disabled'}><small>${n}</small>${it?`<b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b><span>${itemDesc(it)}</span>`:'<span>비어 있음</span>'}</button>`}).join('');
   const bag=P.bag.length?P.bag.map(it=>{try{return bagRow(it,sell)}catch(e){typeof crashErr==='function'&&crashErr('bag '+(it&&it.name)+': '+e.message);
     return `<div class="it"><div><b>${esc(String(it&&it.name||'알 수 없는 물건'))}</b><span>알 수 없는 물건 · 버리지 않으면 그대로 남는다</span></div><div class="ib">${it&&it.id!=null?B('drop:'+it.id,'버리기'):''}</div></div>`}}).join(''):'<p class="note">행낭이 비어 있습니다.</p>';
@@ -179,7 +179,7 @@ function pBag(){
 // 행낭 한 줄. 물건 하나가 잘못돼도 행낭 전체가 안 열리는 일이 없게 pBag이 줄마다 감싼다
 function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf'||it.slot==='lib'||it.slot==='bp';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]||''}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
-      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':it.slot==='bp'?'살펴보기':'읽기'):it.slot==='weapon'&&it.cls==='단'?'요대에 차기':'장착')}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
+      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':it.slot==='bp'?'살펴보기':'읽기'):'장착')}${!read&&MELEE[it.cls]&&beltOf()?B('beq:'+it.id,'요대에 차기'):''}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
 function pAlly(){
   const pets=allies.filter(a=>a.kind==='pet').map(a=>`<div class="it"><div><b>${esc(a.name)}</b> <small class="dim">${a.k} · ${a.age}/${a.life}살</small><span>생명 ${Math.ceil(a.hp)}/${Math.round(a.maxHp)} · 공격 ${a.atk} · ${a.mode==='wait'?'기다리는 중 (빠르게 회복)':'따라오는 중'}${P.ride===a?' · 타는 중':''}</span></div>
     <div class="ib">${B('pmode:'+allies.indexOf(a),a.mode==='wait'?'따라와':'기다려')}${B('feed:'+allies.indexOf(a),'먹이 · 고기',{d:!(P.mats.고기>0)})}${B('rename:'+allies.indexOf(a),'이름')}${a.d.ride?B('ride','타기/내리기'):''}${B('free:'+allies.indexOf(a),'풀어주기')}</div></div>`).join('')||'<p class="note">길들인 짐승이 없습니다. 짐승을 오른쪽 클릭하거나 선택하고 F를 누르면 활력을 써서 길들인다. 성공률은 내공(갑자)에 달려 있다. 토끼와 양은 길들일 수 없다.</p>';
@@ -242,8 +242,8 @@ function shopList(id){
     if(mr!=null&&realmIdx()<mr)return shopRow(k,`${CONSUME[k]?CONSUME[k].d+' · ':''}${rk(mr)} 이상`,p,`buy:${id}:${i}`,true);
     // mat10: 암기 한 묶음 (v191부터 PACK=100개, 값은 그대로)
     if(t==='mat'||t==='mat10'){const nm=t==='mat10'?`${k} ${PACK}${AMMO[k]?AMMO[k].unit:'자루'}`:k;return shopRow(nm,AMMO[k]?`요대 암기 · ${AMMO[k].d}`:CONSUME[k]?CONSUME[k].d:k.endsWith('씨')?`${Object.keys(CROPS).find(c=>CROPS[c].seed===k)} 씨앗`:'',p,`buy:${id}:${i}`)}
-    if(t==='weapon'){const[,c,wn]=k.split(':');return shopRow(`${wn||WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${c==='단'?`요대에 차는 근접 무기 · ${GD.DAG_W[wn||WNAME[c]].d}`:CLASS[c].d}`,p,`buy:${id}:${i}`)}
-    if(t==='gear')return shopRow(k==='armor'?'무명 무복':k==='belt'?BELTS[0]:'짚신',k==='armor'?'생명 +24':k==='belt'?`요대 · 고른 암기를 암기 초식에 싣는다 · 현묘도 +${GD.BELT_HM}`:'이동 +0.12',p,`buy:${id}:${i}`);
+    if(t==='weapon'){const c=k.split(':')[1];return shopRow(`${WNAME[c]} <small class="dim">${CLASS[c].n}</small>`,`중품 · ${CLASS[c].d}${c==='암'?` · 암기 ${GD.BELT_CAP[0]}칸`:''}`,p,`buy:${id}:${i}`)}
+    if(t==='gear')return shopRow(k==='armor'?'무명 무복':'짚신',k==='armor'?'생명 +24':'이동 +0.12',p,`buy:${id}:${i}`);
     if(t==='tbook'){const j=k.split(':')[1];return shopRow(`기술서 · ${JOBS[j].n}`,P.jobs[j].on?'이미 익혔다':'읽으면 생활 기술을 익힌다',p,`buy:${id}:${i}`,P.jobs[j].on)}
     if(t==='bbook'){bobInit();const bid=k.split(':')[1],b=BOBS[bid],has=!!P.bob[bid];return shopRow(`보법 비급 · ${b.n} <small class="dim">${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>`,has?'이미 익혔다':b.d,p,`buy:${id}:${i}`,has)}
     if(t==='gbook'){ggInit();const gid=k.split(':')[1],g=GGS[gid],has=!!P.gk[gid];return shopRow(`경공 비급 · ${g.n} <small class="dim">${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>`,has?'이미 익혔다':g.d+(g.tr&&g.tr.length?' · '+ggTraitTxt(g):''),p,`buy:${id}:${i}`,has)}
@@ -255,8 +255,8 @@ function buy(id,i){
   const[k,t,p1,mr]=SHOP[id][i];if(mr!=null&&realmIdx()<mr)return;const p0=worldPrice(p1),p=t==='sbook'&&k.endsWith('독공')&&P.side==='사'?worldPrice(60):p0;if(P.silver<p)return;
   if((t==='weapon'||t==='gear'||t==='tbook'||t==='sbook'||t==='pbook'||t==='bbook'||t==='gbook')&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   P.silver-=p;
-  if(t==='mat')addMat(k);else if(t==='mat10')addMat(k,PACK);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0,k.split(':')[2]));
-  else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):k==='belt'?mkBelt(1):mkGear('boots','짚신',1,{spd:.12,hm:3}));
+  if(t==='mat')addMat(k);else if(t==='mat10')addMat(k,PACK);else if(t==='weapon')P.bag.push(mkWeapon(k.split(':')[1],1,0));
+  else if(t==='gear')P.bag.push(k==='armor'?mkGear('armor','무명 무복',1,{hp:24,def:2}):mkGear('boots','짚신',1,{spd:.12,hm:3}));
   else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else if(t==='gbook')P.bag.push(mkGBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }

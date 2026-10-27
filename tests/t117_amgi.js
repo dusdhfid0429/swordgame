@@ -16,8 +16,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`사천당가 암기 무공 ${d.dang.join('·')}, 입문 병기 ${d.start}`,d.dang.length===2&&d.dang.includes('만천화우')&&d.start==='암');
   ok(`하오비도·수전비도도 암기 (${d.moved}), 제갈세가 궁술은 그대로 (${d.bow})`,d.moved==='암암'&&d.bow===2);
   ok(`날아가는 모양 셋 (${d.pj}), 독침 있음`,d.pj==='blade,needle,star'&&d.psn);
-  ok(`병기 ${d.w}, 대장간에서 판다`,d.w==='유엽비도'&&d.smith);
-  // 2. 싸움: 유엽비도를 차고 암기 무공 기본 공격은 비도가 날아가고, 독침은 중독시킨다
+  ok(`병기 ${d.w}, 대장간에서 판다`,d.w==='가죽 요대'&&d.smith);
+  // 2. 싸움: 요대(v192 암기 병기)를 차고 암기 무공 기본 공격은 비도가 날아가고, 독침은 중독시킨다
   const f=await p.evaluate(()=>{const id='사암1',a=ARTS[id];P.eq.weapon=mkWeapon('암',1,0);P.arts[id]={p:100,f:a.forms.map(()=>true)};P.cur=id;recalc();P.eq.belt=null;AMGI_FREE=true;   // 요대 암기(v186, t122)는 빼고 초식 본래 모양을 본다 (v190: 암기 없으면 근접이라 AMGI_FREE)
     
     const e=mkMob('산적',P.x+2,P.y);e.hp=e.maxHp=99999;mobs.push(e);P.target=e;projs=[];P.bcd=P.gcd=0;basicStrike(e);const k0=projs.map(q=>q.kind).join(',');

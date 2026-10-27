@@ -16,7 +16,7 @@ const R1=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function newLife(o){
   const sideD=SIDES[o.side],gg=GEUNGOL[o.side][o.gg],st={str:gg[1],end:gg[2],agi:gg[3],qi:gg[4]},stat=STATUS[o.status];
   P={name:o.name,side:o.side,gg:o.gg,base:{...st},st,wis:o.wis,status:o.status,age:8,life:0,story:{pick:{},open:null,done:{},flag:{}},vit:stat.vit,vitInst:splitVit(o.bonusVit||0),vitCarry:0,vitEarned:0,silver:stat.silver+(o.silver||0),fame:0,good:0,evil:0,
-    qiN:0,qiAcc:0,sim:null,sims:{},mara:0,burst:null,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null,belt:null},mats:{금창약:3,소환단:1},
+    qiN:0,qiAcc:0,sim:null,sims:{},mara:0,burst:null,qiBonus:0,dhw:0,realm:0,inj:0,injS:0,enl:0,peaks:{},rfx:{},qiX:0,gcs:0,mss:0,arts:{base:{p:0,f:[true,false,false]}},cur:'base',mode:'auto',bag:[],eq:{weapon:null,armor:null,acc:null,boots:null},mats:{금창약:3,소환단:1},
     jobs:{대장:{on:0,lv:0},직물:{on:0,lv:0},요리:{on:0,lv:0},약재:{on:0,lv:0}},sp:{암기:0,독공:0,점혈:0},sg:{name:null,pages:{}},sect:null,sectName:null,merit:{},mtot:{},spouse:null,children:[],quests:[],
     duel:0,taught:-1,pas:{},bob:{b_basic:1},bcur:'b_basic',bcd2:0,gk:{g_basic:1},gkcur:'g_basic',ggm:{},chest:0,kills:0,bosses:0,startCls:o.cls||'권',acad:null,lifeNo:G.lives+1,feats:[],
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
@@ -37,9 +37,10 @@ const curCls=()=>art().cls;
 const eqList=()=>Object.values(P.eq).filter(Boolean);
 const gear=f=>eqList().reduce((a,it)=>a+(f==='atk'&&it.slot==='weapon'?0:(it[f]||0)),0);
 // 무공은 그 병기를 차야 펼친다. 권법은 맨손이거나 권갑(철권갑)을 찼을 때만: 검을 찬 채 권법은 못 쓴다
-const hasWeaponFor=c=>{const w=P.eq.weapon;if(c==='단')return !!beltMw();return c==='권'?!w||w.cls==='권':!!(w&&w.cls===c)};   // 단검술은 요대에 찬 단도·절편 (g_amgi.js, v191)
-const wpnNeed=c=>c==='단'?'단검술은 요대에 단도나 절편을 차야 펼칠 수 있습니다.':c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
-const weaponAtk=()=>{const w=curCls()==='단'?beltMw():P.eq.weapon;if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
+const hasWeaponFor=c=>{const w=P.eq.weapon;if(MELEE[c]&&w&&w.cls==='암'&&w.mw&&w.mw.cls===c)return true;return c==='권'?!w||w.cls==='권'||w.cls==='암':!!(w&&w.cls===c)};   // 요대(암)는 맨손 권법을 막지 않는다. 단도·절편은 손에 들거나 요대(암기 병기)에 차 둔다 (g_amgi.js, v192)
+const wpnNeed=c=>MELEE[c]?`${CLASS[c].n}은(는) ${WNAME[c]}을(를) 들거나 요대에 차야 펼칠 수 있습니다.`:c==='권'?'권법은 맨손이거나 권갑을 차야 펼칠 수 있습니다. 병기를 벗으세요.':`${CLASS[c].n}을(를) 펼치려면 ${WNAME[c]} 같은 ${c}을(를) 차야 합니다.`;
+const weaponAtk=()=>{let w=P.eq.weapon;const c=curCls();if(w&&w.cls==='암'&&c!=='암'&&w.mw&&w.mw.cls===c)w=w.mw;   // 요대에 찬 단도·절편으로 싸울 때는 그 공격력
+  if(!w||w.cls!==curCls())return 0;return w.dur>0?w.atk:Math.round(w.atk*.5)};
 const mast=(id=P.cur)=>A(id)?A(id).p:0;
 const atk=()=>Math.round((6+P.st.str*2+weaponAtk()+gear('atk'))*CLASS[curCls()].atk*(1+(P.buff.atk>0?P.buff.atkV||0:0))*(1+pv('atk'))*injMul());
 const hmv=()=>Math.round(P.st.agi*2+CLASS[curCls()].hm+mast()*.3+gear('hm')+(P.buff.hm>0?20:0)+simTv('hm'));
@@ -96,8 +97,8 @@ function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t
 // ================= items =================
 const QN=q=>q>=1.35?'명품':q>=1.1?'상품':q>=.85?'중품':'하품';
 const QC=q=>q>=1.35?'#c58bff':q>=1.1?'#6aa8ff':q>=.85?'#7fd16a':'#d8d2c2';
-function mkWeapon(c,q,made,nm){const dw=c==='단'&&GD.DAG_W[nm||WNAME[c]],a=Math.round((c==='궁'?14:c==='창'?13:c==='암'?11:c==='단'?9:10)*q*(1+Math.random()*.15)*(dw?dw.atk:1));   // 단: 요대 근접 무기 단도·절편 (v191)
-  const w={id:++itemId,slot:'weapon',cls:c,name:nm||WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made};if(dw&&dw.hm)w.hm=dw.hm;return w}
+function mkWeapon(c,q,made,nm){const a=Math.round((c==='궁'?14:c==='창'?13:c==='암'?11:c==='단'?9:c==='편'?8:10)*q*(1+Math.random()*.15));
+  const w={id:++itemId,slot:'weapon',cls:c,name:nm||WNAME[c],q,atk:a,dur:Math.round(60*q),maxDur:Math.round(60*q),price:Math.round(20*q*q+a),made};if(c==='암')beltInit(w,nm);return w}   // 암기술 병기는 요대 (g_amgi.js, v192)
 function mkGear(slot,name,q,o){const it={id:++itemId,slot,name,q,price:0};for(const k in o)it[k]=k==='spd'?+(o[k]*q).toFixed(2):Math.round(o[k]*q);it.price=Math.round(15*q*q+(it.hp||0)*.4+(it.qi||0)*.4+(it.hm||0));return it}
 function mkBook(artId,i){const a=ARTS[artId];return{id:++itemId,slot:'book',art:artId,form:i,name:`${a.n} 비급 · ${a.forms[i].n}`,price:20+i*25}}
 function mkSBook(k){return{id:++itemId,slot:'sbook',sk:k,name:`특수무공 비급 · ${k==='암기'?'암기술':k==='독공'?'독공':'점혈법'}`,price:40}}
@@ -120,7 +121,7 @@ function itemDesc0(it){
   if(it.slot==='sbook')return '읽으면 특수무공을 익힌다';if(it.slot==='gpage')return `읽으면 절세신공 [${it.page}] ${it.n}장을 깨친다`;if(it.slot==='tbook')return '읽으면 생활 기술을 익힌다';
   const a=[];if(it.slot==='weapon')a.push(`${CLASS[it.cls].n} 무기 · 공격력 ${it.atk} · 내구 ${it.dur}/${it.maxDur}`);
   if(it.hp)a.push(`체력 +${it.hp}`);if(it.def)a.push(`받는 피해 -${it.def}%`);if(it.qi)a.push(`내공 +${it.qi}`);if(it.hm)a.push(`현묘도 +${it.hm}`);if(it.spd)a.push(`이동 +${it.spd}`);
-  if(it.slot==='belt')a.unshift(beltTxt(it));   // 요대 (g_amgi.js)
+  if(it.slot==='weapon'&&it.cls==='암')a.push(beltTxt(it));   // 요대: 등록한 암기·찬 근접 무기 (g_amgi.js)
   return a.join(' · ');
 }
 const itemLabel=it=>it.q?`[${QN(it.q)}] ${it.name}`:it.name;
@@ -254,7 +255,7 @@ function gainMast(id,v){
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
-  if(a.base||a.gy||a.dag||(a.made&&!a.sect))a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
+  if(a.base||a.gy||a.melee||(a.made&&!a.sect))a.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req){s.f[i]=true;log(`${a.n}의 [${f.n}]을(를) 깨우쳤습니다.`,'xp');if(a.gy&&allLearned(id))log(`${a.n}의 모든 초식이 열려 필살기 [${a.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}});
   if(s.p>=100&&before<100){log(`${a.n}을(를) 극성까지 익혔습니다. 깨달음이 찾아옵니다.`,'xp');if(P.wis<10){P.wis++;log(`돈오: 오성이 ${P.wis}(으)로 올랐습니다.`,'xp')}}
   runHooks('mastDone',{id,s,before});
 }
