@@ -10651,7 +10651,7 @@ function setSect(id){V.sect=id;P.sect=id||null;recalc();if(typeof garbSync==='fu
 const smPick=(T,sec,t)=>{const ids=Object.keys(T).filter(k=>(sec?T[k].sect===V.sect:!T[k].sect)&&(!t||T[k].t===t));return ids.sort((a,b)=>T[b].g-T[a].g)[0]};
 function leapFx(st,sec){place();ggInit();P.gk=P.gk||{};const id=(sec||V.sect)&&smPick(GGS,1)||smPick(GGS,0);P.gk[id]=1;P.gkcur=id;
   P.ggm=P.ggm||{};P.ggm[P.gkcur]=100;face(P.x+(st===1?-1:1),P.y-1);if(st>1)P.ggc={n:st-1,until:time+2};else P.ggc=null;leap()}
-function bobFx(t){place();bobInit();if(t==='sect'){const id=V.sect&&smPick(BOBS,1);if(!id){addText(P.x,P.y-.6,'문파를 고르세요','#ffd36a');return}t=BOBS[id].t}
+function bobFx(t){place();bobInit();if(t==='sect'){if(!V.sect)setSect('hwasan');const id=smPick(BOBS,1);if(!id)return;t=BOBS[id].t}   // 문파를 안 골랐으면 화산파로 보여 준다
   const id=V.sect&&smPick(BOBS,1,t)||smPick(BOBS,0,t);if(!id)return;
   P.bob[id]=1;P.bcur=id;if(t==='flank'){const g=BG.fail[BOBS[id].g];BG.fail[BOBS[id].g]=0;P.target=tgt();bobeop();BG.fail[BOBS[id].g]=g}else{face(P.x-1,P.y);bobeop()}}
 function spec(k){place();if(k==='점혈'){const e=tgt();P.x=e.x;P.y=e.y+1.4;P.target=e}P.sp=P.sp||{};P.sp[k]=1;P.scd[k]=0;P.mats.비도=9;special(k)}
