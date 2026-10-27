@@ -50,7 +50,7 @@ function repKill(e,foe){const f=e.d.fac;if(!REPF.includes(f))return;
 hook('questDone',q=>{const Q=REP.quest;
   if(q.sect&&SECTS[q.sect]){const own=P.sect===q.sect;repAdd(q.sect,own?Q.ownFac:Q.outFac,own?Q.own:Q.out)}
   if(q.maeng&&ALLY[q.maeng])repAdd(null,Q.maeng,0,alFac(q.maeng));
-  if(q.pyo){if(q.pyoSect&&SECTS[q.pyoSect])repAdd(q.pyoSect,0,Q.pyo);repAdd(null,Q.pyoGwan,0,'관')}});
+  if(q.pyo)repAdd(null,Q.pyoGwan,0,'관')});   // v188: 표국은 문파·세력이 아니다. 표물을 지키면 길이 편해진 관아만 반긴다
 hook('cvSaved',()=>{for(const[f,v]of Object.entries(REP.cvSave))repAdd(null,v,0,f)});
 hook('cvRob',()=>{for(const[f,v]of Object.entries(REP.cvRob))repAdd(null,v,0,f)});
 // 해마다 은원이 조금씩 옅어진다

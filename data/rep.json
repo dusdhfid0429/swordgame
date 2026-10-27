@@ -10,7 +10,7 @@
     "kill": {"sect": -15, "fac": -5},
     "killFoe": {"sect": -2, "elite": -4},
     "killHelp": {"v": 1, "elite": 2, "cap": 30},
-    "quest": {"own": 6, "ownFac": 2, "out": 10, "outFac": 3, "maeng": 3, "pyo": 3, "pyoGwan": 1},
+    "quest": {"own": 6, "ownFac": 2, "out": 10, "outFac": 3, "maeng": 3, "pyoGwan": 1},
     "cvSave": {"관": 2},
     "cvRob": {"관": -6},
     "gift": {"silver": 100, "sect": 5, "fac": 1},

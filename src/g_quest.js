@@ -12,7 +12,8 @@ function questFrom(q){
   if(q.sq)return{n:SECTS[q.sq.sid]?SECTS[q.sq.sid].n:'본산',at:'정세 창(N)의 본산 카드에서 바로 보고',merit:''};
   if(q.rc&&typeof RC!=='undefined'&&RC[q.rc]){const rc=RC[q.rc];return{n:`은거기인 ${rc.n}`,at:`${REGIONS[rc.reg].name} 정상의 ${rc.n}`,merit:'은혜 +1'}}
   if(q.cvLive)return{n:'구해 준 행렬',at:'행렬이 길목에 닿으면 그 자리에서 (g_caravan.js)',merit:''};
-  if(q.pyo)return{n:q.pyoN||'표국',at:q.pyo==='any'?'어느 성읍이든 역참 옆 표국':`${q.pyoAt||'성읍'} 역참 옆 ${q.pyoN||'표국'}`,merit:q.sect?`${SECTS[q.sect].n} 공적 +${q.merit}`:''};
+  if(q.hired)return{n:`${q.pyoN||'표국'} 표행`,at:'표행이 길목에 닿으면 표두가 그 자리에서 (g_caravan.js)',merit:''};
+  if(q.pyo)return{n:q.pyoN||'표국',at:q.pyo==='any'?'어느 성읍이든 역참 옆 표국':`${q.pyoAt||'성읍'} 역참 옆 ${q.pyoN||'표국'}`,merit:''};
   return{n:'개봉 의뢰판',at:'개봉 관아 앞 의뢰판',merit:''}}
 // v176: 임무 종류마다 하는 일 (처치·납품·호위·약탈). w는 화면 글, plain은 짧은 글
 function qGoal(q){if(q.kind==='kill')return{v:'처치',w:mobTxt(q.mob),plain:q.mob.join('·')};
@@ -46,7 +47,7 @@ function questCard(q,i){const f=questFrom(q),p=questProg(q);
 function storyOpenCard(){const r=typeof storyRows==='function'&&storyRows().find(o=>!o.q);if(!r)return'';
   return `<div class="card"><div class="row2"><h4>${esc(r.n)} <small class="gold">선택 대기</small></h4><span class="tag">강호 정세</span></div><p class="bad">남은 시간: ${r.lbl} <b>${fmtLeft(r.left)}</b> · 지나면 손쓰지 못한 채 흘러간다</p><div class="row2"><span></span>${B('open:story','정세창에서 고르기')}</div></div>`}
 function pQuest(){const qs=P.quests||[];
-  const where=[`표국 <small class="dim">성읍 역참 옆 · 호위 일감 · 문파 표국은 그 문파 제자, 독립 표국은 낭인·말단 제자</small>`,`개봉 의뢰판 <small class="dim">한 번에 셋 · ${G.board&&G.board.length?`붙은 방 ${G.board.length}`:'새 방은 해가 바뀌면'}</small>`];
+  const where=[`표국 <small class="dim">성읍 역참 옆 · 출발을 앞둔 표행이 사람을 모은다 · 가입 없이 누구나 한 번씩</small>`,`개봉 의뢰판 <small class="dim">한 번에 셋 · ${G.board&&G.board.length?`붙은 방 ${G.board.length}`:'새 방은 해가 바뀌면'}</small>`];
   if(P.sect&&SECTS[P.sect])where.push(`${SECTS[P.sect].n} 임무 <small class="dim">본산 ${masterTitle(SECTS[P.sect])}·성도 연락관 · 해마다 둘</small>`);
   const al=typeof maengOf==='function'?maengOf():null;if(al&&typeof MAENG!=='undefined'&&MAENG[al])where.push(`${MAENG[al].n} 임무 <small class="dim">총단 · 해마다 셋</small>`);
   return acadQuestCard()+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
