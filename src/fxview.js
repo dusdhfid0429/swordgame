@@ -61,7 +61,8 @@ const trSel=a=>{const t=artTr0(a),o=(k,v)=>`<option value="${esc(k)}"${k===v?' s
 // ---- 무공 초식 ----
 function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;return}if(!w||w.cls!==cls)P.eq.weapon=mkWeapon(cls,1,0)}
 // 요대 암기 (g_amgi.js): 고른 암기를 요대에 넣고 넉넉히 채운다. 없음이면 요대를 푼다
-function setAmmo(){P.beltGift=1;if(!V.ammo){P.eq.belt=null;return}if(!P.eq.belt)P.eq.belt=mkBelt(1);P.eq.belt.am=V.ammo;P.mats[V.ammo]=99}
+// '' 초식 본래 모양(암기 없이도 던짐), '-' 요대 빔 → 비도 쥐고 근접 (v190)
+function setAmmo(){P.beltGift=1;AMGI_FREE=!V.ammo;if(!V.ammo||V.ammo==='-'){P.eq.belt=null;return}if(!P.eq.belt)P.eq.belt=mkBelt(1);P.eq.belt.am=V.ammo;P.mats[V.ammo]=99}
 function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);setAmmo();P.arts=P.arts||{};if(!P.arts[id])P.arts[id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
   P.cur=id;P.arts[id].p=TIERP[V.tier];place();const e=tgt(),X=mkX(id,1);X.t=V.tier;
   if(i==='ult'){heroAtk('ult');showBanner(a.ult.n,`${a.n} 필살기`);P.flash=.5;P.flashCol=a.c;shake=.35;
@@ -200,7 +201,7 @@ function render(){if(!P)return;
     h+=`<h3>병기</h3><div class="ctl" style="padding:0;border:0">${Object.keys(CLASS).map(c=>btn(c,'cls:'+c,V.cls===c)).join('')}</div>
       <h3>무공 (${arts.length})</h3><select data-a="art">${['정','사','마','중'].map(s=>{const l=arts.filter(x=>(x.side||'중')===s);return l.length?`<optgroup label="${s==='중'?'기타':s+'파'}">${l.map(x=>`<option value="${esc(x.id)}"${x.id===V.art?' selected':''}>${esc(x.n)}${x.sect&&SECTS[x.sect]?' · '+esc(SECTS[x.sect].n):''}${x.grade!=null&&typeof AGR!=='undefined'?' · '+esc(AGR[x.grade]||''):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
     if(a){h+=`<p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>${esc(a.d||'')} ${a.el?'· '+esc(a.el):''}${a.elc?' · 번개':''}</p>
-      ${trSel(a)}${elSel()}${a.cls==='암'&&typeof AMMO!=='undefined'?`<h3>요대 암기</h3><select data-a="ammo"><option value="">없음 (초식 본래 모양)</option>${Object.entries(AMMO).map(([k,m])=>`<option value="${esc(k)}"${k===V.ammo?' selected':''}>${esc(k)} · ${esc(m.d)}</option>`).join('')}</select>`:''}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
+      ${trSel(a)}${elSel()}${a.cls==='암'&&typeof AMMO!=='undefined'?`<h3>요대 암기</h3><select data-a="ammo"><option value="">초식 본래 모양</option><option value="-"${V.ammo==='-'?' selected':''}>요대 빔 · 비도 쥐고 근접 (절반)</option>${Object.entries(AMMO).map(([k,m])=>`<option value="${esc(k)}"${k===V.ammo?' selected':''}>${esc(k)} · ${esc(m.d)}</option>`).join('')}</select>`:''}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
   }else if(TAB==='realm'){

@@ -147,21 +147,23 @@
   "_AMGI": "암기술 초식 (v181, 사용자 2026-10-26 \"암기술 무공도 추가\"): pj 는 날아가는 모양(blade 비도·needle 비침·star 표창), psn 은 맞힌 적을 그 초만큼 중독",
   "AMGI": [
     {"n":"비도일섬","p":"proj","cnt":1,"spd":16,"len":6,"m":1.05,"cd":0.35,"pj":"blade"},
-    {"n":"쌍비도","p":"proj","cnt":2,"spread":0.18,"spd":15,"len":6,"m":0.7,"cd":0.45,"pj":"blade"},
-    {"n":"회선표","p":"proj","cnt":3,"spread":0.6,"spd":12,"len":5.5,"pierce":1,"m":0.6,"cd":0.55,"pj":"star"},
-    {"n":"매화침","p":"proj","cnt":5,"spread":0.8,"spd":17,"len":5,"m":0.4,"cd":0.6,"pj":"needle"},
-    {"n":"독침","p":"proj","cnt":1,"spd":19,"len":7,"m":0.8,"cd":0.6,"pj":"needle","psn":4},
+    {"n":"쌍비도","p":"proj","cnt":2,"spread":0.18,"spd":15,"len":6,"m":0.7,"cd":0.45,"pj":"blade","path":"arc"},
+    {"n":"회선표","p":"proj","cnt":3,"spread":0.6,"spd":12,"len":5.5,"pierce":1,"m":0.6,"cd":0.55,"pj":"star","path":"arc"},
+    {"n":"매화침","p":"proj","cnt":5,"spread":0.8,"spd":17,"len":5,"m":0.4,"cd":0.6,"pj":"needle","path":"gather"},
+    {"n":"독침","p":"proj","cnt":1,"spd":19,"len":7,"m":0.8,"cd":0.6,"pj":"needle","psn":4,"path":"spiral"},
     {"n":"낙화우","p":"rain","cnt":7,"rad":1.8,"r":5.5,"m":0.5,"cd":0.9},
-    {"n":"팔방표","p":"proj","full":1,"cnt":8,"spd":11,"len":4.5,"m":0.55,"cd":0.8,"pj":"star"},
-    {"n":"관혈비도","p":"proj","cnt":1,"spd":20,"len":8,"pierce":1,"size":1.4,"m":1.3,"cd":0.8,"pj":"blade"},
-    {"n":"독무산화","p":"proj","cnt":6,"spread":1.1,"spd":14,"len":4.5,"m":0.35,"cd":0.75,"pj":"needle","psn":2},
+    {"n":"팔방표","p":"proj","full":1,"cnt":8,"spd":11,"len":4.5,"m":0.55,"cd":0.8,"pj":"star","path":"gather"},
+    {"n":"관혈비도","p":"proj","cnt":1,"spd":20,"len":8,"size":1.4,"m":2.1,"kb":1.1,"stun":0.25,"cd":0.8,"pj":"blade","path":"bullet"},
+    {"n":"독무산화","p":"proj","cnt":6,"spread":1.1,"spd":14,"len":4.5,"m":0.35,"cd":0.75,"pj":"needle","psn":2,"path":"arc"},
     {"n":"비수격","p":"arc","rad":1.3,"spread":1.6,"m":0.8,"cd":0.4}
   ],
+  "_AMGI_PATH": "암기 궤적 (v190, 사용자 2026-10-27 \"직선 말고 나선형·호, 부채꼴·원형으로 뿌린 뒤 선형으로 목표에 모이기, 곧게 꺾이거나 부드러운 곡선으로, 총알처럼 회전하며 강한 한 방\"): 초식 path — spiral 나선(두 발이면 겹나선, r 폭·w 감기·hz 높이 px), arc 바깥으로 bend 만큼 벌어졌다 부드럽게 휘어 목표로(turn 회전 속도, acc 시간에 따라 더 세게), gather 원래 부채꼴·원형으로 t 초(발마다 dt 늦게) spd 배로 퍼지다 목표 쪽으로 곧게 꺾여 boost 배로 줄지어, vortex 소용돌이로 퍼지다 home 초 뒤 목표가 있으면 곧게 꺾임, bullet charge 초 모은 뒤 spd 배로 회전하며 날아가 한 방(밀침·기절은 초식 값). 휘는 궤적은 사거리 len 배. 조준·같은 적 감쇠(AMGI_AIM)는 그대로",
+  "AMGI_PATH": {"len":1.35,"spiral":{"r":0.32,"w":24,"grow":5,"hz":34},"arc":{"bend":0.8,"turn":3,"acc":5},"gather":{"t":0.16,"dt":0.035,"spd":0.65,"boost":1.4},"vortex":{"w":9,"grow":0.5,"home":0.38},"bullet":{"charge":0.22,"spd":1.5}},
   "_AMGI_AIM": "암기 조준 (사용자 2026-10-26 \"적 수에 따라 형태가 바뀌게, 원형·부채꼴은 명중이 너무 적다\"; 밸런스는 '같은 적 겹침 감쇠'): 사거리 안 적에게 한 발씩 먼저, 적이 surround 명 미만이면 남는 발은 가까운 적부터 cap 발까지 몰아 쏘고(gap 초 간격), 그 이상이면 남는 발은 원래 모양으로 빈 쪽에 퍼진다. 한 시전에서 같은 적에게 두 번째 발부터 over 배",
   "AMGI_AIM": {"over":0.4,"cap":8,"surround":3,"reach":0.6,"gap":0.05},
   "AMGIU": [
-    {"steps":[{"n":"","p":"proj","full":1,"cnt":24,"spd":13,"len":6,"pierce":1,"m":0.8,"pj":"needle","psn":2}]},
-    {"steps":[{"n":"","p":"proj","cnt":12,"spread":1.2,"spd":16,"len":7,"m":0.7,"pj":"needle"}]},
+    {"steps":[{"n":"","p":"proj","full":1,"cnt":24,"spd":13,"len":6,"pierce":1,"m":0.8,"pj":"needle","psn":2,"path":"vortex"}]},
+    {"steps":[{"n":"","p":"proj","cnt":12,"spread":1.2,"spd":16,"len":7,"m":0.7,"pj":"needle","path":"arc"}]},
     {"steps":[{"n":"","p":"rain","cnt":18,"rad":3.5,"self":1,"m":0.85}]}
   ],
   "PTYPE": {
