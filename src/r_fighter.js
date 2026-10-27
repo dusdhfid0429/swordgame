@@ -20,7 +20,7 @@ function drawFighter(e,isP){
     if(sh){if(dc==='검'||dc==='도'){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawSheath(dc,...(SHEATH_AT[sh]||SHEATH_AT.wuxia),flash);ctx.restore()}
       drawSheet(sh,fi,k,flash,gb&&gb.sh&&gb.sh[sh]);if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
       // v124: 소켓이 있는 장(검·도·창·봉 공격)은 손 자리에 코드 무기를 얹는다
-      const wl=dc!=='권'&&dc!=='각'&&dc!=='암'?sheetWeaponLine(sh,fi,dc):null;
+      const wl=dc!=='권'&&dc!=='각'&&dc!=='암'&&dc!=='단'?sheetWeaponLine(sh,fi,dc):null;
       if(wl&&ANIM.heroHandWpn){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawWeapon(dc,wl,dc==='창'||dc==='봉'?'p':'b',flash);ctx.restore()}
       if(P.palm>0){const a=P.palm/.35,g=ctx.createRadialGradient(26,-44,1,26,-44,20);g.addColorStop(0,`rgba(190,220,255,${a})`);g.addColorStop(1,'rgba(80,130,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(26,-44,20,0,7);ctx.fill()}
       ctx.restore();WPN_K=.47;return}
