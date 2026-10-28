@@ -66,10 +66,9 @@ function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;return elevPick
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const frac=v=>v-Math.floor(v);
 
-function bakeGaebong(){
-  const gw=(N+NH)*TW/2,gh=(N+NH)*TH/2,c=document.createElement('canvas');c.width=gw;c.height=gh;c.sm={k:1,X0:-NH*TW/2,Y0:0,x0:0,y0:0,C:N,CH:NH};
-  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data;
-  for(let py=0;py<gh;py++)for(let px=0;px<gw;px++){
+// v195: 개봉 바닥 픽셀 계산만 떼어 낸 순수 함수 (g_faction.js 일꾼에서도 같은 코드로 돈다)
+function gaePix(o){const{gw,gh}=o,k=o.k||1,d=new Uint8ClampedArray(gw*gh*4);   // k<1: 미리보기용으로 줄여 굽는다
+  for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){const px=k===1?qx:qx/k,py=k===1?qy:qy/k;
     const a=(px-NH*TW/2)/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
     if(gx<0||gy<0||gx>=N||gy>=NH)continue;
     const hard=tileG(gx,gy),soft=hard===3||hard===4||hard===5;
@@ -109,9 +108,16 @@ function bakeGaebong(){
       if(dirt>.6){const k=Math.min(1,(dirt-.6)*5);R+=(128-R)*k;G+=(106-G)*k;B+=(72-B)*k}
     }
     const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);
-    const i=(py*gw+px)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
+    const i=(qy*gw+qx)*4;d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade;d[i+3]=255;
   }
-  g.putImageData(img,0,0);
+  return d}
+function bakeGaebong(){
+  const gw=(N+NH)*TW/2,gh=(N+NH)*TH/2,c=document.createElement('canvas');c.width=gw;c.height=gh;c.sm={k:1,X0:-NH*TW/2,Y0:0,x0:0,y0:0,C:N,CH:NH};
+  const g=c.getContext('2d');
+  const o={gw,gh,k:1,N,NH,RIV,G:bakeTiles()},fin=d=>{const img=g.createImageData(gw,gh);img.data.set(d);g.putImageData(img,0,0);gaeDeco(g,o)};if(pixLater('gae',o,c,fin))return c;
+  fin(gaePix(o));return c}
+// 개봉 바닥 위 풀잎·꽃·자갈·비무대 (픽셀을 다 구운 뒤)
+function gaeDeco(g,o){const{gw,N,NH}=o,tileG=pixTile(o);   // 칸은 구울 때 넘긴 o.G로 본다
   const r=rng(77),sp=(gx,gy)=>[(gx-gy)*TW/2+gw/2,(gx+gy)*TH/2];
   g.lineCap='round';
   for(let k=0;k<26000;k++){const gx=1+r()*(N-2),gy=1+r()*(NH-2);if(tileG(gx,gy)!==0)continue;const[x,y]=sp(gx,gy),l=r();
@@ -126,5 +132,4 @@ function bakeGaebong(){
     g.strokeStyle='rgba(230,200,140,.4)';g.lineWidth=1.5;g.beginPath();g.ellipse(x,y,ARENA.r*TW/2*1.41-5,ARENA.r*TH/2*1.41-2.5,0,0,7);g.stroke()}
   // house lots: staked outlines
   for(const l of LOTS){const pts=[sp(l.x,l.y),sp(l.x+l.w,l.y),sp(l.x+l.w,l.y+l.h),sp(l.x,l.y+l.h)];g.setLineDash([5,4]);g.strokeStyle='rgba(230,210,160,.6)';g.lineWidth=1.5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke();g.setLineDash([])}
-  return c;
 }

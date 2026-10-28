@@ -153,7 +153,7 @@ function elevBuild(){ESIL=null;if(!ELV||!ground||ground.chunked)return;
     const order=[];for(let j=0;j<NH;j++)for(let i=0;i<N;i++){const k=j*N+i;if(ELV[k]||HST[k]||HBR[k])order.push(k)}
     order.sort((a,b)=>(a%N+(a/N|0))-(b%N+(b/N|0))||a-b);
     for(const k of order){const i=k%N,j=(k-i)/N,cc=HBR[k]?Array(4).fill(ELV[k]*LH):cornerH(i,j),top=Math.max(...cc);elevPiece(g,i,j,(i-j)*TW/2-32,(i+j)*TH/2-top,src)}
-    c.elev=1;c.padW=padW;c.K=K;c.X0=X0;c.Y0=Y0-padW;GROUND[REG]=c;ground=c}
+    c.elev=1;c.src=src;c.padW=padW;c.K=K;c.X0=X0;c.Y0=Y0-padW;GROUND[REG]=c;ground=c}
   ESIL=new Array(N*NH);for(let j=0;j<NH;j++)for(let i=0;i<N;i++){const k=j*N+i;if(ELV[k]||HST[k]||HBR[k])ESIL[k]=elevSil(i,j)}}
 // 높은 칸 뒤(위쪽)에 서 있어 그 칸에 가려져야 하는 것: 그 칸 윤곽만 바닥 그림에서 다시 오려 그 깊이에 덮는다
 function elevRedraw(s){const ox=-cam.x+W/2,oy=-cam.y+H/2,g=ground,K=g.K;

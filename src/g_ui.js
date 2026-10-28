@@ -109,7 +109,8 @@ function plabel(f){
 let panel=null;
 const TITLES=GD.TITLES;
 let panelAt=0;
-function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;paused=true;renderOpen();$('wbody').scrollTop=0;runHooks('panelOpen',id)}
+function openPanel(id,arg){if(trnOpen)closeTrain();if(panel===id&&id!=='npc'){closePanels();return}panel=id;panelAt=performance.now();panelArg=arg;$('win').hidden=false;{const sb=$('sban');if(sb)sb.classList.remove('on')}   // v195: 창을 열면 정세 배너를 걷는다 (정세 창을 가렸다)
+  paused=true;renderOpen();$('wbody').scrollTop=0;runHooks('panelOpen',id)}
 let panelArg=null;
 function closePanels(){$('wnote').hidden=true;panel=null;$('win').hidden=true;if(playing)paused=false}
 function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,char:pChar,arts:pArts,bag:pBag,ally:pAlly,life:pLife,hist:pHist,npc:pNpc,house:pHouse,help:pHelp,menu:pMenu,world:pWorld,logs:pLogs,story:pStory}[panel];

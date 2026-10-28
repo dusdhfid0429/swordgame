@@ -8,7 +8,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
-  await p.evaluate(()=>{travel({to:'hq_hwasan',tx:20.5,ty:30})});await p.waitForTimeout(1500);
+  await p.evaluate(()=>{travel({to:'hq_hwasan',tx:20.5,ty:30})});await p.waitForTimeout(1500);await p.waitForFunction(()=>!(ground.src||ground).baking,{timeout:10000});   // v195: 바닥은 일꾼이 굽는다. 다 굽고 나서 시간 재기
   await p.evaluate(()=>{mobs=[];P.qi=P.maxQi;P.maxHp=9999;P.hp=9999});
   // 전각 지붕 앞에 서서 지붕 쪽으로 경공
   const r1=await p.evaluate(()=>{const bd=builds.find(q=>q.kind==='temple');const x=bd.x+.5,y=bd.y+bd.h+.6;P.x=x;P.y=y;P.fx=0;P.fy=-1;leap();return{bd:[bd.x,bd.y,bd.w,bd.h]}});

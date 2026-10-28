@@ -201,16 +201,16 @@ function genHQ(s,th){
 const HQ_GRASS=GD.HQ_GRASS;
 // k: 큰 지역은 바닥 그림을 줄여 굽고(픽셀 수를 40칸 지역과 같게) 그릴 때 늘린다. 휴대폰 메모리 때문.
 // x0,y0,C,CH: 큰 지역은 C×CH칸 조각만 굽는다(아래 chunkGround). 조각 그림의 왼쪽 위 = 그 칸 묶음 마름모를 감싸는 네모. 맵 전체면 N×NH
-function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&!y0?NH:C){
-  const X0=(x0-y0-CH)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round((C+CH)*TW/2*k),gh=Math.round((C+CH)*TH/2*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
-  c.sm={k,X0,Y0,x0,y0,C,CH,chunk:C!==N||CH!==NH||x0||y0};   // v173: 계절 겹(g_season.js)이 칸 좌표를 되찾는다
-  const g=c.getContext('2d'),img=g.createImageData(gw,gh),d=img.data,TR=th==='hall'||th==='dark'&&!(TP&&TP.key==='십만대산')?null:TP,gc=TR&&TR.grass||HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow',MI=TR&&TR.mist;   // v155: TR = 지역 지형(g_terrain.js)
+// v195: 바닥 한 장의 픽셀 계산만 떼어 낸 순수 함수 (일꾼 Worker에서도 같은 코드로 돈다). 결과는 bakeHQ가 동기로 굽던 것과 같다
+function bakePix(o){
+  const{gw,gh,k,X0,Y0,x0,y0,C,CH,N,NH,th,gc,stair,MI,TW,TH}=o,GT=o.G,TR=o.tw,d=new Uint8ClampedArray(gw*gh*4),
+    tg=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return GT[y*N+x]};
   for(let qy=0;qy<gh;qy++)for(let qx=0;qx<gw;qx++){
     const px=qx/k+X0,py=qy/k+Y0,a=px/(TW/2),b=py/(TH/2),gx=(a+b)/2,gy=(b-a)/2;
     if(gx<x0||gy<y0||gx>=x0+C||gy>=y0+CH||gx>=N||gy>=NH)continue;
-    const hard=tileG(gx,gy),soft=hard===1||hard===3||hard===4;
+    const hard=tg(gx,gy),soft=hard===1||hard===3||hard===4;
     const jx=soft?gx:gx+(vn(gx*2.3,gy*2.3)-.5)*.6,jy=soft?gy:gy+(vn(gx*2.3+9,gy*2.3+4)-.5)*.6;
-    const t=soft?hard:tileG(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
+    const t=soft?hard:tg(jx,jy),n=fbm(gx*1.3,gy*1.3),grain=.92+hash(qx,qy)*.16;
     let R,G,B;
     if(t===2){const w=fbm(gx*2.5,gy*4);if(TR&&TR.water){const c=TR.water,m=.8+w*.4;R=c[0]*m;G=c[1]*m;B=c[2]*m}else if(th==='swamp'||th==='miao'){R=44+w*20;G=60+w*22;B=42+w*14}else{R=60+w*30;G=98+w*30;B=118+w*28}if(vn(gx*7,gy*7)>.8){R+=70;G+=70;B+=60}}
     else if(t===3){R=136;G=96;B=60;const gr=vn(gx*40,gy*4);R*=.8+gr*.35;G*=.8+gr*.35;B*=.8+gr*.3;if(frac(gx*4)<.1){R*=.45;G*=.45;B*=.45}}
@@ -238,15 +238,52 @@ function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&
       d[i]=R*grain*f+MI[0]*(1-f);d[i+1]=G*grain*f+MI[1]*(1-f);d[i+2]=B*grain*f+MI[2]*(1-f)}
     else{const fade=Math.min(1,ed/1.6);d[i]=R*grain*fade;d[i+1]=G*grain*fade;d[i+2]=B*grain*fade}d[i+3]=255;
   }
-  g.putImageData(img,0,0);
+  return d}
+function bakeHQ(th,k=Math.min(1,40/Math.max(N,NH)),x0=0,y0=0,C=N,CH=C===N&&!x0&&!y0?NH:C){
+  const X0=(x0-y0-CH)*TW/2,Y0=(x0+y0)*TH/2,gw=Math.round((C+CH)*TW/2*k),gh=Math.round((C+CH)*TH/2*k),c=document.createElement('canvas');c.width=gw;c.height=gh;
+  c.sm={k,X0,Y0,x0,y0,C,CH,chunk:C!==N||CH!==NH||x0||y0};   // v173: 계절 겹(g_season.js)이 칸 좌표를 되찾는다
+  const g=c.getContext('2d'),TR=th==='hall'||th==='dark'&&!(TP&&TP.key==='십만대산')?null:TP,gc=TR&&TR.grass||HQ_GRASS[th]||HQ_GRASS.peak,stair=th==='peak'||th==='snow',MI=TR&&TR.mist;   // v155: TR = 지역 지형(g_terrain.js)
+  const o={gw,gh,k,X0,Y0,x0,y0,C,CH,N,NH,th,gc,stair,MI,TW,TH,tw:TR?{water:TR.water,rock:TR.rock,pat:TR.pat}:null,G:bakeTiles()},
+    fin=d=>{const img=g.createImageData(gw,gh);img.data.set(d);g.putImageData(img,0,0);bakeDeco(g,o,TR)};
+  // 놀이 중에 바닥(맵 한 장이든 큰 지역 조각이든)을 구울 때는 일꾼에게 맡긴다 (지역 이동 때 0.4~1초 멈춤 없앰, pixLater)
+  if(pixLater('hq',o,c,fin))return c;
+  fin(bakePix(o));return c}
+// 바닥 위 풀잎·자갈 (픽셀을 다 구운 뒤에 그린다)
+function bakeDeco(g,o,TR){const{th,k,X0,Y0,x0,y0,C,CH,N,NH}=o,tileG=pixTile(o);   // 칸은 구울 때 넘긴 o.G로 본다 (다 굽기 전에 지역을 떠나도 맞게)
   const r=rng(57+th.length+x0*131+y0*7919),sp=(gx,gy)=>[((gx-gy)*TW/2-X0)*k,((gx+gy)*TH/2-Y0)*k],A=C*CH/1600,rx=()=>Math.min(N-1,x0+r()*C),ry=()=>Math.min(NH-1,y0+r()*CH);g.lineCap='round';
   const hue=TR&&TR.sand?40:th==='canyon'?60:th==='swamp'?75:th==='dark'?100:105;
   for(let q=0;q<16000*A;q++){const gx=rx(),gy=ry();if(gx<1||gy<1||gx>N-1||gy>NH-1)continue;const t=tileG(gx,gy);if(t!==0&&!(t===9&&r()<.3))continue;const[x,y]=sp(gx,gy),l=r();
     g.strokeStyle=`hsla(${hue+r()*30},${20+r()*20}%,${l<.5?14+r()*10:30+r()*14}%,.7)`;g.lineWidth=k;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3*k,y-(2+r()*4)*k);g.stroke()}
   for(let q=0;q<900*A;q++){const gx=rx(),gy=ry(),t=tileG(gx,gy);if(t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(1.5+r()*3.5)*k;
     g.fillStyle=t===6&&TR&&TR.rock?`rgb(${TR.rock.map(v=>v*(.55+r()*.5)|0).join(',')})`:t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
-  return c;
 }
+const BAKE_PREVIEW=.2;   // 일꾼이 굽는 동안 깔 미리보기 배율
+// 지금 맵 칸 종류를 한 줄 배열로 (일꾼에게 넘긴다)
+// o.G(칸 배열)로 보는 tileG
+const pixTile=o=>{const{N,NH,G}=o;return(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return G[y*N+x]}};
+function bakeTiles(){const G=new Uint8Array(N*NH);for(let y=0;y<NH;y++){const r=map[y];for(let x=0;x<N;x++)G[y*N+x]=r[x].g}return G}
+// 바닥 픽셀 함수들. 모두 o만 보고(칸은 tileG 또는 o.G) Uint8ClampedArray를 돌려준다. o.k로 줄여 구울 수 있어야 한다
+const PIXF=()=>({hq:bakePix,gae:gaePix});
+// 일꾼: 픽셀 함수와 잡음 함수를 글로 옮겨 Blob으로 띄운다. tileG·N·NH·RIV는 일감마다 o에서 채운다. 못 띄우면(CSP 등) null → 동기로 굽는다
+let BAKE_W,BAKE_N=0;const BAKE_JOB=new Map;
+function bakeWorker(){if(BAKE_W!==undefined)return BAKE_W;BAKE_W=null;
+  try{if(typeof Worker==='undefined'||typeof Blob==='undefined')return null;const F=PIXF();
+    const src=`${hash}\n${vn}\nconst fbm=${fbm},frac=${frac},clamp=${clamp},TW=${TW},TH=${TH},MID=${MID};let N,NH,RIV,GT;
+const tileG=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return GT[y*N+x]};
+${Object.values(F).join('\n')}\nconst PIX={${Object.entries(F).map(([k,f])=>k+':'+f.name).join(',')}};
+onmessage=e=>{const o=e.data.o;N=o.N;NH=o.NH;RIV=o.RIV;GT=o.G;const d=PIX[e.data.f](o);postMessage({id:e.data.id,d},[d.buffer])}`,
+      w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+    w.onmessage=e=>{const j=BAKE_JOB.get(e.data.id);if(!j)return;BAKE_JOB.delete(e.data.id);pixDone(j,e.data.d)};
+    w.onerror=()=>{BAKE_W=null;const F=PIXF();for(const[id,j]of BAKE_JOB){BAKE_JOB.delete(id);pixDone(j,F[j.f](j.o))}};   // 일꾼이 죽으면 남은 일을 여기서 마저 굽는다
+    BAKE_W=w}catch(e){BAKE_W=null}return BAKE_W}
+// 다 구운 픽셀을 붙인다. 높낮이 맵은 g_elev가 미리보기로 만든 그림(src가 이 바닥)을 지금 지역이면 다시 짓고, 아니면 버려 다음에 새로 굽게 한다
+function pixDone(j,d){j.c.baking=0;j.fin(d);
+  for(const k in GROUND){const e=GROUND[k];if(e.src!==j.c)continue;if(k===REG&&ground===e){GROUND[k]=ground=j.c;elevBuild()}else delete GROUND[k]}}
+// 놀이 중이면 픽셀 함수 f를 일꾼에게 맡기고, 그동안 c에 줄여 구운 미리보기를 늘려 깐다. 다 되면 fin(d). 맡기지 못하면 false (부른 쪽이 동기로 굽는다)
+function pixLater(f,o,c,fin){if(!playing||window.BAKE_SYNC)return false;const w=bakeWorker();if(!w)return false;
+  const q=BAKE_PREVIEW,o2={...o,k:(o.k||1)*q,gw:Math.max(1,Math.round(o.gw*q)),gh:Math.max(1,Math.round(o.gh*q))},t=document.createElement('canvas');t.width=o2.gw;t.height=o2.gh;
+  const tg=t.getContext('2d'),im=tg.createImageData(o2.gw,o2.gh);im.data.set(PIXF()[f](o2));tg.putImageData(im,0,0);{const cg=c.getContext('2d');cg.imageSmoothingQuality='high';cg.drawImage(t,0,0,o.gw,o.gh)}
+  const id=++BAKE_N;BAKE_JOB.set(id,{f,o,c,fin});c.baking=1;w.postMessage({id,f,o});return true}
 // 큰 지역(성) 바닥: 한 장으로 구우면 휴대폰 메모리가 모자라서, 12×12칸 조각을 화면 가까이에서만 굽고 멀어진 조각은 버린다
 const CHUNK=12,CHUNK_K=.6,CHUNK_KEEP=64;
 const chunkGround=th=>({chunked:1,th,cache:new Map,n:0});

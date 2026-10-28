@@ -38,7 +38,7 @@ hook('sectActDone',c=>{if(c.a==='sleave'&&!P.sect)mobilBack('하산')});
 hook('sectAct',c=>{if(c.a==='mobil'){c.done=true;c.r=true;if(mobilize())closePanels()}else if(c.a==='mobback'){c.done=true;c.r=true;mobilBack('돌려보냄')}});
 // 문파창 (g_sect.js membership)
 function mobilHtml(s){if(P.sect!==s.id)return'';const p=mobilPlan(),out=mobilOut(),why=mobilWhy(),t=MOBIL.rank;
-  const rows=t.map((r,i)=>r.n?`${rankName(s.id,i)} ${r.n}명${r.e?`(고수 ${r.e})`:''}`:null).filter(Boolean).join(' · ');
+  const rows=t.slice(0,rankTop(s.id)+1).map((r,i)=>r.n?`${rankName(s.id,i)} ${r.n}명${r.e?`(고수 ${r.e})`:''}`:null).filter(Boolean).join(' · ');
   return `<div class="card"><h4>문파원 동원 ${out.length?`<small class="dim">함께 있는 문파원 ${out.length}명 · ${Math.ceil(Math.max(...out.map(a=>a.left)))}초 남음</small>`:''}</h4>
     <p class="note">${p&&p.n?`지금 직위로 ${p.n}명${p.e?` (고수 ${p.e}명, ${RANKS[p.re]})`:''}, ${RANKS[p.r]} 무인 · 공적 ${p.cost} · ${MOBIL.dur}초 · 해마다 한 번. 쓰러지면 문파 인원이 준다.`:''}${why&&!out.length?` <b class="bad">${why}</b>`:''}</p>
     <p class="dim">${rows}</p>
