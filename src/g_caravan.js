@@ -57,7 +57,7 @@ function cvToward(ex,dst){if(!dst)return[];const hit=to=>!!to&&pvBase(to)===pvId
   return[]}
 // 출발을 앞둔 표행: 표국마다 CARV.recruit.runs개. 떠난 표행은 지우고 새 표행을 건다
 function pyoMkRun(p,dep){const RC=CARV.recruit,E=CARV.escort,lo=cvDanger(p.k),c=pick(CARV.cargo),nb=PV_NB(p.k).filter(n=>n!==p.k&&PROV[n]),dst=nb.length?pick(nb):null;
-  const need=R1(RC.need[0],RC.need[1]),to=Math.random()<RC.facTo?pyoFacTo(dst):null;
+  const need=R1(RC.need[0],RC.need[1]),to=!c.nofac&&Math.random()<RC.facTo?pyoFacTo(dst):null;   // v194: 관아 세은은 세력 문파로 가지 않는다
   return{id:`${p.id}:${Math.round(dep)}:${Math.floor(Math.random()*1e4)}`,cargo:c.k,dst,dep,t0:nowS(),need,got:R1(0,Math.max(0,need-3)),to,
     silver:Math.round(R1(E.silver[0],E.silver[1])*(1+lo*.35)*c.mul*(to?RC.facMul:1)),vit:E.vit+lo*20,fame:E.fame,good:E.good}}
 // 표물을 받는 곳이 세력의 문파나 맹이면(사용자 2026-10-27) 그 세력의 적 세력이 표행을 노린다. 표국은 여전히 어느 편도 아니다
@@ -71,6 +71,11 @@ function pyoRuns(p){G.pyoRuns=G.pyoRuns||{};const RC=CARV.recruit,t=nowS();const
   while(L.filter(r=>!r.me).length<RC.runs){const last=Math.max(t,...L.map(r=>r.dep));L.push(pyoMkRun(p,last+(L.length?R1(RC.gap[0],RC.gap[1]):R1(RC.dep[0],RC.dep[1]))))}
   L.sort((a,b)=>a.dep-b.dep);G.pyoRuns[p.id]=L;return L}
 const cargoOf=k=>CARV.cargo.find(c=>c.k===k)||CARV.cargo[0];
+// v194 (점검 2026-10-28): 표행 위험도. 세력 무리는 우두머리가 일대제자·호법(일류~절정), 산적은 두 번째 습격에 산적두목(이류 우두머리)이 온다(cvAmbush).
+//   권장 경지(need)보다 낮으면 모집 창과 참여 기록에 경고한다 (막지는 않는다. 8세 이류가 마교 당주에게 쓰러지던 점검 결과)
+const PYO_RISK=CARV.risk||{fac:2,bandit:1};
+const pyoRisk=r=>{const f=r.to?pyoFoes(r.to):[];return f.length?{need:PYO_RISK.fac,t:`${f.map(x=>FACN[x]).join('·')} 무리 셋, 우두머리는 일류~절정`}:{need:PYO_RISK.bandit,t:'산적 네댓, 두 번째 습격엔 산적두목(이류 우두머리)'}};
+const pyoRiskHtml=r=>{const k=pyoRisk(r),low=realmIdx()<k.need;return `<p class="${low?'bad':''}"><b>위험</b> ${k.t} · 권장 ${rk(k.need)} 이상${low?` · <b>지금 경지(${rk(realmIdx())})로는 목숨이 위태롭다</b>`:''}</p>`};
 const dstN=k=>k&&PROV[k]?PROV[k].n:'이웃 성';
 // 표행 한 장: 출발까지 남은 시간·목적지·표물·일행·성공하면 받는 임금
 function pyoRunHtml(p,r,i){const c=cargoOf(r.cargo),T=CARV.types.pyo,left=r.dep-nowS(),why=r.me?'':pyoWhy(p,r);
@@ -78,6 +83,7 @@ function pyoRunHtml(p,r,i){const c=cargoOf(r.cargo),T=CARV.types.pyo,left=r.dep-
     <p><b>목적지</b> ${esc(PROV[p.k].n)} 성 지도를 지나 ${esc(dstN(r.dst))} 쪽 길목까지. ${esc(p.town)} 성문 밖에서 모여 떠난다</p>
     <p><b>표물</b> ${esc(c.d)} · ${r.to?`<b>${esc(r.to.n)}</b>(${FACN[r.to.fac]})에게`:`${esc(dstN(r.dst))}의 ${esc(c.to)}에게`}${c.boss?' · <b class="bad">값진 표물이라 산적두목이 노린다</b>':''}</p>
     ${r.to?`<p class="bad"><b>노리는 자</b> ${pyoFoes(r.to).map(f=>FACN[f]).join('·')} 무인이 ${esc(r.to.n)}에 가는 표물을 친다. 임금 ×${CARV.recruit.facMul}</p>`:''}
+    ${pyoRiskHtml(r)}
     <p><b>일행</b> ${T.lead} 1 · ${T.guard} ${T.nGuard[0]}~${T.nGuard[1]} · 모집 <b>${r.got+(r.me?1:0)}/${r.need}</b>명 · 가는 길에 습격 두 번쯤</p>
     <p><b>성공하면</b> 은자 <b class="gold">${r.silver}</b> · 활력 ${r.vit} · 명성 ${r.fame} · 선업 ${r.good} <small class="dim">길목에 닿으면 ${T.lead}가 그 자리에서 치른다. 수레가 부서지면 품삯은 없다</small></p>
     <div class="row2"><span class="${why?'bad':'note'}">${r.me?'<b class="gold">따라나서기로 했다.</b> 성문 밖 성 지도로 나가면 바로 떠난다':why||'가입할 필요 없다. 이번 한 번 품을 판다'}</span>${r.me?'':B(`pyojoin:${p.id}:${i}`,'참여하기',{pri:!why,d:!!why})}</div></div>`}
@@ -94,7 +100,8 @@ hook('sectAct',c=>{if(c.a!=='pyojoin')return;c.done=true;c.r=true;const p=PYO[c.
   r.me=1;const cg=cargoOf(r.cargo);
   P.quests.push({n:`${cg.n} 표행 · ${p.town} → ${dstN(r.dst)}`,kind:'escort',cnt:1,have:0,hired:1,run:r.id,reg:pvId(p.k),dst:r.dst,dep:r.dep,cargo:r.cargo,hands:Math.min(2,r.got),to:r.to||null,
     silver:r.silver,vit:r.vit,fame:r.fame,good:r.good,pyo:p.id,pyoN:p.n,pyoAt:p.town,key:`pyo:${r.id}`});
-  log(`[${p.n}] ${cg.n} 표행에 따라나서기로 했습니다. ${fmtLeft(r.dep-nowS())} 안에 ${p.town} 성문 밖 ${PROV[p.k].n} 성 지도로 나가세요.`,'info')});
+  log(`[${p.n}] ${cg.n} 표행에 따라나서기로 했습니다. ${fmtLeft(r.dep-nowS())} 안에 ${p.town} 성문 밖 ${PROV[p.k].n} 성 지도로 나가세요.`,'info');
+  {const k=pyoRisk(r);if(realmIdx()<k.need)log(`표두: "${rk(k.need)}도 못 된 몸으로 따라오겠다니, 습격이 오면 수레 뒤에 붙어 있으시오." (${k.t})`,'dmg')}});
 function pyoRunDone(q){const L=G.pyoRuns&&G.pyoRuns[q.pyo];if(L)G.pyoRuns[q.pyo]=L.filter(r=>r.id!==q.run)}
 // 의뢰판·문파 임무로 맡은 호위는 맡은 곳의 성으로 정한다. 따라나선 표행은 출발 시각이 지나도 성문 밖에 오지 않으면 기다리다 떠난다
 let pyoChk=0;

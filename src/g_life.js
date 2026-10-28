@@ -288,7 +288,9 @@ function rebirthVit(realm=realmIdx()){const share=(typeof diffOf==='function'?di
   const deed=Math.round(P.fame*1.5+Math.max(0,P.good)*2+realm*40+Math.max(0,P.age-30)*3),fromVit=Math.round(earned*share);
   G.bonusParts={deed,earned,share,fromVit};return deed+fromVit}
 function die(cause){
-  if(!playing)return;playing=false;paused=true;P.hp=0;
+  if(!playing)return;
+  {const c={cause,stop:false};runHooks('preDie',c);if(c.stop)return}   // 무관 보호 (g_academy.js): 졸업 전에는 쓰러져도 생이 끝나지 않는다
+  playing=false;paused=true;P.hp=0;
   const karma=P.good-P.evil,realm=realmIdx();
   let st=karma<-30?0:karma<30?1:karma<120?2:3;if(P.fame>=300&&st<3)st++;
   const bonus=rebirthVit(realm);

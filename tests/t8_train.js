@@ -14,7 +14,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     await tap('[data-s="new"]');await tap('[data-s="start"]');await p.waitForTimeout(400);
     await p.evaluate(()=>{P.vit=2000;P.x=27.5;P.y=13.5;P.path=null;mobs=mobs.filter(m=>m.d.villager);spawnTick=()=>{}});await p.waitForTimeout(300);
     const tag=mobile?'phone':'pc';
-    if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyT');
+    if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyU');
     await p.waitForTimeout(200);
     const st=await p.evaluate(()=>{const r=TRN.getBoundingClientRect(),q=toScreen(P.x,P.y),cr=C.getBoundingClientRect();return{open:!TRN.hidden,paused,win:!$('win').hidden,top:r.top,head:cr.top+(q.y-70)*S,feet:cr.top+q.y*S}});
     ok(`${tag}: 수련 창이 열리고 시간은 흐른다`,st.open&&!st.paused&&!st.win);
@@ -31,7 +31,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     await tap('#pstat .who');   // v178: 가운데에 내공 성 칸이 있다await p.waitForTimeout(200);
     const pc=await p.evaluate(()=>({panel,win:!$('win').hidden,trn:!TRN.hidden,title:$('wtitle').textContent}));
     ok(`${tag}: 정보창을 누르면 인물 창이 열린다 (${pc.title})`,pc.panel==='char'&&pc.win&&!pc.trn);
-    await p.evaluate(()=>closePanels());if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyT');await p.waitForTimeout(200);
+    await p.evaluate(()=>closePanels());if(mobile){await tap('#tmenu');await tap('[data-act="trainwin"]')}else await p.keyboard.press('KeyU');await p.waitForTimeout(200);
     for(const k of['str','end','agi','qi']){
       const v0=await p.evaluate(k=>P.st[k],k);await tap(`[data-tr="${k}"]`);
       await p.waitForTimeout(550);

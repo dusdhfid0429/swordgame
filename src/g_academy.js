@@ -140,10 +140,23 @@ hook('hitDone',c=>{if(!acadOn()||!c.e||!c.e.acadDummy)return;const k=P.acad.c;k.
 const acadDvitOn=()=>acadOn()&&P.acad.stage>=Math.max(0,ACAD_ST.findIndex(s=>s.goals.some(g=>g.k==='hit')));
 const acadDvitNote=()=>acadDvitOn()?`<p class="note">목인장 수련 활력 <b>${P.acad.c.dvit||0}/${ACAD_DVIT.cap}</b> · ${ACAD_DVIT.per}번 칠 때마다 1 · 무관 과제 중에만</p>`:'';
 hook('kill',e=>{if(acadOn()&&e.kind==='산적두목'&&REG===acadField(P.side))P.acad.c.boss=(P.acad.c.boss||0)+1});
+// v194 (점검 2026-10-28): 수련곡 산적두목은 삼류 정예 몫. 예전엔 이류 보스(생명 2112)라 4단계 과제를 이길 수 없었다. 난이도 배율(g_diff.js)은 이 뒤에 곱한다
+const ACAD_BOSS=GD.ACAD_BOSS,ACAD_SAFE=GD.ACAD_SAFE;
+hook('mobScaled',e=>{if(e.kind!=='산적두목'||!P||!REG||REG!==acadField(P.side))return;const s=eliteStat(ACAD_BOSS.realm,ACAD_BOSS.kh,ACAD_BOSS.ka);
+  e.realm=ACAD_BOSS.realm;e.maxHp=e.hp=s.hp;e.atk=s.atk;e.hm=s.hm;e.acadBoss=1});
+// v194 (점검 2026-10-28): 졸업 전에는 쓰러져도 생이 끝나지 않는다. 관주가 무관으로 데려와 깨운다 (첫 생이 8세에 수련곡에서 끝나던 문제)
+hook('preDie',c=>{if(c.stop||!acadOn()||c.cause==='천수')return;c.stop=true;const a=P.acad,A=acadOf(P.side);a.c.rescue=(a.c.rescue||0)+1;
+  P.hp=Math.max(1,Math.round(P.maxHp*ACAD_SAFE.hp));P.binsa=null;P.poison=0;P.inv=Math.max(P.inv||0,3);P.target=null;P.path=null;P.medit=false;P.leap=null;
+  for(const e of mobs)if(e.hp>0&&(e.tgt===P||e.aggro)){e.aggro=false;e.tgt=null;e.lost=time+10}
+  const fee=Math.floor((P.silver||0)*ACAD_SAFE.silver);P.silver-=fee;
+  log(`정신을 잃고 쓰러졌습니다. ${A.master}이(가) 사람을 보내 무관으로 데려왔습니다.${fee?` 치료비 은자 ${fee}.`:''} 졸업 전에는 목숨을 잃지 않지만, 졸업하고 강호에 나가면 쓰러지는 것이 곧 생의 끝입니다.`,'dmg');
+  showBanner('무관으로 실려 오다','졸업 전에는 관주가 지켜 준다');
+  if(REG!==acadReg())setTimeout(()=>{if(P&&playing&&!P.traveling)travel({to:acadReg(),tx:26.5,ty:13.2})},300);else{P.x=26.5;P.y=13.2}});
 hook('panelOpen',id=>{if(acadOn())P.acad.c['panel_'+id]=1});
 
 // ---- 대련·월반 시험·졸업 비무 (비무 틀을 빌린다) ----
-const acadSparStat=s=>{const[a,h,m]=STD[s.lv];return{hp:Math.round(h*2.2*s.k),atk:Math.round(a*.6*s.k),hm:m,def:Math.round(2+s.lv*1.5)}};
+// v194 (점검): 상대는 그 경지 정예(g_balance.js eliteStat)의 kh·ka배. 예전엔 표준 생명 2.2배라 1초 안에 끝났다
+const acadSparStat=s=>({...eliteStat(s.lv,s.kh,s.ka),def:Math.round(2+s.lv*1.5)});
 const acadSparOk=kind=>{const a=P.acad;if(!acadOn()||!inAcad())return false;
   return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&realmIdx()>=1&&(a.c.final||0)<3&&acadCurK()==='final':false};
 function acadSpar(kind){if(G.duel||P.hp<=0||!acadSparOk(kind))return;const a=P.acad,A=acadOf(P.side);let o;

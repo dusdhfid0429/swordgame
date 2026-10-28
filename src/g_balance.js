@@ -19,6 +19,9 @@ function scaleMob(e){const d=e.d;if(!d||d.beast||d.villager||d.passive||e.realm=
   e.maxHp=e.hp=Math.round(h*t.h*(g.hs?g.hs[r]:1+(g.h||0)*r));e.atk=Math.round(a*t.a*(1+g.a*r));e.hm=d.hm!=null&&d.hm<5?d.hm:Math.round(m*t.m);   // 강시처럼 굼뜬 몹은 그대로
   e.def=Math.max(d.def||0,Math.round((1+r*1.5)*t.d));runHooks('mobScaled',e);return e}   // mobScaled: 난이도 배율 (g_diff.js)
 hook('mobMade',(e,kind,extra)=>{if(MOB_REALM[kind]!=null&&!extra){e.realm=MOB_REALM[kind];scaleMob(e)}});
+// v194 (점검 2026-10-28): 시험·대련 상대의 기준. 그 경지 정예(scaleMob의 e 등급)의 생명 kh배·공격 ka배. 무관 대련(g_academy.js)·승급 시험(g_ranktest.js)이 쓴다
+function eliteStat(r,kh=1,ka=1){r=clamp(r,0,6);const[a,h,m]=STD[r],t=TIER.e,g=GD.GROW||{h:0,a:0};
+  return{hp:Math.max(1,Math.round(h*t.h*(g.hs?g.hs[r]:1+(g.h||0)*r)*kh)),atk:Math.max(1,Math.round(a*t.a*(1+g.a*r)*ka)),hm:Math.round(m*t.m)}}
 // 문파 무인: 직위(0 속가·졸개·교도, 1 정식·정예, 2 일대·조장·향주, 3 호법·당주)가 경지
 hook('facMade',e=>{e.realm=e.rank||0;scaleMob(e)});
 

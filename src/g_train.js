@@ -124,4 +124,5 @@ function drawTrainFx(front){
   ctx.restore();if(front)TFX=TFX.filter(f=>f.t<f.dur);
 }
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||!playing)return;
-  if(e.code==='KeyT'){trnOpen?closeTrain():openTrain()}else if(e.code==='Escape'&&trnOpen)closeTrain()});
+  // v194 (점검): 수련 창은 U. T는 강제공격이라 둘 다 돌았다 (수련 창을 열면 강제공격이 켜지던 버그)
+  if(e.code==='KeyU'){trnOpen?closeTrain():openTrain()}else if(e.code==='Escape'&&trnOpen)closeTrain()});
