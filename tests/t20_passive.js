@@ -32,7 +32,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`다른 타입 2단계 "${s2.b2}", 3단계는 직위 "${s2.a3rank}", 호법이 되어도 2단계 미대성이면 "${s2.a3low}"`,s2.b2==="일대제자 이상"&&s2.a3rank==='호법 이상'&&s2.a3low==='이동속도 2단계 대성 필요'&&s2.a3===null);
   ok('같은 타입은 겹치지 않고 가장 센 것 하나',s2.stack);
   // 화면: 무공 창, 문파 창
-  await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(200);
+  await p.evaluate(()=>{WTAB.arts=1;openPanel('arts')});   // v200: 심법·보법은 무공 창 둘째 탭
+ await p.waitForTimeout(200);
   ok('무공 창에 패시브 무공',await p.evaluate(()=>$('wbody').textContent.includes('패시브 무공')&&$('wbody').textContent.includes('암향표')));
   await p.evaluate(()=>{const c=[...document.querySelectorAll('#wbody .card')].find(e=>e.textContent.includes('패시브 무공'));c&&c.scrollIntoView()});await p.screenshot({path:shot('passive_arts')});
   await p.evaluate(()=>{closePanels();travel({to:'hq_hwasan',tx:20.5,ty:10.5})});await p.waitForTimeout(1800);

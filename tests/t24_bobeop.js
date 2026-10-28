@@ -69,7 +69,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const s7=await p.evaluate(()=>{P.sect=null;const a=bobBlock('B_hwasan_2',1);P.sect='hwasan';P.srank={hwasan:0};P.merit={hwasan:500};P.bob.B_hwasan_1=1;const r0=bobBlock('B_hwasan_2',1);
     P.srank.hwasan=1;learnBob('B_hwasan_2',1);const r1=bobBlock('B_hwasan_3',1);return{a,r0,learned:!!P.bob.B_hwasan_2,merit:P.merit.hwasan,r1,shop:bobBlock('B_hwasan_3'),old:bobBlock('b_yuun',1)}});
   ok(`문파 보법은 본산에서: "${s7.a}", "${s7.r0}" → 익힘(공적 500→${s7.merit}), 절정 "${s7.r1}", 상점으로는 "${s7.shop}", 옛 유운보 "${s7.old}"`,s7.a==='화산파 제자만'&&/이상/.test(s7.r0)&&s7.learned&&s7.merit===400&&/이상/.test(s7.r1)&&s7.shop==='문파에서'&&s7.old==='문파에서 익히지 않는다');
-  await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(200);
+  await p.evaluate(()=>{WTAB.arts=1;openPanel('arts')});   // v200: 심법·보법은 무공 창 둘째 탭
+ await p.waitForTimeout(200);
   ok('무공 창에 보법 목록과 바꾸기',await p.evaluate(()=>$('wbody').textContent.includes('보법')&&!!document.querySelector('#wbody [data-act^="bsel:"]')));
   await p.evaluate(()=>act('bsel:b_basic'));ok('바꾸면 그 보법을 쓴다',await p.evaluate(()=>P.bcur==='b_basic'));
   await p.evaluate(()=>closePanels());

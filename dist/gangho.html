@@ -17,7 +17,7 @@
 html,body{height:100%;margin:0}
 body{background:var(--ink);color:var(--paper);font-family:var(--body);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;font-size:14px}
 button{font-family:var(--body)}
-#app{display:flex;flex-direction:column;height:100%}
+#app{display:flex;flex-direction:column;height:100%;container:app/inline-size;position:relative}
 #stage{position:relative;flex:1;min-height:0}
 canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .zone{position:absolute;top:10px;left:12px;font-family:var(--display);font-size:17px;line-height:1.35;text-shadow:0 1px 3px #000;max-width:calc(100% - 170px)}
@@ -80,7 +80,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .sk.u{border-color:#c58bff}
 .sep{width:6px}
 .banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.banner div{font-family:var(--display);font-size:clamp(28px,6vw,50px);color:var(--paper);text-shadow:0 2px 18px #000,0 0 2px #000;opacity:0;transition:opacity .4s;text-align:center}
+.banner div{font-family:var(--display);font-size:clamp(28px,6cqw,50px);color:var(--paper);text-shadow:0 2px 18px #000,0 0 2px #000;opacity:0;transition:opacity .4s;text-align:center}
 .banner div.on{opacity:1}
 .banner small{display:block;font-size:.4em;color:var(--exp);letter-spacing:.2em;margin-top:6px}
 /* v149 (사용자): 정세 사건 연출. 창 대신 화면 가운데 먹빛 띠에 붉은 제목이 쾅 박힌다. 터치는 통과 */
@@ -88,8 +88,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .sban.on{animation:sbanIn 4.2s ease forwards}
 .sban .bd{position:absolute;inset:-14px 0;background:linear-gradient(90deg,transparent,#0b0604e8 18%,#0b0604f2 50%,#0b0604e8 82%,transparent);border-top:1px solid #a8332a90;border-bottom:1px solid #a8332a90}
 .sban .k{position:relative;font:13px var(--body);letter-spacing:.5em;color:#e0b25a;margin-bottom:2px}
-.sban .t{position:relative;font-family:var(--display);font-size:clamp(34px,7.5vw,64px);color:#f3e2c0;text-shadow:0 0 18px #c0281c,0 0 2px #000,0 3px 0 #5a0f0a;letter-spacing:.08em;animation:sbanT 4.2s ease forwards}
-.sban .s{position:relative;font:clamp(12px,2.4vw,15px)/1.5 var(--body);color:#d8c7a0;max-width:min(560px,86vw);text-align:center;margin-top:4px}
+.sban .t{position:relative;font-family:var(--display);font-size:clamp(34px,7.5cqw,64px);color:#f3e2c0;text-shadow:0 0 18px #c0281c,0 0 2px #000,0 3px 0 #5a0f0a;letter-spacing:.08em;animation:sbanT 4.2s ease forwards}
+.sban .s{position:relative;font:clamp(12px,2.4cqw,15px)/1.5 var(--body);color:#d8c7a0;max-width:min(560px,86cqw);text-align:center;margin-top:4px}
 @keyframes sbanIn{0%{opacity:0}8%{opacity:1}82%{opacity:1}100%{opacity:0}}
 @keyframes sbanT{0%{transform:scale(2.2);opacity:0;filter:blur(6px)}10%{transform:scale(.94);opacity:1;filter:blur(0)}16%{transform:scale(1)}100%{transform:scale(1.04)}}
 .qtrack div.sq{color:#f0a890;white-space:normal}.qtrack .sq b{color:#ffb38a}.qtrack .sq i{font-style:normal;color:#e0b25a}
@@ -125,11 +125,10 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
   box-shadow:0 6px 20px rgba(0,0,0,.6);opacity:0;transform:translateY(-10px) scale(.97);transition:opacity .35s ease,transform .35s ease}
 .sysmsg p.on{opacity:1;transform:none}.sysmsg p.off{opacity:0;transform:translateY(-6px);transition-duration:.6s}
 .sysmsg p.xp{color:#ffd98a;border-color:#a8853e}.sysmsg p.dmg{color:#f0968a;border-color:#7a3a30}.sysmsg p.info{color:#a9c4ea}
-/* v136 (사용자): 세로 화면에서는 왼쪽 위(기록 줄 자리)에 좁게 띄워 오른쪽 임무 줄과 겹치지 않는다 */.touch .sysmsg{top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));left:8px;transform:none;width:min(210px,50vw);align-items:flex-start;gap:4px}
+/* v136 (사용자): 세로 화면에서는 왼쪽 위(기록 줄 자리)에 좁게 띄워 오른쪽 임무 줄과 겹치지 않는다 */.touch .sysmsg{top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));left:8px;transform:none;width:min(210px,50cqw);align-items:flex-start;gap:4px}
 /* 메시지가 떠 있는 동안은 같은 내용의 작은 기록 줄을 숨겨 겹쳐 보이지 않게 */
 .touch #log{transition:opacity .3s}.touch.sys-on #log{opacity:0}
 .touch .sysmsg p{font-size:12px;padding:6px 10px;text-align:left}
-@media (max-height:520px){.touch .sysmsg{top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(260px,32vw);align-items:center}.touch .sysmsg p{text-align:center}}
 @media (prefers-reduced-motion:reduce){.sysmsg p{transition:opacity .2s}}.wnote.sys{color:#e8d9a8}.wnote.dmg{color:var(--bad)}
 .win,.screen{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -144,6 +143,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .forms li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;font-size:13px;align-items:baseline}
 .forms li small{color:var(--paper-dim);font-size:11px}
 .forms li.off{opacity:.45}.forms li.ult span{color:var(--exp);font-family:var(--display)}
+.touch .forms .key{display:none}.touch .forms li{grid-template-columns:minmax(0,1fr) auto}
 .key{font:11px var(--body);color:var(--paper-dim);border:1px solid #4a3c27;padding:0 4px;white-space:nowrap}
 .list{display:grid;gap:4px}
 .it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#0a0806e6;border:1px solid #4a3c27;padding:6px 8px;font-size:13px}
@@ -162,7 +162,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .eq[disabled]{cursor:default;border-color:#4a3c27}.eq small{color:var(--exp);font-size:11px}.eq span{font-size:11px;color:var(--paper-dim)}
 .screen{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#2a2015ee,#0b0a09f6);overflow:auto;padding:16px}
 .screen .box{width:min(760px,100%);display:grid;gap:12px}
-.title{font-family:var(--display);font-size:clamp(40px,9vw,76px);text-align:center;margin:0;letter-spacing:.08em;text-shadow:0 4px 30px #000}
+.title{font-family:var(--display);font-size:clamp(40px,9cqw,76px);text-align:center;margin:0;letter-spacing:.08em;text-shadow:0 4px 30px #000}
 .title+p{text-align:center;color:var(--paper-dim);margin:0}
 .center{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .choice{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
@@ -173,7 +173,7 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .opt:focus-visible{outline:2px solid var(--exp);outline-offset:1px}
 input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border:1px solid var(--bronze);padding:6px 10px;width:180px;user-select:text;-webkit-user-select:text}
 .help{columns:2;column-gap:20px;font-size:12px;color:var(--paper-dim);line-height:1.7}.help b{color:var(--paper);font-weight:400}
-@media (max-width:760px){
+@container app (max-width:760px){
   .panel{grid-template-columns:minmax(0,1fr);padding-inline:10px;gap:6px}
   .log{height:46px;order:3}.status{order:1}.bar{order:2}
   .sk{width:40px;height:40px;font-size:11px}.sk.menu{width:38px}
@@ -184,13 +184,13 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 #tui{display:none}
 .touch .panel{display:none}
 .touch #tui{display:block;position:absolute;inset:0;pointer-events:none;z-index:0}
-.touch .status{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:8px;width:min(196px,48vw);background:#0b0a09cc;border:1px solid var(--bronze);padding:5px 7px;gap:3px;pointer-events:auto}   /* v129: 누르면 인물 창 */
+.touch .status{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:8px;width:min(196px,48cqw);background:#0b0a09cc;border:1px solid var(--bronze);padding:5px 7px;gap:3px;pointer-events:auto}   /* v129: 누르면 인물 창 */
 .touch .status .sub#sub{display:none}
 .touch .status .gauge{height:13px}.touch .status .gauge b{line-height:12px;font-size:10px}
 .touch .status .who{font-size:14px}.touch .status #res{font-size:10px;white-space:normal}
-.touch #log{position:absolute;left:8px;top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(210px,50vw);height:64px;background:none;border:0;box-shadow:none;padding:0;font-size:11px;line-height:1.45;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
-.touch .zone{top:calc(74px + env(safe-area-inset-top,0px));left:auto;right:10px;text-align:right;font-size:13px;max-width:44vw;pointer-events:none}
-.touch .zone small{font-size:11px}.touch .zone .row{display:none}.touch .qtrack{font-size:11px;width:min(170px,42vw);max-height:100px;pointer-events:auto;text-align:left;margin-left:auto}.touch #log p{pointer-events:auto}
+.touch #log{position:absolute;left:8px;top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(210px,50cqw);height:64px;background:none;border:0;box-shadow:none;padding:0;font-size:11px;line-height:1.45;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
+.touch .zone{top:calc(74px + env(safe-area-inset-top,0px));left:auto;right:10px;text-align:right;font-size:13px;max-width:44cqw;pointer-events:none}
+.touch .zone small{font-size:11px}.touch .zone .row{display:none}.touch .qtrack{font-size:11px;width:min(170px,42cqw);max-height:100px;pointer-events:auto;text-align:left;margin-left:auto}.touch #log p{pointer-events:auto}
 .touch #mini{top:calc(6px + env(safe-area-inset-top,0px));width:110px;height:62px}
 #tmenu{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:126px;width:46px;height:46px;font-size:22px;line-height:1;color:var(--paper);background:var(--stone);border:1px solid var(--bronze-hi);pointer-events:auto}
 #joyz{position:absolute;left:0;bottom:0;width:48%;height:46%;pointer-events:auto;touch-action:none}
@@ -230,14 +230,6 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .mbtn{display:grid;gap:2px;text-align:center;padding:12px 6px!important;min-height:64px}
 .mbtn b{font:400 17px var(--display)}.mbtn small{font-size:11px;color:var(--paper-dim);white-space:normal;word-break:keep-all}
-@media (max-height:520px){ /* phone held sideways */
-  .touch #log{top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(260px,32vw);height:48px;text-align:center}
-  .touch .zone{right:calc(58px + env(safe-area-inset-right,0px))}.touch .qtrack{max-height:80px}
-  #tbtns,#tquick{transform:scale(.82);transform-origin:100% 100%}
-  #tquick{bottom:calc(196px + env(safe-area-inset-bottom,0px))}
-  #tslots{left:50%;transform:translateX(-50%)}
-  #joyz{height:60%}
-}
 /* ---- 수련 창: 화면 아래쪽에 붙고 시간은 흐른다. 캐릭터(화면 가운데)를 가리지 않게 높이를 제한 ---- */
 .trn{position:absolute;left:50%;bottom:calc(8px + var(--sab,0px));transform:translateX(-50%);width:min(560px,calc(100% - 16px));max-height:min(40%,330px);overflow:hidden;grid-template-rows:auto minmax(0,1fr);z-index:3;
   background:linear-gradient(#2c2419f2,#17120cf2);border:2px solid var(--bronze);box-shadow:0 6px 24px #000c,inset 0 1px 0 var(--bronze-hi);padding:8px 10px;display:grid;gap:6px;touch-action:pan-y}
@@ -251,6 +243,38 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .trn-on #tbtns,.trn-on #joyz,.trn-on #tquick,.trn-on #tslots{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
 #app:has(#scr:not([hidden])) .panel{visibility:hidden}   /* v196: 제목·탄생·윤회 화면 뒤로 HUD(무명 · 삼류 · 12성)가 비치지 않게 */
+
+/* ==== v200 모바일 전용 (사용자 2026-10-28: 세로 고정). body.mob = 개발용(?dev)이 아닌 모든 화면 ==== */
+/* PC로 열면 가운데에 휴대폰 비율 화면 (휴대폰은 손가락 입력이라 이 규칙을 타지 않는다) */
+@media (orientation:landscape) and (pointer:fine){
+  body.mob{background:radial-gradient(ellipse at 50% 40%,#1d1710,#070605 70%)}
+  body.mob #app{max-width:calc(100dvh * 9 / 19);margin:0 auto;border-inline:1px solid var(--bronze);box-shadow:0 0 40px #000}
+}
+#rot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#0b0a09f2;text-align:center;color:var(--paper)}
+#rot b{display:block;font-size:54px;color:var(--exp);animation:rotSpin 2.4s ease-in-out infinite}#rot p{margin:8px 0 4px;font:20px var(--display)}#rot small{color:var(--paper-dim)}
+@keyframes rotSpin{0%,30%{transform:rotate(90deg)}60%,100%{transform:rotate(0)}}
+/* 토스 앱 위쪽 오른쪽의 ··· / X 단추 자리를 비운다: 미니맵·☰·지역 이름을 한 줄 내린다 */
+body.mob{--tnav:48px}
+.touch #mini,.touch #tmenu{top:calc(6px + var(--tnav,0px) + env(safe-area-inset-top,0px))}
+.touch .zone{top:calc(74px + var(--tnav,0px) + env(safe-area-inset-top,0px))}
+/* 창 = 아래에서 올라오는 시트. 머리줄의 손잡이를 아래로 끌거나 뒤로 가기로 닫는다 */
+.touch .win{left:0;right:0;top:auto;bottom:0;transform:none;width:auto;max-height:calc(100% - 64px - env(safe-area-inset-top,0px));border-width:2px 0 0;border-radius:14px 14px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:sheetUp .2s ease-out}
+.touch .whead{position:relative;border-radius:14px 14px 0 0;padding-top:18px;touch-action:none}
+.touch .whead::before{content:"";position:absolute;top:7px;left:50%;width:42px;height:4px;margin-left:-21px;border-radius:2px;background:#7a6440}
+@keyframes sheetUp{from{transform:translateY(40%);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.touch .win{animation:none}}
+.wtabs{position:sticky;top:0;z-index:2;display:flex;margin:-2px 0 0;background:#1e1810;border-bottom:1px solid #4a3c27}
+.wtab{flex:1;min-height:44px;background:none;border:0;border-bottom:2px solid transparent;color:var(--paper-dim);font:15px var(--display);cursor:pointer}
+.wtab.on{color:#f6e7b8;border-bottom-color:var(--exp)}
+/* 상태 상자: 접으면 이름·생명·내공만 */
+.pexp{display:none}
+.touch .pexp{display:block;position:absolute;right:-1px;bottom:0;transform:translateY(100%);width:40px;height:22px;padding:0;border:1px solid var(--bronze);border-top:0;border-radius:0 0 7px 7px;background:#0b0a09cc;color:var(--paper-dim);font-size:12px;line-height:1;pointer-events:auto}
+.touch .status:not(.open) .gauge.ms,.touch .status:not(.open) #res{display:none}
+/* 손가락 크기: 누르는 것은 44px 안팎 */
+.touch .btn{min-height:44px}.touch .ib .btn{min-height:40px}
+.touch .mat button{min-height:36px;min-width:48px;font-size:13px}
+.touch .tq{width:46px;height:46px}.touch .ts{width:54px;height:46px}
+.touch .qsr{grid-template-columns:repeat(6,36px)}.touch .qsr button{height:34px}
 </style></head><body>
 <div id="app">
   <div id="stage">
@@ -2224,23 +2248,27 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,ch
   // 창 하나를 그리다 오류가 나도 창은 열리고 닫기 단추가 남는다 (오류는 꺼짐 기록에 남긴다)
   let h;try{h=f(panelArg)}catch(e){if(typeof crashErr==='function')crashErr('panel '+panel+': '+e.message);console.warn(e);h=`<p class="note bad">이 창을 그리다 문제가 생겼습니다. 물건과 기록은 그대로 있습니다. 닫고 다시 열거나 게임을 새로 켜 주세요.</p>`}
   $('wbody').innerHTML=josa(h)}
+// v200 창 탭 (모바일 전용): 긴 창을 위쪽 탭으로 나눈다. 터치 조작에서만 나누고, PC(개발용)에서는 예전처럼 한 줄로 이어 붙인다
+const WTAB={};
+function wtabs(id,tabs){if(!TOUCH)return tabs.map(t=>t[1]).join('');const cur=Math.min(WTAB[id]||0,tabs.length-1);
+  return `<div class="wtabs" role="tablist">${tabs.map((t,i)=>`<button type="button" role="tab" class="wtab${i===cur?' on':''}" aria-selected="${i===cur}" data-act="wtab:${id}:${i}">${t[0]}</button>`).join('')}</div>${tabs[cur][1]}`}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
   const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
-  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
+  return wtabs('char',[['인물',`<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}
-    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (U)',{pri:1})}</div></div>
+    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기'+(TOUCH?'':' (U)'),{pri:1})}</div></div>`],['업보·평판',`
     ${typeof maraHtml==='function'?maraHtml():''}${typeof sinHtml==='function'?sinHtml():''}${typeof diffHtml==='function'?diffHtml():''}
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     ${typeof repHtml==='function'?repHtml():''}
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
-      <p>${Object.keys(SHINGONG).map(k=>`${k} ${P.sg.pages[k]||0}/10`).join(' · ')}</p></div>`;
+      <p>${Object.keys(SHINGONG).map(k=>`${k} ${P.sg.pages[k]||0}/10`).join(' · ')}</p></div>`]])
 }
 // 무공 잊기 (v184, 사용자 2026-10-26): 익힌 무공을 지워 오성이 정한 칸을 비운다. 숙련과 초식이 모두 사라지고 되돌릴 수 없어 한 번 더 묻는다
 let forgetAsk=null;hook('panelOpen',()=>{forgetAsk=null});
@@ -2265,14 +2293,13 @@ function pArts(){
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다 · 칸이 차면 '잊기'로 비운다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
-    ${list}
+    ${wtabs('arts',[['무공',`${list}
     ${gyNote()}
-    ${typeof gsHtml==='function'?gsHtml():''}
-    ${simArtsHtml()}
+    ${typeof gsHtml==='function'?gsHtml():''}`],['심법·보법',`${simArtsHtml()}
     ${ggArtsHtml()}
     ${bobArtsHtml()}
     ${pasArtsHtml()}
-    <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
+    <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>`]])}
     <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇되 필살기는 쓰지 않고(직접 S·필살 버튼), <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
 }
 let shopMode=null;
@@ -2326,7 +2353,7 @@ function pHelp(){
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
-  <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
+  ${DEV?`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`:''}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
@@ -2422,6 +2449,7 @@ let wDown=0;$('wbody').addEventListener('pointerdown',()=>{wDown=performance.now
 $('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||(e.detail&&wDown<panelAt))return;act(b.dataset.act)});
 function act(s){
   const[a,x,y]=s.split(':'),n=+x;
+  if(a==='wtab'){WTAB[x]=+y;renderOpen();$('wbody').scrollTop=0;return}
   if(sectAct(a,x,y)){renderOpen();return}
   switch(a){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
@@ -4063,7 +4091,7 @@ function setTouch(on){
   joy.on=false;joy.m=0;touchAtk=false;resize();logTop();
 }
 // v113 (사용자: 로그 창이 플레이어 정보창을 덮는다): 상태 상자(마성 게이지·두 줄 자원)가 커져도 로그는 늘 그 아래에
-function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$('stage').getBoundingClientRect();document.documentElement.style.setProperty('--log-top',Math.round(b.bottom-st.top+5)+'px')}
+function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$('stage').getBoundingClientRect();document.documentElement.style.setProperty('--log-top',Math.round(b.bottom-st.top+($('pexp')?26:5))+'px')}
 if(window.ResizeObserver)new ResizeObserver(()=>logTop()).observe(statusEl);
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
 function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||1;joy.gx=gx/l;joy.gy=gy/l}
@@ -4140,10 +4168,36 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')} ${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${DEV?B('ctl:k','PC 조작으로')+' ':''}${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
 }
+// v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
+// 자동 테스트(navigator.webdriver)는 ?touch가 없으면 예전처럼 PC 조작으로 돈다.
+const DEV=/[?#&]dev\b/.test(location.href)||(!!navigator.webdriver&&!/[?#&]touch/.test(location.href));
+document.body.classList.toggle('mob',!DEV);
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
-setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
+setTouch(DEV?(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches):true);
+// 상태 상자: 평소엔 이름·생명·내공만, ▾를 누르면 숙련·활력·은자까지 펼친다 (상자 다른 곳을 누르면 그대로 인물 창)
+{const b=document.createElement('button');b.type='button';b.id='pexp';b.className='pexp';b.setAttribute('aria-label','상태 펼치기');b.textContent='▾';statusEl.appendChild(b);
+  const set=on=>{statusEl.classList.toggle('open',on);b.textContent=on?'▴':'▾';b.setAttribute('aria-expanded',on);logTop()};
+  let o=false;try{o=STORE.get('ganghoyunhoe-pexp')==='1'}catch(e){}set(o);
+  b.addEventListener('click',e=>{e.stopPropagation();const on=!statusEl.classList.contains('open');set(on);try{STORE.set('ganghoyunhoe-pexp',on?'1':'0',1)}catch(err){}})}
+// 휴대폰을 가로로 돌리면 세로로 돌려 달라는 막을 띄우고 멈춘다 (토스·설치판은 세로로 잠겨 있다). 화면 크기가 아니라 기기 방향을 본다: 글자판이 올라와 화면이 낮아져도 뜨지 않게
+const ROT=document.createElement('div');ROT.id='rot';ROT.hidden=true;ROT.innerHTML='<div><b>⟳</b><p>휴대폰을 세로로 세워 주세요</p><small>강호윤회록은 세로 화면 전용입니다</small></div>';document.body.appendChild(ROT);
+let rotPaused=false;
+function rotCheck(){if(DEV)return;const t=screen.orientation&&screen.orientation.type,land=t?t.startsWith('landscape'):innerWidth>innerHeight&&!(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
+  const on=land&&matchMedia('(pointer:coarse)').matches;ROT.hidden=!on;
+  if(on&&typeof playing!=='undefined'&&playing&&!paused){paused=true;rotPaused=true}
+  else if(!on&&rotPaused){rotPaused=false;if($('win').hidden&&!(typeof trnOpen!=='undefined'&&trnOpen))paused=false}}
+addEventListener('resize',rotCheck);if(screen.orientation)screen.orientation.addEventListener('change',rotCheck);rotCheck();
+// 창: 아래에서 올라오는 시트. 머리줄을 아래로 끌면 닫힌다
+{let y0=null;const h=document.querySelector('#win .whead');
+  h.addEventListener('pointerdown',e=>{if(TOUCH&&!e.target.closest('button'))y0=e.clientY});
+  h.addEventListener('pointerup',e=>{if(y0!=null&&e.clientY-y0>60)closePanels();y0=null});h.addEventListener('pointercancel',()=>{y0=null})}
+// 뒤로 가기(안드로이드·토스): 열린 것부터 닫는다. 닫은 게 있으면 true
+function gameBack(){if(typeof qsOpen==='function'&&$('qsr')&&!$('qsr').hidden){qsOpen(false);return true}
+  if(typeof trnOpen!=='undefined'&&trnOpen){closeTrain();return true}
+  if(!$('win').hidden){closePanels();return true}
+  return false}
 
 // ================= 수련 창: 화면 아래에 붙어 캐릭터를 가리지 않는다 =================
 // 시간은 멈추지 않는다. 한 번 수련하면 연출이 끝날 때까지(약간의 쿨타임) 다음 수련을 할 수 없다.

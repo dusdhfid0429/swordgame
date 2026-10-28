@@ -26,8 +26,9 @@
   // 뒤로 가기: 열린 창부터 닫고, 더 닫을 것이 없으면 끝낼지 묻는다
   window.apkBack=function(){
     if(!Q.hidden){stay();return}
-    if(typeof trnOpen!=='undefined'&&trnOpen){closeTrain();return}
-    if(!$('win').hidden){closePanels();return}
+    if(typeof gameBack==='function'){if(gameBack())return}
+    else{if(typeof trnOpen!=='undefined'&&trnOpen){closeTrain();return}
+      if(!$('win').hidden){closePanels();return}}
     ask()};
   // 화면을 내리면 멈추고 기록한다. 돌아오면 이어서 한다
   let hidePaused=false;
