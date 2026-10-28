@@ -50,7 +50,7 @@ function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없�
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
   return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||`벽 깨기 · 활력 ${pgCost()}`}<i class="tcd"></i></button>
-    ${pill&&!why?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}
+    ${pill&&!why&&pgChance(1)>pgChance(0)?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · ${Math.round(pgChance(1)*100)}%<i class="tcd"></i></button>`:''}
     ${!hobeop()&&pgPlace()?`<button type="button" class="btn tbtn" data-tr="hob"${trnBusy||P.silver<hobCost()?' disabled':''}>호법 고용 · 은자 ${hobCost()}</button>`:''}</div>`}
 function pgStart(k){
   if(trnBusy||P.hp<=0)return;const why=pgWhy();if(why){log(`폐관수련을 할 수 없습니다: ${why}.`,'info');return}

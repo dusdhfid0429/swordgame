@@ -16,4 +16,5 @@ function unifyCard(){const w=wld(),my=myFac();
   return `<div class="card"><div class="row2"><h4>천하통일</h4><span class="tag">${G.unified?`${FAC4N[G.unified.by]}의 천하 (제${G.unified.life}생)`:'아직 아무도'}</span></div>
     ${worldHtml()}<p><b style="color:${FACC[my]}">${FAC4N[my]}의 길</b> <small>${UNIFY.lines[my]}</small></p>${rows}
     <p class="note">천하대전을 한 세력이 홀로 이기고, 그 힘이 ${UNIFY.pow} 이상이며 나머지 셋이 모두 ${UNIFY.rival} 이하면 천하통일. 내 세력이면 명성 +${UNIFY.fame}, 은자 +${UNIFY.silver}. 사건마다 내 세력의 눈으로 본 노선이 열리고, 다른 세력의 길은 고를 수 없다.</p></div>`}
-{const ps=pStory;pStory=function(){const h=ps(),first=evCard(curEv()[0]),i=h.indexOf(first);return i<0?h+unifyCard():h.slice(0,i)+unifyCard()+h.slice(i)}}
+// v196: 사건 카드가 정세 창 맨 위로 가서, 통일 카드는 세력의 힘 카드 앞에 둔다
+{const ps=pStory;pStory=function(){const h=ps(),i=h.indexOf('<div class="card"><h4>세력의 힘</h4>');return i<0?h+unifyCard():h.slice(0,i)+unifyCard()+h.slice(i)}}

@@ -119,12 +119,12 @@ function pStory(){const w=wld(),plan=warPlan(),s=PS(),war=G.war&&G.war.life===P.
   const rel=Object.keys(w.rel).map(k=>`${k} <b class="num ${w.rel[k]>=20?'good':w.rel[k]<=-20?'bad':''}">${w.rel[k]>0?'+':''}${Math.round(w.rel[k])}</b>`).join(' · ');
   const seal=Object.keys(G.seal).filter(id=>SECTS[id]).map(id=>SECTS[id].n),occ=Object.keys(G.occ).filter(id=>SECTS[id]).map(id=>`${SECTS[id].n}(${FAC4N[G.occ[id].by]||G.occ[id].by})`);
   const wars=G.wars.slice(-3).reverse().map(x=>`제${x.life}생 ${x.n}${x.won?` · ${sideName(x.won)} 승`:''}`);
-  return `<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`${warLbl()} 중: ${G.war.plan.n}`:s.flag.warDone?warLbl()+'이 끝났다':`${warLbl()}까지 ${Math.ceil(yearsToWar())}년 (${warAge()}세)`}</span></div>
+  // v196 (플레이 점검): 고를 사건 카드를 창 맨 위에 둔다 (전엔 설명·세력 아래에 묻혀 스크롤해야 보였다)
+  return `${curEv().map(evCard).join('')}<div class="card"><div class="row2"><h3>${Math.floor(P.age)}세 · ${lifeStage()}</h3><span class="tag">${war?`${warLbl()} 중: ${G.war.plan.n}`:s.flag.warDone?warLbl()+'이 끝났다':`${warLbl()}까지 ${Math.ceil(yearsToWar())}년 (${warAge()}세)`}</span></div>
     ${actOf()===2?act2Intro():`<p>${ST.evFrom}세부터 강호의 사건이 반년마다 하나씩 열 번 찾아오고, ${ST.war}세가 되는 해에 천하대전이 터진다. 그 전에 죽으면 8세로 윤회하되, 세력의 힘과 관계·봉문·점령은 그대로 이어진다.</p>`}
     <p>예상 구도 <b class="gold">${plan.n}</b> <small class="dim">${plan.d}${plan.notes.length?' · '+plan.notes.join(', '):''}</small></p></div>
     <div class="card"><h4>세력의 힘</h4>${pow}<p>관계 ${rel} <small class="dim">(+20 이상이면 손을 잡고, -20 아래면 등을 돌린다)</small></p>
     ${seal.length?`<p>봉문 <b class="bad">${seal.join(' · ')}</b> <small class="dim">제자를 받지 않는다</small></p>`:''}${occ.length?`<p>점령 ${occ.join(' · ')}</p>`:''}${wars.length?`<p class="note">지난 대전: ${wars.join(' · ')}</p>`:''}</div>
-    ${curEv().map(evCard).join('')}
     <p class="note">세력의 힘은 그 세력 문파들의 인원과 경지에서 나온다(아래 문파 인원). 사건의 선택, 문파·맹 임무, 세력 무인의 죽음이 인원을 움직인다. 구도 규칙: 정사 +20 이상이고 마교 ${STORY.WAR[0].cond[1].split('>=')[1]} 이상이면 정사연합, 사마 +20 이상이고 정사 -20 이하면 사마연합, 정사 -40 이하이고 사파 60 이상이면 정마밀약, 아니면 삼파전.</p>`}
 hook('sectAct',c=>{if(c.a!=='spick')return;c.done=true;c.r=true;const e=evOf(c.x);if(e)pickChoice(e,+c.y,false)});
 {const pc=pChar;pChar=function(){return pc()+storyCard()}}

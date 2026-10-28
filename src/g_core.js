@@ -79,7 +79,7 @@ const season=()=>SEASONS[Math.floor(frac(G.cal)*4)];
 const realAge=()=>P.age+(P.ban?P.ban.yrs:0);
 // 문파·맹 임무는 해마다 한 번씩만 보고한다 (키에 해가 들어 있어 해가 바뀌면 비운다)
 // 행적: "N세에 …" (윤회 기록·비석에 남는다)
-function feat(t){P.feats.push(`${Math.floor(P.age)}세에 ${t}`)}
+function feat(t){P.feats.push(`${Math.floor(P.age)}세에 ${josa(t)}`)}   // v196: 조사 을(를)·이(가)를 이름 받침에 맞춰 남긴다
 const qDone=k=>!!(P.qdone&&P.qdone[k]);
 // 본원진기 2점마다 수명 +1년 (사용자 결정 2026-10-09). 수련·기연·주화입마로 바뀌면 그만큼 수명도 바뀐다
 const qiLife=()=>Math.floor(P.st.qi*.5);
@@ -321,7 +321,7 @@ const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
 function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}
 function useForm(i,silent){
   if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
-  if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. 비급이 필요합니다.`,'info');return false}
+  if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. ${typeof acadOn==='function'&&acadOn()?'교두에게 전수받아야 합니다':'비급을 읽거나 사부의 가르침을 받아야 합니다'}.`,'info');return false}
   if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;const q=formQi(f);if(P.qi<q){if(!silent)log('내공이 부족합니다.','info');return false}
   // 연속기: forms entered in order inside the window stack their 추가 공력
