@@ -165,7 +165,10 @@ const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v18
     const m=migrateSave({v:3,P:{name:'옛사람'},G:{}});return{reg:REG,reg0,acad:sv.P.acad.stage,mig:m.P.acad,v:m.v,SV:SAVE_VER,sa:ACAD['사'].n,saReg:!!REGIONS['acad_sacheon']&&!!REGIONS['acad_sacheon_field']}});
   ok(`이어 하기 → ${r18.reg}, 저장에 단계 ${r18.acad}, v3 저장 → v${r18.v} acad=${r18.mig}, 사파 ${r18.sa}`,r18.reg==='acad_jeong'&&r18.acad===3&&r18.mig===null&&r18.v===r18.SV&&r18.sa==='패천관'&&r18.saReg);
   // 10b. v138 윤회 때 무관 건너뛰기: 병기·하승 심법 고르는 창 → 개봉에서 바로 시작
-  await p.evaluate(()=>{closePanels();die('건너뛰기')});await p.waitForSelector('[data-s="rebirth"]',{timeout:8000});await p.click('[data-s="rebirth"]');
+  // v194 무관 보호: 무관 생에서 쓰러지면 관주가 구해 무관으로 돌려보낸다 (은자 20%)
+  const rs=await p.evaluate(()=>{closePanels();P.silver=100;P.hp=0;die('산적');return{playing,hp:P.hp,max:P.maxHp,res:P.acad.c.rescue,silver:P.silver,reg:REG}});
+  ok(`무관 생 보호: 쓰러져도 계속 (${rs.playing}), 생명 ${rs.hp}/${rs.max}, 구조 ${rs.res}, 은자 ${rs.silver}, ${rs.reg}`,rs.playing&&rs.hp>0&&rs.res===1&&rs.silver===80&&rs.reg.startsWith('acad_'));
+  await p.evaluate(()=>{closePanels();P.acad=null;die('건너뛰기')});await p.waitForSelector('[data-s="rebirth"]',{timeout:8000});await p.click('[data-s="rebirth"]');
   await p.evaluate(()=>{const b=document.querySelector('[data-s="noheir"]');if(b)b.click()});await p.click('[data-s="side:사"]');
   await p.click('[data-s="skipacad"]');
   const s20=await p.evaluate(()=>({cls:document.querySelectorAll('[data-s^="cls:"]').length,sim:[...document.querySelectorAll('[data-s^="ssim:"]')].map(e=>e.dataset.s.slice(5)),t:$('scrbox').textContent}));

@@ -76,7 +76,9 @@ hook('drawTop',()=>{if(!P||P.hp<=0)return;const saved=dngSaved();
 const BS=DG.binsa;
 hook('lethal',()=>{if(P.hp>0||P.binsa||G.duel)return;
   P.binsa={t:time};P.hp=1;P.inv=Math.max(P.inv||0,BS.inv);P.chan=null;P.poison=0;P.medit=false;P.target=null;P.path=null;P.leap=null;
-  for(const e of mobs)if(e.hp>0&&(e.tgt===P||e.aggro&&!e.tgt)){e.aggro=false;e.tgt=null;e.wind=0;e.slam=0;e.lost=time+BS.lose}
+  // v194 (점검): 곁의 적은 나를 노리지 않았어도 밀쳐내고(push칸까지), lose초 동안 덤비지 않는다. 비무 상대·고정 경비는 그대로
+  for(const e of mobs)if(e.hp>0&&!e.duel&&(e.tgt===P||e.aggro&&!e.tgt||e.d&&e.d.hostile&&dist(e,P)<(BS.near||0))){e.aggro=false;e.tgt=null;e.wind=0;e.slam=0;e.lost=time+BS.lose;
+    const d=dist(e,P),k=BS.push||0;if(k&&d<k&&!e.fixed){const ux=d>.01?(e.x-P.x)/d:Math.cos(e.id||1),uy=d>.01?(e.y-P.y)/d:Math.sin(e.id||1),nx=P.x+ux*k,ny=P.y+uy*k;if(walkAt(nx,ny)){e.x=nx;e.y=ny;fx.push({t:'puff',x:nx,y:ny,life:.4})}}}
   dngF=1;shake=Math.max(shake,.3);addText(P.x,P.y-.5,'빈사','#ff4a3a');sfx('heart',{v:1});
   log(`빈사 상태입니다. 기어서 물러나 운기조식으로 생명을 ${Math.round(BS.out*100)}%까지 되찾으면 벗어납니다. 이대로 또 맞으면 쓰러집니다.`,'dmg');
   if(typeof showBanner==='function')showBanner('빈사','운기조식으로 회복하라')});

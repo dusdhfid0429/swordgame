@@ -22,15 +22,16 @@ function rtNotice(sid){if(!P||!P.srank||P.sect!==sid||rtWhy(sid,false))return;co
 // 문파 창 직위 칸에 붙는 줄 (g_faction.js rankHtml)
 function rtHtml(s){if(P.sect!==s.id)return'';const i=rankIdx(s.id);if(i>=rankTop(s.id))return'';const why=rtWhy(s.id),to=i+1;
   return `<div class="row2"><span class="note">다음 직위 <b>${rankName(s.id,to)}</b>는 승급 시험에 붙어야 오른다.${why?` <small class="dim">${why}</small>`:' 시험관과 비무해 이기면 된다.'}</span>${B('rtest:'+s.id,'승급 시험 청하기',{pri:!why,d:!!why})}</div>`}
-function rtStart(sid){if(rtWhy(sid))return;const s=SECTS[sid],to=rtNext(sid),r=clamp(to-GD.RANK_CAP.plus,0,6),[a,h,m]=STD[r];
+function rtStart(sid){if(rtWhy(sid))return;const s=SECTS[sid],to=rtNext(sid),r=clamp(to-GD.RANK_CAP.plus,0,6);
   const st=typeof startSet==='function'?startSet(s):null,cls=st&&st.w&&st.w!=='궁'?st.w:(s.arts.find(q=>q.cls!=='궁')||s.arts[0]).cls,ar=s.arts.find(q=>q.cls===cls&&!q.hi)||s.arts[0];
   const exr=Math.min(rankTop(sid),to+1),nm=`${s.n} 시험관`;
   log(`${masterTitle(s)}: "${josa(RT.say[s.al].replace('{rank}',rankName(sid,to)))}"`,'info');
   closePanels();G.duel=true;G.rtDuel={sid,to,x:P.x,y:P.y};for(const o of mobs)if(o.aggro){o.aggro=false;o.tgt=null}
   P.path=null;P.target=null;P.leap=null;P.hp=P.maxHp;P.qi=P.maxQi;
   let ex=P.x+2.4,ey=P.y;if(!walkAt(ex,ey)){ex=P.x-2.4;if(!walkAt(ex,ey)){ex=P.x;ey=P.y+2.4}}
-  const e=mkMob(nm,ex,ey,{hp:Math.round(h*RT.hp),atk:Math.round(a*RT.atk),def:Math.round(2+r*1.5),hm:m,sp:2.2,reach:cls==='창'?1.8:cls==='봉'?1.6:1.4,el:ar.el,pal:'duelist',hostile:1,aggro:9,duelist:1,elite:1});
-  const hp=Math.round(h*RT.hp);Object.assign(e,{hp,maxHp:hp,atk:Math.round(a*RT.atk),def:Math.round(2+r*1.5),hm:m,duel:1,aggro:true,realm:r,wcls:cls,art:ar.id,rtExam:1});
+  const es=eliteStat(r,RT.kh,RT.ka);   // v194: 그 경지 정예 몫
+  const e=mkMob(nm,ex,ey,{hp:es.hp,atk:es.atk,def:Math.round(2+r*1.5),hm:es.hm,sp:2.2,reach:cls==='창'?1.8:cls==='봉'?1.6:1.4,el:ar.el,pal:'duelist',hostile:1,aggro:9,duelist:1,elite:1});
+  const hp=es.hp;Object.assign(e,{hp,maxHp:hp,atk:es.atk,def:Math.round(2+r*1.5),hm:es.hm,duel:1,aggro:true,realm:r,wcls:cls,art:ar.id,rtExam:1});
   e.d=Object.assign({},e.d,{pal:(typeof sectPal==='function'&&sectPal(sid,exr,cls,{elite:1}))||'duelist'});e.name=`${nm} · ${rankName(sid,exr)}`;
   mobs.push(e);P.target=e;showBanner('승급 시험',`${s.n} ${rankName(sid,to)}`);log(`승급 시험 시작: ${e.name} (${CLASS[cls].n}). ${RT.ring}칸 밖으로 나가면 떨어진다.`,'sys')}
 function rtEnd(win,e){const t=G.rtDuel;G.duel=false;G.rtDuel=null;mobs=mobs.filter(m=>!m.duel);P.target=null;if(!t)return;const s=SECTS[t.sid];

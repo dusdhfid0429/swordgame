@@ -6,7 +6,10 @@ const DIGF=[21,8,0,16,0,0,1,8,8,0];
 function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이\(가\)|은\(는\)|와\(과\)|\(으\)로)/g,(m,ch,tag,j)=>{const f=/[0-9]/.test(ch)?DIGF[+ch]:(ch.charCodeAt(0)-0xAC00)%28;tag=tag||'';
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 const logHist=[];   // 시스템 메시지 기록: 메시지창을 누르면 되돌아본다
-function log(t,c){winNote(t,c);const p=document.createElement('p');p.className=c||'';p.textContent=josa(t);logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove();
+function log(t,c){winNote(t,c);const tx=josa(t),last=logEl.lastElementChild;
+  // v194 (점검): 같은 줄이 잇달아 오면 새 줄을 쌓지 않고 '×n'만 늘린다 ("금창약이 없습니다"가 화면을 채우던 문제)
+  if(last&&last.dataset.t===tx&&(last.className||'')===(c||'')){const n=(+last.dataset.n||1)+1;last.dataset.n=n;last.textContent=`${tx} ×${n}`;return}
+  const p=document.createElement('p');p.className=c||'';p.textContent=tx;p.dataset.t=tx;logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove();
   logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
 function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없습니다.</p>';
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
@@ -124,7 +127,7 @@ function pChar(){
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}
-    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (T)',{pri:1})}</div></div>
+    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (U)',{pri:1})}</div></div>
     ${typeof maraHtml==='function'?maraHtml():''}${typeof sinHtml==='function'?sinHtml():''}${typeof diffHtml==='function'?diffHtml():''}
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
@@ -221,6 +224,7 @@ function pHelp(){
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
   <p><b>경공</b> Space 도약(강·지붕·성벽도 넘는다), R 질주(내공 소모).</p>
+  <p><b>수련</b> U. 기본기·내공·폐관수련 창을 화면 아래에 연다.</p>
   <p><b>강제공격</b> T (HUD '강제' 단추). 켜면 같은 편과 양민도 공격 대상이 되고, 치면 배신이 되어 악업이 쌓인다.</p>
   <p><b>맵 이동</b> 출입구나 맵 가장자리에 1초 머물면 넘어간다. 지나가거나 경공으로 날면 넘어가지 않는다.</p>
   <p><b>특수무공</b> 1 암기 · 2 독공 · 3 점혈. <b>절세신공</b> V.</p>
