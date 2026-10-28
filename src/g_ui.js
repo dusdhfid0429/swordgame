@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const logEl=$('log');
 // pick the right particle after a Korean word: 을/를, 이/가, 은/는, 와/과, 으로/로
 const DIGF=[21,8,0,16,0,0,1,8,8,0];
-function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>)?(을\(를\)|이\(가\)|은\(는\)|와\(과\)|\(으\)로)/g,(m,ch,tag,j)=>{const f=/[0-9]/.test(ch)?DIGF[+ch]:(ch.charCodeAt(0)-0xAC00)%28;tag=tag||'';
+function josa(s){return String(s).replace(/([가-힣0-9])(<\/b>|\]|」|』)?(을\(를\)|이\(가\)|은\(는\)|와\(과\)|\(으\)로)/g,(m,ch,tag,j)=>{const f=/[0-9]/.test(ch)?DIGF[+ch]:(ch.charCodeAt(0)-0xAC00)%28;tag=tag||'';
   const t={'을(를)':f?'을':'를','이(가)':f?'이':'가','은(는)':f?'은':'는','와(과)':f?'과':'와','(으)로':f&&f!==8?'으로':'로'}[j];return ch+tag+t})}
 const logHist=[];   // 시스템 메시지 기록: 메시지창을 누르면 되돌아본다
 function log(t,c){winNote(t,c);const tx=josa(t),last=logEl.lastElementChild;
@@ -209,7 +209,7 @@ function pHist(){
   return (h.length?h.map(e=>`<div class="card"><div class="row2"><h4>제${e.life}생 ${esc(e.name)}</h4><span class="tag">${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg}</span></div>
     <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='좌화'?`${e.realm}에 이르러 스스로 좌화했다`:e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
     ${e.arts.length?`<p>무공: ${e.arts.map(esc).join(', ')}</p>`:''}${e.sect?`<p>문파: ${esc(e.sect)}</p>`:''}${e.spouse?`<p>배우자 ${esc(e.spouse)}${e.children.length?' · 자식 '+e.children.map(esc).join(', '):''}</p>`:''}
-    ${e.feats.length?`<p>${e.feats.map(esc).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');
+    ${e.feats.length?`<p>${e.feats.map(f=>esc(josa(f))).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');
 }
 function pHelp(){
   if(TOUCH)return `<div class="help"><p><b>이동</b> 화면 왼쪽 아래를 누른 채 끌면 그쪽으로 걷는다. 사람·적·채집물·땅을 톡 치면 그리로 간다.</p>

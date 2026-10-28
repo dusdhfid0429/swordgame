@@ -250,6 +250,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .tbtn.busy{border-color:var(--exp);color:#f6e7b8}
 .trn-on #tbtns,.trn-on #joyz,.trn-on #tquick,.trn-on #tslots{display:none}
 @media (prefers-reduced-motion:reduce){.banner div{transition:none}}
+#app:has(#scr:not([hidden])) .panel{visibility:hidden}   /* v196: 제목·탄생·윤회 화면 뒤로 HUD(무명 · 삼류 · 12성)가 비치지 않게 */
 </style></head><body>
 <div id="app">
   <div id="stage">
