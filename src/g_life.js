@@ -69,7 +69,7 @@ function updateP(dt){
   }
   if(P.moving){P.runT=.14;P.runPh=(P.runPh||0)+dt;P.medit=false;if(P.chan&&!P.chan.walk)P.chan=null}else if(P.runT<=0)P.runPh=0;
   if(P.ride){P.ride.x=P.x;P.ride.y=P.y;P.ride.fx=P.fx;P.ride.fy=P.fy;P.ride.moving=P.moving}
-  if(G.duel&&!G.ldDuel&&!G.acadDuel&&!G.rtDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
+  if(G.duel&&!G.ldDuel&&!G.acadDuel&&!G.rtDuel&&!G.sryDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
 }
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
   a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
@@ -316,7 +316,8 @@ function duelStart(){
 }
 function duelEnd(win,e){
   if(G.acadDuel){acadDuelEnd(win,e);return}
-  if(G.rtDuel){rtEnd(win,e);return}   // 승급 시험 (g_ranktest.js)   // 무관 대련·월반 시험·졸업 비무 (g_academy.js)
+  if(G.rtDuel){rtEnd(win,e);return}
+  if(G.sryDuel){sryDuelEnd(win,e);return}   // 문파 수련기 동기 대련 (g_suryeon.js)   // 승급 시험 (g_ranktest.js)   // 무관 대련·월반 시험·졸업 비무 (g_academy.js)
   const o=DUELISTS[P.duel],c={win,e,o,was:P.duel,me:realmIdx()};G.duel=false;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(win){P.fame+=o.fame;P.silver+=o.silver;P.duel++;log(`${o.n}을(를) 꺾었습니다. 명성 +${o.fame}, 은자 +${o.silver}`,'xp');showBanner('비무 승리',`명성 +${o.fame}`);feat(`비무에서 ${o.n}을(를) 꺾었다`)}
   else{log(`${o.n}에게 졌습니다. 비무에서는 목숨을 잃지 않습니다.`,'dmg');P.hp=Math.max(1,P.maxHp*.3)}

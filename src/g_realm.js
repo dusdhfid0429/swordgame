@@ -62,8 +62,8 @@ function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관
   if(!passYears(yrs))return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;const bf=brkFx(r);if(!bf)fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);   // 경지마다 다른 돌파 연출 (r_fx.js, v163)
     log(`${yrs}년의 폐관 끝에 벽을 깨고 ${rk(r)}의 경지에 올랐습니다.`,'xp');if(bf)log(bf.d,'xp');showBanner('벽을 깨다',`${rk(r)}의 경지${bf?' · '+bf.n:''}`);
-    feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);return}
-  qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r)}
+    feat(`폐관수련으로 ${rk(r)}의 경지에 올랐다`);wallCheck();realmGain(r);if(typeof talmaGain==='function')talmaGain(r);runHooks('pgDone',true);return}
+  qiDeviation(r);if(typeof talmaFail==='function')talmaFail(r);runHooks('pgDone',false)}   // pgDone: 폐관을 마친 뒤 (붙든 떨어지든, g_suryeon.js)
 // 주화입마: 가벼우면 내공 일부를 잃고 경맥이 상한다. 무거우면 기본기도 깎인다. 초절정 이상의 벽에서는 목숨을 잃을 수도 있다.
 function qiDeviation(r){const roll=Math.random(),death=r>=4?.05:0;fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
   if(roll<death){log('기혈이 역류하여 주화입마에 빠졌습니다. 심맥이 끊어졌습니다.','dmg');feat(`${rk(r)}의 벽 앞에서 주화입마로 쓰러졌다`);die('주화입마');return}

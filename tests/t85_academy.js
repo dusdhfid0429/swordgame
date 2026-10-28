@@ -123,11 +123,12 @@ const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v18
   await p.evaluate(()=>{closePanels();acadCheck();openPanel('story');closePanels();acadCheck()});
   const r10=await p.evaluate(()=>({rep:P.acad.c.repair,done:acadAllDone(),st:(act('acrep'),P.acad.stage)}));
   ok(`대장간 수리 ${r10.rep}, 정세창, 4단계 보고 → 5단계`,r10.rep===1&&r10.done&&r10.st===4);
-  // 6. 5단계: 세 기둥 → 벽 → 무관 폐관실(호법, 가벼운 주화입마) → 이류, 졸업 비무는 이류가 된 뒤
+  // 6. 5단계: 세 기둥(삼류 상급, v198) → 졸업 비무는 세 기둥을 채운 뒤. 무관 폐관실(호법, 가벼운 주화입마)은 그대로 쓸 수 있다
   const r11=await p.evaluate(()=>{const pre=(acadSpar('final'),G.duel);P.st.str+=3;P.st.end+=2;P.st.agi+=2;P.qiAcc=80;P.arts[acadArts()[0]].p=52;recalc();wallCheck();
     const o={pre,wall:atWall(),place:pgPlace(),hob:hobeop()};const r0=Math.random;Math.random=()=>.999;const st0={...P.st};qiDeviation(1);Math.random=r0;o.heavy=P.injS;o.stat=JSON.stringify(st0)===JSON.stringify(P.st);P.inj=0;P.injS=0;return o});
-  ok(`5단계: 이류 전 졸업 비무 막힘, 벽 ${r11.wall}, 폐관 장소 ${r11.place}, 호법 ${r11.hob}, 무관 주화입마는 가벼움(injS ${r11.heavy}, 스탯 그대로 ${r11.stat})`,!r11.pre&&r11.wall&&r11.place==='청운무관 폐관실'&&r11.hob&&r11.heavy===1&&r11.stat);
-  await p.evaluate(()=>{P.realm=1;recalc();acadCheck()});
+  ok(`5단계: 세 기둥 전 졸업 비무 막힘, 벽 ${r11.wall}, 폐관 장소 ${r11.place}, 호법 ${r11.hob}, 무관 주화입마는 가벼움(injS ${r11.heavy}, 스탯 그대로 ${r11.stat})`,!r11.pre&&r11.wall&&r11.place==='청운무관 폐관실'&&r11.hob&&r11.heavy===1&&r11.stat);
+  const r11b=await p.evaluate(()=>{acadCheck();return{cur:acadCurK(),realm:realmIdx()}});
+  ok(`삼류 그대로 졸업 비무 열림 (과제 ${r11b.cur}, 경지 ${r11b.realm})`,r11b.cur==='final'&&r11b.realm===0);
   for(let i=0;i<3;i++){await p.evaluate(i=>{acadSpar('final');if(i<2)damage(mobs.find(m=>m.duel),99999,0,0,P);else duelEnd(false)},i);await p.waitForTimeout(250)}
   const r12=await p.evaluate(()=>({f:P.acad.c.final,w:P.acad.c.finalWin,done:acadAllDone(),grade:acadGradeOf().n}));
   ok(`졸업 비무 ${r12.f}판 ${r12.w}승, 성적 ${r12.grade}`,r12.f===3&&r12.w===2&&r12.done&&r12.grade==='수석');
