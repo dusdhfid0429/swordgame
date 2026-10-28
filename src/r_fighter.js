@@ -4,7 +4,7 @@ function drawFighter(e,isP){
   const mv=e.moving,ph=time*(isP?moveSpd():e.sp||1)*3.1+(e.bob||0);
   const flash=(isP?P.hit:e.hit)>0,Fc=c=>flash?'#ffffff':c;
   const jump=isP&&P.jump>0?Math.sin((1-P.jump/.35)*Math.PI)*28:0;
-  ctx.save();ctx.translate(p.x,p.y);
+  ctx.save();ctx.translate(p.x,p.y);if(isP){const ak=heroAgeK();if(ak<1)ctx.scale(ak,ak)}   // v197: 어린 주인공은 발을 축으로 작게
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
   // v172: 칠 준비 고리는 g_danger.js drawTop 이 나를 노리는 치명 공격에만 그린다 (사용자 2026-10-24: 몹끼리 싸울 때는 없어야)
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
@@ -144,3 +144,5 @@ function drawFighter(e,isP){
     if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?(typeof repStE==='function'&&repStE(e)!==2?REP.col[repStE(e)]:'#9cc8f0'):'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
   if(e.npc&&!e.dead){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
 }
+// v197 (사용자): 주인공 몸 크기 배율. ANIM.ageK.from세 min배 → to세 1배, 사이는 smoothstep
+function heroAgeK(){const A=ANIM.ageK;if(!A||!P)return 1;const t=clamp((P.age-A.from)/(A.to-A.from),0,1);return A.min+(1-A.min)*t*t*(3-2*t)}

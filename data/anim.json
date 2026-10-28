@@ -4,6 +4,8 @@
     "atkWeight": [0.3, 0.25, 0.3, 0.15],
     "_heroHandWpn": "v167 사용자: 게임이 따로 그려 손에 붙이던 주인공 무기(무기 파츠 시트·코드 무기)를 일단 뺀다. true면 다시 그린다. 허리 칼집은 그대로",
     "heroHandWpn": false,
+    "_ageK": "v197 사용자(2026-10-28): 주인공은 나이에 따라 자란다. from세에 min배로 그리고 to세에 1배(지금 크기)가 되도록 부드럽게 커진다. 그림자·무기·칼집·직위 표식도 함께 줄어든다",
+    "ageK": {"from": 8, "to": 20, "min": 0.72},
     "_sheetK": "v127 시트 클립별 몸 배율. 핸드오프 시트의 무기 공격 클립은 맨손 클립보다 10~15% 작게 그려져(면적 1300 vs 1700) 공격 중 작아 보였다(사용자). 서 있는 장이 대기(70px)와 같아지도록 클립마다 곱한다. 무기는 WPN_K로 되돌려 크기 불변",
     "sheetK": {"actfx": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}, "act": {"staff_1": 1.1, "staff_2": 1.1, "spear_1": 1.12, "spear_2": 1.12, "sword_thrust": 1.06, "sword_slash": 1.06, "saber_heavy": 1.06, "saber_whirlwind": 1.1, "dodge": 1.12}},
     "clips": {
