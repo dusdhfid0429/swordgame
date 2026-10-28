@@ -20,7 +20,7 @@ let qtrackKey='';
 $('qtrack').addEventListener('click',e=>{if(!playing||!P)return;openPanel(e.target.closest('[data-story]')?'story':'quest')});
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const pr=questProg(q),have=pr.have,done=pr.done,g=qGoal(q),what=q.kind==='kill'?g.plain+' 처치':g.plain+' '+g.v;return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const ac=acadTrackHtml();   // 무관 과제 (g_academy.js)
+  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'');   // 무관 과제 (g_academy.js)
   // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
   const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');

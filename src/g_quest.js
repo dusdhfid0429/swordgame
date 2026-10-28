@@ -50,7 +50,7 @@ function pQuest(){const qs=P.quests||[];
   const where=[`표국 <small class="dim">성읍 역참 옆 · 출발을 앞둔 표행이 사람을 모은다 · 가입 없이 누구나 한 번씩</small>`,`개봉 의뢰판 <small class="dim">한 번에 셋 · ${G.board&&G.board.length?`붙은 방 ${G.board.length}`:'새 방은 해가 바뀌면'}</small>`];
   if(P.sect&&SECTS[P.sect])where.push(`${SECTS[P.sect].n} 임무 <small class="dim">본산 ${masterTitle(SECTS[P.sect])}·성도 연락관 · 해마다 둘</small>`);
   const al=typeof maengOf==='function'?maengOf():null;if(al&&typeof MAENG!=='undefined'&&MAENG[al])where.push(`${MAENG[al].n} 임무 <small class="dim">총단 · 해마다 셋</small>`);
-  return acadQuestCard()+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
+  return acadQuestCard()+(typeof sryCard==='function'?sryCard(false):'')+`<p class="note">맡은 임무 ${qs.length}. 보상은 의뢰처에 가서 보고해야 받는다. 적이 나오는 곳과 재료 얻는 곳이 흐린 글로 적혀 있다.</p>
     ${storyOpenCard()}${gycCard()}${typeof remnCard==='function'?remnCard():''}${intelCard()}${qs.length?qs.map((q,i)=>[q,i]).sort((a,b)=>!!(b[0].story||b[0].war||b[0].sq)-!!(a[0].story||a[0].war||a[0].sq)).map(([q,i])=>questCard(q,i)).join(''):'<p class="note">맡은 임무가 없다.</p>'}
     <div class="card"><h4>임무를 맡는 곳</h4>${where.map(w=>`<p>${w}</p>`).join('')}</div>`}
 // 열기: J 키, 왼쪽 '맡은 임무' 글(PC)

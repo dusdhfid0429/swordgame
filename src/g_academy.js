@@ -1,6 +1,6 @@
 // ================= 무관(사관학교): 새 생과 윤회의 시작점 =================
 // 사용자 요청(2026-10-17): 새로 시작하거나 윤회하면 정파·사파 각각 사관학교 같은 곳에서 시작해, 성장에 맞춘 임무로 게임 시스템을 익힌다.
-//   무기 계열과 하승 내공심법(서로 다른 여럿 중 하나)을 골라 배우고, 5단계를 수료해 이류가 되면 졸업한다.
+//   무기 계열과 하승 내공심법(서로 다른 여럿 중 하나)을 골라 배우고, 5단계를 수료해 삼류 상급(세 기둥이 이류 문턱 가까이)이 되면 졸업한다. v198: 예전엔 이류. 이류는 문파에 들어간 뒤 첫 폐관으로 깬다.
 // 사용자 결정(2026-10-17): 무기는 생성 화면이 아니라 무관 2단계에서 고른다 · 전생에 졸업했으면 1~3단계를 월반 시험으로 건너뛰되 병기·심법은 골라야 한다 ·
 //   고르지 않은 하승 심법은 졸업 뒤 맹 총관에게서 맹 공적으로 배운다 · 졸업 기한은 없다 · 이름은 청운무관(정)·패천관(사).
 // - 정파 청운무관은 형주(정의맹 총단과 같은 성내), 사파 패천관은 악양(사천맹 총단과 같은 성내)에 있다. 북문 밖 수련곡이 실습장이다. 마교는 무관이 없다.
@@ -158,7 +158,7 @@ hook('panelOpen',id=>{if(acadOn())P.acad.c['panel_'+id]=1});
 // v194 (점검): 상대는 그 경지 정예(g_balance.js eliteStat)의 kh·ka배. 예전엔 표준 생명 2.2배라 1초 안에 끝났다
 const acadSparStat=s=>({...eliteStat(s.lv,s.kh,s.ka),def:Math.round(2+s.lv*1.5)});
 const acadSparOk=kind=>{const a=P.acad;if(!acadOn()||!inAcad())return false;
-  return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&realmIdx()>=1&&(a.c.final||0)<3&&acadCurK()==='final':false};
+  return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&(a.c.final||0)<3&&acadCurK()==='final':false};
 function acadSpar(kind){if(G.duel||P.hp<=0||!acadSparOk(kind))return;const a=P.acad,A=acadOf(P.side);let o;
   if(kind==='final'){const i=a.c.final||0,s=ACAD_SPAR.final[i];if(!s)return;const mt=A.mates[i];o={n:mt[0],...acadSparStat(s),cls:CLS[(i*2+(P.side==='사'?1:0))%5]}}
   else{const s=ACAD_SPAR[kind];o={n:kind==='inst'?A.inst[1]:A.master,...acadSparStat(s),cls:kind==='inst'?(rangedCls(a.cls)?'검':a.cls||'검'):'검'}}
@@ -286,7 +286,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
       <div class="list">${acadRecList().map(s=>`<div class="it"><div>${s.n}<span>${TIERN[s.tier]||s.tier} · ${hqPlace(s)}</span></div><div class="ib">${B('acrec:'+s.id,'추천서')}</div></div>`).join('')}</div>
       <div class="row2">${B('acrec:maeng',`${MAENG[A.al].short} 맹원으로`,{d:!!(P.sect||P.maeng)})}${B('acrec:none','낭인으로')}</div></div>`}`;
     const skipB=a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip?`<div class="card"><h4>월반 시험</h4><p class="note">"전생에 이곳을 거친 눈빛이로구나. 나를 상대로 버텨 이기면 1~3단계를 건너뛰게 해 주마. 병기와 심법은 그래도 교두들에게서 골라야 한다."</p>${B('acspar:skip','월반 시험을 치른다',{pri:1})}</div>`:'';
-    const grad=a.stage===4?(acadAllDone()?`<div class="row2"><span class="note">성적은 졸업 나이와 졸업 비무 승수로 정한다. 지금이면 <b class="gold">${acadGradeOf().n}</b>.</span>${B('acgrad','졸업식',{pri:1})}</div>`:'<p class="note">"이류가 되고 졸업 비무를 마치면 졸업식을 열어 주마."</p>'):'';
+    const grad=a.stage===4?(acadAllDone()?`<div class="row2"><span class="note">성적은 졸업 나이와 졸업 비무 승수로 정한다. 지금이면 <b class="gold">${acadGradeOf().n}</b>.</span>${B('acgrad','졸업식',{pri:1})}</div>`:'<p class="note">"세 기둥을 채우고 졸업 비무를 마치면 졸업식을 열어 주마."</p>'):'';
     return `<p class="note">"${A.hello}"</p>${acadSteps()}${skipB}${acadStageCard(grad)}`}
   // 교두
   const head=`<p class="note">${['기본기와 몸가짐을 맡는다.','병기와 무공을 맡는다.','심법과 내공을 맡는다.','강호 실습을 맡는다.'][n.i]}</p>`;
@@ -296,7 +296,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
     if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
   if(n.i===2){if(acadSimOpen())body+=acadSimHtml()+acadElHtml();else body+='<p class="note">"심법은 2단계에서 고른다. 심법이 없으면 수련을 해도 내공이 쌓이지 않는다."</p>'}
   if(n.i===3){if(a.stage>=3)body+=acadQuestHtml();else body+='<p class="note">"4단계가 되면 수련곡으로 실습을 나간다."</p>'}
-  if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승${realmIdx()<1?' · 이류가 되어야 치를 수 있다':''}</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:!acadSparOk('final')})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
+  if(n.i===0&&a.stage===4){const left=3-(a.c.final||0);body+=left>0?`<div class="row2"><span class="note">졸업 비무 ${a.c.final||0}/3판 · ${a.c.finalWin||0}승</span>${B('acspar:final',`다음 상대: ${esc(A.mates[a.c.final||0][0])}`,{d:!acadSparOk('final')})}</div>`:`<p class="note">졸업 비무를 마쳤다 (${a.c.finalWin||0}승).</p>`}
   return head+body+(acadSt().inst===n.i?acadStageCard(rep(n.i)):'')}
 hook('npcDlg',c=>{if(c.html!=null||!c.n.acad)return;c.html=acadDlg(c.n)});
 // 맹 총관: 고르지 않은 무관 하승 심법을 맹 공적으로 (졸업한 사람만)
