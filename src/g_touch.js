@@ -34,7 +34,7 @@ function setTouch(on){
   joy.on=false;joy.m=0;touchAtk=false;resize();logTop();
 }
 // v113 (사용자: 로그 창이 플레이어 정보창을 덮는다): 상태 상자(마성 게이지·두 줄 자원)가 커져도 로그는 늘 그 아래에
-function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$('stage').getBoundingClientRect();document.documentElement.style.setProperty('--log-top',Math.round(b.bottom-st.top+5)+'px')}
+function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$('stage').getBoundingClientRect();document.documentElement.style.setProperty('--log-top',Math.round(b.bottom-st.top+($('pexp')?26:5))+'px')}
 if(window.ResizeObserver)new ResizeObserver(()=>logTop()).observe(statusEl);
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
 function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||1;joy.gx=gx/l;joy.gy=gy/l}
@@ -111,7 +111,33 @@ function pMenu(){
   return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${B('ctl:k','PC 조작으로')} ${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
+    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${DEV?B('ctl:k','PC 조작으로')+' ':''}${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
 }
+// v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
+// 자동 테스트(navigator.webdriver)는 ?touch가 없으면 예전처럼 PC 조작으로 돈다.
+const DEV=/[?#&]dev\b/.test(location.href)||(!!navigator.webdriver&&!/[?#&]touch/.test(location.href));
+document.body.classList.toggle('mob',!DEV);
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
-setTouch(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches);
+setTouch(DEV?(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches):true);
+// 상태 상자: 평소엔 이름·생명·내공만, ▾를 누르면 숙련·활력·은자까지 펼친다 (상자 다른 곳을 누르면 그대로 인물 창)
+{const b=document.createElement('button');b.type='button';b.id='pexp';b.className='pexp';b.setAttribute('aria-label','상태 펼치기');b.textContent='▾';statusEl.appendChild(b);
+  const set=on=>{statusEl.classList.toggle('open',on);b.textContent=on?'▴':'▾';b.setAttribute('aria-expanded',on);logTop()};
+  let o=false;try{o=STORE.get('ganghoyunhoe-pexp')==='1'}catch(e){}set(o);
+  b.addEventListener('click',e=>{e.stopPropagation();const on=!statusEl.classList.contains('open');set(on);try{STORE.set('ganghoyunhoe-pexp',on?'1':'0',1)}catch(err){}})}
+// 휴대폰을 가로로 돌리면 세로로 돌려 달라는 막을 띄우고 멈춘다 (토스·설치판은 세로로 잠겨 있다). 화면 크기가 아니라 기기 방향을 본다: 글자판이 올라와 화면이 낮아져도 뜨지 않게
+const ROT=document.createElement('div');ROT.id='rot';ROT.hidden=true;ROT.innerHTML='<div><b>⟳</b><p>휴대폰을 세로로 세워 주세요</p><small>강호윤회록은 세로 화면 전용입니다</small></div>';document.body.appendChild(ROT);
+let rotPaused=false;
+function rotCheck(){if(DEV)return;const t=screen.orientation&&screen.orientation.type,land=t?t.startsWith('landscape'):innerWidth>innerHeight&&!(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
+  const on=land&&matchMedia('(pointer:coarse)').matches;ROT.hidden=!on;
+  if(on&&typeof playing!=='undefined'&&playing&&!paused){paused=true;rotPaused=true}
+  else if(!on&&rotPaused){rotPaused=false;if($('win').hidden&&!(typeof trnOpen!=='undefined'&&trnOpen))paused=false}}
+addEventListener('resize',rotCheck);if(screen.orientation)screen.orientation.addEventListener('change',rotCheck);rotCheck();
+// 창: 아래에서 올라오는 시트. 머리줄을 아래로 끌면 닫힌다
+{let y0=null;const h=document.querySelector('#win .whead');
+  h.addEventListener('pointerdown',e=>{if(TOUCH&&!e.target.closest('button'))y0=e.clientY});
+  h.addEventListener('pointerup',e=>{if(y0!=null&&e.clientY-y0>60)closePanels();y0=null});h.addEventListener('pointercancel',()=>{y0=null})}
+// 뒤로 가기(안드로이드·토스): 열린 것부터 닫는다. 닫은 게 있으면 true
+function gameBack(){if(typeof qsOpen==='function'&&$('qsr')&&!$('qsr').hidden){qsOpen(false);return true}
+  if(typeof trnOpen!=='undefined'&&trnOpen){closeTrain();return true}
+  if(!$('win').hidden){closePanels();return true}
+  return false}

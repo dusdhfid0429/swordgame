@@ -3,7 +3,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   const url='file://'+require('path').resolve(__dirname,'../dist/gangho.html');
-  for(const[w,h,n]of[[390,844,'세로'],[844,390,'가로']]){
+  for(const[w,h,n]of[[390,844,'세로']]){   // v200: 세로 고정 (가로 휴대폰은 세로로 세워 달라는 막만 뜬다, t130)
     const p=await b.newPage({viewport:{width:w,height:h},hasTouch:true,isMobile:true});p.on('pageerror',e=>errs.push('PE '+e.message));
     await p.goto(url+'?touch');await p.waitForFunction(()=>typeof loadRegion==='function');await p.evaluate(()=>localStorage.clear());
     await p.click('[data-s="new"]');await p.click('[data-s="side:사"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);

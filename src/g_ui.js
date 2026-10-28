@@ -118,23 +118,27 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,ch
   // 창 하나를 그리다 오류가 나도 창은 열리고 닫기 단추가 남는다 (오류는 꺼짐 기록에 남긴다)
   let h;try{h=f(panelArg)}catch(e){if(typeof crashErr==='function')crashErr('panel '+panel+': '+e.message);console.warn(e);h=`<p class="note bad">이 창을 그리다 문제가 생겼습니다. 물건과 기록은 그대로 있습니다. 닫고 다시 열거나 게임을 새로 켜 주세요.</p>`}
   $('wbody').innerHTML=josa(h)}
+// v200 창 탭 (모바일 전용): 긴 창을 위쪽 탭으로 나눈다. 터치 조작에서만 나누고, PC(개발용)에서는 예전처럼 한 줄로 이어 붙인다
+const WTAB={};
+function wtabs(id,tabs){if(!TOUCH)return tabs.map(t=>t[1]).join('');const cur=Math.min(WTAB[id]||0,tabs.length-1);
+  return `<div class="wtabs" role="tablist">${tabs.map((t,i)=>`<button type="button" role="tab" class="wtab${i===cur?' on':''}" aria-selected="${i===cur}" data-act="wtab:${id}:${i}">${t[0]}</button>`).join('')}</div>${tabs[cur][1]}`}
 const B=(act,label,o={})=>`<button type="button" class="btn${o.pri?' pri':''}" data-act="${act}"${o.d?' disabled':''}${o.t?` title="${esc(o.t)}"`:''}>${label}</button>`;
 function pChar(){
   const c=qiCost(P.side,P.qiN);
   const stats=STATS.map(({k,n})=>{const v=P.st[k],add=v-P.base[k];const fx=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${150+v*25}, 피해 감소`:k==='agi'?`현묘도 +${v*2}, 이동·재사용`:`생명 +${v*10}, 생명 회복 ${(1+v*.2).toFixed(1)}/초, 수명 +${Math.floor(v*.5)}년`;
     return `<div class="it"><div>${n} <b class="num gold">${v}</b>${add?` <small class="good">(근골 ${P.base[k]} +${add})</small>`:''}<span>${fx}</span></div><div class="ib"></div></div>`}).join('');
-  return `<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
+  return wtabs('char',[['인물',`<div class="card"><div class="row2"><h3>${esc(P.name)} <small class="dim">${P.lifeNo}번째 생</small></h3><span class="tag">${STATUS[P.status].n} · ${facName()} · ${simCur().n} <small class="dim">${simCur().sc} ${simCur().el}</small>${simCur().tr&&simCur().tr.length?` <small class="dim">${simTraitTxt(simCur())}</small>`:''}</span></div>
     <p>근골 <b class="gold">${GEUNGOL[P.side][P.gg][0]}</b> · 오성 <b class="gold">${P.wis}</b> (익힐 수 있는 무공 ${artCap()}가지, 숙련 증가 ${Math.round(wisMul()*100)}%) · ${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()}${P.age>=P.life-6?' · <span class="bad">기력이 쇠했다</span>':''}</p>
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}
-    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기 (U)',{pri:1})}</div></div>
+    <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기'+(TOUCH?'':' (U)'),{pri:1})}</div></div>`],['업보·평판',`
     ${typeof maraHtml==='function'?maraHtml():''}${typeof sinHtml==='function'?sinHtml():''}${typeof diffHtml==='function'?diffHtml():''}
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
       <p>죽으면 업보와 명성으로 다음 생의 신분과 보상 활력이 정해진다.</p></div>
     ${typeof repHtml==='function'?repHtml():''}
     <div class="card"><h4>절세신공</h4><p>${P.sg.name?`<b class="gold">${P.sg.name}</b> · ${SHINGONG[P.sg.name].d}`:'아직 없음. 화경에 오른 뒤 우두머리에게서 열 장을 모은다. 캐릭터당 하나, 수동초식 상태 전용, 재사용 5초.'}</p>
-      <p>${Object.keys(SHINGONG).map(k=>`${k} ${P.sg.pages[k]||0}/10`).join(' · ')}</p></div>`;
+      <p>${Object.keys(SHINGONG).map(k=>`${k} ${P.sg.pages[k]||0}/10`).join(' · ')}</p></div>`]])
 }
 // 무공 잊기 (v184, 사용자 2026-10-26): 익힌 무공을 지워 오성이 정한 칸을 비운다. 숙련과 초식이 모두 사라지고 되돌릴 수 없어 한 번 더 묻는다
 let forgetAsk=null;hook('panelOpen',()=>{forgetAsk=null});
@@ -159,14 +163,13 @@ function pArts(){
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
   return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다 · 칸이 차면 '잊기'로 비운다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
-    ${list}
+    ${wtabs('arts',[['무공',`${list}
     ${gyNote()}
-    ${typeof gsHtml==='function'?gsHtml():''}
-    ${simArtsHtml()}
+    ${typeof gsHtml==='function'?gsHtml():''}`],['심법·보법',`${simArtsHtml()}
     ${ggArtsHtml()}
     ${bobArtsHtml()}
     ${pasArtsHtml()}
-    <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>
+    <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>`]])}
     <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇되 필살기는 쓰지 않고(직접 S·필살 버튼), <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
 }
 let shopMode=null;
@@ -220,7 +223,7 @@ function pHelp(){
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
   <p><b>☰ 메뉴</b> 인물·무공·행낭·동료·생활·임무·강호사·천하 지도·수련 창. 질주·강제공격·운기·승마는 오른쪽 가장자리의 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
-  <div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`;
+  ${DEV?`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`:''}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
   <p><b>초식</b> 키패드 7·4·1·9·6·3 또는 Q·A·Z·E·D·C (키패드 배치를 왼손에 옮긴 것). <b>필살기</b> 키패드 5 또는 S.</p>
   <p><b>자동/수동초식</b> Tab. 자동은 클릭한 적에게 초식을 차례로 잇는다.</p>
@@ -316,6 +319,7 @@ let wDown=0;$('wbody').addEventListener('pointerdown',()=>{wDown=performance.now
 $('wbody').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||(e.detail&&wDown<panelAt))return;act(b.dataset.act)});
 function act(s){
   const[a,x,y]=s.split(':'),n=+x;
+  if(a==='wtab'){WTAB[x]=+y;renderOpen();$('wbody').scrollTop=0;return}
   if(sectAct(a,x,y)){renderOpen();return}
   switch(a){
     case'stat':trainStat(x);break;case'qi':trainQi();return;
