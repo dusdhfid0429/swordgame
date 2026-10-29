@@ -8,8 +8,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 세로 휴대폰
   let p=await b.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});p.on('pageerror',e=>errs.push('PE '+e.message));
   await start(p,'?touch&noacad');
-  let r=await p.evaluate(()=>({mob:document.body.classList.contains('mob'),touch:TOUCH,ms:getComputedStyle(document.querySelector('.status .gauge.ms')).display,mini:$('mini').getBoundingClientRect().top,menu:$('tmenu').getBoundingClientRect().top}));
-  ok(`세로: 모바일 모드 ${r.mob}, 터치 ${r.touch}, 숙련 막대 접힘 (${r.ms}), 미니맵이 토스 단추 아래 (${Math.round(r.mini)})`,r.mob&&r.touch&&r.ms==='none'&&r.mini>=50);
+  let r=await p.evaluate(()=>({mob:document.body.classList.contains('mob'),touch:TOUCH,ms:getComputedStyle(document.querySelector('.status .gauge.ms')).display,mini:$('mini').getBoundingClientRect().top,st:document.querySelector('.status').getBoundingClientRect().top,menu:$('tmenu').getBoundingClientRect().top}));
+  ok(`세로: 모바일 모드 ${r.mob}, 터치 ${r.touch}, 숙련 막대 접힘 (${r.ms}), 미니맵 위가 상태 칸과 같은 높이 (${Math.round(r.mini)}/${Math.round(r.st)})`,r.mob&&r.touch&&r.ms==='none'&&Math.abs(r.mini-r.st)<1);
   await p.tap('#pexp');r=await p.evaluate(()=>({ms:getComputedStyle(document.querySelector('.status .gauge.ms')).display,panel}));
   ok(`▾를 누르면 펼치고 인물 창은 안 열린다 (${r.ms}, ${r.panel})`,r.ms!=='none'&&r.panel==null);
   // v201 여백·탭바: 가장자리에서 16px 이상, 탭바 다섯 칸
