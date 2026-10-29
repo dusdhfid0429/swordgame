@@ -279,7 +279,7 @@ function acadQuestHtml(){const st=ACAD_ST[3],c=P.acad.c;
 function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   if(!mine)return `<p class="note">"${A.n}은(는) ${SIDES[n.acad].n}의 자제만 받는다."</p>`;
   if(n.role==='mate'){const m=A.mates[n.i];return `<p class="note">${esc(m[1])}.</p><p class="note">"${a&&a.grad?'졸업하고도 잊지 마. 강호에서 또 보자.':a&&a.stage>=4?'졸업 비무에서 만나면 봐주지 않을 거야.':'같이 열심히 해 보자!'}"</p>`}
-  if(!a)return `<p class="note">"강호에 나간 지 오래되었구나. 가끔 들러 후배들을 보아 다오."</p>`;
+  if(!a)return `<p class="note">"강호에 나간 지 오래되었구나. 가끔 들러 후배들을 보아 다오."</p>`+(n.role==='inst'&&n.i===1?acadFormsHtml():'');
   const rep=i=>!a.grad&&acadSt().inst===i&&a.stage<4?(acadAllDone()?B('acrep','보고하고 다음 단계로',{pri:1}):'<p class="note">과제를 마치면 보고하러 오너라.</p>'):'';
   if(n.role==='master'){
     if(a.grad)return `<p class="note">"${A.grad}"</p><p>${A.n} ${a.grade} 졸업 · ${a.gradAge}세</p>${a.recDone?(a.rec?`<p>추천서: <b class="gold">${SECTS[a.rec].n}</b> ${a.recUsed?'<small class="good">들어감</small>':''}</p>`:''):`<div class="card"><h4>추천서 <small class="dim">${a.grade}: ${acadRecTiers().map(t=>TIERN[t]||t).join('·')}</small></h4><p class="note">추천서를 낸 문파는 명성·나이 조건 없이 받아 주고, 공적 ${(ACAD_GRADE.find(g=>g.n===a.grade)||{}).merit}을(를) 얹어 준다.</p>
@@ -290,7 +290,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
     return `<p class="note">"${A.hello}"</p>${acadSteps()}${skipB}${acadStageCard(grad)}`}
   // 교두
   const head=`<p class="note">${['기본기와 몸가짐을 맡는다.','병기와 무공을 맡는다.','심법과 내공을 맡는다.','강호 실습을 맡는다.'][n.i]}</p>`;
-  if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>';
+  if(a.grad)return head+'<p class="note">"졸업한 몸이 웬일이냐. 강호는 어떠하더냐?"</p>'+(n.i===1?acadFormsHtml():'');
   let body='';
   if(n.i===1){if(acadPickOpen())body+=acadWeaponHtml();if(acadBobOpen()&&(acadPickLocked()||P.bcur||P.acad.skip))body+=acadBobHtml();if(acadGkOpen()&&(P.bcur||P.gkcur||P.acad.skip))body+=acadGkHtml();if(acadPickLocked())body+=acadFormsHtml();if(!acadPickOpen()) body+='<p class="note">"병기는 3단계에서 고른다. 무공은 내공을 쓰니, 먼저 심법 교두에게서 심법을 익히고 내공을 쌓아라."</p>';
     if(acadSparOk('inst'))body+=`<div class="row2"><span class="note">대련에서 져도 다치지 않는다.</span>${B('acspar:inst','대련을 청한다')}</div>`}
@@ -407,16 +407,20 @@ hook('drawList',list=>{if(!playing||!acadDr)return;const d=acadDr,D=ACAD_BOBD;li
   if(d.t>D.warn){const u=(d.t-D.warn)/D.fly,o=toScreen(d.ox,d.oy),x=o.x+(p.x-o.x)*u,y=o.y+(p.y-o.y)*u-Math.sin(u*Math.PI)*40;
     ctx.fillStyle='#b88a52';ctx.strokeStyle='#3a2410';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill();ctx.stroke()}ctx.restore()}})});
 // 무관 무공 초식 전수: 숙련(성)이 차면 병기 교두에게서 그 무공의 남은 초식을 활력으로 배운다 (비급 없이)
-const acadMainArt=()=>{const a=P.acad;return a&&a.cls?ARTS[P.side+a.cls+'0']:null};
-function acadFormBlock(i){const art=acadMainArt(),s=art&&A(art.id),f=art&&art.forms[i];if(!acadOn()||!f||!s)return'무공이 없다';if(s.f[i])return'익힘';
+// v206 (사용자 2026-10-29): 졸업했거나 윤회 때 무관을 건너뛴 생도 무관에 찾아오면 병기 교두가 같은 조건으로 전수한다.
+// 문파에 들지 않은 낭인·맹원은 정파 무관 무공의 다음 초식을 얻을 길이 없었다. 건너뛴 생의 무관 무공은 고른 병기 계열의 0번(화) 무공
+const acadMainArt=()=>{const a=P.acad,c=a?a.cls:P.acadSkip?P.startCls:null;return c?ARTS[P.side+c+'0']:null};
+const acadFormOn=()=>acadOn()||acadPast();
+function acadFormBlock(i){const art=acadMainArt(),s=art&&A(art.id),f=art&&art.forms[i];if(!acadFormOn()||!f||!s)return'무공이 없다';if(s.f[i])return'익힘';
   if(s.p<f.req)return`숙련 ${f.req} 필요`;if(P.vit<f.cost)return`활력 ${f.cost} 필요`;return null}
 function acadFormLearn(i){const art=acadMainArt();if(!art||acadFormBlock(i))return;const f=art.forms[i];P.vit-=f.cost;P.arts[art.id].f[i]=true;
   log(`병기 교두에게서 ${art.n}의 [${f.n}]을(를) 전수받았습니다. (활력 -${f.cost})`,'xp');
   if(allLearned(art.id))log(`${art.n}의 모든 초식을 익혀 필살기 [${art.ult.n}]을(를) 쓸 수 있습니다. (S / 키패드 5)`,'xp');acadCheck()}
 function acadFormsHtml(){const art=acadMainArt(),s=art&&A(art.id);if(!s)return'';
-  return `<div class="card"><h4>${art.n} 초식 전수 <small class="dim">숙련이 차면 무관에 있는 동안 남은 초식을 모두 배울 수 있다 · 지금 숙련 ${Math.floor(s.p)}</small></h4>
-    <p class="note">"목인장으로는 소성(25)까지만 오른다. 그 위는 수련곡에서 싸워 올려라."</p><div class="list">${art.forms.map((f,i)=>{const no=acadFormBlock(i);
+  const past=!acadOn();
+  return `<div class="card"><h4>${art.n} 초식 전수 <small class="dim">숙련이 차면 남은 초식을 모두 배울 수 있다${past?' · 졸업한 뒤에도 찾아오면 전수한다':''} · 지금 숙련 ${Math.floor(s.p)}</small></h4>
+    <p class="note">${past?'"강호에서 숙련을 쌓았으면 보여 다오. 무관에서 익힌 무공이니 끝까지 가르쳐 주마."':'"목인장으로는 소성(25)까지만 오른다. 그 위는 수련곡에서 싸워 올려라."'}</p><div class="list">${art.forms.map((f,i)=>{const no=acadFormBlock(i);
       return `<div class="it"><div>${i+1}초 ${f.n}${s.f[i]?' <small class="good">익힘</small>':''}<span>숙련 ${f.req} · 활력 ${f.cost}</span></div><div class="ib">${s.f[i]?'':B('acform:'+i,no||'전수받는다',{d:!!no})}</div></div>`}).join('')}</div></div>`}
 // 새 초식을 배울 숙련이 되면 한 번 알린다
-let acadFT=0;hook('tick',dt=>{if(!acadOn()||(acadFT-=dt)>0)return;acadFT=1;const art=acadMainArt(),s=art&&A(art.id);if(!s)return;const c=P.acad.c;
-  art.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req&&!c['fopen'+i]){c['fopen'+i]=1;if(i>0)log(`${art.n} 숙련이 ${f.req}에 닿아 [${f.n}]을(를) 배울 수 있습니다. 병기 교두에게 전수를 청하세요.`,'info')}})});
+let acadFT=0;hook('tick',dt=>{if(!P||!acadFormOn()||(acadFT-=dt)>0)return;acadFT=1;const art=acadMainArt(),s=art&&A(art.id);if(!s)return;const c=P.acad?P.acad.c:(P.acadFo=P.acadFo||{});
+  art.forms.forEach((f,i)=>{if(!s.f[i]&&s.p>=f.req&&!c['fopen'+i]){c['fopen'+i]=1;if(i>0)log(`${art.n} 숙련이 ${f.req}에 닿아 [${f.n}]을(를) 배울 수 있습니다. ${acadOn()?'병기 교두에게 전수를 청하세요.':`${acadOf(P.side).n} 병기 교두${P.sect&&P.sect!=='own'?'나 사부':''}에게 전수를 청하세요.`}`,'info')}})});

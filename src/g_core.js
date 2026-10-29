@@ -321,7 +321,7 @@ const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
 function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}
 function useForm(i,silent){
   if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
-  if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. ${typeof acadOn==='function'&&acadOn()?'교두에게 전수받아야 합니다':'비급을 읽거나 사부의 가르침을 받아야 합니다'}.`,'info');return false}
+  if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. ${typeof acadOn==='function'&&acadOn()?'교두에게 전수받아야 합니다':typeof acadMainArt==='function'&&acadPast()&&acadMainArt()===a?'무관 병기 교두에게 전수받거나 비급을 읽어야 합니다':'비급을 읽거나 사부의 가르침을 받아야 합니다'}.`,'info');return false}
   if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;const q=formQi(f);if(P.qi<q){if(!silent)log('내공이 부족합니다.','info');return false}
   // 연속기: forms entered in order inside the window stack their 추가 공력
