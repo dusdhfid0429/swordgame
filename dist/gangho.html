@@ -277,8 +277,11 @@ body.mob{--tnav:48px}
    가장자리 여백 16px + 안전 영역, 맨 아래 탭바, 위쪽 한 줄(왼쪽 상태 · 오른쪽 미니맵·지명·은자), 왼쪽 열(임무·기록), 탭바 바로 위 한 줄(약 · 켜고 끄기), 오른손 전투 단추 */
 body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(var(--gut) + env(safe-area-inset-right,0px));--gt:calc(8px + env(safe-area-inset-top,0px))}
 #tbar{display:none}
+#tvit{position:absolute;left:0;right:0;top:0;height:14px;background:#0a0806;border-bottom:1px solid #4a3c2788;overflow:hidden;pointer-events:none}
+#tvit i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(#8fc86a,#4c7f34);box-shadow:inset 0 1px 0 #d6f2b088;transition:width .3s ease}
+#tvit b{position:relative;display:block;text-align:center;font:400 10px/14px var(--body);color:#f2ecd6;text-shadow:0 1px 1px #000,0 0 3px #000;font-variant-numeric:tabular-nums}
 .touch #tbar #tmenu{position:static;width:auto;height:60px;font:11px var(--body);line-height:normal;color:var(--paper-dim);background:none;border:0}.touch #tbar #tmenu.on{color:#f6e7b8}
-.touch #tbar{display:flex;flex:none;position:relative;z-index:5;padding:0 calc(env(safe-area-inset-right,0px) + 6px) env(safe-area-inset-bottom,0px) calc(env(safe-area-inset-left,0px) + 6px);background:linear-gradient(#2a2117,#120e09);border-top:1px solid var(--bronze);box-shadow:0 -4px 14px #0009,inset 0 1px 0 #a88a5544}
+.touch #tbar{display:flex;flex:none;position:relative;z-index:5;padding:14px calc(env(safe-area-inset-right,0px) + 6px) env(safe-area-inset-bottom,0px) calc(env(safe-area-inset-left,0px) + 6px);background:linear-gradient(#2a2117,#120e09);border-top:1px solid var(--bronze);box-shadow:0 -4px 14px #0009,inset 0 1px 0 #a88a5544}
 #app:has(#scr:not([hidden])) #tbar{display:none}
 .tbi{flex:1;min-width:0;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;border:0;background:none;color:var(--paper-dim);font:11px var(--body);cursor:pointer;touch-action:manipulation}
 .tbi i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid #6b563688;font:normal 17px/1 var(--display);color:#cbb68a;background:radial-gradient(circle at 35% 30%,#2e251a,#100c08)}
@@ -292,6 +295,14 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 #tcur{display:none}
 /* 왼쪽 열: 임무 줄 → 기록 줄 */
 #lcol{display:none}
+/* v204 임무 줄 접기: 오른쪽에서 왼쪽으로 접혀 왼쪽 가장자리에 '任 ▸' 손잡이만 남는다 */
+.qfold{display:none}
+.touch #lcol .qtrack{transition:transform .22s ease,opacity .22s ease;padding-right:30px}
+.touch #lcol .qfold{display:grid;place-items:center;position:absolute;top:0;right:0;width:28px;height:34px;padding:0;border:0;border-left:1px solid #4a3c2780;border-radius:0 6px 0 6px;background:#1a140ccc;color:#e8d9a8;font:18px/1 var(--body);pointer-events:auto;touch-action:manipulation;z-index:1}
+.touch #lcol:has(.qtrack[hidden]) .qfold{display:none}
+.touch.qfolded #lcol .qtrack{transform:translateX(calc(-100% - var(--gl)));opacity:0;pointer-events:none}
+.touch.qfolded #lcol .qfold{right:auto;left:calc(0px - var(--gl));width:auto;height:34px;padding:0 8px 0 6px;gap:2px;grid-auto-flow:column;border:1px solid var(--bronze);border-left:0;border-radius:0 8px 8px 0;background:#1a140ce6;font-size:12px}
+.touch.qfolded #lcol .qfold i{font:normal 14px/1 var(--display);color:#ffd98a}
 .touch #lcol{display:flex;flex-direction:column;gap:6px;position:absolute;left:var(--gl);top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(200px,45cqw);pointer-events:none}
 .touch #lcol .qtrack{width:auto;max-height:96px;margin:0}
 .touch.qs-on #lcol{visibility:hidden}.touch.qs-on #lcol *{pointer-events:none}   /* 성 고르는 칸이 펼쳐지면 그 아래 임무 줄도 감춘다 (t114) */
@@ -2390,7 +2401,7 @@ function pHelp(){
   <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
   <p><b>상황 버튼</b> 공격 위의 버튼은 가까이 있는 것에 따라 대화·채집·농사·집·길들이기·말·운기로 바뀐다.</p>
-  <p><b>아래 탭</b> 인물·무공·행낭·임무, 나머지 창(동료·생활·정세·강호사·천하 지도·수련)과 설정은 더보기. 질주·강제공격·운기·승마는 탭 바로 위 오른쪽 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
+  <p><b>아래 탭</b> 인물·무공·행낭·임무·수련, 나머지 창(동료·생활·정세·강호사·천하 지도)과 설정은 더보기. 왼쪽 임무 줄은 ◂를 누르거나 왼쪽으로 밀면 접힌다. 질주·강제공격·운기·승마는 탭 바로 위 오른쪽 네모 단추, 금창약·소환단·비도는 퀵슬롯 줄. 창이 열려 있는 동안 시간이 멈춘다.</p>
   <p><b>나이</b> 실제 30분(낮밤 열두 바퀴)이 1년, 낮밤 한 바퀴가 한 달. 늙거나 싸움에서 쓰러지면 생이 끝나고 업보에 따라 다시 태어난다.</p></div>
   ${DEV?`<div class="center">${B('ctl:k','PC 조작으로 바꾸기')}</div>`:''}`;
   return `<div class="help"><p><b>이동</b> 땅 클릭 또는 방향키. 적 클릭은 공격, 사람·밭·채집물 클릭은 다가가서 행동.</p>
@@ -4125,9 +4136,14 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
 $('stage').insertBefore(TUI,$('win'));
 // v201 아래 탭바 (사용자 2026-10-29 "세로 게임들 참고해서 대규모 개선"): ☰ 대신 인물·무공·행낭·임무·더보기. 더보기가 예전 ☰(#tmenu) 자리를 잇는다
 const TBAR=document.createElement('nav');TBAR.id='tbar';TBAR.setAttribute('aria-label','창 바로가기');
-TBAR.innerHTML=[['char','人','인물'],['arts','武','무공'],['bag','囊','행낭'],['quest','任','임무'],['menu','⋯','더보기']].map(([p,g,l])=>`<button type="button" class="tbi" data-p="${p}" id="${p==='menu'?'tmenu':'tb_'+p}"><i aria-hidden="true">${g}</i><span>${l}</span></button>`).join('');
+TBAR.innerHTML=[['char','人','인물'],['arts','武','무공'],['bag','囊','행낭'],['quest','任','임무'],['train','修','수련'],['menu','⋯','더보기']].map(([p,g,l])=>`<button type="button" class="tbi" data-p="${p}" id="${p==='menu'?'tmenu':'tb_'+p}"><i aria-hidden="true">${g}</i><span>${l}</span></button>`).join('');
+// v204 (사용자): 활력은 탭바 윗단의 막대로 (미니맵 아래에는 은자만)
+const TVIT=document.createElement('div');TVIT.id='tvit';TVIT.innerHTML='<i></i><b></b>';TBAR.prepend(TVIT);
 $('app').appendChild(TBAR);
-TBAR.addEventListener('click',e=>{const b=e.target.closest('.tbi');if(!b||!playing||b.id==='tmenu')return;if(typeof trnOpen!=='undefined'&&trnOpen)closeTrain();openPanel(b.dataset.p)});
+TBAR.addEventListener('click',e=>{const b=e.target.closest('.tbi');if(!b||!playing||b.id==='tmenu')return;
+  // v204 (사용자): 수련도 탭바에. 수련 창은 화면 아래 띠라서 따로 열고 닫는다
+  if(b.dataset.p==='train'){if(trnOpen)closeTrain();else openTrain();return}
+  if(typeof trnOpen!=='undefined'&&trnOpen)closeTrain();openPanel(b.dataset.p)});
 // 기본 정보 줄(오른쪽 위 미니맵 아래): 은자·활력
 const TCUR=document.createElement('small');TCUR.id='tcur';$('cal').after(TCUR);
 // 탭바가 생기고 없어지면 무대 높이가 바뀌므로 캔버스도 다시 잰다
@@ -4197,8 +4213,9 @@ function ctxPick(){
 let ctxT=0,ctxNow=null;   // 상황 버튼은 프레임 수가 아니라 실제 시간 0.15초마다 고른다 (느린 기기에서 늦게 뜨던 것)
 function touchHud(){
   if(P.mode!=='auto')P.mode='auto';
-  for(const b of TBAR.children)b.classList.toggle('on',panel===b.dataset.p);
-  txt(TCUR,`은자 ${P.silver} · 활력 ${P.vit}/${maxVit()}`);
+  for(const b of TBAR.querySelectorAll('.tbi'))b.classList.toggle('on',b.dataset.p==='train'?!!trnOpen:panel===b.dataset.p);
+  txt(TCUR,`은자 ${P.silver}`);
+  {const m=maxVit();sty(qc(TVIT,'i'),'width',clamp(m?P.vit/m:0,0,1)*100+'%');txt(qc(TVIT,'b'),`활력 ${P.vit} / ${m}`)}
   if(touchAtk&&!paused&&!joy.on)touchTarget();
   else if(atkAuto&&!paused&&!joy.on)autoEngage();
   const a=art(),cd=(id,v)=>sty(qc($(id),'.cd'),'height',clamp(v,0,1)*100+'%');
@@ -4228,11 +4245,11 @@ function autoEngage(){
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   // 창 목록만 (사용자 요청 2026-10-13: 중복 빼고, 질주·말·운기 같은 동작은 HUD 빠른 버튼으로). 설정은 아래 한 줄.
-  // v201: 인물·무공·행낭·임무는 아래 탭바에 있으므로 더보기에서는 뺀다 (개발용 PC 조작에서는 그대로)
+  // v201: 인물·무공·행낭·임무(v204 수련도)는 아래 탭바에 있으므로 더보기에서는 뺀다 (개발용 PC 조작에서는 그대로)
   const tab=!DEV;
   return `<div class="mgrid">${tab?'':M('open:char','인물','능력치 · 문파 · 업보')+M('open:arts','무공','무공 · 초식 · 심법')+M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${tab?'':M('open:quest','임무','맡은 임무 상세')}
-    ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
+    ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${tab?'':M('trainwin','수련','기본기 · 내공 심법')}</div>
     <h4 class="mh">설정 <small>30초마다 저절로 기록된다</small></h4><div class="mset">${B('save','기록')}${B('open:help','조작법')}${DEV?B('ctl:k','PC 조작으로'):''}${B('quit','종료',{pri:quitAsk})}</div><div class="sndrow" id="atkrow">${B('atkm:btn','공격 단추',{pri:!atkAuto})}${B('atkm:auto','멈추면 자동 공격',{pri:atkAuto})}</div>${quitCard()}`;
 }
 // v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
@@ -4241,6 +4258,17 @@ const DEV=/[?#&]dev\b/.test(location.href)||(!!navigator.webdriver&&!/[?#&]touch
 document.body.classList.toggle('mob',!DEV);
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(DEV?(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches):true);
+// v204 임무 줄 접기 (사용자 2026-10-29): 오른쪽 끝 ◂를 누르거나 임무 줄을 오른쪽에서 왼쪽으로 밀면 왼쪽 가장자리로 접히고, 남은 '任 ▸' 손잡이로 다시 편다
+{const q=$('qtrack'),b=document.createElement('button');b.type='button';b.id='qfold';b.className='qfold';$('lcol').appendChild(b);
+  const set=on=>{document.body.classList.toggle('qfolded',on);b.innerHTML=on?'<i>任</i>▸':'◂';b.setAttribute('aria-label',on?'임무 펼치기':'임무 접기');b.setAttribute('aria-expanded',!on)};
+  const save=on=>{set(on);try{STORE.set('ganghoyunhoe-qfold',on?'1':'0',1)}catch(e){}};
+  let o=false;try{o=STORE.get('ganghoyunhoe-qfold')==='1'}catch(e){}set(o);
+  b.addEventListener('click',e=>{e.stopPropagation();save(!document.body.classList.contains('qfolded'))});
+  let sx=null,sy=0;
+  q.addEventListener('pointerdown',e=>{if(TOUCH){sx=e.clientX;sy=e.clientY}});
+  q.addEventListener('pointerup',e=>{if(sx==null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;
+    if(dx<-40&&Math.abs(dx)>Math.abs(dy)*1.5){save(true);q.dataset.swiped='1';setTimeout(()=>delete q.dataset.swiped,350)}});
+  q.addEventListener('click',e=>{if(q.dataset.swiped){e.stopImmediatePropagation();e.preventDefault()}},true)}
 // 상태 상자: 평소엔 이름·생명·내공만, ▾를 누르면 숙련·활력·은자까지 펼친다 (상자 다른 곳을 누르면 그대로 인물 창)
 {const b=document.createElement('button');b.type='button';b.id='pexp';b.className='pexp';b.setAttribute('aria-label','상태 펼치기');b.textContent='▾';statusEl.appendChild(b);
   const set=on=>{statusEl.classList.toggle('open',on);b.textContent=on?'▴':'▾';b.setAttribute('aria-expanded',on);logTop()};
@@ -7660,7 +7688,8 @@ function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p
   if(m.l){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
-  const TR=['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=['#tmenu','#b_p_bag','[data-act="open:bag"]'];
+  const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
+  const TR=tabs?['#tb_train']:['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=tabs?['#tb_bag']:['#tmenu','#b_p_bag','[data-act="open:bag"]'];
   const robe=P.bag.find(i=>i.acad&&i.slot==='armor'),books=P.bag.filter(i=>i.slot==='book'&&a.cls&&ARTS[i.art]&&ARTS[i.art].cls===a.cls);
   const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],

@@ -277,8 +277,11 @@ body.mob{--tnav:48px}
    가장자리 여백 16px + 안전 영역, 맨 아래 탭바, 위쪽 한 줄(왼쪽 상태 · 오른쪽 미니맵·지명·은자), 왼쪽 열(임무·기록), 탭바 바로 위 한 줄(약 · 켜고 끄기), 오른손 전투 단추 */
 body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(var(--gut) + env(safe-area-inset-right,0px));--gt:calc(8px + env(safe-area-inset-top,0px))}
 #tbar{display:none}
+#tvit{position:absolute;left:0;right:0;top:0;height:14px;background:#0a0806;border-bottom:1px solid #4a3c2788;overflow:hidden;pointer-events:none}
+#tvit i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(#8fc86a,#4c7f34);box-shadow:inset 0 1px 0 #d6f2b088;transition:width .3s ease}
+#tvit b{position:relative;display:block;text-align:center;font:400 10px/14px var(--body);color:#f2ecd6;text-shadow:0 1px 1px #000,0 0 3px #000;font-variant-numeric:tabular-nums}
 .touch #tbar #tmenu{position:static;width:auto;height:60px;font:11px var(--body);line-height:normal;color:var(--paper-dim);background:none;border:0}.touch #tbar #tmenu.on{color:#f6e7b8}
-.touch #tbar{display:flex;flex:none;position:relative;z-index:5;padding:0 calc(env(safe-area-inset-right,0px) + 6px) env(safe-area-inset-bottom,0px) calc(env(safe-area-inset-left,0px) + 6px);background:linear-gradient(#2a2117,#120e09);border-top:1px solid var(--bronze);box-shadow:0 -4px 14px #0009,inset 0 1px 0 #a88a5544}
+.touch #tbar{display:flex;flex:none;position:relative;z-index:5;padding:14px calc(env(safe-area-inset-right,0px) + 6px) env(safe-area-inset-bottom,0px) calc(env(safe-area-inset-left,0px) + 6px);background:linear-gradient(#2a2117,#120e09);border-top:1px solid var(--bronze);box-shadow:0 -4px 14px #0009,inset 0 1px 0 #a88a5544}
 #app:has(#scr:not([hidden])) #tbar{display:none}
 .tbi{flex:1;min-width:0;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;border:0;background:none;color:var(--paper-dim);font:11px var(--body);cursor:pointer;touch-action:manipulation}
 .tbi i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid #6b563688;font:normal 17px/1 var(--display);color:#cbb68a;background:radial-gradient(circle at 35% 30%,#2e251a,#100c08)}
@@ -292,6 +295,14 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 #tcur{display:none}
 /* 왼쪽 열: 임무 줄 → 기록 줄 */
 #lcol{display:none}
+/* v204 임무 줄 접기: 오른쪽에서 왼쪽으로 접혀 왼쪽 가장자리에 '任 ▸' 손잡이만 남는다 */
+.qfold{display:none}
+.touch #lcol .qtrack{transition:transform .22s ease,opacity .22s ease;padding-right:30px}
+.touch #lcol .qfold{display:grid;place-items:center;position:absolute;top:0;right:0;width:28px;height:34px;padding:0;border:0;border-left:1px solid #4a3c2780;border-radius:0 6px 0 6px;background:#1a140ccc;color:#e8d9a8;font:18px/1 var(--body);pointer-events:auto;touch-action:manipulation;z-index:1}
+.touch #lcol:has(.qtrack[hidden]) .qfold{display:none}
+.touch.qfolded #lcol .qtrack{transform:translateX(calc(-100% - var(--gl)));opacity:0;pointer-events:none}
+.touch.qfolded #lcol .qfold{right:auto;left:calc(0px - var(--gl));width:auto;height:34px;padding:0 8px 0 6px;gap:2px;grid-auto-flow:column;border:1px solid var(--bronze);border-left:0;border-radius:0 8px 8px 0;background:#1a140ce6;font-size:12px}
+.touch.qfolded #lcol .qfold i{font:normal 14px/1 var(--display);color:#ffd98a}
 .touch #lcol{display:flex;flex-direction:column;gap:6px;position:absolute;left:var(--gl);top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(200px,45cqw);pointer-events:none}
 .touch #lcol .qtrack{width:auto;max-height:96px;margin:0}
 .touch.qs-on #lcol{visibility:hidden}.touch.qs-on #lcol *{pointer-events:none}   /* 성 고르는 칸이 펼쳐지면 그 아래 임무 줄도 감춘다 (t114) */
