@@ -15,22 +15,45 @@ const MK_PRE={금:['파천','벽력','금강','섬광'],목:['청풍','유성','
 const MK_SUF={검:'검법',도:'도법',창:'창법',봉:'봉법',권:'권법',궁:'궁술',암:'암기술'};
 const mkMul=a=>a.sect||a.gy||a.made||a.rc?GMUL[a.grade||0]:(a.forms.length<=3?1.25:1);   // 초식 m에 이미 곱해진 등급 보정
 const mkUltMul=a=>a.sect||a.gy||a.made||a.rc?GULT[a.grade||0][1]:1;
-// 재료가 될 수 있는 무공 묶음: {cls,g,ids} (대성 이상 다섯 넘는 것만)
+// ---- 완본 (v207, 사용자 2026-10-29 "초식까지 모두 모으면 창안에 소모하게") ----
+// 다른 병기 무공은 그 병기를 들어야 펼치고 창안 재료도 같은 병기여야 해서, 견식·낱장으로 얻으면 쓸모가 없었다.
+// - 익히지 않은 무공의 사본·비급을 첫 초식부터 마지막 초식까지 모두 행낭에 모으면 '완본'(slot wbook)으로 엮는다. 완본은 오성 가짓수에 들지 않는다.
+// - 창안할 때 완본, 그리고 초식을 모두 익힌 다른 병기 무공(숙련은 따지지 않는다)이 같은 등급 재료 자리를 MK_SUB까지 대신하고 함께 사라진다.
+//   같은 병기 무공은 지금처럼 숙련 100이어야 하고, 새 무공의 초식·필살기는 같은 병기 재료에서만 뽑는다.
+const MK_SUB=2;
+const wbOk=a=>!!a&&!a.base&&!a.gy&&!!a.forms&&(a.grade||0)<MK_TOP;
+// 행낭에서 그 무공의 초식별 비급(사본 포함) 한 권씩. 모자라면 null
+function wbBooks(id){const a=ARTS[id];if(!wbOk(a)||P.arts[id])return null;const L=[];
+  for(let i=0;i<a.forms.length;i++){const b=P.bag.find(it=>it.slot==='book'&&it.art===id&&it.form===i);if(!b)return null;L.push(b)}return L}
+function wbBind(id){const a=ARTS[id],L=wbBooks(id);if(!L)return;for(const b of L)P.bag.splice(P.bag.indexOf(b),1);
+  P.bag.push({id:++itemId,slot:'wbook',art:id,name:`${a.n} 완본`,price:L.reduce((s,b)=>s+(b.price||0),0)});
+  log(`[${a.n}]의 초식 ${a.forms.length}개를 한 권으로 엮어 완본을 만들었다. 다른 병기의 같은 등급 무공을 창안할 때 재료 한 자리를 대신한다.`,'xp')}
+const wbDesc=it=>{const a=ARTS[it.art];return a?`${AGR[a.grade||0]} · ${CLASS[a.cls].n} · 초식 ${a.forms.length}개를 모두 갖춘 완본 · 익히지 않아도 다른 병기 ${AGR[a.grade||0]} 무공 창안 재료 한 자리를 대신한다 (다섯 중 ${MK_SUB}자리까지)`:'지금 강호에 전하지 않는 무공의 완본'};
+// 묶음 cls·등급 g를 대신할 재료: 완본(행낭) 먼저, 다음은 초식을 다 익힌 다른 병기 무공(숙련 낮은 것부터). 같은 무공은 한 번만
+function mkSubs(cls,g){const out=[],seen=new Set();
+  for(const it of P.bag){const a=ARTS[it.art];if(it.slot!=='wbook'||!wbOk(a)||a.cls===cls||(a.grade||0)!==g||seen.has(a.id))continue;seen.add(a.id);out.push({it:it.id,art:a.id})}
+  for(const id of learnedArts().slice().sort((x,y)=>A(x).p-A(y).p)){const a=ARTS[id];if(!wbOk(a)||a.cls===cls||(a.grade||0)!==g||seen.has(id)||!allLearned(id))continue;seen.add(id);out.push({art:id})}
+  return out}
+// 재료가 될 수 있는 무공 묶음: {cls,g,ids,subs} (같은 병기 대성 무공 + 완본·다른 병기 무공 MK_SUB까지로 다섯)
 function mkGroups(){const by={};
   for(const id of learnedArts()){const a=ARTS[id],s=A(id);if(!a||a.base||a.gy||(a.grade||0)>=MK_TOP||s.p<MK_MAST)continue;
     const k=a.cls+':'+(a.grade||0);(by[k]=by[k]||[]).push(id)}
-  return Object.entries(by).filter(([,ids])=>ids.length>=MK_N).map(([k,ids])=>{const[cls,g]=k.split(':');return{cls,g:+g,ids:ids.sort((x,y)=>A(y).p-A(x).p).slice(0,MK_N)}})}
+  const out=[];
+  for(const[k,L]of Object.entries(by)){const[cls,gs]=k.split(':'),g=+gs,ids=L.sort((x,y)=>A(y).p-A(x).p).slice(0,MK_N),need=MK_N-ids.length;
+    if(need>MK_SUB)continue;const subs=need>0?mkSubs(cls,g).filter(x=>!ids.includes(x.art)).slice(0,need):[];if(subs.length<need)continue;out.push({cls,g,ids,subs})}
+  return out}
+const mkSrcN=grp=>[...grp.ids.map(i=>ARTS[i].n),...(grp.subs||[]).map(x=>ARTS[x.art].n+(x.it?' 완본':''))];
 const mkCost=g=>100+60*g,mkYears=g=>2+g,mkRealm=g=>MK_REALM;
 function mkChance(g){let c=.85;if(hobeop())c+=.1;if(realmIdx()>mkRealm(g))c+=.05;return Math.min(.95,c)}
 function mkWhy(g){if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
   if(realmIdx()<mkRealm(g))return`${rk(mkRealm(g))}의 경지 필요`;if(P.vit<mkCost(g))return`활력 ${mkCost(g)} 필요`;return''}
-function mkRows(){return mkGroups().map(({cls,g,ids})=>{const k=`mk:${cls}:${g}`,why=mkWhy(g),busy=trnBusy&&trnBusy.k===k;
-  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>숙련 100인 ${CLASS[cls].n} 다섯을 잊고 심득을 모은다 · ${ids.map(i=>ARTS[i].n).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
+function mkRows(){return mkGroups().map(({cls,g,ids,subs})=>{const k=`mk:${cls}:${g}`,why=mkWhy(g),busy=trnBusy&&trnBusy.k===k;
+  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>숙련 100인 ${CLASS[cls].n} ${ids.length===MK_N?'다섯':ids.length+'개'}${subs.length?`와 다른 병기 ${subs.length}개`:''}를 잊고 심득을 모은다 · ${mkSrcN({ids,subs}).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="${k}"${why||trnBusy?' disabled':''}>${why||`창안 · 활력 ${mkCost(g)}`}<i class="tcd"></i></button></div>`}).join('')}
 function mkStart(k){const[,cls,g]=k.split(':'),grp=mkGroups().find(q=>q.cls===cls&&q.g===+g);
   if(trnBusy||P.hp<=0||!grp)return;const why=mkWhy(+g);if(why){log(`무공을 창안할 수 없습니다: ${why}.`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
-  log(`${pgPlace()}에서 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 모아 새 무공을 궁리합니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR.mk||3};renderTrain()}
+  log(`${pgPlace()}에서 ${mkSrcN(grp).join('·')}의 심득을 모아 새 무공을 궁리합니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR.mk||3};renderTrain()}
 function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mkGroups().find(q=>q.cls===cls&&q.g===g);
   const why=grp?mkWhy(g):'재료가 모자라다';if(why){log(`무공 창안이 끊겼습니다: ${why}.`,'info');return}
   const yrs=mkYears(g),ch=mkChance(g);P.vit-=mkCost(g);if(!passYears(yrs))return;
@@ -38,11 +61,12 @@ function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mk
   if(Math.random()>=ch){P.inj=DAY_SEC*.5;P.injS=1;P.hp=Math.max(1,Math.round(P.hp*.5));fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=Math.max(shake,.3);
     log(`${yrs}년을 궁리했지만 다섯 무공의 심득이 하나로 모이지 않았습니다. 기혈이 뒤틀려 보름 동안 힘을 다 쓰지 못합니다.`,'dmg');showBanner('창안 실패','심득이 모이지 않았다');
     feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
-  const a=mkCreate(grp);
+  const srcN=mkSrcN(grp),a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
+  for(const x of grp.subs||[]){if(x.it){const i=P.bag.findIndex(it=>it.id===x.it);if(i>=0)P.bag.splice(i,1)}else delete P.arts[x.art]}
   P.arts[a.id]={p:30,f:a.forms.map(()=>true)};if(!P.arts[P.cur])setArt(a.id);
   fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);recalc();
-  log(`${yrs}년의 폐관 끝에 ${grp.ids.map(i=>ARTS[i].n).join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
+  log(`${yrs}년의 폐관 끝에 ${srcN.join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
   showBanner('무공 창안',a.n);feat(`${AGR[g+1]} 무공 ${a.n}을(를) 창안했다`);wallCheck()}
 // 다섯 무공에서 새 무공의 정의를 뽑아 G.made에 적고 ARTS에 만든다
 function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=(G.madeN||0)+1),id=`mk_${n0}`,r=rng(5000+n0*97+P.name.length);
@@ -60,6 +84,7 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   // v157 (사용자 2026-10-20): 문파 제자라도 창안한 순간에는 등록하지 않는다. 문파 창에서 제자들에게 전수해야 그 문파 무공이 된다 (gycSectHtml, g_gyc.js). 무소속이면 예전처럼 기연에서 만나는 무공
   const member=P.sect&&P.sect!=='own'&&SECTS[P.sect];def.sect=null;def.key=mkKey(def);def.reg=member?0:1;
   G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
+  if(grp.subs&&grp.subs.length){def.srcN=mkSrcN(grp);def.sub=grp.subs.map(x=>x.art)}
   G.made[id]=def;const a=mkBuild(def);mkRegister(def);return a}
 const mkKey=def=>def.forms.map(x=>x.a+':'+x.i).sort().join(',')+'|'+def.ult.a;
 // 문파 무공 목록에 넣거나(문파 제자) 기연 무공으로 둔다(무소속)
