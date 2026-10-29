@@ -283,7 +283,7 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .tbi.on{color:#f6e7b8}.tbi.on i{border-color:var(--exp);color:#ffe9a8;box-shadow:0 0 10px #c9a14a66;background:radial-gradient(circle at 35% 30%,#4a3a22,#1a130b)}
 .tbi:active i{transform:scale(.92)}
 /* 위쪽 */
-.touch .status{top:var(--gt);left:var(--gl);width:min(200px,52cqw)}
+.touch .status{top:var(--gt);left:var(--gl);width:min(200px,52cqw);z-index:2}   /* 성 고르는 칸이 조이스틱 자리 위로 펼쳐져도 눌리게 */
 .touch #mini{top:calc(var(--gt) + var(--tnav,0px));right:var(--gr)}
 .touch .zone{top:calc(var(--gt) + var(--tnav,0px) + 68px);right:var(--gr);max-width:40cqw}
 .touch #tcur{display:block;margin-top:2px;font:11px var(--body);color:#e8d9a8;font-variant-numeric:tabular-nums}
@@ -292,6 +292,7 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 #lcol{display:none}
 .touch #lcol{display:flex;flex-direction:column;gap:6px;position:absolute;left:var(--gl);top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(200px,45cqw);pointer-events:none}
 .touch #lcol .qtrack{width:auto;max-height:96px;margin:0}
+.touch.qs-on #lcol{visibility:hidden}.touch.qs-on #lcol *{pointer-events:none}   /* 성 고르는 칸이 펼쳐지면 그 아래 임무 줄도 감춘다 (t114) */
 .touch #lcol #log{position:static;width:auto;height:50px;overflow:hidden}
 /* 큰 알림은 화면 가운데 위쪽에 잠깐 */
 .touch .sysmsg{top:30%;left:50%;transform:translateX(-50%);width:min(260px,70cqw);align-items:center}.touch .sysmsg p{text-align:center}
