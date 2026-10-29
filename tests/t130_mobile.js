@@ -18,8 +18,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸+▸ 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===5&&r.nx&&r.tb>=56&&r.gap===0);
   // v204 활력 막대: 탭바 윗단, 미니맵 아래에는 은자만
   r=await p.evaluate(async()=>{P.vit=Math.round(maxVit()/2);await new Promise(r=>setTimeout(r,500));const v=$('tvit').getBoundingClientRect(),tb=$('tbar').getBoundingClientRect(),i=qc($('tvit'),'i').getBoundingClientRect();
-    return{t:$('tvit').textContent,cur:$('tcur').textContent,top:Math.round(v.top-tb.top),w:Math.round(v.width),tw:Math.round(tb.width),k:i.width/v.width}});
-  ok(`활력 막대가 탭바 윗단 (${r.t}, 위 ${r.top}, 폭 ${r.w}/${r.tw}, 채움 ${r.k.toFixed(2)}), 미니맵 아래 '${r.cur}'`,r.t.startsWith('활력')&&r.top<=1&&r.w===r.tw&&Math.abs(r.k-.5)<.05&&!r.cur.includes('활력'));
+    return{t:$('tvit').textContent,cur:$('tcur').textContent,top:Math.round(v.top-tb.top),h:v.height,w:Math.round(v.width),tw:Math.round(tb.width),k:i.width/v.width}});
+  ok(`활력 막대가 탭바 윗단 (${r.t}, 위 ${r.top}, 두께 ${r.h}px, 폭 ${r.w}/${r.tw}, 채움 ${r.k.toFixed(2)}), 미니맵 아래 '${r.cur}'`,r.t.startsWith('활력')&&r.top<=1&&r.h<=4&&r.w===r.tw&&Math.abs(r.k-.5)<.05&&!r.cur.includes('활력'));
   await p.tap('#tb_bag');await p.waitForTimeout(250);
   r=await p.evaluate(()=>({panel,on:$('tb_bag').classList.contains('on')}));
   ok(`행낭 탭 → 행낭 창 (${r.panel}), 탭 불 켜짐`,r.panel==='bag'&&r.on);
