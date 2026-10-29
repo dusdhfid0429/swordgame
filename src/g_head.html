@@ -227,6 +227,7 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 .touch .btn{font-size:14px;padding:8px 12px}
 .touch .ib .btn{font-size:13px;padding:6px 10px}
 .touch .win{max-height:calc(100% - 12px)}
+.mh{margin:8px 0 0;font:400 16px var(--display)}.mh small{font:12px var(--body);color:var(--paper-dim);margin-left:6px}.mset{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px}
 .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .mbtn{display:grid;gap:2px;text-align:center;padding:12px 6px!important;min-height:64px}
 .mbtn b{font:400 17px var(--display)}.mbtn small{font-size:11px;color:var(--paper-dim);white-space:normal;word-break:keep-all}
@@ -257,12 +258,6 @@ input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border
 body.mob{--tnav:48px}
 .touch #mini,.touch #tmenu{top:calc(6px + var(--tnav,0px) + env(safe-area-inset-top,0px))}
 .touch .zone{top:calc(74px + var(--tnav,0px) + env(safe-area-inset-top,0px))}
-/* 창 = 아래에서 올라오는 시트. 머리줄의 손잡이를 아래로 끌거나 뒤로 가기로 닫는다 */
-.touch .win{left:0;right:0;top:auto;bottom:0;transform:none;width:auto;max-height:calc(100% - 64px - env(safe-area-inset-top,0px));border-width:2px 0 0;border-radius:14px 14px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:sheetUp .2s ease-out}
-.touch .whead{position:relative;border-radius:14px 14px 0 0;padding-top:18px;touch-action:none}
-.touch .whead::before{content:"";position:absolute;top:7px;left:50%;width:42px;height:4px;margin-left:-21px;border-radius:2px;background:#7a6440}
-@keyframes sheetUp{from{transform:translateY(40%);opacity:.4}to{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){.touch .win{animation:none}}
 .wtabs{position:sticky;top:0;z-index:2;display:flex;margin:-2px 0 0;background:#1e1810;border-bottom:1px solid #4a3c27}
 .wtab{flex:1;min-height:44px;background:none;border:0;border-bottom:2px solid transparent;color:var(--paper-dim);font:15px var(--display);cursor:pointer}
 .wtab.on{color:#f6e7b8;border-bottom-color:var(--exp)}
@@ -275,6 +270,47 @@ body.mob{--tnav:48px}
 .touch .mat button{min-height:36px;min-width:48px;font-size:13px}
 .touch .tq{width:46px;height:46px}.touch .ts{width:54px;height:46px}
 .touch .qsr{grid-template-columns:repeat(6,36px)}.touch .qsr button{height:34px}
+
+/* ==== v201 세로 게임식 화면 틀 (사용자 2026-10-29: "인터페이스가 좌우로 너무 밀착", "세로 게임들 참고해서 대규모 개선") ====
+   가장자리 여백 16px + 안전 영역, 맨 아래 탭바, 위쪽 한 줄(왼쪽 상태 · 오른쪽 미니맵·지명·은자), 왼쪽 열(임무·기록), 탭바 바로 위 한 줄(약 · 켜고 끄기), 오른손 전투 단추 */
+body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(var(--gut) + env(safe-area-inset-right,0px));--gt:calc(8px + env(safe-area-inset-top,0px))}
+#tbar{display:none}
+.touch #tbar #tmenu{position:static;width:auto;height:60px;font:11px var(--body);line-height:normal;color:var(--paper-dim);background:none;border:0}.touch #tbar #tmenu.on{color:#f6e7b8}
+.touch #tbar{display:flex;flex:none;position:relative;z-index:5;padding:0 calc(env(safe-area-inset-right,0px) + 6px) env(safe-area-inset-bottom,0px) calc(env(safe-area-inset-left,0px) + 6px);background:linear-gradient(#2a2117,#120e09);border-top:1px solid var(--bronze);box-shadow:0 -4px 14px #0009,inset 0 1px 0 #a88a5544}
+#app:has(#scr:not([hidden])) #tbar{display:none}
+.tbi{flex:1;min-width:0;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;border:0;background:none;color:var(--paper-dim);font:11px var(--body);cursor:pointer;touch-action:manipulation}
+.tbi i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid #6b563688;font:normal 17px/1 var(--display);color:#cbb68a;background:radial-gradient(circle at 35% 30%,#2e251a,#100c08)}
+.tbi.on{color:#f6e7b8}.tbi.on i{border-color:var(--exp);color:#ffe9a8;box-shadow:0 0 10px #c9a14a66;background:radial-gradient(circle at 35% 30%,#4a3a22,#1a130b)}
+.tbi:active i{transform:scale(.92)}
+/* 위쪽 */
+.touch .status{top:var(--gt);left:var(--gl);width:min(200px,52cqw)}
+.touch #mini{top:calc(var(--gt) + var(--tnav,0px));right:var(--gr)}
+.touch .zone{top:calc(var(--gt) + var(--tnav,0px) + 68px);right:var(--gr);max-width:40cqw}
+.touch #tcur{display:block;margin-top:2px;font:11px var(--body);color:#e8d9a8;font-variant-numeric:tabular-nums}
+#tcur{display:none}
+/* 왼쪽 열: 임무 줄 → 기록 줄 */
+#lcol{display:none}
+.touch #lcol{display:flex;flex-direction:column;gap:6px;position:absolute;left:var(--gl);top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(200px,45cqw);pointer-events:none}
+.touch #lcol .qtrack{width:auto;max-height:96px;margin:0}
+.touch #lcol #log{position:static;width:auto;height:50px;overflow:hidden}
+/* 큰 알림은 화면 가운데 위쪽에 잠깐 */
+.touch .sysmsg{top:30%;left:50%;transform:translateX(-50%);width:min(260px,70cqw);align-items:center}.touch .sysmsg p{text-align:center}
+/* 아래: 탭바 바로 위 한 줄 — 왼쪽 약·비도, 오른쪽 켜고 끄기 */
+.touch #tslots{left:var(--gl);bottom:10px;gap:6px}
+.touch #tquick{right:var(--gr);bottom:10px;flex-direction:row-reverse;gap:6px}
+/* 약 셋 + 켜고 끄기 넷이 한 줄에 다 떠도 좁은 휴대폰(360px)에서 겹치지 않게 폭을 화면에 맞춘다 */
+.touch .ts{width:min(52px,12cqw);height:46px}.touch .tq{width:min(46px,11cqw);height:46px}
+.touch #tbtns{right:var(--gr);bottom:70px}
+.touch #joyz{left:0;bottom:66px;width:55%;height:44%}
+.touch #joy{left:calc(var(--gl) + 66px)}
+/* 창 = 탭바 위를 꽉 채우는 페이지. 닫기는 왼쪽 위(오른쪽 위는 토스 ···/X 자리) */
+.touch .win{inset:0;transform:none;width:auto;max-height:none;border:0;border-radius:0;padding:0 var(--gr) 12px var(--gl);gap:10px;animation:pageIn .16s ease-out}
+.touch .whead{flex-direction:row-reverse;justify-content:flex-end;gap:10px;margin:0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));padding:calc(10px + env(safe-area-inset-top,0px)) calc(var(--gr) + 92px) 10px var(--gl);font-size:19px}
+.touch #wbody{align-content:start}.touch #wx{min-width:0;padding:8px 12px}.touch #wx::before{content:"‹ "}
+.touch .win.sheet{top:auto;max-height:62%;border-top:2px solid var(--bronze);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px #000c}
+.touch .win.sheet .whead{padding-top:12px;border-radius:14px 14px 0 0}
+@keyframes pageIn{from{opacity:.3;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.touch .win{animation:none}}
 </style></head><body>
 <div id="app">
   <div id="stage">

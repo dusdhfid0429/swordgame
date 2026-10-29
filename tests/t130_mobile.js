@@ -9,13 +9,24 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   let p=await b.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});p.on('pageerror',e=>errs.push('PE '+e.message));
   await start(p,'?touch&noacad');
   let r=await p.evaluate(()=>({mob:document.body.classList.contains('mob'),touch:TOUCH,ms:getComputedStyle(document.querySelector('.status .gauge.ms')).display,mini:$('mini').getBoundingClientRect().top,menu:$('tmenu').getBoundingClientRect().top}));
-  ok(`세로: 모바일 모드 ${r.mob}, 터치 ${r.touch}, 숙련 막대 접힘 (${r.ms}), 미니맵·☰이 토스 단추 아래 (${Math.round(r.mini)}, ${Math.round(r.menu)})`,r.mob&&r.touch&&r.ms==='none'&&r.mini>=50&&r.menu>=50);
+  ok(`세로: 모바일 모드 ${r.mob}, 터치 ${r.touch}, 숙련 막대 접힘 (${r.ms}), 미니맵이 토스 단추 아래 (${Math.round(r.mini)})`,r.mob&&r.touch&&r.ms==='none'&&r.mini>=50);
   await p.tap('#pexp');r=await p.evaluate(()=>({ms:getComputedStyle(document.querySelector('.status .gauge.ms')).display,panel}));
   ok(`▾를 누르면 펼치고 인물 창은 안 열린다 (${r.ms}, ${r.panel})`,r.ms!=='none'&&r.panel==null);
+  // v201 여백·탭바: 가장자리에서 16px 이상, 탭바 다섯 칸
+  r=await p.evaluate(()=>{const vw=innerWidth,R=s=>document.querySelector(s).getBoundingClientRect(),tb=R('#tbar'),st=R('#stage');
+    return{l:Math.min(R('.status').left,R('#tslots').left),r:Math.min(vw-R('#tbtns').right,vw-R('#tquick').right,vw-R('#mini').right),tb:tb.height,tn:$('tbar').children.length,gap:Math.round(tb.top-st.bottom)}});
+  ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===5&&r.tb>=56&&r.gap===0);
+  await p.tap('#tb_bag');await p.waitForTimeout(250);
+  r=await p.evaluate(()=>({panel,on:$('tb_bag').classList.contains('on')}));
+  ok(`행낭 탭 → 행낭 창 (${r.panel}), 탭 불 켜짐`,r.panel==='bag'&&r.on);
+  await p.tap('#tb_bag');await p.waitForTimeout(150);ok('같은 탭을 다시 누르면 닫힌다',await p.evaluate(()=>panel===null&&$('win').hidden));
   await p.tap('#tmenu');await p.waitForTimeout(400);
-  r=await p.evaluate(()=>{const w=$('win').getBoundingClientRect(),st=$('stage').getBoundingClientRect(),bs=[...$('wbody').querySelectorAll('.btn')].filter(e=>e.offsetParent);
-    return{pc:$('wbody').textContent.includes('PC 조작'),bot:Math.round(st.bottom-w.bottom),w:Math.round(w.width),sw:Math.round(st.width),minH:Math.min(...bs.map(e=>e.getBoundingClientRect().height))}});
-  ok(`메뉴: PC 조작 단추 없음 (${!r.pc}), 아래에 붙은 시트 (바닥 ${r.bot}px, 폭 ${r.w}/${r.sw}), 단추 높이 ${Math.round(r.minH)}px`,!r.pc&&r.bot===0&&r.w===r.sw&&r.minH>=40);
+  r=await p.evaluate(()=>{const w=$('win').getBoundingClientRect(),st=$('stage').getBoundingClientRect(),bs=[...$('wbody').querySelectorAll('.btn')].filter(e=>e.offsetParent),g=[...document.querySelectorAll('#wbody .mbtn b')].map(e=>e.textContent);
+    return{pc:$('wbody').textContent.includes('PC 조작'),top:Math.round(w.top-st.top),bot:Math.round(st.bottom-w.bottom),w:Math.round(w.width),sw:Math.round(st.width),minH:Math.min(...bs.map(e=>e.getBoundingClientRect().height)),g}});
+  ok(`더보기: PC 조작 단추 없음, 탭에 있는 창은 빼고 (${r.g.join('·')}), 탭바 위를 꽉 채운 페이지 (위 ${r.top}·아래 ${r.bot}, 폭 ${r.w}/${r.sw}), 단추 높이 ${Math.round(r.minH)}px`,
+    !r.pc&&!r.g.includes('행낭')&&r.g.includes('수련')&&r.top===0&&r.bot===0&&r.w===r.sw&&r.minH>=40);
+  r=await p.evaluate(()=>{closePanels();const n=npcsHere()[0];openPanel('npc',n);const w=$('win').getBoundingClientRect(),st=$('stage').getBoundingClientRect();const o={sheet:$('win').classList.contains('sheet'),top:w.top-st.top,h:st.height};closePanels();return o});
+  ok(`사람과 대화는 아래 시트 (위 ${Math.round(r.top)}px)`,r.sheet&&r.top>r.h*.3);
   await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(100);
   r=await p.evaluate(()=>({tabs:[...document.querySelectorAll('.wtab')].map(e=>e.textContent),key:[...document.querySelectorAll('.forms .key')].some(e=>e.offsetParent),sim:$('wbody').textContent.includes('혈라공')}));
   ok(`무공 창 탭 ${r.tabs.join('/')}, 단축키 표시 숨김, 첫 탭엔 심법 없음`,r.tabs.length===2&&!r.key&&!r.sim);
