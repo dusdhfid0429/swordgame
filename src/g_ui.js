@@ -216,7 +216,7 @@ function pHist(){
 }
 function pHelp(){
   if(TOUCH)return `<div class="help"><p><b>이동</b> 화면 왼쪽 아래를 누른 채 끌면 그쪽으로 걷는다. 사람·적·채집물·땅을 톡 치면 그리로 간다.</p>
-  <p><b>공격</b> 가장 가까운 적과 싸운다. 익힌 초식을 차례로 이어 연속기가 된다. 누르고 있으면 다음 적으로 계속 넘어간다.</p>
+  <p><b>공격</b> ${atkAuto?'멈춰 서면 가까운 적을 알아서 친다. 익힌 초식을 차례로 이어 연속기가 된다. 조이스틱으로 걸으면 싸움에서 빠진다. (더보기 → 설정에서 공격 단추로 바꿀 수 있다)':'가장 가까운 적과 싸운다. 익힌 초식을 차례로 이어 연속기가 된다. 누르고 있으면 다음 적으로 계속 넘어간다. (더보기 → 설정에서 멈추면 자동 공격으로 바꿀 수 있다)'}</p>
   <p><b>필살</b> 무공의 초식을 모두 익히면 열린다. <b>경공</b> 바라보는 쪽으로 도약해 강과 지붕도 넘는다.</p>
   <p><b>비기</b> 특수무공(암기·독공·점혈)이나 절세신공을 익히면 나타나고, 지금 쓸 수 있는 것을 알아서 고른다.</p>
   <p><b>약</b> 생명과 내공 중 더 모자란 쪽을 채운다.</p>
@@ -344,6 +344,7 @@ function act(s){
     case'quitno':quitAsk=false;break;
     case'quitapp':quitApp();return;
     case'ctl':closePanels();setTouch(x==='t');return;
+    case'atkm':setAtkMode(x==='auto');try{STORE.set('ganghoyunhoe-atk',x,1)}catch(e){}log(x==='auto'?'공격 방식: 멈춰 서면 가까운 적을 알아서 칩니다. 걸으면 싸움에서 빠집니다.':'공격 방식: 공격 단추를 눌러 싸웁니다.','sys');break;
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}

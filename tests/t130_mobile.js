@@ -32,6 +32,23 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`무공 창 탭 ${r.tabs.join('/')}, 단축키 표시 숨김, 첫 탭엔 심법 없음`,r.tabs.length===2&&!r.key&&!r.sim);
   await p.tap('.wtab:nth-child(2)');r=await p.evaluate(()=>({sim:$('wbody').textContent.includes('혈라공'),on:document.querySelector('.wtab.on').textContent,panel}));
   ok(`둘째 탭을 누르면 심법·보법 (${r.on})`,r.sim&&r.on==='심법·보법'&&r.panel==='arts');
+  // v202 공격 방식: 더보기 설정에서 '멈추면 자동 공격'으로 바꾸면 공격 단추가 숨고 필살이 그 자리로, 멈춰 서면 가까운 적을 친다
+  await p.evaluate(()=>closePanels());await p.tap('#tmenu');await p.waitForTimeout(200);
+  r=await p.evaluate(()=>{const b=document.querySelector('[data-act="atkm:auto"]'),c=document.querySelector('[data-act="atkm:btn"]');return{has:!!b&&c.classList.contains('pri')&&!b.classList.contains('pri'),txt:c&&c.textContent}});
+  ok(`더보기 설정에 공격 방식 단추 (${r.txt})`,r.has);
+  await p.tap('[data-act="atkm:auto"]');await p.waitForTimeout(150);
+  r=await p.evaluate(()=>({auto:atkAuto,st:STORE.get('ganghoyunhoe-atk'),atk:getComputedStyle($('t_atk')).display,ult:Math.round($('t_ult').getBoundingClientRect().width),lab:document.querySelector('[data-act="atkm:auto"]').classList.contains('pri')}));
+  ok(`자동으로 바꾸면 기록되고(${r.st}) 공격 단추 숨김(${r.atk}), 필살이 커짐(${r.ult}px), 고른 쪽 불 켜짐`,r.auto&&r.st==='auto'&&r.atk==='none'&&r.ult>=70&&r.lab);
+  await p.evaluate(()=>closePanels());
+  r=await p.evaluate(async()=>{const e=mkMob('산적',P.x+2,P.y,{hp:1e6,atk:0});mobs.push(e);P.target=null;P.path=null;P.goal=null;P.talk=null;P.medit=false;
+    await new Promise(r=>setTimeout(r,400));const a=P.target===e;
+    joy.on=true;joy.gx=-1;joy.gy=0;await new Promise(r=>setTimeout(r,300));const b=P.target==null;joy.on=false;joy.gx=0;
+    return{a,b}});
+  ok(`멈춰 서면 가까운 적을 친다 (${r.a}), 조이스틱으로 걸으면 싸움에서 빠진다 (${r.b})`,r.a&&r.b);
+  await p.evaluate(()=>{act('atkm:btn')});
+  r=await p.evaluate(()=>({auto:atkAuto,st:STORE.get('ganghoyunhoe-atk'),atk:getComputedStyle($('t_atk')).display}));
+  ok(`단추로 되돌리면 공격 단추가 다시 보인다 (${r.atk})`,!r.auto&&r.st==='btn'&&r.atk!=='none');
+  await p.evaluate(()=>closePanels());
   // 머리줄을 아래로 끌면 닫힌다
   const h=await p.evaluate(()=>{const e=document.querySelector('#win .whead').getBoundingClientRect();return{x:e.left+40,y:e.top+20}});
   await p.evaluate(({x,y})=>{const t=document.querySelector('#win .whead'),o={bubbles:true,pointerId:1,pointerType:'touch',clientX:x};
