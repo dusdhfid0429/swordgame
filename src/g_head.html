@@ -287,6 +287,16 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .tbi i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid #6b563688;font:normal 17px/1 var(--display);color:#cbb68a;background:radial-gradient(circle at 35% 30%,#2e251a,#100c08)}
 .tbi.on{color:#f6e7b8}.tbi.on i{border-color:var(--exp);color:#ffe9a8;box-shadow:0 0 10px #c9a14a66;background:radial-gradient(circle at 35% 30%,#4a3a22,#1a130b)}
 .tbi:active i{transform:scale(.92)}
+/* v205 두 쪽 탭바: 지금 쪽이 아닌 탭은 숨기고 끝의 ▸/◂로 넘긴다 */
+#tbar .tbi[data-pg="1"],#tbar.pg1 .tbi[data-pg="0"],#tbar .tpg{display:none}
+#tbar.pg1 .tbi[data-pg="1"],#tbar .tbi[data-pg="all"]{display:flex}
+.touch #tbar #tnext,.touch #tbar.pg1 #tprev{display:grid}.touch #tbar.pg1 #tnext{display:none}
+.tpg{flex:none;width:34px;height:60px;place-items:center;padding:0;border:0;background:none;color:#e0c890;font:18px/1 var(--body);cursor:pointer;touch-action:manipulation}
+.tpg::before{content:'';width:11px;height:11px;border:solid #e0c890;border-width:0 2.5px 2.5px 0;transform:translateX(-3px) rotate(-45deg)}
+#tprev::before{transform:translateX(3px) rotate(135deg)}
+.tpg:active::before{border-color:#fff3c8}
+#tbar.slide-l .tbi{animation:tbInL .2s ease}#tbar.slide-r .tbi{animation:tbInR .2s ease}
+@keyframes tbInL{from{transform:translateX(24px);opacity:0}}@keyframes tbInR{from{transform:translateX(-24px);opacity:0}}
 /* 위쪽 */
 .touch .status{top:var(--gt);left:var(--gl);width:min(200px,52cqw);z-index:2}   /* 성 고르는 칸이 조이스틱 자리 위로 펼쳐져도 눌리게 */
 .touch #mini{top:var(--gt);right:var(--gr)}   /* v203 (사용자): 왼쪽 상태 칸과 위 높이를 맞춘다 */

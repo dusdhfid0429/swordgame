@@ -14,8 +14,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`▾를 누르면 펼치고 인물 창은 안 열린다 (${r.ms}, ${r.panel})`,r.ms!=='none'&&r.panel==null);
   // v201 여백·탭바: 가장자리에서 16px 이상, 탭바 다섯 칸
   r=await p.evaluate(()=>{const vw=innerWidth,R=s=>document.querySelector(s).getBoundingClientRect(),tb=R('#tbar'),st=R('#stage');
-    return{l:Math.min(R('.status').left,R('#tslots').left),r:Math.min(vw-R('#tbtns').right,vw-R('#tquick').right,vw-R('#mini').right),tb:tb.height,tn:$('tbar').querySelectorAll('.tbi').length,gap:Math.round(tb.top-st.bottom)}});
-  ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===6&&r.tb>=56&&r.gap===0);
+    return{l:Math.min(R('.status').left,R('#tslots').left),r:Math.min(vw-R('#tbtns').right,vw-R('#tquick').right,vw-R('#mini').right),tb:tb.height,tn:[...$('tbar').querySelectorAll('.tbi')].filter(e=>e.offsetParent).length,nx:!!$('tnext').offsetParent,gap:Math.round(tb.top-st.bottom)}});
+  ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸+▸ 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===5&&r.nx&&r.tb>=56&&r.gap===0);
   // v204 활력 막대: 탭바 윗단, 미니맵 아래에는 은자만
   r=await p.evaluate(async()=>{P.vit=Math.round(maxVit()/2);await new Promise(r=>setTimeout(r,500));const v=$('tvit').getBoundingClientRect(),tb=$('tbar').getBoundingClientRect(),i=qc($('tvit'),'i').getBoundingClientRect();
     return{t:$('tvit').textContent,cur:$('tcur').textContent,top:Math.round(v.top-tb.top),w:Math.round(v.width),tw:Math.round(tb.width),k:i.width/v.width}});
@@ -24,11 +24,20 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   r=await p.evaluate(()=>({panel,on:$('tb_bag').classList.contains('on')}));
   ok(`행낭 탭 → 행낭 창 (${r.panel}), 탭 불 켜짐`,r.panel==='bag'&&r.on);
   await p.tap('#tb_bag');await p.waitForTimeout(150);ok('같은 탭을 다시 누르면 닫힌다',await p.evaluate(()=>panel===null&&$('win').hidden));
+  // v205 두 쪽 탭바: ▸로 둘째 쪽(동료·생활·정세·강호사·지도·설정), ◂로 돌아오고, 옆으로 밀어도 넘어간다
+  await p.tap('#tnext');await p.waitForTimeout(250);
+  r=await p.evaluate(()=>({t:[...$('tbar').querySelectorAll('.tbi')].filter(e=>e.offsetParent).map(e=>e.textContent),pv:!!$('tprev').offsetParent,nx:!!$('tnext').offsetParent,pg:tbPage}));
+  ok(`▸ → 둘째 쪽 (${r.t.join('·')}), ◂ 보임`,r.pg===1&&r.t.join()==='伴동료,活생활,勢정세,史강호사,圖지도,設설정'&&r.pv&&!r.nx);
+  await p.tap('#tb_story');await p.waitForTimeout(200);ok('둘째 쪽 정세 탭 → 정세 창',await p.evaluate(()=>panel==='story'&&$('tb_story').classList.contains('on')));
+  await p.evaluate(()=>closePanels());await p.tap('#tprev');await p.waitForTimeout(250);ok('◂ → 첫 쪽',await p.evaluate(()=>tbPage===0&&!!$('tb_bag').offsetParent&&!$('tb_story').offsetParent));
+  r=await p.evaluate(()=>{const t=$('tbar'),b=$('tb_arts').getBoundingClientRect(),y=b.top+b.height/2,o={bubbles:true,pointerId:5,pointerType:'touch',clientY:y};
+    t.dispatchEvent(new PointerEvent('pointerdown',{...o,clientX:300}));$('tb_arts').dispatchEvent(new PointerEvent('pointerup',{...o,clientX:120}));$('tb_arts').click();return{pg:tbPage,panel}});
+  ok(`탭바를 왼쪽으로 밀면 둘째 쪽, 밀 때 닿은 탭은 안 열림 (${r.panel})`,r.pg===1&&r.panel==null);
   await p.tap('#tmenu');await p.waitForTimeout(400);
   r=await p.evaluate(()=>{const w=$('win').getBoundingClientRect(),st=$('stage').getBoundingClientRect(),bs=[...$('wbody').querySelectorAll('.btn')].filter(e=>e.offsetParent),g=[...document.querySelectorAll('#wbody .mbtn b')].map(e=>e.textContent);
-    return{pc:$('wbody').textContent.includes('PC 조작'),top:Math.round(w.top-st.top),bot:Math.round(st.bottom-w.bottom),w:Math.round(w.width),sw:Math.round(st.width),minH:Math.min(...bs.map(e=>e.getBoundingClientRect().height)),g}});
-  ok(`더보기: PC 조작 단추 없음, 탭에 있는 창은 빼고 (${r.g.join('·')}), 탭바 위를 꽉 채운 페이지 (위 ${r.top}·아래 ${r.bot}, 폭 ${r.w}/${r.sw}), 단추 높이 ${Math.round(r.minH)}px`,
-    !r.pc&&!r.g.includes('행낭')&&!r.g.includes('수련')&&r.g.includes('정세')&&r.top===0&&r.bot===0&&r.w===r.sw&&r.minH>=40);
+    return{pc:$('wbody').textContent.includes('PC 조작'),top:Math.round(w.top-st.top),bot:Math.round(st.bottom-w.bottom),w:Math.round(w.width),sw:Math.round(st.width),minH:Math.min(...bs.map(e=>e.getBoundingClientRect().height)),g,ti:$('wtitle').textContent}});
+  ok(`설정: PC 조작 단추 없음, 창 목록 없음 (${r.g.length}), 제목 ${r.ti}, 탭바 위를 꽉 채운 페이지 (위 ${r.top}·아래 ${r.bot}, 폭 ${r.w}/${r.sw}), 단추 높이 ${Math.round(r.minH)}px`,
+    !r.pc&&r.g.length===0&&r.ti.startsWith('설정')&&r.top===0&&r.bot===0&&r.w===r.sw&&r.minH>=40);
   r=await p.evaluate(()=>{closePanels();const n=npcsHere()[0];openPanel('npc',n);const w=$('win').getBoundingClientRect(),st=$('stage').getBoundingClientRect();const o={sheet:$('win').classList.contains('sheet'),top:w.top-st.top,h:st.height};closePanels();return o});
   ok(`사람과 대화는 아래 시트 (위 ${Math.round(r.top)}px)`,r.sheet&&r.top>r.h*.3);
   await p.evaluate(()=>openPanel('arts'));await p.waitForTimeout(100);
@@ -54,7 +63,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`단추로 되돌리면 공격 단추가 다시 보인다 (${r.atk})`,!r.auto&&r.st==='btn'&&r.atk!=='none');
   await p.evaluate(()=>closePanels());
   // v204 수련 탭: 누르면 수련 띠가 열리고 탭에 불, 다시 누르면 닫힌다
-  await p.evaluate(()=>closePanels());await p.tap('#tb_train');await p.waitForTimeout(150);
+  await p.evaluate(()=>{closePanels();tbSet(0)});await p.tap('#tb_train');await p.waitForTimeout(150);
   r=await p.evaluate(()=>({o:trnOpen,on:$('tb_train').classList.contains('on'),bar:getComputedStyle($('tbar')).display}));
   ok(`수련 탭 → 수련 창 (${r.o}), 탭 불 (${r.on}), 탭바 그대로 (${r.bar})`,r.o&&r.on&&r.bar!=='none');
   await p.tap('#tb_train');await p.waitForTimeout(150);ok('수련 탭을 다시 누르면 닫힌다',await p.evaluate(()=>!trnOpen));

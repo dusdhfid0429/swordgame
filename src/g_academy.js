@@ -359,14 +359,14 @@ function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
   const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
-  const TR=tabs?['#tb_train']:['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=tabs?['#tb_bag']:['#tmenu','#b_p_bag','[data-act="open:bag"]'];
+  const TR=tabs?tabMark('train'):['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=tabs?tabMark('bag'):['#tmenu','#b_p_bag','[data-act="open:bag"]'];
   const robe=P.bag.find(i=>i.acad&&i.slot==='armor'),books=P.bag.filter(i=>i.slot==='book'&&a.cls&&ARTS[i.art]&&ARTS[i.art].cls===a.cls);
   const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
     ne:[...TR,'[data-tr="neigong"]'],qin:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
     hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],bobd:['#t_step'],leap:['#t_leap','#b_leap'],gkrun:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
     pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
-    quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:['#tmenu',`[data-act="open:${g.id}"]`]};
+    quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:tabs?tabMark(g.id):['#tmenu',`[data-act="open:${g.id}"]`]};
   const s=(U[g.k]||[]).slice();
   // 표시한 NPC 곁에 서 있으면 터치 상황 단추(대화)도
   if(acadMarks().some(m=>m.npc&&Math.hypot(m.x-P.x,m.y-P.y)<3))s.push('#t_ctx');
