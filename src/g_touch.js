@@ -28,15 +28,29 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
 $('stage').insertBefore(TUI,$('win'));
 // v201 아래 탭바 (사용자 2026-10-29 "세로 게임들 참고해서 대규모 개선"): ☰ 대신 인물·무공·행낭·임무·더보기. 더보기가 예전 ☰(#tmenu) 자리를 잇는다
 const TBAR=document.createElement('nav');TBAR.id='tbar';TBAR.setAttribute('aria-label','창 바로가기');
-TBAR.innerHTML=[['char','人','인물'],['arts','武','무공'],['bag','囊','행낭'],['quest','任','임무'],['train','修','수련'],['menu','⋯','더보기']].map(([p,g,l])=>`<button type="button" class="tbi" data-p="${p}" id="${p==='menu'?'tmenu':'tb_'+p}"><i aria-hidden="true">${g}</i><span>${l}</span></button>`).join('');
+// v205 (사용자 2026-10-29 "더보기보단 배치된 버튼을 다음 목록으로 넘겨"): 탭바는 두 쪽. ▸/◂를 누르거나 탭바를 옆으로 밀면 넘어간다.
+// 둘째 쪽 끝의 #tmenu는 설정(개발용 PC 조작에서는 예전 더보기 목록)
+const TABS=[['char','人','인물',0],['arts','武','무공',0],['bag','囊','행낭',0],['quest','任','임무',0],['train','修','수련',0],
+  ['ally','伴','동료',1],['life','活','생활',1],['story','勢','정세',1],['hist','史','강호사',1],['world','圖','지도',1],['menu','設','설정',1]];
+const tbBtn=([p,g,l,pg])=>`<button type="button" class="tbi" data-p="${p}" data-pg="${pg}" id="${p==='menu'?'tmenu':'tb_'+p}"><i aria-hidden="true">${g}</i><span>${l}</span></button>`;
+TBAR.innerHTML=`<button type="button" class="tpg" id="tprev" data-pg="1" aria-label="앞 목록"></button>${TABS.map(tbBtn).join('')}<button type="button" class="tpg" id="tnext" data-pg="0" aria-label="다음 목록"></button>`;
+let tbPage=0;
+function tbSet(n){n=n?1:0;if(n===tbPage)return;TBAR.classList.toggle('pg1',!!n);TBAR.classList.remove('slide-l','slide-r');void TBAR.offsetWidth;TBAR.classList.add(n?'slide-l':'slide-r');tbPage=n}
+// 무관 과제 표시가 가리킬 곳: 그 탭이 지금 쪽에 없으면 넘기는 화살표
+function tabMark(p){const b=$(p==='menu'?'tmenu':'tb_'+p);if(!b)return[];return +b.dataset.pg===tbPage?['#'+b.id]:[tbPage?'#tprev':'#tnext']}
 // v204 (사용자): 활력은 탭바 윗단의 막대로 (미니맵 아래에는 은자만)
 const TVIT=document.createElement('div');TVIT.id='tvit';TVIT.innerHTML='<i></i><b></b>';TBAR.prepend(TVIT);
 $('app').appendChild(TBAR);
-TBAR.addEventListener('click',e=>{const b=e.target.closest('.tbi');if(!b||!playing||b.id==='tmenu')return;
+TBAR.addEventListener('click',e=>{if(TBAR.dataset.swiped)return;const g=e.target.closest('.tpg');if(g){tbSet(g.id==='tnext'?1:0);return}
+  const b=e.target.closest('.tbi');if(!b||!playing||b.id==='tmenu')return;
   // v204 (사용자): 수련도 탭바에. 수련 창은 화면 아래 띠라서 따로 열고 닫는다
   if(b.dataset.p==='train'){if(trnOpen)closeTrain();else openTrain();return}
   if(typeof trnOpen!=='undefined'&&trnOpen)closeTrain();openPanel(b.dataset.p)});
-// 기본 정보 줄(오른쪽 위 미니맵 아래): 은자·활력
+{let sx=null,sy=0;   // 탭바를 옆으로 밀어 넘기기
+  TBAR.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY});
+  TBAR.addEventListener('pointerup',e=>{if(sx==null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){tbSet(dx<0?1:0);TBAR.dataset.swiped='1';setTimeout(()=>delete TBAR.dataset.swiped,350)}})}
+// 기본 정보 줄(오른쪽 위 미니맵 아래): 은자
 const TCUR=document.createElement('small');TCUR.id='tcur';$('cal').after(TCUR);
 // 탭바가 생기고 없어지면 무대 높이가 바뀌므로 캔버스도 다시 잰다
 if(window.ResizeObserver)new ResizeObserver(()=>{if(typeof resize==='function')resize()}).observe($('stage'));
@@ -137,17 +151,20 @@ function autoEngage(){
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   // 창 목록만 (사용자 요청 2026-10-13: 중복 빼고, 질주·말·운기 같은 동작은 HUD 빠른 버튼으로). 설정은 아래 한 줄.
+  // v205: 터치 화면은 모든 창이 두 쪽짜리 탭바에 있으므로 여기는 설정만 (개발용 PC 조작에서는 예전 목록 그대로)
   // v201: 인물·무공·행낭·임무(v204 수련도)는 아래 탭바에 있으므로 더보기에서는 뺀다 (개발용 PC 조작에서는 그대로)
   const tab=!DEV;
-  return `<div class="mgrid">${tab?'':M('open:char','인물','능력치 · 문파 · 업보')+M('open:arts','무공','무공 · 초식 · 심법')+M('open:bag','행낭','장비 · 비급 읽기')}
+  return `${tab?'':`<div class="mgrid">${tab?'':M('open:char','인물','능력치 · 문파 · 업보')+M('open:arts','무공','무공 · 초식 · 심법')+M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${tab?'':M('open:quest','임무','맡은 임무 상세')}
-    ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${tab?'':M('trainwin','수련','기본기 · 내공 심법')}</div>
+    ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>`}
     <h4 class="mh">설정 <small>30초마다 저절로 기록된다</small></h4><div class="mset">${B('save','기록')}${B('open:help','조작법')}${DEV?B('ctl:k','PC 조작으로'):''}${B('quit','종료',{pri:quitAsk})}</div><div class="sndrow" id="atkrow">${B('atkm:btn','공격 단추',{pri:!atkAuto})}${B('atkm:auto','멈추면 자동 공격',{pri:atkAuto})}</div>${quitCard()}`;
 }
 // v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
 // 자동 테스트(navigator.webdriver)는 ?touch가 없으면 예전처럼 PC 조작으로 돈다.
 const DEV=/[?#&]dev\b/.test(location.href)||(!!navigator.webdriver&&!/[?#&]touch/.test(location.href));
 document.body.classList.toggle('mob',!DEV);
+if(!DEV)TITLES.menu='설정';
+if(DEV){const m=$('tmenu');m.dataset.pg='all';m.querySelector('i').textContent='⋯';m.querySelector('span').textContent='더보기'}
 let pref=null;try{pref=STORE.get('ganghoyunhoe-ctl')}catch(e){}
 setTouch(DEV?(pref?pref==='t':/[?#&]touch/.test(location.href)||matchMedia('(pointer:coarse)').matches):true);
 // v204 임무 줄 접기 (사용자 2026-10-29): 오른쪽 끝 ◂를 누르거나 임무 줄을 오른쪽에서 왼쪽으로 밀면 왼쪽 가장자리로 접히고, 남은 '任 ▸' 손잡이로 다시 편다
