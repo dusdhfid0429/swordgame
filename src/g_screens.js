@@ -128,7 +128,7 @@ function startPlay(fresh){
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 사람 앞에서 행동 단추로 대화 · 더보기 → 조작법 참고':'땅 클릭 이동 · 사람을 눌러 대화 · F 행동 · 조작법 버튼 참고','info');showBanner(A.n,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else if(fresh){log(`${P.name}, ${STATUS[P.status].n}의 자식으로 개봉에서 태어났습니다.`,'sys');
     log(TOUCH?'아래 행낭 탭에서 비급을 읽어 첫 초식을 익히세요. 더보기 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(U) 창에서 기본기와 내공을 다질 수 있습니다.','info');
-    log(TOUCH?'왼쪽 아래를 끌어 이동 · 공격 버튼으로 싸움 · 더보기 → 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
+    log(TOUCH?'왼쪽 아래를 끌어 이동 · '+(atkAuto?'멈춰 서면 자동 공격':'공격 버튼으로 싸움')+' · 더보기 → 조작법 참고':'땅 클릭 이동 · 적 클릭 공격 · Q A Z E D C 초식 · S 필살기 · Space 도약 · F 행동 · 조작법 버튼 참고','info');showBanner(P.name,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else log(`${P.name}의 생을 이어갑니다. ${Math.floor(P.age)}세.`,'sys');
   // 새로 태어나면 개봉 성내에서, 이어 할 때는 마지막에 있던 곳에서 가장 가까운 성도에서 시작한다 (사용자 결정 2026-10-11)
   // 무관(g_academy.js)을 졸업하기 전에는 새 생도 이어 하기도 무관 본관에서

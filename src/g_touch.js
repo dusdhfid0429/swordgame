@@ -2,7 +2,7 @@
 // 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
 // 켜고 끄는 것(질주·강제공격·운기·승마)은 탭바 바로 위 오른쪽 줄의 네모 단추, 약·비도는 같은 줄 왼쪽 퀵슬롯 (v201). 창은 맨 아래 탭바(인물·무공·행낭·임무·더보기)로 연다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
-var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
+var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false,atkAuto=false;
 const TUI=document.createElement('div');TUI.id='tui';
 TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
   <div id="lcol"></div>
@@ -103,6 +103,7 @@ function touchHud(){
   for(const b of TBAR.children)b.classList.toggle('on',panel===b.dataset.p);
   txt(TCUR,`은자 ${P.silver} · 활력 ${P.vit}/${maxVit()}`);
   if(touchAtk&&!paused&&!joy.on)touchTarget();
+  else if(atkAuto&&!paused&&!joy.on)autoEngage();
   const a=art(),cd=(id,v)=>sty(qc($(id),'.cd'),'height',clamp(v,0,1)*100+'%');
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));txt(qc(u,'span'),allLearned(a.id)?a.ult.n.slice(0,4):'필살');cd('t_ult',P.ucd/8);
   $('t_leap').hidden=!P.gkcur;$('t_step').hidden=!P.bcur;
@@ -119,6 +120,14 @@ function touchHud(){
     const horse=P.ride||allies.some(a=>a.d&&a.d.ride&&a.hp>0&&dist(a,P)<3);$('t_ride').hidden=!horse;$('t_ride').textContent=P.ride?'하마':'승마';$('t_ride').classList.toggle('on',!!P.ride);
     const med=P.medit||(!inCombat()&&!P.ride&&!simCur().none&&(P.qi<P.maxQi||P.hp<P.maxHp||(typeof isMa==='function'&&isMa()&&P.mara>0)||(typeof acadCurK==='function'&&acadCurK()==='medit')));   /* v136: 무관 운기 과제 중이면 내공이 가득해도 보인다 */   /* v130 (사용자): 마성이 쌓여 있어도 운기 단추를 보인다 (운기조식이 마성을 내린다) */$('t_med').hidden=!med;$('t_med').classList.toggle('on',!!P.medit)}}
 }
+// v202 공격 방식 (사용자 2026-10-29): '단추'는 공격 단추를 누를 때만, '자동'은 조이스틱을 놓고 멈춰 서면 가까운 적을 알아서 친다 (아처 식).
+// 자동일 때 공격 단추는 숨기고 그 자리에 필살을 둔다. 걷는 동안은 조이스틱이 P.target을 지우므로 언제든 빠져나갈 수 있다.
+function setAtkMode(a){atkAuto=!!a;touchAtk=false;document.body.classList.toggle('atkauto',atkAuto)}
+function autoEngage(){
+  if(P.target&&P.target.hp>0)return;
+  if(P.medit||P.chan||P.leap||P.ride||P.path&&P.path.length||P.goal||P.talk||panel)return;
+  const e=nearest(6);if(e){P.target=e;P.repath=0}}
+{let m=null;try{m=STORE.get('ganghoyunhoe-atk')}catch(e){}setAtkMode(m==='auto')}
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   // 창 목록만 (사용자 요청 2026-10-13: 중복 빼고, 질주·말·운기 같은 동작은 HUD 빠른 버튼으로). 설정은 아래 한 줄.
@@ -127,7 +136,7 @@ function pMenu(){
   return `<div class="mgrid">${tab?'':M('open:char','인물','능력치 · 문파 · 업보')+M('open:arts','무공','무공 · 초식 · 심법')+M('open:bag','행낭','장비 · 비급 읽기')}
     ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${tab?'':M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <h4 class="mh">설정 <small>30초마다 저절로 기록된다</small></h4><div class="mset">${B('save','기록')}${B('open:help','조작법')}${DEV?B('ctl:k','PC 조작으로'):''}${B('quit','종료',{pri:quitAsk})}</div>${quitCard()}`;
+    <h4 class="mh">설정 <small>30초마다 저절로 기록된다</small></h4><div class="mset">${B('save','기록')}${B('open:help','조작법')}${DEV?B('ctl:k','PC 조작으로'):''}${B('quit','종료',{pri:quitAsk})}</div><div class="sndrow" id="atkrow">${B('atkm:btn','공격 단추',{pri:!atkAuto})}${B('atkm:auto','멈추면 자동 공격',{pri:atkAuto})}</div>${quitCard()}`;
 }
 // v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
 // 자동 테스트(navigator.webdriver)는 ?touch가 없으면 예전처럼 PC 조작으로 돈다.
