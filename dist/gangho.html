@@ -286,8 +286,8 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .tbi:active i{transform:scale(.92)}
 /* 위쪽 */
 .touch .status{top:var(--gt);left:var(--gl);width:min(200px,52cqw);z-index:2}   /* 성 고르는 칸이 조이스틱 자리 위로 펼쳐져도 눌리게 */
-.touch #mini{top:calc(var(--gt) + var(--tnav,0px));right:var(--gr)}
-.touch .zone{top:calc(var(--gt) + var(--tnav,0px) + 68px);right:var(--gr);max-width:40cqw}
+.touch #mini{top:var(--gt);right:var(--gr)}   /* v203 (사용자): 왼쪽 상태 칸과 위 높이를 맞춘다 */
+.touch .zone{top:calc(var(--gt) + 68px);right:var(--gr);max-width:40cqw}
 .touch #tcur{display:block;margin-top:2px;font:11px var(--body);color:#e8d9a8;font-variant-numeric:tabular-nums}
 #tcur{display:none}
 /* 왼쪽 열: 임무 줄 → 기록 줄 */
