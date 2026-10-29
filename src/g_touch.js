@@ -1,11 +1,11 @@
 // ================= 터치 조작 (모바일) =================
 // 왼쪽 아래를 끌면 이동, 오른쪽 아래 공격을 중심으로 한 부채꼴(보법·필살·경공·비기·상황)로 싸운다. 원신·명조식 배치 (사용자 선택 2026-10-13, B안).
-// 켜고 끄는 것(질주·강제공격·운기·승마)은 오른쪽 가장자리 세로 열의 네모 단추, 약·비도는 퀵슬롯 줄(세로 화면은 왼쪽 아래 모퉁이, 가로 화면은 아래 가운데). ☰ 하나에 창을 모두 모았다.
+// 켜고 끄는 것(질주·강제공격·운기·승마)은 탭바 바로 위 오른쪽 줄의 네모 단추, 약·비도는 같은 줄 왼쪽 퀵슬롯 (v201). 창은 맨 아래 탭바(인물·무공·행낭·임무·더보기)로 연다.
 // 터치에서는 늘 자동초식이라 초식은 공격 버튼 하나가 차례로 잇는다.
 var TOUCH=false,joy={on:false,gx:0,gy:0,m:0},touchAtk=false;
 const TUI=document.createElement('div');TUI.id='tui';
 TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
-  <button type="button" id="tmenu" aria-label="메뉴">☰</button>
+  <div id="lcol"></div>
   <div id="tbtns">
     <button type="button" class="tb big" id="t_atk"><span>공격</span><i class="cd"></i></button>
     <button type="button" class="tb" id="t_ult"><span>필살</span><i class="cd"></i></button>
@@ -26,10 +26,22 @@ TUI.innerHTML=`<div id="joyz"><div id="joy"><i id="joyk"></i></div></div>
     <button type="button" class="ts" id="ts_bd" hidden><span>비도</span><em></em><i class="cd"></i></button>
   </div>`;
 $('stage').insertBefore(TUI,$('win'));
+// v201 아래 탭바 (사용자 2026-10-29 "세로 게임들 참고해서 대규모 개선"): ☰ 대신 인물·무공·행낭·임무·더보기. 더보기가 예전 ☰(#tmenu) 자리를 잇는다
+const TBAR=document.createElement('nav');TBAR.id='tbar';TBAR.setAttribute('aria-label','창 바로가기');
+TBAR.innerHTML=[['char','人','인물'],['arts','武','무공'],['bag','囊','행낭'],['quest','任','임무'],['menu','⋯','더보기']].map(([p,g,l])=>`<button type="button" class="tbi" data-p="${p}" id="${p==='menu'?'tmenu':'tb_'+p}"><i aria-hidden="true">${g}</i><span>${l}</span></button>`).join('');
+$('app').appendChild(TBAR);
+TBAR.addEventListener('click',e=>{const b=e.target.closest('.tbi');if(!b||!playing||b.id==='tmenu')return;if(typeof trnOpen!=='undefined'&&trnOpen)closeTrain();openPanel(b.dataset.p)});
+// 기본 정보 줄(오른쪽 위 미니맵 아래): 은자·활력
+const TCUR=document.createElement('small');TCUR.id='tcur';$('cal').after(TCUR);
+// 탭바가 생기고 없어지면 무대 높이가 바뀌므로 캔버스도 다시 잰다
+if(window.ResizeObserver)new ResizeObserver(()=>{if(typeof resize==='function')resize()}).observe($('stage'));
+// 사람과 나누는 대화(npc)만은 세계가 보이게 아래 시트로, 나머지 창은 꽉 찬 페이지로
+hook('panelOpen',id=>$('win').classList.toggle('sheet',id==='npc'));
 const statusEl=document.querySelector('.status'),panelEl=document.querySelector('.panel');
 function setTouch(on){
   TOUCH=on;document.body.classList.toggle('touch',on);
-  if(on){TUI.prepend(logEl);TUI.prepend(statusEl)}else{panelEl.prepend(logEl);panelEl.prepend(statusEl)}
+  // 터치: 왼쪽 열(상태 상자 아래)에 임무 줄과 기록 줄을 차례로 쌓는다
+  if(on){$('lcol').append($('qtrack'),logEl);TUI.prepend(statusEl)}else{document.querySelector('.zone').appendChild($('qtrack'));panelEl.prepend(logEl);panelEl.prepend(statusEl)}
   try{STORE.set('ganghoyunhoe-ctl',on?'t':'k',1)}catch(e){}
   joy.on=false;joy.m=0;touchAtk=false;resize();logTop();
 }
@@ -65,7 +77,7 @@ hold('ts_bd',()=>special('암기'));
 hold('t_ctx',()=>{const c=ctxPick();if(c)c.fn()});
 // 빠른 버튼 (사용자 요청 2026-10-13 "질주·탈것 등은 HUD 버튼으로"): 질주 켜고 끄기, 말 타고 내리기(말이 곁에 있거나 탔을 때만), 운기조식(싸움 중이 아닐 때만)
 hold('t_run',()=>toggleRun());hold('t_force',()=>toggleForce());hold('t_ride',()=>rideToggle());hold('t_med',()=>meditate());
-$('tmenu').addEventListener('click',()=>{if(playing)openPanel('menu')});
+$('tmenu').addEventListener('click',()=>{if(!playing)return;if(typeof trnOpen!=='undefined'&&trnOpen)closeTrain();openPanel('menu')});
 // 비기: 지금 쓸 수 있는 특수무공·신공 중 하나를 알아서 고른다
 function sgReady(){return P.sg.name&&realmIdx()>=5&&P.fame>=200&&P.scd.신공<=0}
 function specPick(){
@@ -88,6 +100,8 @@ function ctxPick(){
 let ctxT=0,ctxNow=null;   // 상황 버튼은 프레임 수가 아니라 실제 시간 0.15초마다 고른다 (느린 기기에서 늦게 뜨던 것)
 function touchHud(){
   if(P.mode!=='auto')P.mode='auto';
+  for(const b of TBAR.children)b.classList.toggle('on',panel===b.dataset.p);
+  txt(TCUR,`은자 ${P.silver} · 활력 ${P.vit}/${maxVit()}`);
   if(touchAtk&&!paused&&!joy.on)touchTarget();
   const a=art(),cd=(id,v)=>sty(qc($(id),'.cd'),'height',clamp(v,0,1)*100+'%');
   const u=$('t_ult');u.classList.toggle('off',!allLearned(a.id));txt(qc(u,'span'),allLearned(a.id)?a.ult.n.slice(0,4):'필살');cd('t_ult',P.ucd/8);
@@ -108,10 +122,12 @@ function touchHud(){
 function pMenu(){
   const M=(a,l,s)=>`<button type="button" class="btn mbtn" data-act="${a}"><b>${l}</b><small>${s}</small></button>`;
   // 창 목록만 (사용자 요청 2026-10-13: 중복 빼고, 질주·말·운기 같은 동작은 HUD 빠른 버튼으로). 설정은 아래 한 줄.
-  return `<div class="mgrid">${M('open:char','인물','능력치 · 문파 · 업보')}${M('open:arts','무공','무공 · 초식 · 심법')}${M('open:bag','행낭','장비 · 비급 읽기')}
-    ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${M('open:quest','임무','맡은 임무 상세')}
+  // v201: 인물·무공·행낭·임무는 아래 탭바에 있으므로 더보기에서는 뺀다 (개발용 PC 조작에서는 그대로)
+  const tab=!DEV;
+  return `<div class="mgrid">${tab?'':M('open:char','인물','능력치 · 문파 · 업보')+M('open:arts','무공','무공 · 초식 · 심법')+M('open:bag','행낭','장비 · 비급 읽기')}
+    ${M('open:ally','동료','짐승 · 제자 · 가족')}${M('open:life','생활','직업 · 제작 · 농사')}${tab?'':M('open:quest','임무','맡은 임무 상세')}
     ${M('open:story','정세','천하대전 · 사건')}${M('open:hist','강호사','지난 생들')}${M('open:world','천하 지도','성과 문파 본산')}${M('trainwin','수련','기본기 · 내공 심법')}</div>
-    <div class="row2" style="margin-top:4px"><span class="note">설정 · 30초마다 저절로 기록된다</span><span>${B('save','기록')} ${B('open:help','조작법')} ${DEV?B('ctl:k','PC 조작으로')+' ':''}${B('quit','종료',{pri:quitAsk})}</span></div>${quitCard()}`;
+    <h4 class="mh">설정 <small>30초마다 저절로 기록된다</small></h4><div class="mset">${B('save','기록')}${B('open:help','조작법')}${DEV?B('ctl:k','PC 조작으로'):''}${B('quit','종료',{pri:quitAsk})}</div>${quitCard()}`;
 }
 // v200 모바일 전용 (사용자 2026-10-28, 세로 고정): 늘 터치 조작. 키보드·PC 하단 HUD는 개발용(?dev)으로만 남는다.
 // 자동 테스트(navigator.webdriver)는 ?touch가 없으면 예전처럼 PC 조작으로 돈다.
