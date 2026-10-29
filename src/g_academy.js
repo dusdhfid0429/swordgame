@@ -358,7 +358,8 @@ function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p
   if(m.l){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
-  const TR=['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=['#tmenu','#b_p_bag','[data-act="open:bag"]'];
+  const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
+  const TR=tabs?['#tb_train']:['#tmenu','#b_p_char','[data-act="trainwin"]'],BAG=tabs?['#tb_bag']:['#tmenu','#b_p_bag','[data-act="open:bag"]'];
   const robe=P.bag.find(i=>i.acad&&i.slot==='armor'),books=P.bag.filter(i=>i.slot==='book'&&a.cls&&ARTS[i.art]&&ARTS[i.art].cls===a.cls);
   const U={equip:[...BAG,...(robe?[`[data-act="eq:${robe.id}"]`]:[])],read:[...BAG,...books.map(i=>`[data-act="read:${i.id}"]`)],
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
