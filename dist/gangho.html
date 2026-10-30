@@ -8206,6 +8206,8 @@ hook('recalc',()=>{const w=P&&P.eq.weapon;if(!w)return;const g=GD.BELT_GIFT;
 // 장비 칸 설명
 const beltTxt=it=>{beltNorm(it);const r=it.reg.length?it.reg.map(k=>it===beltOf()?`${k===it.am?'●':''}${k} ${ammoN(k)}`:k).join(' · '):'등록한 암기 없음';
   return `암기 ${it.reg.length}/${beltCap(it)}칸 ${r}${it.mw?` · 근접 ${it.mw.name}`:''}`};
+// 「암기 빼기」 펼침: 빼기 단추를 누르면 창을 다시 그려도 펼쳐 둔다 (사용자 2026-10-30 "자꾸 다시 접혀")
+let amrOpen=false;
 // 행낭 창의 요대: 등록한 암기를 둥글게(시계방향) 늘어놓고, 눌러서 지금 쓸 암기를 고른다. 근접 무기 칸
 function beltPick(){const b=beltOf();if(!b)return '';beltNorm(b);const cap=beltCap(b),cur=beltAmmo()||b.am,mw=b.mw;
   const slots=[...Array(cap)].map((_,i)=>{const k=b.reg[i],a=i/cap*Math.PI*2-Math.PI/2,x=(50+Math.cos(a)*39).toFixed(1),y=(50+Math.sin(a)*39).toFixed(1);
@@ -8215,7 +8217,7 @@ function beltPick(){const b=beltOf();if(!b)return '';beltNorm(b);const cap=beltC
   return `<div class="card"><h4>요대 <small class="dim">암기 ${b.reg.length}/${cap}칸 · 눌러 고른 암기를 다 쓰면 시계방향 다음 암기 · 모두 쓰면 ${mw?`${esc(mw.name)}로 ${esc(MELEE[mw.cls].n)}`:'맨손 권각'}</small></h4>
     <div class="bring">${slots}<div class="bcen"><small>지금</small><b>${cur?esc(cur):'없음'}</b><small>↻ 시계방향</small></div></div>
     <div class="row2"><span class="note">근접 무기 ${mw?`<b style="color:${itemCol(mw)}">${esc(itemLabel(mw))}</b> 공격력 ${mw.atk}${mw.hm?` · 현묘도 +${mw.hm}`:''}`:'없음 · 행낭의 단도·절편에서 「요대에 차기」'}</span>${mw?B('bmw:off','풀기'):''}</div>
-    ${add?`<div class="ib">${add}</div>`:''}${rm?`<details><summary class="dim">암기 빼기</summary><div class="ib">${rm}</div></details>`:''}</div>`}
+    ${add?`<div class="ib">${add}</div>`:''}${rm?`<details${amrOpen?' open':''}><summary class="dim" onclick="amrOpen=!this.parentNode.open">암기 빼기</summary><div class="ib">${rm}</div></details>`:''}</div>`}
 // 요대 단추: 고르기·넣기·빼기, 단도·절편 차기(행낭 「요대에 차기」 beq)·풀기. 행낭 「장착」은 다른 병기처럼 손(무기 칸)에 든다
 hook('sectAct',c=>{const{a,x}=c,b=beltOf();
   if(a==='beq'){c.done=true;c.r=true;const it=P.bag.find(i=>i.id===+x);if(!it||it.slot!=='weapon'||!MELEE[it.cls])return;
@@ -8223,7 +8225,7 @@ hook('sectAct',c=>{const{a,x}=c,b=beltOf();
   if(!['amk','ama','amr','bmw'].includes(a))return;c.done=true;c.r=true;if(!b)return;beltNorm(b);
   if(a==='amk'&&b.reg.includes(x)){b.am=x;log(`요대 암기를 ${x}(으)로 골랐습니다.${ammoN(x)?'':' 다 떨어져 있어 다음 암기를 씁니다.'}`,'sys');amgiBack()}
   if(a==='ama'&&AMMO[x]&&!b.reg.includes(x)&&b.reg.length<beltCap(b)){b.reg.push(x);if(!(b.am&&ammoN(b.am)>0))b.am=x;log(`${x}을(를) 요대에 등록했습니다.`,'sys');amgiBack()}
-  if(a==='amr'&&b.reg.includes(x)){b.reg.splice(b.reg.indexOf(x),1);if(b.am===x)b.am=b.reg[0]||null;log(`${x}을(를) 요대에서 뺐습니다.`,'sys')}
+  if(a==='amr'&&b.reg.includes(x)){amrOpen=true;b.reg.splice(b.reg.indexOf(x),1);if(b.am===x)b.am=b.reg[0]||null;log(`${x}을(를) 요대에서 뺐습니다.`,'sys')}
   if(a==='bmw'&&b.mw){if(P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}P.bag.push(b.mw);log(`${b.mw.name}을(를) 요대에서 풀었습니다.`,'sys');const mc=b.mw.cls;b.mw=null;if(P.cur===meleeArt(mc))setArt('base');recalc()}});
 // ================= 암기 궤적 (v190) =================
 // 사용자 2026-10-27: "직선 말고 나선형이나 호를 그리며, 총알처럼 회전하며 강한 한 방", "부채꼴·원형으로 날리다 선형으로 목표물에게", "곧게 꺾여 가기도 하고 부드러운 곡선으로도",
