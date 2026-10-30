@@ -78,7 +78,7 @@ function ribbon(f,p,k,o={}){
   const e=outer.slice(n*.45|0);ctx.strokeStyle=rgba(f.col,.6*fade);ctx.lineWidth=5;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.95*fade);ctx.lineWidth=1.8;path(e);ctx.stroke();
   const tip=outer[n];if(k>.5)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
 }
-// 찌르기·주먹 기운 (v210): 휘두르는 반달(ribbon)과 달리 바라보는 쪽으로 곧게 뻗는다. 길이는 반달과 같은 타원 반지름을 기준으로 mo마다 늘이고 줄인다
+// 찌르기·주먹 기운 (v211): 휘두르는 반달(ribbon)과 달리 바라보는 쪽으로 곧게 뻗는다. 길이는 반달과 같은 타원 반지름을 기준으로 mo마다 늘이고 줄인다
 const THR={thrust:1.3,punch:.8,gust:1.8};
 function thrustGeo(f){const rx=f.r*55,ry=f.r*32,c=Math.cos(f.ang),s=Math.sin(f.ang);return{ux:c,uy:s,L:rx*ry/Math.hypot(ry*c,rx*s)*(THR[f.mo]||THR.thrust)}}
 function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.x+ux*6,oy=p.y-26+uy*6,fade=Math.min(1,k*2.2),an=Math.atan2(uy,ux);

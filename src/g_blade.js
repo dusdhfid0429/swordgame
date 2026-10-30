@@ -37,7 +37,7 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(r<5||e.hp>=c.hp0)return;const tr=
   bladeCall(tr,e);(tr===5?bladeOrb:tr===6?bladeFly:tr===7?bladeMind:bladeRain)(e)});
 
 // 베기 모양: 검환은 반달 끝에 강환이 맺히고, 어검술은 반달을 따라 검 그림자 둘, 심검은 반달이 옅어지고 날카로운 한 줄, 무형검은 형체 없이 물결만
-// v210: 찌르기·주먹(o.t 'thrust')이면 강환은 기운 끝에 맺히고, 병기 그림자는 기운과 나란히 앞으로 뻗는다. 그림자 모양은 든 병기를 따른다 (wpnShape)
+// v211: 찌르기·주먹(o.t 'thrust')이면 강환은 기운 끝에 맺히고, 병기 그림자는 기운과 나란히 앞으로 뻗는다. 그림자 모양은 든 병기를 따른다 (wpnShape)
 hook('slashFx',o=>{const r=realmIdx();if(r<5)return;const tr=Math.min(r,8),col=bladeCol(tr),L=o.life,cls=bladeCls(),th=o.t==='thrust';
   if(th&&tr===5)fx.push({t:'bt',k:'tipT',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.3,mo:o.mo,col,life:L,max:L});
   else if(th&&tr===6)for(const s of[-1,1])fx.push({t:'bt',k:'shadowT',cls,side:s,glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.4,mo:o.mo,col,life:L*1.1,max:L*1.1});
@@ -57,7 +57,7 @@ function swordShape(x,y,ang,len,col,a){   // 날·코등이·자루를 한 획�
   ctx.fillStyle=rgba(col,.55*a);ctx.beginPath();ctx.moveTo(tip[0],tip[1]);ctx.lineTo(g[0]+px*3,g[1]+py*3);ctx.lineTo(g[0]-px*3,g[1]-py*3);ctx.fill();
   ctx.strokeStyle=rgba(HI,.95*a);ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(tip[0],tip[1]);ctx.lineTo(g[0],g[1]);ctx.stroke();
   ctx.strokeStyle=rgba(col,.9*a);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(g[0]+px*6,g[1]+py*6);ctx.lineTo(g[0]-px*6,g[1]-py*6);ctx.moveTo(g[0],g[1]);ctx.lineTo(hilt[0],hilt[1]);ctx.stroke()}
-// 든 병기 모양의 기운 그림자 (v210): 검·도·창·봉·권. 단도·절편은 검 모양
+// 든 병기 모양의 기운 그림자 (v211): 검·도·창·봉·권. 단도·절편은 검 모양
 function wpnShape(cls,x,y,ang,len,col,a){const c=Math.cos(ang),s=Math.sin(ang),px=-s,py=c,at=(u,v=0)=>[x+c*len*u+px*v,y+s*len*u+py*v];
   const fill=(pts,al)=>{ctx.fillStyle=rgba(col,al*a);path(pts);ctx.fill()},line=(p0,p1,w,cc,al)=>{ctx.strokeStyle=rgba(cc,al*a);ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()};
   if(cls==='도'){fill([at(.62,1),at(-.22,2.5),at(-.22,-3),at(.15,-5.5),at(.45,-4)],.55);line(at(-.22,-3),at(.15,-5.5),1.4,HI,.9);line(at(.15,-5.5),at(.62,1),1.4,HI,.9);   // 등은 곧고 날이 배부른 넓은 칼
