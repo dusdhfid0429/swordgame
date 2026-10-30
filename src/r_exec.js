@@ -20,7 +20,11 @@ function GL(o,X){
   runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)
   tagCast(X,i0);
 }
-const fArc=(X,r,spread,col,w,life)=>{const o={t:'arc',x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
+// v210 (사용자 2026-10-30 "권각 무공에 검기·검강이 나와 이상하다. 무기 형태를 기본으로, 찌르면 찌르는 모양 휘두르면 휘두르는 모양"):
+// 한 대상을 치는 공격은 병기의 동작(CLASS.anim)을 따른다. 휘두르기(검·도·봉·단·편)는 반달, 찌르기(창)는 곧게 뻗는 기의 창끝, 주먹(권·맨손)은 앞으로 밀려 나가는 기 덩어리.
+// 부채꼴로 쓸어 치는 초식(arc)은 어느 병기든 휘두르는 동작이라 반달 그대로다 (sweep)
+const strikeMo=X=>{const c=X&&X.art&&X.art.cls,a=c&&CLASS[c]&&CLASS[c].anim;return a==='thrust'?'thrust':a==='punch'?'punch':'swing'};
+const fArc=(X,r,spread,col,w,life,sweep)=>{const mo=sweep?'swing':strikeMo(X);const o={t:mo==='swing'?'arc':'thrust',mo,x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
 const fRing=(X,c,r,col,w,life)=>GL({t:'ring2',x:c.x,y:c.y,r,col,w,life},X);
 const fLine=(X,len,col,w,life,wavy,off=0)=>{const e=rot(len,off);GL({t:'line',x:P.x,y:P.y,ex:e.x,ey:e.y,col,w,life,wavy},X)};
@@ -45,7 +49,7 @@ function exec(f,e,X){
   switch(f.p){
     case'melee':anim(.2);if(e){hitE(X,e,m,kb,stun,P,true);fxHit(X,e)}fArc(X,1.15,1.6,c,3,.2);break;
     case'multi':for(let i=0;i<hits+(t>=3?1:0);i++)later(i*.1,()=>{anim(.1);if(e&&e.hp>0){hitE(X,e,m,.08,stun,P,true);fxHit(X,e,.8)}fArc(X,.8,1.1,c,2,.14)});break;
-    case'arc':for(let i=0;i<hits;i++)later(i*.12,()=>{anim(.24);arcHit(X,f.rad*rm,Math.cos(f.spread/2),m,kb,stun);fArc(X,f.rad*rm,f.spread,c,6,.28)});break;
+    case'arc':for(let i=0;i<hits;i++)later(i*.12,()=>{anim(.24);arcHit(X,f.rad*rm,Math.cos(f.spread/2),m,kb,stun);fArc(X,f.rad*rm,f.spread,c,6,.28,true)});break;
     case'circle':for(let i=0;i<hits;i++)later(i*.13,()=>{anim(.26);circleHit(X,P,f.rad*rm,m,kb,stun);fSpin(X,P,f.rad*rm,c,5,.32)});break;
     case'line':anim(.22);lineHit(X,f.len*rm,f.w,m,kb,stun);fLine(X,f.len*rm,c,f.len>5?10:5,.3,f.wavy);break;
     case'proj':{

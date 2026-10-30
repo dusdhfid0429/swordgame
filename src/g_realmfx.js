@@ -80,7 +80,13 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
     if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);for(let i=0;i<3;i++)GL({t:'line',x:P.x,y:P.y,ex:o.x+(i-1)*.15,ey:o.y,w:i===1?1.6:.8,wavy:1,life:.3,col:r>=4?RFX_COL.gang:RFX_COL.sa})}}});
 // 베기마다: 검기는 칼날 너머로 뻗는 푸른 반달, 검사는 반달 끝에서 뻗는 은빛 실 셋, 검강은 굵고 무거운 금빛 반달 두 겹
 const RFX_COL={gi:'140,205,255',sa:'215,245,255',gang:'255,212,105'};
+// v210: 찌르기·주먹(o.t 'thrust')은 같은 세 단계를 곧은 모양으로. 창기=푸른 창끝, 창사=앞으로 곧게 뻗는 은빛 실 셋, 창강=굵은 금빛 창끝 두 겹 / 권기=푸른 기 덩어리, 권풍=밀려 나가는 바람 고리, 권강=금빛 기 덩어리 두 겹
 hook('slashFx',o=>{const r=realmIdx();if(r<2)return;const L=o.life,arc=(k)=>fx.push({...o,glow:true,el:false,max:L*(k.l||1),life:L*(k.l||1),st:null,...k});
+  if(o.t==='thrust'){if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.3,w:o.w*2.4,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.22,w:o.w,dim:.95})}return}
+    arc({col:RFX_COL.gi,r:o.r*1.3,w:o.w*.9,dim:.75,l:1.1});
+    if(r===3){if(o.mo==='punch')arc({mo:'gust',col:RFX_COL.sa,w:o.w,dim:.85,l:1.6});
+      else{const a0=Math.atan2(P.fy,P.fx);for(const d of[-.12,0,.12]){const a=a0+d,L2=o.r*2.6;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,life:.28,col:RFX_COL.sa})}}}
+    return}
   if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.4,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.32,w:o.w*1,spread:o.spread*1.05,dim:.95})}return}   // 심검·무형검은 강기를 드러내지 않는다 (g_blade.js)
   arc({col:RFX_COL.gi,r:o.r*1.35,w:o.w*.9,spread:o.spread*1.1,dim:.75,l:1.1});
   if(r===3){const a0=Math.atan2(P.fy,P.fx);for(const d of[-.5,0,.5]){const a=a0+d*o.spread*.6,L2=o.r*2.2;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,wavy:1,life:.28,col:RFX_COL.sa})}}});
