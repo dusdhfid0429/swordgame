@@ -334,6 +334,28 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .touch #wbody{align-content:start}.touch #wx{min-width:0;padding:8px 12px}.touch #wx::before{content:"‹ "}
 .touch .win.sheet{top:auto;max-height:62%;border-top:2px solid var(--bronze);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px #000c}
 .touch .win.sheet .whead{padding-top:12px;border-radius:14px 14px 0 0}
+/* ==== v208 (사용자 2026-10-30 "UI 버튼이나 비율이 너무 큰 것 같아"): 화면을 넓게 보이도록 HUD 전체를 약 8할로 줄인다. 누르는 것은 38px 이상 ==== */
+.touch .status{width:min(166px,44cqw);padding:4px 6px;gap:2px}
+.touch .status .who{font-size:12px}.touch .status .who span{font-size:10px}.touch .status #nm{font-size:13px!important}
+.touch .status .gauge{height:11px}.touch .status .gauge b{line-height:10px;font-size:9px}.touch .status #res{font-size:9px}
+.touch .status .qsc{font-size:9px;line-height:10px}
+.touch .pexp{width:34px;height:18px;font-size:10px}
+.touch #mini{width:88px;height:50px}
+.touch .zone{top:calc(var(--gt) + 54px);font-size:12px}.touch .zone small{font-size:10px}.touch #tcur{font-size:10px}
+.touch #lcol{width:min(176px,42cqw);gap:4px}.touch #lcol .qtrack{font-size:10px;max-height:80px}.touch #lcol #log{font-size:10px;height:44px}
+.touch #lcol .qfold{height:30px;width:24px;font-size:15px}.touch.qfolded #lcol .qfold{height:30px;font-size:11px}
+/* 전투 단추 묶음은 통째로 줄인다 (단추 사이 거리도 같이 준다). 글씨는 줄어든 만큼 키워 읽히게 */
+.touch #tbtns{bottom:52px;transform:scale(.78);transform-origin:100% 100%}
+.touch .tb{font-size:15px}.touch .tb.big{font-size:22px}.touch #t_spec{font-size:14px}.touch #t_ctx{font-size:16px}.touch .tb em{font-size:12px}
+.touch.atkauto #t_ult{font-size:19px}
+.touch #joy{width:94px;height:94px;margin:-47px 0 0 -47px;left:calc(var(--gl) + 54px);top:calc(100% - 92px)}
+.touch #joyk{width:40px;height:40px;margin:-20px 0 0 -20px}
+.touch #joyz{bottom:52px}
+.touch #tslots,.touch #tquick{bottom:8px;gap:5px}
+.touch .ts{width:min(44px,11cqw);height:38px;padding-bottom:7px;font-size:10px}.touch .ts em{font-size:9px}
+.touch .tq{width:min(40px,10cqw);height:38px;font-size:11px}
+.touch #tbar #tmenu,.touch .tbi,.touch .tpg{height:46px}
+.touch .tbi{font-size:10px;gap:1px}.touch .tbi i{width:24px;height:24px;font-size:14px}
 @keyframes pageIn{from{opacity:.3;transform:translateY(12px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.touch .win{animation:none}}
 </style></head><body>
@@ -4191,7 +4213,7 @@ function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$
 if(window.ResizeObserver)new ResizeObserver(()=>logTop()).observe(statusEl);
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
 function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||1;joy.gx=gx/l;joy.gy=gy/l}
-{const z=$('joyz'),base=$('joy'),knob=$('joyk'),R=50;let id=null,sx=0,sy=0,t0=0,moved=0;
+{const z=$('joyz'),base=$('joy'),knob=$('joyk'),R=40;let id=null,sx=0,sy=0,t0=0,moved=0;
   const home=()=>{base.style.left='';base.style.top='';base.classList.remove('on');knob.style.transform=''};
   z.addEventListener('pointerdown',e=>{if(!playing||paused||id!==null)return;e.preventDefault();id=e.pointerId;z.setPointerCapture(id);
     const r=z.getBoundingClientRect();sx=e.clientX;sy=e.clientY;t0=performance.now();moved=0;

@@ -69,7 +69,7 @@ function logTop(){if(!TOUCH)return;const b=statusEl.getBoundingClientRect(),st=$
 if(window.ResizeObserver)new ResizeObserver(()=>logTop()).observe(statusEl);
 // 화면 방향 (dx,dy) → 격자 방향. 쿼터뷰라 화면 위쪽은 격자 (-1,-1).
 function joyDir(dx,dy){const gx=dx/TW+dy/TH,gy=dy/TH-dx/TW,l=Math.hypot(gx,gy)||1;joy.gx=gx/l;joy.gy=gy/l}
-{const z=$('joyz'),base=$('joy'),knob=$('joyk'),R=50;let id=null,sx=0,sy=0,t0=0,moved=0;
+{const z=$('joyz'),base=$('joy'),knob=$('joyk'),R=40;let id=null,sx=0,sy=0,t0=0,moved=0;
   const home=()=>{base.style.left='';base.style.top='';base.classList.remove('on');knob.style.transform=''};
   z.addEventListener('pointerdown',e=>{if(!playing||paused||id!==null)return;e.preventDefault();id=e.pointerId;z.setPointerCapture(id);
     const r=z.getBoundingClientRect();sx=e.clientX;sy=e.clientY;t0=performance.now();moved=0;
