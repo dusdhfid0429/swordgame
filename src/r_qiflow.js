@@ -101,3 +101,18 @@ const qfMedN=()=>QF_MED.n[qfRealm()]||1,qfMedR=()=>QF_MED.r[qfRealm()]||1;
 // 내공 수련을 시작할 때 머리 위에 지금 경지의 운기 경로 이름을 띄운다 (같은 경지면 20초에 한 번)
 function qfName(){const d=QI_FLOW[qfRealm()];return d?d.n:''}
 function qfShowName(){const r=qfRealm(),n=qfName();if(!n||!P||(QF.nr===r&&time-(QF.nt||-99)<20))return;QF.nr=r;QF.nt=time;addText(P.x,P.y-1.4,n,'#e8f0ff')}
+// ---- v209 몸 둘레를 도는 기운 (사용자 2026-10-30 "몸주변을 회전하는 효과도 경지에 따라 다르게") ----
+// 운기조식 기운 줄기(g_draw.js MED) 하나가 생길 때 경지에 맞는 성질을 덧붙인다. w 도는 방향·빠르기, h 높이, tl 기울기, e 닿는 단전, cc 색, dk 검은 기운, leaf 빛잎
+//  삼류 제멋대로 느리게 · 이류 한 방향 한 띠 · 일류 위아래 두 띠가 서로 반대로 · 절정 비스듬한 두 고리가 엇갈림 · 초절정 세 띠가 세 단전으로
+//  화경 오행 다섯 줄기 · 현경 느리고 굵은 띠가 정수리로 · 생사경 흰 기운은 올라 돌고 검은 기운은 내려 거꾸로 · 자연경 하늘에서 빛잎이 천천히 내려앉음
+function qfSwirl(){const r=qfRealm(),R=Math.random,sp=1.1+R()*1.3,o={tl:0,e:0,cc:null,dk:0,leaf:0};   // 되살릴 때(Object.assign) 앞 경지의 성질이 남지 않게 모두 적는다
+  if(r===0){o.w=(R()<.5?-1:1)*sp*.7}
+  else if(r===1){o.w=sp;o.h=-24-R()*16}
+  else if(r===2){const up=R()<.5;o.w=up?sp:-sp;o.h=up?-50-R()*18:-6-R()*12}
+  else if(r===3){o.w=sp*1.3;o.tl=R()<.5?.38:-.38;o.h=-26-R()*14}
+  else if(r===4){const b=R()*3|0;o.w=(b%2?-1:1)*sp*1.2;o.h=[-8,-30,-56][b]-R()*8;o.e=[8,0,-11][b]}
+  else if(r===5){const j=R()*5|0;o.w=sp*1.1;o.a=j*Math.PI*2/5+R()*.25;if(R()<.7)o.cc=WUHAENG[j]}
+  else if(r===6){o.w=sp*.5;o.s=2.4+R()*1.6;o.e=-14;o.h=-30-R()*30}
+  else if(r===7){if(R()<.5){o.w=sp;o.e=-16;o.h=-40-R()*30}else{o.w=-sp;o.e=20;o.h=-4-R()*10;o.dk=1;o.cc='14,8,26'}}
+  else{o.w=(R()<.5?-1:1)*sp*.55;o.h=-90-R()*60;o.v=3+R()*5;if(R()<.6){o.leaf=1;o.cc=R()<.5?'255,225,150':'200,240,175'}}
+  return o}
