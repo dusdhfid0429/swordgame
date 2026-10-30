@@ -19,7 +19,7 @@ function repFacBase(f){const pf=pfac();let b=f===pf?REP.base.ownFac:facFoe(f,pf)
 const repFac=f=>clamp(repFacBase(f)+(repD().fac[f]||0),-REP.lim,REP.lim);
 // 그 문파가 보는 나: 내 문파면 바탕 50, 아니면 세력 바탕. 세력 값과 문파 값을 더한다
 function repSect(sid){const s=SECTS[sid];if(!s)return 0;const f=alFac(s.al),r=repD();
-  return clamp((P.sect===sid?REP.base.own:repFacBase(f))+(r.fac[f]||0)+(r.sect[sid]||0),-REP.lim,REP.lim)}
+  return clamp((P.sect===sid?REP.base.own:repFacBase(f))+(typeof relBase==='function'?relBase(sid):0)+(r.fac[f]||0)+(r.sect[sid]||0),-REP.lim,REP.lim)}   // v213 앙숙·동맹 (g_lore.js)
 // 바탕을 뺀 내 행적만의 값 (원한): 가입·임무·동원 거절에 쓴다. 마교가 정파도 받는 규칙(v102)은 바탕과 상관없이 그대로
 const repOwn=sid=>{const s=SECTS[sid];if(!s)return 0;const r=repD();return (r.fac[alFac(s.al)]||0)+(r.sect[sid]||0)};
 function repGrudge(sid){const s=SECTS[sid];return s&&repOwn(sid)<REP.joinMin?`${s.n}은(는) 당신이 저지른 일을 잊지 않았다 (우호도 ${repName(repSect(sid))})`:''}
