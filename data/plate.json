@@ -1,0 +1,21 @@
+{
+  "PLATE": {
+    "d": "v209 (사용자 2026-10-30): 머리 위 생명 막대를 나와의 관계로 구분하고, 아군과 내가 겨누거나 친 적에게만 띄운다. rel: pal 동료(따라다니는 동료·영수·동원 문파원), ally 결전장 아군, side 같은 편 세력 무인(싸울 때만), foe 적, wary 경계, neu 중립(겨눌 때만)",
+    "keep": 4,
+    "fade": 1,
+    "sideFight": 5,
+    "h": 4,
+    "bossH": 5,
+    "ghost": 0.9,
+    "col": {
+      "pal":  {"bar": "#6abf5a", "edge": "#2e5a26", "name": "#a6d47f"},
+      "ally": {"bar": "#5a9ad8", "edge": "#22406a", "name": "#9cc8f0"},
+      "side": {"bar": "#5a9ad8", "edge": "#22406a", "name": "#9cc8f0"},
+      "foe":  {"bar": "#c8301f", "edge": "#4a0c06", "name": "#f0a080"},
+      "wary": {"bar": "#d8b040", "edge": "#5a4410", "name": "#f0d070"},
+      "neu":  {"bar": "#a89c80", "edge": "#3e382c", "name": "#e0d6bc"}
+    },
+    "target": "#ffe9a8",
+    "boss": "#d8a84a"
+  }
+}

@@ -72,8 +72,8 @@ function drawBeast(e){
   ctx.restore();
   if(e.stun>0){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(b.L+b.ry)*s*2-6+Math.sin(a)*3,2,0,7);ctx.fill()}}
   const y=p.y-(b.L+b.ry*2+(b.neck?16:6))*s-6;if(e.dead)return;
-  if(e.hp<e.maxHp||P.target===e||e.ally){const w=26;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-w/2-1,y-1,w+2,5);ctx.fillStyle=e.ally?'#6abf5a':'#c0261b';ctx.fillRect(p.x-w/2,y,w*Math.max(0,e.hp/e.maxHp),3)}
-  if(P.target===e||e.ally){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.ally?'#a6d47f':d.hostile?'#f0a080':'#f0e4c8';ctx.fillText(e.name,p.x,y-5)
+  const nc=drawPlate(e,p.x,y,26);   // v209: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
+  if(P.target===e||e.ally){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=nc||(e.ally?'#a6d47f':d.hostile?'#f0a080':'#f0e4c8');ctx.fillText(e.name,p.x,y-5)
     if(e.art&&P.target===e){const t=mobKitLabel(e);ctx.font='10px "Gowun Dodum",sans-serif';ctx.fillStyle='#000';ctx.fillText(t,p.x+1,y-16);ctx.fillStyle='#d8c8a0';ctx.fillText(t,p.x,y-17)}}
 }
 // hero on horseback: horse under the hero
