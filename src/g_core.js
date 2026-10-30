@@ -317,7 +317,7 @@ function hurtP(dm,src){
 
 // ================= 초식, 연속기, 필살기 =================
 function engage(f){
-  switch(f.p){case'melee':case'multi':return CLASS[curCls()].reach;case'arc':return f.rad*.9;case'circle':return f.rad*.85;case'line':return f.len*.9;
+  switch(f.p){case'melee':case'multi':return CLASS[curCls()].reach;case'arc':return meleeRad({art:art()},f)*.9;case'circle':return meleeRad({art:art()},f)*.85;case'line':return f.len*.9;
   case'proj':return f.full?f.len*.8:f.len*.9;case'pull':return f.rad;case'dash':return f.dist+1.2;case'blinkMulti':return 5;default:return f.r||4}}
 const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
 function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}

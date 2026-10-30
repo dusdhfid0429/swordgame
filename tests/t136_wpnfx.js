@@ -23,6 +23,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 쓸어 치는 초식은 권이라도 반달
   const sw=await p.evaluate(()=>{fx=[];fArc(mkX(P.cur),1.5,2,'200,200,200',6,.28,true);return fx.filter(f=>f.t==='arc').length});
   ok(`권의 쓸어 치기 초식은 반달 (${sw})`,sw>0);
+  // v212 병기 길이: 사거리는 권 < 검 < 창, 쓸어 치기 판정 반경도 병기 길이를 따르고 반달 그림은 판정 반경 안에 그친다
+  const arcs=await p.evaluate(async()=>{const o={};for(const cls of['권','검','창']){const id=Object.keys(ARTS).find(k=>ARTS[k].cls===cls&&!ARTS[k].base&&ARTS[k].forms.some(f=>f.p==='arc'));
+      const a=ARTS[id],f=a.forms.find(f=>f.p==='arc'),X=mkX(id);X.t=0;P.fx=1;P.fy=0;P.realm=4;
+      const R=meleeRad(X,f),mk=d=>{const e=mkMob('강시',P.x+d,P.y);e.hp=e.maxHp=99999;e.def=0;return e};const near=mk(R*.92),far=mk(R*1.08);mobs=[near,far];fx=[];sched=[];
+      const r0=Math.random;Math.random=()=>.5;exec({...f,hits:1},near,X);await new Promise(z=>setTimeout(z,80));Math.random=r0;
+      const vis=Math.max(...fx.filter(q=>q.t==='arc').map(q=>q.r*55/45));   // 반달 그림의 가로 반경(땅 칸)
+      o[cls]={reach:CLASS[cls].reach,R:+R.toFixed(2),near:near.hp<99999,far:far.hp<99999,vis:+vis.toFixed(2),eng:+engage(f).toFixed(2)}}P.realm=0;return o});
+  ok(`사거리 권 ${arcs.권.reach} < 검 ${arcs.검.reach} < 창 ${arcs.창.reach}`,arcs.권.reach<arcs.검.reach&&arcs.검.reach<arcs.창.reach);
+  for(const[c,v]of Object.entries(arcs))ok(`${c} 쓸어 치기: 반경 ${v.R} 안은 맞고 ${v.near} 밖은 안 맞음 ${!v.far}, 반달 그림 ${v.vis}칸 ≤ 반경`,v.near&&!v.far&&v.vis<=v.R*1.1);
+  ok(`쓸어 치기 반경 권 ${arcs.권.R} < 검 ${arcs.검.R} < 창 ${arcs.창.R}`,arcs.권.R<arcs.검.R&&arcs.검.R<arcs.창.R);
   // 모양마다 그림 (몇 프레임 지나 한 장씩)
   await p.evaluate(()=>{const s=document.querySelector('#tbtns');if(s)s.style.display='none'});
   for(const cls of['검','창','권']){await setCls(cls);for(const r of[2,3,4]){await strike(r);await p.waitForTimeout(90);await p.screenshot({path:`${__dirname}/shots/wpnfx_${cls}_${r}.png`,clip:{x:95,y:250,width:200,height:200}})}}

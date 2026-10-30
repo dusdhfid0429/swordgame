@@ -82,14 +82,15 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
 const RFX_COL={gi:'140,205,255',sa:'215,245,255',gang:'255,212,105'};
 // v211: 찌르기·주먹(o.t 'thrust')은 같은 세 단계를 곧은 모양으로. 창기=푸른 창끝, 창사=앞으로 곧게 뻗는 은빛 실 셋, 창강=굵은 금빛 창끝 두 겹 / 권기=푸른 기 덩어리, 권풍=밀려 나가는 바람 고리, 권강=금빛 기 덩어리 두 겹
 hook('slashFx',o=>{const r=realmIdx();if(r<2)return;const L=o.life,arc=(k)=>fx.push({...o,glow:true,el:false,max:L*(k.l||1),life:L*(k.l||1),st:null,...k});
-  if(o.t==='thrust'){if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.3,w:o.w*2.4,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.22,w:o.w,dim:.95})}return}
-    arc({col:RFX_COL.gi,r:o.r*1.3,w:o.w*.9,dim:.75,l:1.1});
-    if(r===3){if(o.mo==='punch')arc({mo:'gust',col:RFX_COL.sa,w:o.w,dim:.85,l:1.6});
-      else{const a0=Math.atan2(P.fy,P.fx);for(const d of[-.12,0,.12]){const a=a0+d,L2=o.r*2.6;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,life:.28,col:RFX_COL.sa})}}}
+  if(o.t==='thrust'){if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.06,w:o.w*2.4,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.02,w:o.w,dim:.95})}return}
+    arc({col:RFX_COL.gi,r:o.r*1.06,w:o.w*.9,dim:.75,l:1.1});
+    if(r===3){if(o.mo==='punch')arc({mo:'gust',col:RFX_COL.sa,w:o.w,dim:.85,l:1.6});   // 권풍 고리도 주먹이 닿는 데서 멈춘다 (THR.gust)
+
+      else{const a0=Math.atan2(P.fy,P.fx);for(const d of[-.12,0,.12]){const a=a0+d,L2=o.r*1.25;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,life:.28,col:RFX_COL.sa})}}}
     return}
-  if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.4,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.32,w:o.w*1,spread:o.spread*1.05,dim:.95})}return}   // 심검·무형검은 강기를 드러내지 않는다 (g_blade.js)
-  arc({col:RFX_COL.gi,r:o.r*1.35,w:o.w*.9,spread:o.spread*1.1,dim:.75,l:1.1});
-  if(r===3){const a0=Math.atan2(P.fy,P.fx);for(const d of[-.5,0,.5]){const a=a0+d*o.spread*.6,L2=o.r*2.2;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,wavy:1,life:.28,col:RFX_COL.sa})}}});
+  if(r>=4){if(r<7){arc({col:RFX_COL.gang,r:o.r*1.06,w:o.w*2.6,spread:o.spread*1.15,dim:.9,l:1.15});arc({col:'255,250,225',r:o.r*1.02,w:o.w*1,spread:o.spread*1.05,dim:.95})}return}   // 심검·무형검은 강기를 드러내지 않는다 (g_blade.js)
+  arc({col:RFX_COL.gi,r:o.r*1.06,w:o.w*.9,spread:o.spread*1.1,dim:.75,l:1.1});   // v212: 기운도 병기 사거리 안 (예전 1.35배는 사거리 밖까지 뻗었다)
+  if(r===3){const a0=Math.atan2(P.fy,P.fx);for(const d of[-.5,0,.5]){const a=a0+d*o.spread*.6,L2=o.r*1.25;GL({t:'line',x:P.x,y:P.y,ex:P.x+Math.cos(a)*L2,ey:P.y+Math.sin(a)*L2,w:.9,wavy:1,life:.28,col:RFX_COL.sa})}}});
 hook('hurt',c=>{const r=realmIdx(),src=c.src;
   if(src.d&&r>=4&&mobRealm(src)<=r-2){c.dm*=.2;if(time-(P.hsT||-9)>1.2){P.hsT=time;addText(P.x,P.y-.4,'호신강기','#ffe7a0')}}
   if(src.d&&school()==='불가'&&(src.d.fac==='사'||src.d.fac==='마'))c.dm*=.85;
