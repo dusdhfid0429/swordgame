@@ -63,7 +63,7 @@ function shock(x,y,rx,ry,col,k,w){ctx.save();ctx.translate(x,y);ctx.scale(1,ry/r
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,rx,0,7);ctx.fill();ctx.restore()}
 // crescent sword-qi ribbon swept along an iso ellipse; thick bright leading edge, streaky tail
 function ribbon(f,p,k,o={}){
-  const flat=o.flat,rx=flat?isoR(f.r)[0]:f.r*55,ry=flat?isoR(f.r)[1]:f.r*32,th=Math.atan2(Math.sin(f.ang)*rx,Math.cos(f.ang)*ry),pr=1-k,sp=o.spread||f.spread,dir=f.flip?-1:1;
+  const flat=o.flat,rk=o.rk||1,rx=(flat?isoR(f.r)[0]:f.r*55)*rk,ry=(flat?isoR(f.r)[1]:f.r*32)*rk,th=Math.atan2(Math.sin(f.ang)*rx,Math.cos(f.ang)*ry),pr=1-k,sp=o.spread||f.spread,dir=o.dir??(f.flip?-1:1);
   const head=Math.min(1,pr/(o.fast||.32)),tail=Math.max(0,(pr-.28)/.72)*.97,cy=p.y-(o.h??26),lift=(o.lift??8)*f.r,thick=(o.thick||(6+f.w*2.2))*(f.r>1.2?1.25:1);
   if(head-tail<.02)return;const a0=(o.a0??th-dir*sp/2);
   const P2=(u,rr)=>{const a=a0+dir*sp*u;return[p.x+Math.cos(a)*rx*rr,cy+Math.sin(a)*ry*rr-lift*Math.sin(u*Math.PI)*(o.tilt??1)]};
@@ -75,11 +75,11 @@ function ribbon(f,p,k,o={}){
   if(!f.st)f.st=Array.from({length:9},()=>({rr:rnd(),s:rnd()*.7,w:.6+rnd()*1.6,c:rnd()<.35}));
   for(const s of f.st){const pts=[];for(let i=Math.floor(s.s*n);i<=n;i++){const a=outer[i],b=inner[i];pts.push([a[0]+(b[0]-a[0])*s.rr,a[1]+(b[1]-a[1])*s.rr])}
     ctx.strokeStyle=rgba(s.c?HI:f.col,(s.c?.5:.7)*fade);ctx.lineWidth=s.w;path(pts);ctx.stroke()}
-  const e=outer.slice(n*.45|0);ctx.strokeStyle=rgba(f.col,.6*fade);ctx.lineWidth=5;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.95*fade);ctx.lineWidth=1.8;path(e);ctx.stroke();
+  const e=outer.slice(n*.45|0);ctx.strokeStyle=rgba(f.col,.6*fade);ctx.lineWidth=5;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.95*fade*(o.soft?.35:1));ctx.lineWidth=1.8;path(e);ctx.stroke();
   const tip=outer[n];if(k>.5)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
 }
 // 찌르기·주먹 기운 (v211): 휘두르는 반달(ribbon)과 달리 바라보는 쪽으로 곧게 뻗는다. 길이는 반달과 같은 타원 반지름을 기준으로 mo마다 늘이고 줄인다
-const THR={thrust:1.3,punch:.8,gust:1.8};
+const THR={thrust:1,punch:1,gust:1.1};   // v212: 끝이 병기 사거리에 닿는다 (fArc가 r을 병기 길이로 맞춘다)
 function thrustGeo(f){const rx=f.r*55,ry=f.r*32,c=Math.cos(f.ang),s=Math.sin(f.ang);return{ux:c,uy:s,L:rx*ry/Math.hypot(ry*c,rx*s)*(THR[f.mo]||THR.thrust)}}
 function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.x+ux*6,oy=p.y-26+uy*6,fade=Math.min(1,k*2.2),an=Math.atan2(uy,ux);
   const ring=(x,y,R,al,w)=>{ctx.save();ctx.translate(x,y);ctx.rotate(an);ctx.beginPath();ctx.ellipse(0,0,R*.38,R,0,0,7);ctx.strokeStyle=rgba(f.col,al);ctx.lineWidth=w;ctx.stroke();ctx.strokeStyle=rgba(HI,al*.8);ctx.lineWidth=w*.35;ctx.stroke();ctx.restore()};
@@ -100,9 +100,15 @@ function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.
   if(!f.st)f.st=Array.from({length:5},()=>({o:(rnd()-.5)*3.2,s:.15+rnd()*.35}));
   for(const q of f.st){const sx=bx+nx*W*q.o-ux*L*q.s,sy=by+ny*W*q.o-uy*L*q.s;ctx.strokeStyle=rgba(f.col,.55*fade);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+ux*L*q.s*.7,sy+uy*L*q.s*.7);ctx.stroke()}
   if(k>.4)glowDot(px,py,10+W*1.5,f.col,(k-.4)*1.6)}
+// 쓸어 치기 모양을 병기마다 (v212): 검은 가늘고 날카로운 반달 그대로, 도는 두껍고 무거운 반달, 봉은 땅 가까이 넓게 도는 둥근 띠,
+// 창은 자루 끝 창날이 그리는 가는 호, 권각은 날 없이 뭉툭하고 넓은 바람 띠, 단도·절편은 짧고 가는 반달이 엇갈려 두 번
+const SWP={도:{thick:1.7},봉:{flat:1,rk:1.2,h:14,lift:3,thick:1.4,spread:1.12},창:{thick:.45},권:{thick:2,soft:1,fast:.24},단:{thick:.65,dbl:1},편:{thick:.55,dbl:1}};
+function sweepFx(f,p,k){const s=SWP[f.wc];if(!s){ribbon(f,p,k);return}
+  const o={...s,thick:(6+f.w*2.2)*s.thick,spread:f.spread*(s.spread||1)};ribbon(f,p,k,o);
+  if(s.dbl){const k2=Math.min(1,k*1.25);if(k2<.98)ribbon(f,p,k2,{...o,rk:.72,dir:f.flip?1:-1})}}
 function drawGlow(f){
   const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
-  if(f.t==='arc')ribbon(f,p,k);
+  if(f.t==='arc')sweepFx(f,p,k);
   else if(f.t==='thrust')drawThrust(f,p,k);
   else if(f.t==='spin'){const a=-time*0;ribbon(f,p,k,{flat:1,spread:5.6,lift:3,h:16,fast:.45,a0:f.a0??(f.a0=rnd()*6.28)});ribbon(f,p,k,{flat:1,spread:5.6,lift:2,h:30,fast:.5,thick:5,a0:f.a0+3.14});
     if(!f.sp)f.sp=mkSparks(10,150,.3);sparks(f,p.x,p.y-16,f.col,k);shock(p.x,p.y,isoR(f.r)[0]*(1.1-k*.3),isoR(f.r)[1]*(1.1-k*.3),f.col,k)}

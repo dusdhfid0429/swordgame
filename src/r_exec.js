@@ -23,8 +23,17 @@ function GL(o,X){
 // v211 (사용자 2026-10-30 "권각 무공에 검기·검강이 나와 이상하다. 무기 형태를 기본으로, 찌르면 찌르는 모양 휘두르면 휘두르는 모양"):
 // 한 대상을 치는 공격은 병기의 동작(CLASS.anim)을 따른다. 휘두르기(검·도·봉·단·편)는 반달, 찌르기(창)는 곧게 뻗는 기의 창끝, 주먹(권·맨손)은 앞으로 밀려 나가는 기 덩어리.
 // 부채꼴로 쓸어 치는 초식(arc)은 어느 병기든 휘두르는 동작이라 반달 그대로다 (sweep)
+// v212 (사용자 2026-10-30 "쓸어치는 동작도 무기별로, 무기 길이의 영향을 받게, 무기마다 사거리 차이, 발사·방출형이 아니면 이펙트는 사거리 안에서"):
+// 병기 길이 wLen = 그 병기 사거리 / 검 사거리. 근접(melee·multi)·쓸어 치기(arc)·몸 둘레(circle) 초식의 판정 반경과 이펙트 크기에 곱한다. 궁·암(쏘는 병기)의 근접 초식은 검 길이로 본다
+// 반달 그림(ribbon)은 r*55px 로 그려 땅 위 반경보다 1.2배쯤 크게 보이므로, 판정 반경을 그림 반경으로 바꿀 때 FX_R 을 곱해 이펙트가 사거리 밖으로 넘지 않게 한다
+const FX_R=.8,wLen=X=>{const c=X&&X.art&&X.art.cls,C=CLASS[c];return C&&!rangedCls(c)?C.reach/CLASS.검.reach:1};
+// 쓸어 치기·몸 둘레 반경 = 병기 사거리 × 모양 배율(SWR) × (이 초식 rad / 같은 병기 같은 모양 초식들의 평균 rad).
+// 무공 표의 rad 는 병기마다 이미 조금씩 달라(권 쓸어 치기가 검보다 컸다) 평균으로 나눠 병기 차이는 사거리만 남기고, 같은 병기 안의 초식끼리 차이는 살린다
+const SWR={arc:1.07,circle:1.15},RADM={};
+const radMean=(c,p)=>{const k=c+p;if(RADM[k]==null){const v=[];for(const a of Object.values(ARTS))if(a.cls===c)for(const f of a.forms)if(f.p===p&&f.rad)v.push(f.rad);RADM[k]=v.length?v.reduce((a,b)=>a+b)/v.length:0}return RADM[k]};
+function meleeRad(X,f){const c=X&&X.art&&X.art.cls,m=radMean(c,f.p);return !m||!CLASS[c]||rangedCls(c)||!SWR[f.p]?f.rad:f.rad/m*CLASS[c].reach*SWR[f.p]}
 const strikeMo=X=>{const c=X&&X.art&&X.art.cls,a=c&&CLASS[c]&&CLASS[c].anim;return a==='thrust'?'thrust':a==='punch'?'punch':'swing'};
-const fArc=(X,r,spread,col,w,life,sweep)=>{const mo=sweep?'swing':strikeMo(X);const o={t:mo==='swing'?'arc':'thrust',mo,x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
+const fArc=(X,r,spread,col,w,life,sweep)=>{const mo=sweep?'swing':strikeMo(X);if(!sweep)r*=wLen(X);const o={t:mo==='swing'?'arc':'thrust',mo,wc:X&&X.art&&X.art.cls,x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
 const fRing=(X,c,r,col,w,life)=>GL({t:'ring2',x:c.x,y:c.y,r,col,w,life},X);
 const fLine=(X,len,col,w,life,wavy,off=0)=>{const e=rot(len,off);GL({t:'line',x:P.x,y:P.y,ex:e.x,ey:e.y,col,w,life,wavy},X)};
@@ -45,12 +54,12 @@ function fxHit(X,e,s=1){
 
 function exec(f,e,X){
   if(f.delay){const g={...f,delay:0};later(f.delay,()=>exec(g,e,X));return}
-  const t=X.t,c=X.art.c,m=f.m,rm=t>=2?1.2:1,stun=f.stun||0,kb=f.kb||.3,hits=f.hits||1;
+  const t=X.t,c=X.art.c,m=f.m,rm=t>=2?1.2:1,mr=meleeRad(X,f),stun=f.stun||0,kb=f.kb||.3,hits=f.hits||1;
   switch(f.p){
     case'melee':anim(.2);if(e){hitE(X,e,m,kb,stun,P,true);fxHit(X,e)}fArc(X,1.15,1.6,c,3,.2);break;
     case'multi':for(let i=0;i<hits+(t>=3?1:0);i++)later(i*.1,()=>{anim(.1);if(e&&e.hp>0){hitE(X,e,m,.08,stun,P,true);fxHit(X,e,.8)}fArc(X,.8,1.1,c,2,.14)});break;
-    case'arc':for(let i=0;i<hits;i++)later(i*.12,()=>{anim(.24);arcHit(X,f.rad*rm,Math.cos(f.spread/2),m,kb,stun);fArc(X,f.rad*rm,f.spread,c,6,.28,true)});break;
-    case'circle':for(let i=0;i<hits;i++)later(i*.13,()=>{anim(.26);circleHit(X,P,f.rad*rm,m,kb,stun);fSpin(X,P,f.rad*rm,c,5,.32)});break;
+    case'arc':for(let i=0;i<hits;i++)later(i*.12,()=>{anim(.24);arcHit(X,mr*rm,Math.cos(f.spread/2),m,kb,stun);fArc(X,mr*rm*FX_R,f.spread,c,6,.28,true)});break;
+    case'circle':for(let i=0;i<hits;i++)later(i*.13,()=>{anim(.26);circleHit(X,P,mr*rm,m,kb,stun);fSpin(X,P,mr*rm,c,5,.32)});break;
     case'line':anim(.22);lineHit(X,f.len*rm,f.w,m,kb,stun);fLine(X,f.len*rm,c,f.len>5?10:5,.3,f.wavy);break;
     case'proj':{
       const fire=()=>{anim(.22);let n=f.cnt;if(f.full)n=Math.round(n*(t>=1?1.5:1));else if(t>=1)n+=1;

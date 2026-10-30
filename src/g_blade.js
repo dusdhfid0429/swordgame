@@ -39,12 +39,12 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(r<5||e.hp>=c.hp0)return;const tr=
 // 베기 모양: 검환은 반달 끝에 강환이 맺히고, 어검술은 반달을 따라 검 그림자 둘, 심검은 반달이 옅어지고 날카로운 한 줄, 무형검은 형체 없이 물결만
 // v211: 찌르기·주먹(o.t 'thrust')이면 강환은 기운 끝에 맺히고, 병기 그림자는 기운과 나란히 앞으로 뻗는다. 그림자 모양은 든 병기를 따른다 (wpnShape)
 hook('slashFx',o=>{const r=realmIdx();if(r<5)return;const tr=Math.min(r,8),col=bladeCol(tr),L=o.life,cls=bladeCls(),th=o.t==='thrust';
-  if(th&&tr===5)fx.push({t:'bt',k:'tipT',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.3,mo:o.mo,col,life:L,max:L});
-  else if(th&&tr===6)for(const s of[-1,1])fx.push({t:'bt',k:'shadowT',cls,side:s,glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.4,mo:o.mo,col,life:L*1.1,max:L*1.1});
-  else if(tr===5)fx.push({t:'bt',k:'tip',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.4,spread:o.spread*1.15,flip:o.flip,col,life:L,max:L});
-  else if(tr===6)for(const s of[-1,1])fx.push({t:'bt',k:'shadow',cls,glow:true,x:P.x,y:P.y,ang:o.ang+s*o.spread*.35,r:o.r*1.5,col,life:L*1.1,max:L*1.1});
-  else if(tr===7){fx.push({...o,glow:true,el:false,st:null,col,r:o.r*1.3,w:o.w*.7,dim:.45,max:L,life:L});fx.push({t:'bt',k:'cut',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.6,col,life:L*.8,max:L*.8})}
-  else fx.push({t:'bt',k:'ripple',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.5,col,life:L*1.4,max:L*1.4})});
+  if(th&&tr===5)fx.push({t:'bt',k:'tipT',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r,mo:o.mo,col,life:L,max:L});
+  else if(th&&tr===6)for(const s of[-1,1])fx.push({t:'bt',k:'shadowT',cls,side:s,glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r,mo:o.mo,col,life:L*1.1,max:L*1.1});
+  else if(tr===5)fx.push({t:'bt',k:'tip',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.04,spread:o.spread*1.15,flip:o.flip,col,life:L,max:L});
+  else if(tr===6)for(const s of[-1,1])fx.push({t:'bt',k:'shadow',cls,glow:true,x:P.x,y:P.y,ang:o.ang+s*o.spread*.35,r:o.r,col,life:L*1.1,max:L*1.1});
+  else if(tr===7){fx.push({...o,glow:true,el:false,st:null,col,r:o.r,w:o.w*.7,dim:.45,max:L,life:L});fx.push({t:'bt',k:'cut',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r*1.05,col,life:L*.8,max:L*.8})}
+  else fx.push({t:'bt',k:'ripple',glow:true,x:P.x,y:P.y,ang:o.ang,r:o.r,col,life:L*1.4,max:L*1.4})});
 
 // 경지에 들면 알린다 (g_realmfx.js realmGain 이 부른다)
 function bladeGain(r){if(r>=5&&r<=8)log(`${bladeName(r)}${bladeHz(r)}: ${BLADE.d[r-2]}`,'xp')}
