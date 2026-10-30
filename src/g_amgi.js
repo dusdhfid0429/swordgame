@@ -65,7 +65,7 @@ function beltPick(){const b=beltOf();if(!b)return '';beltNorm(b);const cap=beltC
   return `<div class="card"><h4>요대 <small class="dim">암기 ${b.reg.length}/${cap}칸 · 눌러 고른 암기를 다 쓰면 시계방향 다음 암기 · 모두 쓰면 ${mw?`${esc(mw.name)}로 ${esc(MELEE[mw.cls].n)}`:'맨손 권각'}</small></h4>
     <div class="bring">${slots}<div class="bcen"><small>지금</small><b>${cur?esc(cur):'없음'}</b><small>↻ 시계방향</small></div></div>
     <div class="row2"><span class="note">근접 무기 ${mw?`<b style="color:${itemCol(mw)}">${esc(itemLabel(mw))}</b> 공격력 ${mw.atk}${mw.hm?` · 현묘도 +${mw.hm}`:''}`:'없음 · 행낭의 단도·절편에서 「요대에 차기」'}</span>${mw?B('bmw:off','풀기'):''}</div>
-    ${add?`<div class="ib">${add}</div>`:''}${rm?`<details${amrOpen?' open':''} ontoggle="amrOpen=this.open"><summary class="dim">암기 빼기</summary><div class="ib">${rm}</div></details>`:''}</div>`}
+    ${add?`<div class="ib">${add}</div>`:''}${rm?`<details${amrOpen?' open':''}><summary class="dim" onclick="amrOpen=!this.parentNode.open">암기 빼기</summary><div class="ib">${rm}</div></details>`:''}</div>`}
 // 요대 단추: 고르기·넣기·빼기, 단도·절편 차기(행낭 「요대에 차기」 beq)·풀기. 행낭 「장착」은 다른 병기처럼 손(무기 칸)에 든다
 hook('sectAct',c=>{const{a,x}=c,b=beltOf();
   if(a==='beq'){c.done=true;c.r=true;const it=P.bag.find(i=>i.id===+x);if(!it||it.slot!=='weapon'||!MELEE[it.cls])return;
