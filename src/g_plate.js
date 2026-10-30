@@ -1,4 +1,4 @@
-// ================= 머리 위 생명 막대: 관계별 모양·색 (v209) =================
+// ================= 머리 위 생명 막대: 관계별 모양·색 (v210) =================
 // 사용자 2026-10-30: "HP바 플레이트를 나와의 관계에 따라 구분되게, 아군인 경우와 내가 타겟팅한 적(공격 중인 적)만 나오게"
 //  동료(초록, 둥근 끝)·결전장 아군과 싸우는 같은 편 무인(파랑, 둥근 끝)은 늘 / 적(빨강, 뾰족한 끝)은 겨누었거나 내가 친 뒤 PLATE.keep초 동안만
 //  경계(노랑)·중립(옅은 갈색, 납작)은 겨눌 때만. 보스·정예는 금테·뿔. 겨눈 대상은 밝은 테. 잃은 몫은 잠깐 하얗게 남았다가 줄어든다
@@ -19,8 +19,8 @@ function plAlpha(e,rel){
   if(rel==='foe'){const t=time-(e.pHitAt??-99);return t<PLATE.keep?1:t<PLATE.keep+PLATE.fade?1-(t-PLATE.keep)/PLATE.fade:0}
   return 0}
 const plShown=e=>!e.dead&&e.hp>0&&!!P&&plAlpha(e,plRel(e))>0;
-// 내가 친 적을 기억한다 (from이 나거나 내 투사체)
-hook('struck',(e,from)=>{if(!from||from===P||from.owner===P||from.src===P)e.pHitAt=time});
+// 내가 친 적을 기억한다. from이 나, 또는 내 투사체가 넘기는 {x,y} 자리. 동료·무인(d나 kind가 있는 것)이 친 것은 아니다
+hook('struck',(e,from)=>{if(!from||from===P||!(from.d||from.kind))e.pHitAt=time});
 function plPath(x,y,w,h,rel){const l=x-w/2,r=x+w/2;ctx.beginPath();
   if(rel==='foe'){const k=h/2+2;ctx.moveTo(l-k,y+h/2);ctx.lineTo(l,y-1);ctx.lineTo(r,y-1);ctx.lineTo(r+k,y+h/2);ctx.lineTo(r,y+h+1);ctx.lineTo(l,y+h+1);ctx.closePath()}
   else if(rel==='neu'||rel==='wary'){ctx.rect(l-1,y-1,w+2,h+2)}

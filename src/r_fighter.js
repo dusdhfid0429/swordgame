@@ -140,7 +140,7 @@ function drawFighter(e,isP){
   ctx.restore();
   if(!isP&&e.stun>0&&!e.npc){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(sc>1.2?88:68)+Math.sin(a)*3,2,0,7);ctx.fill()}}
   if(!isP&&!e.npc&&!e.dead){const w=30*sc,y=p.y-(sc>1.2?94:74);
-    drawPlate(e,p.x,y,w);   // v209: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
+    drawPlate(e,p.x,y,w);   // v210: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
     if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?(typeof repStE==='function'&&repStE(e)!==2?REP.col[repStE(e)]:'#9cc8f0'):'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
   if(e.npc&&!e.dead){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
 }

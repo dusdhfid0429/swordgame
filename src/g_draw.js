@@ -72,7 +72,7 @@ function drawBeast(e){
   ctx.restore();
   if(e.stun>0){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(b.L+b.ry)*s*2-6+Math.sin(a)*3,2,0,7);ctx.fill()}}
   const y=p.y-(b.L+b.ry*2+(b.neck?16:6))*s-6;if(e.dead)return;
-  const nc=drawPlate(e,p.x,y,26);   // v209: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
+  const nc=drawPlate(e,p.x,y,26);   // v210: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
   if(P.target===e||e.ally){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=nc||(e.ally?'#a6d47f':d.hostile?'#f0a080':'#f0e4c8');ctx.fillText(e.name,p.x,y-5)
     if(e.art&&P.target===e){const t=mobKitLabel(e);ctx.font='10px "Gowun Dodum",sans-serif';ctx.fillStyle='#000';ctx.fillText(t,p.x+1,y-16);ctx.fillStyle='#d8c8a0';ctx.fillText(t,p.x,y-17)}}
 }
@@ -133,7 +133,7 @@ function drawFx2(f){
 // 닿을 때마다 몸의 빛이 조금씩 밝아진다. 정파는 금빛·푸른빛, 사파는 붉은빛·보랏빛.
 const MED={k:0,parts:[],lt:0,pulse:0,spin:0};
 function medSpawn(){const r0=(50+Math.random()*60)*qfMedR();return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
-  h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0,...qfSwirl()}}   // v209: 경지마다 도는 모양이 다르다 (r_qiflow.js qfSwirl)
+  h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0,...qfSwirl()}}   // v210: 경지마다 도는 모양이 다르다 (r_qiflow.js qfSwirl)
 function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
   MED.k=clamp(MED.k+((P.medit||P.qiTraining&&!(typeof ngProg==='function'&&ngProg()>=0))&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
   if(MED.k<=0){MED.parts.length=0;return}
@@ -141,7 +141,7 @@ function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
   for(const q of MED.parts){const near=1-q.r/q.r0;q.v+=dt*(50+220*near*near);q.r-=q.v*dt;q.a+=q.w*dt*(1+near*3);q.life+=dt;
     if(q.r<4){MED.pulse=Math.min(1,MED.pulse+.07);if(MED.parts.length>want)q.dead=1;else Object.assign(q,medSpawn())}}
   MED.parts=MED.parts.filter(q=>!q.dead)}
-// tl: 기운 고리가 비스듬히 기운 정도, e: 다 모였을 때 단전에서 위(−)·아래(+)로 비켜 닿는 자리 (v209)
+// tl: 기운 고리가 비스듬히 기운 정도, e: 다 모였을 때 단전에서 위(−)·아래(+)로 비켜 닿는 자리 (v210)
 function medPos(q,r,a,c){const f=r/q.r0;return[c.x+Math.cos(a)*r,c.y+Math.sin(a)*r*.48+q.h*f+(q.tl?Math.cos(a)*r*q.tl:0)+(q.e?q.e*(1-Math.min(1,f)):0)]}
 function drawMedit(front){
   if(!front)medTick();if(MED.k<=0)return;
