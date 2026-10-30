@@ -1,0 +1,37 @@
+// v210 관계별 생명 막대 (g_plate.js): 아군은 늘, 적은 겨누었거나 내가 친 뒤 잠깐만, 중립·경계는 겨눌 때만
+const {chromium}=require(process.env.PWPATH||'playwright');
+(async()=>{
+  const b=await chromium.launch();const errs=[];
+  const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();
+  p.on('pageerror',e=>errs.push('PE '+e.message));p.on('dialog',d=>d.accept());
+  const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
+  await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
+  await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForTimeout(400);
+  const r=await p.evaluate(()=>{paused=true;mobs=[];allies.length=0;P.target=null;P.sect=null;const X=P.x,Y=P.y,o={};
+    const a=mkMob('산적',X+2,Y);a.hp=a.maxHp*.5;mobs.push(a);
+    o.hurtHidden=!plShown(a)&&plRel(a)==='foe';
+    P.target=a;o.target=plShown(a);P.target=null;
+    const b=mkMob('산적',X-2,Y);mobs.push(b);const c=mkMob('산적',X,Y+2);mobs.push(c);
+    damage(b,1,0,0,P);damage(c,1,0,0,b);o.hitMine=plShown(b);const q=mkMob('산적',X+3,Y-2);mobs.push(q);damage(q,1,0,0,{x:X,y:Y});o.proj=plShown(q);o.hitOther=!plShown(c);
+    time+=PLATE.keep+PLATE.fade+.1;o.fadeOut=!plShown(b);
+    const al=mkAlly('sect','제자',X-1,Y-1);allies.push(al);al.ally=1;o.pal=plRel(al)==='pal'&&plShown(al);
+    const w=mkFac('정',0,X+1,Y+1);w.warAlly=1;mobs.push(w);o.war=plRel(w)==='ally'&&plShown(w);
+    const s=mkFac('정',0,X+1,Y-2);mobs.push(s);o.sideRel=plRel(s);o.sideIdle=!plShown(s);s.hurtAt=time;o.sideFight=plShown(s);
+    const v=mkMob('양민',X-2,Y+2);mobs.push(v);o.neu=plRel(v)==='neu'&&!plShown(v);P.target=v;o.neuT=plShown(v);P.target=null;
+    const f=mkFac('마',0,X+3,Y+3);mobs.push(f);o.foeFac=plRel(f)==='foe'&&!plShown(f);
+    let n=0;const dp=window.drawPlate;window.drawPlate=(...q)=>{const k=dp(...q);if(k)n++;return k};P.target=a;draw();window.drawPlate=dp;o.drawn=n;
+    return o});
+  ok('다쳤어도 겨누지도 치지도 않은 적은 막대 없음',r.hurtHidden);
+  ok('겨눈 적은 막대',r.target);
+  ok('내가 친 적은 막대',r.hitMine);
+  ok('내 투사체가 맞힌 적도 막대',r.proj);
+  ok('다른 이가 친 적은 막대 없음',r.hitOther);
+  ok('친 뒤 시간이 지나면 사라짐',r.fadeOut);
+  ok('동료는 초록 막대 늘',r.pal);
+  ok('결전장 아군은 늘',r.war);
+  ok('같은 편 무인은 싸울 때만',r.sideRel==='side'&&r.sideIdle&&r.sideFight);
+  ok('양민은 겨눌 때만',r.neu&&r.neuT);
+  ok('적 세력 무인도 겨누지 않으면 없음',r.foeFac);
+  ok('그리기: 동료·아군·같은 편·겨눈 적만 ('+r.drawn+')',r.drawn===4);
+  ok('오류 없음',!errs.length);if(errs.length)console.log(errs);
+  await b.close()})();
