@@ -29,6 +29,12 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const md=await p.evaluate(()=>{const r={};for(const rl of[0,8]){P.realm=rl;P.medit=true;MED.k=0;MED.parts.length=0;let n=0;const f=window.qfDraw;window.qfDraw=function(...a){n++;return f.apply(this,a)};
       for(let i=0;i<60;i++){time+=.03;draw()}window.qfDraw=f;r[rl]={parts:MED.parts.length,qf:n};P.medit=false;for(let i=0;i<30;i++){time+=.03;draw()}}return r});
   ok(`운기조식에도 기운 길 (삼류 ${md[0].qf}회, 자연경 ${md[8].qf}회) · 알갱이 삼류 ${md[0].parts} < 자연경 ${md[8].parts}`,md[0].qf>0&&md[8].qf>0&&md[8].parts>md[0].parts);
+  // 3b. v209 몸 둘레를 도는 기운도 경지마다 다르다 (사용자 2026-10-30 "몸주변을 회전하는 효과도 경지에 따라 다르게")
+  const sw=await p.evaluate(()=>{const o={};for(let r=0;r<=8;r++){P.realm=r;const a=Array.from({length:300},()=>medSpawn());
+      o[r]={pos:a.filter(q=>q.w>0).length,neg:a.filter(q=>q.w<0).length,tl:a.some(q=>q.tl),e:[...new Set(a.map(q=>q.e))].length,wh:a.filter(q=>WUHAENG.includes(q.cc)).length,dk:a.filter(q=>q.dk).length,leaf:a.filter(q=>q.leaf).length,hi:Math.min(...a.map(q=>q.h))}}
+    P.realm=8;const q=Object.assign(medSpawn(),{});P.realm=1;Object.assign(q,medSpawn());o.clean=!q.leaf&&!q.cc&&!q.dk;return o});
+  ok(`이류 한 방향 ${sw[1].neg===0} · 일류 두 띠 반대 ${sw[2].pos>0&&sw[2].neg>0} · 절정 기운 고리 ${sw[3].tl} · 초절정 세 단전 ${sw[4].e} · 화경 오행 ${sw[5].wh} · 생사경 검은 기운 ${sw[7].dk} · 자연경 빛잎 ${sw[8].leaf} 높이 ${sw[8].hi|0} · 되살릴 때 앞 경지 성질 지움 ${sw.clean}`,
+    sw[1].neg===0&&sw[2].pos>0&&sw[2].neg>0&&sw[3].tl&&!sw[1].tl&&sw[4].e===3&&sw[5].wh>100&&sw[7].dk>100&&sw[8].leaf>100&&sw[8].hi<-100&&sw[0].wh+sw[0].dk+sw[0].leaf===0&&sw.clean);
   // 4. 마교(마기, 어두운 색)도 오류 없이 그린다 + 장면 사진
   await p.evaluate(()=>{P.sect='cheonma';for(const r of[3,7]){P.realm=r;startTrain('neigong');for(let i=0;i<30;i++){time+=.03;trainTick(.03);draw()}trnBusy=null;P.qiTraining=false}P.sect='hwasan'});
   for(const r of[1,2,3,5,6,8]){await p.evaluate(r=>{P.realm=r;trnBusy={k:'neigong',t:0,dur:1.6};P.qiTraining=true;for(let i=0;i<24;i++){time+=.03;trnBusy.t+=.03;draw()}},r);
