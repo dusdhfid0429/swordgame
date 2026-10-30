@@ -8,7 +8,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const SECTS_N=Object.fromEntries(require('../data/sects.json').SECT_DATA.map(x=>[x[0],1]));const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
-  const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
+  // v213 형산 음공 [소상야우검](소문파 일반 = 중승)은 문파마다 하나인 중승 무공(넷째 칸 'm')과 따로 센다 (g_lore.js)
+  const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;if(!ARTS[a.id].um)cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
       const st=START[s.id],want=a.mid?1:!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?2:(a.hi?3:2);if(g!==want)bad.push(a.n)}
     const starts=Object.values(SECTS).filter(s=>s.arts.length).map(s=>artGrade(startSet(s).art.id));cnt.start=starts.length;cnt.start0=starts.every(g=>g===0);
     const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy&&!a.rc).every(a=>(a.grade||0)===0);

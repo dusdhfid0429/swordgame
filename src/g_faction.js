@@ -101,7 +101,7 @@ const rankIdx=(sid=P.sect)=>P.srank?Math.min(P.srank[sid]||0,rankTop(sid)):Math.
 const capNeed=i=>rk(Math.max(0,i-GD.RANK_CAP.plus));
 const rankName=(sid=P.sect,i)=>{const s=SECTS[sid];return s?SRANK[s.al][i??rankIdx(sid)]:null};
 function addMerit(sid,v){
-  if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1)*(G.unified&&G.unified.by===alFac(SECTS[sid].al)?worldMul('merit'):1));   // v153: 천하통일한 세력의 문파   // 맹 서열 1위 문파 +15% (g_maeng.js)
+  if(!sid||!SECTS[sid])return 0;const member=P.sect===sid;if(member)v=Math.round(v*(1+rankIdx(sid)*.1)*(typeof maengSeatMul==='function'?maengSeatMul(sid):1)*(typeof loreSeatMul==='function'?loreSeatMul(sid):1)*(G.unified&&G.unified.by===alFac(SECTS[sid].al)?worldMul('merit'):1));   // v153: 천하통일한 세력의 문파   // 맹 서열 1위 문파 +15% (g_maeng.js)
   P.merit[sid]=(P.merit[sid]||0)+v;
   if(member){P.mtot=P.mtot||{};const b=rankIdx(sid),rb=rankRaw(sid);P.mtot[sid]=(P.mtot[sid]||0)+v;const a=rankIdx(sid);
     if(P.srank&&rankRaw(sid)>rb&&typeof rtNotice==='function')rtNotice(sid);

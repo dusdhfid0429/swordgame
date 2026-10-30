@@ -11,8 +11,9 @@ function drawLamp(l){
 function drawFx(f){
   const p=toScreen(f.x,f.y);
   if(f.t==='dust'){const k=1-f.life/.45;ctx.fillStyle=`rgba(150,128,96,${.35*(1-k)})`;ctx.beginPath();ctx.ellipse(p.x,p.y-2-k*4,4+k*9,2+k*4,0,0,7);ctx.fill();return}
-  if(f.t==='ring'){const k=1-f.life/f.max,r=k*2.6;ctx.strokeStyle=`rgba(140,180,255,${1-k})`;ctx.lineWidth=5*(1-k)+1;
-    ctx.beginPath();ctx.ellipse(p.x,p.y,r*TW/2*1.41,r*TH/2*1.41,0,0,7);ctx.stroke();ctx.fillStyle=`rgba(160,200,255,${.12*(1-k)})`;ctx.fill()}
+  if(f.t==='ring'){const k=1-f.life/f.max,r=k*2.6,rc=f.um&&f.col||'140,180,255';ctx.strokeStyle=`rgba(${rc},${1-k})`;   // v213 음공 고리는 제 색 (g_lore.js)
+    ctx.lineWidth=5*(1-k)+1;
+    ctx.beginPath();ctx.ellipse(p.x,p.y,r*TW/2*1.41,r*TH/2*1.41,0,0,7);ctx.stroke();ctx.fillStyle=`rgba(${f.um?rc:'160,200,255'},${.12*(1-k)})`;ctx.fill()}
   else if(f.t==='slash'){const a=f.life/.2;ctx.save();ctx.translate(p.x,p.y-30);ctx.scale(f.side,1);
     ctx.strokeStyle=`rgba(255,250,230,${a})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(-6,0,18,-1.1,1.1);ctx.stroke();
     ctx.strokeStyle=`rgba(255,200,120,${a*.6})`;ctx.lineWidth=7;ctx.beginPath();ctx.arc(-8,0,18,-.8,.8);ctx.stroke();ctx.restore()}

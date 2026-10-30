@@ -158,7 +158,7 @@ function pArts(){
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
     return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 특성 ${trHtml(a)} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
-      <p>${a.d}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
+      <p>${a.d}${typeof artMeanHtml==='function'?artMeanHtml(a):''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
@@ -364,7 +364,7 @@ function act(s){
     case'sleep':if(P.silver>=10){P.silver-=10;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('객잔에서 하룻밤 묵었습니다.','sys');closePanels();return}break;
     case'rumor':log(`객잔 주인: "${pick(TIPS)}"`,'info');break;
     case'repair':{const w=P.eq.weapon,c=Math.ceil((w.maxDur-w.dur)*.6);if(P.silver>=c){P.silver-=c;w.dur=w.maxDur;log('무기를 고쳤습니다.','sys')}break}
-    case'marry':{const v=prompt('배우자의 이름',pick(['연화','소혜','설아','월향','진운','하령','유경','백란']));if(!v)return;P.silver-=200;P.spouse={name:v.trim().slice(0,8)};
+    case'marry':{if(P.monk){log('출가한 몸이라 혼례를 올리지 못한다.','info');return}const v=prompt('배우자의 이름',pick(['연화','소혜','설아','월향','진운','하령','유경','백란']));if(!v)return;P.silver-=200;P.spouse={name:v.trim().slice(0,8)};
       log(`${P.spouse.name}와(과) 혼례를 올렸습니다.`,'xp');showBanner('혼례',`${P.name} · ${P.spouse.name}`);feat(`${P.spouse.name}와(과) 혼인했다`);break}
     case'qtake':{const q={...G.board[n],have:0},m=worldMul('board');if(m!==1)q.silver=Math.round(q.silver*m);P.quests.push(q)}G.board.splice(n,1);break;
     case'qdrop':P.quests.splice(n,1);break;
@@ -372,7 +372,7 @@ function act(s){
     case'duel':duelStart();return;
     case'lot':P.silver-=300;G.house={lot:n,built:false};log('집터를 샀습니다. 목재와 광석을 모아 토지 관리인에게 오세요.','sys');break;
     case'build':P.mats.목재-=10;P.mats.광석-=6;P.silver-=150;G.house.built=true;buildHouse();log('집을 지었습니다.','xp');feat(`집을 지었다`);break;
-    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(realAge());log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
+    case'teach':{const a2=art(),s2=A(a2.id),fi=a2.forms.findIndex((f,i)=>!s2.f[i]&&s2.p>=f.req);if(fi>=0&&typeof kinBlock==='function'&&kinBlock(a2,fi)){log(`[${a2.forms[fi].n}]은(는) ${kinBlock(a2,fi)} 받는다.`,'info');break}if(fi>=0){s2.f[fi]=true;P.taught=Math.floor(realAge());log(`사부에게서 [${a2.forms[fi].n}]을(를) 전수받았습니다.`,'xp');if(allLearned(a2.id))log(`필살기 [${a2.ult.n}]을(를) 쓸 수 있습니다.`,'xp')}break}
     case'sbuy':{const fi=+y,price=40*(fi+1);if(P.silver>=price){P.silver-=price;P.bag.push(mkBook(x,fi));log('비급을 샀습니다. 행낭에서 읽으세요.','sys')}break}
     case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;feat(`${P.sectName}을(를) 세웠다`);break}
     case'disciple':{P.silver-=50;const nm=pick(['소운','청하','무진','백결','한솔','도현','진우','설화','유린']);const d=mkAlly('disciple',nm,P.x+.6,P.y+.4);allies.push(d);log(`${nm}을(를) 제자로 받았습니다.`,'xp');break}
