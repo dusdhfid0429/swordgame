@@ -132,12 +132,12 @@ function drawFx2(f){
 // 기운 한 줄기는 몸 둘레 바깥에서 생겨 나선을 그리며 점점 빨라지고, 단전(몸 가운데)에 닿으면 사라진다.
 // 닿을 때마다 몸의 빛이 조금씩 밝아진다. 정파는 금빛·푸른빛, 사파는 붉은빛·보랏빛.
 const MED={k:0,parts:[],lt:0,pulse:0,spin:0};
-function medSpawn(){const r0=50+Math.random()*60;return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
+function medSpawn(){const r0=(50+Math.random()*60)*qfMedR();return{r:r0,r0,a:Math.random()*7,w:(Math.random()<.5?-1:1)*(1.1+Math.random()*1.3),v:6+Math.random()*10,
   h:-14-Math.random()*50,s:1.3+Math.random()*1.5,c:Math.random()<.65?0:1,life:0}}
 function medTick(){const dt=Math.min(.05,Math.max(0,time-MED.lt));MED.lt=time;
   MED.k=clamp(MED.k+((P.medit||P.qiTraining&&!(typeof ngProg==='function'&&ngProg()>=0))&&P.hp>0?dt/.6:-dt/.35),0,1);MED.spin+=dt*1.6;MED.pulse=Math.max(0,MED.pulse-dt*1.4);
   if(MED.k<=0){MED.parts.length=0;return}
-  const want=Math.round(54*MED.k);while(MED.parts.length<want)MED.parts.push(medSpawn());
+  const want=Math.round(54*MED.k*qfMedN());while(MED.parts.length<want)MED.parts.push(medSpawn());
   for(const q of MED.parts){const near=1-q.r/q.r0;q.v+=dt*(50+220*near*near);q.r-=q.v*dt;q.a+=q.w*dt*(1+near*3);q.life+=dt;
     if(q.r<4){MED.pulse=Math.min(1,MED.pulse+.07);if(MED.parts.length>want)q.dead=1;else Object.assign(q,medSpawn())}}
   MED.parts=MED.parts.filter(q=>!q.dead)}
@@ -147,9 +147,11 @@ function drawMedit(front){
   // v156: 운기 색은 문파 색(pFxPair, g_simbeop.js). 마교 심법은 검은 마기 그대로 (사용자 요청 2026-10-14)
   const col=pFxPair(),dk=isDark(col[0]),p=toScreen(P.x,P.y),k=MED.k,c={x:p.x,y:p.y-30};
   ctx.save();
+  // v208: 운기조식도 경지의 기운 길이 옅게 몸을 돈다 (r_qiflow.js). 발밑 고리는 삼류 한 겹, 초절정부터 세 겹
+  const rl=qfRealm(),side=(P.fx-P.fy)>=0?1:-1;
   if(!front){
-    // 발밑: 천천히 도는 두 겹의 기운 고리
-    for(const[rr,dir,al]of[[30,1,.7],[44,-1,.4]]){ctx.strokeStyle=`rgba(${col[0]},${al*k})`;ctx.lineWidth=1.8;ctx.setLineDash([7,5]);ctx.lineDashOffset=-MED.spin*14*dir;
+    qfDraw(0,k,side,.8);
+    for(const[rr,dir,al]of[[30,1,.7],[44,-1,.4],[58,1,.25]].slice(0,rl<1?1:rl<4?2:3)){ctx.strokeStyle=`rgba(${col[0]},${al*k})`;ctx.lineWidth=1.8;ctx.setLineDash([7,5]);ctx.lineDashOffset=-MED.spin*14*dir;
       ctx.beginPath();ctx.ellipse(p.x,p.y,rr*k,rr*.5*k,0,0,7);ctx.stroke()}
     ctx.setLineDash([]);
     const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,40*k);g.addColorStop(0,`rgba(${col[0]},${.22*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
@@ -166,8 +168,10 @@ function drawMedit(front){
       ctx.fillStyle=`rgba(${col[q.c]},${al*.5})`;ctx.beginPath();ctx.arc(x,y,q.s*.9,0,7);ctx.fill()}
     // 단전의 빛: 기운이 닿을수록 밝아진다
     ctx.globalCompositeOperation=dk?'source-over':'lighter';const pr=18+12*MED.pulse+2*Math.sin(time*5),g=ctx.createRadialGradient(c.x,c.y+6,0,c.x,c.y+6,pr*1.8);
-    g.addColorStop(0,`rgba(${dk?'10,0,18':'255,250,230'},${(.25+.35*MED.pulse)*k})`);g.addColorStop(.4,`rgba(${col[0]},${(.18+.25*MED.pulse)*k})`);g.addColorStop(1,`rgba(${col[0]},0)`);
+    const gk=k*(rl?.7:1);g.addColorStop(0,`rgba(${dk?'10,0,18':'255,250,230'},${(.25+.35*MED.pulse)*gk})`);g.addColorStop(.4,`rgba(${col[0]},${(.18+.25*MED.pulse)*gk})`);   // v208: 경맥이 보이게 단전 빛은 조금 옅게
+    g.addColorStop(1,`rgba(${col[0]},0)`);
     ctx.fillStyle=g;ctx.fillRect(c.x-pr*1.8,c.y+6-pr*1.8,pr*3.6,pr*3.6);
+    qfDraw(1,k,side,.8);
   }
   ctx.restore();
 }

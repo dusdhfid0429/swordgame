@@ -123,7 +123,7 @@ const FLOW=()=>[
   ['금강불괴',()=>{place();bodyFx('255,205,90');showBanner('금강불괴','칼이 들지 않는 몸')}],
   ['주화입마',()=>{place();fx.push({t:'ring',x:P.x,y:P.y,life:.6,max:.6,col:'220,60,60'});shake=.3}],
 ];
-function medit(on,kind){place();P.medit=false;P.qiTraining=false;if(on){if(kind==='qi')P.qiTraining=true;else P.medit=true}}
+function medit(on,kind){place();P.realm=V.realm;P.medit=false;P.qiTraining=false;if(on){if(kind==='qi')P.qiTraining=true;else P.medit=true}}
 const TRAIN=[['근력 수련','str'],['민첩 수련','agi'],['지구력 수련','end'],['본원진기 수련','qi']];
 function setSect(id){V.sect=id;P.sect=id||null;recalc();if(typeof garbSync==='function')try{garbSync()}catch(e){}}
 // v187: 문파를 고르면 그 문파 경공·보법(가장 높은 단계, 잔상이 문파 색), 아니면 공용 가운데 가장 높은 것
@@ -212,6 +212,8 @@ function render(){if(!P)return;
       <h3>경지 돌파 연출</h3>${BRK().length?`<div class="grid">${BRK().map(([i,d])=>btn(`<span class="form"><b>${esc(d.n)}</b><small>${esc(RANKS[i]||'')}</small></span>`,'brk:'+i)).join('')}</div>`:'<p class="dim">경지 돌파 연출(작업 중인 PR)이 이 빌드에 합쳐지면 여기에 나온다.</p>'}`;
   }else if(TAB==='qi'){
     h+=`<h3>문파 (운기·무공 색)</h3><select data-a="sect"><option value="">문파 없음 (계열 색)</option>${Object.entries(SECTS).filter(([id])=>SECT_FX[id]).map(([id,s])=>`<option value="${esc(id)}"${id===V.sect?' selected':''}>${esc(s.n)}</option>`).join('')}</select>
+      <h3>경지 (몸을 도는 기운의 길)</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${typeof QI_FLOW!=='undefined'&&QI_FLOW[i]?' · '+esc(QI_FLOW[i].n):''}</option>`).join('')}</select>
+      ${typeof QI_FLOW!=='undefined'&&QI_FLOW[V.realm]?`<p class="dim">${esc(QI_FLOW[V.realm].d)}</p>`:''}
       <h3>운기</h3><div class="grid">${btn('운기조식 켜기','med:1',P.medit)}${btn('내공 수련 켜기','med:qi',P.qiTraining)}${btn('끄기','med:0')}</div>
       <h3>기본기 수련 연출</h3><div class="grid">${TRAIN.map(([n,k])=>btn(n,'train:'+k)).join('')}</div>`;
   }else if(TAB==='prim'){
