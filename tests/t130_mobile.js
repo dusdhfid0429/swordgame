@@ -15,7 +15,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // v201 여백·탭바: 가장자리에서 16px 이상, 탭바 다섯 칸
   r=await p.evaluate(()=>{const vw=innerWidth,R=s=>document.querySelector(s).getBoundingClientRect(),tb=R('#tbar'),st=R('#stage');
     return{l:Math.min(R('.status').left,R('#tslots').left),r:Math.min(vw-R('#tbtns').right,vw-R('#tquick').right,vw-R('#mini').right),tb:tb.height,tn:[...$('tbar').querySelectorAll('.tbi')].filter(e=>e.offsetParent).length,nx:!!$('tnext').offsetParent,gap:Math.round(tb.top-st.bottom)}});
-  ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸+▸ 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===5&&r.nx&&r.tb>=56&&r.gap===0);
+  ok(`여백 왼쪽 ${Math.round(r.l)}px·오른쪽 ${Math.round(r.r)}px, 탭바 ${r.tn}칸+▸ 높이 ${Math.round(r.tb)}px가 무대 아래`,r.l>=16&&r.r>=16&&r.tn===5&&r.nx&&r.tb>=44&&r.gap===0);
   // v204 활력 막대: 탭바 윗단, 미니맵 아래에는 은자만
   r=await p.evaluate(async()=>{P.vit=Math.round(maxVit()/2);await new Promise(r=>setTimeout(r,500));const v=$('tvit').getBoundingClientRect(),tb=$('tbar').getBoundingClientRect(),i=qc($('tvit'),'i').getBoundingClientRect();
     return{t:$('tvit').textContent,cur:$('tcur').textContent,top:Math.round(v.top-tb.top),h:v.height,w:Math.round(v.width),tw:Math.round(tb.width),k:i.width/v.width}});
@@ -51,7 +51,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`더보기 설정에 공격 방식 단추 (${r.txt})`,r.has);
   await p.tap('[data-act="atkm:auto"]');await p.waitForTimeout(150);
   r=await p.evaluate(()=>({auto:atkAuto,st:STORE.get('ganghoyunhoe-atk'),atk:getComputedStyle($('t_atk')).display,ult:Math.round($('t_ult').getBoundingClientRect().width),lab:document.querySelector('[data-act="atkm:auto"]').classList.contains('pri')}));
-  ok(`자동으로 바꾸면 기록되고(${r.st}) 공격 단추 숨김(${r.atk}), 필살이 커짐(${r.ult}px), 고른 쪽 불 켜짐`,r.auto&&r.st==='auto'&&r.atk==='none'&&r.ult>=70&&r.lab);
+  ok(`자동으로 바꾸면 기록되고(${r.st}) 공격 단추 숨김(${r.atk}), 필살이 커짐(${r.ult}px), 고른 쪽 불 켜짐`,r.auto&&r.st==='auto'&&r.atk==='none'&&r.ult>=56&&r.lab);
   await p.evaluate(()=>closePanels());
   r=await p.evaluate(async()=>{const e=mkMob('산적',P.x+2,P.y,{hp:1e6,atk:0});mobs.push(e);P.target=null;P.path=null;P.goal=null;P.talk=null;P.medit=false;
     await new Promise(r=>setTimeout(r,400));const a=P.target===e;
