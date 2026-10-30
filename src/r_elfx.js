@@ -13,13 +13,14 @@ function elEmit(o,n){const out=[],L=o.max||o.life,R=Math.random;
   const ell=(rx,ry,cy,u0,u1,dl)=>{for(let i=0;i<n;i++){const u=R(),a=u0+(u1-u0)*u;out.push({ox:Math.cos(a)*rx,oy:cy+Math.sin(a)*ry,gy:Math.sin(a)*ry,d:dl*u*L})}};
   if(o.t==='arc'){const rx=o.r*55,ry=o.r*32,th=Math.atan2(Math.sin(o.ang)*rx,Math.cos(o.ang)*ry),sp=o.spread,dir=o.flip?-1:1,a0=th-dir*sp/2;
     for(let i=0;i<n;i++){const u=R(),a=a0+dir*sp*u;out.push({ox:Math.cos(a)*rx,oy:-26+Math.sin(a)*ry-8*o.r*Math.sin(u*Math.PI),gy:Math.sin(a)*ry,d:u*.32*L})}}
+  else if(o.t==='thrust'){const g=thrustGeo(o);for(let i=0;i<n;i++){const u=R();out.push({ox:g.ux*(6+g.L*u)+(R()-.5)*8,oy:-26+g.uy*(6+g.L*u)+(R()-.5)*8,gy:g.uy*g.L*u,d:u*.22*L})}}
   else if(o.t==='spin'){const[rx,ry]=isoR(o.r);ell(rx,ry,-16,0,6.283,.45)}
   else if(o.t==='ring2'||o.t==='vortex'){const[rx,ry]=isoR(o.r);ell(rx*(o.t==='vortex'?.8:1),ry*(o.t==='vortex'?.8:1),0,0,6.283,o.t==='vortex'?.6:.15)}
   else if(o.t==='line'||o.t==='zap'){const a=toScreen(o.x,o.y),b=toScreen(o.ex,o.ey);
     for(let i=0;i<n;i++){const u=R();out.push({ox:(b.x-a.x)*u+(R()-.5)*10,oy:(b.y-a.y)*u-26+(R()-.5)*8,gy:(b.y-a.y)*u,d:u*.25*L})}}
   else{const cy=o.t==='bolt'?-6:-28;for(let i=0;i<n;i++)out.push({ox:(R()-.5)*16,oy:cy+(R()-.5)*14,gy:(R()-.5)*6,d:R()*.05})}
   return out}
-const SWEEP={arc:1,spin:1,ring2:1,line:1,zap:1,vortex:1};
+const SWEEP={arc:1,thrust:1,spin:1,ring2:1,line:1,zap:1,vortex:1};
 // 입자 하나: 종류마다 수명·속도·크기를 정한다 (그림은 elDraw)
 function elPart(k,e){const R=Math.random,a=R()*6.283,q={...e,k,r:R(),rot:R()*6.283};
   switch(k){

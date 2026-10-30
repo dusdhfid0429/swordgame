@@ -105,7 +105,6 @@ const BASIC=[
 ];
 
 // ---- 경지·몸·운기·수련·이동 ----
-const RFX=['','','검기 (푸른 반달)','검사 (은빛 실)','검강 (금빛 두 겹)','검환 (강기 구슬)','어검술 (나는 기검)','심검 (그 자리 베기)','무형검 (하늘의 기검)'];
 function strike(){place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;basicStrike(e)}
 // 화경 이후 병기 기운 (g_blade.js): 경지를 맞추고 한 번 베고, 확률을 기다리지 않고 바로 발동시킨다
 const bladeNameFor=r=>(BLADE.names[V.cls]||BLADE.names['검'])[r-2];
@@ -205,8 +204,8 @@ function render(){if(!P)return;
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
   }else if(TAB==='realm'){
-    h+=`<h3>경지</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${RFX[i]?' · '+RFX[i]:''}</option>`).join('')}</select>
-      <p class="dim">기본 공격은 경지에 따라 일류 검기, 절정 검사, 초절정 검강, 화경 검환, 현경 어검술, 생사경 심검, 자연경 무형검이 덧붙는다. 이름은 병기마다 다르다(도강·창환·격공권 …).</p>
+    h+=`<h3>경지</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${i>=2?' · '+bladeNameFor(i):''}</option>`).join('')}</select>
+      <p class="dim">기본 공격은 경지에 따라 일류 검기, 절정 검사, 초절정 검강, 화경 검환, 현경 어검술, 생사경 심검, 자연경 무형검이 덧붙는다. 이름은 병기마다 다르고(도강·창환·격공권 …), 모양은 동작을 따른다: 휘두르는 검·도·봉은 반달, 찌르는 창은 곧은 창끝, 권각은 밀려 나가는 기 덩어리(권풍은 바람 고리).</p>
       <div class="grid">${FLOW().map(([n],i)=>btn(n,'flow:'+i)).join('')}</div>
       ${BLADES().length?`<h3>화경 이후 병기 기운 (발동)</h3><div class="grid">${BLADES().map(([r])=>btn(`<span class="form"><b>${esc(bladeNameFor(r))}</b><small>${esc(RANKS[r])}${V.cls==='검'?' · '+esc(BLADE.hz[r-2]):''}</small></span>`,'blade:'+r)).join('')}</div>`:''}
       <h3>경지 돌파 연출</h3>${BRK().length?`<div class="grid">${BRK().map(([i,d])=>btn(`<span class="form"><b>${esc(d.n)}</b><small>${esc(RANKS[i]||'')}</small></span>`,'brk:'+i)).join('')}</div>`:'<p class="dim">경지 돌파 연출(작업 중인 PR)이 이 빌드에 합쳐지면 여기에 나온다.</p>'}`;

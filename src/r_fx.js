@@ -78,9 +78,32 @@ function ribbon(f,p,k,o={}){
   const e=outer.slice(n*.45|0);ctx.strokeStyle=rgba(f.col,.6*fade);ctx.lineWidth=5;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.95*fade);ctx.lineWidth=1.8;path(e);ctx.stroke();
   const tip=outer[n];if(k>.5)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
 }
+// 찌르기·주먹 기운 (v211): 휘두르는 반달(ribbon)과 달리 바라보는 쪽으로 곧게 뻗는다. 길이는 반달과 같은 타원 반지름을 기준으로 mo마다 늘이고 줄인다
+const THR={thrust:1.3,punch:.8,gust:1.8};
+function thrustGeo(f){const rx=f.r*55,ry=f.r*32,c=Math.cos(f.ang),s=Math.sin(f.ang);return{ux:c,uy:s,L:rx*ry/Math.hypot(ry*c,rx*s)*(THR[f.mo]||THR.thrust)}}
+function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.x+ux*6,oy=p.y-26+uy*6,fade=Math.min(1,k*2.2),an=Math.atan2(uy,ux);
+  const ring=(x,y,R,al,w)=>{ctx.save();ctx.translate(x,y);ctx.rotate(an);ctx.beginPath();ctx.ellipse(0,0,R*.38,R,0,0,7);ctx.strokeStyle=rgba(f.col,al);ctx.lineWidth=w;ctx.stroke();ctx.strokeStyle=rgba(HI,al*.8);ctx.lineWidth=w*.35;ctx.stroke();ctx.restore()};
+  if(f.mo==='gust'){   // 권풍: 주먹 바람이 고리 셋으로 겹쳐 밀려 나간다
+    for(let i=0;i<3;i++){const u=Math.min(1,pr*1.5-i*.2);if(u<=0)continue;const R=(7+f.w*1.6)*(.7+u*1.3);ring(ox+ux*L*u,oy+uy*L*u,R,.7*(1-u)*fade,2.4)}return}
+  const head=Math.min(1,pr/(f.mo==='punch'?.16:.22)),tail=Math.max(0,(pr-.3)/.7);if(head-tail<.02)return;
+  const hx=ox+ux*L*head,hy=oy+uy*L*head,tx=ox+ux*L*tail,ty=oy+uy*L*tail;
+  if(f.mo==='punch'){const R=6+f.w*2;   // 주먹: 손끝에서 넓어지는 기의 덩어리, 닿는 끝에 공기가 터지는 고리
+    ctx.fillStyle=rgba(f.col,.22*fade);path([[tx+nx*R*.35,ty+ny*R*.35],[hx+nx*R,hy+ny*R],[hx-nx*R,hy-ny*R],[tx-nx*R*.35,ty-ny*R*.35]]);ctx.fill();
+    glowDot(hx,hy,R*2,f.col,fade);ctx.fillStyle=rgba(HI,.8*fade);ctx.beginPath();ctx.arc(hx,hy,R*.4,0,7);ctx.fill();
+    if(head>=1){const u=Math.min(1,(pr-.16)/.6);ring(hx,hy,R*(1+u*1.8),.75*(1-u)*fade,3)}
+    if(!f.st)f.st=Array.from({length:4},()=>({o:(rnd()-.5)*2,s:.3+rnd()*.4}));
+    for(const q of f.st){const sx=hx-ux*L*q.s+nx*R*q.o,sy=hy-uy*L*q.s+ny*R*q.o;ctx.strokeStyle=rgba(f.col,.5*fade);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+ux*L*q.s*.6,sy+uy*L*q.s*.6);ctx.stroke()}
+    return}
+  const W=2.5+f.w*1.1,bx=tx+(hx-tx)*.8,by=ty+(hy-ty)*.8,px=hx+ux*W*2.6,py=hy+uy*W*2.6;   // 찌르기: 꼬리에서 굵어져 창끝처럼 뾰족해지는 한 줄기
+  for(const[m,al]of[[1.9,.2],[1,.5]]){ctx.fillStyle=rgba(f.col,al*fade);path([[tx,ty],[bx+nx*W*m,by+ny*W*m],[px+ux*W*(m-1),py+uy*W*(m-1)],[bx-nx*W*m,by-ny*W*m]]);ctx.fill()}
+  ctx.strokeStyle=rgba(HI,.95*fade);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(tx+(hx-tx)*.3,ty+(hy-ty)*.3);ctx.lineTo(px,py);ctx.stroke();
+  if(!f.st)f.st=Array.from({length:5},()=>({o:(rnd()-.5)*3.2,s:.15+rnd()*.35}));
+  for(const q of f.st){const sx=bx+nx*W*q.o-ux*L*q.s,sy=by+ny*W*q.o-uy*L*q.s;ctx.strokeStyle=rgba(f.col,.55*fade);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+ux*L*q.s*.7,sy+uy*L*q.s*.7);ctx.stroke()}
+  if(k>.4)glowDot(px,py,10+W*1.5,f.col,(k-.4)*1.6)}
 function drawGlow(f){
   const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
   if(f.t==='arc')ribbon(f,p,k);
+  else if(f.t==='thrust')drawThrust(f,p,k);
   else if(f.t==='spin'){const a=-time*0;ribbon(f,p,k,{flat:1,spread:5.6,lift:3,h:16,fast:.45,a0:f.a0??(f.a0=rnd()*6.28)});ribbon(f,p,k,{flat:1,spread:5.6,lift:2,h:30,fast:.5,thick:5,a0:f.a0+3.14});
     if(!f.sp)f.sp=mkSparks(10,150,.3);sparks(f,p.x,p.y-16,f.col,k);shock(p.x,p.y,isoR(f.r)[0]*(1.1-k*.3),isoR(f.r)[1]*(1.1-k*.3),f.col,k)}
   else if(f.t==='ring2'){const[rx,ry]=isoR(f.r*(1-k*.6));shock(p.x,p.y,rx,ry,f.col,k);
@@ -117,7 +140,7 @@ function drawGlow(f){
   else if(f.t==='crackle'){const bs=flick(f,()=>{const o=[];for(let i=0;i<3;i++){const a=rnd()*6.28,L=16+rnd()*20;boltPts(0,0,Math.cos(a)*L,Math.sin(a)*L*.8,10,.2,1,o)}return o},.06);
     ctx.save();ctx.translate(p.x,p.y-28);strokeBolts(bs,f.col,k,.45);ctx.restore()}
 }
-const DARKEN={bolt:150,zap:90,vortex:80,spin:70,arc:50,crackle:40};
+const DARKEN={bolt:150,zap:90,vortex:80,spin:70,arc:50,thrust:50,crackle:40};
 function drawGlow2(f){
   const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
   if(f.t==='vortex'){const[rx,ry]=isoR(f.r*(.3+.7*k));glowDot(p.x,p.y-10,rx*.5,f.col,k,.5);
