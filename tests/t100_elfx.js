@@ -25,14 +25,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const fade=old1.length>0&&old1.every(f=>f.old&&f.life<=FX_OLD.life)&&oth.every(f=>!f.old)&&fresh.every(f=>!f.old)&&nA>0;
     // 재질 입자가 많으면 하나하나를 흐리게
     fx=[];for(let i=0;i<20;i++)elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'화');time+=.001;const dk=elDense();
-    const rb={};fx=[];elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'화');rb.arc=fx.some(f=>f.t==='elr'&&f.rb===EL_FX['화'].rb);
-    fx=[];elFx({t:'thrust',mo:'thrust',x:P.x,y:P.y,ang:0,r:1.2,life:.3,max:.3},X,'독');rb.thrust=fx.some(f=>f.t==='elr');for(let i=0;i<8;i++){time+=.03;for(const f of fx)f.life-=.03;draw()}
-    rb.all=els.every(k=>EL_FX[k].rb);fx=[];elFx({t:'bolt',x:e.x,y:e.y,s:1,life:.5,max:.5},X,'화');rb.burst=fx.some(f=>f.t==='elr');
-    return{n:els.length,all,kinds,viaGL,plain,trail,fade,dk,rb}});
-  ok(`속성 ${r.n}가지 모두 기운이 있다`,r.all&&r.n>=13);
+    return{n:els.length,all,kinds,viaGL,plain,trail,fade,dk}});
+  ok(`속성 ${r.n}가지 모두 재질이 있다`,r.all&&r.n>=9);
   ok(`속성마다 다른 재질: ${Object.entries(r.kinds).map(([k,v])=>k+' '+v).join(', ')}`,new Set(Object.values(r.kinds)).size===r.n);
-  ok(`v216 물건 재질 대신 기운: 화기 솟구침, 수기 굽이침, 뇌기 잔번개, 독기·혈기·풍기·빙기 (${['독','혈','풍','빙'].map(k=>k+':'+r.kinds[k]).join(' ')})`,/q_rise/.test(r.kinds['화'])&&/q_flow/.test(r.kinds['수'])&&/spark/.test(r.kinds['뇌'])&&['독','혈','풍','빙'].every(k=>r.kinds[k])&&!Object.values(r.kinds).some(v=>/flame|drop|leaf|rock|ripple/.test(v)));
-  ok(`공격 궤적을 따라 이어진 기운 띠: 반달 ${r.rb.arc} · 창끝 ${r.rb.thrust} · 속성마다 ${r.rb.all}, 터지는 모양엔 없음 ${r.rb.burst}`,r.rb.arc&&r.rb.thrust&&r.rb.all&&!r.rb.burst);
+  ok(`화는 불, 수는 물, 뇌는 번개`,/flame/.test(r.kinds['화'])&&/drop/.test(r.kinds['수'])&&/spark/.test(r.kinds['뇌']));
   ok(`초식을 쓰면 재질이 붙는다 ${r.viaGL}, 무공 아닌 효과에는 안 붙는다 ${r.plain}, 투사체 꼬리 ${r.trail}`,r.viaGL&&r.plain&&r.trail);
   ok(`같은 무공을 이어 쓰면 앞 시전 이펙트는 흐려져 빨리 사라지고 다른 무공은 그대로 ${r.fade}`,r.fade);
   ok(`재질 입자가 몰리면 흐리게 그린다 (${r.dk.toFixed(2)})`,r.dk<.6);
