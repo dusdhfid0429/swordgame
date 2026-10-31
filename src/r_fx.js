@@ -159,7 +159,6 @@ function drawGlow2(f){
   else if(f.t==='brk')drawBrk(f);
   else if(f.t==='bt')drawBT(f);   // 화경 이후 병기 기운 (g_blade.js)
   else if(f.t==='el')drawEl(f);
-  else if(f.t==='elr')drawElr(f);   // 속성 기운 띠 (r_elfx.js, v216)
   else if(f.t==='dag')drawDag(f);   // 손에 쥔 비도 (g_amgi.js)   // 속성 재질 (r_elfx.js)
   else drawGlow(f);
   ctx.globalAlpha=1;
