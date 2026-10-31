@@ -19,6 +19,7 @@ function drawFx(f){
     ctx.strokeStyle=`rgba(255,200,120,${a*.6})`;ctx.lineWidth=7;ctx.beginPath();ctx.arc(-8,0,18,-.8,.8);ctx.stroke();ctx.restore()}
   else if(f.t==='puff'){const k=1-f.life/.6;for(let n=0;n<7;n++){ctx.fillStyle=`rgba(30,26,22,${.6*(1-k)})`;ctx.beginPath();ctx.arc(p.x+Math.cos(n*.9)*k*26,p.y-16-k*18+Math.sin(n*.9)*k*9,8*(1-k)+3,0,7);ctx.fill()}}
   else if(f.t==='ghost'){ctx.fillStyle=`rgba(${f.col||'120,150,220'},${f.life*1.2})`;ctx.beginPath();ctx.ellipse(p.x,p.y-26,8,24,0,0,7);ctx.fill()}
+  else if(f.t==='bare')drawBare(f);else if(f.t==='bareHit')drawBareHit(f);   // 내공 없는 맨 공격 (g_bare.js, v214)
   else if(f.t==='lvl'){const k=1-f.life/1.2;ctx.strokeStyle=`rgba(255,215,120,${1-k})`;ctx.lineWidth=2;
     for(let n=0;n<3;n++){ctx.beginPath();ctx.ellipse(p.x,p.y-k*60-n*12,18-n*3,7-n,0,0,7);ctx.stroke()}}
 }

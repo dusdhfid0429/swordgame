@@ -109,6 +109,10 @@ function strike(){place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;basicStr
 // 화경 이후 병기 기운 (g_blade.js): 경지를 맞추고 한 번 베고, 확률을 기다리지 않고 바로 발동시킨다
 const bladeNameFor=r=>(BLADE.names[V.cls]||BLADE.names['검'])[r-2];
 const BLADES=()=>typeof BLADE==='undefined'?[]:[[5,()=>bladeOrb],[6,()=>bladeFly],[7,()=>bladeMind],[8,()=>bladeRain]];
+// 내공이 바닥났을 때의 기본 공격 (g_bare.js, v214): 병기를 들고 내공을 0으로 비운 채 한 번 친다. 각은 권 기본 공격의 발차기 차례로 맞춘다
+const BAREW=['검','도','창','봉','권','각','단','편','궁','암'];
+function bareShow(k){const c=k==='각'?'권':k,a=Object.values(ARTS).find(x=>x.cls===c&&!x.base);if(!a)return;setWeapon(c);setAmmo();P.arts=P.arts||{};if(!P.arts[a.id])P.arts[a.id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
+  P.cur=a.id;place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;if(c==='권')P.hc=k==='각'?0:1;P.qi=0;basicStrike(e)}
 function bladeShow(r,f){place();const e=tgt();P.realm=r;P.bcd=0;P.gcd=0;P.bpT=P.mhT=time;basicStrike(e);f()(e)}
 // 경지 돌파 연출 (r_fx.js brkFx, data/brkfx.json): 이 빌드에 있을 때만
 const BRK=()=>typeof brkFx==='function'&&typeof BRK_FX!=='undefined'?BRK_FX.map((d,i)=>d&&[i,d]).filter(Boolean):[];
@@ -207,6 +211,8 @@ function render(){if(!P)return;
     h+=`<h3>경지</h3><select data-a="realm">${RANKS.map((r,i)=>`<option value="${i}"${i===V.realm?' selected':''}>${esc(r)}${i>=2?' · '+bladeNameFor(i):''}</option>`).join('')}</select>
       <p class="dim">기본 공격은 경지에 따라 일류 검기, 절정 검사, 초절정 검강, 화경 검환, 현경 어검술, 생사경 심검, 자연경 무형검이 덧붙는다. 이름은 병기마다 다르고(도강·창환·격공권 …), 모양은 동작을 따른다: 휘두르는 검·도·봉은 반달, 찌르는 창은 곧은 창끝, 권각은 밀려 나가는 기 덩어리(권풍은 바람 고리).</p>
       <div class="grid">${FLOW().map(([n],i)=>btn(n,'flow:'+i)).join('')}</div>
+      <h3>내공이 바닥났을 때 기본 공격</h3><p class="dim">내공 0이면 경지와 상관없이 검기·강기·병기 기운이 없고, 병기 모양·사거리를 따르는 잿빛 궤적과 작은 타격 자국만 남는다.</p>
+      <div class="grid">${BAREW.map(k=>btn(k,'bare:'+k)).join('')}</div>
       ${BLADES().length?`<h3>화경 이후 병기 기운 (발동)</h3><div class="grid">${BLADES().map(([r])=>btn(`<span class="form"><b>${esc(bladeNameFor(r))}</b><small>${esc(RANKS[r])}${V.cls==='검'?' · '+esc(BLADE.hz[r-2]):''}</small></span>`,'blade:'+r)).join('')}</div>`:''}
       <h3>경지 돌파 연출</h3>${BRK().length?`<div class="grid">${BRK().map(([i,d])=>btn(`<span class="form"><b>${esc(d.n)}</b><small>${esc(RANKS[i]||'')}</small></span>`,'brk:'+i)).join('')}</div>`:'<p class="dim">경지 돌파 연출(작업 중인 PR)이 이 빌드에 합쳐지면 여기에 나온다.</p>'}`;
   }else if(TAB==='qi'){
@@ -258,6 +264,7 @@ function onClick(ev){const b=ev.target.closest('button[data-a]');if(!b||!P)retur
   if(k==='form'){const a=ARTS[V.art],i=v==='ult'?'ult':+v;const id=V.art;play(()=>useArtFx(id,i),`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`,{art:id,form:i,tier:V.tier,qs:V.qs,el:V.el});return}
   if(k==='brk'){const d=BRK_FX[+v];play(()=>brk(+v),`경지 돌파 · ${RANKS[+v]||''} ${d.n}`);return}
   if(k==='flow'){const[n,f]=FLOW()[+v];play(f,n);return}
+  if(k==='bare'){play(()=>bareShow(v),`내공 없음 · ${v} 기본 공격`);return}
   if(k==='blade'){const[r,f]=BLADES().find(x=>x[0]===+v);play(()=>bladeShow(r,f),`${RANKS[r]} · ${bladeNameFor(r)}`);return}
   if(k==='med'){medit(v!=='0',v);note(v==='0'?'운기 멈춤':v==='qi'?'내공 수련 중':'운기조식 중');render();return}
   if(k==='train'){const t=TRAIN.find(x=>x[1]===v);play(()=>{place();trainFx(v)},t[0]);return}

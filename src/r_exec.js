@@ -121,7 +121,7 @@ function updateProjs(dt){
     if(q.path)amgiMove(q,dt);else{q.x+=q.vx*dt;q.y+=q.vy*dt;q.left-=Math.hypot(q.vx,q.vy)*dt}if(q.z0)q.z=q.z0*Math.max(0,1-Math.hypot(q.x-q.ox,q.y-q.oy)/q.zd);q.trail.push({x:q.x,y:q.y,z:q.hz,zz:q.z||0});if(q.trail.length>8)q.trail.shift();   // 암기 궤적 (g_amgi.js)
     if(q.high===undefined)q.high=!!P.perch;   // 높은 곳에서 쏜 것은 장애물을 넘는다
     if(!q.high&&blockedAt(q.x,q.y)){q.left=0;fRing(q.X,q,.4,q.c,2,.2)}
-    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});fxHit(q.X,e,.7);if(q.path==='bullet')amgiImpact(q,e);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
+    for(const e of foes())if(e.hp>0&&!q.hit.has(e)&&dist(e,q)<.42*Math.max(1,q.size*.7)){q.hit.add(e);let qm=q.m;if(q.vol){const k=q.vol.get(e)||0;q.vol.set(e,k+1);if(k)qm*=AIM.over}hitE(q.X,e,qm,q.kb,q.stun,{x:q.x-q.vx,y:q.y-q.vy});if(q.X.bare)bareHit(e,'poke');else fxHit(q.X,e,.7);if(q.path==='bullet')amgiImpact(q,e);if(q.psn&&e.hp>0){e.psn=Math.max(e.psn||0,q.psn);e.psnD=Math.max(e.psnD||0,2,atk()*.12*q.m);e.aggro=true}if(!q.pierce){q.left=0;break}}}
   for(const q of projs)if(q.left<=0&&q.boom)amgiBoom(q);   // 벽력자는 맞거나 떨어진 자리에서 터진다
   projs=projs.filter(q=>q.left>0);
 }

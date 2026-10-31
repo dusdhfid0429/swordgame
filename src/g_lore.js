@@ -131,7 +131,7 @@ function addLoreArts(arts,pool,ults,formName,ultName){const U=GD.LORE.um,s=SECTS
   arts[id]=artFx({id,side:ALLY[s.al].side,cls:U.cls,el:U.el,n:U.n,forms,sect:s.id,hi:false,grade:g,um:1,
     ult:{n:ultName(),steps:[F('','circle',{rad:3.2,m:GULT[g][0],stun:.4}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
     d:`${s.n}(${GD.TIERN[s.tier]})의 ${AGR[g]} 일반 무공 · ${CLASS[U.cls].n} · 음공. 검이 호금처럼 울려 음파가 퍼진다. 맞은 적은 느려지고 이따금 넋을 놓는다. 초식 ${forms.length}개와 필살기.`})}
-hook('hitDone',c=>{const a=c.X&&c.X.art;if(!a||!a.um||!c.e)return;const U=LORE.um,e=c.e;fx.push({t:'ring',um:1,col:U.col,x:e.x,y:e.y,life:.45,max:.45});
+hook('hitDone',c=>{const a=c.X&&c.X.art;if(!a||!a.um||!c.e||c.X.bare)return;const U=LORE.um,e=c.e;fx.push({t:'ring',um:1,col:U.col,x:e.x,y:e.y,life:.45,max:.45});
   if(e.hp<=0)return;e.slow=Math.max(e.slow||0,U.slow);if(!e.d.boss&&Math.random()<U.stun){e.stun=Math.max(e.stun||0,.5);addText(e.x,e.y-.4,'음파','#a8f0c8')}});
 
 // ---- 1 무림록 창 ----

@@ -334,10 +334,11 @@ function useForm(i,silent){
 }
 function basicStrike(e){
   if(P.bcd>0||P.gcd>0||!e)return;const useArt=hasWeaponFor(curCls())?P.cur:'base',a=ARTS[useArt];const X=mkX(useArt);X.pj=CLASS[a.cls].pj;
+  if(noQi())X.bare=1;   // v214: 내공이 바닥나면 검기·강기 없이 병기 모양의 잿빛 궤적만 (g_bare.js)
   P.bcd=.8*cdMul();face(e.x,e.y);heroAtk();P.lastAtk=time;
-  if(rangedCls(a.cls)&&useArt!=='base'){const am=a.cls==='암';projs.push({x:P.x,y:P.y,vx:P.fx*(am?16:14),vy:P.fy*(am?16:14),left:am?5.5:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:a.c,kind:am?'blade':'arrow',trail:[],ph:0});
+  if(rangedCls(a.cls)&&useArt!=='base'){const am=a.cls==='암';projs.push({x:P.x,y:P.y,vx:P.fx*(am?16:14),vy:P.fy*(am?16:14),left:am?5.5:7,m:.75,kb:.1,stun:0,pierce:0,size:1,hit:new Set,X,c:X.bare?BAREFX.col:a.c,c2:X.bare?null:undefined,kind:am?'blade':'arrow',trail:[],ph:0});
     if(am&&!AMGI_FREE&&!amgiLoad(projs[projs.length-1])){projs.pop();amgiOut()}}   // v191: 평타도 요대 암기를 하나씩 쓴다. 다 떨어지면 단검술·권각으로 (g_amgi.js)
-  else{anim(.2);hitE(X,e,.75,.25,0);fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}
+  else{anim(.2);hitE(X,e,.75,.25,0);if(X.bare)bareSwing(X,e);else{fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}}
 }
 function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(P.hp<=0)return;const a=art();
