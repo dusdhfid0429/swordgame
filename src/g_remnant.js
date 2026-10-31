@@ -29,7 +29,7 @@ const libNext=id=>{const a=ARTS[id],s=A(id);return a.forms.findIndex((f,i)=>!(s&
 const libProbe=(id,fi)=>({slot:'book',art:id,form:fi,tu:1});
 function libDlg(it){const s=SECTS[it.sect];if(!s)return '<p class="note">사라진 문파의 비급이다.</p>';
   const rows=libArts(it.sect,it.hi).map(id=>{const a=ARTS[id],st=A(id),fi=libNext(id),why=fi<0?'모두 익힘':readBlock(libProbe(id,fi));
-    return `<div class="it"><div style="color:rgb(${a.ct})">${a.n} ${gradeTag(a.grade||0)} <small class="dim">${CLASS[a.cls].n} · ${a.el}</small><span>초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length} · 숙련 ${Math.floor(st.p)}`:''}${fi>=0?` · 다음 [${a.forms[fi].n}] 숙련 ${a.forms[fi].req} · 활력 ${a.forms[fi].cost}`:''}${why&&fi>=0?` · <span class="bad">${esc(why)}</span>`:''}</span></div>
+    return `<div class="it"><div style="color:rgb(${a.ct})">${a.n} ${gradeTag(a.grade||0)} <small class="dim">${CLASS[a.cls].n}</small><span>초식 ${a.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length} · 숙련 ${Math.floor(st.p)}`:''}${fi>=0?` · 다음 [${a.forms[fi].n}] 숙련 ${a.forms[fi].req} · 활력 ${a.forms[fi].cost}`:''}${why&&fi>=0?` · <span class="bad">${esc(why)}</span>`:''}</span></div>
       <div class="ib">${B(`libl:${it.id}:${id}`,fi<0?'모두 익힘':st?'다음 초식 익히기':'익히기',{d:!!why,pri:!why})}</div></div>`}).join('');
   return `<p class="note">${it.hi?`${s.n}의 장문인이 제자에게 직접 전하던 절기다. 최후의 전인이 품고 있던 것을 거두었다.`:`멸문한 ${s.n}의 장경각에서 쓸어 담은 비급들이다. 장문인이 직접 전하던 절기는 여기 없다.`} 익히는 규칙은 비급과 같다 (숙련·활력·오성).</p><div class="list">${rows}</div>`}
 function libLearn(itId,id){const it=bagAll().find(q=>q.id===+itId&&q.slot==='lib');if(!it||!libArts(it.sect,it.hi).includes(id))return;const fi=libNext(id);if(fi<0)return;

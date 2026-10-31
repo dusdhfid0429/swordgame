@@ -1,25 +1,14 @@
-// ================= 무공 특성 색 (v169) =================
-// 사용자 요청(2026-10-21): "무공이나 심법이 가지는 특성 별로 색상을 부여하고, 특성의 조합에 따라 이펙트의 색상을 가지게" → 주색은 심법, 보조색은 무공 (결정 카드 A안)
-// - 무공 특성(심상): data/fxcolor.json FX_TR. 무공 이름에서 kw 를 찾아 앞에 나온 것부터 FX_MIX.max 개. 없으면 병기 기본(FX_TR_CLS), ART_TR 이 이긴다.
-//   창안 무공은 재료 무공들의 특성을 세어 많은 순서로 물려받아 def.tr 에 적는다(g_create.js).
-// - 무공 색 trCol(a) = 특성 색을 FX_MIX.w 비중으로 OKLCH 에서 섞은 것 = 보조색(a.c2).
-// - 주색(a.c) = 지금까지의 심법·문파 색(fxCol)에 무공 색을 FX_MIX.tint 만큼 OKLCH 로 물들인 것. 마기(어두운 색)는 물들이지 않고 검은색이 이긴다.
-// - 그릴 때: 밝은 심지(HI)가 보조색 쪽으로 물들고(FX_MIX.hi), 숙련 2단계 잔광과 투사체 꼬리·흩어지는 입자 절반이 보조색이다.
-//   마기는 보랏빛 테두리에 무공 색이 섞이고(darkRim), 2단계 잔광만 검은 기운 둘레에 옅게 보조색으로 번진다.
-// - 색만 바뀌고 수치는 그대로다. 테스트: tests/t102_fxcol.js
-const FX_TR=GD.FX_TR,FX_TR_CLS=GD.FX_TR_CLS,ART_TR=GD.ART_TR,FX_MIX=GD.FX_MIX;
-// 이름에서 특성 찾기: 같은 특성의 더 긴 kw 안에 든 짧은 kw 는 버린다(예: 혈월 안의 월)
-function trOfName(n,cls){if(ART_TR[n])return ART_TR[n].slice();const hits=[];
-  for(const[k,t]of Object.entries(FX_TR))for(const w of t.kw){let i=n.indexOf(w);while(i>=0){hits.push({k,i,l:w.length});i=n.indexOf(w,i+1)}}
-  const keep=hits.filter(h=>!hits.some(o=>o!==h&&o.k===h.k&&o.l>h.l&&o.i<=h.i&&o.i+o.l>=h.i+h.l)).sort((a,b)=>a.i-b.i||b.l-a.l);
-  const out=[];for(const h of keep)if(!out.includes(h.k))out.push(h.k);
-  return out.length?out.slice(0,FX_MIX.max):[FX_TR_CLS[cls]||'광']}
-// 재료 무공들의 특성을 세어 많은 순서로 (같으면 먼저 나온 것)
-function trOfSrc(ids){const cnt={},first={};let n=0;for(const id of ids){const a=ARTS[id];if(!a)continue;for(const k of artTr(a)){cnt[k]=(cnt[k]||0)+1;if(!(k in first))first[k]=n++}}
-  return Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]||first[x]-first[y]).slice(0,FX_MIX.max)}
-const TRC=new WeakMap();   // 이름에서 찾은 특성 (창안 무공은 a.tr0 = def.tr)
-function artTr(a){if(a.tr0)return a.tr0;let r=TRC.get(a);if(!r)TRC.set(a,r=trOfName(a.n||'',a.cls));return r}
-const trName=k=>FX_TR[k]?FX_TR[k].n:k;
+// ================= 무공 이펙트 색·연출 = 심법 (v215) =================
+// 사용자 요청(2026-10-31): "무공에 속성 제거하고 심법에 속성으로 무공 이펙트 색상이랑 연출 나오게 해줘" / "적 무공 이펙트는 오로지 심법에 영향을 받아"
+// v169 의 무공 특성(이름에서 찾던 바람·꽃·불꽃… 23가지)과 그 물들임을 없앴다. 무공은 속성도 특성도 없다
+// (arts.json·sects.json 의 el 은 초식 수를 정할 때만 쓰는 생성 번호로 남는다: 이미 익힌 초식이 바뀌지 않게. 화면·전투·이펙트에는 쓰지 않는다).
+// - 주색(a.c)   = 펼치는 사람 심법의 색 (fxCol: 문파 심법이면 문파 색 SECT_FX[0], 아니면 계열 색 SCHOOL_FX)
+// - 보조색(a.c2) = 그 심법의 보조색 (SECT_FX[1], 문파 없는 심법은 계열 짝 schoolPair)
+// - 재질 연출(불·물·번개·서리·검은 연기…) = 그 심법의 속성 (artEl → r_elfx.js)
+// - 적: foeSim(e) 이 적의 심법(문파 무인 = 문파 심법, 그 밖의 사람 = 정·사 기초 심법, 속성이 정해진 적은 그 속성, 짐승 = 없음)을 정하고,
+//   foeX(e) 가 그 색·속성으로 내려찍기·연사 이펙트를 낸다 (g_life.js). 초식 외침 글자색도 그 심법 색.
+// 테스트: tests/t102_fxcol.js
+const FX_MIX=GD.FX_MIX;
 // ---- OKLCH 섞기: RGB 평균은 회색으로 탁해지므로 밝기·채도·색상각을 따로 섞는다 ----
 const s2l=v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)},l2s=v=>{v=v<=.0031308?12.92*v:1.055*Math.pow(v,1/2.4)-.055;return Math.max(0,Math.min(255,Math.round(v*255)))};
 function toLch(c){const[r,g,b]=String(c).split(',').map(Number).map(s2l);
@@ -36,12 +25,21 @@ function mixCol(a,b,t,lab){if(t<=0||!b)return a;if(t>=1||!a)return b;const key=a
       r=fromLch([p[0]+(q[0]-p[0])*t,Math.hypot(x,y),Math.atan2(y,x)]);MIXC.set(key,r);return r}
     h=p[2]+d*t}
   r=fromLch([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,h]);MIXC.set(key,r);return r}
-// 무공 색(보조색): 특성 색을 비중대로 섞는다
-function trCol(a){const tr=artTr(a);let c=FX_TR[tr[0]]?FX_TR[tr[0]].c:'235,240,250';
-  for(let i=1;i<tr.length;i++)if(FX_TR[tr[i]]){const w=FX_MIX.w,acc=w.slice(0,i).reduce((s,x)=>s+x,0);c=mixCol(c,FX_TR[tr[i]].c,w[i]/(acc+w[i]))}
-  return c}
-// 주색: 심법·문파 색(fxCol) + 무공 색 물들임. 마기는 그대로
-function artMain(a){const base=fxCol(a);return isDark(base)?base:mixCol(base,trCol(a),FX_MIX.tint)}
-// 심지 색: 밝은 이펙트는 흰 심지를 보조색 쪽으로, 마기는 보랏빛 테두리에 보조색을
+// 문파 없는 심법의 색 짝 [주, 보조]: 계열(마공·사파·정파)로
+const schoolPair=(sc,side)=>sc==='마공'?['28,6,40','110,20,150']:sc==='사공'||sc==='사불'||side==='사'?['220,40,50','170,70,230']:['255,214,110','120,190,255'];
+// 이 무공을 펼치는 사람이 다른 문파 무인인가 (내가 모르는 남의 문파 무공 = 그 문파 심법을 따른다)
+const artForeign=a=>!!(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))));
+// 보조색: 펼치는 사람 심법의 보조색
+function simC2(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][1]:schoolPair(simSchoolOf(a.sect))[1];return pFxPair()[1]}
+// 심지 색: 밝은 이펙트는 흰 심지를 심법 보조색 쪽으로, 마기는 보랏빛 테두리에 보조색을
 const hiOf=(c,c2)=>isDark(c)?(c2?mixCol(HI_DARK,c2,FX_MIX.darkRim,1):HI_DARK):(c2?mixCol('255,255,255',c2,FX_MIX.hi):'255,255,255');
-const trHtml=a=>artTr(a).map(k=>`<b style="color:rgb(${textCol(FX_TR[k]?FX_TR[k].c:'235,240,250')})">${trName(k)}</b>`).join('·');
+// ---- 적의 심법 ----
+function foeSim(e){if(!e||e===P||!e.d||e.d.beast||e.d.villager||e.d.passive)return null;
+  const a=ARTS[e.art],sid=(e.remn&&SECTS[e.remn]?e.remn:null)||(a&&a.sect&&SECTS[a.sect]?a.sect:null);
+  if(sid){const l=simOf(sid),s=l[l.length-1];return{sect:sid,sc:simSchoolOf(sid),el:e.el||(s&&s.el)||'금',n:s&&s.n}}
+  const m=GD.MOB_ART[e.kind],side=m?m[0]:(e.side||(a&&a.side)||'사'),el=e.el||SIM_BASE_EL[side]||'금';
+  return{sect:null,side,sc:el==='마'?'마공':side==='정'?'정종':'사공',el}}
+const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:[SCHOOL_FX[s.sc]||SCHOOL_FX['정종'],schoolPair(s.sc,s.side)[1]];
+// 적이 펼치는 이펙트의 X: 색·보조색·속성이 모두 그 적의 심법 것. 정예·두목은 잔광이 붙는다
+function foeX(e){const s=foeSim(e);if(!s)return null;const[c,c2]=foePair(s),a=ARTS[e.art];
+  return{art:{c,c2,ct:textCol(c),cls:e.wcls||(a&&a.cls)||'검',pt:EL[s.el]?EL[s.el].pt:'spark',elc:s.el==='뇌'},el:s.el,key:null,t:e.d.boss?2:e.d.elite||e.duel?1:0,mul:1,combo:1,foe:e}}

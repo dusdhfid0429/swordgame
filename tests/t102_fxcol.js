@@ -1,4 +1,5 @@
-// v169: 무공 특성 색 — 주색은 심법 색 + 무공 특성 물들임, 보조색은 무공 특성 색, 창안 무공은 재료 특성을 물려받는다 (g_fxcol.js, data/fxcolor.json)
+// v215 (사용자 2026-10-31 "무공에 속성 제거하고 심법에 속성으로 무공 이펙트 색상이랑 연출", "적 무공 이펙트는 오로지 심법에 영향"):
+// 무공 특성·속성 없음 — 주색·보조색·재질은 펼치는 사람의 심법. 적은 foeX(e) (g_fxcol.js)
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];
@@ -8,47 +9,63 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForTimeout(500);
   const r=await p.evaluate(()=>{
-    const L=Object.values(ARTS),trs=L.map(a=>artTr(a));
-    const allTr=trs.every(t=>t.length>=1&&t.length<=FX_MIX.max&&t.every(k=>FX_TR[k]));
-    const named=L.filter(a=>!artTr(a).includes(FX_TR_CLS[a.cls])||trOfName(a.n,a.cls).length>1).length/L.length;
-    const nm=n=>trOfName(n,'검').join('+');
-    const ex={매화:nm('이십사수매화검'),혈월:trOfName('혈월광랑도','도').join('+'),청풍:nm('청풍검법'),천마:nm('천마검법')};
-    // 색 다양성: 같은 심법(지금 내 심법)으로 쓰는 무공들의 주색 가짓수
-    const mine=L.filter(a=>!a.sect),mains=new Set(mine.map(a=>a.c)),subs=new Set(L.map(a=>a.c2));
-    // 섞기는 회색으로 탁해지지 않는다: 빨강+파랑 중간의 채도
-    const mid=toLch(mixCol('230,35,55','70,165,255',.5)),rgbAvg=toLch('150,100,155');
-    // 마기: 주색은 검게 그대로, 심지는 보랏빛에 보조색이 섞인다
-    const dark='28,6,40',art=L.find(a=>artTr(a)[0]==='꽃'),hiD=hiOf(dark,art.c2),hiL=hiOf('235,240,250',art.c2);
-    // 그리기: 초식을 쓰면 효과에 c2 가 붙고 잔광·투사체 꼬리가 보조색
-    const id=Object.keys(ARTS).find(k=>ARTS[k].cls==='검'&&!ARTS[k].base&&!ARTS[k].sect),X=mkX(id);X.t=2;
-    const e=mkMob('목인장',P.x+1,P.y,{hp:999,atk:0,def:0,hm:0,sp:0,pal:'villager'});mobs.push(e);
+    const gone=['artTr','trOfName','trOfSrc','trCol','artMain','trHtml','FX_TR','ART_TR'].filter(k=>typeof window[k]!=='undefined'||(()=>{try{return eval('typeof '+k)!=='undefined'}catch(e){return false}})());
+    const mine=Object.values(ARTS).filter(a=>!artForeign(a)),mains=new Set(mine.map(a=>a.c)),subs=new Set(mine.map(a=>a.c2));
+    const pair=pFxPair(),base={c:[...mains][0],c2:[...subs][0]};
+    // 심법을 바꾸면 모든 내 무공의 색·재질이 따라 바뀐다
+    const id=Object.keys(ARTS).find(k=>ARTS[k].cls==='검'&&!ARTS[k].base&&!ARTS[k].sect),A=ARTS[id],el0=artEl(A);
+    const sid='mudang',sm=simOf(sid)[0];P.sims=P.sims||{};P.sims[sm.id]=1;P.sim=sm.id;
+    const sw={c:A.c,c2:A.c2,el:artEl(A),want:SECT_FX[sid],simEl:sm.el};
+    // 그리기: 초식 효과의 c2·잔광·재질이 심법 것
+    const X=mkX(id);X.t=2;const e=mkMob('목인장',P.x+1,P.y,{hp:999,atk:0,def:0,hm:0,sp:0,pal:'villager'});mobs.push(e);
     fx=[];projs=[];exec({p:'arc',rad:1.5,spread:1.6,m:.1,hits:1},e,X);for(let i=0;i<6;i++)update(.03);
-    const glow=fx.filter(f=>f.glow&&f.t==='arc'),c2ok=glow.length&&glow.every(f=>f.c2===ARTS[id].c2),after=glow.some(f=>f.col===ARTS[id].c2);
-    exec({p:'proj',cnt:1,spd:6,len:5,m:.1},e,X);const pj=projs[0]&&projs[0].c2===ARTS[id].c2;for(let i=0;i<10;i++){update(.03);draw()}
-    return{allTr,named,ex,mains:mains.size,subs:subs.size,midC:mid[1],avgC:rgbAvg[1],hiD,hiL,c2ok,after,pj,main:ARTS[id].c,base:fxCol(ARTS[id]),c2:ARTS[id].c2}});
-  ok(`모든 무공에 특성 1~${2}개 (이름에서 찾은 비율 ${(r.named*100).toFixed(0)}%)`,r.allTr&&r.named>.6);
-  ok(`이름 특성: 이십사수매화검=${r.ex.매화}, 혈월광랑도=${r.ex.혈월}, 청풍검법=${r.ex.청풍}, 천마검법=${r.ex.천마}`,r.ex.매화==='꽃'&&r.ex.혈월==='월+혈'&&r.ex.청풍==='풍');
-  ok(`같은 심법이라도 주색 ${r.mains}가지, 보조색 ${r.subs}가지`,r.mains>=15&&r.subs>=20);
-  ok(`OKLCH 섞기는 채도를 지킨다 (${r.midC.toFixed(3)} > RGB 평균 ${r.avgC.toFixed(3)})`,r.midC>r.avgC);
-  ok(`주색 ${r.main} = 심법 ${r.base} 에 보조색 ${r.c2} 물들임`,r.main!==r.base&&r.main!==r.c2);
-  ok(`마기 심지 ${r.hiD} (보랏빛+꽃), 밝은 심지 ${r.hiL}`,r.hiD!=='150,40,190'&&r.hiL!=='255,255,255');
-  ok(`초식 효과에 보조색 ${r.c2ok}, 2단계 잔광은 보조색 ${r.after}, 투사체 ${r.pj}`,r.c2ok&&r.after&&r.pj);
-  // 창안: 재료 다섯 무공의 특성을 세어 물려받는다
-  // v169b: 심법 재질 입자는 무공 보조색 쪽으로 물들고 진하기·크기가 줄어든다, 마기 연기는 검게 그대로
-  const h=await p.evaluate(()=>{const a=Object.values(ARTS).find(x=>artTr(x)[0]==='꽃'),X=mkX(a.id);fx=[];
+    const glow=fx.filter(f=>f.glow&&f.t==='arc'),c2ok=glow.length&&glow.every(f=>f.c2===SECT_FX[sid][1]),after=glow.some(f=>f.col===SECT_FX[sid][1]),elOk=fx.some(f=>f.t==='el'&&f.el===sm.el);
+    // 남의 문파 무공은 그 문파 무인이 쓰므로 그 문파 심법
+    const fa=Object.values(ARTS).find(a=>a.sect==='shaolin'&&!P.arts[a.id]);
+    return{gone,mains:mains.size,subs:subs.size,pair,base,sw,el0,c2ok,after,elOk,fa:{c:fa.c,c2:fa.c2,el:artEl(fa),want:SECT_FX.shaolin,simEl:simSectEl('shaolin')}}});
+  ok(`무공 특성 함수·표가 없다 (${r.gone.join(',')||'없음'})`,!r.gone.length);
+  ok(`내 무공은 모두 같은 심법 색: 주색 ${r.mains}가지 ${r.base.c}, 보조색 ${r.subs}가지 ${r.base.c2} = 심법 짝 ${r.pair[1]}`,r.mains===1&&r.subs===1&&r.base.c2===r.pair[1]);
+  ok(`심법을 무당 심법으로 바꾸면 색 ${r.sw.c}/${r.sw.c2} = 무당 ${r.sw.want}, 재질 ${r.el0}→${r.sw.el} (심법 ${r.sw.simEl})`,r.sw.c===r.sw.want[0]&&r.sw.c2===r.sw.want[1]&&r.sw.el===r.sw.simEl);
+  ok(`초식 효과 보조색 ${r.c2ok}, 잔광 ${r.after}, 재질 ${r.elOk}`,r.c2ok&&r.after&&r.elOk);
+  ok(`남의 문파(소림) 무공은 소림 심법 색 ${r.fa.c}/${r.fa.c2}·속성 ${r.fa.el}`,r.fa.c===r.fa.want[0]&&r.fa.c2===r.fa.want[1]&&r.fa.el===r.fa.simEl);
+  // 적: 문파 무인은 문파 심법, 산적은 사파 기초 심법(음), 짐승은 없음
+  const f=await p.evaluate(()=>{const o={};
+    const w=mkFac('정',1,P.x+3,P.y,'emei');const Xw=foeX(w);o.fac={c:Xw.art.c,c2:Xw.art.c2,el:Xw.el,want:SECT_FX.emei,simEl:simSectEl('emei')};
+    const s=mkMob('산적두목',P.x+3,P.y);const Xs=foeX(s);o.band={c:Xs.art.c,el:Xs.el,eel:s.el,want:SCHOOL_FX['사공']};
+    o.beast=foeX(mkMob(Object.keys(MOBS).find(k=>MOBS[k].beast),P.x+3,P.y));
+    // 마교 무인 = 마기, 검게
+    const m=mkFac('마',1,P.x+3,P.y,'cheonma'),Xm=foeX(m);o.ma={c:Xm.art.c,el:Xm.el,dark:isDark(Xm.art.c)};
+    // 내려찍기: 실제 적 행동 코드에서 고리·재질이 그 적 심법 것
+    loadRegion('pv_henan');mobs=[];for(let y=6;y<34&&!o.at;y++)for(let x=6;x<34;x++)if([...Array(25)].every((_,i)=>walk(x+i%5-2,y+Math.floor(i/5)-2))){P.x=x+.5;P.y=y+.5;o.at=1;break}
+    const run=n=>{for(let i=0;i<n;i++){time+=.03;for(const m of mobs)updateMob(m,.03);updateEprojs&&updateEprojs(.03);runHooks('tick',.03)}};
+    mobs=[];P.hp=P.maxHp=99999;const e=mkFac('마',1,P.x+1.2,P.y,'cheonma');e.d={...e.d,elite:1};e.aggro=true;e.tgt=P;e.slam=.01;e.slamAt={x:P.x,y:P.y};mobs.push(e);fx=[];
+    run(3);const ring=fx.find(q=>q.t==='ring2');o.slam={col:ring&&ring.col,c2:ring&&ring.c2,el:fx.some(q=>q.t==='el'&&q.el==='마'),want:SECT_FX.cheonma};
+    // 초식 외침 글자색
+    texts=[];w.known=1;mobFormCall(w);o.call=texts.length&&texts[texts.length-1].c;o.callWant=`rgb(${Xw.art.ct})`;
+    // 연사(원거리 정예): 화살 색·재질 꼬리
+    mobs=[];eprojs=[];fx=[];const g=mkMob('산적궁수',P.x+3,P.y);g.d={...g.d,elite:1};g.aggro=true;g.tgt=P;g.skT=0;mobs.push(g);
+    run(4);draw();const Xg=foeX(g);o.vol={n:eprojs.length,c:eprojs.every(q=>q.c===Xg.art.c),trail:fx.some(q=>q.t==='el'&&q.el===Xg.el)};
+    return o});
+  ok(`아미 무인 이펙트 = 아미 심법 ${f.fac.c}/${f.fac.c2} 속성 ${f.fac.el}`,f.fac.c===f.fac.want[0]&&f.fac.c2===f.fac.want[1]&&f.fac.el===f.fac.simEl);
+  ok(`산적은 사파 기초 심법: 색 ${f.band.c}, 속성 ${f.band.el} (적 속성 ${f.band.eel})`,f.band.c===f.band.want&&f.band.el===f.band.eel&&f.band.el);
+  ok(`짐승은 심법 없음 ${f.beast}`,f.beast===null);
+  ok(`천마신교 무인은 마기 ${f.ma.el}, 검은 색 ${f.ma.dark}`,f.ma.el==='마'&&f.ma.dark);
+  ok(`천마신교 정예 내려찍기 고리 ${f.slam.col}/${f.slam.c2} = 천마신교 심법, 마기 재질 ${f.slam.el}`,f.slam.col===f.slam.want[0]&&f.slam.c2===f.slam.want[1]&&f.slam.el);
+  ok(`초식 외침 글자 ${f.call}`,f.call===f.callWant);
+  ok(`연사 ${f.vol.n}발 심법 색 ${f.vol.c}, 재질 꼬리 ${f.vol.trail}`,f.vol.n>=3&&f.vol.c&&f.vol.trail);
+  // 재질 입자: 보조색 쪽으로 물들고, 마기 연기는 검게 그대로
+  const h=await p.evaluate(()=>{const X=mkX(P.cur);fx=[];
     elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'화');const f=fx.find(q=>q.t==='el'),raw=EL_FX['화'].parts.map(x=>x[2]);
     fx=[];elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'마');const d=fx.find(q=>q.t==='el');
-    return{tinted:f.ps.every(q=>!raw.includes(q.col)),c2:f.c2===a.c2,dark:d.ps.every(q=>q.col===EL_FX['마'].parts[0][2]),harm:EL_HARM,purple:mixCol(HI_DARK,'150,225,50',.5,1)}});
-  ok(`재질 색이 무공 보조색에 물든다 ${h.tinted}, 심지도 보조색 ${h.c2}, 마기 연기는 검게 ${h.dark} (진하기 ${h.harm.alpha}, 크기 ${h.harm.size})`,h.tinted&&h.c2&&h.dark&&h.harm.alpha<1&&h.harm.size<1);
+    return{tinted:f.ps.every(q=>!raw.includes(q.col)),c2:f.c2===X.art.c2,dark:d.ps.every(q=>q.col===EL_FX['마'].parts[0][2]),purple:mixCol(HI_DARK,'150,225,50',.5,1),hiD:hiOf('28,6,40','110,20,150')}});
+  ok(`재질 색이 심법 보조색에 물든다 ${h.tinted}, 심지 ${h.c2}, 마기 연기는 검게 ${h.dark}, 마기 심지 ${h.hiD}`,h.tinted&&h.c2&&h.dark&&h.hiD!=='150,40,190');
   {const[r,g,bb]=h.purple.split(',').map(Number);ok(`보라+초록 테두리는 주황으로 새지 않는다 (${h.purple})`,!(r>g&&g>bb&&r>150))}
+  // 창안 무공: 특성을 적지 않는다, 무공 창에 '특성' 글자 없음
   const m=await p.evaluate(()=>{window.__noPrompt=1;
     const ids=Object.keys(ARTS).filter(k=>ARTS[k].cls==='검'&&!ARTS[k].sect&&!ARTS[k].gy&&!ARTS[k].base&&(ARTS[k].grade||0)===0).slice(0,5);
     for(const id of ids)P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)};
-    const want=trOfSrc(ids),a=mkCreate({ids,g:0,cls:'검'}),def=G.made[a.id];
-    const saved=JSON.parse(JSON.stringify(def));delete saved.tr;delete ARTS[a.id];const b2=mkBuild(saved);
-    return{want,tr:artTr(a),def:def.tr,re:artTr(b2),c2:a.c2,srcTr:ids.map(i=>artTr(ARTS[i]).join('+'))}});
-  ok(`창안 무공 특성 ${m.tr} = 재료(${m.srcTr.join(', ')})에서 센 것 ${m.want}, 저장 ${m.def}`,m.tr.join()===m.want.join()&&m.def.join()===m.want.join()&&m.want.length>=1);
-  ok(`예전 저장(특성 없음)도 재료에서 다시 센다 ${m.re}`,m.re.join()===m.want.join());
-  await p.evaluate(()=>{openPanel&&openPanel('arts')}).catch(()=>{});
+    const a=mkCreate({ids,g:0,cls:'검'}),def=G.made[a.id];const old={...def,tr:['꽃']};delete ARTS[a.id];const b2=mkBuild(old);
+    openPanel('arts');const html=document.body.innerHTML;return{tr:'tr' in def,c:a.c===fxCol(a),old:b2.c2===pFxPair()[1],word:/특성 <b/.test(html)}}).catch(e=>({err:String(e)}));
+  ok(`창안 무공은 특성이 없고 심법 색 ${JSON.stringify(m)}`,!m.err&&!m.tr&&m.c&&m.old&&!m.word);
   ok(`오류 없음 ${errs.slice(0,5).join(' | ')}`,errs.length===0);
   await b.close()})();

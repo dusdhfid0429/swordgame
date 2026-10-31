@@ -4,7 +4,7 @@
 // 그래서 r_fx.js 나 데이터가 바뀌면 python3 build.py 한 번으로 뷰어도 같이 바뀐다.
 // 아직 없는 함수(다른 브랜치의 경지 돌파 연출 등)는 typeof 로 보고 있을 때만 단추를 낸다.
 (()=>{
-const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',tr1:'',tr2:'',dum:6,ammo:''};
+const V={el:'',shake:true,zoom:innerWidth<760?1:1.5,speed:1,loop:false,last:null,timer:null,night:false,tier:0,qs:12,cls:'검',art:null,col:'140,205,255',realm:0,sect:'',dum:6,ammo:''};
 const HOME={x:15.5,y:17.5},DUMMY=[[15.5,14.6],[13.4,15.6],[17.6,15.6],[12.6,17.8],[18.4,17.8],[15.5,20.2]];
 const PNAME={melee:'근접',multi:'연타',arc:'부채꼴',circle:'회전',line:'직선',proj:'투사체',drop:'낙하',rain:'비',pull:'끌어당김',chain:'연쇄',blink:'순보',blinkMulti:'연속 순보',dash:'돌진'};
 const TIERN=['입문','소성','대성','극성'],TIERP=[0,25,60,100];
@@ -51,12 +51,9 @@ const rs0=resize;resize=()=>{rs0();const r=C.getBoundingClientRect();S*=V.zoom;W
 const artEl0=artEl;artEl=a=>V.el||artEl0(a);
 const elSel=()=>typeof EL_FX==='undefined'?'':`<h3>속성 (심법)</h3><select data-a="el"><option value="">심법 그대로 (${esc(artEl0({}))})</option>${Object.entries(EL_FX).map(([k,e])=>`<option value="${esc(k)}"${k===V.el?' selected':''}>${esc(k)} · ${esc(e.n)}</option>`).join('')}</select>${V.el&&EL_FX[V.el]?`<p class="dim">${esc(EL_FX[V.el].d)}</p>`:''}`;
 
-// ---- 무공 특성(v169): 특성을 바꿔 보조색과 물들인 주색을 본다 (g_fxcol.js) ----
-const artTr0=artTr;artTr=a=>V.tr1?[V.tr1,V.tr2].filter(Boolean):artTr0(a);
-const trSel=a=>{const t=artTr0(a),o=(k,v)=>`<option value="${esc(k)}"${k===v?' selected':''}>${esc(k)} · ${esc(FX_TR[k].n)}</option>`,ks=Object.keys(FX_TR);
-  return `<h3>특성 (무공) · 주색은 심법, 보조색은 특성</h3><p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>주색 ${esc(a.c)} &nbsp;<span class="sw" style="background:rgb(${a.c2})"></span>보조색 ${esc(a.c2)} &nbsp;<span class="sw" style="background:rgb(${fxCol(a)})"></span>심법 색</p>
-  <div class="grid"><select data-a="tr1"><option value="">무공 그대로 (${esc(t.map(k=>FX_TR[k]?FX_TR[k].n:k).join('+'))})</option>${ks.map(k=>o(k,V.tr1)).join('')}</select>
-  <select data-a="tr2"${V.tr1?'':' disabled'}><option value="">둘째 특성 없음</option>${ks.map(k=>o(k,V.tr2)).join('')}</select></div>`};
+// ---- 색 (v215): 무공 특성은 없앴다. 주색·보조색 모두 운용 중인 심법(문파 심법이면 문파 색)의 것 (g_fxcol.js) ----
+const trSel=a=>{const sm=typeof simCur==='function'?simCur():null;
+  return `<h3>색 · 심법이 정한다</h3><p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>주색 ${esc(a.c)} &nbsp;<span class="sw" style="background:rgb(${a.c2})"></span>보조색 ${esc(a.c2)}${sm?` &nbsp;· ${esc(sm.n)} (${esc(sm.sc||'')}·${esc(artEl(a)||'')})`:''}</p><p class="dim">색은 아래 '문파' 칸, 재질은 '속성' 칸으로 바꿔 본다.</p>`};
 
 // ---- 무공 초식 ----
 function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;return}
@@ -148,7 +145,7 @@ const MOVE=[
   ['암기 (비도)',()=>spec('암기')],['독공',()=>spec('독공')],['점혈',()=>spec('점혈')],
   ['피격 번쩍임 (큰 피해)',()=>hitDemo(.3)],
   ['적 공격 예고 !! (맞으면 쓰러짐)',()=>windDemo(1)],['빈사 위험 박동',()=>{dngDemo=3}],
-  ['두목 내려찍기',()=>{const c=at();fx.push({t:'warn',x:c.x,y:c.y,r:2,life:1.1,max:1.1});later(1.1,()=>{fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(null,c,2,'255,120,80',4,.35)})}],
+  ['두목 내려찍기 (고른 문파·속성의 심법)',()=>{const c=at(),FX=foeX({d:{boss:1},kind:'',el:V.el||null,remn:V.sect||null,side:P.side});fx.push({t:'warn',x:c.x,y:c.y,r:2,life:1.1,max:1.1});later(1.1,()=>{fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(FX,c,2,FX.art.c,4,.35)})}],
 ];
 
 // ---- 색 고르기: 문파 색(SECT_FX)과 심법 계열 색(SCHOOL_FX) ----
@@ -203,7 +200,7 @@ function render(){if(!P)return;
   if(TAB==='art'){
     h+=`<h3>병기</h3><div class="ctl" style="padding:0;border:0">${Object.keys(CLASS).map(c=>btn(c,'cls:'+c,V.cls===c)).join('')}</div>
       <h3>무공 (${arts.length})</h3><select data-a="art">${['정','사','마','중'].map(s=>{const l=arts.filter(x=>(x.side||'중')===s);return l.length?`<optgroup label="${s==='중'?'기타':s+'파'}">${l.map(x=>`<option value="${esc(x.id)}"${x.id===V.art?' selected':''}>${esc(x.n)}${x.sect&&SECTS[x.sect]?' · '+esc(SECTS[x.sect].n):''}${x.grade!=null&&typeof AGR!=='undefined'?' · '+esc(AGR[x.grade]||''):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
-    if(a){h+=`<p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>${esc(a.d||'')} ${a.el?'· '+esc(a.el):''}${a.elc?' · 번개':''}</p>
+    if(a){h+=`<p class="dim"><span class="sw" style="background:rgb(${a.c})"></span>${esc(a.d||'')}${a.elc?' · 번개':''}</p>
       ${trSel(a)}${elSel()}${a.cls==='암'&&typeof AMMO!=='undefined'?`<h3>요대 암기</h3><select data-a="ammo"><option value="">초식 본래 모양</option>${Object.entries(AMMO).map(([k,m])=>`<option value="${esc(k)}"${k===V.ammo?' selected':''}>${esc(k)}${ammoSect(k)?' ('+esc(SECTS[ammoSect(k)].n)+')':''} · ${esc(m.d)}</option>`).join('')}</select>`:''}<h3>초식</h3><div class="grid">${a.forms.map((f,i)=>btn(`<span class="form"><b>${esc(f.n)}</b><small>${PNAME[f.p]||f.p}${f.delay?' · 지연':''}${f.then?' → '+(PNAME[f.then.p]||''):''}</small></span>`,'form:'+i)).join('')}
       ${btn(`<span class="form"><b>${esc(a.ult.n)}</b><small>필살기 · ${a.ult.steps.map(s=>PNAME[s.p]||s.p).join('+')}</small></span>`,'form:ult')}</div>
       <div style="margin-top:6px">${btn('▶ 초식 전부 차례로','all')}</div>`}
@@ -245,7 +242,7 @@ function paintBar(){const B=document.body.classList,sel=(a,o,cur)=>`<select data
   barH()}
 function onChange(ev){const s=ev.target.closest('select');if(!s)return;const k=s.dataset.a,v=s.value;
   if(k==='spd'){V.speed=+v;render();return}if(k==='dum'){V.dum=+v;arena();render();return}if(k==='zoom'){V.zoom=+v;resize();render();return}
-  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='ammo')V.ammo=v;else if(k==='tr1'){V.tr1=v;if(!v)V.tr2=''}else if(k==='tr2')V.tr2=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
+  if(k==='art')V.art=v;else if(k==='el')V.el=v;else if(k==='ammo')V.ammo=v;else if(k==='realm'){V.realm=+v;P.realm=V.realm}else if(k==='tier')V.tier=+v;else if(k==='qs'){V.qs=+v;P.qs=V.qs}else if(k==='col')V.col=v;else if(k==='sect')setSect(v);render()}
 box.addEventListener('change',onChange);bar.addEventListener('change',onChange);
 // 좁은 화면에서 재생 단추를 누르면 서랍을 닫아 연출이 가리지 않게 한다
 const PLAYK=new Set(['form','all','brk','flow','train','prim','proj','basic','move','blade']);
