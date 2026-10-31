@@ -72,6 +72,7 @@ hook('hit',c=>{const r=realmIdx();
   if(r>=2)c.def=Math.round(c.def*.5)});
 hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
   if(sig('사불'))P.hp=Math.min(P.maxHp,P.hp+(c.hp0-Math.max(0,e.hp))*.06);if(sig('사공'))e.slow=Math.max(e.slow||0,2);
+  if(c.X&&c.X.bare)return;   // v214: 내공이 바닥난 맨 공격에는 검기·검사·검강도, 검사의 기 실은 곁가지 일격도 없다 (g_bare.js)
   // v136 (사용자): 세 단계가 서로 달라 보이게. 검기=푸른 날 기운, 검사=은빛 실, 검강=금빛 강기 충격
   if(r>=4){fParts(null,e,RFX_COL.gang,8,80,'dot',.4);GL({t:'ring2',x:e.x,y:e.y,r:.75,col:RFX_COL.gang,w:4,life:.3})}
   else if(r===3)for(let i=0;i<2;i++)GL({t:'line',x:e.x+(Math.random()-.5)*.8,y:e.y+(Math.random()-.5)*.8,ex:e.x,ey:e.y,w:1,wavy:1,life:.22,col:RFX_COL.sa});

@@ -47,7 +47,8 @@ function elFx(o,X,el){el=el||(X&&X.art&&typeof artEl==='function'?artEl(X.art):n
   const L=Math.max(...ps.map(q=>q.d+q.L));fx.push({t:'el',el,glow:true,dim:1,x:o.x,y:o.y,z:o.z,ps,life:L,max:L,col:'255,255,255',c2:X&&X.art&&X.art.c2})}
 hook('glFx',(o,X)=>elFx(o,X));
 // 투사체 꼬리: 날아가는 동안 조금씩 속성 입자를 흘린다
-hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key)continue;q.elT=(q.elT||0)-dt;if(q.elT>0)continue;q.elT=.06;
+hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key||q.X.bare)continue;   // 내공 없는 맨 화살·암기는 속성 꼬리 없이 (g_bare.js)
+  q.elT=(q.elT||0)-dt;if(q.elT>0)continue;q.elT=.06;
   const el=artEl(q.X.art),E=EL_FX[el];if(!E)continue;const ps=[];
   for(const[k,m,c0]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m)),col=elCol(c0,q.X);
     for(let i=0;i<n;i++)ps.push({...elPart(k,{ox:(Math.random()-.5)*8,oy:-24+(Math.random()-.5)*8,gy:0,d:0}),col})}

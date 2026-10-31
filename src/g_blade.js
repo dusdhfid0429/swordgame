@@ -31,7 +31,8 @@ function bladeRain(e){const q=BLADE.proc[8],col=bladeCol(8);
     fx.push({t:'bt',k:'rain',cls:bladeCls(),glow:true,x:o.x+ox,y:o.y+oy,col,life:L,max:L});
     later(L*.45,()=>{bHit(o,q.m);GL({t:'ring2',x:o.x+ox,y:o.y+oy,r:.6,col,w:2,life:.3})})}))}
 
-hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(r<5||e.hp>=c.hp0)return;const tr=Math.min(r,8),q=BLADE.proc[tr];
+// 내공이 바닥난 맨 공격(X.bare)에는 병기 기운도 없다 (g_bare.js)
+hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(r<5||e.hp>=c.hp0||c.X&&c.X.bare)return;const tr=Math.min(r,8),q=BLADE.proc[tr];
   if(tr===8){if(time-(P.mhT??-99)<q.cd)return;P.mhT=time}
   else{if(time-(P.bpT??-99)<q.icd||Math.random()>=q.p)return;P.bpT=time}
   bladeCall(tr,e);(tr===5?bladeOrb:tr===6?bladeFly:tr===7?bladeMind:bladeRain)(e)});
