@@ -145,6 +145,7 @@ const MOVE=[
   ['암기 (비도)',()=>spec('암기')],['독공',()=>spec('독공')],['점혈',()=>spec('점혈')],
   ['피격 번쩍임 (큰 피해)',()=>hitDemo(.3)],
   ['적 공격 예고 !! (맞으면 쓰러짐)',()=>windDemo(1)],['빈사 위험 박동',()=>{dngDemo=3}],
+  ['적 평타 (고른 문파·속성의 심법)',()=>{const e=tgt();e.remn=V.sect||null;e.el=V.el||null;e.wcls=V.cls;e.d={...e.d,beast:0,villager:0,passive:0};foeStrike(e,P)}],
   ['두목 내려찍기 (고른 문파·속성의 심법)',()=>{const c=at(),FX=foeX({d:{boss:1},kind:'',el:V.el||null,remn:V.sect||null,side:P.side});fx.push({t:'warn',x:c.x,y:c.y,r:2,life:1.1,max:1.1});later(1.1,()=>{fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;fRing(FX,c,2,FX.art.c,4,.35)})}],
 ];
 

@@ -53,6 +53,16 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`천마신교 정예 내려찍기 고리 ${f.slam.col}/${f.slam.c2} = 천마신교 심법, 마기 재질 ${f.slam.el}`,f.slam.col===f.slam.want[0]&&f.slam.c2===f.slam.want[1]&&f.slam.el);
   ok(`초식 외침 글자 ${f.call}`,f.call===f.callWant);
   ok(`연사 ${f.vol.n}발 심법 색 ${f.vol.c}, 재질 꼬리 ${f.vol.trail}`,f.vol.n>=3&&f.vol.c&&f.vol.trail);
+  // v216: 적 평타에도 그 적 심법 색·기운, 새 속성 적중 효과
+  const g2=await p.evaluate(()=>{const o={};mobs=[];fx=[];const e=mkFac('사',0,P.x+1,P.y,'mandok');e.aggro=true;e.tgt=P;e.wind=.01;mobs.push(e);
+    for(let i=0;i<3;i++){time+=.03;updateMob(e,.03)}const X=foeX(e);o.strike=fx.some(f=>(f.t==='arc'||f.t==='thrust')&&f.col===X.art.c);o.rb=fx.some(f=>f.t==='elr'&&f.el==='독');o.el=X.el;
+    const t=mkMob('목인장',P.x+1,P.y,{hp:9999,atk:5,def:0,hm:0,sp:0,pal:'villager'});mobs=[t];const sm=simOf('dang')[0];P.sims[sm.id]=1;P.sim=sm.id;const XP=mkX(P.cur);
+    hitE(XP,t,1,0,0);o.psn=t.burn>0&&t.weak>0&&t.burnC;const c={dm:100,src:t,hm:0};runHooks('hurt',c);o.weakDm=c.dm;
+    const b=simOf('bukhae')[0];P.sims[b.id]=1;P.sim=b.id;t.slow=0;hitE(XP,t,1,0,0);o.ice=t.slow>0;
+    o.names=[elN('독'),elN('뇌')];const bs=mkMob('혈교장로',P.x+2,P.y);o.lite=[foeX(e).lite,foeX(bs).lite,foeX(bs).el];fx=[];GL({t:'arc',x:P.x,y:P.y,ang:0,r:1,spread:1.4,col:'255,255,255',w:4,life:.3},foeX(e));o.liteW=fx[0].w<4&&fx[0].dim<1;return o});
+  ok(`만독문 무인 평타 이펙트: 심법 색 ${g2.strike}, 독기 띠 ${g2.rb} (${g2.el})`,g2.strike&&g2.rb&&g2.el==='독');
+  ok(`일반 적 이펙트는 간결 ${g2.lite[0]}·${g2.liteW}, 두목은 플레이어와 같음 ${!g2.lite[1]} (혈교장로 ${g2.lite[2]})`,g2.lite[0]&&g2.liteW&&!g2.lite[1]&&g2.lite[2]==='혈');
+  ok(`독기 적중: 중독 ${g2.psn}, 중독된 적의 공격 ${g2.weakDm}/100 · 빙기 둔화 ${g2.ice} · 이름 ${g2.names}`,g2.psn&&g2.weakDm<100&&g2.ice&&g2.names.join()==='독기,뇌기');
   // 재질 입자: 보조색 쪽으로 물들고, 마기 연기는 검게 그대로
   const h=await p.evaluate(()=>{const X=mkX(P.cur);fx=[];
     elFx({t:'arc',x:P.x,y:P.y,ang:0,r:1.2,spread:1.6,flip:0,life:.3,max:.3},X,'화');const f=fx.find(q=>q.t==='el'),raw=EL_FX['화'].parts.map(x=>x[2]);

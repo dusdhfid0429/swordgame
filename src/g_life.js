@@ -111,7 +111,7 @@ function chase(e,tg,dt,spd){
 function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(e.hp<=0)return;const d=e.d;
   e.hit=Math.max(0,e.hit-dt);if(e.swing>0&&e.swing<=dt)e.rec=.22;e.swing=Math.max(0,e.swing-dt);e.rec=Math.max(0,(e.rec||0)-dt);e.slow=Math.max(0,e.slow-dt);e.bind=Math.max(0,(e.bind||0)-dt);e.nohe=Math.max(0,e.nohe-dt);
-  if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
+  if(e.weak>0)e.weak-=dt;if(e.burn>0){e.burn-=dt;e.hp-=e.burnD*dt;if(Math.random()<dt*8)fParts(null,e,e.burnC||'255,140,60',2,40,'dot',.5);if(e.hp<=0){onKill(e);return}}
   if(e.psn>0){e.psn-=dt;e.hp-=e.psnD*dt;if(Math.random()<dt*6)fParts(null,e,'120,220,90',2,30,'dot',.5);if(e.hp<=0){onKill(e);return}}
   {const ox=e.x,oy=e.y;e.x+=e.kb.x*dt*6;e.y+=e.kb.y*dt*6;if(!walkAt(e.x,e.y)||!hstep(ox,oy,e.x,e.y)){e.x=ox;e.y=oy}}e.kb.x*=.8;e.kb.y*=.8;
   if(e.stun>0){e.stun-=dt;e.wind=0;e.moving=false;return}
@@ -149,8 +149,9 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
-      if(d.ranged){const ux=dd>1e-3?(tg.x-e.x)/dd:(e.fx||1),uy=dd>1e-3?(tg.y-e.y)/dd:(e.fy||0);eprojs.push({x:e.x,y:e.y,vx:ux*10,vy:uy*10,left:reach+1,dmg:e.atk,src:e,c:'230,210,160'})}   // 겹쳐 선 상대(dd 0)는 바라보는 쪽으로: NaN 화살 방지
-      else if(dist(e,tg)<reach+.3&&!elevGap(e,tg)){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
+      if(d.ranged){const ux=dd>1e-3?(tg.x-e.x)/dd:(e.fx||1),uy=dd>1e-3?(tg.y-e.y)/dd:(e.fy||0),FX=dist(e,P)<14?foeX(e):null;eprojs.push({x:e.x,y:e.y,vx:ux*10,vy:uy*10,left:reach+1,dmg:e.atk,src:e,c:FX?FX.art.c:'230,210,160',c2:FX&&FX.art.c2,X:FX})}   // 겹쳐 선 상대(dd 0)는 바라보는 쪽으로: NaN 화살 방지
+      else foeStrike(e,tg);   // v216: 적 평타에도 그 적 심법의 색·기운 (g_fxcol.js)
+      if(!d.ranged&&dist(e,tg)<reach+.3&&!elevGap(e,tg)){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
     return}
   e.cd-=dt;e.moving=false;
   if(dd<reach){if(e.cd<=0)e.wind=d.boss?.5:.4;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}
@@ -313,7 +314,7 @@ function duelStart(){
   P.x=ARENA.x-1;P.y=ARENA.y;P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;
   const e=mkMob(o.n,ARENA.x+1,ARENA.y,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:o.ranged?5:1.4,ranged:o.ranged,el:o.el,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
   e.duel=1;e.aggro=true;e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':rangedCls(o.cls)?'tang':'chief',ranged:o.ranged});e.el=o.el;e.wcls=o.cls;mobs.push(e);P.target=e;
-  showBanner('비무',`${o.n}`);log(`비무 시작: ${o.n} (${CLASS[o.cls].n}·${o.el})`,'sys');
+  showBanner('비무',`${o.n}`);log(`비무 시작: ${o.n} (${CLASS[o.cls].n}·${elN(o.el)})`,'sys');
   runHooks('duelStart',o,e);
 }
 function duelEnd(win,e){

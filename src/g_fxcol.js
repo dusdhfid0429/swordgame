@@ -42,4 +42,9 @@ function foeSim(e){if(!e||e===P||!e.d||e.d.beast||e.d.villager||e.d.passive)retu
 const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:[SCHOOL_FX[s.sc]||SCHOOL_FX['정종'],schoolPair(s.sc,s.side)[1]];
 // 적이 펼치는 이펙트의 X: 색·보조색·속성이 모두 그 적의 심법 것. 정예·두목은 잔광이 붙는다
 function foeX(e){const s=foeSim(e);if(!s)return null;const[c,c2]=foePair(s),a=ARTS[e.art];
-  return{art:{c,c2,ct:textCol(c),cls:e.wcls||(a&&a.cls)||'검',pt:EL[s.el]?EL[s.el].pt:'spark',elc:s.el==='뇌'},el:s.el,key:null,t:e.d.boss?2:e.d.elite||e.duel?1:0,mul:1,combo:1,foe:e}}
+  const boss=!!e.d.boss;   // v216: 두목만 플레이어와 같은 이펙트, 나머지 적은 GD.FOE_FX 만큼 간결하게 (lite)
+  return{art:{c,c2,ct:textCol(c),cls:e.wcls||(a&&a.cls)||'검',pt:EL[s.el]?EL[s.el].pt:'spark',elc:s.el==='뇌'},el:s.el,key:null,t:boss?2:0,lite:!boss,mul:1,combo:1,foe:e}}
+// v216 (사용자 2026-10-31 "적이 공격할 때 이펙트가 없다"): 사람 적의 평타. 병기 동작(휘두르기=반달, 창=창끝, 권=기 덩어리)과 사거리는 내 평타와 같은 규칙(r_exec strikeMo·wLen),
+// 색·속성 기운은 그 적의 심법. 화면 밖(14칸 넘게) 싸움은 그리지 않는다
+function foeStrike(e,tg){if(!P||dist(e,P)>14)return;const X=foeX(e);if(!X)return;const l=Math.hypot(tg.x-e.x,tg.y-e.y)||1,fx=(tg.x-e.x)/l,fy=(tg.y-e.y)/l,mo=strikeMo(X);
+  GL({t:mo==='swing'?'arc':'thrust',mo,wc:X.art.cls,x:e.x,y:e.y,ang:Math.atan2((fx+fy)*TH/2,(fx-fy)*TW/2),r:1.05*wLen(X),spread:1.4,col:X.art.c,w:2.2,life:.45,flip:(e.flipC=!e.flipC),foe:1},X)}

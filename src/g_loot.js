@@ -4,7 +4,7 @@
 const MOB_ART=GD.MOB_ART,KIT_ODDS=GD.KIT_ODDS;
 const mobTier=e=>e.d.boss?'b':e.d.elite||MOB_TIER[e.kind]==='e'?'e':'n';
 function mobArtId(e){const d=e.d;if(e.art&&ARTS[e.art])return e.art;
-  const m=MOB_ART[e.kind];if(!m)return null;const[side,cls]=m,ei=Math.max(0,ELS.indexOf(d.el||e.el));return `${side}${cls}${ei}`}
+  const m=MOB_ART[e.kind];if(!m)return null;const[side,cls]=m,ei=Math.max(0,ELS.indexOf(d.ael||d.el||e.el));return `${side}${cls}${ei}`}
 // 아는 초식 수: 경지 하나에 초식 하나씩, 보스는 하나 더
 function mobKnown(e){const a=ARTS[e.art];if(!a)return 0;return Math.min(a.forms.length,1+(e.realm||0)+(e.d.boss?1:0))}
 function mobKit(e){
