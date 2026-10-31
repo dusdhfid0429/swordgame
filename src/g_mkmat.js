@@ -99,7 +99,7 @@ function rcDlg(n){const rc=RC[n.rc];if(!rc)return'';
   const task=on?misRow(on,misSpan(on,on)+' · 은혜 +1',misReport(on,qi)):(t=>misRow(t,`${t.what} · 은혜 +1 · 활력 ${t.vit}`,B('rctake:'+rc.id,'부탁 듣기',{d:P.quests.length>=4,t:P.quests.length>=4?'임무는 넷까지 맡는다':''})))(rcTask(rc,st.k));
   const arts=rcArts(rc).map((id,j)=>{const a=ARTS[id],s=A(id),fi=s?a.forms.findIndex((f,i)=>!s.f[i]):0,book=fi>=0&&hasBookOf(id,fi);
     const why=fi<0?'모두 배움':book?'비급이 행낭에 있다':st.tok<1?'은혜 1 필요':!s&&capArts().length>=artCap()?`오성 ${P.wis}로는 ${artCap()}가지까지`:s&&s.p<a.forms[fi].req?`숙련 ${a.forms[fi].req} 필요`:'';
-    return `<div class="it"><div style="color:rgb(${a.ct})">${a.n} ${gradeTag(a.grade)} <small class="dim">${a.el} · ${CLASS[a.cls].n}</small><span>초식 ${a.forms.length}개${s?` · 익힌 초식 ${s.f.filter(Boolean).length} · 숙련 ${Math.floor(s.p)}`:''}${fi>=0?` · 다음 [${a.forms[fi].n}] 숙련 ${a.forms[fi].req}`:''}</span></div>
+    return `<div class="it"><div style="color:rgb(${a.ct})">${a.n} ${gradeTag(a.grade)} <small class="dim">${CLASS[a.cls].n}</small><span>초식 ${a.forms.length}개${s?` · 익힌 초식 ${s.f.filter(Boolean).length} · 숙련 ${Math.floor(s.p)}`:''}${fi>=0?` · 다음 [${a.forms[fi].n}] 숙련 ${a.forms[fi].req}`:''}</span></div>
       <div class="ib">${B(`rcteach:${rc.id}:${j}`,why||(s?'가르침 청하기 · 은혜 1':'배우기 · 은혜 1'),{d:!!why,pri:!why})}</div></div>`}).join('');
   return `<p class="note">${esc(n.n)}: "${esc(rc.hello)} 공짜로 가르치진 않는다. 늙은이 부탁을 들어주면 하나씩 일러 주마."</p>
     <div class="card"><h4>${esc(rc.n)} <small class="dim">은거기인 · ${CLASS[rc.cls].n} · 무소속</small></h4><p>은혜 <b class="gold">${st.tok}</b> · 들어준 부탁 ${st.k} <small class="dim">(은혜 하나로 한 초식을 전수받는다)</small></p></div>

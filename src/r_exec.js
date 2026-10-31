@@ -14,7 +14,7 @@ function fadeOld(X){if(!X||!X.key)return;for(const f of fx)if(f.ck===X.key&&f.cx
 function tagCast(X,i0,thin=true){if(X&&X.key)for(let i=i0;i<fx.length;i++){fx[i].cx=X;fx[i].ck=X.key;fxPw(fx[i],X,thin)}}   // fxPw: 낮은 성은 옅고 가늘게 (g_qstar.js)
 function GL(o,X){
   fadeOld(X);const i0=fx.length;
-  const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;if(X&&X.art&&!o.c2)o.c2=X.art.c2;fx.push(o);   // c2: 무공 특성 보조색 (g_fxcol.js, v169)
+  const t=X?X.t:0;o.glow=true;o.el=!!(X&&X.art.elc);o.w=(o.w||2)*(1+.3*t);o.max=o.life;if(X&&X.art&&!o.c2)o.c2=X.art.c2;fx.push(o);   // c2: 심법 보조색 (g_fxcol.js, v215)
   if(t>=2&&qsGlow(X,QS.fx.g2))fx.push({...o,col:o.c2||o.col,life:o.life*1.5,max:o.life*1.5,w:o.w*2.2,dim:o.c2&&isDark(o.col)?.22:.35,r:o.r&&o.r*1.08});   // 잔광은 보조색 (마기는 검은 기운 둘레에 옅게)
   if(t>=3&&qsGlow(X,QS.fx.g3))fx.push({...o,col:'255,215,120',life:o.life*1.2,max:o.life*1.2,w:o.w*.6,dim:.8,r:o.r&&o.r*.92});
   runHooks('glFx',o,X);   // 심법 속성 재질 (r_elfx.js, v165)

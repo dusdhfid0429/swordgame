@@ -9,7 +9,8 @@ function mobArtId(e){const d=e.d;if(e.art&&ARTS[e.art])return e.art;
 function mobKnown(e){const a=ARTS[e.art];if(!a)return 0;return Math.min(a.forms.length,1+(e.realm||0)+(e.d.boss?1:0))}
 function mobKit(e){
   const d=e.d;if(!d||d.beast||d.villager||d.passive||e.duel||e.eq)return e;
-  const id=mobArtId(e);if(!id)return e;e.art=id;const a=ARTS[id];if(!e.el&&a.el)e.el=a.el;e.known=mobKnown(e);
+  const id=mobArtId(e);if(!id)return e;e.art=id;const a=ARTS[id];if(!e.el){const s=foeSim(e);if(s)e.el=s.el}   // v215: 적의 속성은 그 적의 심법(정·사 기초 심법) 것. 무공에는 속성이 없다
+  e.known=mobKnown(e);
   const t=mobTier(e),r=e.realm||0,q=()=>clamp(.55+r*.13+(t==='b'?.3:t==='e'?.12:0)+Math.random()*.2,.5,1.6),o=KIT_ODDS[t];
   e.eq={weapon:mkWeapon(a.cls,q(),0),armor:null,acc:null,boots:null};
   if(Math.random()<o.armor)e.eq.armor=mkGear('armor',pick(['마의','피갑','흑철갑']),q(),{hp:26,def:4});
@@ -27,7 +28,8 @@ function mobKitLabel(e){const a=ARTS[e.art];if(!a)return'';const q=e.eq&&e.eq.we
   return `${a.n}${q?` · ${QN(q.q)} ${q.name}`:''}${e.eq&&e.eq.armor?` · ${e.eq.armor.name}`:''}`}
 // 정예·보스가 큰 기술을 쓸 때 초식 이름을 외친다
 function mobFormCall(e){const a=ARTS[e.art];if(!a||!e.known)return;const f=a.forms[Math.floor(Math.random()*e.known)];
-  texts.push({x:e.x,y:e.y,t:`${a.n} · ${f.n}`,c:`rgb(${a.ct})`,life:.9,call:1});runHooks('formCall',e,f)}
+  const FX=foeX(e);texts.push({x:e.x,y:e.y,t:`${a.n} · ${f.n}`,c:`rgb(${FX?FX.art.ct:a.ct})`,life:.9,call:1});   // v215: 외치는 글자색도 그 적의 심법 색
+  runHooks('formCall',e,f)}
 // 전리품
 function mobLoot(e){
   const d=e.d,out=[];

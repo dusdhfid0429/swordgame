@@ -157,7 +157,7 @@ function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 특성 ${trHtml(a)} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
       <p>${a.d}${typeof artMeanHtml==='function'?artMeanHtml(a):''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}

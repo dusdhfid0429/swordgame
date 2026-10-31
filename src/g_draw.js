@@ -285,7 +285,7 @@ function draw(){
   // v169: 무공 이펙트(c2 있음)는 심지가 무공 특성 보조색 쪽으로 물든다 (g_fxcol.js hiOf)
   const fxMode=(c,c2)=>{const dk=isDark(c);ctx.globalCompositeOperation=dk?'source-over':'lighter';HI=c2?hiOf(c,c2):dk?HI_DARK:WH};
   for(const f of fx)if(f.glow){fxMode(f.col,f.c2);atZ(f,()=>drawGlow2(f))}for(const q of projs){fxMode(q.c,q.c2);const s=q.X&&q.X.fs;ctx.globalAlpha=s!=null&&s<1?QS.fx.a+(1-QS.fx.a)*s:1;atZ(q,()=>drawProj(q));ctx.globalAlpha=1}ctx.globalCompositeOperation='lighter';HI=WH;   // 투사체: 낮은 성의 시전은 옅게 (g_qstar.js)
-  for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();drawProj({...q,X:{t:0,art:{elc:false}},size:1,kind:'arrow'})}
+  for(const q of eprojs){if(!q.trail)q.trail=[];q.trail.push({x:q.x,y:q.y});if(q.trail.length>6)q.trail.shift();if(q.X)fxMode(q.c,q.c2);drawProj({...q,X:q.X||{t:0,art:{elc:false}},size:1,kind:'arrow'});if(q.X){ctx.globalCompositeOperation='lighter';HI=WH}}   // v215: 적 초식 연사는 그 적 심법 색 (foeX)
   if(P.flash>0){ctx.fillStyle=rgba(P.flashCol,P.flash*.5);ctx.fillRect(0,0,W,H)}
   ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center';

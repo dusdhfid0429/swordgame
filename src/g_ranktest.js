@@ -30,7 +30,7 @@ function rtStart(sid){if(rtWhy(sid))return;const s=SECTS[sid],to=rtNext(sid),r=c
   P.path=null;P.target=null;P.leap=null;P.hp=P.maxHp;P.qi=P.maxQi;
   let ex=P.x+2.4,ey=P.y;if(!walkAt(ex,ey)){ex=P.x-2.4;if(!walkAt(ex,ey)){ex=P.x;ey=P.y+2.4}}
   const es=eliteStat(r,RT.kh,RT.ka);   // v194: 그 경지 정예 몫
-  const e=mkMob(nm,ex,ey,{hp:es.hp,atk:es.atk,def:Math.round(2+r*1.5),hm:es.hm,sp:2.2,reach:cls==='창'?1.8:cls==='봉'?1.6:1.4,el:ar.el,pal:'duelist',hostile:1,aggro:9,duelist:1,elite:1});
+  const e=mkMob(nm,ex,ey,{hp:es.hp,atk:es.atk,def:Math.round(2+r*1.5),hm:es.hm,sp:2.2,reach:cls==='창'?1.8:cls==='봉'?1.6:1.4,el:simSectEl(sid),pal:'duelist',hostile:1,aggro:9,duelist:1,elite:1});
   const hp=es.hp;Object.assign(e,{hp,maxHp:hp,atk:es.atk,def:Math.round(2+r*1.5),hm:es.hm,duel:1,aggro:true,realm:r,wcls:cls,art:ar.id,rtExam:1});
   e.d=Object.assign({},e.d,{pal:(typeof sectPal==='function'&&sectPal(sid,exr,cls,{elite:1}))||'duelist'});e.name=`${nm} · ${rankName(sid,exr)}`;
   mobs.push(e);P.target=e;showBanner('승급 시험',`${s.n} ${rankName(sid,to)}`);log(`승급 시험 시작: ${e.name} (${CLASS[cls].n}). ${RT.ring}칸 밖으로 나가면 떨어진다.`,'sys')}

@@ -234,7 +234,8 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
-  const a=X.art,el=from===P?pEl():(from.el||a.el);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
+  // v215: 무공에는 속성이 없다. 상극은 치는 사람의 심법 속성만 (적은 e.el = 그 적 심법)
+  const a=X.art,el=from===P?pEl():elOf(from);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}

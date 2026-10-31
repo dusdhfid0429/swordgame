@@ -4,8 +4,9 @@
 //  화 불길·불티 / 수 물방울·물결 / 목 잎 / 금 쇳조각·칼빛 / 토 돌·흙먼지·갈라짐 / 양 햇살 / 음 서리꽃·찬 안개 / 뇌 잔번개 / 마 검은 연기
 // 표는 data/elfx.json EL_FX(속성마다 입자 종류·배율·색), r_exec.js GL 이 glFx 훅을 부르고, 투사체는 tick 훅에서 꼬리를 남긴다
 const EL_FX=GD.EL_FX,EL_FX_N=GD.EL_FX_N,EL_HARM=GD.EL_HARM;
-// v169b (사용자 2026-10-22 "심법 영향 이펙트만 너무 강조되어 조화롭지 못하다, 무공 이펙트와 자연스럽게 섞이게"): 재질 입자의 색을 무공 보조색(a.c2) 쪽으로
-// EL_HARM.tint 만큼 물들이고, 크기(size)·진하기(alpha)를 줄인다. 심지(HI)도 무공 보조색을 따른다. 마기 연기는 검은색 그대로 둔다
+// v169b (사용자 2026-10-22 "심법 영향 이펙트만 너무 강조되어 조화롭지 못하다, 무공 이펙트와 자연스럽게 섞이게"): 재질 입자의 색을 보조색(a.c2) 쪽으로
+// EL_HARM.tint 만큼 물들이고, 크기(size)·진하기(alpha)를 줄인다. 마기 연기는 검은색 그대로 둔다.
+// v215: 보조색도 이제 심법의 것이라(무공 특성 없음) 색·재질이 모두 펼치는 사람의 심법에서 나온다. 적은 foeX(e).el (g_fxcol.js)
 const elCol=(col,X)=>{const c2=X&&X.art&&X.art.c2;return c2&&!isDark(col)?mixCol(col,c2,EL_HARM.tint,1):col};
 const ELFX_SKIP={crackle:1,parts:1};   // 뇌기 잔번개(crackle)는 이미 속성 연출이다
 // 모양마다 입자가 날 자리: 기준점(o.x,o.y)의 화면 좌표에서 떨어진 ox,oy, 땅 높이 gy, 늦게 나는 시간 d
@@ -41,7 +42,7 @@ function elPart(k,e){const R=Math.random,a=R()*6.283,q={...e,k,r:R(),rot:R()*6.2
     case'smoke':q.L=.7+R()*.5;q.vx=(R()-.5)*24;q.vy=-(30+R()*40);q.s=6+R()*6;break}
   q.s*=EL_HARM.size;return q}
 // 무공 이펙트 하나(o)에 속성 재질을 덧입힌다. X 가 없거나(경지 효과 등) 속성 표에 없으면 그냥 둔다
-function elFx(o,X,el){el=el||(X&&X.art&&typeof artEl==='function'?artEl(X.art):null);const E=EL_FX[el];if(!E||ELFX_SKIP[o.t])return;
+function elFx(o,X,el){el=el||(X&&X.el)||(X&&X.art&&typeof artEl==='function'?artEl(X.art):null);const E=EL_FX[el];if(!E||ELFX_SKIP[o.t])return;
   const t=X?X.t:0,base=(SWEEP[o.t]?EL_FX_N.sweep:EL_FX_N.burst)+EL_FX_N.tier*t,ps=[];
   for(const[k,m,c0]of E.parts){const n=Math.max(1,Math.round(base*m)),col=elCol(c0,X);for(const e of elEmit(o,n))ps.push({...elPart(k,e),col})}
   const L=Math.max(...ps.map(q=>q.d+q.L));fx.push({t:'el',el,glow:true,dim:1,x:o.x,y:o.y,z:o.z,ps,life:L,max:L,col:'255,255,255',c2:X&&X.art&&X.art.c2})}
@@ -52,7 +53,12 @@ hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key||q.X.bare)con
   const el=artEl(q.X.art),E=EL_FX[el];if(!E)continue;const ps=[];
   for(const[k,m,c0]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m)),col=elCol(c0,q.X);
     for(let i=0;i<n;i++)ps.push({...elPart(k,{ox:(Math.random()-.5)*8,oy:-24+(Math.random()-.5)*8,gy:0,d:0}),col})}
-  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:q.X.art.c2});fxPw(fx[fx.length-1],q.X,false)}});
+  const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:q.X.art.c2});fxPw(fx[fx.length-1],q.X,false)}
+  // v215: 적의 무공 연사(초식)도 그 적 심법의 속성 꼬리를 흘린다 (foeX, g_life.js)
+  for(const q of eprojs){const X=q.X;if(!X||!X.el)continue;q.elT=(q.elT||0)-dt;if(q.elT>0)continue;q.elT=.08;const E=EL_FX[X.el];if(!E)continue;const ps=[];
+    for(const[k,m,c0]of E.parts){if(k==='crack'||k==='ripple')continue;const n=Math.max(1,Math.round(EL_FX_N.trail*m)),col=elCol(c0,X);
+      for(let i=0;i<n;i++)ps.push({...elPart(k,{ox:(Math.random()-.5)*8,oy:-24+(Math.random()-.5)*8,gy:0,d:0}),col})}
+    const L=Math.max(...ps.map(p=>p.L));fx.push({t:'el',el:X.el,glow:true,dim:1,x:q.x,y:q.y,ps,life:L,max:L,col:'255,255,255',c2:X.art.c2})}});
 
 // ---- 그리기 (r_fx.js drawGlow2 가 부른다. 더하기 합성이 기본, 돌·흙·잎·연기는 보통 합성) ----
 const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};
