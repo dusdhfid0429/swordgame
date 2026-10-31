@@ -236,11 +236,13 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   // v215: 무공에는 속성이 없다. 상극은 치는 사람의 심법 속성만 (적은 e.el = 그 적 심법)
   const a=X.art,el=from===P?pEl():elOf(from);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
+  if(el==='혈'&&e.hp<e.maxHp*.5)d*=1.2;   // v216 혈기: 생명이 절반 아래인 적에게 피해 +20%
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
   if(el==='토'){stun=(stun||0)+.3;kb=(kb||0)+.3}
+  if(el==='풍')kb=(kb||0)+.45;   // v216 풍기: 크게 밀쳐낸다
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
-  if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07);
+  if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07),e.burnC=null;
   if(el==='수')e.slow=Math.max(e.slow,2);
   if(el==='목'&&P.hp>0)P.hp=Math.min(P.maxHp,P.hp+d*.1);
   // 음양·뇌기 (심법 속성, 2026-10-13)
@@ -249,6 +251,11 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   // 마기 (마교 심법, 2026-10-14): 오행·음양 대신 검은 기운. 느려지고 생명·내공을 빨아들인다
   if(el==='마'){e.slow=Math.max(e.slow||0,1.5);if(from===P&&P.hp>0){P.hp=Math.min(P.maxHp,P.hp+d*.08);P.qi=Math.min(P.maxQi,P.qi+d*.08)}}
   if(el==='뇌'&&Math.random()<.2){e.stun=Math.max(e.stun||0,e.d.boss?.15:.35);addText(e.x,e.y-.4,'뇌격','#cfe8ff')}
+  // v216 (사용자 2026-10-31 "오행 음양 뇌 말고 심법 속성을 더 다양하게, 독 등등"): 독기·혈기·풍기·빙기
+  if(el==='독'){e.burn=Math.max(e.burn,5);e.burnD=Math.max(1,d*.06);e.burnC='150,225,80';e.weak=Math.max(e.weak||0,5)}   // 중독: 독이 퍼지고 공격이 약해진다 (hurt 훅)
+  if(el==='혈'){e.burn=Math.max(e.burn,4);e.burnD=Math.max(1,d*.05);e.burnC='220,30,45'}   // 출혈
+  if(el==='풍'&&Math.random()<.2)later(.12,()=>{if(e.hp>0)damage(e,Math.max(1,Math.round(d*.4)),.2,0,from)});   // 바람이 한 번 더 벤다
+  if(el==='빙'){e.slow=Math.max(e.slow||0,2);if(Math.random()<.15){e.stun=Math.max(e.stun||0,e.d.boss?.4:1);addText(e.x,e.y-.4,'빙결','#bfeaff')}}
   if(!e.acadDummy||mast(X.key)<25)gainMast(X.key,1);   // 무관 목인장으로는 소성까지만 (g_academy.js)
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});

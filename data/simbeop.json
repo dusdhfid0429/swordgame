@@ -59,11 +59,7 @@
   "SIM_TDEF": {"불가": "def", "도가": "qreg", "정종": "hm", "사공": "drain", "마공": "atk", "사불": "def"},
   "SIM_BASE_EL": {"정": "금", "사": "음"},
   "SIM_SHOP_EL": {"정": "양", "사": "수"},
-  "SIM_EL": {
-    "shaolin": "금", "mudang": "양", "hwasan": "화", "emei": "음", "kunlun": "수", "kongtong": "수", "jeomchang": "뇌", "cheongseong": "목",
-    "jongnam": "토", "gaebang": "양", "namgung": "뇌", "dang": "목", "paeng": "토", "moyong": "음", "jegal": "토",
-    "taeyang": "양", "bukhae": "음", "podal": "금", "daeroe": "금", "cheonma": "마", "hyeolrang": "음", "mandok": "목", "sama": "음"
-  },
+  "SIM_EL": {"shaolin": "금", "mudang": "양", "hwasan": "화", "emei": "음", "kunlun": "수", "kongtong": "수", "jeomchang": "뇌", "cheongseong": "풍", "jongnam": "토", "gaebang": "양", "namgung": "뇌", "dang": "독", "paeng": "토", "moyong": "음", "jegal": "토", "taeyang": "양", "bukhae": "빙", "podal": "금", "daeroe": "금", "cheonma": "마", "hyeolrang": "혈", "mandok": "독", "sama": "음", "mosan": "독", "seolsan": "빙", "cheonsan": "빙", "gwangpung": "풍", "heukpung": "풍"},
   "SCHOOL_FX": {
     "불가": "255,214,120", "도가": "150,220,255", "정종": "235,240,250", "사공": "255,80,100", "마공": "28,6,40", "사불": "255,150,70"
   },

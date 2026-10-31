@@ -270,8 +270,8 @@ const acadSimIntro=()=>`<p class="note">"심법은 단전에 내공을 쌓는 �
   <p class="note dim">계열(불가·도가·정종·사공·마공)이 상극인 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다. 쌓은 내공은 심법을 바꿔도 그대로다.</p>`;
 function acadElHtml(){const els=[...new Set(ACAD_SIM[P.side].map(x=>x.el))];
   return `<div class="card"><h4>속성과 상극</h4><p class="note">"무공의 기운은 심법을 따른다. 어떤 심법을 운용하느냐에 따라 같은 검법도 불이 되고 물이 된다."</p>
-    <p>상극: ${Object.entries(BEATS).map(([k,v])=>`${k}→${v}`).join(' · ')} <small class="dim">(앞이 뒤를 누른다 · 피해가 커진다)</small></p>
-    <p>${els.map(e=>`<b>${e}</b> ${EL[e]?EL[e].fx:''}`).join('<br>')}</p>${P.acad.c.talk_el?'':B('actalk:el','알겠습니다',{pri:1})}</div>`}
+    <p>상극: ${Object.entries(BEATS).map(([k,v])=>`${elN(k)}→${elN(v)}`).join(' · ')} <small class="dim">(앞이 뒤를 누른다 · 피해가 커진다)</small></p>
+    <p>${els.map(e=>`<b>${elN(e)}</b> ${EL[e]?EL[e].fx:''}`).join('<br>')}</p>${P.acad.c.talk_el?'':B('actalk:el','알겠습니다',{pri:1})}</div>`}
 function acadQuestHtml(){const st=ACAD_ST[3],c=P.acad.c;
   const rows=st.quests.map((q,i)=>{const key='acad:'+i,done=(c.qd||{})[key],on=P.quests.findIndex(o=>o.key===key),p=on>=0?questProg(P.quests[on]):null;
     return `<div class="it"><div>${esc(q.n)}${done?' <small class="good">해결</small>':''}<span>${q.kind==='kill'?q.mob.join('·')+' 처치':q.mat+' 납품'} ${q.cnt} · 은자 ${q.silver} · 활력 ${q.vit}${p?` · 진행 ${p.have}/${q.cnt}`:''}</span></div><div class="ib">${done?'':on>=0?B('acqd:'+on,'보고',{d:!p.done,pri:p.done}):B('acq:'+i,'맡기',{d:P.quests.length>=4})}</div></div>`}).join('');

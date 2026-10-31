@@ -34,7 +34,9 @@ function pFxSect(){if(!P)return null;const s=simCur(),sid=s.sect||(P.sect&&P.sec
 function pFxPair(){const sid=pFxSect();if(sid)return SECT_FX[sid];return schoolPair(pSchool(),P&&P.side)}
 function fxCol(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][0]:SCHOOL_FX[simSchoolOf(a.sect)]||SCHOOL_FX['정종'];
   const sid=pFxSect();return sid?SECT_FX[sid][0]:SCHOOL_FX[pSchool()]||SCHOOL_FX['정종']}
-const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${x.el}</b> ${EL[x.el]?EL[x.el].fx:''}`;
+// v216 (사용자 2026-10-31 "혈기 독기 뇌기 등"): 속성은 '○기'로 부른다 (화기·수기…·마기·독기·혈기·풍기·빙기). 자료의 열쇠는 한 글자 그대로
+const elN=e=>e?e+'기':'';
+const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${elN(x.el)}</b> ${EL[x.el]?EL[x.el].fx:''}`;
 // 심법 특색: 운용 중인 심법의 특색 k 값(SIM_TK 단위: %p 또는 현묘도 점수). 없으면 0
 function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&SECTS[sid].al==='sacheon'?'사공':'정종'}
 const simTraitVal=(x,k)=>x&&x.tr&&x.tr.includes(k)?SIM_TK[k].v*SIM_TQ[x.g]:0;
@@ -45,6 +47,7 @@ const simTraitHtml=x=>simTraits(x).map(t=>`<b class="gold">${t.n}</b> ${t.txt}`)
 // 전투 적용: 공격력·광폭·받는 피해·반탄·적중 효과(중독=독기, 둔화, 경직)·흡정·흡혈. 치명타·현묘도·회복·이동·경공·초식 내공은 각 공식에서 simTv 를 더한다
 hook('hit',c=>{if(c.from!==P)return;const a=simTv('atk'),r=P.hp<P.maxHp*.5?simTv('rage'):0;if(a||r)c.m*=1+(a+r)/100});
 hook('hurt',c=>{const v=simTv('def');if(v)c.dm*=1-v/100});
+hook('hurt',c=>{if(c.src&&c.src.weak>0)c.dm*=.85});   // v216 독기에 중독된 적은 공격이 15% 약하다
 hook('hitDone',c=>{const e=c.e,d=c.hp0-e.hp;if(!e||d<=0||!(simCur().tr||[]).length)return;
   if(Math.random()*100<simTv('poison')){e.burn=Math.max(e.burn||0,4);e.burnD=Math.max(1,Math.round(d*.06));addText(e.x,e.y-.4,'중독','#9fd36a')}
   if(Math.random()*100<simTv('slow')){e.slow=Math.max(e.slow||0,2.5);addText(e.x,e.y-.4,'둔화','#9fc8ff')}
@@ -99,4 +102,4 @@ const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
   return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
     <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다. 마공과 정파 계열(불가·도가·정종) 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다.</p></div>`}
-function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${x.el}속성 · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}
+function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${elN(x.el)} · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}

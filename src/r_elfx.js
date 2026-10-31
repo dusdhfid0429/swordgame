@@ -1,4 +1,7 @@
-// ================= 속성 재질: 무공 이펙트에 심법 속성을 덧입힌다 =================
+// ================= 속성 기운: 무공 이펙트에 심법 속성을 덧입힌다 =================
+// v216 (사용자 2026-10-31 "속성 효과가 풀잎이나 물방울이라기보단 기운으로 표현"): 불길·물방울·잎·돌 같은 물건 재질 대신, 속성마다 움직임이 다른 '기운 줄기'(q_*)로 그린다.
+//  화기 솟구침(rise) / 수기 굽이침(flow) / 목기 나선(spiral) / 금기 곧게 뻗침(dart) / 토기 땅을 타고 묵직하게(low) / 양기 사방으로(pulse)
+//  음기 가라앉음(sink) / 독기 끓어 엉김(haze) / 혈기 맥박(throb) / 풍기 소용돌이(swirl) / 빙기 얼어 번짐(drift), 작은 기운 알갱이(mote). 뇌기 잔번개·마기 연기는 원래 기운이라 그대로
 // 사용자 요청(2026-10-21): "무공은 종류가 다양하지만 결국 공격 패턴이 비슷하고 연출이 겹친다. 내공에 특성을 넣었으니 그 효과에 맞는 이펙트를 — 화는 불, 수는 물, 뇌는 번개"
 // 모양(반달·회전·고리·직선·낙뢰…)과 색(문파 색)은 그대로 두고, 그 모양을 따라 속성의 재질 입자를 얹는다:
 //  화 불길·불티 / 수 물방울·물결 / 목 잎 / 금 쇳조각·칼빛 / 토 돌·흙먼지·갈라짐 / 양 햇살 / 음 서리꽃·찬 안개 / 뇌 잔번개 / 마 검은 연기
@@ -39,14 +42,51 @@ function elPart(k,e){const R=Math.random,a=R()*6.283,q={...e,k,r:R(),rot:R()*6.2
     case'frost':q.L=.8+R()*.5;q.vx=(R()-.5)*30;q.vy=-(10+R()*30);q.s=4.5+R()*3;break;
     case'mist':q.L=.8+R()*.4;q.vx=(R()-.5)*20;q.vy=-4;q.s=14+R()*12;break;
     case'spark':q.L=.18+R()*.18;q.s=16+R()*18;q.d+=R()*.15;break;
-    case'smoke':q.L=.7+R()*.5;q.vx=(R()-.5)*24;q.vy=-(30+R()*40);q.s=6+R()*6;break}
+    case'smoke':q.L=.7+R()*.5;q.vx=(R()-.5)*24;q.vy=-(30+R()*40);q.s=6+R()*6;break
+    default:if(k.startsWith('q_')){q.mv=k.slice(2);q.vx=(R()-.5)*40;q.L=(q.mv==='haze'||q.mv==='throb'||q.mv==='low'?.7:.5)+R()*.35;q.s=(q.mv==='mote'?1.8:3)+R()*1.6;if(q.mv==='low')q.oy=q.gy}}
   q.s*=EL_HARM.size;return q}
 // 무공 이펙트 하나(o)에 속성 재질을 덧입힌다. X 가 없거나(경지 효과 등) 속성 표에 없으면 그냥 둔다
 function elFx(o,X,el){el=el||(X&&X.el)||(X&&X.art&&typeof artEl==='function'?artEl(X.art):null);const E=EL_FX[el];if(!E||ELFX_SKIP[o.t])return;
-  const t=X?X.t:0,base=(SWEEP[o.t]?EL_FX_N.sweep:EL_FX_N.burst)+EL_FX_N.tier*t,ps=[];
+  const rb=E.rb&&ELR[o.t]?elRibbon(o,X,el,E.rb):null;
+  const t=X?X.t:0,base=((SWEEP[o.t]?EL_FX_N.sweep:EL_FX_N.burst)+EL_FX_N.tier*t)*(rb?EL_FX_N.rbPart:1)*(X&&X.lite?GD.FOE_FX.part:1),ps=[];
   for(const[k,m,c0]of E.parts){const n=Math.max(1,Math.round(base*m)),col=elCol(c0,X);for(const e of elEmit(o,n))ps.push({...elPart(k,e),col})}
   const L=Math.max(...ps.map(q=>q.d+q.L));fx.push({t:'el',el,glow:true,dim:1,x:o.x,y:o.y,z:o.z,ps,life:L,max:L,col:'255,255,255',c2:X&&X.art&&X.art.c2})}
 hook('glFx',(o,X)=>elFx(o,X));
+// ---- 속성 기운 띠 (v216, data/elfx.json EL_FX[el].rb): 공격 궤적을 따라 하나로 이어진 기운. 가장자리는 속성마다 (불꽃 혀·물결·날카로운 결·끓는 덩이) ----
+const ELR={arc:1,thrust:1,spin:1,ring2:1,vortex:1,line:1};
+function elRibbon(o,X,el,rb){const L=Math.max(.42,(o.max||o.life)*1.35);
+  const f={t:'elr',el,rb,glow:true,dim:1,x:o.x,y:o.y,z:o.z,life:L,max:L,col:rb.c[1],sh:{t:o.t,r:o.r,ang:o.ang,spread:o.spread,flip:o.flip,mo:o.mo,w:o.w||2,ex:o.ex,ey:o.ey},seed:Math.random()*50,dark:isDark(rb.c[1]),lite:X&&X.lite?GD.FOE_FX:null};if(f.lite)f.dim=f.lite.a;
+  fx.push(f);if(X)fxPw(f,X,false);return f}
+// 띠의 가운데 선 (화면 px, 기준점에서) 과 바깥쪽 법선. sym: 양쪽으로 퍼지는 모양(찌르기·직선)
+function elrGeo(f,p,u){const o=f.sh;
+  if(o.t==='arc'){const rx=o.r*55,ry=o.r*32,th=Math.atan2(Math.sin(o.ang)*rx,Math.cos(o.ang)*ry),dir=o.flip?-1:1,a=th-dir*o.spread/2+dir*o.spread*u,lift=8*o.r;
+    const nx=Math.cos(a)*ry,ny=Math.sin(a)*rx,l=Math.hypot(nx,ny)||1;return[Math.cos(a)*rx,-26+Math.sin(a)*ry-lift*Math.sin(u*Math.PI),nx/l,ny/l]}
+  if(o.t==='thrust'){const g=thrustGeo(o),d=6+g.L*u;return[g.ux*d,-26+g.uy*d,-g.uy,g.ux]}
+  if(o.t==='line'){const a=toScreen(f.x,f.y),b=toScreen(o.ex,o.ey),dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1;return[dx*u,dy*u-26,-dy/l,dx/l]}
+  const[rx0,ry0]=isoR(o.r),k=o.t==='vortex'?.8:1,rx=rx0*k,ry=ry0*k,a=(o.ang||0)+u*6.283,cy=o.t==='spin'?-16:0,nx=Math.cos(a)*ry,ny=Math.sin(a)*rx,l=Math.hypot(nx,ny)||1;
+  return[Math.cos(a)*rx,cy+Math.sin(a)*ry,nx/l,ny/l]}
+const elrSym=t=>t==='thrust'||t==='line';
+function elrEdge(rb,q,i,seed){const ph=q*rb.fr*6.283-time*rb.sp+seed;
+  switch(rb.edge){case'flame':return Math.pow(Math.max(0,Math.sin(ph)),3)*(.6+.4*Math.sin(ph*2.3+1))+.1;
+    case'wave':return .5+.5*Math.sin(ph);
+    case'blob':return Math.sqrt(Math.abs(Math.sin(ph)));
+    case'jag':{const v=Math.sin((i*12.9898+seed*7.1+Math.floor(time*rb.sp))*1.37)*43758.5453;return Math.pow(v-Math.floor(v),2)}
+    default:return .3}}
+function drawElr(f){const p=toScreen(f.x,f.y),rb=f.rb,pr=1-f.life/f.max,o=f.sh,loop=!ELR_OPEN[o.t];
+  const sy=elrSym(o.t),head=Math.min(1,pr/(sy?.14:.3)),tail=loop?Math.max(0,(pr-.45)/.55):Math.max(0,(pr-.3)/.7);if(head-tail<.02)return;
+  const fade=Math.min(1,(1-pr)*2.5),W=(6+o.w*2.2)*EL_RBW*rb.w*(o.r>1.2?1.15:1)*(sy?.42:1)*(f.lite?f.lite.rbw:1),n=28,sym=elrSym(o.t),C=[],N=[],E1=[],E2=[],WD=[];
+  for(let i=0;i<=n;i++){const q=i/n,u=tail+(head-tail)*q,g=elrGeo(f,p,u);C.push([p.x+g[0],p.y+g[1]]);N.push([g[2],g[3]]);
+    WD.push(W*(o.t==='arc'?Math.pow(q,.8)*Math.min(1,(1-q)*10+.3):Math.pow(Math.sin(Math.PI*Math.min(1,.08+q*.92)),.6)));
+    E1.push(elrEdge(rb,u,i,f.seed));E2.push(elrEdge(rb,u,i+97,f.seed+3.1))}
+  const band=(sc)=>{const out=[],inn=[];for(let i=0;i<=n;i++){const[cx,cy]=C[i],[nx,ny]=N[i],w=WD[i]*sc,e=rb.amp*E1[i],up=rb.up*w*e*.9;
+      out.push([cx+nx*w*(1+e),cy+ny*w*(1+e)-up]);
+      const ws=sym?w*(1+rb.amp*E2[i]):w*.4;inn.push([cx-nx*ws,cy-ny*ws-(sym?rb.up*w*rb.amp*E2[i]*.9:0)])}
+    return[...out,...inn.reverse()]};
+  const mode=ctx.globalCompositeOperation,ga=ctx.globalAlpha;ctx.globalAlpha=ga*(f.dim||1);ctx.globalCompositeOperation=f.dark?'source-over':'lighter';
+  for(const[sc,ci,al]of EL_RBL){ctx.fillStyle=rgba(rb.c[ci],al*fade);path(band(sc));ctx.fill()}
+  if(f.dark){ctx.strokeStyle=rgba(HI_DARK,.45*fade);ctx.lineWidth=1.2;path(band(1));ctx.stroke()}
+  ctx.globalCompositeOperation=mode;ctx.globalAlpha=ga}
+const ELR_OPEN={arc:1,thrust:1,line:1},EL_RBW=GD.EL_RB.w,EL_RBL=GD.EL_RB.layers;   // 띠 굵기 배율, 겹 [크기, 색 번호, 진하기]
 // 투사체 꼬리: 날아가는 동안 조금씩 속성 입자를 흘린다
 hook('tick',dt=>{for(const q of projs){if(!q.X||!q.X.art||!q.X.key||q.X.bare)continue;   // 내공 없는 맨 화살·암기는 속성 꼬리 없이 (g_bare.js)
   q.elT=(q.elT||0)-dt;if(q.elT>0)continue;q.elT=.06;
@@ -65,11 +105,33 @@ const EL_SOLID={rock:1,dust:1,crack:1,leaf:1,smoke:1};
 const SPK=[];
 // 살아 있는 재질 입자가 많을수록 하나하나를 흐리게 그린다 (겹치면 하얗게 타서 무공 모양이 묻힌다, EL_FX_N.dense)
 const ELD={t:-1,k:1};
-function elDense(){if(ELD.t===time)return ELD.k;let n=0;for(const f of fx)if(f.t==='el')n+=f.ps.length;ELD.t=time;return ELD.k=Math.min(1,Math.sqrt(EL_FX_N.dense/Math.max(1,n)))}
+function elDense(){if(ELD.t===time)return ELD.k;let n=0;for(const f of fx)if(f.t==='el')n+=f.ps.length;else if(f.t==='elr')n+=12;ELD.t=time;return ELD.k=Math.min(1,Math.sqrt(EL_FX_N.dense/Math.max(1,n)))}
+// 기운 줄기 하나가 a초 뒤 있는 자리 (기준점에서 화면 px)
+function qiPos(q,a){const g=q.rot,S=Math.sin,C=Math.cos;switch(q.mv){
+  case'rise':return[q.vx*a*.6+S(a*9+q.r*6)*4,-(50+q.r*40)*a];
+  case'flow':return[C(g)*a*90,S(a*10+q.r*6)*6+S(g)*a*30];
+  case'spiral':{const rr=4+a*34,t=g+a*8;return[C(t)*rr,S(t)*rr*.6-22*a]}
+  case'dart':return[C(g)*a*220,S(g)*a*130];
+  case'low':return[C(g)*a*80,S(g)*a*28];
+  case'pulse':return[C(g)*a*110,S(g)*a*65];
+  case'sink':return[q.vx*a*.4+S(a*5+q.r*6)*4,30*a+12*a*a];
+  case'haze':return[S(a*5+q.r*6)*7+q.vx*a*.3,-22*a];
+  case'throb':return[q.vx*a*.5,-36*a];
+  case'swirl':{const rr=10+a*26,t=g+a*11;return[C(t)*rr*1.3+q.vx*a*.6,S(t)*rr*.45-10*a]}
+  case'drift':return[C(g)*a*45,S(g)*a*28-8*a];
+  default:return[q.vx*a*.5+S(a*6+q.r*6)*3,-(25+q.r*30)*a]}}
+const QT=[0,.035,.07,.105];
+function drawQi(q,a,u,fade,x0,y0,c){let s=q.s;if(q.mv==='haze')s*=1+u*1.5;else if(q.mv==='throb')s*=1+.45*Math.sin(a*20+q.r*6);
+  const[hx,hy]=qiPos(q,a);
+  if(q.mv==='mote'){glowDot(x0+hx,y0+hy,s*2.4,c,.5*fade);ctx.fillStyle=rgba(HI,.8*fade);ctx.fillRect(x0+hx-.8,y0+hy-.8,1.6,1.6);return}
+  ctx.beginPath();for(let i=0;i<QT.length;i++){const[x,y]=qiPos(q,Math.max(0,a-QT[i]));i?ctx.lineTo(x0+x,y0+y):ctx.moveTo(x0+x,y0+y)}
+  ctx.strokeStyle=rgba(c,.45*fade);ctx.lineWidth=s*1.7;ctx.stroke();ctx.strokeStyle=rgba(HI,.55*fade);ctx.lineWidth=s*.45;ctx.stroke();
+  glowDot(x0+hx,y0+hy,s*2.2,c,.35*fade)}
 function drawEl(f){SPK.length=0;const p=toScreen(f.x,f.y),T=f.max-f.life,mode=ctx.globalCompositeOperation,ga=ctx.globalAlpha;ctx.globalAlpha=ga*elDense()*EL_HARM.alpha;ctx.lineCap='round';
   for(const q of f.ps){const a=T-q.d;if(a<0||a>q.L)continue;const u=a/q.L,fade=u<.1?u/.1:1-u*u;
     ctx.globalCompositeOperation=EL_SOLID[q.k]?'source-over':'lighter';
     const x0=p.x+q.ox,y0=p.y+q.oy,gr=p.y+q.gy,c=q.col;
+    if(q.mv){drawQi(q,a,u,fade,x0,y0,c);continue}
     switch(q.k){
       case'flame':{const x=x0+q.vx*a+Math.sin(a*14+q.r*6)*3,y=y0+q.vy*a,s=q.s*(1-u*.6),hot=u<.2?'255,225,150':u<.6?c:'210,60,25';
         glowDot(x,y,s*1.5,hot,.25*fade);ctx.fillStyle=rgba(hot,.75*fade);ctx.beginPath();ctx.moveTo(x,y-s*1.7);ctx.quadraticCurveTo(x+s*.8,y,x,y+s*.6);ctx.quadraticCurveTo(x-s*.8,y,x,y-s*1.7);ctx.fill();break}
