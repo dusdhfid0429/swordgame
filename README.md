@@ -57,6 +57,7 @@ GitHub에 푸시하면 `.github/workflows/test.yml`이 빌드, dist 일치 확�
 | `r_sheet.js` | 핸드오프 시트 로더(v123): `assets/<이름>/` 아틀라스·클립을 `SHEETS`로 읽고 발 기준점으로 그린다 |
 | `assets/wuxia/` | 핸드오프 주인공 시트(145장 22클립)와 원본 시트, `tools/` 는 시트 제작 툴(spritify·autosheet). 설명: docs/스프라이트_핸드오프.md |
 | `assets/wpn/` | 무기 파츠 시트(v125, 검·도·창·봉·궁 36장, 초록 마커→grip 소켓). `tools/weaponsheet.py`로 잘라낸다. 주인공 코드 무기를 대체 |
+| `tools/webp.py` | v225 용량: 시트 PNG를 같은 자리 무손실 `.webp`로, `src/r_atlas.js` 안 옛 아틀라스를 WebP로 바꾼다(픽셀 같음, HERO2는 WebP 한 변 한계 16383px를 넘어 PNG로 남음). build.py는 `.webp`가 있으면 그것을 넣는다. PNG를 고치면 다시 돌린다(Pillow 필요). 용량·메모리 한도는 `data/perf.json`, 테스트 `tests/t145_membudget.js` |
 | `g_guard.js` | 문파 구성(v118): 문지기·순찰조·전각 당원/시종(data/guard.json), 결전장 16 대 20 + 증원 파도 |
 | `g_caravan.js` | 표국·상단 행렬(v176): 성 지도 길을 오가는 행렬, 습격·구출·이어지는 일감, 약탈·수배, 성읍 표국(문파 운영/독립)과 호위 일감·표국 신용, 객잔 별미, 행렬 소문. 데이터 `data/caravan.json`, 설계 docs/표국_설계.md |
 | `g_rep.js` | 세력·문파 우호도(v182): 캐릭터마다 정·사·마·관과 문파별 값, 적대·경계·중립·우호 단계가 무인의 태도를 정한다. 윤회하면 처음부터. 데이터 `data/rep.json`, 설계 docs/세력_문파_설계.md 37장 |
