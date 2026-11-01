@@ -133,7 +133,7 @@ const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v18
   const r12=await p.evaluate(()=>({f:P.acad.c.final,w:P.acad.c.finalWin,done:acadAllDone(),grade:acadGradeOf().n}));
   ok(`졸업 비무 ${r12.f}판 ${r12.w}승, 성적 ${r12.grade}`,r12.f===3&&r12.w===2&&r12.done&&r12.grade==='수석');
   // 7. 졸업식 → 추천서 → 그 문파에 들면 공적을 얹어 받는다
-  await p.evaluate(()=>{P.age=13.2;act('acgrad');openNpc(npcsHere().find(n=>n.id==='ac_master'))});await p.waitForTimeout(150);
+  await p.evaluate(()=>{P.age=13.2;act('acgrad');P.acad.cards=['hwasan'];openNpc(npcsHere().find(n=>n.id==='ac_master'))});await p.waitForTimeout(150);   // v221 카드는 무게대로 뽑힌다: 화산파 카드를 깐다 (뽑기는 t141)
   const t13=await p.evaluate(()=>$('wbody').textContent);
   const r13=await p.evaluate(()=>({grad:P.acad.grad,grade:P.acad.grade,n:G.acadN,tok:!!P.bag.find(i=>i.name.includes('졸업 증표')),track:$('qtrack').textContent,big:acadRecList().some(s=>s.tier==='big')}));
   ok(`${r13.grade} 졸업, 졸업 증표, 추천서 목록에 대문파 (${t13.includes('화산파')}), 졸업 횟수 ${r13.n}`,r13.grad===1&&r13.grade==='수석'&&r13.tok&&r13.big&&r13.n===1&&!r13.track.includes('단계'));
