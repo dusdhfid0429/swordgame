@@ -17,7 +17,7 @@ function sryStart(sid){if(!P||P.sry||P.age>=SRY_END||!SECTS[sid])return;P.sry={s
 function sryActivate(){const s=P.sry,st=srySt(),S=SECTS[s.sid];s.open=1;s.c={};s.base={oe:SRY_VAL.oe(),merit:SRY_VAL.merit(),rank:rankIdx(s.sid)};
   if(st.rival&&!s.rival){const A=acadOf(P.side),pool=SECT_DATA.map(d=>d[0]).filter(id=>id!==s.sid&&SECTS[id].al!=='magyo'&&sideOk(SECTS[id].al)&&!(G.gone&&G.gone[id]));
     s.rival={n:A.mates[Math.floor(Math.random()*A.mates.length)][0],sect:pool.length?pick(pool):null}}
-  log(`[문파 수련기 ${s.m+1} · ${st.n}] ${masterTitle(S)}: "${st.say}"`,'sys');showBanner(`수련기 ${s.m+1} · ${st.n}`,`${S.n} ${masterTitle(S)}의 부름`)}
+  log(`[문파 수련기 ${s.m+1} · ${st.n}] ${masterTitle(S)}: "${st.say}"`,'sys');if(s.m>0&&typeof inyOffer==='function')inyOffer('sry:'+s.m);showBanner(`수련기 ${s.m+1} · ${st.n}`,`${S.n} ${masterTitle(S)}의 부름`)}   // v220: 둘째 마디부터 인연 3갈래
 // 나이가 차면 다음 마디를 연다. 예전 저장(이미 문파에 든 어린 제자)도 여기서 시작한다
 let sryT=0;hook('tick',dt=>{if(!P||!playing)return;
   if(sryOpen()){const s=P.sry;if(P.medit&&srySt().goals.some(g=>g.k==='medit'))s.c.medit=(s.c.medit||0)+dt}
@@ -60,7 +60,8 @@ function sryReport(){if(!sryOpen()||!sryAllDone())return;const s=P.sry,st=srySt(
   allies=allies.filter(a=>!a.sry);recalc();
   log(`${masterTitle(S)}: "잘했다." 수련기 ${s.m+1}마디 [${st.n}]을(를) 마쳤습니다. ${got.join(', ')}.`,'xp');feat(`${S.n} 수련기 [${st.n}]을(를) 마쳤다`);
   s.m++;s.open=0;s.c={};if(s.m>=SRY.length){s.end=1;showBanner('수련기를 마치다',`${S.n} · ${Math.floor(P.age)}세`);log('문파 수련기를 모두 마쳤다. 이제 강호가 기다린다.','xp')}
-  else showBanner(`${st.n} 마침`,`다음: ${SRY[s.m].n} (${SRY[s.m].age}세)`)}
+  else showBanner(`${st.n} 마침`,`다음: ${SRY[s.m].n} (${SRY[s.m].age}세)`);
+  if(typeof mdEnd==='function')mdEnd();if(typeof mdYears==='function'&&mdYears().y)log('세월 넘기기: 왼쪽 위 줄이나 임무창에서 다음 마디까지 세월을 넘길 수 있다.','info')}   // v220
 hook('sectAct',c=>{const a=c.a;if(a!=='sryrep'&&a!=='sryally'&&a!=='sryduel')return;c.done=true;c.r=true;
   if(a==='sryrep')sryReport();else if(a==='sryally'){sryAlly();closePanels()}else sryDuel()});
 // ---- 화면: 문파 창 카드, 임무창 카드, 임무 줄 ----

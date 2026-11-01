@@ -219,7 +219,7 @@ function acadGraduate(){const a=P.acad;if(!acadOn()||a.stage!==4||!acadAllDone()
   a.grad=1;a.grade=g.n;a.gradAge=Math.floor(P.age);G.acadN=(G.acadN||0)+1;P.silver+=g.silver;P.fame+=g.fame;
   const tok=mkGear('acc',`${A.n} 졸업 증표 (${g.n})`,g.n==='수석'?1.4:g.n==='우등'?1.2:1,{qi:10,hm:2});giveItem(tok);
   log(`${A.n}을(를) ${g.n}(으)로 졸업했습니다. 은자 ${g.silver}, 명성 ${g.fame}, 졸업 증표. 관주에게 추천서를 받자.`,'xp');showBanner(`${A.n} 졸업`,`${g.n} · ${Math.floor(P.age)}세`);
-  feat(`${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2})
+  feat(`${A.n}을(를) ${g.n}(으)로 졸업했다`);fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});if(typeof inyOffer==='function'){inyOffer('grad');mdEnd()}   // v220 인연 3갈래 · 세월 넘기기
   // 사파 무관을 악업이 무겁게 졸업하면 마교 밀사가 길을 일러 준다 (가입은 지금처럼 본산에서)
   if(P.side==='사'&&P.evil>=30&&SECTS.cheonma)setTimeout(()=>log(`졸업식 밤, 마교 밀사가 찾아와 속삭였다. "천마신교는 강한 자를 반긴다. ${hqPlace(SECTS.cheonma)}(으)로 오라."`,'dmg'),1200)}
 // 추천서: 성적에 맞는 같은 진영 문파 하나. 그 문파에 들면 가입 조건(명성·나이)을 덜고 공적을 얹어 받는다
