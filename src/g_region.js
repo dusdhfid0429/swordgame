@@ -82,12 +82,8 @@ function drawGate(g){
   for(let k=0;k<3;k++){const s=1-k*.25;ctx.beginPath();ctx.ellipse(0,0,26*s,13*s,0,0,7);ctx.stroke()}
   // 건물 문은 빛나는 자리와 이름만 (이정표 없이)
   if(g.door){ctx.restore();ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,p.y-13);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,p.y-14);return}
-  // 이정표
-  ctx.fillStyle='#4a3420';ctx.fillRect(18,-34,4,36);ctx.fillStyle='#8a6a40';ctx.strokeStyle='#2a1a0e';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(6,-36);ctx.lineTo(40,-36);ctx.lineTo(46,-30);ctx.lineTo(40,-24);ctx.lineTo(6,-24);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.restore();
-  ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=`${g.label} 가는 길`;
-  ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y-41);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y-42);
+  // v218: 이정표 대신 목적지를 상징하는 건물·봉우리 (g_portal.js)
+  ctx.restore();drawPortal(g);
 }
 
 // ---------- 숭산: 개봉 북쪽 산. 굽이진 돌계단 길, 계곡물, 바위 벼랑, 꼭대기는 눈과 암자 ----------
