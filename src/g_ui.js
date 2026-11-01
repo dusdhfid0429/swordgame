@@ -353,7 +353,7 @@ function act(s){
     case'uneq':if(P.bag.length<24){P.bag.push(P.eq[x]);P.eq[x]=null;recalc()}break;
     case'eq':{const it=P.bag.find(i=>i.id===n);if(it){P.bag.splice(P.bag.indexOf(it),1);if(P.eq[it.slot])P.bag.push(P.eq[it.slot]);P.eq[it.slot]=it;recalc();log(`${itemLabel(it)}을(를) 장착했습니다.`,'sys')}break}
     case'wbind':wbBind(x);break;
-    case'read':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}
+    case'read':case'tread':{const it=P.bag.find(i=>i.id===n);if(it)readBook(it);break}
     case'drop':{const i=P.bag.findIndex(i=>i.id===n);if(i>=0)P.bag.splice(i,1);break}
     case'sell':{const i=P.bag.findIndex(i=>i.id===n);if(i>=0){P.silver+=P.bag[i].price;log(`${P.bag[i].name}을(를) 은자 ${P.bag[i].price}에 팔았습니다.`,'sys');P.bag.splice(i,1)}break}
     case'sellm':{const k=x,c=P.mats[k]||0,p=Math.max(1,Math.round(MAT_PRICE[k]*.6))*c;P.silver+=p;P.mats[k]=0;log(`${k} ${c}개를 은자 ${p}에 팔았습니다.`,'sys');break}

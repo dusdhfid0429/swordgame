@@ -158,20 +158,23 @@ hook('panelOpen',id=>{if(acadOn())P.acad.c['panel_'+id]=1});
 // v194 (점검): 상대는 그 경지 정예(g_balance.js eliteStat)의 kh·ka배. 예전엔 표준 생명 2.2배라 1초 안에 끝났다
 const acadSparStat=s=>({...eliteStat(s.lv,s.kh,s.ka),def:Math.round(2+s.lv*1.5)});
 const acadSparOk=kind=>{const a=P.acad;if(!acadOn()||!inAcad())return false;
-  return kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&(a.c.final||0)<3&&acadCurK()==='final':false};
+  return kind==='mate'?a.stage===0&&!a.c.spar_mate&&acadCurK()==='spar':kind==='inst'?a.stage>=1&&!a.c.spar_inst&&!!GOAL.read()[0]&&acadCurK()==='spar':kind==='skip'?a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip:kind==='final'?a.stage===4&&(a.c.final||0)<3&&acadCurK()==='final':false};
 function acadSpar(kind){if(G.duel||P.hp<=0||!acadSparOk(kind))return;const a=P.acad,A=acadOf(P.side);let o;
   if(kind==='final'){const i=a.c.final||0,s=ACAD_SPAR.final[i];if(!s)return;const mt=A.mates[i];o={n:mt[0],...acadSparStat(s),cls:CLS[(i*2+(P.side==='사'?1:0))%5]}}
+  else if(kind==='mate'){const s=ACAD_SPAR.mate;o={n:A.mates[s.i][0],...acadSparStat(s),cls:'권'}}   // v222 첫 대련 (개선 계획 3절)
   else{const s=ACAD_SPAR[kind];o={n:kind==='inst'?A.inst[1]:A.master,...acadSparStat(s),cls:kind==='inst'?(rangedCls(a.cls)?'검':a.cls||'검'):'검'}}
   closePanels();G.duel=true;G.acadDuel={kind};for(const m of mobs)if(m.aggro){m.aggro=false;m.tgt=null}
   P.x=19.5;P.y=23.5;P.path=null;P.target=null;P.leap=null;P.hp=P.maxHp;P.qi=P.maxQi;
   const e=mkMob(o.n,22.5,23.5,{hp:o.hp,atk:o.atk,def:o.def,hm:o.hm,sp:2.2,reach:rangedCls(o.cls)?5:1.4,ranged:rangedCls(o.cls)?1:0,el:null,pal:'duel'+o.cls,hostile:1,aggro:9,duelist:1});
   Object.assign(e,{hp:o.hp,maxHp:o.hp,atk:o.atk,def:o.def,hm:o.hm,duel:1,aggro:true,acadSpar:kind,wcls:o.cls});e.d=Object.assign({},e.d,{pal:o.cls==='검'?'duelist':'chief'});
-  mobs.push(e);P.target=e;showBanner(kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':'대련',o.n);log(`${kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':'대련'} 시작: ${o.n} (${CLASS[o.cls].n})`,'sys')}
+  mobs.push(e);P.target=e;showBanner(kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':kind==='mate'?'첫 대련':'대련',o.n);
+  if(kind==='mate'&&typeof callout==='function')setTimeout(()=>{if(G.acadDuel&&G.acadDuel.kind==='mate')callout(ACAD_SPAR.mate.shout,o.n)},700);log(`${kind==='final'?'졸업 비무':kind==='skip'?'월반 시험':'대련'} 시작: ${o.n} (${CLASS[o.cls].n})`,'sys')}
 // 대련 중에 기록된 저장을 불러오면 대련은 없던 것으로
 hook('gLoaded',()=>{if(G.acadDuel){G.acadDuel=null;G.duel=false}});
 function acadDuelEnd(win,e){const kind=G.acadDuel&&G.acadDuel.kind,a=P.acad;G.duel=false;G.acadDuel=null;mobs=mobs.filter(m=>!m.duel);P.target=null;
   if(!win)P.hp=Math.max(1,Math.round(P.maxHp*.3));if(!a)return;
-  if(kind==='inst'){if(win){a.c.spar_inst=1;log('병기 교두를 꺾었습니다.','xp');showBanner('대련 승리','')}else log('병기 교두에게 졌습니다. 숨을 고르고 다시 청하자.','dmg')}
+  if(kind==='mate'){a.c.spar_mate=1;log(win?'동기를 꺾었습니다. 첫 실전이다.':'동기에게 졌지만 첫 실전을 치렀습니다. 수련으로 몸을 다지자.',win?'xp':'info');showBanner(win?'첫 대련 승리':'첫 대련','')}
+  else if(kind==='inst'){if(win){a.c.spar_inst=1;log('병기 교두를 꺾었습니다.','xp');showBanner('대련 승리','')}else log('병기 교두에게 졌습니다. 숨을 고르고 다시 청하자.','dmg')}
   else if(kind==='skip'){a.skipTried=1;if(win){a.skip=1;a.stage=3;log('월반 시험에 붙었습니다. 4단계 강호 실습부터 한다. 병기와 심법은 교두들에게서 골라야 한다.','xp');feat(`월반 시험에 붙었다`);acadStageStart()}
     else log('월반 시험에 떨어졌습니다. 1단계부터 차근차근 배우자.','dmg')}
   else if(kind==='final'){a.c.final=(a.c.final||0)+1;if(win)a.c.finalWin=(a.c.finalWin||0)+1;log(`졸업 비무 ${a.c.final}판째: ${win?'이겼다':'졌다'}. (${a.c.finalWin||0}승)`,win?'xp':'info')}
@@ -278,7 +281,7 @@ function acadQuestHtml(){const st=ACAD_ST[3],c=P.acad.c;
   return `<div class="card"><h4>실습 의뢰 <small class="dim">수련곡은 무관 북문 밖</small></h4><div class="list">${rows}</div></div>`}
 function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   if(!mine)return `<p class="note">"${A.n}은(는) ${SIDES[n.acad].n}의 자제만 받는다."</p>`;
-  if(n.role==='mate'){const m=A.mates[n.i];return `<p class="note">${esc(m[1])}.</p><p class="note">"${a&&a.grad?'졸업하고도 잊지 마. 강호에서 또 보자.':a&&a.stage>=4?'졸업 비무에서 만나면 봐주지 않을 거야.':'같이 열심히 해 보자!'}"</p>`}
+  if(n.role==='mate'){const m=A.mates[n.i],sp=n.i===ACAD_SPAR.mate.i&&acadSparOk('mate')?`<div class="row2"><span class="note">"한판 붙어 볼래? 맨손으로!"</span>${B('acspar:mate','대련을 청한다',{pri:1})}</div>`:'';return sp+`<p class="note">${esc(m[1])}.</p><p class="note">"${a&&a.grad?'졸업하고도 잊지 마. 강호에서 또 보자.':a&&a.stage>=4?'졸업 비무에서 만나면 봐주지 않을 거야.':'같이 열심히 해 보자!'}"</p>`}
   if(!a)return `<p class="note">"강호에 나간 지 오래되었구나. 가끔 들러 후배들을 보아 다오."</p>`+(n.role==='inst'&&n.i===1?acadFormsHtml():'');
   const rep=i=>!a.grad&&acadSt().inst===i&&a.stage<4?(acadAllDone()?B('acrep','보고하고 다음 단계로',{pri:1}):'<p class="note">과제를 마치면 보고하러 오너라.</p>'):'';
   if(n.role==='master'){
@@ -337,7 +340,8 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
     case'throw':return dummy('비도 던지기');
     case'bobd':{const s=acadDrSpot();return Math.hypot(P.x-s.x,P.y-s.y)<ACAD_BOBD.area?[]:[{x:s.x,y:s.y,l:'보법 수련 자리',h:44}]}
     case'gkrun':{if(a.c.gkOn){const b=gkGoalB();return b?[{x:b.x+b.w/2,y:b.y+b.h/2,l:'도착 정자',h:70}]:[]}const s=ACAD_GKC.startAt;if(gkOnStart()){const b=gkGoalB();return b?[{x:b.x+b.w/2,y:b.y+b.h/2,l:'도착 정자',h:70}]:[]}return[{x:s[0],y:s[1],l:'경공 출발점',h:44}]}
-    case'pick':case'spar':case'bobpick':case'gklearn':return npc('ac_i1');
+    case'spar':return g.id==='mate'?npc('ac_m'+ACAD_SPAR.mate.i):npc('ac_i1');
+    case'pick':case'bobpick':case'gklearn':return npc('ac_i1');
     case'sim':case'talk':return npc('ac_i2');
     case'final':return npc('ac_i0');
     case'repair':return npc('smith');
@@ -363,7 +367,7 @@ function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','
     oe:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],oeAbs:[...TR,'[data-tr="str"]','[data-tr="end"]','[data-tr="agi"]','[data-tr="qi"]'],
     ne:[...TR,'[data-tr="neigong"]'],qin:[...TR,'[data-tr="neigong"]'],realm:[...TR,'[data-tr="pg"]','[data-tr="pg2"]'],medit:['#t_med','#b_medit'],
     hit:['#t_atk'],mast:['#t_atk'],mu:['#t_atk'],bob:['#t_step'],bobd:['#t_step'],leap:['#t_leap','#b_leap'],gkrun:['#t_leap','#b_leap'],throw:['#ts_bd','#b_암기'],
-    pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:['[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
+    pick:['[data-act^="acpick:"]'],bobpick:['[data-act^="acbob:"]'],gklearn:['[data-act="acgk"]'],sim:['[data-act^="acsim:"]'],talk:['[data-act="actalk:el"]'],spar:[g.id==='mate'?'[data-act="acspar:mate"]':'[data-act="acspar:inst"]'],final:['[data-act="acspar:final"]'],
     quest:['[data-act^="acq:"]','[data-act^="acqd:"]'],repair:['[data-act="repair"]'],panel:tabs?tabMark(g.id):['#tmenu',`[data-act="open:${g.id}"]`]};
   const s=(U[g.k]||[]).slice();
   // 표시한 NPC 곁에 서 있으면 터치 상황 단추(대화)도
