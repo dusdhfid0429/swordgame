@@ -39,7 +39,10 @@ if os.path.isdir(ASSETS):
             continue
         atlas = json.load(open(aj, encoding='utf8'))
         clips = json.load(open(os.path.join(d, name + '.clips.json'), encoding='utf8'))['clips']
-        png = base64.b64encode(open(os.path.join(d, name + '.png'), 'rb').read()).decode('ascii')
+        # v225: tools/webp.py가 만든 무손실 .webp가 있으면 그것을 넣는다 (픽셀은 PNG와 같다)
+        wp = os.path.join(d, name + '.webp')
+        mime, src_img = ('webp', wp) if os.path.isfile(wp) else ('png', os.path.join(d, name + '.png'))
+        png = base64.b64encode(open(src_img, 'rb').read()).decode('ascii')
         frames = [None] * len(atlas['frames'])
         for fn, f in atlas['frames'].items():
             r, o, ss, pv = f['rect'], f['offset'], f['sourceSize'], f['pivot']
@@ -48,7 +51,7 @@ if os.path.isdir(ASSETS):
             if 'charRect' in f:
                 c = f['charRect']; frames[f['index']]['cb'] = [c['x'], c['y'], c['w'], c['h']]
         assert all(frames), f'assets/{name}: index 가 비었습니다'
-        sheets[name] = {'img': 'data:image/png;base64,' + png, 'frames': frames,
+        sheets[name] = {'img': f'data:image/{mime};base64,' + png, 'frames': frames,
                         'clips': {k: {'f': v['frames'], 'fps': v.get('fps', 10), 'loop': v.get('loop', False)} for k, v in clips.items()}}
 sheets_js = json.dumps(sheets, ensure_ascii=False, separators=(',', ':'))
 
