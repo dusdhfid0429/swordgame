@@ -1423,6 +1423,9 @@ const walkAt=(fx,fy)=>walk(Math.floor(fx),Math.floor(fy));
 const tileG=(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return map[y][x].g};
 const iso=(gx,gy)=>({x:(gx-gy)*TW/2,y:(gx+gy)*TH/2});
 // v179: 그 자리 땅 높이(gH, g_elev.js)만큼 올려 그린다. 바닥 그림은 toScreen0
+// 카메라가 주인공보다 화면 높이의 CAMY만큼 위를 비춘다 → 주인공이 화면 가운데보다 그만큼 아래에 선다 (?camy=0 이면 예전처럼 한가운데)
+const CAMY=(()=>{const q=new URLSearchParams(location.search).get('camy');return q!=null&&isFinite(+q)?+q:.08})();
+function camDY(){return (typeof H==='number'?H:0)*CAMY}
 const toScreen=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2-gH(gx,gy)}};
 const toScreen0=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2}};
 function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;return elevPick(wx,wy,(wx,wy)=>{const a=wx/(TW/2),b=wy/(TH/2);return{x:(a+b)/2,y:(b-a)/2}})}
@@ -1904,7 +1907,7 @@ function update(dt){
   if(sched.length){for(const q of sched)q.t-=dt;if(sched.some(q=>q.t<=0)){const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f())}}
   for(const f of fx)f.life-=dt;prune(fx,f=>f.life>0);
   for(const t of texts)t.life-=dt;prune(texts,t=>t.life>0);
-  const t=iso(P.x,P.y);t.y-=gH(P.x,P.y);cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
+  const t=iso(P.x,P.y);t.y-=gH(P.x,P.y)+camDY();cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
 }
 function updateP(dt){
   for(let i=0;i<6;i++)P.fcd[i]=Math.max(0,P.fcd[i]-dt);for(const k in P.scd)P.scd[k]=Math.max(0,P.scd[k]-dt);
@@ -4266,7 +4269,7 @@ function startPlay(fresh){
   // 무관(g_academy.js)을 졸업하기 전에는 새 생도 이어 하기도 무관 본관에서
   const start=acadOn()?acadReg():fresh?'gaebong':nearestCapital(P.reg||'gaebong');
   if(REG!==start){mobs=[];drops=[];loadRegion(start)}P.reg=start;P.gateLock=0;
-  const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
+  const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-camDY();spawnTick();spawnTick();
   if(!fresh&&start!=='gaebong')log(`${REGIONS[start].name}에서 다시 길을 나섭니다.`,'sys');saveGame(true);
 }
 function showRebirth(e,cause){
@@ -5499,7 +5502,7 @@ const FADE=document.createElement('div');FADE.className='fade';$('stage').append
 function enterRegion(id,x,y){mobs=[];drops=[];eprojs=[];fx=[];G.giyeon=null;
   loadRegion(id);P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
   allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
-  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-gH(P.x,P.y)}
+  const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-gH(P.x,P.y)-camDY()}
 function travel(g){
   {const c={g};runHooks('travel',c);g=c.g}
   if(P.traveling)return;P.traveling=1;FADE.classList.add('on');
