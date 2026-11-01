@@ -282,9 +282,7 @@ function acadDlg(n){const a=P.acad,A=acadOf(n.acad),mine=P.side===n.acad;
   if(!a)return `<p class="note">"강호에 나간 지 오래되었구나. 가끔 들러 후배들을 보아 다오."</p>`+(n.role==='inst'&&n.i===1?acadFormsHtml():'');
   const rep=i=>!a.grad&&acadSt().inst===i&&a.stage<4?(acadAllDone()?B('acrep','보고하고 다음 단계로',{pri:1}):'<p class="note">과제를 마치면 보고하러 오너라.</p>'):'';
   if(n.role==='master'){
-    if(a.grad)return `<p class="note">"${A.grad}"</p><p>${A.n} ${a.grade} 졸업 · ${a.gradAge}세</p>${a.recDone?(a.rec?`<p>추천서: <b class="gold">${SECTS[a.rec].n}</b> ${a.recUsed?'<small class="good">들어감</small>':''}</p>`:''):`<div class="card"><h4>추천서 <small class="dim">${a.grade}: ${acadRecTiers().map(t=>TIERN[t]||t).join('·')}</small></h4><p class="note">추천서를 낸 문파는 명성·나이 조건 없이 받아 주고, 공적 ${(ACAD_GRADE.find(g=>g.n===a.grade)||{}).merit}을(를) 얹어 준다.</p>
-      <div class="list">${acadRecList().map(s=>`<div class="it"><div>${s.n}<span>${TIERN[s.tier]||s.tier} · ${hqPlace(s)}</span></div><div class="ib">${B('acrec:'+s.id,'추천서')}</div></div>`).join('')}</div>
-      <div class="row2">${B('acrec:maeng',`${MAENG[A.al].short} 맹원으로`,{d:!!(P.sect||P.maeng)})}${B('acrec:none','낭인으로')}</div></div>`}`;
+    if(a.grad)return `<p class="note">"${A.grad}"</p><p>${A.n} ${a.grade} 졸업 · ${a.gradAge}세</p>${a.recDone?(a.rec?`<p>추천서: <b class="gold">${SECTS[a.rec].n}</b> ${a.recUsed?'<small class="good">들어감</small>':''}</p>`:''):scHtml()}`;   // v221 문파 고르기 카드 (g_scard.js)
     const skipB=a.stage===0&&(G.acadN||0)>0&&!a.skipTried&&!a.skip?`<div class="card"><h4>월반 시험</h4><p class="note">"전생에 이곳을 거친 눈빛이로구나. 나를 상대로 버텨 이기면 1~3단계를 건너뛰게 해 주마. 병기와 심법은 그래도 교두들에게서 골라야 한다."</p>${B('acspar:skip','월반 시험을 치른다',{pri:1})}</div>`:'';
     const grad=a.stage===4?(acadAllDone()?`<div class="row2"><span class="note">성적은 졸업 나이와 졸업 비무 승수로 정한다. 지금이면 <b class="gold">${acadGradeOf().n}</b>.</span>${B('acgrad','졸업식',{pri:1})}</div>`:'<p class="note">"세 기둥을 채우고 졸업 비무를 마치면 졸업식을 열어 주마."</p>'):'';
     return `<p class="note">"${A.hello}"</p>${acadSteps()}${skipB}${acadStageCard(grad)}`}
