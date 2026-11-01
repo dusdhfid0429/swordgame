@@ -58,7 +58,7 @@ function facScan(e,dt){
 function mobHurt(t,dm,src){
   if(t.hp<=0)return;{const c={t,src,dm};runHooks('mobHurt',c);dm=c.dm}
   dm=Math.max(1,Math.round(dm*(.9+Math.random()*.2)-(t.def||0)));t.hp-=dm;t.hit=.12;t.hurtAt=time;
-  if(dist(t,P)<14)addText(t.x,t.y,dm,'#c8b8a0');
+  if(dist(t,P)<14)addText(t.x,t.y,dm,'#c8b8a0','far');
   if(t.d.fac&&(!t.tgt||t.tgt.hp<=0||!t.tgt.isMob||Math.random()<.3)){t.tgt=src;t.aggro=true}
   if(t.hp<=0){t.hp=0;fx.push({t:'puff',x:t.x,y:t.y,life:.6});if(P.target===t)P.target=null;runHooks('mobKilled',t,src);
     if(dist(t,P)<12)log(`${src.name}이(가) ${t.name}을(를) 쓰러뜨렸습니다.`,'info')}

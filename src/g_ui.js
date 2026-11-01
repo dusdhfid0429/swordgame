@@ -11,6 +11,8 @@ function log(t,c){winNote(t,c);const tx=josa(t),last=logEl.lastElementChild;
   if(last&&last.dataset.t===tx&&(last.className||'')===(c||'')){const n=(+last.dataset.n||1)+1;last.dataset.n=n;last.textContent=`${tx} ×${n}`;return}
   const p=document.createElement('p');p.className=c||'';p.textContent=tx;p.dataset.t=tx;logEl.appendChild(p);while(logEl.children.length>14)logEl.firstChild.remove();
   logHist.push({t:p.textContent,c:c||'',at:P?`${Math.floor(P.age)}세${P.ban&&P.ban.yrs?` <small class="dim">(반로환동, 살아온 해 ${Math.floor(realAge())}년)</small>`:''} ${season()} ${SIJIN[Math.floor((tod*24+1)/2)%12]}시`:''});if(logHist.length>400)logHist.shift()}
+// 화면에는 띄우지 않고 기록 창에만 남기는 줄 (v219)
+function logQuiet(t,c){logHist.push({t:josa(t),c:c||'',at:P?`${Math.floor(P.age)}세 ${season()}`:''});if(logHist.length>400)logHist.shift()}
 function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없습니다.</p>';
   return `<p class="note">최근 ${logHist.length}건, 새 것이 위. 시스템 메시지창을 누르면 언제든 볼 수 있다.</p><div class="logs">${logHist.slice().reverse().map(l=>`<p class="${l.c}"><small>${l.at}</small>${esc(l.t)}</p>`).join('')}</div>`}
 // 맡은 임무와 진행도: 지역 이름 아래
@@ -25,7 +27,9 @@ function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
   const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
   const key=ac+st+rest.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rest.length&&!ac&&!st;
-  el.innerHTML=ac+(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')}
+  el.innerHTML=ac+(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'');
+  // v219 (개선 계획 3절 '왼쪽 위 문구 줄이기'): 터치 화면은 맨 위 한 가지(머리줄+할 일 한 줄)만 보이고 나머지는 '외 n가지'로 접는다 (CSS .touch #lcol .qtrack)
+  const n=[...el.children].filter(c=>c.tagName==='DIV'&&!c.classList.contains('achint')).length;if(n>1)el.dataset.more=`외 ${n-1}가지 ▸`;else delete el.dataset.more}
 // 남은 시간: 한 시간 넘으면 시·분, 그 아래는 분·초, 1분 아래는 초
 function fmtLeft(sec){sec=Math.max(0,Math.ceil(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}시간 ${m}분`:m?`${m}분 ${s}초`:`${s}초`}
 let noteT;
@@ -46,7 +50,7 @@ function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if
 // v149 (사용자): 정세 사건은 창을 띄우지 않고 화면 가운데에 크게 박는다 (맵 이동 알림보다 세게, 터치는 통과)
 let sbanT;function storyBanner(t,s,k){const b=$('sban');if(!b)return;b.innerHTML=`<div class="bd"></div><div class="k">${esc(k||'강호 정세')}</div><div class="t">${esc(t)}</div>${s?`<div class="s">${esc(josa(s))}</div>`:''}`;
   b.classList.remove('on');void b.offsetWidth;b.classList.add('on');clearTimeout(sbanT);sbanT=setTimeout(()=>b.classList.remove('on'),4300);shake=Math.max(shake||0,.25);if(typeof sfx==='function')sfx('ult')}
-function addText(x,y,t,c){texts.push({x,y,t:String(t),c,life:.9})}
+function addText(x,y,t,c,k){texts.push({x,y,t:String(t),c,life:.9,k})}   // k: 피해 숫자 종류 out·crit·in·far (v219, g_read.js)
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ================= skill bar =================
@@ -117,7 +121,7 @@ function renderOpen(){if(!panel||$('win').hidden)return;const f={quest:pQuest,ch
   $('wtitle').innerHTML=panel==='npc'?esc(panelArg.n):TITLES[panel]+(panel==='bag'?`<small>${P.bag.length}/24</small>`:'');
   // 창 하나를 그리다 오류가 나도 창은 열리고 닫기 단추가 남는다 (오류는 꺼짐 기록에 남긴다)
   let h;try{h=f(panelArg)}catch(e){if(typeof crashErr==='function')crashErr('panel '+panel+': '+e.message);console.warn(e);h=`<p class="note bad">이 창을 그리다 문제가 생겼습니다. 물건과 기록은 그대로 있습니다. 닫고 다시 열거나 게임을 새로 켜 주세요.</p>`}
-  $('wbody').innerHTML=josa(h)}
+  $('wbody').innerHTML=josa(h);runHooks('panelDrawn',panel)}   // v219: 용어 풀이 표시 (g_gloss.js)
 // v200 창 탭 (모바일 전용): 긴 창을 위쪽 탭으로 나눈다. 터치 조작에서만 나누고, PC(개발용)에서는 예전처럼 한 줄로 이어 붙인다
 const WTAB={};
 function wtabs(id,tabs){if(!TOUCH)return tabs.map(t=>t[1]).join('');const cur=Math.min(WTAB[id]||0,tabs.length-1);
@@ -209,7 +213,7 @@ function pLife(){
 }
 function pHist(){
   const h=G.history.slice().reverse();
-  return (h.length?h.map(e=>`<div class="card"><div class="row2"><h4>제${e.life}생 ${esc(e.name)}</h4><span class="tag">${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg}</span></div>
+  return (P&&playing&&typeof loreVerTxt==='function'?`<div class="card"><h4>이번 생의 강호</h4><p class="note">${loreVerTxt()}</p></div>`:'')+(h.length?h.map(e=>`<div class="card"><div class="row2"><h4>제${e.life}생 ${esc(e.name)}</h4><span class="tag">${e.status} · ${e.side==='정'?'정파':'사파'} · ${e.gg}</span></div>
     <p>${e.age}세에 ${e.cause==='천수'?'천수를 누리고 눈을 감았다':e.cause==='좌화'?`${e.realm}에 이르러 스스로 좌화했다`:e.cause==='독'?'독에 쓰러졌다':'싸움에서 쓰러졌다'}. 경지 ${e.realm} · 명성 ${e.fame} · 선업 ${e.good} · 악업 ${e.evil} · 처치 ${e.kills}</p>
     ${e.arts.length?`<p>무공: ${e.arts.map(esc).join(', ')}</p>`:''}${e.sect?`<p>문파: ${esc(e.sect)}</p>`:''}${e.spouse?`<p>배우자 ${esc(e.spouse)}${e.children.length?' · 자식 '+e.children.map(esc).join(', '):''}</p>`:''}
     ${e.feats.length?`<p>${e.feats.map(f=>esc(josa(f))).join(' · ')}</p>`:''}</div>`).join(''):'<p class="note">아직 기록된 생이 없습니다. 한 생이 끝나면 이곳에 강호의 역사로 남는다.</p>');

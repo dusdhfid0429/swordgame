@@ -169,6 +169,19 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .opt{text-align:left;background:#0a0806e6;border:1px solid #4a3c27;color:var(--paper);padding:7px 9px;cursor:pointer;font:12px var(--body);display:grid;gap:2px}
 .opt b{font-family:var(--display);font-weight:400;font-size:15px}
 .slots{display:grid;gap:6px;max-width:560px;margin:8px auto}.opt.slot span{font-size:12px}
+/* v219 첫 화면 (개선 계획 3절): 그림·제목·큰 단추 둘, 저장 칸은 칩 다섯 */
+.tmain{position:relative;display:grid;justify-items:center;gap:2px;margin-top:4px}.tmain .tart{width:min(420px,100%);height:auto;display:block;margin-bottom:-56px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.tmain .title{position:relative}.tmain .title+p{position:relative;font-size:13px}
+.tcard{max-width:420px;width:100%;margin:6px auto 0;justify-items:center;text-align:center;gap:8px;padding:12px}
+.tcard .tsum{margin:0;font-size:13px}.tbig .btn{font:22px var(--display);padding:10px 34px;min-width:190px}
+.tsmall .btn{font-size:12px;padding:4px 10px;background:none;border-color:#4a3c27;color:var(--paper-dim)}
+.slotbar{display:grid;justify-items:center;gap:4px;max-width:420px;width:100%;margin:0 auto}
+.slotbar .slots{grid-template-columns:repeat(5,minmax(0,1fr));width:100%;margin:0;gap:5px}
+.slotbar .opt.slot{padding:5px 4px;text-align:center;justify-items:center;min-height:40px}.slotbar .opt.slot b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.slotbar .opt.slot .sd{display:none}
+.crow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.crow small{display:block;margin-top:2px}.crow .btn{flex:none}
+.term{color:#f0d48a;border-bottom:1px dotted #c9a24e;cursor:help}.term:focus-visible{outline:1px solid var(--exp)}
+.gtip{position:fixed;z-index:80;background:#14100bf5;border:1px solid var(--exp);border-radius:8px;padding:8px 12px;box-shadow:0 6px 24px #000c;font:13px/1.5 var(--body);color:var(--paper)}.gtip b{font:15px var(--display);color:#ffd98a}.gtip small{color:var(--paper-dim);font-size:11px}.gtip p{margin:3px 0 0;color:#e8d9a8}
+.tlinks .btn{background:none;border-color:transparent;color:var(--paper-dim);font-size:13px;text-decoration:underline;text-underline-offset:3px}
 .opt[aria-pressed="true"]{border-color:var(--exp);background:#2a2114;box-shadow:inset 0 0 0 1px var(--exp)}
 .opt:focus-visible{outline:2px solid var(--exp);outline-offset:1px}
 input.name{font:18px var(--display);background:#0a0806;color:var(--paper);border:1px solid var(--bronze);padding:6px 10px;width:180px;user-select:text;-webkit-user-select:text}
@@ -316,6 +329,10 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .touch.qfolded #lcol .qfold i{font:normal 14px/1 var(--display);color:#ffd98a}
 .touch #lcol{display:flex;flex-direction:column;gap:6px;position:absolute;left:var(--gl);top:var(--log-top,calc(124px + env(safe-area-inset-top,0px)));width:min(200px,45cqw);pointer-events:none}
 .touch #lcol .qtrack{width:auto;max-height:96px;margin:0}
+/* v219 (개선 계획 3절): 임무 줄은 맨 위 한 가지만, 기록 줄은 최근 두 줄만 (한 줄씩 말줄임) */
+.touch #lcol .qtrack{overflow:hidden}.touch #lcol .qtrack>*{display:none!important}.touch #lcol .qtrack>h5:first-child,.touch #lcol .qtrack>h5:first-child+div{display:block!important}
+.touch #lcol .qtrack[data-more]::after{content:attr(data-more);display:block;font-size:10px;color:var(--paper-dim);margin-top:1px}
+.touch #lcol #log p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
 .touch.qs-on #lcol{visibility:hidden}.touch.qs-on #lcol *{pointer-events:none}   /* 성 고르는 칸이 펼쳐지면 그 아래 임무 줄도 감춘다 (t114) */
 .touch #lcol #log{position:static;width:auto;height:50px;overflow:hidden}
 /* 큰 알림은 화면 가운데 위쪽에 잠깐 */
@@ -342,7 +359,7 @@ body{--gut:16px;--gl:calc(var(--gut) + env(safe-area-inset-left,0px));--gr:calc(
 .touch .pexp{width:34px;height:18px;font-size:10px}
 .touch #mini{width:88px;height:50px}
 .touch .zone{top:calc(var(--gt) + 54px);font-size:12px}.touch .zone small{font-size:10px}.touch #tcur{font-size:10px}
-.touch #lcol{width:min(176px,42cqw);gap:4px}.touch #lcol .qtrack{font-size:10px;max-height:80px}.touch #lcol #log{font-size:10px;height:44px}
+.touch #lcol{width:min(176px,42cqw);gap:4px}.touch #lcol .qtrack{font-size:10px;max-height:80px}.touch #lcol #log{font-size:10px;height:30px;display:flex;flex-direction:column;justify-content:flex-end}
 .touch #lcol .qfold{height:30px;width:24px;font-size:15px}.touch.qfolded #lcol .qfold{height:30px;font-size:11px}
 /* 전투 단추 묶음은 통째로 줄인다 (단추 사이 거리도 같이 준다). 글씨는 줄어든 만큼 키워 읽히게 */
 .touch #tbtns{bottom:52px;transform:scale(.78);transform-origin:100% 100%}
