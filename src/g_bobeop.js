@@ -70,7 +70,7 @@ function bobeop(){
   BOB_STAT.ms=performance.now()-t0;
   if(!dst){addText(P.x,P.y,'막혔다','#9a8d72');return false}
   const col=b.sect&&smCol(b.sect)||'190,220,255',sx=P.x,sy=P.y;
-  P.qi-=q;P.bcd2=0;P.inv=Math.max(P.inv,BG.inv[b.g]+bobTv('inv',b));P.path=null;P.chan=null;P.medit=false;
+  P.qi-=q;P.bcd2=0;P.inv=Math.max(P.inv,BG.inv[b.g]+bobTv('inv',b));P.path=null;P.chan=null;P.medit=false;runHooks('stepDone',b);   // v223 간파 (g_fight.js)
   if(Math.hypot(dst.x-P.x,dst.y-P.y)<.1){fx.push({t:'ghost',x:P.x,y:P.y,life:.35,col});bobAfter(b,sx,sy,{x:P.x,y:P.y});if(typeof sfx==='function')sfx('dodge');return true}   // 제자리 회피
   P.leap={sx:P.x,sy:P.y,ex:dst.x,ey:dst.y,t:0,dur:.2+Math.hypot(dst.x-P.x,dst.y-P.y)*.025,z0:0,z1:0,to:null,step:1};
   for(let i=0;i<4;i++)fx.push({t:'ghost',x:P.x+(dst.x-P.x)*i/4,y:P.y+(dst.y-P.y)*i/4,life:.3+i*.05,col});

@@ -115,6 +115,7 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(e.psn>0){e.psn-=dt;e.hp-=e.psnD*dt;if(Math.random()<dt*6)fParts(null,e,'120,220,90',2,30,'dot',.5);if(e.hp<=0){onKill(e);return}}
   {const ox=e.x,oy=e.y;e.x+=e.kb.x*dt*6;e.y+=e.kb.y*dt*6;if(!walkAt(e.x,e.y)||!hstep(ox,oy,e.x,e.y)){e.x=ox;e.y=oy}}e.kb.x*=.8;e.kb.y*=.8;
   if(e.stun>0){e.stun-=dt;e.wind=0;e.moving=false;return}
+  {const c={e,dt,stop:false};runHooks('mobAct',c);if(c.stop)return}   // v223 우두머리 수 (g_fight.js)
   const spd=e.sp*(e.slow>0?.6:1)*(e.bind>0?.15:1);
   if(e.flee>0){e.flee-=dt;const f=e.fleeFrom||P,dx=e.x-f.x,dy=e.y-f.y,l=Math.hypot(dx,dy)||1;e.fx=dx/l;e.fy=dy/l;moveEnt(e,e.fx*spd*1.1*dt,e.fy*spd*1.1*dt);e.moving=true;return}
   if(d.villager){if(!e.angry)wander(e,dt,inTown);else wander(e,dt);return}

@@ -86,6 +86,11 @@ function touchTarget(){if(P.target&&P.target.hp>0&&dist(P.target,P)<10)return tr
 function hold(id,down,upf){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!playing||paused)return;b.classList.add('press');down()});
   const u=()=>{b.classList.remove('press');if(upf)upf()};b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u);b.addEventListener('pointerleave',u)}
 hold('t_atk',()=>{touchAtk=true;if(!touchTarget())log('가까이 싸울 상대가 없습니다.','info')},()=>{touchAtk=false});
+// v223 초식 직접 고르기 (g_fight.js): 공격 단추를 위로 밀면 가장 센 초식, 옆으로 밀면 범위 초식
+{const b=$('t_atk');let sx=null,sy=null,used=false;b.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;used=false;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  b.addEventListener('pointermove',e=>{if(sx==null||used||!playing||paused)return;const dx=e.clientX-sx,dy=e.clientY-sy,S=FT.pick.swipe;if(Math.hypot(dx,dy)<S)return;used=true;
+    b.classList.add(dy<-S*.6&&Math.abs(dy)>Math.abs(dx)?'swu':'sws');setTimeout(()=>b.classList.remove('swu','sws'),300);formPick(dy<-S*.6&&Math.abs(dy)>Math.abs(dx)?'strong':'wide')});
+  const end=()=>{sx=null};b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end)}
 hold('t_ult',()=>ultimate());
 hold('t_leap',()=>leap());
 hold('t_step',()=>bobeop());
