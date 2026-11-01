@@ -30,14 +30,14 @@ const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v18
   ok(`목인장 활력: 1단계엔 ${r2v.s0}, 2단계부터 ${r2v.per}번에 1 → 10번 ${r2v.a}, 400번 더 쳐도 ${r2v.b} (한도 ${r2v.cap}), 졸업 뒤 ${r2v.c}, 과제 카드에 표시`,r2v.s0===0&&r2v.a>0&&r2v.a<=2&&r2v.dv===r2v.cap&&r2v.c===0&&r2v.note);
   // v135: 과제는 하나씩. 지금 과제만 보이고, 세는 과제는 열린 뒤부터 센다. 표시는 장소·단추에
   const r2b=await p.evaluate(()=>{const o={g0:acadCur().k,mk:acadMarks().map(m=>m.l),tr:$('qtrack').textContent};
-    for(const k of['장경각','병기고','숙소','식당'])P.acad.c['spot_'+k]=1;acadCheck();o.g1=acadCur().k;o.done=Object.keys(P.acad.done).length;return o});
+    acadSpar('mate');o.duel=!!(G.acadDuel&&G.acadDuel.kind==='mate');const e=mobs.find(m=>m.acadSpar==='mate');o.weak=e&&e.maxHp<P.maxHp*3;acadDuelEnd(false,e);acadCheck();o.g1=acadCur().k;o.done=Object.keys(P.acad.done).length;return o});   // v222 첫 과제는 동기와 첫 대련 (져도 끝)
   await p.waitForTimeout(350);
   const r2c=await p.evaluate(()=>({bag:!!document.querySelector('#b_p_bag.achl'),card:(openNpc(npcsHere().find(n=>n.id==='ac_i0')),$('wbody').textContent)}));
   await p.evaluate(()=>{closePanels();openPanel('bag')});await p.waitForTimeout(350);
   const r2d=await p.evaluate(()=>{const r=P.bag.find(i=>i.acad);const hl=!!document.querySelector(`[data-act="eq:${r.id}"].achl`);act('eq:'+r.id);closePanels();acadCheck();
     const o={hl,g:acadCur().k};return o});
   ok(`하나씩: 첫 과제 ${r2b.g0}(표시 ${r2b.mk.join(',')}), 왼쪽엔 그 과제만 (${!r2b.tr.includes('무관복')}), 다음 ${r2b.g1}, 행낭 단추 표시 ${r2c.bag}, 교두 창에 뒤 과제 숨김 (${!r2c.card.includes('수련으로 기본기')}), 무관복 줄 표시 ${r2d.hl}, 다음 ${r2d.g} (목인장은 심법 뒤로)`,
-    r2b.g0==='goto'&&r2b.mk.length===1&&r2b.tr.includes('둘러보기')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('수련으로 기본기')&&r2d.hl&&r2d.g==='oe');
+    r2b.g0==='spar'&&r2b.duel&&r2b.weak&&r2b.mk.length===1&&/동기/.test(r2b.mk[0])&&r2b.tr.includes('첫 대련')&&!r2b.tr.includes('무관복')&&r2b.g1==='equip'&&r2b.done===1&&r2c.bag&&r2c.card.includes('남은 과제')&&!r2c.card.includes('수련으로 기본기')&&r2d.hl&&r2d.g==='oe');
   // v140 (사용자): 기본기 과제는 1만. 처음 받은 활력으로 한 번 수련하면 끝난다
   const ro=await p.evaluate(()=>{const o={k:acadCurK(),vit:P.vit};trainStat('str');acadCheck();o.next=acadCurK();o.all=acadAllDone();return o});
   ok(`기본기 과제: 처음 활력 ${ro.vit}으로 한 번 수련하면 끝 (${ro.k} → 1단계 과제 완료 ${ro.all})`,ro.k==='oe'&&ro.all);

@@ -159,6 +159,6 @@ hook('trainTick',dt=>{if(P&&playing&&P.hp>0){peakTick(dt);senseTick()}});
 function realmCardExtra(){const ri=realmIdx(),s=school();
   const ladder=REALM_FX.map((_,i)=>fxOf(i)).map((f,i)=>`<div class="it"><div>${i<=ri?'<b class="good">●</b>':'<span class="dim">○</span>'} ${rk(i)} · <b${i<=ri?' class="gold"':''}>${f.n}</b><span>${f.d}</span></div><div class="ib"></div></div>`).join('');
   const extra=`<p>내공 <b class="gold">${gapja(baseQi())}</b> (${baseQi()}) · ${danName()} · 심법 계열 <b class="gold">${s}</b> <small class="dim">${SCHOOL[s].d}</small></p>
-    <p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>
-    ${typeof bladeHtml==='function'?bladeHtml():''}<details><summary>경지의 길</summary><div class="list">${ladder}</div></details>${bodyHtml()}`;
+    ${openOf('mu')?`<p>깨달음 <b class="gold">${P.enl||0}</b> <small class="dim">명산 정상 운기조식(일출이면 두 배), 높은 경지의 고수와 비무·사투, 돈오, 기연으로 쌓여 무리에 더해진다</small></p>`:''}
+    ${typeof bladeHtml==='function'?bladeHtml():''}<details><summary>경지의 길</summary><div class="list">${ladder}</div></details>${openOf('mu')?bodyHtml():''}`;   // v222 깨달음·몸의 변화는 첫 벽에서 연다 (g_open.js)
   return extra}
