@@ -19,15 +19,16 @@ function pLogs(){if(!logHist.length)return '<p class="note">아직 기록이 없
 let qtrackKey='';
 // v136 (사용자): 임무 줄은 높이가 고정이고 스크롤된다. 누르면(끌어 스크롤하면 아님) 임무창이 열린다
 // v149 (사용자): 정세 줄을 누르면 정세창, 다른 줄은 임무창
-$('qtrack').addEventListener('click',e=>{if(!playing||!P)return;openPanel(e.target.closest('[data-story]')?'story':'quest')});
+$('qtrack').addEventListener('click',e=>{if(!playing||!P)return;if(e.target.closest('[data-iny]')){openPanel('npc',{id:'iny',n:'인연'});return}if(e.target.closest('[data-md]')){mdOpen();return}openPanel(e.target.closest('[data-story]')?'story':'quest')});   // v220: 인연·세월 넘기기 줄 (g_madi.js)
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const pr=questProg(q),have=pr.have,done=pr.done,g=qGoal(q),what=q.kind==='kill'?g.plain+' 처치':g.plain+' '+g.v;return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'');   // 무관 과제 (g_academy.js)
+  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():''),md=typeof mdTrackHtml==='function'?mdTrackHtml():'';   // 무관 과제 (g_academy.js)
   // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
   const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
-  const key=ac+st+rest.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rest.length&&!ac&&!st;
-  el.innerHTML=ac+(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'');
+  const iny=md.includes('data-iny')?md:'',mdr=iny?'':md;   // v220: 고를 인연은 정세 다음, 세월 넘기기는 맨 끝 (g_madi.js)
+  const key=ac+st+md+rest.map(r=>r.n+r.s+r.done).join('|');if(key===qtrackKey)return;qtrackKey=key;el.hidden=!rest.length&&!ac&&!st&&!md;
+  el.innerHTML=(st?`<h5>정세 <small>누르면 정세창</small></h5>`+st:'')+iny+ac+(rest.length?`<h5>맡은 임무 ${rest.length}</h5>`+rest.map(r=>`<div class="${r.done?'done':''}">${esc(r.n)} · ${r.s}${r.done?' · 완료':''}</div>`).join(''):'')+mdr;
   // v219 (개선 계획 3절 '왼쪽 위 문구 줄이기'): 터치 화면은 맨 위 한 가지(머리줄+할 일 한 줄)만 보이고 나머지는 '외 n가지'로 접는다 (CSS .touch #lcol .qtrack)
   const n=[...el.children].filter(c=>c.tagName==='DIV'&&!c.classList.contains('achint')).length;if(n>1)el.dataset.more=`외 ${n-1}가지 ▸`;else delete el.dataset.more}
 // 남은 시간: 한 시간 넘으면 시·분, 그 아래는 분·초, 1분 아래는 초
