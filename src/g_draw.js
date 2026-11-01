@@ -292,6 +292,7 @@ function draw(){
   runHooks('drawTop');   // 화면 위 표시: 적의 공격 예고 (g_danger.js)
   drawGateHold();
   for(const t of texts){const p=toScreen(t.x,t.y),k=1-t.life/.9;p.y-=t.z||0;ctx.globalAlpha=Math.min(1,t.life*2);
+    if(t.k){numDraw(t,p,k);continue}   // v219: 피해 숫자 (g_read.js)
     const yy=t.call?p.y-98-k*8:p.y-74-k*22;ctx.font=t.call?'17px "Song Myung",serif':t.big?'bold 22px "Song Myung",serif':'15px "Song Myung",serif';ctx.fillStyle='#000';ctx.fillText(t.t,p.x+1,yy+1);ctx.fillStyle=t.c;ctx.fillText(t.t,p.x,yy)}
   ctx.globalAlpha=1;
   if(!REGION().in)for(const m of embers){m.y-=.0005*m.s;m.x+=.0003*Math.sin(time+m.p);if(m.y<0)m.y=1;
@@ -302,7 +303,8 @@ function draw(){
 }
 // 화면 가장자리 어둡게: 크기가 바뀔 때만 다시 그린다 (매 프레임 화면 전체 방사형 그라디언트가 5ms쯤 들었다)
 let VIG=null;
-function vignette(){const w=Math.ceil(W),h=Math.ceil(H);if(VIG&&VIG.width===w&&VIG.height===h)return VIG;
+function vignette(){const w=Math.ceil(VW_PX||W),h=Math.ceil(VH_PX||H);   // v219: 화면 픽셀 크기로 (카메라 당김 중에 W·H가 매 프레임 바뀐다)
+  if(VIG&&VIG.width===w&&VIG.height===h)return VIG;
   VIG=document.createElement('canvas');VIG.width=w;VIG.height=h;const g2=VIG.getContext('2d'),g=g2.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);
   g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');g2.fillStyle=g;g2.fillRect(0,0,w,h);return VIG}
 // minimap: baked terrain + live dots

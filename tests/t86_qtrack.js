@@ -12,12 +12,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     await p.waitForTimeout(700);
     const r=await p.evaluate(()=>{const q=$('qtrack'),qr=q.getBoundingClientRect(),s=document.querySelector('.sysmsg p.on'),sr=s&&s.getBoundingClientRect();
       const hit=(a,b)=>a&&b&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
-      return{w:qr.width,h:qr.height,vw:innerWidth,scroll:q.scrollHeight>q.clientHeight,sw:sr&&sr.width,over:hit(qr,sr),over2:[...document.querySelectorAll('#tquick button:not([hidden])')].some(e=>hit(qr,e.getBoundingClientRect()))}});
-    ok(`${n}: 임무 줄 폭 ${Math.round(r.w)}px·높이 ${Math.round(r.h)}px 고정, 스크롤 ${r.scroll}, 메시지 폭 ${Math.round(r.sw)}px, 겹침 없음 (메시지 ${r.over}, 빠른 단추 ${r.over2})`,r.w<=Math.min(230,r.vw*.45)&&r.h<=140&&r.scroll&&r.sw<=270&&!r.over&&!r.over2);
-    await p.evaluate(()=>{$('qtrack').scrollTop=999});const st=await p.evaluate(()=>$('qtrack').scrollTop);
+      const vis=[...q.children].filter(c=>c.tagName==='DIV'&&getComputedStyle(c).display!=='none').length;return{w:qr.width,h:qr.height,vw:innerWidth,scroll:vis===1&&/외 \d+가지/.test(q.dataset.more||''),vis,more:q.dataset.more,sw:sr&&sr.width,over:hit(qr,sr),over2:[...document.querySelectorAll('#tquick button:not([hidden])')].some(e=>hit(qr,e.getBoundingClientRect()))}});
+    ok(`${n}: 임무 줄 폭 ${Math.round(r.w)}px·높이 ${Math.round(r.h)}px, 한 가지만 보임 ${r.vis}줄 '${r.more}' (v219), 메시지 폭 ${Math.round(r.sw)}px, 겹침 없음 (메시지 ${r.over}, 빠른 단추 ${r.over2})`,r.w<=Math.min(230,r.vw*.45)&&r.h<=140&&r.scroll&&r.sw<=270&&!r.over&&!r.over2);
     await p.tap('#qtrack');await p.waitForTimeout(200);
     const pn=await p.evaluate(()=>panel);
-    ok(`${n}: 임무 줄 스크롤 ${st>0}, 누르면 임무창 (${pn})`,st>0&&pn==='quest');
+    ok(`${n}: 임무 줄 누르면 임무창 (${pn})`,pn==='quest');
     await p.close()}
   ok('오류 없음: '+errs.join(' | ').slice(0,300),errs.length===0);
   await b.close();

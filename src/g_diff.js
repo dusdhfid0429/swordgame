@@ -12,6 +12,8 @@ hook('hurt',c=>{if(c.src&&c.src.d)c.dm*=diffMul('taken')});
 const diffVit=v=>v>0?Math.round(v*diffMul('vit')):v;   // v136 (사용자): 활력은 정수만 (배율을 곱하면 소수점이 나왔다)
 const diffSquad=n=>Math.max(1,Math.round(n*diffMul('squad')));
 function diffHtml(){const d=diffOf();return `<div class="card"><h4>난이도 <small class="dim">완전 새로 시작할 때 정한다</small></h4><p><b class="gold">${d.n}</b> · ${d.d}</p><p class="note">적 생명 ×${d.mobHp} · 적 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken} · 활력 ×${d.vit} · 윤회 보상 ${Math.round((d.carry??.3)*100)}% · 마성 ×${d.mara} · 추살조 ×${d.squad}</p></div>`}
+// v219 (개선 계획 3절): 탄생 화면에서는 '보통'을 고른 채 한 줄로 접어 둔다. '바꾸기'를 누르면 다섯 단계가 펼쳐진다
 function diffPickHtml(){if(G.lives)return '';const i=diffIdx();
+  if(!(CR&&CR.diffOpen))return `<div class="card crow"><span><b>난이도</b> <span class="gold">${DIFF[i].n}</span></span><button type="button" class="btn" data-s="diffopen">바꾸기</button></div>`;
   return `<div class="card"><h4>난이도 <small class="dim">이 저장 칸의 모든 생에 걸친다 · 처음부터 새로 시작할 때만 고른다</small></h4>
     <div class="choice">${DIFF.map((d,k)=>`<button type="button" class="opt" data-s="diff:${k}" aria-pressed="${k===i}"><b>${d.n}</b><span>${d.d}</span><span class="dim">적 생명 ×${d.mobHp} · 공격 ×${d.mobAtk} · 받는 피해 ×${d.taken}</span></button>`).join('')}</div></div>`}

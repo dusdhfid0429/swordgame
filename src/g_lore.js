@@ -79,7 +79,8 @@ function loreSpotXY(fx,fy){const R=REGION(),cx=Math.floor(N*fx),cy=Math.floor(NH
     if(x<2||y<2||x>N-3||y>NH-3||!walk(x,y))continue;if(nodes.some(n=>Math.hypot(n.x-x-.5,n.y-y-.5)<2.5))continue;
     if((R.gates||[]).some(g=>Math.hypot(g.x-x-.5,g.y-y-.5)<3))continue;return{x:x+.5,y:y+.5}}return null}
 // 생마다 한 번 이번 생의 강호를 알린다
-hook('tick',()=>{if(!P||!playing)return;const V=loreVer();if(!V.told){V.told=1;log(`이번 생의 강호: ${loreVerTxt()}`,'sys')}});
+// v219 (개선 계획 3절): 화면 왼쪽 위에는 띄우지 않고 기록(logs)과 강호사 창 맨 위에만 남긴다
+hook('tick',()=>{if(!P||!playing)return;const V=loreVer();if(!V.told){V.told=1;logQuiet(`이번 생의 강호: ${loreVerTxt()}`,'sys')}});
 hook('regionLoaded',id=>{if(!P)return;
   const m=/^hq_(\w+)$/.exec(id),s=m&&SECTS[m[1]],L=s&&LSECT[s.id];if(!L)return;loreD().seen[s.id]=1;
   if(L.leg){const p=loreSpotXY(.36,.42);if(p)nodes.push({t:'stele',sect:s.id,...p,cd:0})}

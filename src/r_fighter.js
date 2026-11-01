@@ -6,6 +6,7 @@ function drawFighter(e,isP){
   const jump=isP&&P.jump>0?Math.sin((1-P.jump/.35)*Math.PI)*28:0;
   ctx.save();ctx.translate(p.x,p.y);if(isP){const ak=heroAgeK();if(ak<1)ctx.scale(ak,ak)}   // v197: 어린 주인공은 발을 축으로 작게
   const sh=1-jump/70;ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,0,13*sc*sh,5.5*sc*sh,0,0,7);ctx.fill();
+  if(isP)heroRing(sh);   // v219: 주인공 발밑 심법 색 고리 (g_read.js)
   // v172: 칠 준비 고리는 g_danger.js drawTop 이 나를 노리는 치명 공격에만 그린다 (사용자 2026-10-24: 몹끼리 싸울 때는 없어야)
   if(isP&&P.inv>0)ctx.globalAlpha=.6;
   if(isP&&heroSprite()){let[fi,useB,lk,a2,sh]=heroFrame(),f=sh?SHEETS[sh].frames[fi]:a2?HF2[fi]:HF[fi];
@@ -18,7 +19,7 @@ function drawFighter(e,isP){
     const gb=heroGarb();
     // v123 핸드오프 시트 장: 발 기준점이 캔버스에 박혀 있어 자리 보정 없이 그린다. 무기는 소켓이 확정될 때까지 안 그린다
     if(sh){if(dc==='검'||dc==='도'){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawSheath(dc,...(SHEATH_AT[sh]||SHEATH_AT.wuxia),flash);ctx.restore()}
-      drawSheet(sh,fi,k,flash,gb&&gb.sh&&gb.sh[sh]);if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
+      heroGlow(flash);drawSheet(sh,fi,k,flash,gb&&gb.sh&&gb.sh[sh]);heroGlow(0,1);   // v219: 싸울 때 엷은 테두리if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,sheetTop(sh,fi,k)-10);
       // v124: 소켓이 있는 장(검·도·창·봉 공격)은 손 자리에 코드 무기를 얹는다
       const wl=dc!=='권'&&dc!=='각'&&dc!=='암'&&dc!=='단'&&dc!=='편'?sheetWeaponLine(sh,fi,dc):null;
       if(wl&&ANIM.heroHandWpn){const[ox,oy]=sheetXY(sh,fi,0,0,k);ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);drawWeapon(dc,wl,dc==='창'||dc==='봉'?'p':'b',flash);ctx.restore()}
@@ -28,7 +29,7 @@ function drawFighter(e,isP){
     const pc=lk==='p'&&a2?POLEI[dc].cut[fi]:null,fw=pc?pc[0]:f[1];
     // v125 칼집: 검객 원본 시트가 아닌 장(몸통·두 번째 시트)에서 검·도를 들었으면 허리 뒤에 걸린 칼집을 몸보다 먼저
     if((a2||useB)&&(dc==='검'||dc==='도')){ctx.save();ctx.translate(-f[3]*k,-f[2]*k+3-f[4]*k);ctx.scale(k,k);drawSheath(dc,f[3]-6,f[2]*.55,flash);ctx.restore()}
-    drawPart(img,flash,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);
+    heroGlow(flash);drawPart(img,flash,f[0],0,fw,f[2],-f[3]*k,-f[2]*k+3-f[4]*k,fw*k,f[2]*k);heroGlow(0,1);
     // 직위 표식 (망토 대신, 사용자 결정 2026-10-13): 머리 위 문장 + 점
     if(gb&&gb.mark&&!flash)drawRankMark(gb.mark,side,-f[2]*k+3-f[4]*k-10);
     if(!ANIM.heroHandWpn){}   // v167 사용자: 따로 그려 손에 붙이던 무기는 일단 뺀다 (시트 그림의 무기만)
@@ -141,8 +142,8 @@ function drawFighter(e,isP){
   if(!isP&&e.stun>0&&!e.npc){for(let n=0;n<3;n++){const a=time*6+n*2.1;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*10,p.y-(sc>1.2?88:68)+Math.sin(a)*3,2,0,7);ctx.fill()}}
   if(!isP&&!e.npc&&!e.dead){const w=30*sc,y=p.y-(sc>1.2?94:74);
     drawPlate(e,p.x,y,w);   // v210: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
-    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?(typeof repStE==='function'&&repStE(e)!==2?REP.col[repStE(e)]:'#9cc8f0'):'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}}}
-  if(e.npc&&!e.dead){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72)}
+    if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){const na=e.d.boss||e.duel||e.ally||P.target===e?1:nameDim();if(na<1)ctx.globalAlpha=na;ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?(typeof repStE==='function'&&repStE(e)!==2?REP.col[repStE(e)]:'#9cc8f0'):'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}ctx.globalAlpha=1}}
+  if(e.npc&&!e.dead){ctx.globalAlpha=nameDim();ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72);ctx.globalAlpha=1}   // v219: 싸울 때는 흐리게
 }
 // v197 (사용자): 주인공 몸 크기 배율. ANIM.ageK.from세 min배 → to세 1배, 사이는 smoothstep
 function heroAgeK(){const A=ANIM.ageK;if(!A||!P)return 1;const t=clamp((P.age-A.from)/(A.to-A.from),0,1);return A.min+(1-A.min)*t*t*(3-2*t)}

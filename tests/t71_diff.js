@@ -6,6 +6,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');
+  // v219: 난이도는 '보통'을 고른 채 접혀 있다가 '바꾸기'로 펼친다
+  const fold=await p.evaluate(()=>({btns:document.querySelectorAll('[data-s^="diff:"]').length,open:!!document.querySelector('[data-s="diffopen"]'),txt:document.querySelector('[data-s="diffopen"]').parentElement.textContent}));
+  ok(`난이도 접힘: 단추 ${fold.btns}개, 바꾸기 ${fold.open}, "${fold.txt.trim().slice(0,20)}"`,fold.btns===0&&fold.open&&/보통/.test(fold.txt));
+  await p.click('[data-s="diffopen"]');
   // 1. 빈 칸의 첫 인생: 탄생 화면에 난이도 카드(5단계, 기본 보통). 고르면 G.diff
   const c=await p.evaluate(()=>{const o={};o.n=document.querySelectorAll('[data-s^="diff:"]').length;o.def=document.querySelector('[data-s="diff:1"]').getAttribute('aria-pressed')==='true';o.names=DIFF.map(d=>d.n).join('·');return o});
   await p.click('[data-s="diff:3"]');
@@ -28,7 +32,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     G.lives=1;showCreate();o.pick=!document.querySelector('[data-s^="diff:"]');o.diff=G.diff;const g=G.diff;act=null;return o});
   ok(`인물 창 카드 ${l.card} · 둘째 인생 탄생 화면에 난이도 선택 없음 ${l.pick}, G.diff 유지 ${l.diff}`,l.card&&l.pick&&l.diff===3);
   // 4. 옛 저장(G.diff 없음)은 보통. '처음부터 새로'(reset2)는 다시 고른다
-  const o4=await p.evaluate(()=>{const o={};delete G.diff;o.old=diffIdx()===1&&diffOf().n==='보통';G.lives=0;G.diff=0;showCreate();o.pick=!!document.querySelector('[data-s^="diff:"]');o.pressed=document.querySelector('[data-s="diff:0"]').getAttribute('aria-pressed')==='true';return o});
+  const o4=await p.evaluate(()=>{const o={};delete G.diff;o.old=diffIdx()===1&&diffOf().n==='보통';G.lives=0;G.diff=0;showCreate();CR.diffOpen=1;renderCreate();o.pick=!!document.querySelector('[data-s^="diff:"]');o.pressed=document.querySelector('[data-s="diff:0"]').getAttribute('aria-pressed')==='true';return o});
   ok(`옛 저장은 보통 ${o4.old} · 빈 칸(처음부터 새로)은 다시 고른다 ${o4.pick} 입문 표시 ${o4.pressed}`,o4.old&&o4.pick&&o4.pressed);
   if(errs.length){console.log('ERRORS');errs.forEach(e=>console.log(' ',e))}
   await b.close();process.exit(errs.length?1:0)})();

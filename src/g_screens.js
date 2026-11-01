@@ -8,16 +8,18 @@ function slotInfo(i){const sv=loadSlot(i);if(!sv||!sv.G)return null;const p=sv.P
   const realm=alive?(RANKS[p.realm|0]||''):last?last.realm:'';
   let when='';try{when=new Date(sv.t||0).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){}
   return{sv,alive,name:name||'이름 없음',life,age:Math.floor(p.age||0),sect,realm,when:sv.t?when:'',lives:sv.G.lives||0,hist:h.length}}
-function slotRow(i,sel){const s=slotInfo(i);const t=s?`<b>${i+1}번 · ${esc(s.name)}</b><span>${s.alive?`${s.life}회차 · ${s.age}세 · ${esc(s.realm)}${s.sect?' · '+esc(s.sect):''}`:`${s.lives}회차 마침 · 다음 생 대기`}${s.when?` · <span class="dim">${s.when}</span>`:''}</span>`:`<b>${i+1}번 · 빈 칸</b><span class="dim">새로 시작할 수 있다</span>`;
+// v219 (개선 계획 3절): 첫 화면은 제목·그림·큰 단추 둘. 칸은 아래 작은 칩 다섯 개로 줄이고, 고른 칸의 자세한 줄은 가운데 카드가 보여 준다 (칩의 자세한 글은 .sd로 숨긴다)
+function slotRow(i,sel){const s=slotInfo(i);const t=s?`<b>${i+1}번 · ${esc(s.name)}</b><span class="sd">${s.alive?`${s.life}회차 · ${s.age}세 · ${esc(s.realm)}${s.sect?' · '+esc(s.sect):''}`:`${s.lives}회차 마침 · 다음 생 대기`}${s.when?` · <span class="dim">${s.when}</span>`:''}</span>`:`<b>${i+1}번 · 빈 칸</b><span class="dim sd">새로 시작할 수 있다</span>`;
   return `<button type="button" class="opt slot" data-s="slot:${i}" aria-pressed="${sel}">${t}</button>`}
 function slotPanel(){const i=SLOT,s=slotInfo(i);
-  if(!s)return `<div class="card"><p>${i+1}번 칸은 비어 있다. 새 인생을 시작하면 이 칸에 기록된다.</p><div class="center"><button class="btn pri" data-s="new" type="button">새 인생</button></div></div>`;
-  const body=s.alive?`<p><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · 경지 ${esc(s.realm)} · 문파 ${s.sect?esc(s.sect):'없음'}${s.when?` · 기록 ${s.when}`:''}</p><p class="note">다음 생은 이 생이 끝나야 열린다: 죽거나, 생사경에 올라 좌화하거나.</p>`:`<p>${s.lives}번의 생을 마쳤다. 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` · 기록 ${s.when}`:''}</p>`;
+  if(!s)return `<div class="card tcard"><div class="center tbig"><button class="btn pri" data-s="new" type="button">새 인생</button></div><p class="note">${i+1}번 칸 · 비어 있음</p></div>`;
+  const body=s.alive?`<p class="tsum"><b class="gold">${esc(s.name)}</b> · 제${s.life}생 · ${s.age}세 · ${esc(s.realm)}${s.sect?' · '+esc(s.sect):''}${s.when?` <span class="dim">· ${s.when}</span>`:''}</p>`:`<p class="tsum">${s.lives}번의 생을 마쳤다 · 마지막은 <b class="gold">${esc(s.name)}</b>${s.when?` <span class="dim">· ${s.when}</span>`:''}</p>`;
   // v160 (사용자 2026-10-20 "저장된 기록을 삭제 가능하게"): 삭제는 칸을 비우고 제목 화면에 남는다. 처음부터 새로는 지우고 바로 새 인생
   const btns=slotAsk==='del'?`<p class="note">${i+1}번 칸의 기록(인물·세상·강호사)을 모두 지워 빈 칸으로 만든다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="del2" type="button">삭제한다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
     :slotAsk?`<p class="note">이 칸의 세력 구도·봉문·점령과 강호사까지 모두 지우고 1회차부터 다시 시작한다. 되돌릴 수 없다.</p><div class="center"><button class="btn pri" data-s="reset2" type="button">지운다</button><button class="btn" data-s="noreset" type="button">그만둔다</button></div>`
-    :`<div class="center">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}${s.alive?'':`<button class="btn pri" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>`}${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button><button class="btn" data-s="del" type="button" title="이 칸의 기록을 지워 빈 칸으로">삭제</button></div>`;
-  return `<div class="card" id="slotinfo">${body}${btns}</div>`}
+    :`<div class="center tbig">${s.alive?'<button class="btn pri" data-s="cont" type="button">이어하기</button>':''}${s.alive?'':`<button class="btn pri" data-s="new" type="button">${s.lives?'다음 생 시작':'새 인생'}</button>`}</div>
+      <div class="center tsmall">${s.hist?'<button class="btn" data-s="hist" type="button">강호사</button>':''}<button class="btn" data-s="reset" type="button" title="이 칸의 세상(세력 구도·봉문·점령)과 강호사를 모두 지우고 1회차부터">처음부터 새로</button><button class="btn" data-s="del" type="button" title="이 칸의 기록을 지워 빈 칸으로">삭제</button></div>`;
+  return `<div class="card tcard" id="slotinfo">${body}${btns}</div>`}
 // 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
 function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
   P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
@@ -32,20 +34,33 @@ function quitApp(){quitAsk=false;if(P)saveGame(true);
   try{window.close()}catch(e){}
   setTimeout(()=>{if(window.closed)return;if(P)toTitle();else showTitle();
     box.insertAdjacentHTML('afterbegin','<p class="card note" id="quitnote" style="text-align:center">기록해 두었습니다. 브라우저에서는 게임이 창을 직접 닫을 수 없으니 이 탭을 닫아 끝내 주세요.</p>')},250)}
+// 첫 화면 그림: 달·먹 산 세 겹·벼랑 위 검객 그림자 (코드로 그린 SVG)
+const TITLE_ART=`<svg class="tart" viewBox="0 0 360 170" aria-hidden="true" preserveAspectRatio="xMidYMax slice"><defs><radialGradient id="tmoon" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f6e7b8"/><stop offset=".6" stop-color="#e8d49a"/><stop offset="1" stop-color="#e8d49a" stop-opacity="0"/></radialGradient><linearGradient id="tfog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0a09" stop-opacity="0"/><stop offset="1" stop-color="#0b0a09"/></linearGradient></defs>
+  <circle cx="262" cy="52" r="34" fill="url(#tmoon)" opacity=".85"/><circle cx="262" cy="52" r="22" fill="#f1e2b0" opacity=".9"/>
+  <path d="M0 120 L40 86 L70 104 L112 62 L150 96 L188 70 L232 108 L276 78 L318 102 L360 84 L360 170 L0 170Z" fill="#3a3226" opacity=".55"/>
+  <path d="M0 140 L32 116 L64 128 L98 98 L134 126 L170 110 L214 134 L250 112 L296 132 L330 118 L360 128 L360 170 L0 170Z" fill="#251f18" opacity=".85"/>
+  <path d="M60 170 L96 132 L120 126 L138 112 L150 118 L166 170Z" fill="#14110d"/>
+  <g fill="#0d0b09"><path d="M139 112 l2 -14 l3 -3 l3 3 l1 14 l-2 0 l-1 -10 l-2 0 l-1 10Z"/><circle cx="144" cy="92" r="3.2"/><path d="M146 97 l18 -16" stroke="#0d0b09" stroke-width="1.4"/><path d="M141 99 q-8 4 -13 12 q6 -3 12 -6Z" opacity=".8"/></g>
+  <path d="M40 150 q10 -26 6 -40 m-6 40 q-14 -10 -24 -8 m24 0 q14 -14 26 -12" stroke="#120f0b" stroke-width="3" fill="none"/>
+  <rect x="0" y="120" width="360" height="50" fill="url(#tfog)"/></svg>`;
+let titleView='main';
 function showTitle(){
-  playing=false;paused=true;scrEl.hidden=false;slotAsk=false;
-  box.innerHTML=`<h1 class="title">강호윤회록</h1><p>쿼터뷰 무협 · 태어나 늙고, 업보에 따라 다시 태어난다</p>
-   <div class="slots">${Array.from({length:SLOT_N},(_,i)=>slotRow(i,i===SLOT)).join('')}</div>${slotPanel()}
-   <div class="card">${pHelp()}</div>
-   <p class="note" style="text-align:center">진행은 고른 칸에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p>`;
-}
-function refreshSlots(){const l=box.querySelector('.slots');if(l){l.innerHTML=Array.from({length:SLOT_N},(_,i)=>slotRow(i,i===SLOT)).join('');const p=$('slotinfo')||box.querySelector('.slots+.card');if(p)p.outerHTML=slotPanel()}}
+  playing=false;paused=true;scrEl.hidden=false;slotAsk=false;titleView='main';renderTitle()}
+function renderTitle(){
+  if(titleView==='help'){box.innerHTML=`<h2 class="title" style="font-size:36px">설정 · 조작법</h2><div class="card">${pHelp()}</div>
+   <p class="note" style="text-align:center">진행은 고른 칸에 30초마다, 그리고 객잔·집에서 쉴 때 기록된다. 그림은 모두 코드로 그렸고 주인공 스프라이트는 사용자가 준 그림이다.</p><div class="center"><button class="btn" data-s="back" type="button">돌아가기</button></div>`;return}
+  box.innerHTML=`<div class="tmain">${TITLE_ART}<h1 class="title">강호윤회록</h1><p>태어나 늙고, 업보에 따라 다시 태어난다</p></div>
+   ${slotPanel()}
+   <div class="slotbar"><small class="dim">저장 칸</small><div class="slots">${Array.from({length:SLOT_N},(_,i)=>slotRow(i,i===SLOT)).join('')}</div></div>
+   <div class="center tlinks"><button class="btn" data-s="thelp" type="button">설정 · 조작법</button></div>`}
+function refreshSlots(){if(titleView==='main')renderTitle()}
 box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.disabled)return;const s=b.dataset.s;
   if(s.startsWith('slot:')){setSlot(+s.slice(5));G=G0();slotAsk=false;refreshSlots();return}
   if(s==='cont'){const sv=loadGame();if(applySave(sv)){startPlay(false)}else showCreate()}
   else if(s==='new'){const sv=loadGame();if(sv&&sv.G){G=Object.assign(G,sv.G);if(sv.alive){G.nextStatus=G.nextStatus??1}}showCreate()}
   else if(s==='hist'){const sv=loadGame();if(sv)G=Object.assign(G,sv.G);box.innerHTML=`<h2 class="title" style="font-size:40px">강호사</h2>${pHist()}<div class="center"><button class="btn" data-s="back" type="button">돌아가기</button></div>`}
   else if(s==='back')showTitle();
+  else if(s==='thelp'){titleView='help';renderTitle()}
   else if(s==='reset'){slotAsk=true;refreshSlots()}
   else if(s==='del'){slotAsk='del';refreshSlots()}
   else if(s==='del2'){STORE.del(SAVE_KEY);G=G0();slotAsk=false;refreshSlots()}
@@ -54,6 +69,7 @@ box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||b.d
   else if(s.startsWith('side:')){CR.side=s.slice(5);CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s.startsWith('gg:')){CR.gg=+s.slice(3);renderCreate()}
   else if(s.startsWith('cls:')){CR.cls=s.slice(4);if(CR.skip)renderSkip();else renderCreate()}
+  else if(s==='diffopen'){CR.diffOpen=1;renderCreate()}
   else if(s.startsWith('diff:')){if(!G.lives)G.diff=+s.slice(5);renderCreate()}
   else if(s.startsWith('heir:')){const c=G.heir.children[+s.slice(5)];CR.heir=c;CR.name=c.name;CR.status=Math.max(G.nextStatus??1,2);CR.side=G.heir.side;CR.opts=rollGG(CR.side);CR.gg=CR.opts[0];renderCreate()}
   else if(s==='noheir'){CR.heir=null;CR.status=G.nextStatus??1;renderCreate()}
@@ -76,24 +92,28 @@ function showCreate(){
   // v143 (사용자 버그: 윤회했는데 무관 처음부터): 두 번째 생부터는 무관 건너뛰기가 기본으로 골라져 있고, 무관부터 하려면 따로 고른다
   CR={name:rname(),side:'정',cls:'검',status:st,wis:Math.min(10,R1(3,7)+STATUS[st].wis+(G.wisCarry||0)),heir:null,amode:G.lives?'skip':'acad'};CR.opts=rollGG('정');CR.gg=CR.opts[0];renderCreate();
 }
+// 근골 한 줄 성격: 가장 높은 값(같은 값 둘이면 둘 다)의 형용사 + 효과. 고르면 even
+function ggTrait(g){const T=GD.GG_TRAIT,k=['str','end','agi','qi'],v=g.slice(1,5),mx=Math.max(...v),mn=Math.min(...v);if(mx-mn<=1)return T.even;
+  const top=k.filter((_,i)=>v[i]===mx).slice(0,2);return top.length>1?`${T.and[top[0]]} ${T.adj[top[1]]} 몸 · ${T.eff[top[0]]}`:`${T.adj[top[0]]} 몸 · ${T.eff[top[0]]}`}
 function renderCreate(){
   const st=STATUS[CR.status],gl=GEUNGOL[CR.side];
   const heir=G.heir&&G.heir.children.length?`<div class="card"><h4>대물림</h4><p>전생의 자식으로 이어 살면 집과 창고, 은자 ${G.heir.silver}을(를) 물려받는다. 계열은 부모를 따른다.</p>
     <div class="center">${G.heir.children.map((c,i)=>`<button type="button" class="opt" data-s="heir:${i}" aria-pressed="${CR.heir===c}"><b>${esc(c.name)}</b><span>${c.age}세</span></button>`).join('')}<button type="button" class="opt" data-s="noheir" aria-pressed="${!CR.heir}"><b>남으로 태어나기</b><span>가문을 잇지 않는다</span></button></div></div>`:'';
-  box.innerHTML=josa(`<h2 class="title" style="font-size:44px">${G.lives?`제${G.lives+1}생`:'탄생'}</h2>
-    <div class="card"><div class="row2"><h3>신분 · ${st.n}</h3><span class="tag">오성 ${CR.wis}${G.wisCarry?` (전생의 선업 +${G.wisCarry})`:''} · 시작 활력 ${st.vit} · 은자 ${st.silver+(CR.heir?G.heir.silver:0)}</span></div><p>${CR.heir?'가문을 이어 무가 이상으로 태어난다. ':''}${st.d}${G.bonusVit?` 전생의 보상 활력 ${G.bonusVit}은(는) 다섯 몫으로 나뉘어 생일마다 ${Math.ceil(G.bonusVit/5)}씩 받는다.`:''} 근골과 오성은 타고나는 값이라 기연이나 윤회로만 오른다.</p></div>
-    ${typeof diffPickHtml==='function'?diffPickHtml():''}
+  // v219 (개선 계획 3절): 한 화면에 들어오게. 신분은 한 줄, 난이도는 접고, 근골은 숫자 대신 한 줄 성격 (숫자는 작게)
+  box.innerHTML=josa(`<h2 class="title" style="font-size:40px">${G.lives?`제${G.lives+1}생`:'탄생'}</h2>
+    <div class="card crow"><span><b>${st.n}</b>의 자식 <small class="dim">${esc(st.d)}${G.bonusVit?` 전생의 보상 활력 ${G.bonusVit}은(는) 생일마다 ${Math.ceil(G.bonusVit/5)}씩 받는다.`:''}</small></span><span class="tag">오성 ${CR.wis}${G.wisCarry?` (+${G.wisCarry})`:''} · 은자 ${st.silver+(CR.heir?G.heir.silver:0)}</span></div>
     ${heir}
-    <div class="row2"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
+    <div class="row2 cname"><label style="display:flex;gap:8px;align-items:center;font-family:var(--display);font-size:18px">이름 <input class="name" id="nmi" maxlength="8" value="${esc(CR.name)}"${CR.heir?' disabled':''}></label>
       <div class="center">${['정','사'].map(s=>`<button type="button" class="opt" data-s="side:${s}" aria-pressed="${CR.side===s}"${CR.heir?' disabled':''}><b>${SIDES[s].n}</b><span>${ACAD_OFF?`기초 내공 ${SIDES[s].base}`:acadOf(s).n}</span></button>`).join('')}</div></div>
     <p class="note">${SIDES[CR.side].d}</p>
-    <div class="card"><h4>근골 <small class="dim">${st.n}은(는) ${st.pick}가지 중에서 고른다 · 근력/지구력/민첩력/본원진기, 합 32</small></h4>
-      <div class="choice">${CR.opts.map(i=>{const g=gl[i];return `<button type="button" class="opt" data-s="gg:${i}" aria-pressed="${CR.gg===i}"><b>${g[0]}</b><span class="num">${g[1]} / ${g[2]} / ${g[3]} / ${g[4]}</span>${g[5]?'':'<span class="dim">창작 근골</span>'}</button>`}).join('')}</div></div>
+    <div class="card"><h4>타고난 몸 <small class="dim">근골 · ${st.pick}가지 중 하나</small></h4>
+      <div class="choice">${CR.opts.map(i=>{const g=gl[i];return `<button type="button" class="opt" data-s="gg:${i}" aria-pressed="${CR.gg===i}" title="근력 ${g[1]} · 지구력 ${g[2]} · 민첩력 ${g[3]} · 본원진기 ${g[4]}"><b>${g[0]}</b><span>${ggTrait(g)}</span></button>`}).join('')}</div></div>
+    ${typeof diffPickHtml==='function'?diffPickHtml():''}
     ${ACAD_OFF?`    <div class="card"><h4>처음 잡을 무기 <small class="dim">그 계열 화(火) 무공의 첫 초식 비급을 받는다</small></h4>
       <div class="choice">${CLS.map(c=>`<button type="button" class="opt" data-s="cls:${c}" aria-pressed="${CR.cls===c}"><b>${CLASS[c].n}</b><span>${CLASS[c].w} · ${CLASS[c].d}</span></button>`).join('')}</div></div>`:G.lives?`<div class="card"><h4>어디서 시작할까 <small class="dim">전생을 거친 몸이다</small></h4><div class="choice">
       <button type="button" class="opt" data-s="amode:skip" aria-pressed="${CR.amode==='skip'}"><b>무관 건너뛰기</b><span>병기·심법·보법만 골라 바로 강호에서 시작한다. 졸업 보상과 추천서는 없다.</span></button>
       <button type="button" class="opt" data-s="amode:acad" aria-pressed="${CR.amode==='acad'}"><b>${acadOf(CR.side).n}부터</b><span>무관 과제를 처음부터 한다.${(G.acadN||0)>0?' 전생에 졸업했으면 관주에게 월반 시험을 볼 수 있다.':''}</span></button></div></div>`
-      :`<div class="card"><h4>${acadOf(CR.side).n}에서 시작 <small class="dim">무관 5단계를 마치고 이류가 되면 졸업한다</small></h4><p class="note">병기와 내공심법은 무관에서 직접 보고 고른다. ${acadOf(CR.side).hello}</p></div>`}
+      :`<p class="note center">${acadOf(CR.side).n}에서 시작한다. 병기와 내공심법은 무관에서 직접 보고 고른다.</p>`}
     <div class="center">${!ACAD_OFF&&G.lives&&CR.amode==='skip'?'<button type="button" class="btn pri" data-s="skipacad" style="font-size:18px;padding:8px 26px">다음: 병기·심법·보법 고르기</button>'
       :`<button type="button" class="btn pri" data-s="start" style="font-size:18px;padding:8px 26px">${ACAD_OFF?'8세, 강호에 태어나다':`8세, ${acadOf(CR.side).n}에 들다`}</button>`}</div>`);
   const ni=$('nmi');if(ni)ni.addEventListener('input',()=>CR.name=ni.value);
@@ -123,8 +143,8 @@ function beginLife(skip){
 }
 function startPlay(fresh){
   scrEl.hidden=true;playing=true;paused=false;lastYear=Math.floor(P.age);logEl.innerHTML='';
-  if(fresh&&acadOn()){const A=acadOf(P.side);log(`${P.name}, ${STATUS[P.status].n}의 자식으로 태어나 여덟 살에 ${A.n}에 들었습니다.`,'sys');
-    log(`"${A.hello}" 관주에게 말을 걸고, 왼쪽 위의 과제를 따라 배우자. 임무창(J · 아래 임무 탭)에 자세히 나온다.`,'info');
+  if(fresh&&acadOn()){const A=acadOf(P.side);logQuiet(`${P.name}, ${STATUS[P.status].n}의 자식으로 태어나 여덟 살에 ${A.n}에 들었습니다. "${A.hello}"`,'sys');   // v219: 왼쪽 위는 두 줄만
+    log(`관주에게 말을 걸고 왼쪽 위 과제를 따라 배우자.`,'info');
     log(TOUCH?'왼쪽 아래를 끌어 이동 · 사람 앞에서 행동 단추로 대화 · 더보기 → 조작법 참고':'땅 클릭 이동 · 사람을 눌러 대화 · F 행동 · 조작법 버튼 참고','info');showBanner(A.n,`${SIDES[P.side].n} · ${GEUNGOL[P.side][P.gg][0]}`)}
   else if(fresh){log(`${P.name}, ${STATUS[P.status].n}의 자식으로 개봉에서 태어났습니다.`,'sys');
     log(TOUCH?'아래 행낭 탭에서 비급을 읽어 첫 초식을 익히세요. 더보기 → 수련에서 기본기와 내공을 다질 수 있습니다.':'행낭(I)의 비급을 읽어 첫 초식을 익히세요. 수련(U) 창에서 기본기와 내공을 다질 수 있습니다.','info');
@@ -153,7 +173,8 @@ const L=document.createElement('canvas'),lx=L.getContext('2d');
 // 그리는 해상도는 화면 배율 2까지만 (사용자 2026-10-24 "게임이 자꾸 꺼져"): 배율 3 휴대폰에서 화면 크기 캔버스(본 화면·빛 겹·합성 사본) 한 장이 12MB씩이라
 // 메모리가 모자라 웹뷰가 꺼질 수 있다. 2배면 한 장 5MB, 칠할 픽셀도 절반 아래로 준다
 let DPR_MAX=2;   // 절전이면 1.5 (g_power.js)
-function resize(){const r=C.getBoundingClientRect(),d=Math.min(DPR_MAX,devicePixelRatio||1);S=Math.max(.8,Math.min(1.3,r.width/900));W=r.width/S;H=r.height/S;C.width=L.width=Math.round(r.width*d);C.height=L.height=Math.round(r.height*d)}
+let S_BASE=1,VW_PX=0,VH_PX=0;   // v219: 카메라 당김(g_read.js)이 S를 S_BASE×배율로 바꾼다
+function resize(){const r=C.getBoundingClientRect(),d=Math.min(DPR_MAX,devicePixelRatio||1);S=Math.max(.8,Math.min(1.3,r.width/900));W=r.width/S;H=r.height/S;S_BASE=S;VW_PX=r.width;VH_PX=r.height;C.width=L.width=Math.round(r.width*d);C.height=L.height=Math.round(r.height*d)}
 addEventListener('resize',resize);
 function pickAt(ev){
   const r=C.getBoundingClientRect(),sx=(ev.clientX-r.left)/S,sy=(ev.clientY-r.top)/S;

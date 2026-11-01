@@ -271,7 +271,7 @@ function gainMast(id,v){
   runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
-  e.hp-=d;e.hit=.12;e.hurtAt=time;addText(e.x,e.y,crit?d+'!':d,crit?'#ffd36a':'#f3e6c4');
+  e.hp-=d;e.hit=.12;e.hurtAt=time;{const mine=from===P||!!from&&!from.d&&!from.kind;addText(e.x,e.y,crit&&mine?d+'!':d,crit?'#ffd36a':'#f3e6c4',mine?crit?'crit':'out':'far')}   // v219: 내가 준 것·치명타·남이 준 것을 나눠 그린다 (g_read.js)
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);
   runHooks('struck',e,from);   // v176: 표국·상단 행렬을 치면 약탈이 된다 (g_caravan.js). 같은 편 배신 판정보다 먼저
@@ -315,7 +315,7 @@ function hurtP(dm,src){
   if(P.inv>0||P.hp<=0)return;
   const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
   if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
-  dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a');P.chan=null;
+  dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
   if(P.hp<=0&&!G.duel)runHooks('lethal',c);   // 생사경이 한 해에 한 번 버틴다 (g_beyond.js)

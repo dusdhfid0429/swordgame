@@ -1,0 +1,16 @@
+{
+  "READ": {
+    "d": "v219 전투 가독성 (개선 계획 4절, 동훈님 2026-11-01): 주인공 발밑 심법 색 고리, 싸울 때 엷은 테두리, 싸울 때 NPC 이름표 흐리게, 피해 숫자 구분, 싸울 때 카메라 당김",
+    "ring": {"rx": 17, "ry": 7, "w": 1.6, "a": 0.75, "fightA": 0.95, "pulse": 0.15},
+    "glow": {"blur": 7, "a": 0.85},
+    "fight": {"hold": 2.5, "range": 7},
+    "dimName": 0.28,
+    "zoom": {"fight": 1.12, "in": 2.2, "out": 1.8},
+    "num": {
+      "out":  {"font": "15px", "col": "#f3e6c4"},
+      "crit": {"font": "bold 24px", "col": "#ffd36a", "pop": 1.5},
+      "in":   {"font": "bold 18px", "col": "#ff6a5a", "dx": -16},
+      "far":  {"font": "12px", "col": "#a89c88", "a": 0.7}
+    }
+  }
+}

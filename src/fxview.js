@@ -45,7 +45,7 @@ function play(fn,label,ctx){V.last={fn,label,ctx};clearTimeout(V.timer);try{fn()
 function note(t){const el=$('fxvnow');if(el)el.textContent='▶ '+t}
 
 // ---- 확대: 게임의 resize 뒤에 배율을 곱한다 ----
-const rs0=resize;resize=()=>{rs0();const r=C.getBoundingClientRect();S*=V.zoom;W=r.width/S;H=r.height/S};addEventListener('resize',()=>resize());
+const rs0=resize;resize=()=>{rs0();const r=C.getBoundingClientRect();S*=V.zoom;W=r.width/S;H=r.height/S;S_BASE=S};addEventListener('resize',()=>resize());
 
 // ---- 속성: 심법 속성을 골라 무공의 재질(불·물·번개…)을 바꿔 본다 ----
 const artEl0=artEl;artEl=a=>V.el||artEl0(a);
@@ -135,7 +135,7 @@ function bobFx(t){place();bobInit();if(t==='sect'){if(!V.sect)setSect('hwasan');
   P.bob[id]=1;P.bcur=id;if(t==='flank'){const g=BG.fail[BOBS[id].g];BG.fail[BOBS[id].g]=0;P.target=tgt();bobeop();BG.fail[BOBS[id].g]=g}else{face(P.x-1,P.y);bobeop()}}
 function spec(k){place();if(k==='점혈'){const e=tgt();P.x=e.x;P.y=e.y+1.4;P.target=e}P.sp=P.sp||{};P.sp[k]=1;P.scd[k]=0;P.mats.비도=9;special(k)}
 // v172 피격·빈사 알림 (g_danger.js): 뷰어의 주인공은 다치지 않으므로 맞은 셈을 치고, 목인장이 칠 준비를 하는 셈을 친다
-function hitDemo(k){const dm=Math.max(1,Math.round(P.maxHp*k)),hp0=P.hp;P.hp=Math.max(1,P.hp-dm);P.hit=.2;shake=.12;addText(P.x,P.y,dm,'#e0675a');sfx('hurt');runHooks('hurtDone',{src:{},dm,hp0})}
+function hitDemo(k){const dm=Math.max(1,Math.round(P.maxHp*k)),hp0=P.hp;P.hp=Math.max(1,P.hp-dm);P.hit=.2;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');sfx('hurt');runHooks('hurtDone',{src:{},dm,hp0})}
 function windDemo(l){place();const e=tgt();e.dngDemo=1;e.dngL=l;e.wind=.4}
 hook('mobTick',e=>{if(e.dngDemo&&e.wind>0)e.stun=0});   // 목인장은 늘 기절해 있다(g_academy.js): 칠 준비하는 동안만 풀어 둔다
 hook('tick',dt=>{for(const m of mobs)if(m.dngDemo&&m.wind>0){m.wind-=dt;if(m.wind<=0){m.wind=0;m.swing=.24;hitDemo(m.dngL?.4:.1)}}});
