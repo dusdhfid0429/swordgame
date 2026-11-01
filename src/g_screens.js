@@ -134,7 +134,7 @@ function startPlay(fresh){
   // 무관(g_academy.js)을 졸업하기 전에는 새 생도 이어 하기도 무관 본관에서
   const start=acadOn()?acadReg():fresh?'gaebong':nearestCapital(P.reg||'gaebong');
   if(REG!==start){mobs=[];drops=[];loadRegion(start)}P.reg=start;P.gateLock=0;
-  const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y;spawnTick();spawnTick();
+  const at=start==='gaebong'?{x:20.5,y:20.5}:arriveAt(start);P.x=at.x;P.y=at.y;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-camDY();spawnTick();spawnTick();
   if(!fresh&&start!=='gaebong')log(`${REGIONS[start].name}에서 다시 길을 나섭니다.`,'sys');saveGame(true);
 }
 function showRebirth(e,cause){
