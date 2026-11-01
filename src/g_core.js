@@ -355,7 +355,7 @@ function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기
   const cost=Math.round((a.base?30:55)*(P.buff.ult>0?.3:1));if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
   const ch=P.chain,combo=time-ch.t<1.7?1+ch.sum/100:1;P.chain={last:-1,t:-9,sum:0,n:0};
   P.qi-=cost;P.ucd=8;heroAtk('ult');const X=mkX(a.id,combo),e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
-  showBanner(a.ult.n,`${a.n} 필살기${combo>1?` · 공력 ${Math.round(combo*100)}%`:''}`);log(`필살기 [${a.ult.n}]!`,'sys');P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
+  showBanner(a.ult.n,`${a.n} 필살기${combo>1?` · 공력 ${Math.round(combo*100)}%`:''}`);log(`필살기 [${a.ult.n}]!`,'sys');if(typeof callout==='function')callout(a.ult.n,P.byh||P.name);   // v224 오의 이름 외치기 (g_open.js)P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
   a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈

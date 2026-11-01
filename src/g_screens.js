@@ -44,7 +44,8 @@ const TITLE_ART=`<svg class="tart" viewBox="0 0 360 170" aria-hidden="true" pres
   <path d="M40 150 q10 -26 6 -40 m-6 40 q-14 -10 -24 -8 m24 0 q14 -14 26 -12" stroke="#120f0b" stroke-width="3" fill="none"/>
   <rect x="0" y="120" width="360" height="50" fill="url(#tfog)"/></svg>`;
 let titleView='main';
-function showTitle(){
+function showTitle(){if(typeof mdgEnd==='function')mdgEnd(true,true);   // v224 마당 사건을 접는다 (g_scene.js)
+
   playing=false;paused=true;scrEl.hidden=false;slotAsk=false;titleView='main';renderTitle()}
 function renderTitle(){
   if(titleView==='help'){box.innerHTML=`<h2 class="title" style="font-size:36px">설정 · 조작법</h2><div class="card">${pHelp()}</div>

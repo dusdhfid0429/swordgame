@@ -68,7 +68,7 @@ function storyDueIn(yrs){const s=PS(),a=realAge();if(!s||s.flag.warDone)return n
 const evOf=id=>SEV.find(e=>e.id===id)||act2Find(id);
 function evState(e){const s=PS();return s.pick[e.id]!=null?'done':s.open===e.id?'open':'wait'}
 // v149 (사용자): 사건이 터지면 창을 띄우지 않고 화면에 크게 알린다. 정세 줄(맨 위)을 누르거나 N으로 정세창을 연다
-function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');feat(`${e.n}을(를) 마주했다`);
+function openEvent(e){const s=PS();s.open=e.id;storyBanner(e.n,'강호의 사건 · 왼쪽 정세 줄을 누르거나 N으로 정세창에서 고른다','강호의 사건');log(`[사건] ${e.n}: ${e.t}`,'sys');feat(`${e.n}을(를) 마주했다`);runHooks('evOpen',e);   // v224 마당 사건 (g_scene.js)
   if(panel==='story'&&!$('win').hidden)renderOpen()}
 // 정세 줄: 고를 사건(다음 사건이 열리면 저절로 흘러간다)과 정세 임무. left = 남은 초 (나이 → 1년 YEAR_SEC초)
 function storyRows(){if(!P||!P.story)return[];const s=PS(),out=[],sec=a=>(a-realAge())*YEAR_SEC;

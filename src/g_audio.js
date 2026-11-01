@@ -62,6 +62,15 @@ function gong(dst,t,f,vol,dec){[[1,1],[1.48,.6],[2.02,.45],[2.74,.3],[3.9,.18]].
 
 // ---- 효과음 ----
 let sfxLast={};
+// v224 병기마다 다른 타격음 (개선 계획 5절): 검 쇳소리 울림 · 도 묵직하게 베는 소리 · 창 날카롭게 꿰는 소리 · 봉 나무 울림 · 권각 둔탁한 살 소리 · 암기류 짧은 쇳조각
+const HITCLS={검:1,도:1,창:1,봉:1,권:1,각:1,암:1,단:1,편:1,궁:1};
+function hitCls(D,t,c,v){if(!c||!HITCLS[c])return;switch(c){
+  case'검':tone(D,t+.005,3150,'sine',.07*v,.002,.32,3100);tone(D,t+.005,4720,'sine',.03*v,.002,.22,4700);break;
+  case'도':noise(D,t,.32*v,.002,.12,'lowpass',1100,500,.9);tone(D,t,105,'triangle',.35*v,.002,.16,55);break;
+  case'창':noise(D,t,.22*v,.001,.05,'highpass',3600,2400,1);tone(D,t,240,'sine',.2*v,.001,.06,120);break;
+  case'봉':tone(D,t,420,'triangle',.3*v,.001,.09,300);tone(D,t+.01,640,'triangle',.12*v,.001,.07,500);break;
+  case'권':case'각':tone(D,t,88,'sine',.45*v,.002,.12,50);noise(D,t,.25*v,.002,.06,'lowpass',700,300,.8);break;
+  default:tone(D,t,2450,'square',.04*v,.001,.05,1900);noise(D,t,.1*v,.001,.03,'highpass',4200,3000,1)}}
 function sfx(k,o={}){
   if(!AC||!SND.s||document.hidden)return;const t=AC.currentTime,D=ASfx;
   // 같은 소리가 한 순간에 몰리면 줄인다
@@ -71,9 +80,9 @@ function sfx(k,o={}){
     case'swing':{const c=o.cls||'검',hi=c==='검'?1:c==='창'||c==='봉'?.7:c==='도'?.8:c==='궁'?1.2:c==='암'?1.35:c==='단'||c==='편'?1.25:.5;
       noise(D,t,.28*v,.01,.16,'bandpass',2600*hi,700*hi,1.2);if(c==='검')tone(D,t+.02,2800,'sine',.03*v,.002,.25,2700);break}
     case'bow':tone(D,t,180,'triangle',.25*v,.002,.12,90);noise(D,t,.15*v,.002,.25,'bandpass',3000,1200,2);break;
-    case'hit':noise(D,t,.4*v,.001,.07,'bandpass',1800,600,.8);tone(D,t,150,'sine',.5*v,.002,.13,60);break;
+    case'hit':noise(D,t,.4*v,.001,.07,'bandpass',1800,600,.8);tone(D,t,150,'sine',.5*v,.002,.13,60);hitCls(D,t,o.cls,v);break;
     case'crit':noise(D,t,.5*v,.001,.09,'bandpass',2400,800,.8);tone(D,t,130,'sine',.6*v,.002,.18,50);
-      [1900,2850,4100].forEach((f,i)=>tone(D,t+.01,f,'sine',.08*v/(i+1),.002,.5,f*.99));break;
+      [1900,2850,4100].forEach((f,i)=>tone(D,t+.01,f,'sine',.08*v/(i+1),.002,.5,f*.99));hitCls(D,t,o.cls,v*1.2);break;
     case'miss':noise(D,t,.12*v,.01,.12,'highpass',2000,900);break;
     case'hurt':tone(D,t,95,'sine',.6,.003,.2,45);noise(D,t,.3,.002,.14,'lowpass',1400,300);tone(D,t,220,'sawtooth',.06,.01,.12,140);break;
     // v172 빈사 심장 소리: 두 번 뛰는 낮은 박동 (g_danger.js)
@@ -153,7 +162,7 @@ function musStep(m,s,t,st){
 // ---- 게임에 소리 붙이기 (기존 함수를 감싼다) ----
 const sndNear=e=>!e||!P||Math.hypot(e.x-P.x,e.y-P.y)<10;
 {const wrap=(name,fn)=>{const o=window[name];if(typeof o!=='function')return;window[name]=function(...a){return fn(o,a,this)}};
-  wrap('damage',(o,a)=>{const[e,d,kb,stun,from,crit]=a,was=e&&e.hp>0;const r=o(...a);if(was&&sndNear(e)&&(from===undefined||from===P||allies.includes(from)))sfx(crit?'crit':'hit',{v:from&&from!==P?.5:1});if(was&&e.hp<=0&&sndNear(e))sfx('kill');return r});
+  wrap('damage',(o,a)=>{const[e,d,kb,stun,from,crit]=a,was=e&&e.hp>0;const r=o(...a);if(was&&sndNear(e)&&(from===undefined||from===P||allies.includes(from)))sfx(crit?'crit':'hit',{v:from&&from!==P?.5:1,cls:from===P?curCls():null});if(was&&e.hp<=0&&sndNear(e))sfx('kill');return r});
   wrap('hitE',(o,a)=>{const e=a[1],hp=e&&e.hp,r=o(...a);if(e&&e.hp===hp&&e.hp>0&&sndNear(e))sfx('miss');return r});
   wrap('hurtP',(o,a)=>{const hp=P.hp,r=o(...a);if(P.hp<hp&&P.hp>0)sfx('hurt');else if(P.hp===hp&&P.inv<=0)sfx('dodge');return r});
   wrap('basicStrike',(o,a)=>{const b=P.bcd,r=o(...a);if(P.bcd>b){const c=curCls();sfx(c==='궁'&&hasWeaponFor('궁')?'bow':'swing',{cls:c})}return r});
