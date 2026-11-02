@@ -28,7 +28,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`심법을 무당 심법으로 바꾸면 색 ${r.sw.c}/${r.sw.c2} = 무당 ${r.sw.want}, 재질 ${r.el0}→${r.sw.el} (심법 ${r.sw.simEl})`,r.sw.c===r.sw.want[0]&&r.sw.c2===r.sw.want[1]&&r.sw.el===r.sw.simEl);
   ok(`초식 효과 보조색 ${r.c2ok}, 잔광 ${r.after}, 재질 ${r.elOk}`,r.c2ok&&r.after&&r.elOk);
   ok(`남의 문파(소림) 무공은 소림 심법 색 ${r.fa.c}/${r.fa.c2}·속성 ${r.fa.el}`,r.fa.c===r.fa.want[0]&&r.fa.c2===r.fa.want[1]&&r.fa.el===r.fa.simEl);
-  // v228 (사용자 2026-11-02): 문파 없는 심법(무관 소양진기 = 정종·양기)은 계열 흰빛이 아니라 양기 색
+  // v229 (사용자 2026-11-02): 문파 없는 심법(무관 소양진기 = 정종·양기)은 계열 흰빛이 아니라 양기 색
   const so=await p.evaluate(()=>{const s=SIM.N_ac_jeong_3;P.sect=null;P.sims=P.sims||{};P.sims[s.id]=1;P.sim=s.id;
     const a=Object.values(ARTS).find(a=>!artForeign(a));const r={sc:s.sc,el:s.el,c:fxCol(a),pair:pFxPair(),want:EL['양'].c,hero:heroCol()};return r});
   ok(`소양진기(${so.sc}·${so.el}) 이펙트 주색 ${so.c} = 양기 ${so.want}, 운기 ${so.pair[0]}, 주인공 ${so.hero}`,so.c===so.want&&so.pair[0]===so.want&&so.hero===so.want);

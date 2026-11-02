@@ -1,5 +1,5 @@
 // 오행·음양·뇌기는 운용 중인 심법의 것, 이펙트 색은 심법 계열 (사용자 요청 2026-10-13). 무공 표시에서 오행은 빠지고 상극 우선순위는 유지
-// v228: 문파 없는 심법의 이펙트 주색은 계열 색이 아니라 심법 속성 색(EL[el].c)
+// v229: 문파 없는 심법의 이펙트 주색은 계열 색이 아니라 심법 속성 색(EL[el].c)
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];

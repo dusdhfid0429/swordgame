@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const distinct=new Set(Object.values(SECT_FX).map(x=>x[0])).size;
     return{all,none,nonePair,noneWant,base,own,pair,other,dark,distinct,n:Object.keys(SECTS).length}});
   ok(`문파 ${r.n}곳 모두 색 두 가지, 서로 다른 주색 ${r.distinct}`,r.all&&r.distinct>=r.n-1);
-  ok(`문파 없음 ${r.none} (v228: 심법 속성 색 ${r.noneWant}), 운기 ${r.nonePair}`,r.none===r.noneWant&&r.nonePair===r.noneWant);
+  ok(`문파 없음 ${r.none} (v229: 심법 속성 색 ${r.noneWant}), 운기 ${r.nonePair}`,r.none===r.noneWant&&r.nonePair===r.noneWant);
   ok(`타고난 심법 + 화산파 → ${r.base}`,r.base===GD_HW());
   ok(`무당 심법 → 무공 ${r.own}, 운기 ${r.pair.join(' / ')}`,r.own==='170,210,255'&&r.pair[1]==='255,255,255');
   ok(`아미파 무인의 무공 → ${r.other}, 천마신교 운기는 검은 마기 ${r.dark}`,r.other==='225,195,255'&&r.dark);

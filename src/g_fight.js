@@ -84,26 +84,31 @@ function clashStart(e){const C=FT.clash;fClashCd=time+C.cd;const rr=(mobRealm(e)
   const l=Math.hypot(e.x-P.x,e.y-P.y)||1,ux=(e.x-P.x)/l,uy=(e.y-P.y)/l;P.fx=ux;P.fy=uy;e.fx=-ux;e.fy=-uy;e.wind=0;e.slam=0;e.bp=null;e.moving=false;
   const nx=P.x+ux*C.gap,ny=P.y+uy*C.gap;if(Math.abs(l-C.gap)>.3&&typeof walkAt==='function'&&walkAt(nx,ny)){e.x=nx;e.y=ny}
   let el=document.getElementById('clash');if(!el){el=document.createElement('div');el.id='clash';$('app').appendChild(el);
-    el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();clashTap(ev.target&&ev.target.closest&&ev.target.closest('.cbtn'))})}
+    el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();clashTap()})}
   const c=fClash.col,R=i=>typeof RANKS!=='undefined'&&RANKS[i]?RANKS[i]:'';
   el.style.setProperty('--cp',rgbCss(c.p));el.style.setProperty('--ce',rgbCss(c.e));el.style.setProperty('--ci',C.intro+'s');
   el.innerHTML=`<div class="cban"><b>내공 대결</b><small>${esc(e.kind)}와(과) 내력이 맞붙었다</small></div>
 <div class="cbox"><div class="crow"><div class="cg"><div class="cnm"><span class="me">나 <em>${esc(R(realmIdx()))}</em></span><span class="ct"></span><span class="fo">${esc(e.kind)} <em>${esc(R(mobRealm(e)))}</em></span></div>
 <div class="cbar"><s class="cpL"></s><s class="cpR"></s><i></i></div>
 <div class="cq"><span class="qm"></span><span class="qe"></span></div></div>
-<button class="cbtn" type="button" aria-label="기 밀어내기"><b>밀어<br>내기</b></button></div>
-<p class="chint">단추나 화면을 빠르게 눌러 기를 밀어붙여라 (PC: 스페이스)</p></div><div class="cres"></div>`;
-  clearTimeout(el._t);document.body.classList.add('clash-on');el.hidden=false;el.classList.remove('fin','win','lose');el.classList.add('on');sfx('crit',{v:1});shake=Math.max(shake,.25);P.target=e;clashPaint()}
-function clashTap(btn){if(!fClash)return;const C=FT.clash,c=fClash;c.taps++;
+</div>
+<p class="chint">${document.body.classList.contains('touch')?'빛나는 밀어내기(공격) 단추를':'화면이나 스페이스를'} 빠르게 눌러 기를 밀어붙여라</p></div><div class="cres"></div>`;
+  clearTimeout(el._t);document.body.classList.add('clash-on');clashAtk(true);el.hidden=false;el.classList.remove('fin','win','lose');el.classList.add('on');sfx('crit',{v:1});shake=Math.max(shake,.25);P.target=e;clashPaint()}
+function clashTap(){if(!fClash)return;const C=FT.clash,c=fClash;c.taps++;
   const cost=Math.max(1,Math.round((P.maxQi||0)*C.tapQi)),dry=(P.qi||0)<cost;if(!dry)P.qi-=cost;
   const pw=C.tap*(1+Math.min(.5,(P.maxQi||0)/4000))*(dry?C.dryK:1);c.v=Math.min(1,c.v+pw);c.eq=Math.max(0,c.eq-c.eq0*pw*C.eDrain);c.bump=1;
-  clashBurst(10);const el=document.getElementById('clash');if(el){const b=el.querySelector('.cbtn');if(b){b.classList.remove('hit');void b.offsetWidth;b.classList.add('hit')}}
+  clashBurst(10);const b=document.getElementById('t_atk');if(b){b.classList.remove('clhit');void b.offsetWidth;b.classList.add('clhit')}
   shake=Math.max(shake,.06);clashPaint();if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}if(c.v>=1)clashEnd(true)}
 function clashPaint(){const el=document.getElementById('clash');if(!el||!fClash)return;const c=fClash,f=(c.v+1)/2;
   const i=el.querySelector('.cbar i');if(i)i.style.left=(f*100)+'%';const L=el.querySelector('.cpL'),R=el.querySelector('.cpR');if(L)L.style.width=(f*100)+'%';if(R)R.style.width=((1-f)*100)+'%';
   const t=el.querySelector('.ct');if(t)t.textContent=`${Math.max(0,c.t).toFixed(1)}초`;
   const qm=el.querySelector('.qm'),qe=el.querySelector('.qe');if(qm)qm.textContent=`내공 ${Math.round(P.qi||0)} / ${Math.round(P.maxQi||0)}`;if(qe)qe.textContent=`내공 ${Math.round(c.eq)} / ${c.eq0}`;
   el.classList.toggle('dry',(P.qi||0)<Math.max(1,(P.maxQi||0)*FT.clash.tapQi))}
+// v228 (동훈님 2026-11-02 "밀어내기 버튼을 공격버튼으로 대체"): 대결 동안 공격 단추 글자가 '밀어내기'로 바뀌고 빛난다. 누르면 민다 (공격·초식 고르기는 막음)
+function clashAtk(on){const b=document.getElementById('t_atk');if(!b)return;const sp=b.querySelector('span');if(sp){if(on){if(b.dataset.lbl==null)b.dataset.lbl=sp.textContent;sp.textContent='밀어내기'}else if(b.dataset.lbl!=null){sp.textContent=b.dataset.lbl;delete b.dataset.lbl}}
+  b.classList.toggle('clash',!!on);if(!on)b.classList.remove('clhit');
+  if(!b._clash){b._clash=1;b.addEventListener('pointerdown',ev=>{if(!fClash)return;ev.preventDefault();ev.stopImmediatePropagation();clashTap()},true);
+    for(const t of['pointermove','pointerup','click'])b.addEventListener(t,ev=>{if(fClash||b.classList.contains('clash')){ev.stopImmediatePropagation()}},true)}}
 // 두 사람 가운데·부딪치는 자리 (세계 좌표)
 const clashMid=c=>({x:(P.x+c.e.x)/2,y:(P.y+c.e.y)/2});
 const clashPt=c=>{const f=.5+.42*c.v;return{x:P.x+(c.e.x-P.x)*f,y:P.y+(c.e.y-P.y)*f}};
@@ -118,7 +123,7 @@ function clashCam(dt){const C=FT.clash,m=clashMid(fClash),k=Math.min(1,dt*C.zin)
   const t=iso(m.x,m.y);t.y-=gH(m.x,m.y);cam.x+=(t.x-cam.x)*k;cam.y+=(t.y-cam.y)*k}
 function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=document.getElementById('clash');
   if(el){el.classList.add('fin',win?'win':'lose');const r=el.querySelector('.cres');if(r)r.innerHTML=`<b>${win?'밀어냈다!':'밀렸다…'}</b>`;clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('on','fin','win','lose');el.hidden=true;document.body.classList.remove('clash-on')},C.outro*1000)}
-  const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
+  clashAtk(false);const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
   if(!e||e.hp<=0||!P||P.hp<=0)return;shake=Math.max(shake,.45);
   if(win){const d=Math.round(e.maxHp*(e.d.boss?C.boss:C.win));damage(e,d,.6,C.stun,P,true);addText(e.x,e.y-.9,'내력으로 밀어냈다','#ffd36a');P.clashW=(P.clashW||0)+1;slowMo(.4,.4)}
   else{hurtP(e.atk*C.lose,e);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}

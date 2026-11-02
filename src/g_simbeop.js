@@ -31,7 +31,7 @@ function artEl(a){if(artForeign(a))return simSectEl(a.sect);return pEl()}
 // 내 쪽은 운용 중 심법의 문파 → 그 심법이 문파 것이 아니면(타고난·잡화점·무관) 내 문파 → 둘 다 없으면 예전처럼 계열(SCHOOL_FX) 색
 const SECT_FX=GD.SECT_FX;
 function pFxSect(){if(!P)return null;const s=simCur(),sid=s.sect||(P.sect&&P.sect!=='own'?P.sect:null);return sid&&SECT_FX[sid]?sid:null}
-// v228 (사용자 2026-11-02 "소양진기가 양기인데 이펙트가 왜 흰색이야?"): 문파 없는 심법(무관·잡화점·타고난)은 계열 색(정종=흰빛) 대신
+// v229 (사용자 2026-11-02 "소양진기가 양기인데 이펙트가 왜 흰색이야?"): 문파 없는 심법(무관·잡화점·타고난)은 계열 색(정종=흰빛) 대신
 // 그 심법 속성 색(EL[el].c)을 주색으로, 같은 빛깔의 밝은 색을 보조색으로 쓴다 (계열 짝 파랑이 심지·잔광을 물들이지 않게).
 // 마기처럼 어두운 속성은 계열 짝 보조색. 문파 심법은 여전히 문파 색(SECT_FX)
 const elFxC=(el,sc)=>EL[el]&&EL[el].c||SCHOOL_FX[sc]||SCHOOL_FX['정종'];

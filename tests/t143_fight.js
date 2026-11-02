@@ -38,23 +38,23 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`우두머리 회전 예고 중 간파 → 빗나감 ${r.miss}, 잃은 생명 ${r.lost}, 외친 이름 '${r.co}'`,r.bp&&r.miss&&r.lost===0&&/선풍회륜/.test(r.co));
   await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_boss.png')});
   // 4. 내공 대결: 연타로 밀어내면 상대가 크게 다치고 기절한다. 그동안 세상은 거의 멈춘다
-  r=await p.evaluate(()=>{for(const m of mobs)m.hp=0;mobs=[];const e=mk('흑풍채주',1.2);e.realm=realmIdx();fClashCd=0;clashStart(e);const k=fightK(.016);const vis=!document.getElementById('clash').hidden;
+  r=await p.evaluate(()=>{for(const m of mobs)m.hp=0;mobs=[];const e=mk('흑풍채주',1.2);window.CE=e;e.realm=realmIdx();fClashCd=0;clashStart(e);const k=fightK(.016);const vis=!document.getElementById('clash').hidden;
     const h0=e.hp;for(let i=0;i<20;i++)clashTap();fightK(.016);return{k,vis,on:!!fClash,lost:h0-e.hp,stun:e.stun>0,w:P.clashW||0}});
   ok(`내공 대결 창 ${r.vis}, 시간 배율 ${r.k}, 연타로 이김 ${r.w}, 상대 피해 ${r.lost}, 기절 ${r.stun}`,r.vis&&r.k<.1&&!r.on&&r.w===1&&r.lost>0&&r.stun);
   // v226: 화면 가운데 문구 → 게이지·단추, 카메라를 크게 당긴다, 단추를 누르면 내공이 든다 (실제 프레임으로 돌려 본다)
-  await p.evaluate(()=>{const e=mobs[0];e.stun=0;e.hp=e.maxHp;fClashCd=0;P.qi=P.maxQi;clashStart(e)});
+  await p.evaluate(()=>{const e=CE;e.stun=0;e.hp=e.maxHp;fClashCd=0;P.qi=P.maxQi;clashStart(e)});
   await p.waitForTimeout(450);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash1.png')});
   await p.waitForTimeout(900);
-  r=await p.evaluate(()=>{const el=document.getElementById('clash'),ban=el.querySelector('.cban').getBoundingClientRect(),box=el.querySelector('.cbox').getBoundingClientRect(),btn=el.querySelector('.cbtn').getBoundingClientRect(),bar=el.querySelector('.cbar').getBoundingClientRect();
-    const q0=P.qi;clashTap(true);return{on:!!fClash,midY:(ban.top+ban.bottom)/2/innerHeight,box:getComputedStyle(el.querySelector('.cbox')).opacity,side:btn.left>=bar.right-2&&Math.abs((btn.top+btn.bottom)/2-(bar.top+bar.bottom)/2)<40,
-      nm:el.querySelector('.cnm').textContent,qm:el.querySelector('.qm').textContent,qe:el.querySelector('.qe').textContent,spent:q0-P.qi,z:rdZ}});
-  ok(`문구 세로 위치 ${r.midY.toFixed(2)}, 게이지 ${r.box}, 단추가 게이지 옆 ${r.side}, '${r.nm}' ${r.qm} ${r.qe}, 누를 때 든 내공 ${r.spent}, 줌 ${r.z.toFixed(2)}`,
-    r.on&&r.midY>.3&&r.midY<.6&&+r.box>.9&&r.side&&/나/.test(r.nm)&&/내공/.test(r.qm)&&/내공/.test(r.qe)&&r.spent>0&&r.z>1.5);
+  r=await p.evaluate(()=>{const el=document.getElementById('clash'),ban=el.querySelector('.cban').getBoundingClientRect(),box=el.querySelector('.cbox').getBoundingClientRect(),atk=document.getElementById('t_atk'),bar=el.querySelector('.cbar').getBoundingClientRect();
+    const q0=P.qi,v0=fClash.v;const ar=atk.getBoundingClientRect();atk.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:ar.x+ar.width/2,clientY:ar.y+ar.height/2,pointerId:9,pointerType:'touch'}));const top=document.elementFromPoint(ar.x+ar.width/2,ar.y+ar.height/2);return{on:!!fClash,midY:(ban.top+ban.bottom)/2/innerHeight,box:getComputedStyle(el.querySelector('.cbox')).opacity,side:atk.classList.contains('clash')&&/밀어내기/.test(atk.textContent)&&!el.querySelector('.cbtn'),
+      nm:el.querySelector('.cnm').textContent,qm:el.querySelector('.qm').textContent,qe:el.querySelector('.qe').textContent,spent:q0-P.qi,z:rdZ,pushed:fClash.v>v0,top:!!(top&&top.closest('#t_atk'))}});
+  ok(`문구 세로 위치 ${r.midY.toFixed(2)}, 게이지 ${r.box}, 공격 단추가 밀어내기로 ${r.side} 밀림 ${r.pushed}, '${r.nm}' ${r.qm} ${r.qe}, 누를 때 든 내공 ${r.spent}, 줌 ${r.z.toFixed(2)}`,
+    r.on&&r.midY>.3&&r.midY<.6&&+r.box>.9&&r.side&&r.pushed&&/나/.test(r.nm)&&/내공/.test(r.qm)&&/내공/.test(r.qe)&&r.spent>0&&r.z>1.5);
   await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash2.png')});
   await p.evaluate(()=>{for(let i=0;i<30&&fClash;i++)clashTap()});await p.waitForTimeout(250);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash3.png')});
-  await p.waitForTimeout(1200);r=await p.evaluate(()=>({hid:document.getElementById('clash').hidden,on:!!fClash}));ok(`끝나면 창이 닫힘 ${r.hid}`,r.hid&&!r.on);
-  // hurtP 회피 굴림(최대 50%)이 패배 피해를 비켜 가면 잃은 생명이 0이 되어 가끔 실패했다 → 이 단계만 굴림을 고정
-  r=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.99;const e=mobs[0];e.stun=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);Math.random=R;return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
+  await p.waitForTimeout(1200);r=await p.evaluate(()=>({hid:document.getElementById('clash').hidden,on:!!fClash,lbl:document.querySelector('#t_atk span').textContent,cl:document.getElementById('t_atk').classList.contains('clash')}));ok(`끝나면 창이 닫히고 공격 단추가 돌아옴 ${r.hid} '${r.lbl}'`,r.hid&&!r.on&&r.lbl==='공격'&&!r.cl);
+  r=await p.evaluate(()=>{const e=CE;e.stun=0;e.hp=e.maxHp;P.inv=0;fClashCd=0;clashStart(e);const h0=P.hp,rnd=Math.random;Math.random=()=>.99;   // 회피(hurtP 최소 3%)로 빗나가지 않게
+    try{for(let i=0;i<200&&fClash;i++)fightK(.05)}finally{Math.random=rnd}return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
   ok(`가만히 있으면 밀린다: 잃은 생명 ${r.lost} ${JSON.stringify(r)}`,!r.on&&r.lost>0);
   ok('오류 없음 '+errs.slice(0,3).join(' | '),errs.length===0);
   await b.close();
