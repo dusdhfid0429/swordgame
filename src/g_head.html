@@ -223,7 +223,7 @@ body.clash-on #vsline,body.clash-on #callout,body.clash-on #sban,body.clash-on #
 #clash .cres b{font:900 min(13vw,64px)/1 var(--display);letter-spacing:.1em;color:#fff4d6;text-shadow:0 0 20px #ffb84a,0 3px 0 #2a1406}#clash.lose .cres b{color:#ffd0c4;text-shadow:0 0 20px #e0472f,0 3px 0 #2a0606}
 @keyframes clBan{0%{opacity:0;transform:scale(1.8)}20%{opacity:1;transform:scale(1)}70%{opacity:1;transform:scale(1.04)}100%{opacity:0;transform:scale(1.1) translateY(-10%)}}
 @keyframes clBox{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}@keyframes clOut{to{opacity:0;transform:translate(-50%,-14px)}}
-/* v227: 대결 동안 공격 단추가 '밀어내기'로 빛난다 (다른 단추는 가린다. 누르는 것은 화면 전체 #clash가 받는다) */
+/* v228: 대결 동안 공격 단추가 '밀어내기'로 빛난다 (다른 단추는 가린다. 누르는 것은 화면 전체 #clash가 받는다) */
 body.clash-on #tbtns .tb:not(#t_atk){visibility:hidden}body.clash-on #t_atk{display:grid!important}
 #t_atk.clash{pointer-events:auto;overflow:visible;border-color:#fff0b8;color:#2a1606;background:radial-gradient(circle at 40% 35%,#fffbe6,#ffd36a 45%,#c07a1a 80%,#3a2208);box-shadow:0 0 0 3px rgba(255,236,170,.85),0 0 22px 6px rgba(255,200,90,.85),0 0 48px 14px rgba(255,170,60,.45);animation:clAtk .6s ease-in-out infinite;text-shadow:0 0 6px #fff}
 #t_atk.clash span{font-weight:900;letter-spacing:-.04em;font-size:18px}#t_atk.clash .cd{display:none}

@@ -104,7 +104,7 @@ function clashPaint(){const el=document.getElementById('clash');if(!el||!fClash)
   const t=el.querySelector('.ct');if(t)t.textContent=`${Math.max(0,c.t).toFixed(1)}초`;
   const qm=el.querySelector('.qm'),qe=el.querySelector('.qe');if(qm)qm.textContent=`내공 ${Math.round(P.qi||0)} / ${Math.round(P.maxQi||0)}`;if(qe)qe.textContent=`내공 ${Math.round(c.eq)} / ${c.eq0}`;
   el.classList.toggle('dry',(P.qi||0)<Math.max(1,(P.maxQi||0)*FT.clash.tapQi))}
-// v227 (동훈님 2026-11-02 "밀어내기 버튼을 공격버튼으로 대체"): 대결 동안 공격 단추 글자가 '밀어내기'로 바뀌고 빛난다. 누르면 민다 (공격·초식 고르기는 막음)
+// v228 (동훈님 2026-11-02 "밀어내기 버튼을 공격버튼으로 대체"): 대결 동안 공격 단추 글자가 '밀어내기'로 바뀌고 빛난다. 누르면 민다 (공격·초식 고르기는 막음)
 function clashAtk(on){const b=document.getElementById('t_atk');if(!b)return;const sp=b.querySelector('span');if(sp){if(on){if(b.dataset.lbl==null)b.dataset.lbl=sp.textContent;sp.textContent='밀어내기'}else if(b.dataset.lbl!=null){sp.textContent=b.dataset.lbl;delete b.dataset.lbl}}
   b.classList.toggle('clash',!!on);if(!on)b.classList.remove('clhit');
   if(!b._clash){b._clash=1;b.addEventListener('pointerdown',ev=>{if(!fClash)return;ev.preventDefault();ev.stopImmediatePropagation();clashTap()},true);

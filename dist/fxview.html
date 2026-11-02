@@ -223,7 +223,7 @@ body.clash-on #vsline,body.clash-on #callout,body.clash-on #sban,body.clash-on #
 #clash .cres b{font:900 min(13vw,64px)/1 var(--display);letter-spacing:.1em;color:#fff4d6;text-shadow:0 0 20px #ffb84a,0 3px 0 #2a1406}#clash.lose .cres b{color:#ffd0c4;text-shadow:0 0 20px #e0472f,0 3px 0 #2a0606}
 @keyframes clBan{0%{opacity:0;transform:scale(1.8)}20%{opacity:1;transform:scale(1)}70%{opacity:1;transform:scale(1.04)}100%{opacity:0;transform:scale(1.1) translateY(-10%)}}
 @keyframes clBox{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}@keyframes clOut{to{opacity:0;transform:translate(-50%,-14px)}}
-/* v227: 대결 동안 공격 단추가 '밀어내기'로 빛난다 (다른 단추는 가린다. 누르는 것은 화면 전체 #clash가 받는다) */
+/* v228: 대결 동안 공격 단추가 '밀어내기'로 빛난다 (다른 단추는 가린다. 누르는 것은 화면 전체 #clash가 받는다) */
 body.clash-on #tbtns .tb:not(#t_atk){visibility:hidden}body.clash-on #t_atk{display:grid!important}
 #t_atk.clash{pointer-events:auto;overflow:visible;border-color:#fff0b8;color:#2a1606;background:radial-gradient(circle at 40% 35%,#fffbe6,#ffd36a 45%,#c07a1a 80%,#3a2208);box-shadow:0 0 0 3px rgba(255,236,170,.85),0 0 22px 6px rgba(255,200,90,.85),0 0 48px 14px rgba(255,170,60,.45);animation:clAtk .6s ease-in-out infinite;text-shadow:0 0 6px #fff}
 #t_atk.clash span{font-weight:900;letter-spacing:-.04em;font-size:18px}#t_atk.clash .cd{display:none}
@@ -10237,7 +10237,7 @@ function clashPaint(){const el=document.getElementById('clash');if(!el||!fClash)
   const t=el.querySelector('.ct');if(t)t.textContent=`${Math.max(0,c.t).toFixed(1)}초`;
   const qm=el.querySelector('.qm'),qe=el.querySelector('.qe');if(qm)qm.textContent=`내공 ${Math.round(P.qi||0)} / ${Math.round(P.maxQi||0)}`;if(qe)qe.textContent=`내공 ${Math.round(c.eq)} / ${c.eq0}`;
   el.classList.toggle('dry',(P.qi||0)<Math.max(1,(P.maxQi||0)*FT.clash.tapQi))}
-// v227 (동훈님 2026-11-02 "밀어내기 버튼을 공격버튼으로 대체"): 대결 동안 공격 단추 글자가 '밀어내기'로 바뀌고 빛난다. 누르면 민다 (공격·초식 고르기는 막음)
+// v228 (동훈님 2026-11-02 "밀어내기 버튼을 공격버튼으로 대체"): 대결 동안 공격 단추 글자가 '밀어내기'로 바뀌고 빛난다. 누르면 민다 (공격·초식 고르기는 막음)
 function clashAtk(on){const b=document.getElementById('t_atk');if(!b)return;const sp=b.querySelector('span');if(sp){if(on){if(b.dataset.lbl==null)b.dataset.lbl=sp.textContent;sp.textContent='밀어내기'}else if(b.dataset.lbl!=null){sp.textContent=b.dataset.lbl;delete b.dataset.lbl}}
   b.classList.toggle('clash',!!on);if(!on)b.classList.remove('clhit');
   if(!b._clash){b._clash=1;b.addEventListener('pointerdown',ev=>{if(!fClash)return;ev.preventDefault();ev.stopImmediatePropagation();clashTap()},true);
