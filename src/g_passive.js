@@ -53,9 +53,12 @@ function pasRow(p,btn){const s=P.pas&&P.pas[p.id],m=s?s.p:0;
 function pasArtsHtml(){
   const mine=Object.keys(P.pas||{}).map(id=>PAS[id]).filter(Boolean).sort((a,b)=>PT_KEYS.indexOf(a.type)-PT_KEYS.indexOf(b.type)||a.tier-b.tier);
   const sum=PT_KEYS.filter(k=>pv(k)>0).map(k=>PTYPE[k].f(pv(k))).join(' · ');
-  return `<div class="card"><h4>패시브 무공 <small class="dim">늘 켜져 있다 · 같은 종류는 가장 센 것 하나</small></h4>
-    ${mine.length?`<p>${sum}</p><div class="list">${mine.map(p=>pasRow(p)).join('')}</div>`:'<p class="note">익힌 패시브 무공이 없다. 공용 패시브는 개봉 잡화점에서 비급을 사서 익히고, 문파 패시브는 문파에서 직위와 공적으로 익힌다.</p>'}
-    <p class="note">숙련은 적을 쓰러뜨리거나 운기조식할 때 오른다. 문파 패시브는 같은 종류의 하위 무공을 대성(숙련 50)해야 익힐 수 있다.</p></div>`}
+  return `<div class="card"><h4>패시브 무공 <small class="dim">늘 켜짐 · 종류마다 가장 센 것</small></h4>
+    ${mine.length?`<p>${sum}</p><div class="list">${mine.map(p=>pasRow(p)).join('')}</div>`:'<p class="note">아직 없다.</p>'}
+    ${fold('pas',`${chip('숙련: 처치·운기조식')}${chip('문파 것은 하위 대성(50)')}`,briefList([
+      ['얻는 곳','공용은 개봉 잡화점 비급, 문파 것은 문파에서 직위·공적으로.'],
+      ['숙련','적을 쓰러뜨리거나 운기조식할 때 오른다.'],
+      ['문파 패시브','같은 종류 하위 무공을 대성(숙련 50)해야 익힌다.']]))}</div>`}
 function pasSectHtml(s){
   const list=pasOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 패시브 <small class="dim">직위가 오르면 더 익힐 수 있다</small></h4><div class="list">${list.map(p=>{const no=pasBlock(p);

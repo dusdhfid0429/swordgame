@@ -182,6 +182,10 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 /* v227: .it span{display:block} 같은 규칙이 용어·글 묶음까지 덩어리로 만들어 낱말마다 줄이 바뀌던 문제 */
 .tw{display:inline!important;font:inherit!important;color:inherit!important}.term[data-term]{display:inline!important;font:inherit!important;color:#f0d48a!important;border-bottom:1px dotted #c9a24e;cursor:help}.term:focus-visible{outline:1px solid var(--exp)}
 .gtip{position:fixed;z-index:80;background:#14100bf5;border:1px solid var(--exp);border-radius:8px;padding:8px 12px;box-shadow:0 6px 24px #000c;font:13px/1.5 var(--body);color:var(--paper)}.gtip b{font:15px var(--display);color:#ffd98a}.gtip small{color:var(--paper-dim);font-size:11px}.gtip p{margin:3px 0 0;color:#e8d9a8}
+.chip{display:inline-block;margin:0 4px 3px 0;padding:1px 7px;border:1px solid #5a4a2c;border-radius:10px;background:#1c160ecc;font-size:11.5px;line-height:1.5;color:var(--paper);white-space:nowrap}.chip.good{border-color:#4f7a3c;color:#bfe3a5}.chip.bad{border-color:#7a3c3c;color:#e8b0a5}
+details.brief{margin:4px 0 0;font-size:12px;color:var(--paper-dim)}details.brief>summary{list-style:none;cursor:pointer;display:flex;align-items:flex-start;gap:6px}details.brief>summary::-webkit-details-marker{display:none}details.brief .bsum{flex:1;min-width:0}details.brief .bmore{flex:none;font-style:normal;font-size:11px;color:#c9a24a;padding-top:2px}details.brief .bmore::after{content:' ▾'}details.brief[open] .bmore{font-size:0}details.brief[open] .bmore::after{content:'접기 ▴';font-size:11px}
+details.brief .bbody{margin-top:4px;padding:6px 8px;border-left:2px solid #5a4a2c;background:#0e0b07aa}details.brief .bbody .note{margin:0 0 3px}.blist{margin:0;padding:0;list-style:none}.blist li{margin:0 0 3px;line-height:1.45}
+p.note.clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;cursor:pointer;border-left:2px solid #5a4a2c;padding-left:6px}p.note.clamp.open{display:block;-webkit-line-clamp:unset}
 .todo{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:8px 10px;border:1px solid #c9a24a;border-radius:8px;background:linear-gradient(90deg,#3a2a0ccc,#1a130acc);font-size:14px;line-height:1.35}.todo>b{color:#ffd36a}.todo>span{flex:1}.todo .btn{flex:none}
 /* v224 대결 전 한마디 · 마당 사건 · 은원 장부 (g_scene.js) */
 #vsline{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:min(92vw,520px);pointer-events:none;display:none;z-index:39;flex-direction:column;gap:6px}#vsline.on{display:flex;animation:vsIn var(--vd,2.8s) ease-out forwards}
@@ -994,7 +998,8 @@ function gyLearn(id){const a=ARTS[id];
   return a}
 // 무공 창 맨 아래 한 줄: 강호에 전하는 기연 무공 중 몇 가지를 만났나 (여러 생에 걸쳐)
 function gyNote(){const seen=G.gyLog||[];
-  return `<p class="note">기연 무공 ${seen.length}/${Object.keys(GY_ARTS).length} · ${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}. 소문을 따라 찾는 기연동굴에서 비급으로 얻으며, 한 생에 ${GY_MAX}가지까지 익힌다.</p>`}
+  const all=Object.keys(GY_ARTS).length;
+  return fold('gy',`<b class="gold">기연 무공</b> ${chip(seen.length+'/'+all)}${chip('한 생 '+GY_MAX+'개')}`,`<p class="note">소문을 따라 기연동굴을 찾으면 비급이 있다.</p><p class="note">${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}</p>`)}
 
 // ================= state =================
 const TW=64,TH=32,MID=20;
@@ -1309,10 +1314,10 @@ function pickUp(d){
   if(P.bag.length>=24){if(!d.full){log('행낭이 가득 찼습니다.','info');d.full=1}return false}
   P.bag.push(it.item);log(`${itemLabel(it.item)}을(를) 얻었습니다.`,it.item.slot==='book'?'xp':'sys');return true;
 }
-function hurtP(dm,src){
+function hurtP(dm,src,sure){   // sure: 피할 수 없는 피해 (내공 대결에 밀림 등)
   if(P.inv>0||P.hp<=0)return;
   const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
-  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
+  if(!sure&&Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
@@ -2489,7 +2494,7 @@ function pArts(){
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
-  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다 · 칸이 차면 '잊기'로 비운다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
+  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} · 오성 ${P.wis}</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${wtabs('arts',[['무공',`${list}
     ${gyNote()}
     ${typeof gsHtml==='function'?gsHtml():''}`],['심법·보법',`${simArtsHtml()}
@@ -2497,7 +2502,12 @@ function pArts(){
     ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>`]])}
-    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇되 필살기는 쓰지 않고(직접 S·필살 버튼), <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
+    ${fold('artsHow',`${chip('연속기 1→2→3')}${chip('필살 '+(TOUCH?'버튼':'S'))}${chip('상극 ×1.3')}${chip(P.mode==='auto'?'자동초식':'수동초식')}`,briefList([
+      ['연속기','1.7초 안에 앞 번호→뒷 번호로 이으면 공력이 쌓인다. 14%·20%·38% → 끝 초식 172%.'],
+      ['필살기',`초식을 다 익히면 ${TOUCH?'필살 버튼':'S(키패드 5)'}. 연속기 끝에 쓰면 쌓인 공력이 실린다.`],
+      ['속성 상극','운용 심법을 따른다. 화→금→목→토→수→화, 양→음→뇌→양. 이기면 1.3배.'],
+      ['자동초식','누른 적에게 익힌 초식을 차례로 잇는다. 필살기는 직접.'],
+      ['수동초식','누르면 평타만 친다.']]))}`;
 }
 let shopMode=null;
 function pBag(){
@@ -5900,9 +5910,12 @@ function pasRow(p,btn){const s=P.pas&&P.pas[p.id],m=s?s.p:0;
 function pasArtsHtml(){
   const mine=Object.keys(P.pas||{}).map(id=>PAS[id]).filter(Boolean).sort((a,b)=>PT_KEYS.indexOf(a.type)-PT_KEYS.indexOf(b.type)||a.tier-b.tier);
   const sum=PT_KEYS.filter(k=>pv(k)>0).map(k=>PTYPE[k].f(pv(k))).join(' · ');
-  return `<div class="card"><h4>패시브 무공 <small class="dim">늘 켜져 있다 · 같은 종류는 가장 센 것 하나</small></h4>
-    ${mine.length?`<p>${sum}</p><div class="list">${mine.map(p=>pasRow(p)).join('')}</div>`:'<p class="note">익힌 패시브 무공이 없다. 공용 패시브는 개봉 잡화점에서 비급을 사서 익히고, 문파 패시브는 문파에서 직위와 공적으로 익힌다.</p>'}
-    <p class="note">숙련은 적을 쓰러뜨리거나 운기조식할 때 오른다. 문파 패시브는 같은 종류의 하위 무공을 대성(숙련 50)해야 익힐 수 있다.</p></div>`}
+  return `<div class="card"><h4>패시브 무공 <small class="dim">늘 켜짐 · 종류마다 가장 센 것</small></h4>
+    ${mine.length?`<p>${sum}</p><div class="list">${mine.map(p=>pasRow(p)).join('')}</div>`:'<p class="note">아직 없다.</p>'}
+    ${fold('pas',`${chip('숙련: 처치·운기조식')}${chip('문파 것은 하위 대성(50)')}`,briefList([
+      ['얻는 곳','공용은 개봉 잡화점 비급, 문파 것은 문파에서 직위·공적으로.'],
+      ['숙련','적을 쓰러뜨리거나 운기조식할 때 오른다.'],
+      ['문파 패시브','같은 종류 하위 무공을 대성(숙련 50)해야 익힌다.']]))}</div>`}
 function pasSectHtml(s){
   const list=pasOf(s.id),member=P.sect===s.id;
   return `<h4 style="margin:0">문파 패시브 <small class="dim">직위가 오르면 더 익힐 수 있다</small></h4><div class="list">${list.map(p=>{const no=pasBlock(p);
@@ -6015,8 +6028,10 @@ hook('sectAct',c=>{const{a,x}=c;
 // 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
 const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
-  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
-    <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다. 마공과 정파 계열(불가·도가·정종) 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다.</p></div>`}
+  return `<div class="card"><h4>심법 <small class="dim">수련 내공·특색을 정함</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
+    ${fold('sim',`${chip('바꿔도 내공 유지','good')}${chip('마공↔정파 산공','bad')}`,briefList([
+      ['얻는 곳','문파 심법은 문파 창(공적), 공용 심법은 개봉 잡화점.'],
+      ['상극','마공과 정파(불가·도가·정종)는 한 몸에 못 둔다. 상극에 입문하면 산공.']]))}</div>`}
 function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${elN(x.el)} · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}
 
 // ================= 무공 이펙트 색·연출 = 심법 (v215) =================
@@ -8455,8 +8470,10 @@ function bobRow(id,btn){const b=BOBS[id],on=P.bcur===id,lm=1+bobTv('len',b)/100,
   return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${b.sect?SECTS[b.sect].n+' · ':''}${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${r1(BG.len[b.g]*lm)}칸 미끄러짐 · 적 투과 · 무조건 발동`:`둘레 ${r1(BG.rad[b.g]*lm)}칸을 살핌 · 실패 ${bobFail(b)}%`} · 내공 ${bobQi(b)}${b.tr&&b.tr.length?`<br>${bobTraitHtml(b)} ${bobTraitTxt(b)}`:''}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function bobArtsHtml(){bobInit();const mine=Object.keys(BOBS).filter(id=>P.bob[id]);
   return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 버튼':'Shift 또는 W'}</small></h4><div class="list">${mine.map(id=>bobRow(id,P.bcur===id?'':B('bsel:'+id,'쓰기'))).join('')}</div>
-    <p class="note">직선 보법은 조이스틱(또는 바라보는) 방향으로 곧게 빠지고, 간파 보법은 상대 등 뒤나 덜 둘러싸인 자리를 찾아 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타. 경공은 멀리·높이 뛰는 이동기로 따로 쓴다.</p>
-    <p class="note">하승·중승 비급은 개봉 잡화점에서 산다. 문파마다 고유한 보법이 있어 가입하면 중승 단계를 받고, 상승·절정 단계는 본산에서 직위와 공적으로 올린다.</p></div>`}
+    ${fold('bob',`${chip('직선: 곧게 빠짐')}${chip('간파: 등 뒤로')}${chip('등 뒤 → 치명','good')}`,briefList([
+      ['직선','조이스틱(또는 바라보는) 방향으로 곧게 빠진다.'],
+      ['간파','적 등 뒤나 덜 둘러싸인 자리로 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타.'],
+      ['얻는 곳','하승·중승은 개봉 잡화점. 문파 보법은 가입하면 중승, 상승·절정은 본산에서 직위·공적으로.']]))}</div>`}
 function bobSectHtml(s){if(P.sect!==s.id)return'';bobInit();const top=smTop(s.id);if(!top)return'';
   return `<h4 style="margin:0">${s.n} 보법 <small class="dim">상승은 ${rankName(s.id,BRANK[2])}${top>=3?`, 절정은 ${rankName(s.id,BRANK[3])}`:''} 이상 · 이 문파만의 보법</small></h4><div class="list">${smSectRows('b',s)}</div>`}
 
@@ -8507,8 +8524,11 @@ function ggUsed(st,dur){const g=ggOf();P.ggc={n:st,until:time+dur+.5+ggTv('chain
 function ggRow(id,btn){const g=GGS[id],on=P.gkcur===id,m=ggMast(id),open=[];for(let s=2;s<=GG_MAX[g.g];s++)open.push(`${s}단 ${m>=GG_OPEN[s-1]?'<span class="good">열림</span>':`숙련 ${GG_OPEN[s-1]}`}`);
   return `<div class="it"><div>${g.n} <small class="${g.g>=2?'good':'dim'}">${g.sect?SECTS[g.sect].n+' · ':''}${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${g.d} · 숙련 ${Math.floor(m)}${open.length?' · '+open.join(' · '):''}${g.tr&&g.tr.length?`<br>${ggTraitHtml(g)} ${ggTraitTxt(g)}`:''}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function ggArtsHtml(){ggInit();const mine=Object.keys(GGS).filter(id=>P.gk[id]);
-  return `<div class="card"><h4>경공 <small class="dim">${TOUCH?'경공 버튼':'Space'} · 이어 누르면 ${ggMaxStage()}단까지</small></h4><div class="list">${mine.map(id=>ggRow(id,P.gkcur===id?'':B('gsel:'+id,'쓰기'))).join('')}</div>
-    <p class="note">1단은 도약, 2단은 공중에서 한 번 더 띄워 1.4배, 3단은 능공비행으로 2배 멀리 날고 내내 몸이 흐려진다. 등급이 최고 단계를 정하고, 뛸수록 오르는 숙련으로 2단(30)·3단(70)이 열린다. 경공마다 특징이 달라 쓰는 경공의 것만 적용된다. 하승·중승 비급은 개봉 잡화점. 문파마다 고유한 경공이 있어 가입하면 중승 단계를 받고, 상승·절정 단계는 본산에서 올린다(숙련은 이어진다).</p></div>`}
+  return `<div class="card"><h4>경공 <small class="dim">${TOUCH?'경공 버튼':'Space'} · 연타 ${ggMaxStage()}단</small></h4><div class="list">${mine.map(id=>ggRow(id,P.gkcur===id?'':B('gsel:'+id,'쓰기'))).join('')}</div>
+    ${fold('gg',`${chip('1단 도약')}${chip('2단 ×1.4 · 숙련 30')}${chip('3단 ×2 · 숙련 70')}`,briefList([
+      ['단계','등급이 최고 단계를 정한다. 3단 능공비행은 나는 내내 몸이 흐려진다.'],
+      ['특징','쓰는 경공의 것만 붙는다.'],
+      ['얻는 곳','하승·중승은 개봉 잡화점. 문파 경공은 가입하면 중승, 상승·절정은 본산에서(숙련은 이어짐).']]))}</div>`}
 function ggSectHtml(s){if(P.sect!==s.id)return'';ggInit();const top=smTop(s.id);if(!top)return'';
   return `<h4 style="margin:0">${s.n} 경공 <small class="dim">상승은 ${rankName(s.id,GG_RANK[2])}${top>=3?`, 절정은 ${rankName(s.id,GG_RANK[3])}`:''} 이상 · 이 문파만의 경공</small></h4><div class="list">${smSectRows('g',s)}</div>`}
 
@@ -10101,6 +10121,25 @@ function glossBook(){const ks=GL_KEYS.filter(k=>G.glos&&G.glos[k]).sort();
   return `<div class="card"><h4>강호 용어 <small class="dim">${ks.length}/${GL_KEYS.length} · 창 안의 금빛 점선 글자를 누르면 실린다</small></h4>${ks.length?ks.map(k=>`<p><b class="gold">${esc(k)}</b> <span class="note">${esc(GLOSS.terms[k])}</span></p>`).join(''):'<p class="dim">아직 실린 용어가 없다.</p>'}</div>`}
 hook('npcDlg',c=>{if(c.n&&c.n.id==='lore'&&!c.n.sect&&typeof c.html==='string'&&!c.html.includes('강호 용어'))c.html+=glossBook()});
 
+// v230 창 설명 줄이기 (동훈님 2026-11-02 "이런 설명들이 너무 글이 많아"): 개선 계획 3절.
+// 설명은 한 줄 요약(칩·숫자) + '자세히'로 접은 본문. 펼친 칸은 창을 다시 그려도 열린 채로 남는다(BRIEF_OPEN).
+// 손으로 줄이지 않은 다른 긴 .note는 briefClamp가 두 줄로 자르고, 누르면 다 보인다.
+const BRIEF_OPEN=new Set(),BRIEF_LONG=new Set();
+function chip(t,c){return `<span class="chip${c?' '+c:''}">${t}</span>`}
+function fold(key,sum,body){const o=BRIEF_OPEN.has(key);
+  return `<details class="brief"${o?' open':''} data-bk="${key}"><summary><span class="bsum">${sum}</span><i class="bmore">자세히</i></summary><div class="bbody">${body}</div></details>`}
+// 여러 줄 본문: [['머리','설명'],...] → 한 줄씩
+function briefList(rows){return `<ul class="blist">${rows.filter(Boolean).map(r=>Array.isArray(r)?`<li><b class="gold">${r[0]}</b> ${r[1]}</li>`:`<li>${r}</li>`).join('')}</ul>`}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d||!d.dataset||!d.dataset.bk)return;d.open?BRIEF_OPEN.add(d.dataset.bk):BRIEF_OPEN.delete(d.dataset.bk)},true);
+const BRIEF_MAX=110;   // 이보다 긴 설명 줄은 두 줄로 자른다
+function briefClamp(root){if(!root)return;root.querySelectorAll('p.note').forEach(p=>{
+  if(p.closest('.brief,.todo,#forgetask')||p.querySelector('button,input,select,.btn'))return;
+  const t=p.textContent.trim();if(t.length<=BRIEF_MAX)return;
+  const k=t.slice(0,40);p.classList.add('clamp');p.dataset.ck=k;if(BRIEF_LONG.has(k))p.classList.add('open')})}
+document.addEventListener('click',e=>{const p=e.target&&e.target.closest&&e.target.closest('p.note.clamp');if(!p||e.target.closest('.term'))return;
+  p.classList.toggle('open');p.classList.contains('open')?BRIEF_LONG.add(p.dataset.ck):BRIEF_LONG.delete(p.dataset.ck)});
+hook('panelDrawn',()=>briefClamp($('wbody')));
+
 // ================= 첫 30분: 창 단계별 열기 · 창 첫 줄 '지금 할 일' · 초식 이름 외치기 (v222, 개선 계획 3절 · 동훈님 2026-11-01) =================
 // 아직 쓸 일이 없는 칸은 감추고 처음 쓸 일이 생기면 연다 (OPEN, 한 번 열리면 P.opened에 남는다).
 //  mk 무공 창 '창안 재료' (g_mkmat gsHtml) · mu 인물 창 깨달음·몸의 변화 (g_realmfx realmCardExtra)
@@ -10270,7 +10309,7 @@ function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=docu
   clashAtk(false);const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
   if(!e||e.hp<=0||!P||P.hp<=0)return;shake=Math.max(shake,.45);
   if(win){const d=Math.round(e.maxHp*(e.d.boss?C.boss:C.win));damage(e,d,.6,C.stun,P,true);addText(e.x,e.y-.9,'내력으로 밀어냈다','#ffd36a');P.clashW=(P.clashW||0)+1;slowMo(.4,.4)}
-  else{hurtP(e.atk*C.lose,e);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
+  else{hurtP(e.atk*C.lose,e,true);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
   log(win?`내공 대결에서 ${e.kind}을(를) 밀어냈다.`:`내공 대결에서 ${e.kind}에게 밀렸다.`,win?'xp':'dmg')}
 // ---- 내공 대결 이펙트: 두 사람의 기운이 줄기로 뻗어 가운데서 부딪친다 ----
 function clashBeam(a,b,col,col2,w,ph){const dk=isDark(col);ctx.globalCompositeOperation=dk?'source-over':'lighter';

@@ -105,6 +105,8 @@ hook('sectAct',c=>{const{a,x}=c;
 // 운용할 심법은 무공 창(pArts)의 심법 카드에서 고른다 (사용자 요청 2026-10-12 "심법도 수련창 말고 무공창에서 장착"). 수련 창에는 바꾸기 줄이 없다
 const simRows=()=>'';
 function simArtsHtml(){const mine=simMine(),cur=simCur();
-  return `<div class="card"><h4>심법 <small class="dim">운용 중인 심법이 수련의 내공 증가와 특색을 정한다</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
-    <p class="note">문파 심법은 문파 창에서 공적으로, 공용 심법은 개봉 잡화점에서 익힌다. 쌓인 내공은 심법을 바꿔도 그대로다. 마공과 정파 계열(불가·도가·정종) 심법은 한 몸에 둘 수 없어, 상극 심법에 입문하면 산공한다.</p></div>`}
+  return `<div class="card"><h4>심법 <small class="dim">수련 내공·특색을 정함</small></h4><div class="list">${mine.length?'':'<p class="note">아직 익힌 심법이 없다. 심법이 없으면 내공 수련을 할 수 없다.</p>'}${mine.map(x=>simRowHtml(x,x.id===cur.id?'':!simKnown(x.id)?'<small class="dim">봉인 · 상극 심법을 지녀 운용 못 함</small>':B('simsel:'+x.id,'운용하기'))).join('')}</div>
+    ${fold('sim',`${chip('바꿔도 내공 유지','good')}${chip('마공↔정파 산공','bad')}`,briefList([
+      ['얻는 곳','문파 심법은 문파 창(공적), 공용 심법은 개봉 잡화점.'],
+      ['상극','마공과 정파(불가·도가·정종)는 한 몸에 못 둔다. 상극에 입문하면 산공.']]))}</div>`}
 function simSwitch(id){const x=SIM[id];if(!x||!simKnown(id)||trnBusy)return;P.sim=id;log(`[${x.n}]을(를) 운용합니다. ${x.sc} ${elN(x.el)} · 수련 한 번에 내공 +${simGain()}.${x.tr&&x.tr.length?' 특색: '+simTraitTxt(x):''}`,'sys');if(typeof renderTrain==='function'&&$('trn')&&!$('trn').hidden)renderTrain()}

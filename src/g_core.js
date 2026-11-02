@@ -311,10 +311,10 @@ function pickUp(d){
   if(P.bag.length>=24){if(!d.full){log('행낭이 가득 찼습니다.','info');d.full=1}return false}
   P.bag.push(it.item);log(`${itemLabel(it.item)}을(를) 얻었습니다.`,it.item.slot==='book'?'xp':'sys');return true;
 }
-function hurtP(dm,src){
+function hurtP(dm,src,sure){   // sure: 피할 수 없는 피해 (내공 대결에 밀림 등)
   if(P.inv>0||P.hp<=0)return;
   const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
-  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
+  if(!sure&&Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
