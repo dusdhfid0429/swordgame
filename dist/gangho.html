@@ -5941,9 +5941,14 @@ function artEl(a){if(artForeign(a))return simSectEl(a.sect);return pEl()}
 // 내 쪽은 운용 중 심법의 문파 → 그 심법이 문파 것이 아니면(타고난·잡화점·무관) 내 문파 → 둘 다 없으면 예전처럼 계열(SCHOOL_FX) 색
 const SECT_FX=GD.SECT_FX;
 function pFxSect(){if(!P)return null;const s=simCur(),sid=s.sect||(P.sect&&P.sect!=='own'?P.sect:null);return sid&&SECT_FX[sid]?sid:null}
-function pFxPair(){const sid=pFxSect();if(sid)return SECT_FX[sid];return schoolPair(pSchool(),P&&P.side)}
-function fxCol(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][0]:SCHOOL_FX[simSchoolOf(a.sect)]||SCHOOL_FX['정종'];
-  const sid=pFxSect();return sid?SECT_FX[sid][0]:SCHOOL_FX[pSchool()]||SCHOOL_FX['정종']}
+// v229 (사용자 2026-11-02 "소양진기가 양기인데 이펙트가 왜 흰색이야?"): 문파 없는 심법(무관·잡화점·타고난)은 계열 색(정종=흰빛) 대신
+// 그 심법 속성 색(EL[el].c)을 주색으로, 같은 빛깔의 밝은 색을 보조색으로 쓴다 (계열 짝 파랑이 심지·잔광을 물들이지 않게).
+// 마기처럼 어두운 속성은 계열 짝 보조색. 문파 심법은 여전히 문파 색(SECT_FX)
+const elFxC=(el,sc)=>EL[el]&&EL[el].c||SCHOOL_FX[sc]||SCHOOL_FX['정종'];
+function elFxPair(el,sc,side){const c=elFxC(el,sc);return[c,isDark(c)?schoolPair(sc,side)[1]:mixCol(c,'255,245,215',.45)]}
+function pFxPair(){const sid=pFxSect();if(sid)return SECT_FX[sid];return elFxPair(pEl(),pSchool(),P&&P.side)}
+function fxCol(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][0]:elFxC(simSectEl(a.sect),simSchoolOf(a.sect));
+  const sid=pFxSect();return sid?SECT_FX[sid][0]:elFxC(pEl(),pSchool())}
 // v216 (사용자 2026-10-31 "혈기 독기 뇌기 등"): 속성은 '○기'로 부른다 (화기·수기…·마기·독기·혈기·풍기·빙기). 자료의 열쇠는 한 글자 그대로
 const elN=e=>e?e+'기':'';
 const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${elN(x.el)}</b> ${EL[x.el]?EL[x.el].fx:''}`;
@@ -6046,7 +6051,7 @@ const schoolPair=(sc,side)=>sc==='마공'?['28,6,40','110,20,150']:sc==='사공'
 // 이 무공을 펼치는 사람이 다른 문파 무인인가 (내가 모르는 남의 문파 무공 = 그 문파 심법을 따른다)
 const artForeign=a=>!!(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))));
 // 보조색: 펼치는 사람 심법의 보조색
-function simC2(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][1]:schoolPair(simSchoolOf(a.sect))[1];return pFxPair()[1]}
+function simC2(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][1]:elFxPair(simSectEl(a.sect),simSchoolOf(a.sect))[1];return pFxPair()[1]}
 // 심지 색: 밝은 이펙트는 흰 심지를 심법 보조색 쪽으로, 마기는 보랏빛 테두리에 보조색을
 const hiOf=(c,c2)=>isDark(c)?(c2?mixCol(HI_DARK,c2,FX_MIX.darkRim,1):HI_DARK):(c2?mixCol('255,255,255',c2,FX_MIX.hi):'255,255,255');
 // ---- 적의 심법 ----
@@ -6055,7 +6060,7 @@ function foeSim(e){if(!e||e===P||!e.d||e.d.beast||e.d.villager||e.d.passive)retu
   if(sid){const l=simOf(sid),s=l[l.length-1];return{sect:sid,sc:simSchoolOf(sid),el:e.el||(s&&s.el)||'금',n:s&&s.n}}
   const m=GD.MOB_ART[e.kind],side=m?m[0]:(e.side||(a&&a.side)||'사'),el=e.el||SIM_BASE_EL[side]||'금';
   return{sect:null,side,sc:el==='마'?'마공':side==='정'?'정종':'사공',el}}
-const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:[SCHOOL_FX[s.sc]||SCHOOL_FX['정종'],schoolPair(s.sc,s.side)[1]];
+const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:elFxPair(s.el,s.sc,s.side);
 // 적이 펼치는 이펙트의 X: 색·보조색·속성이 모두 그 적의 심법 것. 정예·두목은 잔광이 붙는다
 function foeX(e){const s=foeSim(e);if(!s)return null;const[c,c2]=foePair(s),a=ARTS[e.art];
   const boss=!!e.d.boss;   // v216: 두목만 플레이어와 같은 이펙트, 나머지 적은 GD.FOE_FX 만큼 간결하게 (lite)
