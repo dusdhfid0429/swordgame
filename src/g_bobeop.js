@@ -96,7 +96,9 @@ function bobRow(id,btn){const b=BOBS[id],on=P.bcur===id,lm=1+bobTv('len',b)/100,
   return `<div class="it"><div>${b.n} <small class="${b.g>=2?'good':'dim'}">${b.sect?SECTS[b.sect].n+' · ':''}${BGRADE[b.g]} · ${b.t==='line'?'직선':'간파'}</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${b.d} · ${b.t==='line'?`${r1(BG.len[b.g]*lm)}칸 미끄러짐 · 적 투과 · 무조건 발동`:`둘레 ${r1(BG.rad[b.g]*lm)}칸을 살핌 · 실패 ${bobFail(b)}%`} · 내공 ${bobQi(b)}${b.tr&&b.tr.length?`<br>${bobTraitHtml(b)} ${bobTraitTxt(b)}`:''}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function bobArtsHtml(){bobInit();const mine=Object.keys(BOBS).filter(id=>P.bob[id]);
   return `<div class="card"><h4>보법 <small class="dim">회피기 · ${TOUCH?'보법 버튼':'Shift 또는 W'}</small></h4><div class="list">${mine.map(id=>bobRow(id,P.bcur===id?'':B('bsel:'+id,'쓰기'))).join('')}</div>
-    <p class="note">직선 보법은 조이스틱(또는 바라보는) 방향으로 곧게 빠지고, 간파 보법은 상대 등 뒤나 덜 둘러싸인 자리를 찾아 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타. 경공은 멀리·높이 뛰는 이동기로 따로 쓴다.</p>
-    <p class="note">하승·중승 비급은 개봉 잡화점에서 산다. 문파마다 고유한 보법이 있어 가입하면 중승 단계를 받고, 상승·절정 단계는 본산에서 직위와 공적으로 올린다.</p></div>`}
+    ${fold('bob',`${chip('직선: 곧게 빠짐')}${chip('간파: 등 뒤로')}${chip('등 뒤 → 치명','good')}`,briefList([
+      ['직선','조이스틱(또는 바라보는) 방향으로 곧게 빠진다.'],
+      ['간파','적 등 뒤나 덜 둘러싸인 자리로 옮긴다. 등 뒤를 잡으면 다음 일격이 치명타.'],
+      ['얻는 곳','하승·중승은 개봉 잡화점. 문파 보법은 가입하면 중승, 상승·절정은 본산에서 직위·공적으로.']]))}</div>`}
 function bobSectHtml(s){if(P.sect!==s.id)return'';bobInit();const top=smTop(s.id);if(!top)return'';
   return `<h4 style="margin:0">${s.n} 보법 <small class="dim">상승은 ${rankName(s.id,BRANK[2])}${top>=3?`, 절정은 ${rankName(s.id,BRANK[3])}`:''} 이상 · 이 문파만의 보법</small></h4><div class="list">${smSectRows('b',s)}</div>`}

@@ -40,4 +40,5 @@ function gyLearn(id){const a=ARTS[id];
   return a}
 // 무공 창 맨 아래 한 줄: 강호에 전하는 기연 무공 중 몇 가지를 만났나 (여러 생에 걸쳐)
 function gyNote(){const seen=G.gyLog||[];
-  return `<p class="note">기연 무공 ${seen.length}/${Object.keys(GY_ARTS).length} · ${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}. 소문을 따라 찾는 기연동굴에서 비급으로 얻으며, 한 생에 ${GY_MAX}가지까지 익힌다.</p>`}
+  const all=Object.keys(GY_ARTS).length;
+  return fold('gy',`<b class="gold">기연 무공</b> ${chip(seen.length+'/'+all)}${chip('한 생 '+GY_MAX+'개')}`,`<p class="note">소문을 따라 기연동굴을 찾으면 비급이 있다.</p><p class="note">${Object.entries(GY_ARTS).map(([id,a])=>seen.includes(id)?a.n:'???').join(' · ')}</p>`)}

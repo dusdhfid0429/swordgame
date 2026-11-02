@@ -45,7 +45,10 @@ function ggUsed(st,dur){const g=ggOf();P.ggc={n:st,until:time+dur+.5+ggTv('chain
 function ggRow(id,btn){const g=GGS[id],on=P.gkcur===id,m=ggMast(id),open=[];for(let s=2;s<=GG_MAX[g.g];s++)open.push(`${s}단 ${m>=GG_OPEN[s-1]?'<span class="good">열림</span>':`숙련 ${GG_OPEN[s-1]}`}`);
   return `<div class="it"><div>${g.n} <small class="${g.g>=2?'good':'dim'}">${g.sect?SECTS[g.sect].n+' · ':''}${BGRADE[g.g]} · ${GG_MAX[g.g]}단까지</small>${on?' <small class="gold">쓰는 중</small>':''}<span>${g.d} · 숙련 ${Math.floor(m)}${open.length?' · '+open.join(' · '):''}${g.tr&&g.tr.length?`<br>${ggTraitHtml(g)} ${ggTraitTxt(g)}`:''}</span></div>${btn?`<div class="ib">${btn}</div>`:''}</div>`}
 function ggArtsHtml(){ggInit();const mine=Object.keys(GGS).filter(id=>P.gk[id]);
-  return `<div class="card"><h4>경공 <small class="dim">${TOUCH?'경공 버튼':'Space'} · 이어 누르면 ${ggMaxStage()}단까지</small></h4><div class="list">${mine.map(id=>ggRow(id,P.gkcur===id?'':B('gsel:'+id,'쓰기'))).join('')}</div>
-    <p class="note">1단은 도약, 2단은 공중에서 한 번 더 띄워 1.4배, 3단은 능공비행으로 2배 멀리 날고 내내 몸이 흐려진다. 등급이 최고 단계를 정하고, 뛸수록 오르는 숙련으로 2단(30)·3단(70)이 열린다. 경공마다 특징이 달라 쓰는 경공의 것만 적용된다. 하승·중승 비급은 개봉 잡화점. 문파마다 고유한 경공이 있어 가입하면 중승 단계를 받고, 상승·절정 단계는 본산에서 올린다(숙련은 이어진다).</p></div>`}
+  return `<div class="card"><h4>경공 <small class="dim">${TOUCH?'경공 버튼':'Space'} · 연타 ${ggMaxStage()}단</small></h4><div class="list">${mine.map(id=>ggRow(id,P.gkcur===id?'':B('gsel:'+id,'쓰기'))).join('')}</div>
+    ${fold('gg',`${chip('1단 도약')}${chip('2단 ×1.4 · 숙련 30')}${chip('3단 ×2 · 숙련 70')}`,briefList([
+      ['단계','등급이 최고 단계를 정한다. 3단 능공비행은 나는 내내 몸이 흐려진다.'],
+      ['특징','쓰는 경공의 것만 붙는다.'],
+      ['얻는 곳','하승·중승은 개봉 잡화점. 문파 경공은 가입하면 중승, 상승·절정은 본산에서(숙련은 이어짐).']]))}</div>`}
 function ggSectHtml(s){if(P.sect!==s.id)return'';ggInit();const top=smTop(s.id);if(!top)return'';
   return `<h4 style="margin:0">${s.n} 경공 <small class="dim">상승은 ${rankName(s.id,GG_RANK[2])}${top>=3?`, 절정은 ${rankName(s.id,GG_RANK[3])}`:''} 이상 · 이 문파만의 경공</small></h4><div class="list">${smSectRows('g',s)}</div>`}

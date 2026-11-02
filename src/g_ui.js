@@ -167,7 +167,7 @@ function pArts(){
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
-  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} (오성 ${P.wis}) · 초식 비급을 행낭에서 읽어 익힌다 · 칸이 차면 '잊기'로 비운다</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
+  return `<div class="row2"><span class="note">익힌 무공 ${capArts().length}/${artCap()} · 오성 ${P.wis}</span>${B('mode',P.mode==='auto'?'자동초식 → 수동':'수동초식 → 자동')}</div>
     ${wtabs('arts',[['무공',`${list}
     ${gyNote()}
     ${typeof gsHtml==='function'?gsHtml():''}`],['심법·보법',`${simArtsHtml()}
@@ -175,7 +175,12 @@ function pArts(){
     ${bobArtsHtml()}
     ${pasArtsHtml()}
     <div class="card"><h4>특수무공</h4><p>${['암기','독공','점혈'].map(k=>`${k} ${P.sp[k]?'<span class="good">익힘</span>':'<span class="dim">미습득</span>'}`).join(' · ')} · 비도 ${P.mats.비도||0}자루</p></div>`]])}
-    <p class="note"><b class="gold">연속기</b> 초식을 1.7초 안에 순서대로(앞 번호에서 뒷 번호로) 이어 치면 추가 공력이 쌓인다. 예: 14%·20%·38%를 이으면 마지막 초식은 172%로 나간다. <b class="gold">필살기</b> 모든 초식을 익히면 S(키패드 5)로 주변을 친다. 연속기 끝에 쓰면 쌓인 공력이 실린다. <b class="gold">속성 상극</b>은 운용 중인 심법의 속성을 따른다: 화→금→목→토→수→화, 양→음→뇌→양, 이기는 쪽 1.3배. 무공 이펙트 색은 심법 계열(불가·도가·정종·사공·마공·사불)의 것. <b class="gold">자동초식</b>은 클릭한 적에게 익힌 초식을 차례로 잇되 필살기는 쓰지 않고(직접 S·필살 버튼), <b class="gold">수동초식</b>은 클릭이 평타만 친다.</p>`;
+    ${fold('artsHow',`${chip('연속기 1→2→3')}${chip('필살 '+(TOUCH?'버튼':'S'))}${chip('상극 ×1.3')}${chip(P.mode==='auto'?'자동초식':'수동초식')}`,briefList([
+      ['연속기','1.7초 안에 앞 번호→뒷 번호로 이으면 공력이 쌓인다. 14%·20%·38% → 끝 초식 172%.'],
+      ['필살기',`초식을 다 익히면 ${TOUCH?'필살 버튼':'S(키패드 5)'}. 연속기 끝에 쓰면 쌓인 공력이 실린다.`],
+      ['속성 상극','운용 심법을 따른다. 화→금→목→토→수→화, 양→음→뇌→양. 이기면 1.3배.'],
+      ['자동초식','누른 적에게 익힌 초식을 차례로 잇는다. 필살기는 직접.'],
+      ['수동초식','누르면 평타만 친다.']]))}`;
 }
 let shopMode=null;
 function pBag(){
