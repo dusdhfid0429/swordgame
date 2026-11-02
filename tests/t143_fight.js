@@ -53,7 +53,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash2.png')});
   await p.evaluate(()=>{for(let i=0;i<30&&fClash;i++)clashTap()});await p.waitForTimeout(250);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash3.png')});
   await p.waitForTimeout(1200);r=await p.evaluate(()=>({hid:document.getElementById('clash').hidden,on:!!fClash,lbl:document.querySelector('#t_atk span').textContent,cl:document.getElementById('t_atk').classList.contains('clash')}));ok(`끝나면 창이 닫히고 공격 단추가 돌아옴 ${r.hid} '${r.lbl}'`,r.hid&&!r.on&&r.lbl==='공격'&&!r.cl);
-  r=await p.evaluate(()=>{const e=CE;e.stun=0;e.hp=e.maxHp;P.inv=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
+  r=await p.evaluate(()=>{const e=CE;e.stun=0;e.hp=e.maxHp;P.inv=0;fClashCd=0;clashStart(e);const h0=P.hp,rnd=Math.random;Math.random=()=>.99;   // 회피(hurtP 최소 3%)로 빗나가지 않게
+    try{for(let i=0;i<200&&fClash;i++)fightK(.05)}finally{Math.random=rnd}return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
   ok(`가만히 있으면 밀린다: 잃은 생명 ${r.lost} ${JSON.stringify(r)}`,!r.on&&r.lost>0);
   ok('오류 없음 '+errs.slice(0,3).join(' | '),errs.length===0);
   await b.close();
