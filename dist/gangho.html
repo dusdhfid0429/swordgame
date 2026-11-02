@@ -179,7 +179,8 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .slotbar .slots{grid-template-columns:repeat(5,minmax(0,1fr));width:100%;margin:0;gap:5px}
 .slotbar .opt.slot{padding:5px 4px;text-align:center;justify-items:center;min-height:40px}.slotbar .opt.slot b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.slotbar .opt.slot .sd{display:none}
 .crow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.crow small{display:block;margin-top:2px}.crow .btn{flex:none}
-.term{color:#f0d48a;border-bottom:1px dotted #c9a24e;cursor:help}.term:focus-visible{outline:1px solid var(--exp)}
+/* v227: .it span{display:block} 같은 규칙이 용어·글 묶음까지 덩어리로 만들어 낱말마다 줄이 바뀌던 문제 */
+.tw{display:inline!important;font:inherit!important;color:inherit!important}.term[data-term]{display:inline!important;font:inherit!important;color:#f0d48a!important;border-bottom:1px dotted #c9a24e;cursor:help}.term:focus-visible{outline:1px solid var(--exp)}
 .gtip{position:fixed;z-index:80;background:#14100bf5;border:1px solid var(--exp);border-radius:8px;padding:8px 12px;box-shadow:0 6px 24px #000c;font:13px/1.5 var(--body);color:var(--paper)}.gtip b{font:15px var(--display);color:#ffd98a}.gtip small{color:var(--paper-dim);font-size:11px}.gtip p{margin:3px 0 0;color:#e8d9a8}
 .todo{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:8px 10px;border:1px solid #c9a24a;border-radius:8px;background:linear-gradient(90deg,#3a2a0ccc,#1a130acc);font-size:14px;line-height:1.35}.todo>b{color:#ffd36a}.todo>span{flex:1}.todo .btn{flex:none}
 /* v224 대결 전 한마디 · 마당 사건 · 은원 장부 (g_scene.js) */
@@ -10063,7 +10064,9 @@ function glossMark(root){if(!root)return;const seen=new Set(),tw=document.create
     while((m=GL_RE.exec(s))&&left>0){const k=m[0];if(seen.has(k))continue;seen.add(k);left--;
       frag=frag||document.createDocumentFragment();frag.appendChild(document.createTextNode(s.slice(last,m.index)));
       const sp=document.createElement('span');sp.className='term';sp.dataset.term=k;sp.textContent=k;sp.setAttribute('role','button');sp.tabIndex=0;frag.appendChild(sp);last=m.index+k.length}
-    if(frag){frag.appendChild(document.createTextNode(s.slice(last)));n.parentNode.replaceChild(frag,n)}}}
+    if(frag){frag.appendChild(document.createTextNode(s.slice(last)));
+      // 글 조각을 span 하나로 묶어 갈아 끼운다: 부모가 flex·grid면 글 한 덩이가 '글·용어·글' 세 칸으로 쪼개져 줄마다 점선이 깔리던 문제 (v227)
+      const w=document.createElement('span');w.className='tw';w.appendChild(frag);n.parentNode.replaceChild(w,n)}}}
 hook('panelDrawn',()=>glossMark($('wbody')));
 // 풀이 말풍선: 누른 용어 아래(화면 아래쪽이면 위)에 띄운다. 다른 곳을 누르면 닫힌다
 const GTIP=document.createElement('div');GTIP.className='gtip';GTIP.hidden=true;GTIP.setAttribute('role','tooltip');document.body.appendChild(GTIP);
