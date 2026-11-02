@@ -77,8 +77,8 @@ function recolorAtlas(img,robe,tr,rects){
   g.putImageData(id,0,0);return c}
 function heroGarb(){
   if(!P||!P.sect||!LOOK[P.sect])return null;const rank=Math.min(4,rankIdx(P.sect)),L=lookOf(P.sect),key=P.sect+(rank<1?'_0':'_1');
-  if(!HERO_GARB[key]&&HERO.complete&&HERO.naturalWidth&&HBODY.complete&&HBODY.naturalWidth){const robe=rankRobe(L,rank);HERO_GARB[key]={hero:recolorAtlas(HERO,robe),body:recolorAtlas(HBODY,robe)}}
-  const imgs=HERO_GARB[key];if(!imgs)return null;if(!imgs.h2&&hero2Ok())imgs.h2=recolorAtlas(HERO2,rankRobe(L,rank));
+  if(!HERO_GARB[key]&&legOk()){const robe=rankRobe(L,rank);HERO_GARB[key]={leg:recolorAtlas(SHEETS.legacy.img,robe)}}   // v226: 옛 그림 셋(HERO·HBODY·HERO2)이 시트 한 장이라 한 번만 칠한다
+  const imgs=HERO_GARB[key];if(!imgs)return null;
   // 시트마다 옷 색 그림 (v167: actfx는 장마다 캐릭터 몸 상자 cb 안만 칠해 푸른 이펙트는 그대로)
   imgs.sh=imgs.sh||{};if(typeof sheetOk==='function')for(const n of['act','actfx'])if(!imgs.sh[n]&&sheetOk(n))imgs.sh[n]=recolorAtlas(SHEETS[n].img,rankRobe(L,rank),false,SHEETS[n].frames.map(f=>f.cb).filter(Boolean));
   imgs.wx=imgs.sh.act;
