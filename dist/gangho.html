@@ -1309,10 +1309,10 @@ function pickUp(d){
   if(P.bag.length>=24){if(!d.full){log('행낭이 가득 찼습니다.','info');d.full=1}return false}
   P.bag.push(it.item);log(`${itemLabel(it.item)}을(를) 얻었습니다.`,it.item.slot==='book'?'xp':'sys');return true;
 }
-function hurtP(dm,src){
+function hurtP(dm,src,sure){   // sure: 피할 수 없는 피해 (내공 대결에 밀림 등)
   if(P.inv>0||P.hp<=0)return;
   const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
-  if(Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
+  if(!sure&&Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
   if(P.eq.armor&&Math.random()<.04&&P.eq.armor.def)P.eq.armor.def=Math.max(0,P.eq.armor.def-0);
@@ -10294,7 +10294,7 @@ function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=docu
   const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
   if(!e||e.hp<=0||!P||P.hp<=0)return;shake=Math.max(shake,.45);
   if(win){const d=Math.round(e.maxHp*(e.d.boss?C.boss:C.win));damage(e,d,.6,C.stun,P,true);addText(e.x,e.y-.9,'내력으로 밀어냈다','#ffd36a');P.clashW=(P.clashW||0)+1;slowMo(.4,.4)}
-  else{hurtP(e.atk*C.lose,e);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
+  else{hurtP(e.atk*C.lose,e,true);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
   log(win?`내공 대결에서 ${e.kind}을(를) 밀어냈다.`:`내공 대결에서 ${e.kind}에게 밀렸다.`,win?'xp':'dmg')}
 // ---- 내공 대결 이펙트: 두 사람의 기운이 줄기로 뻗어 가운데서 부딪친다 ----
 function clashBeam(a,b,col,col2,w,ph){const dk=isDark(col);ctx.globalCompositeOperation=dk?'source-over':'lighter';

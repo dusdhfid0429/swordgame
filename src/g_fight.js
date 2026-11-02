@@ -121,7 +121,7 @@ function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=docu
   const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
   if(!e||e.hp<=0||!P||P.hp<=0)return;shake=Math.max(shake,.45);
   if(win){const d=Math.round(e.maxHp*(e.d.boss?C.boss:C.win));damage(e,d,.6,C.stun,P,true);addText(e.x,e.y-.9,'내력으로 밀어냈다','#ffd36a');P.clashW=(P.clashW||0)+1;slowMo(.4,.4)}
-  else{hurtP(e.atk*C.lose,e);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
+  else{hurtP(e.atk*C.lose,e,true);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
   log(win?`내공 대결에서 ${e.kind}을(를) 밀어냈다.`:`내공 대결에서 ${e.kind}에게 밀렸다.`,win?'xp':'dmg')}
 // ---- 내공 대결 이펙트: 두 사람의 기운이 줄기로 뻗어 가운데서 부딪친다 ----
 function clashBeam(a,b,col,col2,w,ph){const dk=isDark(col);ctx.globalCompositeOperation=dk?'source-over':'lighter';
