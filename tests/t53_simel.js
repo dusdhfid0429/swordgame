@@ -1,4 +1,5 @@
 // 오행·음양·뇌기는 운용 중인 심법의 것, 이펙트 색은 심법 계열 (사용자 요청 2026-10-13). 무공 표시에서 오행은 빠지고 상극 우선순위는 유지
+// v229: 문파 없는 심법의 이펙트 주색은 계열 색이 아니라 심법 속성 색(EL[el].c)
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
@@ -12,7 +13,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       json:JSON.stringify(a).includes('"c"'),c:fxCol(a),el:pEl(),beats:[elMul('양','음'),elMul('음','뇌'),elMul('뇌','양'),elMul('양','뇌'),elMul('화','금'),elMul('금','화')]}});
   console.log(JSON.stringify(t));
   ok(`심법 ${t.n}개 모두 계열·속성(없는 것 ${t.bad.length}) · 타고난 ${t.base} 잡화점 사 ${t.shop} 소림 ${t.sl} 천마 ${t.cm} · 색 getter(JSON에 없음 ${!t.json}) · 상극 ${t.beats.join(',')}`,
-    t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공마'&&!t.json&&t.c==='255,214,120'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
+    t.bad.length===0&&t.base==='불가금'&&t.shop==='사공수'&&t.sl==='불가금'&&t.cm==='마공마'&&!t.json&&t.c==='235,235,250'&&t.el==='금'&&t.beats.join()==='1.3,1.3,1.3,0.8,1.3,0.8');
   const SW_MU='170,210,255';   // v156: 색은 심법 계열이 아니라 심법의 문파 색 (SECT_FX)
   // 2. 심법을 바꾸면 같은 무공의 색·속성·뇌기가 바뀐다 (무당 양=도가 파랑, 천마 뇌=마공 보라+뇌기)
   const sw=await p.evaluate(()=>{P.sims={N_mudang_2:1,N_cheonma_4:1,N_hwasan_1:1};const a=ARTS[P.cur],o={};P.sim='N_mudang_2';o.mu=[fxCol(a),pEl(),a.elc,a.pt];P.sim='N_cheonma_4';o.cm=[fxCol(a),pEl(),a.elc];
