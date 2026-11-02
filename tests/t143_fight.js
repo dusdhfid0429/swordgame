@@ -41,8 +41,20 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   r=await p.evaluate(()=>{for(const m of mobs)m.hp=0;mobs=[];const e=mk('흑풍채주',1.2);e.realm=realmIdx();fClashCd=0;clashStart(e);const k=fightK(.016);const vis=!document.getElementById('clash').hidden;
     const h0=e.hp;for(let i=0;i<20;i++)clashTap();fightK(.016);return{k,vis,on:!!fClash,lost:h0-e.hp,stun:e.stun>0,w:P.clashW||0}});
   ok(`내공 대결 창 ${r.vis}, 시간 배율 ${r.k}, 연타로 이김 ${r.w}, 상대 피해 ${r.lost}, 기절 ${r.stun}`,r.vis&&r.k<.1&&!r.on&&r.w===1&&r.lost>0&&r.stun);
-  r=await p.evaluate(()=>{const e=mobs[0];e.stun=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);return{lost:h0-P.hp,on:!!fClash}});
-  ok(`가만히 있으면 밀린다: 잃은 생명 ${r.lost}`,!r.on&&r.lost>0);
+  // v226: 화면 가운데 문구 → 게이지·단추, 카메라를 크게 당긴다, 단추를 누르면 내공이 든다 (실제 프레임으로 돌려 본다)
+  await p.evaluate(()=>{const e=mobs[0];e.stun=0;e.hp=e.maxHp;fClashCd=0;P.qi=P.maxQi;clashStart(e)});
+  await p.waitForTimeout(450);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash1.png')});
+  await p.waitForTimeout(900);
+  r=await p.evaluate(()=>{const el=document.getElementById('clash'),ban=el.querySelector('.cban').getBoundingClientRect(),box=el.querySelector('.cbox').getBoundingClientRect(),btn=el.querySelector('.cbtn').getBoundingClientRect(),bar=el.querySelector('.cbar').getBoundingClientRect();
+    const q0=P.qi;clashTap(true);return{on:!!fClash,midY:(ban.top+ban.bottom)/2/innerHeight,box:getComputedStyle(el.querySelector('.cbox')).opacity,side:btn.left>=bar.right-2&&Math.abs((btn.top+btn.bottom)/2-(bar.top+bar.bottom)/2)<40,
+      nm:el.querySelector('.cnm').textContent,qm:el.querySelector('.qm').textContent,qe:el.querySelector('.qe').textContent,spent:q0-P.qi,z:rdZ}});
+  ok(`문구 세로 위치 ${r.midY.toFixed(2)}, 게이지 ${r.box}, 단추가 게이지 옆 ${r.side}, '${r.nm}' ${r.qm} ${r.qe}, 누를 때 든 내공 ${r.spent}, 줌 ${r.z.toFixed(2)}`,
+    r.on&&r.midY>.3&&r.midY<.6&&+r.box>.9&&r.side&&/나/.test(r.nm)&&/내공/.test(r.qm)&&/내공/.test(r.qe)&&r.spent>0&&r.z>1.5);
+  await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash2.png')});
+  await p.evaluate(()=>{for(let i=0;i<30&&fClash;i++)clashTap()});await p.waitForTimeout(250);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash3.png')});
+  await p.waitForTimeout(1200);r=await p.evaluate(()=>({hid:document.getElementById('clash').hidden,on:!!fClash}));ok(`끝나면 창이 닫힘 ${r.hid}`,r.hid&&!r.on);
+  r=await p.evaluate(()=>{const e=mobs[0];e.stun=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
+  ok(`가만히 있으면 밀린다: 잃은 생명 ${r.lost} ${JSON.stringify(r)}`,!r.on&&r.lost>0);
   ok('오류 없음 '+errs.slice(0,3).join(' | '),errs.length===0);
   await b.close();
 })();
