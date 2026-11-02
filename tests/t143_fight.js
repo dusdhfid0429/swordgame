@@ -53,7 +53,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash2.png')});
   await p.evaluate(()=>{for(let i=0;i<30&&fClash;i++)clashTap()});await p.waitForTimeout(250);await p.screenshot({path:require('path').resolve(__dirname,'shots/t143_clash3.png')});
   await p.waitForTimeout(1200);r=await p.evaluate(()=>({hid:document.getElementById('clash').hidden,on:!!fClash}));ok(`끝나면 창이 닫힘 ${r.hid}`,r.hid&&!r.on);
-  r=await p.evaluate(()=>{const e=mobs[0];e.stun=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
+  // hurtP 회피 굴림(최대 50%)이 패배 피해를 비켜 가면 잃은 생명이 0이 되어 가끔 실패했다 → 이 단계만 굴림을 고정
+  r=await p.evaluate(()=>{const R=Math.random;Math.random=()=>.99;const e=mobs[0];e.stun=0;fClashCd=0;clashStart(e);const h0=P.hp;for(let i=0;i<200&&fClash;i++)fightK(.05);Math.random=R;return{lost:h0-P.hp,on:!!fClash,ehp:e.hp,php:P.hp,inv:P.inv,bin:P.binsa,n:mobs.length}});
   ok(`가만히 있으면 밀린다: 잃은 생명 ${r.lost} ${JSON.stringify(r)}`,!r.on&&r.lost>0);
   ok('오류 없음 '+errs.slice(0,3).join(' | '),errs.length===0);
   await b.close();
