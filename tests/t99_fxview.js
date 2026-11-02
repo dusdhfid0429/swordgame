@@ -10,6 +10,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     await p.goto('file://'+require('path').resolve(__dirname,'../dist/fxview.html'));await p.waitForTimeout(1500);
     const st=await p.evaluate(()=>({reg:REG,play:playing,dummies:mobs.filter(m=>m.acadDummy).length,save:STORE.get(SAVE_KEY)}));
     ok(`${vp.width}px: 연무장(${st.reg})에서 시작, 목인장 ${st.dummies}개, 저장 없음`,st.reg==='fxv_arena'&&st.play&&st.dummies===6&&!st.save);
+    // 게임 탭바(#tbar)는 뷰어에 없다 (사용자 2026-11-02: 하단바가 왼쪽 칸을 차지해 무대를 밀었다)
+    const tb=await p.evaluate(()=>{const t=document.getElementById('tbar');return{tb:!!t&&t.offsetWidth>0,sw:$('stage').offsetWidth,aw:$('app').offsetWidth}});
+    ok(`${vp.width}px: 게임 탭바 숨김, 무대가 화면 폭을 다 쓴다 (${tb.sw}/${tb.aw})`,!tb.tb&&(vp.width>=1000||tb.sw>=tb.aw-2));
     const cam0=await p.evaluate(()=>({...cam}));let drift=0;
     const tabs=await p.$$eval('#fxv button[data-a^="tab:"]',l=>l.map(x=>x.dataset.a));let n=0,made=0;
     for(const t of tabs){await cl(`#fxv button[data-a="${t}"]`);
