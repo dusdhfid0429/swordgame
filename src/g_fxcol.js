@@ -30,7 +30,7 @@ const schoolPair=(sc,side)=>sc==='마공'?['28,6,40','110,20,150']:sc==='사공'
 // 이 무공을 펼치는 사람이 다른 문파 무인인가 (내가 모르는 남의 문파 무공 = 그 문파 심법을 따른다)
 const artForeign=a=>!!(a&&a.sect&&SECTS[a.sect]&&(!P||(P.sect!==a.sect&&!(P.arts&&P.arts[a.id]))));
 // 보조색: 펼치는 사람 심법의 보조색
-function simC2(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][1]:schoolPair(simSchoolOf(a.sect))[1];return pFxPair()[1]}
+function simC2(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][1]:elFxPair(simSectEl(a.sect),simSchoolOf(a.sect))[1];return pFxPair()[1]}
 // 심지 색: 밝은 이펙트는 흰 심지를 심법 보조색 쪽으로, 마기는 보랏빛 테두리에 보조색을
 const hiOf=(c,c2)=>isDark(c)?(c2?mixCol(HI_DARK,c2,FX_MIX.darkRim,1):HI_DARK):(c2?mixCol('255,255,255',c2,FX_MIX.hi):'255,255,255');
 // ---- 적의 심법 ----
@@ -39,7 +39,7 @@ function foeSim(e){if(!e||e===P||!e.d||e.d.beast||e.d.villager||e.d.passive)retu
   if(sid){const l=simOf(sid),s=l[l.length-1];return{sect:sid,sc:simSchoolOf(sid),el:e.el||(s&&s.el)||'금',n:s&&s.n}}
   const m=GD.MOB_ART[e.kind],side=m?m[0]:(e.side||(a&&a.side)||'사'),el=e.el||SIM_BASE_EL[side]||'금';
   return{sect:null,side,sc:el==='마'?'마공':side==='정'?'정종':'사공',el}}
-const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:[SCHOOL_FX[s.sc]||SCHOOL_FX['정종'],schoolPair(s.sc,s.side)[1]];
+const foePair=s=>s.sect&&SECT_FX[s.sect]?SECT_FX[s.sect]:elFxPair(s.el,s.sc,s.side);
 // 적이 펼치는 이펙트의 X: 색·보조색·속성이 모두 그 적의 심법 것. 정예·두목은 잔광이 붙는다
 function foeX(e){const s=foeSim(e);if(!s)return null;const[c,c2]=foePair(s),a=ARTS[e.art];
   const boss=!!e.d.boss;   // v216: 두목만 플레이어와 같은 이펙트, 나머지 적은 GD.FOE_FX 만큼 간결하게 (lite)
