@@ -12,7 +12,9 @@ function glossMark(root){if(!root)return;const seen=new Set(),tw=document.create
     while((m=GL_RE.exec(s))&&left>0){const k=m[0];if(seen.has(k))continue;seen.add(k);left--;
       frag=frag||document.createDocumentFragment();frag.appendChild(document.createTextNode(s.slice(last,m.index)));
       const sp=document.createElement('span');sp.className='term';sp.dataset.term=k;sp.textContent=k;sp.setAttribute('role','button');sp.tabIndex=0;frag.appendChild(sp);last=m.index+k.length}
-    if(frag){frag.appendChild(document.createTextNode(s.slice(last)));n.parentNode.replaceChild(frag,n)}}}
+    if(frag){frag.appendChild(document.createTextNode(s.slice(last)));
+      // 글 조각을 span 하나로 묶어 갈아 끼운다: 부모가 flex·grid면 글 한 덩이가 '글·용어·글' 세 칸으로 쪼개져 줄마다 점선이 깔리던 문제 (v226)
+      const w=document.createElement('span');w.className='tw';w.appendChild(frag);n.parentNode.replaceChild(w,n)}}}
 hook('panelDrawn',()=>glossMark($('wbody')));
 // 풀이 말풍선: 누른 용어 아래(화면 아래쪽이면 위)에 띄운다. 다른 곳을 누르면 닫힌다
 const GTIP=document.createElement('div');GTIP.className='gtip';GTIP.hidden=true;GTIP.setAttribute('role','tooltip');document.body.appendChild(GTIP);
