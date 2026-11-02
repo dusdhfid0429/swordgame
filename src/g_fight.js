@@ -70,21 +70,97 @@ function bossMarkDraw(e){const b=e.bp,m=b.m,k=clamp(b.t/m.warn,0,1);ctx.save();c
 hook('drawList',list=>{if(!playing)return;for(const e of mobs)if(e.bp&&e.hp>0)list.push({L:LY.BACK,d:99000,f:()=>bossMarkDraw(e)})});
 
 // ---- 4 내공 대결 ----
+// v226 (동훈님 2026-11-02 "하단에 표시되어서 진행되는지 모르겠어"): 화면 가운데 '내공 대결' 문구 → 나·적 내공 게이지와 그 옆 '밀어내기' 단추 →
+// 두 사람 사이에서 기운이 맞부딪치는 이펙트, 카메라는 두 사람 가운데로 크게 당긴다 (C.zoom). 대결 중에는 게임 시간이 거의 멈추므로
+// 연출·줌·카메라는 실제 dt로 돈다. 단추를 누를 때마다 내 내공이 C.tapQi만큼 든다 (내공이 바닥나면 미는 힘이 C.dryK배)
 const clashOk=e=>e&&e.hp>0&&(e.d.boss||e.d.elite||e.duel)&&!e.dngDemo&&!e.acadSpar&&Math.abs(mobRealm(e)-realmIdx())<=FT.clash.rd&&mobRealm(e)>=realmIdx()&&!P.perch&&!P.leap;
 hook('hitDone',c=>{const e=c&&c.e;if(fClash||!P||P.hp<=0||time<fClashCd||!clashOk(e)||Math.random()>FT.clash.chance)return;clashStart(e)});
-function clashStart(e){const C=FT.clash;fClashCd=time+C.cd;fClash={e,t:C.dur,v:0,taps:0,k:C.push*(mobRealm(e)+1)/(realmIdx()+1)};
+let fClashP=[],fClashFin=null;   // 부딪치는 자리의 불꽃 입자, 끝난 뒤의 폭발 (실제 시간)
+const clashCols=e=>{const pc=typeof pFxPair==='function'?pFxPair():['120,190,255','255,255,255'],X=typeof foeX==='function'?foeX(e):null;return{p:pc[0],p2:pc[1]||pc[0],e:X?X.art.c:'255,110,70',e2:X&&X.art.c2||'255,200,140'}};
+const rgbCss=c=>`rgb(${c})`;
+function clashStart(e){const C=FT.clash;fClashCd=time+C.cd;const rr=(mobRealm(e)+1)/(realmIdx()+1),eq=Math.max(1,Math.round((P.maxQi||100)*rr));
+  fClash={e,t:C.dur,v:0,taps:0,k:C.push*rr,age:0,eq,eq0:eq,col:clashCols(e),bump:0};fClashP=[];fClashFin=null;
+  // 마주 보게 하고 거리를 맞춘다 (막힌 땅이면 그대로)
+  const l=Math.hypot(e.x-P.x,e.y-P.y)||1,ux=(e.x-P.x)/l,uy=(e.y-P.y)/l;P.fx=ux;P.fy=uy;e.fx=-ux;e.fy=-uy;e.wind=0;e.slam=0;e.bp=null;e.moving=false;
+  const nx=P.x+ux*C.gap,ny=P.y+uy*C.gap;if(Math.abs(l-C.gap)>.3&&typeof walkAt==='function'&&walkAt(nx,ny)){e.x=nx;e.y=ny}
   let el=document.getElementById('clash');if(!el){el=document.createElement('div');el.id='clash';$('app').appendChild(el);
-    el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();clashTap()})}
-  el.innerHTML=`<b>내공 대결</b><small>${esc(e.kind)}와(과) 검이 맞붙었다. 화면을 빠르게 두드려 기를 밀어붙여라!</small><div class="cbar"><i></i><em></em></div><span class="ct"></span>`;
-  el.hidden=false;el.classList.add('on');sfx('crit',{v:1});shake=Math.max(shake,.2);P.target=e;clashPaint()}
-function clashTap(){if(!fClash)return;fClash.taps++;fClash.v=Math.min(1,fClash.v+FT.clash.tap*(1+Math.min(.5,(P.maxQi||0)/4000)));clashPaint();if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}if(fClash.v>=1)clashEnd(true)}
-function clashPaint(){const el=document.getElementById('clash');if(!el||!fClash)return;const i=el.querySelector('.cbar i');if(i)i.style.left=((fClash.v+1)/2*100)+'%';
-  const t=el.querySelector('.ct');if(t)t.textContent=`${Math.max(0,fClash.t).toFixed(1)}초`}
-function clashTick(dt){const c=fClash;c.t-=dt;c.v=Math.max(-1,c.v-c.k*dt);clashPaint();if(c.v>=1||c.v<=-1||c.t<=0)clashEnd(c.v>0)}
-function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=document.getElementById('clash');if(el){el.classList.remove('on');el.hidden=true}
-  if(!e||e.hp<=0||!P||P.hp<=0)return;
+    el.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();clashTap(ev.target&&ev.target.closest&&ev.target.closest('.cbtn'))})}
+  const c=fClash.col,R=i=>typeof RANKS!=='undefined'&&RANKS[i]?RANKS[i]:'';
+  el.style.setProperty('--cp',rgbCss(c.p));el.style.setProperty('--ce',rgbCss(c.e));el.style.setProperty('--ci',C.intro+'s');
+  el.innerHTML=`<div class="cban"><b>내공 대결</b><small>${esc(e.kind)}와(과) 내력이 맞붙었다</small></div>
+<div class="cbox"><div class="crow"><div class="cg"><div class="cnm"><span class="me">나 <em>${esc(R(realmIdx()))}</em></span><span class="ct"></span><span class="fo">${esc(e.kind)} <em>${esc(R(mobRealm(e)))}</em></span></div>
+<div class="cbar"><s class="cpL"></s><s class="cpR"></s><i></i></div>
+<div class="cq"><span class="qm"></span><span class="qe"></span></div></div>
+<button class="cbtn" type="button" aria-label="기 밀어내기"><b>밀어<br>내기</b></button></div>
+<p class="chint">단추나 화면을 빠르게 눌러 기를 밀어붙여라 (PC: 스페이스)</p></div><div class="cres"></div>`;
+  clearTimeout(el._t);document.body.classList.add('clash-on');el.hidden=false;el.classList.remove('fin','win','lose');el.classList.add('on');sfx('crit',{v:1});shake=Math.max(shake,.25);P.target=e;clashPaint()}
+function clashTap(btn){if(!fClash)return;const C=FT.clash,c=fClash;c.taps++;
+  const cost=Math.max(1,Math.round((P.maxQi||0)*C.tapQi)),dry=(P.qi||0)<cost;if(!dry)P.qi-=cost;
+  const pw=C.tap*(1+Math.min(.5,(P.maxQi||0)/4000))*(dry?C.dryK:1);c.v=Math.min(1,c.v+pw);c.eq=Math.max(0,c.eq-c.eq0*pw*C.eDrain);c.bump=1;
+  clashBurst(10);const el=document.getElementById('clash');if(el){const b=el.querySelector('.cbtn');if(b){b.classList.remove('hit');void b.offsetWidth;b.classList.add('hit')}}
+  shake=Math.max(shake,.06);clashPaint();if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}if(c.v>=1)clashEnd(true)}
+function clashPaint(){const el=document.getElementById('clash');if(!el||!fClash)return;const c=fClash,f=(c.v+1)/2;
+  const i=el.querySelector('.cbar i');if(i)i.style.left=(f*100)+'%';const L=el.querySelector('.cpL'),R=el.querySelector('.cpR');if(L)L.style.width=(f*100)+'%';if(R)R.style.width=((1-f)*100)+'%';
+  const t=el.querySelector('.ct');if(t)t.textContent=`${Math.max(0,c.t).toFixed(1)}초`;
+  const qm=el.querySelector('.qm'),qe=el.querySelector('.qe');if(qm)qm.textContent=`내공 ${Math.round(P.qi||0)} / ${Math.round(P.maxQi||0)}`;if(qe)qe.textContent=`내공 ${Math.round(c.eq)} / ${c.eq0}`;
+  el.classList.toggle('dry',(P.qi||0)<Math.max(1,(P.maxQi||0)*FT.clash.tapQi))}
+// 두 사람 가운데·부딪치는 자리 (세계 좌표)
+const clashMid=c=>({x:(P.x+c.e.x)/2,y:(P.y+c.e.y)/2});
+const clashPt=c=>{const f=.5+.42*c.v;return{x:P.x+(c.e.x-P.x)*f,y:P.y+(c.e.y-P.y)*f}};
+function clashBurst(n){const c=fClash;if(!c)return;for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=60+Math.random()*190;fClashP.push({a,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.7-40,x:0,y:0,l:.35+Math.random()*.4,m:.75,me:Math.random()<.5})}}
+function clashTick(dt){const c=fClash,C=FT.clash;c.age+=dt;c.bump=Math.max(0,c.bump-dt*5);
+  if(c.age>=C.intro){c.t-=dt;c.v=Math.max(-1,c.v-c.k*dt);c.eq=Math.max(0,c.eq-c.eq0*c.k*dt*C.eDrain*.25)}
+  if(Math.random()<dt*40)clashBurst(1);for(const p of fClashP){p.l-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=160*dt}fClashP=fClashP.filter(p=>p.l>0);
+  clashCam(dt);clashPaint();if(c.v>=1||c.v<=-1||c.t<=0)clashEnd(c.v>0)}
+// 카메라: 두 사람 가운데로 옮기고 C.zoom배로 당긴다 (g_read.js rdZ·rdZoomApply)
+function clashCam(dt){const C=FT.clash,m=clashMid(fClash),k=Math.min(1,dt*C.zin);
+  if(typeof rdZ==='number'&&typeof rdZoomApply==='function'&&!RD_Q){rdZ+=(C.zoom-rdZ)*k;rdZoomApply()}
+  const t=iso(m.x,m.y);t.y-=gH(m.x,m.y);cam.x+=(t.x-cam.x)*k;cam.y+=(t.y-cam.y)*k}
+function clashEnd(win){const c=fClash,C=FT.clash,e=c.e;fClash=null;const el=document.getElementById('clash');
+  if(el){el.classList.add('fin',win?'win':'lose');const r=el.querySelector('.cres');if(r)r.innerHTML=`<b>${win?'밀어냈다!':'밀렸다…'}</b>`;clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('on','fin','win','lose');el.hidden=true;document.body.classList.remove('clash-on')},C.outro*1000)}
+  const lo=win?e:P;fClashFin={x:lo.x,y:lo.y,win,t0:performance.now(),col:c.col};fClashP=[];
+  if(!e||e.hp<=0||!P||P.hp<=0)return;shake=Math.max(shake,.45);
   if(win){const d=Math.round(e.maxHp*(e.d.boss?C.boss:C.win));damage(e,d,.6,C.stun,P,true);addText(e.x,e.y-.9,'내력으로 밀어냈다','#ffd36a');P.clashW=(P.clashW||0)+1;slowMo(.4,.4)}
   else{hurtP(e.atk*C.lose,e);addText(P.x,P.y-.9,'내력에 밀렸다','#e0675a')}
   log(win?`내공 대결에서 ${e.kind}을(를) 밀어냈다.`:`내공 대결에서 ${e.kind}에게 밀렸다.`,win?'xp':'dmg')}
+// ---- 내공 대결 이펙트: 두 사람의 기운이 줄기로 뻗어 가운데서 부딪친다 ----
+function clashBeam(a,b,col,col2,w,ph){const dk=isDark(col);ctx.globalCompositeOperation=dk?'source-over':'lighter';
+  const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,N=14;
+  for(const [ww,al,cc] of [[w*2.6,.22,col],[w*1.4,.55,col],[w*.45,.95,dk?col2:'255,255,255']]){ctx.strokeStyle=`rgba(${cc},${al})`;ctx.lineWidth=ww;ctx.lineCap='round';ctx.beginPath();
+    for(let i=0;i<=N;i++){const t=i/N,o=Math.sin(t*9+ph)*w*.35*Math.sin(t*Math.PI);const x=a.x+dx*t+nx*o,y=a.y+dy*t+ny*o;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}}
+function clashAura(p,col,k){const dk=isDark(col);ctx.globalCompositeOperation=dk?'source-over':'lighter';const r=34+8*Math.sin(performance.now()/90)+14*k;
+  ctx.globalAlpha=dk?.45:.38;ctx.drawImage(glowSpr(col),p.x-r,p.y-30-r*1.3,r*2,r*2.4);
+  ctx.globalAlpha=dk?.4:.35;for(let i=0;i<3;i++){const fl=(performance.now()/400+i/3)%1,hh=70+40*k;ctx.drawImage(glowSpr(col),p.x-14+Math.sin(i*2.1+fl*6)*8,p.y-20-fl*hh-20,28,40*(1-fl)+16)}ctx.globalAlpha=1;
+  ctx.strokeStyle=`rgba(${col},.6)`;ctx.lineWidth=2;const q=(performance.now()/700)%1;ctx.beginPath();ctx.ellipse(p.x,p.y,(20+q*26),(10+q*13),0,0,7);ctx.globalAlpha=1-q;ctx.stroke();ctx.globalAlpha=1}
+function clashDraw(){const now=performance.now();
+  if(fClash){const c=fClash,C=FT.clash,col=c.col,ph=now/80,pin=Math.min(1,c.age/C.intro);
+    const pp=toScreen(P.x,P.y),ep=toScreen(c.e.x,c.e.y),pt=clashPt(c),xp=toScreen(pt.x,pt.y);pp.y-=P.z||0;ep.y-=c.e.z||0;
+    const hy=34,ph1={x:pp.x,y:pp.y-hy},eh={x:ep.x,y:ep.y-hy},x0={x:xp.x,y:xp.y-hy};
+    // 주변을 어둡게: 가운데만 밝게 남긴다
+    ctx.save();const g=ctx.createRadialGradient(x0.x,x0.y,30,x0.x,x0.y,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.3,`rgba(4,6,14,${.35*pin})`);g.addColorStop(1,`rgba(4,6,14,${.85*pin})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // 집중선: 화면 가장자리에서 부딪치는 자리로 모이는 흰 줄 (만화의 기 싸움 연출)
+    const fr=Math.floor(now/70),R0=Math.min(W,H)*.32,R1=Math.hypot(W,H);ctx.fillStyle=`rgba(255,250,235,${.22*pin})`;ctx.beginPath();
+    for(let i=0;i<56;i++){const a=(i+hash(i,fr)*.8)/56*Math.PI*2,r0=R0*(.8+hash(fr,i)*.7),wd=.006+hash(i+3,fr)*.014;
+      ctx.moveTo(x0.x+Math.cos(a)*r0,x0.y+Math.sin(a)*r0);ctx.lineTo(x0.x+Math.cos(a-wd)*R1,x0.y+Math.sin(a-wd)*R1);ctx.lineTo(x0.x+Math.cos(a+wd)*R1,x0.y+Math.sin(a+wd)*R1);ctx.closePath()}ctx.fill();
+    // 땅이 갈라지듯 퍼지는 고리
+    ctx.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const q=((now/900)+i/3)%1;ctx.strokeStyle=`rgba(255,235,190,${.35*(1-q)*pin})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(xp.x,xp.y,20+q*120,10+q*60,0,0,7);ctx.stroke()}
+    clashAura(pp,col.p,c.v>0?c.v:0);clashAura(ep,col.e,c.v<0?-c.v:0);
+    if(pin>.25){const w=10+6*c.bump,grow=Math.min(1,(c.age-C.intro*.25)/(C.intro*.5));
+      const lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+      clashBeam(ph1,lerp(ph1,x0,grow),col.p,col.p2,w*(1+Math.max(0,c.v)*.5),ph);clashBeam(eh,lerp(eh,x0,grow),col.e,col.e2,w*(1+Math.max(0,-c.v)*.5),-ph);
+      if(grow>=1){ctx.globalCompositeOperation='lighter';const r=26+8*Math.sin(now/45)+22*c.bump;
+        ctx.drawImage(glowSpr(col.p),x0.x-r*1.4,x0.y-r*1.4,r*2.8,r*2.8);ctx.drawImage(glowSpr(col.e),x0.x-r,x0.y-r,r*2,r*2);
+        ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(x0.x,x0.y,11+7*c.bump+3*Math.sin(now/30),0,7);ctx.fill();
+        // 두 기운이 맞물려 도는 고리 (내 색 반, 상대 색 반)
+        for(let j=0;j<2;j++){const rot=now/260*(j?-1:1),rr=r*.9+j*10;ctx.lineWidth=3;ctx.strokeStyle=`rgba(${j?col.e:col.p},.75)`;ctx.beginPath();ctx.ellipse(x0.x,x0.y,rr,rr*.55,0,rot,rot+Math.PI*1.1);ctx.stroke()}
+        // 번개처럼 튀는 줄기
+        ctx.strokeStyle='rgba(255,250,230,.8)';ctx.lineWidth=1.5;for(let j=0;j<4;j++){let a=Math.random()*7,x=x0.x,y=x0.y;ctx.beginPath();ctx.moveTo(x,y);for(let s=0;s<4;s++){a+=(Math.random()-.5)*1.4;x+=Math.cos(a)*14;y+=Math.sin(a)*10;ctx.lineTo(x,y)}ctx.stroke()}
+        for(const p of fClashP){ctx.globalAlpha=Math.min(1,p.l/p.m*1.5);ctx.fillStyle=`rgb(${p.me?col.p:col.e})`;ctx.fillRect(x0.x+p.x-1.5,x0.y+p.y-1.5,3,3)}ctx.globalAlpha=1}}
+    ctx.restore()}
+  else if(fClashFin){const f=fClashFin,k=(now-f.t0)/1000/FT.clash.outro;if(k>=1){fClashFin=null;return}
+    const p=toScreen(f.x,f.y),col=f.win?f.col.p:f.col.e;ctx.save();ctx.globalCompositeOperation=isDark(col)?'source-over':'lighter';
+    const r=40+k*170;ctx.globalAlpha=.75*(1-k);ctx.drawImage(glowSpr(col),p.x-r,p.y-34-r,r*2,r*2);ctx.strokeStyle='rgba(255,245,220,.9)';ctx.lineWidth=4*(1-k)+1;ctx.beginPath();ctx.ellipse(p.x,p.y-10,r*.8,r*.4,0,0,7);ctx.stroke();
+    if(k<.12){ctx.globalCompositeOperation='source-over';ctx.globalAlpha=(.12-k)/.12*.3;ctx.fillStyle='#fff8e0';ctx.fillRect(0,0,W,H)}ctx.restore()}}
+hook('drawTop',clashDraw);
 document.addEventListener('keydown',ev=>{if(fClash&&(ev.code==='Space'||ev.code==='KeyF'||ev.code==='Enter')){ev.preventDefault();clashTap()}},true);
 hook('loadRegion',()=>{if(fClash)clashEnd(false);fSlow=1;fSlowEnd=0});

@@ -1,4 +1,4 @@
-// v226 (동훈님 2026-11-02 "UI가 깨지는 부분들 확인해줘"): 용어 풀이(.term)가 flex·grid 칸 안에서 글 조각을 쪼개
+// v227 (동훈님 2026-11-02 "UI가 깨지는 부분들 확인해줘"): 용어 풀이(.term)가 flex·grid 칸 안에서 글 조각을 쪼개
 // 낱말마다 줄이 바뀌고 점선이 칸 폭만큼 깔리던 문제. 모든 창에서 .term은 글 줄 안(inline)에 머물러야 한다
 const {chromium}=require(process.env.PWPATH||'playwright');
 (async()=>{

@@ -31,6 +31,7 @@ function update(dt){
   if(sched.length){for(const q of sched)q.t-=dt;if(sched.some(q=>q.t<=0)){const due=sched.filter(q=>q.t<=0);sched=sched.filter(q=>q.t>0);if(P.hp>0)due.forEach(q=>q.f())}}
   for(const f of fx)f.life-=dt;prune(fx,f=>f.life>0);
   for(const t of texts)t.life-=dt;prune(texts,t=>t.life>0);
+  if(typeof fClash!=='undefined'&&fClash)return;   // v226: 내공 대결 중 카메라는 g_fight.js clashCam
   const t=iso(P.x,P.y);t.y-=gH(P.x,P.y)+camDY();cam.x+=(t.x-cam.x)*Math.min(1,dt*8);cam.y+=(t.y-cam.y)*Math.min(1,dt*8);
 }
 function updateP(dt){
