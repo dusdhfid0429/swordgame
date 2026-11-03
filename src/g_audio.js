@@ -91,6 +91,8 @@ function sfx(k,o={}){
     case'kill':tone(D,t,200,'triangle',.3*v,.005,.35,55);noise(D,t+.05,.2*v,.01,.3,'lowpass',700,120);break;
     case'form':{const f=o.f||660;noise(D,t,.3,.01,.2,'bandpass',3000,900,1.4);tone(D,t,f,'sine',.12,.005,.4,f*1.5);tone(D,t+.06,f*1.5,'sine',.07,.005,.35);break}
     case'ult':gong(D,t,92,.55,3.2);noise(D,t,.08,.4,1.4,'bandpass',600,2600,.7);drum(D,t,'big',1.2);break;
+    // v232 필살기 끊김: 유리 깨지는 소리 (g_ult.js)
+    case'shatter':noise(D,t,.4,.001,.09,'highpass',3200,1800,.7);tone(D,t,140,'sine',.35,.002,.18,60);[3900,5200,6100,4500,7300].forEach((f,i)=>tone(D,t+.02+i*.035+Math.random()*.02,f,'sine',.09,.001,.25+Math.random()*.2,f*.97));noise(D,t+.08,.18,.01,.35,'bandpass',6000,4000,2);break;
     case'leap':noise(D,t,.24,.03,.35,'bandpass',600,3200,1.2);break;
     case'land':noise(D,t,.12,.002,.08,'lowpass',500);break;
     case'coin':tone(D,t,1950,'sine',.16*v,.002,.18);tone(D,t+.06,2630,'sine',.14*v,.002,.3);break;

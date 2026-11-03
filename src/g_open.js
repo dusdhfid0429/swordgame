@@ -34,7 +34,10 @@ hook('panelDrawn',p=>{const w=$('wbody');if(!w||w.querySelector('.todo'))return;
 // ---- 초식 이름 외치기 ----
 // 화면이 잠깐 어두워지고 붓글씨 이름이 크게 지나간다. 같은 사람이 CALLOUT.gap초 안에 또 외치면 건너뛴다
 const calloutAt={};
-function callout(n,by){if(!n||typeof document==='undefined')return false;const k=by||'_';if(calloutAt[k]&&time-calloutAt[k]<CALLOUT.gap)return false;calloutAt[k]=time;
+function callout(n,by,o){if(!n||typeof document==='undefined')return false;const k=by||'_';o=o||{};if(!o.force&&typeof P!=='undefined'&&P&&P.ultCast)return false;if(!o.force&&calloutAt[k]&&time-calloutAt[k]<CALLOUT.gap)return false;calloutAt[k]=time;
   let el=document.getElementById('callout');if(!el){el=document.createElement('div');el.id='callout';el.setAttribute('aria-live','polite');$('app').appendChild(el)}
-  el.innerHTML=`<i></i><b>${esc(n)}</b>${by?`<small>${esc(by)}</small>`:''}`;el.style.setProperty('--cd',CALLOUT.dur+'s');el.style.setProperty('--cdim',CALLOUT.dim);
-  el.classList.remove('on');void el.offsetWidth;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),CALLOUT.dur*1000);return true}
+  const dur=o.dur||CALLOUT.dur;if(typeof coFxStop==='function')coFxStop(el);
+  el.innerHTML=`<i></i><b>${esc(n)}</b>${by?`<small>${esc(by)}</small>`:''}`;el.style.setProperty('--cd',dur+'s');el.style.setProperty('--cdim',CALLOUT.dim);
+  el.classList.remove('on','ult','broke');void el.offsetWidth;el.classList.add('on');if(o.ult)el.classList.add('ult');clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('on');if(typeof coFxStop==='function')coFxStop(el)},dur*1000+(o.ult?400:0));
+  if(o.el&&typeof coFxStart==='function')coFxStart(el,o.el,dur);   // v232 필살기: 심법 속성 기운이 글자를 감싼다 (g_ult.js)
+  return true}
