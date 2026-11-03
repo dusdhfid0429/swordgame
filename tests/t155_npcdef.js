@@ -21,14 +21,14 @@ const {chromium}=require('playwright');
     const e=mobs.find(m=>m.npcDef&&m.npcRef&&m.npcRef.id===_hid);if(!e)return{out:false};e.hp=e.maxHp*.1;for(let i=0;i<6;i++)runHooks('tick',.1);return{out:true,back:REGION().npcs.some(q=>q.id===_hid),mob:mobs.includes(e),again:mobs.some(m=>m.npcRef&&m.npcRef.id===_hid)}});
   ok(`교두도 나서고, 생명이 바닥나면 물러나 NPC로 (침입자가 남아 있어도 한동안 다시 나서지 않음)`,r4.out&&r4.back&&!r4.mob&&!r4.again);
   // 3. 문주: 장문인도 침입자에 맞선다
-  const r5=await p.evaluate(()=>{mobs=[];P.side='정';const s=SECTS.hwasan,H=REGIONS[hqId(s)],id=H.halls&&H.halls.length?H.halls[0].id:hqId(s);enterRegion(id,10,10);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.hq);P.x=n.x;P.y=n.y+3;invade(s,n,2);return{n:n&&n.n}});
+  const r5=await p.evaluate(()=>{mobs=[];P.side='정';const s=SECTS.hwasan,H=REGIONS[hqId(s)],id=(H.halls||[]).flatMap(h=>[h.id,...(REGIONS[h.id].floorIds||[])]).find(i=>REGIONS[i].npcs.some(q=>q.hq))||hqId(s);enterRegion(id,10,10);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.hq);P.x=n.x;P.y=n.y+3;invade(s,n,2);return{n:n&&n.n}});
   await step0(6);
   const r6=await p.evaluate(()=>{const e=mobs.find(m=>m.master==='hwasan');return{out:!!e,def:!!(e&&e.npcDef),hid:!REGION().npcs.some(q=>q.hq)}});
   await p.evaluate(()=>{mobs=mobs.filter(m=>m.master)});await step0(50);
   const r7=await p.evaluate(()=>({back:REGION().npcs.some(q=>q.hq),mob:mobs.some(m=>m.master),dead:!!G.mdead.hwasan}));
   ok(`장문인(${r5.n})도 같은 방식: 나섰다가 침입이 끝나면 돌아온다`,r6.out&&r6.def&&r6.hid&&r7.back&&!r7.mob&&!r7.dead);
   // 4. 후산 장로: 플레이어가 문파 무인과 싸우면 칼을 뽑아 막아선다 (플레이어에게 적)
-  const r8=await p.evaluate(()=>{mobs=[];const s=SECTS.hwasan;enterRegion('hq_hwasan_back',20.5,30);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.elder);P.x=n.x+2;P.y=n.y+2;
+  const r8=await p.evaluate(()=>{mobs=[];const s=SECTS.hwasan;const eid=['hq_hwasan_back',...REGIONS.hq_hwasan.halls.flatMap(h=>[h.id,...(REGIONS[h.id].floorIds||[])])].find(i=>REGIONS[i].npcs.some(q=>q.elder));enterRegion(eid,7.5,8);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.elder);P.x=n.x+2;P.y=n.y+2;
     const d=mkFac(alFac(s.al),0,n.x+1,n.y+3,s.id);d.angry=1;d.aggro=true;d.tgt=null;mobs.push(d);for(let i=0;i<6;i++)runHooks('tick',.1);const e=mobs.find(m=>m.npcRef===n);return{out:!!e,foe:!!(e&&mobFoeP(e)),n:n.n}});
   ok(`후산 ${r8.n}: 플레이어가 문파 무인과 싸우면 나서서 플레이어를 친다`,r8.out&&r8.foe);
   // 5. 마교 장로원 사부(장로)도

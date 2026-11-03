@@ -16,6 +16,7 @@ const REMN=GD.REMN;
 // ---- 장경각 비급 묶음 ----
 function libHall(s){const M=REGIONS[hqId(s)];if(!M)return null;
   const own=k=>{const R=REGIONS[k];return R&&R.hall&&ruinSect(R)===s};
+  const sm=Object.keys(REGIONS).find(k=>k.startsWith('in_')&&own(k)&&REGIONS[k].smFloor&&/^lib/.test(REGIONS[k].smFloor.k)&&REGIONS[k].smFloor.f===1);if(sm)return sm;   // v238: 새 구성의 장경각 1층 (g_sectmap.js)
   const lib=Object.keys(REGIONS).find(k=>k.startsWith('in_')&&own(k)&&REGIONS[k].hall.kit==='library');if(lib)return lib;
   const hs=M.halls||[];return hs[1]?hs[1].id:hs[0]?hs[0].id:hqId(s)}
 // hi: 직접 전수(고급·절기)만, 아니면 그 밖의 모든 무공

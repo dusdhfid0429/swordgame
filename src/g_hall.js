@@ -10,9 +10,9 @@ const HALLS=GD.HALLS,HALL_DEF=GD.HALL_DEF;
 function hallNames(s){return HALLS[s.id]||(/파$|교$|문$/.test(s.n)?HALL_DEF['파']:/가$|장$/.test(s.n)?HALL_DEF['가']:HALL_DEF.default)}
 const hallId=(reg,bi)=>`in_${reg}_${bi}`;
 // 지역 reg 의 장문인: 바깥 맵에 있으면 그 사람, 전각 안이면 안의 사람. 테스트와 안내문이 쓴다
-const findNpc=(reg,pred)=>{const R=REGIONS[reg];if(!R)return null;const f=L=>L&&L.find(pred);return f(R.npcs)||(R.halls||[]).map(h=>f(REGIONS[h.id].npcs)).find(Boolean)||null};
+const findNpc=(reg,pred)=>{const R=REGIONS[reg];if(!R)return null;const f=L=>L&&L.find(pred);return f(R.npcs)||(R.halls||[]).flatMap(h=>[h.id,...(REGIONS[h.id].floorIds||[])]).map(id=>f(REGIONS[id].npcs)).find(Boolean)||null};   // v238: 여러 층 전각의 위층까지
 const hqNpc=reg=>findNpc(reg,n=>n.hq);
-const npcsOf=reg=>{const R=REGIONS[reg];return R?[...R.npcs,...(R.halls||[]).flatMap(h=>REGIONS[h.id].npcs)]:[]};
+const npcsOf=reg=>{const R=REGIONS[reg];return R?[...R.npcs,...(R.halls||[]).flatMap(h=>[h.id,...(REGIONS[h.id].floorIds||[])]).flatMap(id=>REGIONS[id].npcs)]:[]};
 // 내부 맵 그리기. c: {w,h,mg(마교: 검은 벽·붉은 기둥),npcs}
 function genHall(c){
   N=c.w;NH=c.h;const r=rng(c.seed||1);map=[];objs=[];lamps=[];builds=[];rails=[];nodes=[];plots=[];tents=[];

@@ -10,7 +10,17 @@
       "dang":    {"rank": 3, "hp": 2.0, "atk": 1.2, "fame": 12, "title": "당주"},
       "disc":    {"rank": 1, "hp": 1.0, "atk": 1.0, "fame": 3,  "title": "제자"},
       "sabu":    {"rank": 4, "hp": 2.2, "atk": 1.25, "fame": 15, "title": "사부"},
-      "host":    {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 8,  "title": "교두"}
+      "host":    {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 8,  "title": "교두"},
+      "jigak":   {"rank": 4, "hp": 2.0, "atk": 1.15, "fame": 14, "title": "지객 장로"},
+      "hobeop":  {"rank": 3, "hp": 2.0, "atk": 1.2, "fame": 12, "title": "호법"},
+      "aide":    {"rank": 2, "hp": 1.4, "atk": 1.0, "fame": 8,  "title": "장문 집사"},
+      "law":     {"rank": 4, "hp": 2.0, "atk": 1.2, "fame": 15, "title": "집법 장로"},
+      "treas":   {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 10, "title": "총관"},
+      "clerk":   {"rank": 1, "hp": 1.0, "atk": 0.9, "fame": 3,  "title": "장부 집사"},
+      "vguard":  {"rank": 3, "hp": 1.8, "atk": 1.15, "fame": 8, "title": "금고지기"},
+      "lib":     {"rank": 3, "hp": 1.5, "atk": 1.0, "fame": 10, "title": "장경각 서동"},
+      "medic":   {"rank": 1, "hp": 1.0, "atk": 0.8, "fame": 3,  "title": "의원"},
+      "shrine":  {"rank": 1, "hp": 1.0, "atk": 0.9, "fame": 3,  "title": "수묘 제자"}
     },
     "_DEF": "v237c 고정 NPC 방어 (사용자 2026-11-03): 문파에 침입한 적이 r칸 안에 오면 문주·장로·사부·교두가 싸우는 무인으로 나선다. 생명 retreat 아래면 물러나고, calm초 동안 적이 없으면 제자리로. g_npcdef.js",
     "DEF": {"rest": 30, "r": 8, "chase": 12, "calm": 4, "retreat": 0.25, "scan": 0.4},

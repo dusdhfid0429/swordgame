@@ -75,9 +75,10 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     ok('tapping a readable book learns it',await p.evaluate(n0=>learnedArts().length>n0&&!!document.querySelector('.sysmsg p'),n0))}
   await p.tap('#wx');
   // 짧게 톡: 땅을 치면 그리로 걷는다 (조이스틱 영역 안에서도)
-  await p.evaluate(()=>{P.x=20.5;P.y=20.5;P.target=null;P.path=null});await p.waitForTimeout(200);
-  await p.tap('#joyz',{position:{x:120,y:150}});await p.waitForTimeout(100);
-  ok('short tap in joystick area walks there',await p.evaluate(()=>!!(P.path&&P.path.length)));
+  // 톡 친 자리에 무인이 서 있으면 걷기 대신 공격 대상이 된다(가끔 실패하던 까닭): 무인을 치우고, 길이 잡히거나 움직이기 시작하기를 기다린다
+  await p.evaluate(()=>{mobs=[];P.x=20.5;P.y=20.5;P.target=null;P.path=null});await p.waitForTimeout(200);
+  await p.tap('#joyz',{position:{x:120,y:150}});
+  ok('short tap in joystick area walks there',await p.waitForFunction(()=>!P.target&&(!!(P.path&&P.path.length)||Math.hypot(P.x-20.5,P.y-20.5)>.05),null,{timeout:1500}).then(()=>true,()=>false));
   // 가로 화면
   await p.setViewportSize({width:844,height:390});await p.waitForTimeout(500);
   await p.screenshot({path:shot('m_land')});

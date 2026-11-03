@@ -6,11 +6,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
-  const t1=await p.evaluate(()=>{update(.1);const s=SECTS.hwasan,ids=[hqId(s),...((REGIONS[hqId(s)]||{}).halls||[]).map(h=>h.id)],mr=ids.find(id=>(REGIONS[id].npcs||[]).some(n=>n.hq===s.id));window.MR=mr;
+  const t1=await p.evaluate(()=>{update(.1);const s=SECTS.hwasan,ids=[hqId(s),...((REGIONS[hqId(s)]||{}).halls||[]).flatMap(h=>[h.id,...(REGIONS[h.id].floorIds||[])])],mr=ids.find(id=>(REGIONS[id].npcs||[]).some(n=>n.hq===s.id));window.MR=mr;
     window.MOUT=REGIONS[mr].hall.out;const go=()=>{mobs=[];loadRegion(MOUT);P.reg=MOUT;return{npc:!!(REGIONS[mr].npcs||[]).find(n=>n.hq),boss:mobs.find(m=>m.master)}};   // v133: 우두머리는 바깥 맵 전각 앞에 선다
     G.pop.hwasan=300;G.popPrev=null;const a=go();G.pop.hwasan=150;const same=go();P.sect='cheonma';const bb=go();const boss=bb.boss;   // v133: 같은 편(정파)에게는 쇠퇴해도 NPC, 적대 진영(마)에게만 우두머리
     G.pop.hwasan=300;G.popPrev={hwasan:310};const c=go();G.popPrev={hwasan:290};const d=go();
-    const door=(REGIONS[MOUT].halls||[]).find(h=>h.id===mr);return{mr,out:boss&&boss.x===door.x&&Math.abs(boss.y-(door.y+1.5))<.01,a:[a.npc,!!a.boss],same:[same.npc,!!same.boss],b:[bb.npc,!!bb.boss],name:boss&&boss.name,rank:boss&&boss.rank,hp:boss&&boss.maxHp,c:[c.npc,!!c.boss],d:[d.npc,!!d.boss],peace:boss&&peaceful(boss)}});
+    const door=(REGIONS[MOUT].halls||[]).find(h=>h.id===mr||(REGIONS[h.id].floorIds||[]).includes(mr));return{mr,out:boss&&boss.x===door.x&&Math.abs(boss.y-(door.y+1.5))<.01,a:[a.npc,!!a.boss],same:[same.npc,!!same.boss],b:[bb.npc,!!bb.boss],name:boss&&boss.name,rank:boss&&boss.rank,hp:boss&&boss.maxHp,c:[c.npc,!!c.boss],d:[d.npc,!!d.boss],peace:boss&&peaceful(boss)}});
   ok(`장문인 맵 ${t1.mr}: 인원 300 → NPC ${t1.a[0]} 우두머리 ${t1.a[1]} / 150(50%) 같은 편 → NPC ${t1.same[0]} 우두머리 ${t1.same[1]} / 적대 진영 → NPC ${t1.b[0]} 우두머리 ${t1.b[1]} 전각 앞 ${t1.out} [${t1.name}, 직위 ${t1.rank}, 생명 ${t1.hp}]`,t1.a[0]&&!t1.a[1]&&t1.same[0]&&!t1.same[1]&&!t1.b[0]&&t1.b[1]&&t1.out===true&&t1.name==='화산파 장문인'&&t1.rank===4&&t1.hp>400);
   ok(`쇠퇴 추세(적대 진영): 지난해 310→300이면 출전 ${t1.c[1]}, 290→300이면 NPC ${t1.d[0]}`,t1.c[1]&&!t1.c[0]&&t1.d[0]&&!t1.d[1]);
   // 쓰러뜨리면 (v112: 장로급 처치 −15, v133부터 본산 바깥 맵에서 죽어 ×2 = −30 뒤 10% → 108)

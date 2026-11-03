@@ -179,7 +179,7 @@ function sectAct(a,x,y){const c={a,x,y,done:false,r:undefined};runHooks('sectAct
 function sectActBase(a,x,y){
   switch(a){
     case'sview':sectView=x||null;return true;
-    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&panelArg.hq===s.id))return true;P.sect=s.id;P.srank=P.srank||{};P.srank[s.id]=P.srank[s.id]||0;   // v176: 직위는 승급 시험으로 (g_ranktest.js)
+    case'sjoin':{const s=SECTS[x];if(!s||joinBlock(s)||!(panel==='npc'&&panelArg&&(panelArg.hq===s.id||panelArg.jigak===s.id)))return true;P.sect=s.id;P.srank=P.srank||{};P.srank[s.id]=P.srank[s.id]||0;   // v176: 직위는 승급 시험으로 (g_ranktest.js)
       P.sectName=null;setTimeout(()=>log(`${s.n} ${rankName(s.id,0)}의 수련복을 입었습니다.`,'sys'),50);const k=startSet(s),got=giveStartSet(s);
       log(`${s.n}에 입문했습니다. 입문공으로 ${got.map(n=>`[${n}]`).join(' · ')}을(를) 받았습니다.`,'xp');showBanner(`${s.n} 입문`,`입문공 · ${k.art.n}`);
       feat(`${s.n}에 입문했다`);return true}

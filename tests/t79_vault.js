@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const small=Object.values(SECTS).find(x=>x.tier==='small');return{inc0,inc,v0,v1,v2,cap:inc2*20,small:vaultIncome(small),smallN:small.n,big:inc}});
   ok(`화산파 금고: 해마다 ${v.inc0}→${v.inc}(인원 증가) · 처음 ${v.v0} → 1년 ${v.v1} → 상한 ${v.v2}/${v.cap} · ${v.smallN} ${v.small}`,v.inc0>=400&&v.v0===v.inc0*3&&v.v1===v.v0+v.inc&&v.v2===v.cap&&v.small<v.big);
   // 2. 장문인 전각 안에 금고 자리. 몰래 털기: 성공하면 30%, 같은 해엔 다시 못 턴다. 들키면 경비 4명·악업 +8
-  const st=await p.evaluate(()=>{regionJump('hq_hwasan',20,20);const hid=REGION().halls[0].id;regionJump(hid,7,6);const n=nodes.find(x=>x.t==='vault');const o={hid,node:!!n,label:n&&vaultLabel(n)};G.vault.hwasan=1000;G.vaultHit={};
+  const st=await p.evaluate(()=>{const hid=vaultHall(SECTS.hwasan);regionJump(hid,7,6);const n=nodes.find(x=>x.t==='vault');const o={hid,node:!!n,label:n&&vaultLabel(n)};G.vault.hwasan=1000;G.vaultHit={};
     const rr=Math.random;Math.random=()=>.99;const s0=P.silver;vaultOpen(n);o.took=P.silver-s0;o.left=G.vault.hwasan;vaultOpen(n);o.again=$('log').textContent.includes('삼엄');
     G.vaultHit={};Math.random=()=>0;const e0=P.evil;vaultOpen(n);Math.random=rr;o.guards=mobs.filter(m=>m.guard==='hwasan').length;o.angry=mobs.filter(m=>m.guard==='hwasan').every(m=>m.angry&&mobFoeP(m));o.evil=P.evil-e0;o.silver2=P.silver-s0;mobs=[];return o});
   ok(`금고 자리 ${st.node} (${st.hid}, ${st.label}): 성공 은자 +${st.took} 남은 ${st.left} 같은 해 ${st.again} · 발각: 경비 ${st.guards}명 적대 ${st.angry} 악업 +${st.evil} 은자 그대로 ${st.silver2===st.took}`,
