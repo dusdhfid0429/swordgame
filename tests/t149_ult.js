@@ -13,7 +13,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const o={cast:!!P.ultCast,spent:q-P.qi,hp:e.maxHp-e.hp,co:c&&c.classList.contains('on')&&c.classList.contains('ult'),fx:!!(c&&c._co),x:P.x};
     P.fx=1;keys.arrowright=true;update(.3);keys.arrowright=false;o.moved=Math.abs(P.x-o.x);o.mid=e.maxHp-e.hp;o.form=useForm(0);return o});
   ok(`누르자 연출 시작 ${r.cast}, 내공 ${r.spent} 소모, 그 사이 적 피해 ${r.mid}, 제자리 ${r.moved.toFixed(3)}, 초식 막힘 ${r.form}, 속성 캔버스 ${r.fx}`,r.cast&&r.spent>0&&r.hp===0&&r.mid===0&&r.moved<.01&&r.form===false&&r.co&&r.fx);
-  await p.waitForTimeout(500);await p.screenshot({path:require('path').resolve(__dirname,'shots/t148_cast.png')});
+  await p.waitForTimeout(500);await p.screenshot({path:require('path').resolve(__dirname,'shots/t149_cast.png')});
   r=await p.evaluate(()=>{const e=P.target;for(let t=0;t<ULTC.cast+.3;t+=.05)update(.05);return{cast:!!P.ultCast,dm:e.maxHp-e.hp}});
   ok(`연출이 끝나고 무공이 나감 (피해 ${r.dm})`,!r.cast&&r.dm>0);
   // 2. 약한 공격은 끊지 못한다
@@ -22,7 +22,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 3. 강한 공격(최대 생명 10% 이상)은 끊는다: 내공은 돌려받지 못하고 무공도 안 나간다, 글자가 깨진다
   r=await p.evaluate(()=>{const e=P.target;const q=P.qi;const R=Math.random;Math.random=()=>.99;hurtP(P.maxHp*.15/(1-guard()),{atk:1e9,hm:-999});Math.random=R;const c=document.getElementById('callout');
     const u0=P.ultT;const o={cast:!!P.ultCast,qi:q-P.qi,broke:c.classList.contains('broke'),ucd:P.ucd};for(let t=0;t<2;t+=.05)update(.05);o.dm=P.ultT===u0?0:1;return o});
-  await p.waitForTimeout(120);await p.screenshot({path:require('path').resolve(__dirname,'shots/t148_break.png')});
+  await p.waitForTimeout(120);await p.screenshot({path:require('path').resolve(__dirname,'shots/t149_break.png')});
   ok(`강타에 끊김 ${!r.cast}, 글자 깨짐 ${r.broke}, 내공 그대로 잃음(돌려받음 ${-r.qi}), 쿨타임 ${r.ucd.toFixed(1)}, 필살 나감 ${r.dm}`,!r.cast&&r.broke&&r.qi===0&&r.ucd>0&&r.dm===0);
   // 4. 큰 수(평타의 1.6배 내려찍기)는 피해가 적어도 끊는다
   r=await p.evaluate(()=>{prep();ultimate();const R=Math.random;Math.random=()=>.99;hurtP(16,{atk:10,hm:-999});Math.random=R;return{cast:!!P.ultCast}});

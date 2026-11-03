@@ -1301,6 +1301,9 @@
    },
    "weak": 0.5,
    "masterLoss": 0.1,
+   "floor": 1,
+   "scaleMin": 0.1,
+   "last": {"n": 5, "elite": 2, "hp": 1.3},
    "masterBack": 3,
    "masterHp": 3,
    "masterAtk": 1.3
