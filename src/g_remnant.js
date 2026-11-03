@@ -218,3 +218,19 @@ hook('npcDlg',c=>{if(c.html==null&&c.n.slib&&SECTS[c.n.slib])c.html=sectLibDlg(S
 // 살아 있는 문파의 장경각 서가 (폐허가 아니면): 제자는 열람한다
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||R.dead||!R.hall||!P)return;const s=ruinSect(R);if(!s||sectGone(s.id)||libHall(s)!==id)return;const p=tnSpot(3,3)||vaultSpot();if(!p)return;
   nodes.push({t:'lib',sect:s.id,live:1,x:p.x,y:p.y,cd:0})});
+
+// ---- v231 멸문의 순간 (사용자 2026-11-03): 본산에 있으면 최후의 결사대가 달려들고, 어디서든 최후의 전인이 비밀통로로 빠져나갔다는 알림.
+// 자리를 비운 사이 멸문했으면 처음 폐허에 들어설 때 무슨 일이 있었는지 알린다
+function lastStand(s){const L=STORY.POP.last||{n:5,elite:2,hp:1.3},fac=alFac(s.al);let c=null;
+  for(let t=0;t<200&&!c;t++){const a=Math.random()*6.28,d=6+Math.random()*4,x=P.x+Math.cos(a)*d,y=P.y+Math.sin(a)*d;if(x>3&&y>3&&x<N-3&&y<NH-3&&walkAt(x,y))c={x,y}}if(!c)return 0;
+  let k=0;for(let i=0;i<L.n;i++){let p=null;for(let t=0;t<30&&!p;t++){const x=c.x+(Math.random()-.5)*4,y=c.y+(Math.random()-.5)*4;if(walkAt(x,y))p={x,y}}if(!p)p=c;
+    const e=mkFac(fac,i<L.elite?1:0,p.x,p.y,s.id);e.fixed='last';e.last=s.id;e.angry=1;e.home={x:p.x,y:p.y};e.maxHp=Math.round(e.maxHp*L.hp);e.hp=e.maxHp;e.name=i===0?`${s.n} 결사대주`:`${s.n} 결사대`;mobs.push(e);k++}
+  return k}
+hook('sectFall',sid=>{const s=SECTS[sid];if(!s||!P)return;const here=REG&&ruinSect(REGIONS[REG])===s;
+  if(here){if(G.fall&&G.fall[sid])G.fall[sid].seen=1;const k=lastStand(s);if(k){addText(P.x,P.y-1,'최후의 결사대','#ff7a5a');log(`${s.n}의 남은 무인 ${k}명이 최후의 결사대를 이뤄 마지막 칼을 들고 달려든다!`,'dmg');showBanner(`${s.n} 최후의 결사대`,'문파의 마지막 싸움')}}
+  else showBanner(`${s.n} 멸문`,G.fall&&G.fall[sid]&&G.fall[sid].why||'본산이 무너졌다');
+  remnSync();const r=G.remn&&G.remn[sid];if(!r)return;r.hint=remnProv(r);
+  log(`${here?'결사대가 시간을 버는 사이 ':''}${s.n}의 최후의 전인이 문파의 절기를 품고 문주전 뒤 비밀통로로 빠져나갔다.${r.hint?` ${r.hint} 쪽으로 숨어든 듯하다.`:''}`,'dmg')});
+hook('kill',e=>{if(!e.last||mobs.some(m=>m!==e&&m.last===e.last&&m.hp>0))return;const s=SECTS[e.last];if(s)log(`${s.n}의 최후의 결사대가 모두 쓰러졌다. ${s.n}의 본산에는 이제 아무도 남지 않았다.`,'xp')});
+hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.dead||!P||!G.fall)return;const s=ruinSect(R),f=s&&G.fall[s.id];if(!f||f.seen)return;f.seen=1;
+  log(`자리를 비운 사이 ${s.n}이(가) 멸문했다${f.why?` (${f.why})`:''}. 남은 무인들은 최후의 결사대를 이뤄 끝까지 싸우다 쓰러졌고, 최후의 전인은 비밀통로로 빠져나갔다고 한다.`,'info');showBanner(`${s.n} 폐허`,'멸문한 본산')});

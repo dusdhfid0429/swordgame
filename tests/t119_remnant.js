@@ -9,8 +9,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const tick=()=>p.evaluate(()=>runHooks('tick',.05));
 
   // 1. 단리세가 멸문 → 잔당이 들판·산에 숨는다
-  const a=await p.evaluate(()=>{mobs=[];popLose('danri',99999,'시험');remnSync();const r=G.remn.danri,R=REGIONS[r.reg];
-    return{reg:r.reg,left:r.left,lead:r.lead,known:r.known,wild:/^(pv_|lm_)/.test(r.reg)&&!R.city&&!R.hq,card:/단리세가/.test(remnCard())&&/모른다/.test(remnCard())}});
+  const a=await p.evaluate(()=>{mobs=[];G.mdead.danri={y:Math.floor(G.cal),life:P.lifeNo};popLose('danri',99999,'시험');remnSync();const r=G.remn.danri,R=REGIONS[r.reg];
+    return{reg:r.reg,left:r.left,lead:r.lead,known:r.known,wild:/^(pv_|lm_)/.test(r.reg)&&!R.city&&!R.hq,card:/단리세가/.test(remnCard())&&/어딘가로 숨었다|모른다/.test(remnCard())}});
   ok(`멸문 → 잔당 ${a.left}명(전인 ${a.lead}) ${a.reg} 들판·산 ${a.wild} · 숨은 곳 모름 ${a.known===0} · 임무창 칸 ${a.card}`,a.left===4&&a.lead===1&&a.wild&&a.known===0&&a.card);
 
   // 2. 장경각(서재) 서가: 직접 전수를 뺀 무공을 모두 익힌다

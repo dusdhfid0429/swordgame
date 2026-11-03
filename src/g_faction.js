@@ -37,7 +37,7 @@ function facPal(fac,cls,elite,sid){
   return k}
 // 무인 하나를 만든다. sid를 주면 그 문파 제자, 없으면 그 세력의 아무 문파
 function mkFac(fac,elite,x,y,sid){
-  const s=SECTS[sid]||pick(Object.values(SECTS).filter(q=>alFac(q.al)===fac)),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
+  const L=Object.values(SECTS).filter(q=>alFac(q.al)===fac),Lv=typeof sectPop==='function'?L.filter(q=>sectPop(q.id)>0):L,s=SECTS[sid]||pick(Lv.length?Lv:L),a=pick(s.arts.filter(q=>!q.hi)),cls=a.cls,kind=FAC_KIND[fac][elite?1:0];
   const e=mkMob(kind,x,y),bow=rangedCls(cls);
   const sel=typeof simSectEl==='function'?simSectEl(s.id):a.el;   // 무인의 속성은 문파 심법의 것 (천마신교 = 마, v101)
   e.d={...e.d,el:sel,ranged:bow?1:0};e.el=sel;e.art=a.id;e.reach=bow?(cls==='암'?4:5):cls==='창'?1.8:cls==='봉'?1.6:1.3;

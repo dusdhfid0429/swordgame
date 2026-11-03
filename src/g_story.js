@@ -16,7 +16,7 @@ const lastEv=()=>{const l=curEv();return l[l.length-1]};
 const warAge=()=>actOf()===2?S2.T.war:ST.war;
 const warLbl=()=>actOf()===2?'제2차 천하대전':'천하대전';
 const wClamp=()=>{const w=wld();for(const k in w.pow)w.pow[k]=clamp(Math.round(w.pow[k]*10)/10,0,100);for(const k in w.rel)w.rel[k]=clamp(Math.round(w.rel[k]*10)/10,-100,100)};
-function powAdd(f,v){const w=wld();if(w.pow[f]==null)return;if(typeof popScale==='function'){popScale(f,1+v/Math.max(10,w.pow[f]));return}w.pow[f]+=v;wClamp()}
+function powAdd(f,v){const w=wld();if(w.pow[f]==null)return;if(typeof popScale==='function'){popScale(f,Math.max(STORY.POP.scaleMin||.1,1+v/Math.max(10,w.pow[f])));return}w.pow[f]+=v;wClamp()}   // v231: 힘이 10 밑일 때 -10을 맞아도 세력 전체가 한꺼번에 0이 되지 않게
 function relAdd(k,v){const w=wld();if(w.rel[k]==null)return;w.rel[k]+=v;wClamp()}
 // 플레이어 편의 세력 (문파 없으면 타고난 성향). 관군은 금군 제자
 const myFac=()=>pfac();
