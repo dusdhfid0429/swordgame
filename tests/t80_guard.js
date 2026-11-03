@@ -24,9 +24,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     G.pop.hwasan=0;popSync();regionJump('hq_hwasan_gate',20,24);r.dead=mobs.filter(m=>m.fixed).length;G.pop.hwasan=popBase(SECTS.hwasan);popSync();return r});
   ok(`점령: 점령군 ${o.occ}명 (${o.fac}, ${o.nm}) · 폐허 ${o.dead}명`,o.occ>=6&&o.fac==='마'&&/점령군/.test(o.nm)&&o.dead===0);
   // 5. 결전장: 내 편 16 · 적 20(고수 5) + 적장. 10초마다 양쪽 3명 증원(상한까지), 적장이 죽으면 멈춘다
-  const w=await p.evaluate(()=>{for(const e of STORY.EV)P.story.pick[e.id]=e.ch.length-1;G.W.rel.정사=30;setPow('마',50);P.age=26;lastYear=25;update(.1);closePanels();act('wargo');const r={reg:REG,ally:mobs.filter(m=>m.warAlly).length,foe:mobs.filter(m=>m.raid&&!m.warChief).length,elite:mobs.filter(m=>m.raid&&!m.warChief&&m.d.elite).length};
-    for(const m of mobs)if(m.raid&&!m.warChief&&Math.random()<.5)m.hp=0;mobs=mobs.filter(m=>m.hp>0);const f0=mobs.filter(m=>m.raid&&!m.warChief).length;for(let i=0;i<105;i++)runHooks('tick',.1);r.f0=f0;r.f1=mobs.filter(m=>m.raid&&!m.warChief).length;r.waves=G.war.cur.waves;
-    G.war.cur.done=true;for(let i=0;i<105;i++)runHooks('tick',.1);r.f2=mobs.filter(m=>m.raid&&!m.warChief).length;r.total=mobs.length;return r});
+  const w=await p.evaluate(()=>{for(const e of STORY.EV)P.story.pick[e.id]=e.ch.length-1;G.W.rel.정사=30;setPow('마',50);P.age=26;lastYear=25;update(.1);closePanels();act('wargo');const r={reg:REG,ally:mobs.filter(m=>m.warAlly&&!m.hgId).length,foe:mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId).length,elite:mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId&&m.d.elite).length};
+    for(const m of mobs)if(m.raid&&!m.warChief&&Math.random()<.5)m.hp=0;mobs=mobs.filter(m=>m.hp>0);const f0=mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId).length;for(let i=0;i<105;i++)runHooks('tick',.1);r.f0=f0;r.f1=mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId).length;r.waves=G.war.cur.waves;
+    G.war.cur.done=true;for(let i=0;i<105;i++)runHooks('tick',.1);r.f2=mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId).length;r.total=mobs.filter(m=>!m.hgId).length;return r});
   ok(`결전장(${w.reg}): 내 편 ${w.ally} 적 ${w.foe}(고수 ${w.elite}) · 적 ${w.f0}→10초 뒤 ${w.f1} (파도 ${w.waves}) · 적장 격파 뒤 ${w.f2} · 전체 ${w.total}명`,w.reg==='war_field'&&w.ally===16&&w.foe===20&&w.elite===5&&w.f1===w.f0+3&&w.waves===1&&w.f2===w.f1);
   if(errs.length){console.log('ERRORS');errs.forEach(e=>console.log(' ',e))}
   await b.close();process.exit(errs.length?1:0)})();

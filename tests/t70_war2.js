@@ -8,7 +8,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.evaluate(()=>localStorage.clear());await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="cls:검"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(300);
   // 1. 정사연합 대 마교 1차 결전: 정세 창에 '출전' → 결전장. 내 편 5(끝은 고수), 적 8 + 적장, 출입구는 떠나온 곳으로
   const a=await p.evaluate(()=>{for(const e of STORY.EV)P.story.pick[e.id]=2;G.W.rel.정사=30;setPow('마',50);P.age=26;lastYear=25;update(.1);closePanels();openPanel('story');const bt=document.querySelector('[data-act="wargo"]');const o={btn:!!bt&&!bt.disabled,from:REG};
-    act('wargo');o.reg=REG;const al=mobs.filter(m=>m.warAlly),fo=mobs.filter(m=>m.raid&&!m.warChief),cf=mobs.find(m=>m.warChief);o.ally=al.length;o.allyFac=[...new Set(al.map(m=>m.d.fac))].join('·');o.allyPeace=al.every(m=>peaceful(m));
+    act('wargo');o.reg=REG;const al=mobs.filter(m=>m.warAlly&&!m.hgId),fo=mobs.filter(m=>m.raid&&!m.warChief&&!m.hgId),cf=mobs.find(m=>m.warChief);o.ally=al.length;o.allyFac=[...new Set(al.map(m=>m.d.fac))].join('·');o.allyPeace=al.every(m=>peaceful(m));
     o.foe=fo.length;o.foeFac=[...new Set(fo.map(m=>m.d.fac))].join('·');o.chief=cf&&cf.name;o.chiefHp=cf&&cf.maxHp;o.gate=REGION().gates[0].to;o.in=REGIONS.gaebong.gates.find(g=>g.to==='war_field');o.inNeed=o.in&&o.in.need();o.in=!!o.in;o.again=warFieldOk();o.zone=REGION().zone();return o});
   ok(`출전 단추 ${a.btn} → ${a.reg} (${a.zone}) · 내 편 ${a.ally}명(${a.allyFac}, 평화 ${a.allyPeace}) · 적 ${a.foe}명(${a.foeFac}) · 적장 "${a.chief}" 생명 ${a.chiefHp} · 출입구 → ${a.gate} (개봉 쪽 출입구 ${a.in}, 열림 ${a.inNeed===null}) · 재출전 ${a.again}`,
     a.btn&&a.reg==='war_field'&&a.ally===16&&/정|사/.test(a.allyFac)&&a.allyPeace&&a.foe===20&&a.foeFac==='마'&&a.chief==='마교 대장'&&a.chiefHp>300&&a.gate==='gaebong'&&a.in&&a.inNeed===null&&!a.again);
@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`적장 격파 → 공 ${c.done} (${c.q}) 명성 +${c.fame} · 아군 표적 ${c.fight0} 교전 ${c.fight}`,c.done===true&&c.fame===15&&c.fight0>=4&&c.fight);
   // 3. 마교 탈락: 마교도가 마교 없는 구도를 맞으면 어부지리 임무(양쪽 고수 4명), 결전장에서는 모두가 적. 끝내면 마교 +3
   const s=await p.evaluate(()=>{warEnd(true);P.story.flag.warDone=false;G.wars=[];P.quests=[];P.sect='cheonma';P.sims={N_cheonma_1:1};P.sim='N_cheonma_1';P.mtot={cheonma:100};G.W.rel.정사=-30;G.W.rel.사마=-30;setPow('마',10);setPow('사',50);warStart();const o={plan:G.war.plan.n,me:mySide()};
-    const q=P.quests.find(q=>q.sneak);o.q=q&&q.n;o.mob=q&&q.mob.join('·');o.ok=warFieldOk();regionJump('gaebong',60,60);act('wargo');o.reg=REG;const fo=mobs.filter(m=>m.raid);o.foes=[...new Set(fo.map(m=>m.d.fac))].sort().join('·');o.ally=mobs.filter(m=>m.warAlly).length;o.hostile=fo.every(m=>mobFoeP(m));
+    const q=P.quests.find(q=>q.sneak);o.q=q&&q.n;o.mob=q&&q.mob.join('·');o.ok=warFieldOk();regionJump('gaebong',60,60);act('wargo');o.reg=REG;const fo=mobs.filter(m=>m.raid&&!m.hgId);o.foes=[...new Set(fo.map(m=>m.d.fac))].sort().join('·');o.ally=mobs.filter(m=>m.warAlly&&!m.hgId).length;o.hostile=fo.every(m=>mobFoeP(m));
     const pw=G.W.pow.마;if(q){q.have=q.cnt;closePanels();openPanel('story');const bt=document.querySelector('[data-act^="qdone:"]');act(bt.dataset.act)}o.pow=Math.round((G.W.pow.마-pw)*10)/10;return o});
   ok(`마교 탈락 (${s.plan}, 내 편 ${s.me}): 임무 [${s.q}] ${s.mob} · 출전 ${s.ok} → ${s.reg} 적 ${s.foes} 아군 ${s.ally} 모두 적 ${s.hostile} · 보고 → 마교 +${s.pow}`,
     !/마교/.test(s.plan)&&s.me===-1&&/어부지리/.test(s.q)&&s.ok&&s.reg==='war_field'&&s.foes==='사·정'&&s.ally===0&&s.hostile&&s.pow>0);
