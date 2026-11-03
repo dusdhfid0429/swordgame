@@ -16,10 +16,16 @@ const sectQ=s=>Math.min(1,(s.arts.filter(a=>a.hi).length*.4+s.arts.length*.1+(s.
 function facStrength(f,base){let v=0;for(const s of Object.values(SECTS))if(alFac(s.al)===f)v+=(base?popBase(s):sectPop(s.id)*(1+sectUp(s)))*(1+sectQ(s));return v}
 function popSync(){popInit();const w=G.W;if(!w)return;for(const f of FAC4){const b=facStrength(f,true);w.pow[f]=b?clamp(Math.round(STORY.INIT.pow[f]*facStrength(f)/b*10)/10,0,100):0}}
 // 한 세력의 문파 인원을 비율로 늘리거나 줄인다 (사건·전쟁의 효과)
-function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)G.pop[s.id]=Math.max(0,Math.round(G.pop[s.id]*m*10)/10);popSync()}
-function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;const was=G.pop[sid];G.pop[sid]=Math.max(0,Math.round((was-n)*10)/10);popSync();
-  if(was>0&&G.pop[sid]<=0){log(`${SECTS[sid].n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)feat(`${SECTS[sid].n}이(가) 멸문하는 것을 보았다`)}
-  else{const b=popBase(SECTS[sid]);if(Math.floor(was/b*10)!==Math.floor(G.pop[sid]/b*10))log(`${SECTS[sid].n} 인원 ${Math.round(G.pop[sid])}명 (기준의 ${Math.round(G.pop[sid]/b*100)}%).`,'info')}}   // v112: 10%씩 줄 때마다 알린다
+// v231 (사용자 2026-11-03 "장문인을 죽이지 않았는데 개방이 멸문했어"): 장문인이 살아 있으면 인원은 POP.floor 밑으로 내려가지 않는다(존망의 기로).
+// 장문인을 쓰러뜨린 뒤(G.mdead) 남은 무인을 베어야 0이 되어 멸문한다. 멸문은 어느 길로든 popSet 한 곳에서 알리고 'sectFall' 훅을 부른다
+const popFloor=sid=>G.pop[sid]>0&&!(G.mdead&&G.mdead[sid])&&!sectGone(sid)?(POP.floor||0):0;
+function popSet(sid,v,why){const s=SECTS[sid],was=G.pop[sid]||0;if(!s||!(was>0))return;const fl=popFloor(sid);let n=Math.max(0,Math.round(v*10)/10);if(n<fl)n=Math.min(was,fl);G.pop[sid]=n;
+  if(n<=0){log(`${s.n}이(가) 멸문했다${why?` (${why})`:''}. 본산은 폐허가 된다.`,'dmg');if(P)feat(`${s.n}이(가) 멸문하는 것을 보았다`);(G.fall=G.fall||{})[sid]={y:Math.floor(G.cal||0),why:why||''};runHooks('sectFall',sid,why)}
+  else if(fl>0&&n<=fl&&was>fl){log(`${s.n}이(가) 존망의 기로에 섰다. 남은 무인이 거의 없지만 ${masterTitle(s)}이 살아 있는 한 문파는 무너지지 않는다.`,'dmg');if(P)showBanner(`${s.n} 존망의 기로`,`${masterTitle(s)}을 쓰러뜨려야 멸문한다`)}
+  return n}
+function popScale(f,m){popInit();for(const s of Object.values(SECTS))if(alFac(s.al)===f)popSet(s.id,G.pop[s.id]*m,'');popSync()}
+function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;const was=G.pop[sid],now=popSet(sid,was-n,why);popSync();
+  if(now>0&&now<was){const b=popBase(SECTS[sid]);if(Math.floor(was/b*10)!==Math.floor(now/b*10))log(`${SECTS[sid].n} 인원 ${Math.round(now)}명 (기준의 ${Math.round(now/b*100)}%).`,'info')}}   // v112: 10%씩 줄 때마다 알린다
 // 해마다: 자연 증가. 봉문 중이면 수련만 하니 더 늘고, 점령당했으면 늘지 않는다. 멸문(0)은 되살아나지 않는다
 hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
   for(const s of Object.values(SECTS)){const p=G.pop[s.id];if(!(p>0))continue;if(G.occ&&G.occ[s.id])continue;if(G.mdead&&G.mdead[s.id])continue;   // v112: 장문인이 죽어 있으면 제자를 받지 못한다
@@ -30,9 +36,12 @@ hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
 const killLoss=e=>{const t=POP.killRank||[POP.kill],n=t[Math.min(t.length-1,Math.max(0,e.rank||0))]||POP.kill,R=REG&&REGIONS[REG];return n*(R&&R.hq===e.sect?POP.hqMul||1:1)};
 hook('kill',e=>{if(e.sect&&e.d&&e.d.fac)popLose(e.sect,killLoss(e),'')});
 hook('mobKilled',t=>{if(t.sect&&t.d&&t.d.fac)popLose(t.sect,POP.npcKill,'')});
-hook('gLoaded',()=>{popInit();popSync()});
+hook('gLoaded',()=>{popInit();popRevive();popSync()});
+// v231: 예전 규칙에선 장문인이 살아 있어도 인원 0이면 멸문했다. 장문인을 쓰러뜨린 적 없는(G.mdead 없음) 멸문 문파는 존망의 기로(POP.floor)로 되살린다. 절멸(G.gone)은 그대로
+function popRevive(){if(!(POP.floor>0)||G.popRev231)return;G.popRev231=1;const back=[];for(const s of Object.values(SECTS))if(!(G.pop[s.id]>0)&&!(G.mdead&&G.mdead[s.id])&&!sectGone(s.id)){G.pop[s.id]=POP.floor;if(G.remn)delete G.remn[s.id];back.push(s.n)}
+  if(back.length)setTimeout(()=>log(`${back.join('·')}은(는) ${back.length>1?'모두 ':''}장문인이 살아 있어 무너지지 않았다. 남은 무인이 거의 없는 존망의 기로에서 다시 버틴다.`,'info'),0)}
 // 결전·대전에서 진 편
-function popWarLoss(facs,rate){popInit();for(const s of Object.values(SECTS))if(facs.includes(alFac(s.al))&&G.pop[s.id]>0)G.pop[s.id]=Math.round(G.pop[s.id]*(1-rate)*10)/10;popSync()}
+function popWarLoss(facs,rate){popInit();for(const s of Object.values(SECTS))if(facs.includes(alFac(s.al))&&G.pop[s.id]>0)popSet(s.id,G.pop[s.id]*(1-rate),'');popSync()}
 // ---- 무인의 직위(=경지) 분포: 질이 높을수록 윗직위가 많고, 인원이 바닥나면 고수가 드물다 ----
 function popRank(s,elite){const q=Math.max(0,sectQ(s)-(G.mdead&&G.mdead[s.id]?.3:0)),f=Math.min(1,sectPop(s.id)/popBase(s)),r=Math.random();
   if(!elite)return r<.3+.3*q?1:0;

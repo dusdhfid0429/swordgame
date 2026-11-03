@@ -45,7 +45,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const m0=P.mats.폭우이화침||0;act('abuy:dang:폭우이화침');o.noBuy=(P.mats.폭우이화침||0)===m0;
     P.sect='dang';const s0=P.silver;act('abuy:dang:폭우이화침');o.buy=[(P.mats.폭우이화침||0)-m0,s0-P.silver];
     // 12. 하오문을 멸문시키면 설계도첩, 당문 대장장이에게 전하면 하오문 비전 암기를 판다
-    popInit();G.pop.haomun=1;const e={sect:'haomun',d:{fac:1},rank:0};runHooks('kill',e);const bp=P.bag.find(i=>i.slot==='bp');o.bp=[G.pop.haomun,bp&&bp.name,bp&&bpDesc(bp).includes('사천당가')];
+    popInit();G.pop.haomun=1;G.mdead.haomun={y:Math.floor(G.cal),life:P.lifeNo};const e={sect:'haomun',d:{fac:1},rank:0};runHooks('kill',e);const bp=P.bag.find(i=>i.slot==='bp');o.bp=[G.pop.haomun,bp&&bp.name,bp&&bpDesc(bp).includes('사천당가')];
     runHooks('kill',e);o.once=P.bag.filter(i=>i.slot==='bp').length;
     h=asmithDlg(n);o.give=h.includes('bpgive:');act(`bpgive:${bp.id}:dang`);o.given=[G.bpAt.dang.length,P.bag.includes(bp)];
     P.sect=null;const y0=P.mats.유성추||0;act('abuy:dang:유성추');o.bpBuy=(P.mats.유성추||0)-y0;
