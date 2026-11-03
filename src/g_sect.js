@@ -167,6 +167,7 @@ function sectDetail(s,hq){
 }
 // 사부의 가르침(숙련만 닿으면 언제든, 사용자 2026-10-23 한 해 한 번 제한 없앰)과 맹 공용 비급, 자기 문파 세우기는 기존 규칙 그대로
 function teachHtml(){
+  {const a=art(),M=typeof sbPathArt==='function'&&sbPathArt(a.id);if(M)return `<div class="row2"><span class="note">[${esc(a.n)}]은(는) 사부 <b>${esc(M.n)}</b>의 무공이라 초식도 ${sbWhere(SECTS[P.sabu.sid])}의 사부에게 직접 받는다.</span>${B('teach','가르침 청하기',{d:true})}</div>`}   // v237b
   const a=art(),s=A(a.id),fi=artSideOk(a)?a.forms.findIndex((f,i)=>!s.f[i]&&s.p>=f.req):-1,kb=fi>=0&&typeof kinBlock==='function'?kinBlock(a,fi):'',can=fi>=0&&!kb;
   return `<div class="row2"><span class="note">${kb?`[${a.forms[fi].n}]은(는) ${kb} 받는다`:fi>=0?`사부에게 [${a.forms[fi].n}]을(를) 전수받을 수 있다`:'지금 펼치는 무공에서 전수받을 초식이 없다'}</span>${B('teach','가르침 청하기',{d:!can})}</div>`}
 function ownSectHtml(alId){

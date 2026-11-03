@@ -22,15 +22,17 @@ function vaultOpen(n){const s=SECTS[n.sect];if(!s)return;vaultInit();const v=Mat
   const take=Math.max(1,Math.round(v*ST.frac));if(v<=0){log('금고가 비어 있다.','info');return}P.silver+=take;G.vault[s.id]=v-take;addText(P.x,P.y,`은자 ${take}`,'#e8c66e');
   log(`${s.n}의 금고에서 은자 ${take}을(를) 몰래 챙겼다. (들킬 확률 ${Math.round(det*100)}%)`,'xp');feat(`${s.n} 금고에 몰래 들어 은자 ${take}을(를) 가져갔다`)}
 // ---- 전각 NPC 처치와 순환 ----
-const npcRole=n=>!n?null:n.elder?'elder':n.steward?'steward':n.disc?'disc':n.id&&n.id.startsWith('dang_')?'dang':null;
-const npcSect=n=>n.elder||n.steward||n.disc||(n.id&&n.id.startsWith('dang_')?'cheonma':null);
+const npcRole=n=>!n?null:n.elder?'elder':n.steward?'steward':n.disc?'disc':n.id&&n.id.startsWith('dang_')?'dang':n.sfMaster!=null&&n.sfSid?'sabu':n.sfHost?'host':null;   // v237c: 대연무장·장로원 사부와 대연무장 교두(g_sbfest.js)
+const npcSect=n=>n.elder||n.steward||n.disc||(n.id&&n.id.startsWith('dang_')?'cheonma':null)||n.sfSid||n.sfHost||null;
 const npcKey=n=>`${npcSect(n)}/${n.id}`;
 const npcDead=n=>{const r=npcRole(n);if(!r)return false;return !!(G.ndead&&G.ndead[npcKey(n)])};
 const npcCanOut=n=>!!n&&(!!n.hq||!!npcRole(n));
-function npcOut(n){if(!n||!forceAtk)return null;if(n.hq)return masterOut(n);const r=npcRole(n);if(!r)return null;const s=SECTS[npcSect(n)];if(!s||npcDead(n))return null;const key=npcKey(n);
+function npcOut(n){if(!n||!forceAtk)return null;if(n.hq)return masterOut(n);return npcFight(n)}
+// 고정 NPC를 싸우는 무인으로 세운다. quiet: 침입자를 막으러 나설 때(g_npcdef.js)는 '칼을 겨눴다' 알림 없이
+function npcFight(n,quiet){const r=npcRole(n);if(!r)return null;const s=SECTS[npcSect(n)];if(!s||npcDead(n))return null;const key=npcKey(n);
   const live=mobs.find(m=>m.npcKey===key&&m.hp>0);if(live)return live;const R=REGION(),c=VAULT.npc[r];(R._npcsO=R._npcsO||[]).push(n);R.npcs=R.npcs.filter(x=>x!==n);   // 맵을 나갔다 오면 npcSync 가 되돌린다
   const e=mkFac(alFac(s.al),c.rank>=2?1:0,n.x,n.y,s.id);e.rank=c.rank;e.realm=Math.min(4,c.rank);if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*c.hp);e.hp=e.maxHp;e.atk=Math.round(e.atk*c.atk);
-  e.npcKey=key;e.npcRole=r;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);refreshNPCF();log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
+  e.npcKey=key;e.npcRole=r;e.npcRef=n;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);refreshNPCF();if(!quiet)log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
 hook('kill',e=>{if(!e.npcKey)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name};
   P.fame+=c.fame;log(`${e.name}을(를) 쓰러뜨렸다. 명성 +${c.fame}. ${VAULT.revive}년 뒤 ${s?s.n:''}에 새 ${c.title}이(가) 선다.`,'xp');feat(`${e.name}을(를) 쓰러뜨렸다`)});
 // 공석인 자리는 맵에서 비우고(g_pop masterCheck 뒤에 돈다), 멸문 폐허(R.dead)는 g_ruin 이 이미 비웠다

@@ -8,8 +8,12 @@
       "elder":   {"rank": 4, "hp": 2.0, "atk": 1.2, "fame": 15, "title": "장로"},
       "steward": {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 8,  "title": "집사"},
       "dang":    {"rank": 3, "hp": 2.0, "atk": 1.2, "fame": 12, "title": "당주"},
-      "disc":    {"rank": 1, "hp": 1.0, "atk": 1.0, "fame": 3,  "title": "제자"}
+      "disc":    {"rank": 1, "hp": 1.0, "atk": 1.0, "fame": 3,  "title": "제자"},
+      "sabu":    {"rank": 4, "hp": 2.2, "atk": 1.25, "fame": 15, "title": "사부"},
+      "host":    {"rank": 2, "hp": 1.5, "atk": 1.0, "fame": 8,  "title": "교두"}
     },
+    "_DEF": "v237c 고정 NPC 방어 (사용자 2026-11-03): 문파에 침입한 적이 r칸 안에 오면 문주·장로·사부·교두가 싸우는 무인으로 나선다. 생명 retreat 아래면 물러나고, calm초 동안 적이 없으면 제자리로. g_npcdef.js",
+    "DEF": {"r": 8, "chase": 12, "calm": 4, "retreat": 0.25, "scan": 0.4},
     "revive": 3
   }
 }
