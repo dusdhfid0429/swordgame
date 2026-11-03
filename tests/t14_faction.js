@@ -31,7 +31,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const r5=await p.evaluate(()=>{mobs=[];const j=place('정',P.x+1.5,P.y),j2=place('정',P.x+3,P.y);const ev=P.evil;damage(j,5,0,0);return{angry:j.angry&&j2.angry,evil:P.evil-ev,foe:foes().includes(j)}});
   ok(`같은 편 무인을 치면 악업 +${r5.evil}, 그 무인과 주변 동도가 적이 된다`,r5.angry&&r5.evil>0&&r5.foe);
   // 6) 직위: 공적 누적으로 승급, 고급 초식 제한, 할인, 녹봉
-  const r6=await p.evaluate(()=>{mobs=[];P.sect='hwasan';P.merit={};P.mtot={};const h=SECTS.hwasan.arts.find(a=>a.hi);
+  const r6=await p.evaluate(()=>{mobs=[];P.sect='hwasan';P.merit={};P.mtot={};const h=SECTS.hwasan.arts.find(a=>a.hi);P.sabu={sid:'hwasan',coh:[],ord:['@'],st:'disc',m:0,off:-1,step:0,late:1,dj:1,djCool:0};   // v234: 장문절기 비급은 대제자만 (g_sabu.js)
+    
     const n0=rankName();addMerit('hwasan',60);const n1=rankName();P.merit.hwasan=999;P.bag=[];
     sectAct('mbuy',h.id,'2');const blocked=!P.bag.length;const c1=meritCost(h,2);
     addMerit('hwasan',130);const n2=rankName();const c2=meritCost(h,2);sectAct('mbuy',h.id,'2');const got=P.bag.length===1;

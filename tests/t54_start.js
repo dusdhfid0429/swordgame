@@ -41,7 +41,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 7. 가입: 화산파 본산 장문인 앞에서 가입하면 매화검법 첫 초식 + 매화보 + 암향표(v187 문파 고유, 중승) + 자하심법. 고급 무공은 안 받는다
   await p.evaluate(()=>{closePanels();P.gk={g_basic:1};P.gkcur='g_basic';P.bob={b_basic:1};P.bcur='b_basic';P.age=17;P.fame=0;P.evil=0;loadRegion('hq_hwasan');openNpc(hqNpc('hq_hwasan'))});await p.waitForTimeout(200);
   const t0=await p.evaluate(()=>$('wbody').textContent);
-  ok('가입 창에 입문공 세트 안내',t0.includes('입문공 세트')&&t0.includes('매화검법')&&t0.includes('매화보')&&t0.includes('암향표')&&t0.includes('자하심법')&&t0.includes('공적으로 받는다'));
+  ok('가입 창에 입문공 세트 안내',t0.includes('입문공 세트')&&t0.includes('매화검법')&&t0.includes('매화보')&&t0.includes('암향표')&&t0.includes('자하심법')&&t0.includes('대제자만 받는다'));   // v234: 장문절기는 대제자만 (g_sabu.js)
   await p.click('[data-act="sjoin:hwasan"]');await p.waitForTimeout(250);
   const j=await p.evaluate(()=>{const s=SECTS.hwasan,hi=s.arts.find(a=>a.hi),k=startSet(s);return{sect:P.sect,w:k.w,art:k.art.n,f:P.arts[k.art.id]&&P.arts[k.art.id].f.filter(Boolean).length,hi:!!P.arts[hi.id],bob:P.bob.B_hwasan_1,bcur:P.bcur,gg:P.gk.G_hwasan_1,gkcur:P.gkcur,sim:P.sim,known:simKnown('N_hwasan_1'),wpn:P.eq.weapon&&P.eq.weapon.cls}});
   ok(`화산파 가입: 주력 ${j.w} [${j.art}] 초식 ${j.f}개, 매화보 ${j.bob}, 암향표 ${j.gg}, 심법 ${j.sim}, 고급 무공 ${j.hi?'받음':'안 받음'}`,j.sect==='hwasan'&&j.w==='검'&&j.art==='매화검법'&&j.f===1&&!j.hi&&j.bob===1&&j.bcur==='B_hwasan_1'&&j.gg===1&&j.gkcur==='G_hwasan_1'&&j.sim==='N_hwasan_1'&&j.known&&j.wpn==='검');
