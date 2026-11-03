@@ -6,8 +6,12 @@
 // - 층마다 맵 한 장(g_tower.js towerAdd의 틀). 층 NPC는 SECTMAP.kinds[k].floors[층].npcs. 새 역할은 n.srole·n.ssid(g_vault npcRole)라 죽으면 공석·후임, 침공 땐 나선다(g_npcdef)
 // - 데이터 data/sectmap.json. 시범: SECTMAP.on 문파만(화산파). 나머지 문파는 예전 구성 그대로
 const SMAP=GD.SECTMAP;
-const smOn=s=>!!s&&SMAP.on.includes(s.id)&&!!SMAP.tiers[s.tier];
-const smName=(s,k)=>(SMAP.names[s.id]||{})[k]||SMAP.kinds[k].n;
+const smOn=s=>!!s&&!SMAP.skip.includes(s.id)&&!!SMAP.tiers[s.tier]&&!!REGIONS[hqId(s)]&&!!HQ_THEME[s.id];
+// 갈래: 불가(황토 지붕) · 개방 · 채 · 세가 · 그 밖(도가·검파)
+const smStyle=s=>(GD.SECT_STYLE[s.id]||{}).roof==='ochre'?'buddha':/방$/.test(s.n)?'beggar':/채$/.test(s.n)?'fort':/가$/.test(s.n)?'clan':'dao';
+function smName(s,k){const o=(SMAP.names[s.id]||{})[k];if(o)return o;if(k==='main'||k==='main2'){const h=typeof hallNames==='function'&&hallNames(s)[0];if(h&&HALLS[s.id])return h}
+  if(k==='guest'&&HALLS[s.id]&&!/장경|서재|서각/.test(HALLS[s.id][4]))return HALLS[s.id][4];if(k==='pav'&&HALLS[s.id])return HALLS[s.id][5];
+  return(SMAP.style[smStyle(s)]||{})[k]||SMAP.kinds[k].n}
 const smRank=r=>(GD.VAULT.npc[r]||{rank:1}).rank;
 function smNpc(s,f){const id=f.id||f.role,rk=smRank(f.role),n={id,n:`${s.n} ${f.t}`,pal:(typeof sectPal==='function'&&sectPal(s.id,Math.min(4,rk),'검',rk>=4?{master:1}:{}))||masterPal(s)};
   if(f.role==='elder')n.elder=s.id;else if(f.role==='steward')n.steward=s.id;else{n.srole=f.role;n.ssid=s.id}
@@ -36,9 +40,9 @@ function smBuild(s){const T=SMAP.tiers[s.tier].maps,hq=hqId(s),[th]=HQ_THEME[s.i
   const old=[hq,oid,bid].flatMap(smClear),keep={master:old.find(n=>n.hq===s.id)};
   for(const R of[REGIONS[oid],REGIONS[bid]])if(R)R.npcs=R.npcs.filter(n=>!n.elder&&!n.steward&&!n.disc);
   // 본산(장문 구역): genHQ 대신 genStage 틀로 — 마당·길·위로 나가는 길(topX)
-  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:1,topX:t.topX,yard:t.yard,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
+  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:t.topX!=null?1:0,topX:t.topX,yard:t.yard,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
     const st=GD.SECT_STYLE[s.id]||{};c.rc=st.roof;c.wc=st.wall;c.tree=st.tree;c.props=st.props;
-    R.stage=c;R.gen=()=>genStage(c);R.topX=t.topX;const nm=smName(s,'main'),[y0,y1]=[t.yard[1],t.yard[3]];
+    R.stage=c;R.gen=()=>genStage(c);if(t.topX!=null)R.topX=t.topX;const nm=smName(s,t.builds[0].k),[y0,y1]=[t.yard[1],t.yard[3]];
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=y0&&y<=y1?`${s.n} ${nm} 앞마당`:y>=31?`${hqPlace(s)} 어귀`:`${hqPlace(s)} 산길`;
     for(const g of R.gates)if(g.to===bid)g.x=t.topX+.5;const B=REGIONS[bid];if(B)for(const g of B.gates)if(g.to===hq)g.tx=t.topX+.5;
     c.builds.forEach((b,i)=>smHall(hq,i,b,s,keep))}
@@ -46,6 +50,8 @@ function smBuild(s){const T=SMAP.tiers[s.tier].maps,hq=hqId(s),[th]=HQ_THEME[s.i
   if(REGIONS[oid]&&T.outer){const R=REGIONS[oid],c=R.stage,t=T.outer;c.yard=t.yard;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;c.flags=t.flags;
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=t.yard[1]&&y<=t.yard[3]?`${s.n} 외원 마당`:`${hqPlace(s)} 외원`;
     c.builds.forEach((b,i)=>smHall(oid,i,b,s,keep));
+    // 암기 문파(g_amgi)의 암기방 대장장이: 창고 한 채를 암기방으로
+    const sm=old.find(n=>n.asmith===s.id);if(sm){const bi=c.builds.findIndex(b=>b.k==='store'&&!b.door),b=c.builds[bi];b.door=1;R.npcs.push(sm);hallAdd(oid,bi,b,sm.n.replace(/ 대장장이$/,''),['asmith'],{kit:'smith'})}
     // 대연무장 출입구를 본산 아래에서 외원 왼쪽으로 (대문파만, 사용자 결정)
     const A=REGIONS[ar];if(A&&t.arena){const H=REGIONS[hq],[ax,ay]=t.arena;H.gates=H.gates.filter(g=>g.to!==ar);R.gates.push({x:ax,y:ay,to:ar,tx:20.5,ty:36.2,label:'대연무장'});
       for(const g of A.gates)if(g.to===hq){g.to=oid;g.tx=ax+1.8;g.ty=ay;g.label=R.name}
