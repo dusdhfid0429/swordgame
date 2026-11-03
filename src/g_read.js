@@ -33,7 +33,7 @@ hook('tick',dt=>{if(!P)return;
   const on=time-rdLast<READ.fight.hold;rdFight=clamp(rdFight+(on?dt*4:-dt*1.5),0,1);
   rdDimA=1-(1-READ.dimName)*rdFight;
   if(typeof fClash!=='undefined'&&fClash)return;   // v226: 내공 대결 중에는 g_fight.js clashCam이 실제 시간으로 당긴다
-  const Z=READ.zoom,tz=on&&!rdNoZoom()?Z.fight:1;rdZ+=(tz-rdZ)*Math.min(1,dt*(tz>rdZ?Z.in:Z.out));if(Math.abs(rdZ-tz)<.005)rdZ=tz;rdZoomApply()});
+  const Z=READ.zoom,TZ=READ.train,tr=typeof trnOpen!=='undefined'&&trnOpen&&!RD_Q&&TZ,tz=tr?TZ.zoom:on&&!rdNoZoom()?Z.fight:1;rdZ+=(tz-rdZ)*Math.min(1,dt*(tr&&tz>rdZ?TZ.in:tz>rdZ?Z.in:Z.out));if(Math.abs(rdZ-tz)<.005)rdZ=tz;rdZoomApply()});
 // 당기지 않는 때: 결전장(넓게 봐야 한다)·비무 관전·말 위, 주소에 ?zoom=0
 const RD_Q=new URLSearchParams(location.search).get('zoom')==='0';
 const rdNoZoom=()=>RD_Q||REG==='war_field'||!!P.ride;
