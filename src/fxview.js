@@ -157,7 +157,7 @@ function colors(){const o=[['검기','140,205,255'],['검강','255,212,105']];fo
 // ---- 화면 ----
 const css=document.createElement('style');css.textContent=`
 body.fxv #app{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"l s r" "b b b"}
-body.fxv #stage{grid-area:s;min-width:0;min-height:0}#fxv{grid-area:l}#fxai{grid-area:r}#fxvbar{grid-area:b}body.fxv .panel,body.fxv #mini,body.fxv .zone,body.fxv #qtrack,body.fxv #chan,body.fxv [id^=t_],body.fxv #tui,body.fxv #tquick,body.fxv #tslots,body.fxv #joy,body.fxv .tjoy{display:none!important}
+body.fxv #stage{grid-area:s;min-width:0;min-height:0}#fxv{grid-area:l}#fxai{grid-area:r}#fxvbar{grid-area:b}body.fxv .panel,body.fxv #mini,body.fxv .zone,body.fxv #qtrack,body.fxv #chan,body.fxv [id^=t_],body.fxv #tui,body.fxv #tquick,body.fxv #tslots,body.fxv #joy,body.fxv .tjoy,body.fxv #tbar,body.fxv #tvit,body.fxv #tcur{display:none!important}
 #fxv{width:320px;display:flex;flex-direction:column;background:#15120f;border-right:1px solid #3a3128;color:#e9dfc8;font-size:13px;min-height:0}
 #fxv .x,#fxai .x{display:none}
 /* 아래 재생 막대 (영상 플레이어처럼): 지금 재생 중인 이름 + 조작 단추. 왼쪽 끝 '이펙트', 오른쪽 끝 'Claude 수정'이 양쪽 칸을 연다 */
