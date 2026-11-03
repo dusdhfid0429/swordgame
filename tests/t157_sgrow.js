@@ -21,8 +21,8 @@ const {chromium}=require('playwright');
     G.slt={eon:'big'};sgSync(true);const c={outer:!!REGIONS.hq_eon_outer,back:!!REGIONS.hq_eon_back,chain:REGIONS.hq_eon.chain.length,bad:check(s),vault:!!REGIONS[REGIONS.hq_eon.vaultAt]};return{a,c}});
   ok(`되돌림: 산문 ${r2.a.gate}, 규모 ${r2.a.lt}, 전각 ${r2.a.halls}, 막힘 ${r2.a.bad.join(',')||'없음'} · 대문파 저장: 외원 ${r2.c.outer} 후산 ${r2.c.back} 맵 ${r2.c.chain} 금고 ${r2.c.vault} 막힘 ${r2.c.bad.join(',')||'없음'}`,
     !r2.a.gate&&!r2.a.lt&&r2.a.halls===3&&!r2.a.bad.length&&r2.c.outer&&r2.c.back&&r2.c.chain===4&&r2.c.vault&&!r2.c.bad.length);
-  // 3. 후기지수: 세력마다 정원, 확률 배율 훅, 오르면 hugiUp
-  const r3=await p.evaluate(()=>{G.slt={};sgSync(true);const n={};for(const h of hgLive())n[h.fac]=(n[h.fac]||0)+1;const h=hgLive()[0],rk0=h.rk;let up=null;
+  // 3. 후기지수: 세력마다 정원 (기재는 정원 밖: 1번에서 언가 인원 150이라 5% 확률로 기재가 나올 수 있다), 확률 배율 훅, 오르면 hugiUp
+  const r3=await p.evaluate(()=>{G.slt={};sgSync(true);const n={};for(const h of hgLive())if(!h.prod)n[h.fac]=(n[h.fac]||0)+1;const h=hgLive().find(x=>!x.prod),rk0=h.rk;let up=null;
     hook("hugiMul",c=>{if(window._mul!=null)c.mul*=window._mul});hook('hugiUp',(x,f,t,c)=>{up=[x.id,f,t,c]});window._mul=0;let z=0;for(let i=0;i<50;i++)if(hugiRoll(h,'bm'))z++;
     window._mul=1e6;const ok1=hugiRoll(h,'bm');window._mul=null;return{n,zero:z,up,rk0,rk:h.rk,id:h.id}});
   ok(`후기지수 정원 ${JSON.stringify(r3.n)} · 배율 0이면 안 오름 (${r3.zero}) · 배율 크면 ${r3.rk0}→${r3.rk}, hugiUp ${JSON.stringify(r3.up)}`,
