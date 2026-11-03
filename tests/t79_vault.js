@@ -20,7 +20,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const d=await p.evaluate(()=>{G.pop.hwasan=0;popSync();const hid=REGION().hall?REG:REGION().halls[0].id;regionJump(hid,7,6);const n=nodes.find(x=>x.t==='vault');const s0=P.silver;const o={label:n&&vaultLabel(n),dead:REGION().dead};vaultOpen(n);o.took=P.silver-s0;o.left=G.vault.hwasan;G.pop.hwasan=popBase(SECTS.hwasan);popSync();return o});
   ok(`멸문 금고 (${d.label}, 폐허 ${d.dead}): 은자 +${d.took} 남은 ${d.left}`,d.label==='금고를 턴다'&&d.dead&&d.took===700&&d.left===0);
   // 4. 장로: 강제공격으로 치면 우두머리(직위 4, 생명 2배). 죽이면 공석·명성 +15·인원 감소. 맵을 다시 들어와도 공석. 3년 뒤 새 이름의 장로
-  const e=await p.evaluate(()=>{regionJump('hq_hwasan',20,20);const M=REGION();const hid=M.halls.map(h=>h.id).find(id=>REGIONS[id].npcs.some(n=>n.elder));regionJump(hid,7,6);const n=REGION().npcs.find(x=>x.elder);const o={hid,name:n.n};
+  const e=await p.evaluate(()=>{G.popPrev=null;   /* v237c: 쇠퇴한 적 문파면 장로도 몸소 나서므로(g_npcdef.js) 앞 단계가 줄인 인원 기록을 지운다 */regionJump('hq_hwasan',20,20);const M=REGION();const hid=M.halls.map(h=>h.id).find(id=>REGIONS[id].npcs.some(n=>n.elder));regionJump(hid,7,6);const n=REGION().npcs.find(x=>x.elder);const o={hid,name:n.n};
     o.noForce=npcOut(n);toggleForce(true);const m=npcOut(n);o.rank=m&&m.rank;o.key=m&&m.npcKey;o.hidden=!REGION().npcs.includes(n);o.hp=m&&m.maxHp;
     const f0=P.fame,p0=sectPop('hwasan');m.hp=1;damage(m,5,0,0,P);toggleForce(false);o.dead=!!(G.ndead&&G.ndead[o.key]);o.fame=P.fame-f0;o.pop=p0-sectPop('hwasan');
     regionJump('hq_hwasan',20,20);regionJump(hid,7,6);o.hidden2=!REGION().npcs.some(x=>x.elder);G.cal+=3;runHooks('newYear');o.back=REGION().npcs.find(x=>x.elder);o.newName=o.back&&o.back.n;o.cleared=!(G.ndead&&G.ndead[o.key]);return o});
