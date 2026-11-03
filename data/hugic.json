@@ -1,0 +1,32 @@
+{
+ "HGC": {
+  "_": "후기지수 경쟁 (v240, g_hugi2.js). 명단·경지 굴림은 HUGI(g_hugi.js). age: 이 나이까지 순위표에 오른다(동훈님 40). score: 점수 = 경지×rk + 비무 이김×win - 짐×lose + 용봉지회 우승×tour + 창안 art (+ 플레이어는 명성/fameDiv 최대 fameMax, 별호 byh). rel: 은원 값 -100~100, friend 이상 벗, enemy 이하 원수. meet: 들판(pv_)에서 한 해 perYear번까지, 들어서고 t초 뒤 p 확률. lethal: 숙적·원수, 적 세력이면 foeP 확률로 먼저 칼을 뽑는다(생사결 = 진짜 죽음). spur: 플레이어에게 진 후기지수는 이듬해 경지 확률 lose배, 두 경지 앞선 자 ahead배. fade: 세 경지 넘게 뒤처지면 해마다 이 확률로 자취를 감춘다. ch: 도전장(위아래 near 칸 안, 해마다 p, 반년 dur 안에 받지 않으면 명성 -refuseFame). tour: 용봉지회 gap 해마다, 8명, 우승 명성 fame. war: 결전장에 적 후기지수 foe명·내 편 ally명, 대전 중 해마다 전사 확률 die×(1-경지×.1)",
+  "age": 40,
+  "show": 10,
+  "score": {"rk": 100, "win": 10, "lose": 5, "tour": 40, "art": 50, "fameDiv": 10, "fameMax": 60, "byh": 20},
+  "rel": {"friend": 40, "enemy": -50, "win": 4, "lose": 2, "spare": 55, "crip": -70, "kill": -80, "sectKill": -60, "ally": 6},
+  "kh": 1.25, "ka": 1.0,
+  "duel": {"winFame": 15, "rkFame": 10, "ring": 9},
+  "meet": {"perYear": 2, "t": [25, 70], "p": 0.45, "foeP": 0.5},
+  "kill": {"fame": 30, "fac": -6, "sect": -25, "evil": 15},
+  "crip": {"fame": 20, "sect": -15, "evil": 8},
+  "spare": {"good": 10, "fame": 10},
+  "spur": {"lose": 1.8, "ahead": 0.7},
+  "fade": 0.25,
+  "ch": {"p": 0.35, "near": 2, "dur": 0.5, "refuseFame": 10},
+  "tour": {"gap": 3, "fame": 80, "n": 8, "names": ["8강", "4강", "결승"]},
+  "war": {"foe": 3, "ally": 2, "die": 0.12, "friendSheathe": 0.6},
+  "top": {"years": 3, "fame": 50, "title": "천하제일 후기지수"},
+  "rn": {"friend": "벗", "rival": "호적수", "nem": "숙적", "foe": "원수", "met": "안면", "none": "모르는 사이"},
+  "vs": {
+   "none": ["그대가 요즘 이름이 오르내리는 자인가.", "강호의 신진이라. 어디 솜씨 좀 봅시다."],
+   "met": ["또 만났군. 그새 얼마나 늘었는지 봅시다.", "인연이 질기오."],
+   "rival": ["이번엔 내가 이긴다.", "그대를 이기려고 한 해를 칼만 갈았소."],
+   "nem": ["더 말할 것 없다. 오늘 둘 중 하나는 여기 눕는다.", "길이 좁구나. 비켜설 생각은 없다."],
+   "foe": ["사문의 원수! 목을 내놓아라.", "네가 벤 이의 이름을 기억하느냐."],
+   "friend": ["반갑소, 벗이여. 손속에 사정은 두지 않겠소.", "이 한 판은 우정과 따로 칩시다."],
+   "tour": ["용봉지회의 이름을 걸고.", "천하의 눈이 보고 있소."],
+   "me": {"none": "가르침을 청하오.", "met": "덤비시오.", "rival": "언제든.", "nem": "바라던 바다.", "foe": "갚을 테면 갚아 봐라.", "friend": "사양 않겠소.", "tour": "한 수 배우겠소."}
+  }
+ }
+}
