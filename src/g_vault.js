@@ -33,8 +33,8 @@ function npcOut(n){if(!n||!forceAtk)return null;if(n.hq)return masterOut(n);retu
 function npcFight(n,quiet){const r=npcRole(n);if(!r)return null;const s=SECTS[npcSect(n)];if(!s||npcDead(n))return null;const key=npcKey(n);
   const live=mobs.find(m=>m.npcKey===key&&m.hp>0);if(live)return live;const R=REGION(),c=VAULT.npc[r];(R._npcsO=R._npcsO||[]).push(n);R.npcs=R.npcs.filter(x=>x!==n);   // 맵을 나갔다 오면 npcSync 가 되돌린다
   const e=mkFac(alFac(s.al),c.rank>=2?1:0,n.x,n.y,s.id);e.rank=c.rank;e.realm=Math.min(4,c.rank);if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*c.hp);e.hp=e.maxHp;e.atk=Math.round(e.atk*c.atk);
-  e.npcKey=key;e.npcRole=r;e.npcRef=n;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);refreshNPCF();if(!quiet)log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
-hook('kill',e=>{if(!e.npcKey)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name,r:e.npcRole};
+  e.npcKey=key;e.npcRole=r;e.npcRef=n;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};if(n.hugi!=null&&typeof hugiFight==="function")hugiFight(e,n);mobs.push(e);refreshNPCF();if(!quiet)log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
+hook('kill',e=>{if(!e.npcKey||e.npcRef&&e.npcRef.hugi!=null)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name,r:e.npcRole};
   P.fame+=c.fame;log(`${e.name}을(를) 쓰러뜨렸다. 명성 +${c.fame}. ${VAULT.revive}년 뒤 ${s?s.n:''}에 새 ${c.title}이(가) 선다.`,'xp');feat(`${e.name}을(를) 쓰러뜨렸다`)});
 // 공석인 자리는 맵에서 비우고(g_pop masterCheck 뒤에 돈다), 멸문 폐허(R.dead)는 g_ruin 이 이미 비웠다
 function npcSync(id){const R=REGIONS[id];if(!R||!R.npcs||R.dead)return;R._npcsD=R._npcsD||[];const back=[...R.npcs];for(const n of[...R._npcsD,...(R._npcsO||[])])if(!back.includes(n))back.push(n);R._npcsO=[];

@@ -1,0 +1,29 @@
+{
+ "HUGI": {
+  "_": "후기지수 명단 (v239, g_hugi.js). reps: 세력마다 살아 있는 후기지수 수. p: 해마다 사건별 경지 상승 확률 (경지 하나마다 rkDamp 배). retire 나이를 넘으면 후기지수에서 빠진다",
+  "reps": {"정": 3, "사": 2, "마": 2, "관": 2},
+  "age": [16, 22],
+  "retire": 40,
+  "rk0": [0, 2],
+  "cap": 7,
+  "p": {"gy": 0.05, "pg": 0.1, "bm": 0.12, "teach": 0.1},
+  "pgFail": 0.3,
+  "pgDie": 0.05,
+  "rkDamp": 0.8,
+  "tierW": {"big": 3, "one": 3, "mid": 2, "small": 1},
+  "hp": 1.25,
+  "atk": 1.1,
+  "npc": {"rank": 3, "hp": 1.6, "atk": 1.15, "fame": 20, "title": "후기지수"},
+  "prod": {"pop": 150, "p": 0.05, "gap": 10, "rk0": 1, "hwa": 5, "boost": 1.6, "age": [15, 18]},
+  "cause": {"gy": "기연을 얻어", "pg": "폐관 끝에", "bm": "비무에서 깨달음을 얻어", "teach": "사문의 가르침으로"}
+ },
+ "SGROW": {
+  "_": "문파 증축 (v239, g_sgrow.js). 다음 규모 = 인원 pop 이상 + 절정(jeol 등급 이상) 무공 n개 이상. build 해 동안 증축한 뒤 맵이 커진다. donMerit: 장경각에 절정 비급을 바친 공적",
+  "next": {"small": "mid", "mid": "big"},
+  "need": {"mid": {"pop": 150, "n": 1}, "big": {"pop": 300, "n": 2}},
+  "jeol": 3,
+  "build": 1,
+  "donMerit": 60,
+  "donFame": 25
+ }
+}

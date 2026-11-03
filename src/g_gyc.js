@@ -137,7 +137,7 @@ function gycCard(){if(!G.gyc)return'';const L=G.gyc.list.filter(c=>c.heard>=0);i
 // ---- 문파 무공 등록: 기연 무공 기증과 창안 무공 전수 ----
 const gycDonOwner=id=>{for(const[sid,l]of Object.entries(G.gyDon||{}))if(l.includes(id))return sid;return null};
 // 문파가 본래 가진 무공(등록된 것 빼고)의 최고 등급, 등록된 무공의 최고 등급, 오른 등급
-const sectTop0=s=>Math.max(0,...s.arts.filter(q=>!q.gyd&&!q.made).map(q=>artGrade(q.id)));
+const sectTop0=s=>Math.max(0,...s.arts.filter(q=>!q.gyd&&!q.made&&!q.dn).map(q=>artGrade(q.id)));
 const sectTopReg=s=>Math.max(-1,...s.arts.filter(q=>q.gyd||q.made).map(q=>artGrade(q.id)));
 function sectUp(s){const d=sectTopReg(s)-sectTop0(s);return d>0?d*GYC.powPerGrade:0}
 // 문파 목록을 지금 G(기증 G.gyDon, 창안 G.made)에 맞춘다: 완전 새로 시작하면 지난 판의 등록이 사라진다
