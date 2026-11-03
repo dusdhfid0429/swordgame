@@ -62,11 +62,11 @@ function setWeapon(cls){const w=P.eq.weapon;if(cls==='권'){P.eq.weapon=null;ret
 function setAmmo(){P.beltGift=1;P.dagGift=1;const b=P.eq.weapon&&P.eq.weapon.cls==='암'?P.eq.weapon:null;AMGI_FREE=!V.ammo||!b;if(!b)return;b.reg=V.ammo?[V.ammo]:[];b.regInit=1;b.am=V.ammo||null;if(V.ammo)P.mats[V.ammo]=99}
 function useArtFx(id,i){const a=ARTS[id];setWeapon(a.cls);setAmmo();P.arts=P.arts||{};if(!P.arts[id])P.arts[id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
   P.cur=id;P.arts[id].p=TIERP[V.tier];place();const e=tgt(),X=mkX(id,1);X.t=V.tier;
-  if(i==='ult'){heroAtk('ult');showBanner(a.ult.n,`${a.n} 필살기`);P.flash=.5;P.flashCol=a.c;shake=.35;
-    a.ult.steps.forEach(st=>exec({...st},e,X));return}
+  // v232 게임과 같이: 발동 연출(심법 속성 기운)이 끝난 뒤 무공이 나간다 (g_ult.js)
+  if(i==='ult'){P.ultCast=null;for(const k in calloutAt)delete calloutAt[k];showBanner(a.ult.n,`${a.n} 필살기`);P.target=e;ultCastStart(a,1,e,V.el||null);return}
   const f=a.forms[i];P.qs=V.qs;qsX(X,f,V.qs);heroAtk(HKIND[f.p],f);texts.push({x:P.x,y:P.y,t:f.n+(V.qs<QS.n?` · ${V.qs}성`:''),c:`rgb(${a.ct||'255,240,200'})`,life:.9,call:1});exec(f,e,X)}
 function playAll(id){const a=ARTS[id],steps=[...a.forms.map((_,i)=>i),'ult'];let k=0;clearTimeout(V.timer);
-  const go=()=>{if(k>=steps.length)return;const i=steps[k++];useArtFx(id,i);note(`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`);V.timer=setTimeout(go,(i==='ult'?2200:1300)/V.speed)};go()}
+  const go=()=>{if(k>=steps.length)return;const i=steps[k++];useArtFx(id,i);note(`${a.n} · ${i==='ult'?a.ult.n+' (필살기)':a.forms[i].n}`);V.timer=setTimeout(go,(i==='ult'?2200+ULTC.cast*1000:1300)/V.speed)};go()}
 
 // ---- 기본 이펙트 (r_fx.js 의 그림 함수 하나하나) ----
 const at=k=>{const e=tgt();return k==='p'?{x:P.x,y:P.y}:{x:e.x,y:e.y}};
@@ -143,6 +143,7 @@ const MOVE=[
   ['경공 1단',()=>leapFx(1)],['경공 2단',()=>leapFx(2)],['경공 3단',()=>leapFx(3)],
   ['보법 · 직선',()=>bobFx('line')],['보법 · 간파 (등 뒤)',()=>bobFx('flank')],['문파 보법 (고른 문파)',()=>bobFx('sect')],
   ['암기 (비도)',()=>spec('암기')],['독공',()=>spec('독공')],['점혈',()=>spec('점혈')],
+  ['필살기 끊김 (연출 중 강타 → 글자가 깨짐)',()=>{const a=ARTS[V.art]||art();P.ultCast=null;for(const k in calloutAt)delete calloutAt[k];showBanner(a.ult.n,`${a.n} 필살기`);ultCastStart(a,1,tgt(),V.el||null);later(.55,()=>ultBreak('뷰어 시연으로'))}],
   ['피격 번쩍임 (큰 피해)',()=>hitDemo(.3)],
   ['적 공격 예고 !! (맞으면 쓰러짐)',()=>windDemo(1)],['빈사 위험 박동',()=>{dngDemo=3}],
   ['적 평타 (고른 문파·속성의 심법)',()=>{const e=tgt();e.remn=V.sect||null;e.el=V.el||null;e.wcls=V.cls;e.d={...e.d,beast:0,villager:0,passive:0};foeStrike(e,P)}],

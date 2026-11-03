@@ -53,6 +53,7 @@ function updateP(dt){
   if(P.leap){const L=P.leap;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<.5?2*k*k:1-2*(1-k)*(1-k);P.x=L.sx+(L.ex-L.sx)*e;P.y=L.sy+(L.ey-L.sy)*e;P.z=(L.z0||0)+((L.z1||0)-(L.z0||0))*e+elevLeapZ(L,e);
     if(Math.random()<dt*20)fx.push({t:'ghost',x:P.x,y:P.y,life:.25,col:(typeof smLeapCol==='function'&&smLeapCol(L))||'170,200,255'});
     if(k>=1){P.leap=null;if(!L.to)fx.push({t:'dust',x:P.x-.1,y:P.y-.1,life:.45});leapLand(L);ggLand(L)}}
+  else if(P.ultCast){P.path=null}   // v232 필살기 발동 연출 동안은 제자리에 선다 (g_ult.js)
   else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
   else{

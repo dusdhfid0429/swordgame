@@ -205,6 +205,7 @@ body.mdg-on #sban,body.mdg-on #banner,body.mdg-on #vsline,body.mdg-on #tbtns{dis
 .ewl li.ew_kill b,.ewl li.ew_rob b{color:#d86a5a}.ewl li.ew_lost b{color:#c04848}.ewl li.ew_save b,.ewl li.ew_win b{color:#8fc48a}
 #callout{position:absolute;inset:0;pointer-events:none;display:none;z-index:40;align-items:center;justify-content:center;flex-direction:column}#callout.on{display:flex}#callout i{position:absolute;inset:0;background:#000;animation:coDim var(--cd,1.3s) ease-out forwards}
 #callout b{position:relative;font:900 min(18vw,84px)/1 var(--display);color:#fff4d6;letter-spacing:.12em;text-shadow:0 0 18px #ffb84a,0 3px 0 #2a1406,0 0 40px #000;animation:coIn var(--cd,1.3s) cubic-bezier(.2,.8,.3,1) forwards}#callout small{position:relative;margin-top:10px;font:16px var(--display);color:#e8d9a8;text-shadow:0 1px 4px #000;animation:coIn var(--cd,1.3s) ease-out forwards}
+#callout .cofx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}#callout.ult b{text-shadow:0 0 14px rgb(var(--eg,255,184,74)),0 0 34px rgba(var(--eg,255,184,74),.75),0 3px 0 #2a1406,0 0 40px #000}#callout.broke small{transition:opacity .25s;opacity:0}
 @keyframes coDim{0%{opacity:0}15%{opacity:var(--cdim,.45)}75%{opacity:var(--cdim,.45)}100%{opacity:0}}@keyframes coIn{0%{opacity:0;transform:translateX(18%) scale(1.25)}18%{opacity:1;transform:none}78%{opacity:1;transform:translateX(-3%)}100%{opacity:0;transform:translateX(-12%) scale(.96)}}
 #tbar .tbi.dim{opacity:.42}
 /* v226 내공 대결 (동훈님 2026-11-02): 가운데 문구 → 나·적 내공 게이지 + 그 옆 밀어내기 단추. 화면 어디를 눌러도 민다 */

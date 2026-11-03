@@ -313,7 +313,7 @@ function pickUp(d){
 }
 function hurtP(dm,src,sure){   // sure: 피할 수 없는 피해 (내공 대결에 밀림 등)
   if(P.inv>0||P.hp<=0)return;
-  const c={src,dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
+  const c={src,dm,raw:dm,hm:src.hm||0,hp0:P.hp};runHooks('hurt',c);dm=c.dm;
   if(!sure&&Math.random()<clamp((hmv()-c.hm)/200+.06,.03,.5)){addText(P.x,P.y,'회피','#9db8e0');P.dA=time;return}
   dm=Math.max(1,Math.round(dm*(1-guard())));P.hp-=dm;P.hit=.2;P.lastHit=0;shake=.12;addText(P.x,P.y,dm,'#e0675a','in');P.chan=null;
   if(src.d&&src.d.poison&&Math.random()<.25&&!P.poison){P.poison=6;log('중독되었습니다. 해독단으로 풀 수 있습니다.','dmg')}
@@ -348,14 +348,21 @@ function basicStrike(e){
     if(am&&!AMGI_FREE&&!amgiLoad(projs[projs.length-1])){projs.pop();amgiOut()}}   // v191: 평타도 요대 암기를 하나씩 쓴다. 다 떨어지면 단검술·권각으로 (g_amgi.js)
   else{anim(.2);hitE(X,e,.75,.25,0);if(X.bare)bareSwing(X,e);else{fxHit(X,e,.8);fArc(X,1.05,1.4,a.c,2.5,.18)}}
 }
-function ultimate(){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
-  if(P.hp<=0)return;const a=art();
+function ultimate(){
+  if(P.hp<=0||P.ultCast)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
   if(!hasWeaponFor(a.cls)){log(wpnNeed(a.cls),'info');return}
   const cost=Math.round((a.base?30:55)*(P.buff.ult>0?.3:1));if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
   const ch=P.chain,combo=time-ch.t<1.7?1+ch.sum/100:1;P.chain={last:-1,t:-9,sum:0,n:0};
-  P.qi-=cost;P.ucd=8;heroAtk('ult');const X=mkX(a.id,combo),e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
-  showBanner(a.ult.n,`${a.n} 필살기${combo>1?` · 공력 ${Math.round(combo*100)}%`:''}`);log(`필살기 [${a.ult.n}]!`,'sys');if(typeof callout==='function')callout(a.ult.n,P.byh||P.name);   // v224 오의 이름 외치기 (g_open.js)P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
+  P.qi-=cost;P.ucd=8;const e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
+  showBanner(a.ult.n,`${a.n} 필살기${combo>1?` · 공력 ${Math.round(combo*100)}%`:''}`);log(`필살기 [${a.ult.n}]!`,'sys');
+  // v232 발동 연출(오의 외치기)이 끝난 뒤에 무공이 나간다. 그 사이 강하게 맞으면 내공만 쓰고 끊긴다 (g_ult.js)
+  if(typeof ultCastStart==='function'&&ultCastStart(a,combo,e))return;
+  if(typeof callout==='function')callout(a.ult.n,P.byh||P.name);ultFire(a,combo,e);
+}
+function ultFire(a,combo,e){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
+  if(!e||e.hp<=0)e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
+  heroAtk('ult');const X=mkX(a.id,combo);P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
   a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈
