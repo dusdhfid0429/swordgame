@@ -22,14 +22,15 @@ function ndOut(n,why,foeP){const sid=ndSid(n),s=SECTS[sid];if(!s)return null;let
   else{e=npcFight(n,true);if(e&&why)log(why,'info')}
   if(!e)return null;e.npcRef=n;e.ndReg=REG;if(foeP){e.angry=1;e.aggro=true;e.tgt=null}else e.npcDef=1;return e}
 // 제자리로: 무인을 치우고 NPC를 되살린다
-function ndBack(e,why){mobs=mobs.filter(m=>m!==e);const n=e.npcRef,R=REGION();if(why)log(why,'info');
+const ND_REST={},ndKey=n=>n.hq?'hq/'+n.hq:npcKey(n);   // 다쳐 물러난 NPC는 DEF.rest초 동안 다시 나서지 않는다
+function ndBack(e,why){mobs=mobs.filter(m=>m!==e);const n=e.npcRef,R=REGION();if(why){log(why,'info');if(n)ND_REST[ndKey(n)]=time+ND.rest}
   if(e.master){if(typeof masterCheck==='function')masterCheck(REG);if(!(R.npcs||[]).includes(n)&&R._npcsM&&R._npcsM.includes(n))R.npcs=R._npcsM}
   else if(n){if(R._npcsO)R._npcsO=R._npcsO.filter(x=>x!==n);if(!R.npcs.includes(n))R.npcs.push(n)}
   if(typeof SF_KEY!=='undefined')SF_KEY='';refreshNPCF()}
 let ND_T=0,ND_LOG=0;
 hook('tick',dt=>{if(!P||!playing||G.duel||!REG)return;ND_T-=dt;if(ND_T>0)return;ND_T=ND.scan;const R=REGION();if(!R||R.dead||R.ruin)return;
   // 나서기
-  for(const n of[...(R.npcs||[])]){if(!ndFixed(n))continue;const s=SECTS[ndSid(n)];if(!s||!(sectPop(s.id)>0))continue;
+  for(const n of[...(R.npcs||[])]){if(!ndFixed(n)||(ND_REST[ndKey(n)]||0)>time)continue;const s=SECTS[ndSid(n)];if(!s||!(sectPop(s.id)>0))continue;
     const foe=ndNear(n,s,ND.r),pf=!foe&&ndPlayerFoe(n,s,ND.r);if(!foe&&!pf)continue;
     const loud=time-ND_LOG>6;const e=ndOut(n,loud?`${n.n}이(가) ${pf?'칼을 뽑아 당신을 막아선다':'침입자를 막으러 나섰다'}.`:'',pf);if(!e)continue;if(loud)ND_LOG=time;
     if(foe){e.tgt=foe;e.aggro=true}}
