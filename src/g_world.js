@@ -62,7 +62,7 @@ const iso=(gx,gy)=>({x:(gx-gy)*TW/2,y:(gx+gy)*TH/2});
 // v179: 그 자리 땅 높이(gH, g_elev.js)만큼 올려 그린다. 바닥 그림은 toScreen0
 // 카메라가 주인공보다 화면 높이의 CAMY만큼 위를 비춘다 → 주인공이 화면 가운데보다 그만큼 아래에 선다 (?camy=0 이면 예전처럼 한가운데)
 const CAMY=(()=>{const q=new URLSearchParams(location.search).get('camy');return q!=null&&isFinite(+q)?+q:.08})();
-function camDY(){return (typeof H==='number'?H:0)*CAMY}
+function camDY(){if(typeof trnOpen!=='undefined'&&trnOpen&&typeof trnCamDY==='function'){const v=trnCamDY();if(v!=null)return v}return (typeof H==='number'?H:0)*CAMY}
 const toScreen=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2-gH(gx,gy)}};
 const toScreen0=(gx,gy)=>{const p=iso(gx,gy);return{x:p.x-cam.x+W/2,y:p.y-cam.y+H/2}};
 function toGrid(sx,sy){const wx=sx/S-W/2+cam.x,wy=sy/S-H/2+cam.y;return elevPick(wx,wy,(wx,wy)=>{const a=wx/(TW/2),b=wy/(TH/2);return{x:(a+b)/2,y:(b-a)/2}})}

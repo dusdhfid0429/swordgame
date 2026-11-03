@@ -8,6 +8,11 @@ let trnOpen=false,trnBusy=null;   // trnBusy = {k,t,dur}
 const TRN=document.createElement('div');TRN.id='trn';TRN.className='trn';TRN.hidden=true;TRN.setAttribute('role','dialog');TRN.setAttribute('aria-label','수련');
 $('stage').appendChild(TRN);
 function openTrain(){if(!playing||!P)return;closePanels();trnOpen=true;TRN.hidden=false;document.body.classList.add('trn-on');renderTrain()}
+// v233 (동훈님 2026-11-03): 수련 창이 열려 있으면 g_read.js가 READ.train.zoom배로 당기고, camDY()가 이 값을 쓴다.
+// 주인공 몸 가운데를 위 HUD(상태 칸) 아래 ~ 수련 창 위 사이의 READ.train.at 자리에 놓아 연출이 창에 붙지 않게 한다.
+function trnCamDY(){const T=READ.train;if(!T||!C||!(S>0))return null;const cr=C.getBoundingClientRect(),r=TRN.getBoundingClientRect();if(!r.height||!cr.height)return null;
+  const st=$('pstat'),sr=st&&st.offsetParent?st.getBoundingClientRect():null,hb=sr?sr.bottom-cr.top:0,top=hb>0&&hb<cr.height*.4?hb:0,bot=Math.min(cr.height,r.top-cr.top);if(bot-top<60)return null;
+  const body=top+(bot-top)*T.at;return (body/S+T.body)-H/2}
 function closeTrain(){trnOpen=false;renderTrain.h='';TRN.hidden=true;document.body.classList.remove('trn-on')}
 function trnRow(k,name,val,desc,cost,can,why){
   const busy=trnBusy&&trnBusy.k===k;
