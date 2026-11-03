@@ -29,8 +29,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`소교주 전엔 독문무공 잠김, 입지 모자람 ("${r4.why}")`,!r4.jm&&/이상|입지/.test(r4.why)&&r4.why2==='');
   ok(`소교주 후보 셋을 이기면 소교주 + 교주 독문무공 전수`,r4.d0&&r4.d1&&r4.d2&&r4.sgj===1&&r4.hi&&r4.jm2);
   // 5. 장로 사부: 인연 '사부의 가르침'이면 지명
-  const r5=await p.evaluate(()=>{P.wis=20;runHooks('tick',.1);const o={st:P.sabu&&P.sabu.st};P.sabu.late=0;P.sabu.st='common';P.srank.cheonma=0;sectAct('inygo','sabu');o.st2=P.sabu.st;openNpc(hqNpc('hq_cheonma'));act('sbtake');o.st3=P.sabu.st;o.got=!!P.arts[sbMy().path[0]];return o});
-  ok(`인연 '사부의 가르침' → 장로 지명 → 제자, 독문무공 받음 (${r5.st}→${r5.st2}→${r5.st3})`,r5.st2==='named'&&r5.st3==='disc'&&r5.got);
+  const r5=await p.evaluate(()=>{P.wis=20;runHooks('tick',.1);const o={st:P.sabu&&P.sabu.st};P.sabu.late=0;P.sabu.st='common';P.srank.cheonma=0;sectAct('inygo','sabu');o.st2=P.sabu.st;openNpc(hqNpc('hq_cheonma'));act('sbtake');o.hqNo=P.sabu.st==='named';enterRegion('hq_cheonma_6',20.5,30);P.reg=REG;const mn=REGION().npcs.find(n=>n.sfMaster===P.sabu.off);o.mw=!!mn&&walk(Math.floor(mn.x),Math.floor(mn.y));openNpc(mn);act('sbtake');o.st3=P.sabu.st;o.got=!!P.arts[sbMy().path[0]];return o});
+  ok(`인연 '사부의 가르침' → 장로 지명 → 교주 창에선 못 받고 장로원의 장로에게 받든다 → 제자, 독문무공 받음 (${r5.st}→${r5.st2}→${r5.st3})`,r5.st2==='named'&&r5.hqNo&&r5.mw&&r5.st3==='disc'&&r5.got);
   // 6. 곡을 버리면 탈락, 한 해 동안 못 들어감
   const r6=await p.evaluate(()=>{P.sect=null;P.sabu=null;P.sgj=0;enterRegion('hq_cheonma',20.5,20.5);openNpc(hqNpc('hq_cheonma'));act('sjoin:cheonma');return new Promise(res=>setTimeout(()=>{const a=REG;enterRegion('hq_cheonma_4',20.5,20.5);res({a,sect:P.sect,st:P.imk.st,jb:joinBlock(SECTS.cheonma)})},700))});
   ok(`곡을 나가면 탈락·하산, 다시 못 들어감 ("${r6.jb}")`,r6.a==='cv_imagok'&&r6.sect===null&&r6.st==='fail'&&/입마곡/.test(r6.jb||''));

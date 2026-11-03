@@ -19,19 +19,23 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`중견문파 장문절기는 절정 (${r0.hi})`,r0.hi===3);
   // 2. 가입하면 입문 서열이 생기고 문파 창에 카드
   const r1=await p.evaluate(()=>{const s=SECTS.bukhae;enterRegion(hqId(s),20.5,30.5);P.reg=REG;mobs=[];P.realm=0;P.age=16;P.fame=60;P.evil=0;P.side='사';const n=hqNpc(hqId(s));openNpc(n);act('sjoin:bukhae');
-    openNpc(n);const h=$('wbody').innerHTML;return{sect:P.sect,st:P.sabu&&P.sabu.st,pos:sbPos()+1,card:h.includes('사부와 로드맵'),btn:h.includes('data-act="sbduel"'),track:sabuTrackHtml().includes('서열')}});
-  ok(`가입 → 입문 서열 ${r1.pos}위 (삼류는 4위), 카드·비무 단추·임무 줄`,r1.sect==='bukhae'&&r1.st==='rank'&&r1.pos===4&&r1.card&&r1.btn&&r1.track);
+    openNpc(n);const h=$('wbody').innerHTML;return{sect:P.sect,st:P.sabu&&P.sabu.st,pos:sbPos()+1,card:h.includes('사부와 로드맵'),btn:h.includes('data-act="sbduel"'),fest:h.includes('대연무장'),track:sabuTrackHtml().includes('서열')}});
+  ok(`가입 → 입문 서열 ${r1.pos}위 (삼류는 4위), 카드·임무 줄, 본산 창엔 비무 단추 없이 대연무장 안내 (v237)`,r1.sect==='bukhae'&&r1.st==='rank'&&r1.pos===4&&r1.card&&!r1.btn&&r1.fest&&r1.track);
   // 3. 서열 비무: 이기면 한 칸씩, 1위가 되면 사부 고르기
-  const r2=await p.evaluate(()=>{const n=hqNpc(hqId(SECTS.bukhae)),o=[];for(let i=0;i<3;i++){openNpc(n);act('sbduel');const e=mobs.find(m=>m.sbFoe);o.push(!!e&&G.duel);if(e)damage(e,1e8,0,0,P)}
+  const r2=await p.evaluate(()=>{enterRegion('ar_bukhae',20.5,30.5);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.sfHost),o=[];for(let i=0;i<3;i++){openNpc(n);act('sbduel');const e=mobs.find(m=>m.sbFoe);o.push(!!e&&G.duel);if(e)damage(e,1e8,0,0,P)}
     openNpc(n);return{o,pos:sbPos()+1,st:P.sabu.st,duel:G.duel,pick:$('wbody').innerHTML.includes('sbpick:')}});
   ok(`서열 비무 세 번 이겨 1위 → 사부 고르기 (${r2.st})`,r2.o.every(Boolean)&&r2.pos===1&&r2.st==='pick'&&!r2.duel&&r2.pick);
   // 4. 사부를 고르면 로드맵 첫 무공. 숙련·직위가 닿으면 다음 무공
-  const r3=await p.evaluate(()=>{const n=hqNpc(hqId(SECTS.bukhae));P.wis=20;openNpc(n);const M=SABU.bukhae.find(m=>m.cls==='검');act('sbpick:'+M.k);
+  const r3=await p.evaluate(()=>{P.wis=20;openNpc(REGION().npcs.find(q=>q.sfHost));const M=SABU.bukhae.find(m=>m.cls==='검');act('sbpick:'+M.k);
+    enterRegion(hqId(SECTS.bukhae),20.5,30.5);P.reg=REG;mobs=[];const n=hqNpc(hqId(SECTS.bukhae));
     const o={st:P.sabu.st,m:sbMy()&&sbMy().cls,a0:!!P.arts[M.path[0]],step:P.sabu.step,why0:sbNextWhy()};
-    A(M.path[0]).p=70;o.why1=sbNextWhy();openNpc(n);act('sbnext');o.a1=!!P.arts[M.path[1]];
-    A(M.path[1]).p=70;o.why2=sbNextWhy();P.srank.bukhae=1;P.realm=2;openNpc(n);act('sbnext');o.a2=!!P.arts[M.path[2]];return o});
+    A(M.path[0]).p=70;o.why1=sbNextWhy();openNpc(n);act('sbnext');o.hqNo=!P.arts[M.path[1]];   // v237b: 장문인 창에선 사부 무공을 못 받는다
+    P.cur=M.path[0];o.tHq=teachHtml().includes('직접');enterRegion('ar_bukhae',20.5,30.5);P.reg=REG;mobs=[];const mn=REGION().npcs.find(q=>q.sfMaster===M.k);o.mw=!!mn;openNpc(mn);o.formBtn=$('wbody').innerHTML.includes('sbteach:'+M.path[0]);
+    const f0=A(M.path[0]).f.filter(Boolean).length;act('sbteach:'+M.path[0]);o.form=A(M.path[0]).f.filter(Boolean).length===f0+1;openNpc(mn);act('sbnext');o.a1=!!P.arts[M.path[1]];
+    A(M.path[1]).p=70;o.why2=sbNextWhy();P.srank.bukhae=1;P.realm=2;openNpc(mn);act('sbnext');o.a2=!!P.arts[M.path[2]];enterRegion(hqId(SECTS.bukhae),20.5,30.5);P.reg=REG;mobs=[];return o});
   ok(`검 사부 제자 · 하승 무공 받음, 다음은 숙련 조건 ("${r3.why0}")`,r3.st==='disc'&&r3.m==='검'&&r3.a0&&r3.step===1&&/숙련/.test(r3.why0));
   ok(`숙련 닿으면 중승 무공, 상승은 직위 ("${r3.why2}") 뒤`,r3.why1===''&&r3.a1&&/이상/.test(r3.why2)&&r3.a2);
+  ok(`사부 무공·초식은 장문인이 아니라 대연무장의 사부 NPC가 직접 전한다 (v237b)`,r3.hqNo&&r3.tHq&&r3.mw&&r3.formBtn&&r3.form);
   // 5. 장문절기는 대제자만: 비급 단추 잠김 → 선발 비무 이기면 전수
   const r4=await p.evaluate(()=>{const s=SECTS.bukhae,n=hqNpc(hqId(s)),hi=s.arts.find(a=>a.hi);P.merit.bukhae=9999;openNpc(n);
     const btn=$('wbody').querySelector(`[data-act^="mbuy:${hi.id}:"]`),o={lock:btn&&btn.disabled&&/대제자만/.test(btn.textContent),why:djWhy()};

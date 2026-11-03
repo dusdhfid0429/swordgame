@@ -180,7 +180,7 @@ function drawMedit(front){
   ctx.restore();
 }
 // ================= frame =================
-function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:0,fy:1,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
+function npcFighter(n){return{npc:1,n:n.n,x:n.x,y:n.y,d:{pal:n.pal},fx:n.fx??0,fy:n.fy??1,noTag:n.noTag,hp:1,maxHp:1,moving:false,bob:n.x,swing:0,wind:0,stun:0,hit:0,sp:0}}
 let NPCF=NPCS.filter(n=>!n.board).map(npcFighter);
 // 지금 맵의 NPC가 바뀌면(이동·사망·사면·전각) 그리기용 목록을 다시 만든다
 function refreshNPCF(){NPCF=npcsHere().filter(n=>!n.board).map(npcFighter)}

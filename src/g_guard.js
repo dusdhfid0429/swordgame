@@ -16,7 +16,7 @@ function guardPlace(R){const g=guardFac(R);
 function hallPlace(R){const O=REGIONS[R.hall.out];if(!O||!O.hq||!SECTS[O.hq])return;const g=guardFac(O);if(!g.sid)return;const drill=R.hall.kit==='drill',n=drill?GUARD.drill:GUARD.attend,gate=R.gates[0];let made=0;
   for(let t=0;t<120&&made<n;t++){const x=1+Math.floor(Math.random()*(N-2))+.5,y=1+Math.floor(Math.random()*(NH-3))+.5;if(!walkAt(x,y)||dist({x,y},gate)<2.2||npcsHere().some(q=>Math.hypot(q.x-x,q.y-y)<1.3)||mobs.some(m=>Math.hypot(m.x-x,m.y-y)<1.3))continue;
     const e=fixedMk(g,0,x,y,drill?'drill':'attend');e.pfx=0;e.pfy=1;e.fx=0;e.fy=1;if(drill)e.drill=1;mobs.push(e);made++}}
-hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!P||R.dead||R.ruin)return;if(R.hq&&SECTS[R.hq])guardPlace(R);else if(R.hall)hallPlace(R)});
+hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!P||R.dead||R.ruin||R.noGuard)return;if(R.hq&&SECTS[R.hq])guardPlace(R);else if(R.hall)hallPlace(R)});
 // 자리 지키기·순찰: 평시에는 wander 대신 자리(post)나 다음 지점으로. 싸움이 붙으면(aggro) 여느 무인처럼 싸우고, 끝나면 돌아온다
 hook('mobTick',(e,dt)=>{if(!e.fixed||e.hp<=0||e.aggro||G.duel)return;e.wt=99;
   if(e.route){if(e.follow){const l=e.follow;if(l.hp<=0){e.follow=null;e.route=null;return}e.goal={x:l.x-e.foff.x,y:l.y-e.foff.y};if(dist(e,e.goal)<.4)e.goal={x:e.x,y:e.y};return}

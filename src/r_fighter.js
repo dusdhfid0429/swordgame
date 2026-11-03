@@ -143,7 +143,7 @@ function drawFighter(e,isP){
   if(!isP&&!e.npc&&!e.dead){const w=30*sc,y=p.y-(sc>1.2?94:74);
     drawPlate(e,p.x,y,w);   // v210: 관계별 생명 막대 (g_plate.js). 아군과 겨누거나 친 적만
     if(e.d.boss||e.duel||e.ally||e.d.fac||P.target===e){const na=e.d.boss||e.duel||e.ally||P.target===e?1:nameDim();if(na<1)ctx.globalAlpha=na;ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.name,p.x+1,y-4);ctx.fillStyle=e.d.boss?'#ff9a6a':e.ally?'#a6d47f':e.d.fac?(peaceful(e)?(typeof repStE==='function'&&repStE(e)!==2?REP.col[repStE(e)]:'#9cc8f0'):'#f0a080'):'#f0e4c8';ctx.fillText(e.name,p.x,y-5);if(e.sect&&LOOK[e.sect]){const tw=ctx.measureText(e.name).width;drawEmblem(ctx,e.sect,p.x-tw/2-8,y-9,12)}ctx.globalAlpha=1}}
-  if(e.npc&&!e.dead){ctx.globalAlpha=nameDim();ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72);ctx.globalAlpha=1}   // v219: 싸울 때는 흐리게
+  if(e.npc&&!e.dead&&!e.noTag){ctx.globalAlpha=nameDim();ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(e.n,p.x+1,p.y-71);ctx.fillStyle='#e8c66e';ctx.fillText(e.n,p.x,p.y-72);ctx.globalAlpha=1}   // v219: 싸울 때는 흐리게
 }
 // v197 (사용자): 주인공 몸 크기 배율. ANIM.ageK.from세 min배 → to세 1배, 사이는 smoothstep
 function heroAgeK(){const A=ANIM.ageK;if(!A||!P)return 1;const t=clamp((P.age-A.from)/(A.to-A.from),0,1);return A.min+(1-A.min)*t*t*(3-2*t)}
