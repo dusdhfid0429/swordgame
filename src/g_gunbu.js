@@ -31,7 +31,7 @@ function emperorDlg(n){
   if(!g&&P.fame<100)return `<p class="note">금군이 창을 엇갈려 막는다. "명성 100도 없는 자가 어전에 들 수는 없다. 물러가라."</p>`;
   if(karma<=-100)return `<p class="note">"저 자는 조정이 쫓는 죄인이다. 잡아라!"</p><p class="note">업보가 -100 아래면 관군이 그대를 쫓는다. 선업을 쌓아 업보를 되돌려야 한다.</p>`;
   let h=`<p class="note">황제가 용상에서 내려다본다. "${g?`${rankName('geumgun')} ${esc(P.name)}, 짐의 금군이 되어 강호를 다스리라.`:`${esc(P.name)}이라 했는가. 강호에 이름이 들리더구나.`}"</p>`;
-  h+=`<div class="card"><h4>군부 <small class="dim">네 번째 세력</small></h4><p class="note">관군은 사파·마교·도적을 치고, 정파와는 서로 건드리지 않는다. 금군 임무로 쌓은 공적은 금군창법·어림궁술·용양신창 비급이 된다. 금군은 황성 금위영 총관이나 황궁의 대장군에게서 들어간다.</p></div>`;
+  h+=`<div class="card"><h4>군부 <small class="dim">네 번째 세력</small></h4><p class="note">관군은 사파·마교·도적을 치고, 정파와는 서로 건드리지 않는다. 금군에 들 때 병기별 부대를 고른다. 임무로 쌓은 공적은 직위에 따라 황궁 무고의 무공 비급이 되고, 대장군이 되면 짐이 어림군 최고 무공을 직접 내린다. 금군은 황성 금위영 총관이나 황궁의 대장군에게서 들어간다.</p></div>`;
   if(g&&ri>=3){const got=P.imperial;
     h+=`<div class="card"><h4>어전 포상 <small class="dim">천부장 이상 · 한 생에 한 번</small></h4><p class="note">어사패(현묘도·내공), 은자 500, 명성 100</p>${got?'<p class="note">이미 받았다.</p>':B('imperial','포상 받기',{pri:1,d:P.bag.length>=24})}</div>`}
   else if(g)h+=`<p class="note">"공을 더 세워 천부장에 오르면 짐이 직접 상을 내리마."</p>`;
@@ -40,3 +40,36 @@ hook('npcDlg',c=>{if(c.html==null&&c.n.emperor)c.html=emperorDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='imperial')return;c.done=true;c.r=true;if(P.sect!=='geumgun'||rankIdx('geumgun')<3||P.imperial)return;
   P.imperial=1;P.silver+=500;P.fame+=100;const it=mkGear('acc','어사패',1.4,{qi:24,hm:5});P.bag.push(it);
   log('어전 포상: 어사패와 은자 500, 명성 100을 받았습니다.','xp');showBanner('어전 포상','황제의 신임');feat(`황제에게 포상을 받았다`)});
+// ---- v235 병기별 부대 · 황궁 무고 · 대장군 어림군 비급 (사용자 2026-11-03) ----
+// "군부는 각 무기별 부대가 있고 처음 투신 시 고르게, 시작무공은 하승. 전쟁이나 무림 세력 임무로 직위가 오르면 황궁 무고에서 배울 수 있는 등급을 받고,
+//  대장군이 되면 황제가 직접 어림군 최고 무공비급을 하사." 부대와 무고 무공은 SABU.geumgun (g_sect.js addSabuArts), 숫자는 data/sabu.json GUNBU
+const GBU=GD.GUNBU;
+const gbUnit=cls=>(SABU.geumgun||[]).find(u=>u.cls===cls);
+const gbMine=()=>P.sect==='geumgun'?gbUnit(P.gbu||'창'):null;
+const gbTop=()=>rankTop('geumgun');
+// 가입 창: 부대를 골라야 투신한다
+function gbJoinHtml(jb){return `<span class="gbunits">${(SABU.geumgun||[]).map(u=>B('gbjoin:'+u.cls,`${u.n} <small>${CLASS[u.cls].n}</small>`,{pri:u.cls==='창',d:!!jb})).join('')}</span>`}
+// 금군 창 카드: 내 부대, 무고 (직위별 등급), 대장군 하사
+function gbCard(s,hq){if(P.sect!=='geumgun')return'';const u=gbMine(),ri=rankIdx('geumgun'),m=P.merit.geumgun||0,hi=s.arts.filter(a=>a.hi).map(a=>`[${ARTS[a.id].n}]`).join(' · ');
+  const gl=GBU.rank.map((r,g)=>`${AGR[g]} ${rankName('geumgun',r)}`).join(' · ');
+  const row=id=>{const a=ARTS[id],st=A(id),g=a.grade,open=ri>=GBU.rank[g],fi=a.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost({id},fi):0;
+      const why=!open?`${rankName('geumgun',GBU.rank[g])} 이상`:fi<0?'모두 익힘':m<c?`공적 ${c} 필요`:'';
+      return `<div class="it"><div>${gradeTag(g)} ${esc(a.n)}<span>${st?`익힌 초식 ${st.f.filter(Boolean).length}/${a.forms.length}`:`초식 ${a.forms.length}개`}${fi>=0?` · 다음 [${esc(a.forms[fi].n)}]`:''}</span></div><div class="ib">${B(`gbbuy:${id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24,pri:!why})}</div></div>`};
+  const others=(SABU.geumgun||[]).filter(v=>v!==u),rows=`<h5 style="margin:4px 0">${esc(u?u.n:'')} <small class="dim">${u?CLASS[u.cls].n:''}</small></h5><div class="list">${u?u.path.map(row).join(''):''}</div>`+
+    (typeof fold==='function'?fold('gbother','다른 부대 무공',others.map(v=>`<h5 style="margin:4px 0">${esc(v.n)} <small class="dim">${CLASS[v.cls].n}</small></h5><div class="list">${v.path.map(row).join('')}</div>`).join('')):'');
+  return `<div class="card sbcard"><div class="row2"><h4>황궁 무고</h4><span class="tag">${esc(u?u.n:'금군')} · ${rankName('geumgun')}</span></div>
+    <p class="note">임무(도적·사파·마교 토벌, 관물 호송)와 천하대전의 공으로 직위가 오르면 무고에서 받을 수 있는 등급이 열린다: ${gl}. 다른 부대 무공도 받을 수 있다.</p>
+    ${rows}
+    <p class="note">${P.gbGrant?`<b class="gold">대장군</b> · 황제가 어림군 최고 무공 ${hi}을(를) 하사했다.`:`${rankName('geumgun',gbTop())}이 되면 황제가 어림군 최고 무공 ${hi}의 비급을 직접 하사한다. 그 무공은 대장군만 받는다.`}</p></div>`}
+// 대장군이 되면 황제가 하사한다
+function gbGrant(){const s=SECTS.geumgun;P.gbGrant=1;const got=[];
+  for(const m of s.arts.filter(a=>a.hi)){const a=ARTS[m.id];if(P.arts[m.id]){got.push(a.n);continue}
+    if(capArts().length>=artCap()){if(P.bag.length<24)P.bag.push(mkBook(m.id,0));got.push(a.n+' 비급');continue}P.arts[m.id]={p:0,f:a.forms.map((f,i)=>i===0)};got.push(a.n)}
+  showBanner('황제의 하사',`대장군 · ${got.join(' · ')}`);log(`황제: "짐의 대장군이여, 어림군의 비전을 내리노라." 어림군 최고 무공 ${got.map(n=>`[${n}]`).join(' · ')}을(를) 하사받았습니다. 다음 초식 비급은 무고에서 공적으로 받습니다.`,'xp');
+  feat('대장군이 되어 황제에게서 어림군 최고 무공을 하사받았다');P.fame+=50;recalc()}
+hook('tick',()=>{if(!P||!playing||P.sect!=='geumgun'||P.gbGrant)return;if(rankIdx('geumgun')>=gbTop())gbGrant()});
+hook('sectAct',c=>{const k=c.a;if(k!=='gbjoin'&&k!=='gbbuy')return;c.done=true;c.r=true;
+  if(k==='gbjoin'){if(!gbUnit(c.x))return;const was=P.gbu;P.gbu=c.x;sectAct('sjoin','geumgun');if(P.sect!=='geumgun'){P.gbu=was;return}
+    const u=gbUnit(c.x);log(`대장군: "${GBU.say}" 금군 ${u.n}에 배속되었습니다.`,'info');showBanner(`금군 ${u.n}`,`${CLASS[u.cls].n} · ${rankName('geumgun',0)}`);feat(`금군 ${u.n}에 투신했다`);return}
+  const id=c.x,fi=+c.y,a=ARTS[id];if(P.sect!=='geumgun'||!a||a.sect!=='geumgun'||!a.sabu||fi<0||(A(id)&&A(id).f[fi]))return;const cost=meritCost({id},fi);
+  if(rankIdx('geumgun')<GBU.rank[a.grade]||(P.merit.geumgun||0)<cost||P.bag.length>=24)return;P.merit.geumgun-=cost;P.bag.push(mkBook(id,fi));log(`황궁 무고에서 [${a.n} · ${a.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp')});

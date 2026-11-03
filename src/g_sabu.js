@@ -13,7 +13,7 @@ const sbMy=()=>{const s=sbSect();return s&&P.sabu.st==='disc'?sbMasters(s.id)[P.
 const sbPos=()=>P.sabu.ord.indexOf('@');
 const isDaeje=sid=>!!(P&&P.sabu&&P.sabu.sid===sid&&P.sabu.dj&&P.sect===sid);
 // 장문절기 비급을 받을 수 있나: 대제자이거나 이미 익힌 무공 (예전 저장)
-const jmOk=a=>!a||!a.hi||!sabuOn(SECTS[artSect(a.id).id])||isDaeje(artSect(a.id).id)||!!P.arts[a.id];
+const jmOk=a=>{if(!a||!a.hi||P.arts[a.id])return true;const s=artSect(a.id);if(s&&s.id==='geumgun')return P.sect==='geumgun'&&rankIdx('geumgun')>=rankTop('geumgun');return !sabuOn(s)||isDaeje(s.id)};   // v235 군부: 어림군 최고 무공은 대장군만 (g_gunbu.js)
 const sbInHq=sid=>panel==='npc'&&panelArg&&panelArg.hq===sid;
 function sbStart(sid){const s=SECTS[sid];if(!sabuOn(s)||!sbMasters(sid).length)return;
   const pool=SB.coh.slice(),coh=[];for(let i=0;i<5;i++){const n=pool.splice(Math.floor(Math.random()*pool.length),1)[0];coh.push({n,cls:pick(sbMasters(sid)).cls})}
@@ -86,7 +86,7 @@ hook('sectAct',c=>{if(!/^sb/.test(c.a))return;c.done=true;c.r=true;const b=P.sab
 function sbPathHtml(M,mine){const b=P.sabu;return `<div class="sbpath">${M.path.map((id,i)=>{const a=ARTS[id],st=A(id),got=!!st,nx=mine&&i===b.step;
   return `<span class="sbstep${got?' got':nx?' next':''}">${gradeTag(a.grade)} ${esc(a.n)}${got?` <small class="good">${st.f.filter(Boolean).length}/${a.forms.length}</small>`:nx?' <small class="gold">다음</small>':''}</span>`}).join('<span class="dim"> → </span>')}</div>`}
 function sbOrdHtml(){const b=P.sabu;return `<p class="note">${b.ord.map((n,i)=>n==='@'?`<b class="gold">${i+1}.나</b>`:`<span class="dim">${i+1}.${esc(n)}</span>`).join(' · ')}</p>`}
-function sabuCard(s,hq){if(!P.sabu||P.sabu.sid!==s.id||!sabuOn(s))return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
+function sabuCard(s,hq){if(s.id==='geumgun'&&typeof gbCard==='function')return gbCard(s,hq);if(!P.sabu||P.sabu.sid!==s.id||!sabuOn(s))return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
   const b=P.sabu,M=sbMasters(s.id),here=hq?'':`<p class="note dim">비무와 사부 정하기는 본산 ${hqPlace(s)}의 ${masterTitle(s)} 창에서 한다.</p>`;let body='';
   const masters=(btn)=>`<div class="list">${M.map(m=>`<div class="it"><div><b>${esc(m.n)}</b> <small class="dim">${CLASS[m.cls].n}</small>${sbPathHtml(m,false)}<span>"${esc(m.say)}"</span></div><div class="ib">${btn(m)}</div></div>`).join('')}</div>`;
   if(b.st==='rank'){const pos=sbPos(),up=pos>0?b.ord[pos-1]:null;
