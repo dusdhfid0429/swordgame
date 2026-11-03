@@ -18,7 +18,7 @@ const {chromium}=require('playwright');
   ok(`침입자가 없어지면 제자리 NPC로 돌아온다`,r3.back&&!r3.mob);
   // 2. 크게 다치면 물러난다 (무인끼리 싸우다 죽지 않는다)
   await p.evaluate(()=>{const n=REGION().npcs.find(q=>q.sfHost);window._hid=n.id;invade(SECTS.bukhae,n)});await step0(6);
-  const r4=await p.evaluate(()=>{const e=mobs.find(m=>m.npcDef);if(!e)return{out:false};e.hp=e.maxHp*.1;for(let i=0;i<6;i++)runHooks('tick',.1);return{out:true,back:REGION().npcs.some(q=>q.id===_hid),mob:mobs.includes(e)}});
+  const r4=await p.evaluate(()=>{const e=mobs.find(m=>m.npcDef&&m.npcRef&&m.npcRef.id===_hid);if(!e)return{out:false};e.hp=e.maxHp*.1;for(let i=0;i<6;i++)runHooks('tick',.1);return{out:true,back:REGION().npcs.some(q=>q.id===_hid),mob:mobs.includes(e)}});
   ok(`교두도 나서고, 생명이 바닥나면 물러나 NPC로`,r4.out&&r4.back&&!r4.mob);
   // 3. 문주: 장문인도 침입자에 맞선다
   const r5=await p.evaluate(()=>{mobs=[];P.side='정';const s=SECTS.hwasan,H=REGIONS[hqId(s)],id=H.halls&&H.halls.length?H.halls[0].id:hqId(s);enterRegion(id,10,10);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.hq);P.x=n.x;P.y=n.y+3;invade(s,n,2);return{n:n&&n.n}});
