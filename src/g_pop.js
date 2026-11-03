@@ -5,6 +5,8 @@
 // 인원이 줄면 본산 맵이 닫힌다(황폐): 기준 인원의 50% 밑이면 가장 깊은 맵부터, 0이면 멸문. 설계: docs/스토리_설계.md
 const POP=STORY.POP;
 const popBase=s=>POP.base[s.id]||POP.base[s.tier]||60;
+// v239: 인원 상한은 맵 규모(증축한 s.lt)의 기준 인원 × POP.max. 기준 인원(세력 힘의 바탕)은 본래 규모 그대로
+const popCap=s=>Math.max(popBase(s),s.lt&&POP.base[s.lt]||0)*POP.max;
 function popInit(){if(!G.mdead)G.mdead={};if(G.pop){if(!G.popPrev)G.popPrev=JSON.parse(JSON.stringify(G.pop));return}G.pop={};for(const s of Object.values(SECTS))G.pop[s.id]=popBase(s);G.popPrev=JSON.parse(JSON.stringify(G.pop))}   // popPrev: 올해 첫날 인원. 첫해에도 '사망이 추가보다 많다'를 셀 수 있게 처음부터 둔다
 const sectPop=sid=>{popInit();return G.pop[sid]||0};
 // 잔당까지 모두 죽은 문파 (g_remnant.js): 이번 판에서 사라져 목록에 나오지 않고 인원이 다시 차지 않는다. 전체 재시작(G0)에서만 돌아온다
@@ -30,7 +32,7 @@ function popLose(sid,n,why){popInit();if(!SECTS[sid]||!(G.pop[sid]>0))return;con
 hook('newYear',()=>{popInit();G.popPrev=JSON.parse(JSON.stringify(G.pop));
   for(const s of Object.values(SECTS)){const p=G.pop[s.id];if(!(p>0))continue;if(G.occ&&G.occ[s.id])continue;if(G.mdead&&G.mdead[s.id])continue;   // v112: 장문인이 죽어 있으면 제자를 받지 못한다
     let r=(s.tier==='one'?POP.growMagyo:POP.grow)+POP.growHi*s.arts.filter(a=>a.hi).length;if(G.seal&&G.seal[s.id])r*=POP.sealMul;
-    G.pop[s.id]=Math.min(popBase(s)*POP.max,Math.round((p+Math.max(1,p*r))*10)/10)}
+    G.pop[s.id]=Math.min(popCap(s),Math.round((p+Math.max(1,p*r))*10)/10)}
   popSync()});
 // v112 (사용자: 장문인을 죽인 뒤 아무리 베어도 멸문이 안 된다): 직위가 높을수록 크게 줄고(killRank), 본산 안에서 베면 두 배(hqMul)
 const killLoss=e=>{const t=POP.killRank||[POP.kill],n=t[Math.min(t.length-1,Math.max(0,e.rank||0))]||POP.kill,R=REG&&REGIONS[REG];return n*(R&&R.hq===e.sect?POP.hqMul||1:1)};

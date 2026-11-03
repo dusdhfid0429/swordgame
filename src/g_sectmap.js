@@ -6,7 +6,8 @@
 // - 층마다 맵 한 장(g_tower.js towerAdd의 틀). 층 NPC는 SECTMAP.kinds[k].floors[층].npcs. 새 역할은 n.srole·n.ssid(g_vault npcRole)라 죽으면 공석·후임, 침공 땐 나선다(g_npcdef)
 // - 데이터 data/sectmap.json. 시범: SECTMAP.on 문파만(화산파). 나머지 문파는 예전 구성 그대로
 const SMAP=GD.SECTMAP;
-const smOn=s=>!!s&&!SMAP.skip.includes(s.id)&&!!SMAP.tiers[s.tier]&&!!REGIONS[hqId(s)]&&!!HQ_THEME[s.id];
+const smT=s=>s.lt||s.tier;   // v239: 맵 규모(증축하면 s.lt, g_sgrow.js). 무공 등급·기준 인원은 s.tier 그대로
+const smOn=s=>!!s&&!SMAP.skip.includes(s.id)&&!!SMAP.tiers[smT(s)]&&!!REGIONS[hqId(s)]&&!!HQ_THEME[s.id];
 // 갈래: 불가(황토 지붕) · 개방 · 채 · 세가 · 그 밖(도가·검파)
 const smStyle=s=>(GD.SECT_STYLE[s.id]||{}).roof==='ochre'?'buddha':/방$/.test(s.n)?'beggar':/채$/.test(s.n)?'fort':/가$/.test(s.n)?'clan':'dao';
 function smName(s,k){const o=(SMAP.names[s.id]||{})[k];if(o)return o;if(k==='main'||k==='main2'){const h=typeof hallNames==='function'&&hallNames(s)[0];if(h&&HALLS[s.id])return h}
@@ -36,7 +37,7 @@ function smHall(mapId,bi,b,s,keep){const K=SMAP.kinds[b.k];if(!b.door||!K.floors
     if(fd.master&&keep.master){const m=keep.master,w=Q.hall.w;m.x=Math.floor(w/2)+.5;m.y=3.6;Q.npcs.unshift(m);Q.hall.npcs=Q.npcs}
     if(fd.vault)REGIONS[hqId(s)].vaultAt=id});
   return hid}
-function smBuild(s){const T=SMAP.tiers[s.tier].maps,hq=hqId(s),[th]=HQ_THEME[s.id],oid=`hq_${s.id}_outer`,bid=`hq_${s.id}_back`,ar='ar_'+s.id;
+function smBuild(s){const T=SMAP.tiers[smT(s)].maps,hq=hqId(s),[th]=HQ_THEME[s.id],oid=`hq_${s.id}_outer`,bid=`hq_${s.id}_back`,ar='ar_'+s.id;
   const old=[hq,oid,bid].flatMap(smClear),keep={master:old.find(n=>n.hq===s.id)};
   for(const R of[REGIONS[oid],REGIONS[bid]])if(R)R.npcs=R.npcs.filter(n=>!n.elder&&!n.steward&&!n.disc);
   // 본산(장문 구역): genHQ 대신 genStage 틀로 — 마당·길·위로 나가는 길(topX)
@@ -59,7 +60,7 @@ function smBuild(s){const T=SMAP.tiers[s.tier].maps,hq=hqId(s),[th]=HQ_THEME[s.i
   // 후산(비전 구역)
   if(REGIONS[bid]&&T.back){const R=REGIONS[bid],c=R.stage,t=T.back;c.yard=t.yard;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;R.name=`${hqPlace(s)} 후산`;R.zone=()=>R.name;
     c.builds.forEach((b,i)=>smHall(bid,i,b,s,keep))}
-  REGIONS[hq].smTier=s.tier}
+  REGIONS[hq].smTier=smT(s)}
 for(const s of Object.values(SECTS))if(smOn(s))smBuild(s);
 // ---- 새 역할 NPC 창 ----
 function smSay(n,i){const L=SMAP.say[n.srole]||[''],s=SECTS[n.ssid];return(L[i??Math.floor(time/7)%L.length]||'').replace('{s}',s.n).replace('{rank}',P.sect===s.id?rankName(s.id):'손님')}

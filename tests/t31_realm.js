@@ -30,7 +30,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`벽을 깸: ${s.n}, 나이 +${(s.age-age0).toFixed(1)}`,s.r===1&&s.age-age0>=.45&&!s.wall);
   // 주화입마: 실패하면 내공을 잃고 경맥이 상한다
   const d=await p.evaluate(()=>{P.qiN=200;P.qiAcc=200*SIDES[P.side].gain;for(const k of['str','end','agi','qi'])P.st[k]+=6;P.arts.base.p=100;for(const id of Object.keys(ARTS).slice(0,3))P.arts[id]={p:60,f:[true,true,true]};recalc();
-    const w=atWall(),q0=P.qiN,a0=atk();window._rnd=Math.random;let i=0;Math.random=()=>[.99,.5][i++]??.5;pgFinish(false);Math.random=window._rnd;
+    const w=atWall(),q0=P.qiN,a0=atk();window._rnd=Math.random;const py=passYears;passYears=y=>{const o=Math.random;Math.random=window._rnd;try{return py(y)}finally{Math.random=o}};let i=0;Math.random=()=>[.99,.5][i++]??.5;pgFinish(false);Math.random=window._rnd;passYears=py;   // 세월이 흐르는 동안(새해 훅: 후기지수 굴림 등)은 진짜 난수
     return{w,r:realmIdx(),lost:q0-P.qiN,inj:P.inj>0,a0,a1:atk()}});
   ok(`주화입마: 경지 ${d.r} 유지, 내공 회차 -${d.lost}, 공격력 ${d.a0}→${d.a1}`,d.w&&d.r===1&&d.lost>=1&&d.inj&&d.a1<d.a0);
   // 예전 저장: P.realm 없으면 지금 내공 경지를 이어받는다
