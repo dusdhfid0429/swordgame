@@ -10,7 +10,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   // v213 형산 음공 [소상야우검](소문파 일반 = 중승)은 문파마다 하나인 중승 무공(넷째 칸 'm')과 따로 센다 (g_lore.js)
   const r=await p.evaluate(()=>{const cnt={};let bad=[];for(const s of Object.values(SECTS))for(const a of s.arts){const g=ARTS[a.id].grade;if(!ARTS[a.id].um)cnt[AGR[g]]=(cnt[AGR[g]]||0)+1;
-      const st=START[s.id],want=a.mid?1:!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?2:(a.hi?3:2);if(g!==want)bad.push(a.n)}
+      const st=START[s.id],want=a.mid?1:!a.hi&&st&&st.art===a.n?0:s.tier==='small'?(a.hi?2:1):s.tier==='mid'?(a.hi?3:2):(a.hi?3:2);if(g!==want)bad.push(a.n)}
     const starts=Object.values(SECTS).filter(s=>s.arts.length).map(s=>artGrade(startSet(s).art.id));cnt.start=starts.length;cnt.start0=starts.every(g=>g===0);
     const gen=Object.values(ARTS).filter(a=>!a.sect&&!a.base&&!a.gy&&!a.rc).every(a=>(a.grade||0)===0);
     // 같은 무기·같은 초식 자리의 위력 견주기: 화산 낙안검법(대·일반 상승) vs 매화검법(입문공 하승), 이십사수매화검(대·고급 절정) vs 회풍낙안검(소·고급 상승)

@@ -21,7 +21,7 @@ function giveStartSet(s){const k=startSet(s),got=[];
   // 주력 무기가 없으면 수련용 병기 하나 (권은 맨손)
   if(k.w!=='권'&&!(P.eq.weapon&&P.eq.weapon.cls===k.w)&&!P.bag.some(it=>it.slot==='weapon'&&it.cls===k.w)&&P.bag.length<24){const w=mkWeapon(k.w,.85,0);P.bag.push(w);got.push(w.name)}
   return got}
-const artSect=artId=>{const a=typeof ARTS!=='undefined'&&ARTS[artId];if(a&&(a.made||a.gy))return(a.sect&&SECTS[a.sect])||null;const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
+const artSect=artId=>{const a=typeof ARTS!=='undefined'&&ARTS[artId];if(a&&(a.made||a.gy||a.sabu))return(a.sect&&SECTS[a.sect])||null;const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 // 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
 const TIERN=GD.TIERN,FIVE=GD.FIVE||[];   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
 const isFive=s=>(typeof LORE_ON!=='undefined'?loreFive():FIVE).includes(s.id),   // v213: 오대세가 다섯째 자리는 생마다 (g_lore.js)
@@ -33,7 +33,7 @@ const AGR=GD.AGR,AGR_C=GD.AGR_C;
 const GMUL=GD.GMUL,GULT=GD.GULT,GCOST=GD.GCOST,GMAST=GD.GMAST;
 const sectGrade=(s,hi)=>s.tier==='small'?(hi?2:1):s.tier==='mid'?2:(hi?3:2);
 // v180 (사용자 2026-10-26 "문파에도 중승무공 추가해"): 문파마다 그 문파에 없는 병기로 중승 일반 무공 하나(맹마다 병기가 고르게)(data/sects.json 넷째 칸 'm'). 입문공(하승) → 중승 → 상승·절정
-const artGradeOf=(s,a)=>a.mid?1:!a.hi&&START[s.id]&&START[s.id].art===a.n?0:sectGrade(s,a.hi);
+const artGradeOf=(s,a)=>a.mid?1:!a.hi&&START[s.id]&&START[s.id].art===a.n?0:a.hi&&s.tier==='mid'?3:sectGrade(s,a.hi);   // v234: 중견문파 장문절기(고급 무공)는 절정. 그 문파에서 가장 높은 등급이어야 한다
 const artGrade=id=>(ARTS[id]&&ARTS[id].grade)||0;
 // v194 (점검): 문파 비급의 직위 조건. 등급별 최소 직위(ART_RANK)와 고급 무공 초식별 직위(HI_RANK) 가운데 높은 쪽
 const ART_RANK=GD.ART_RANK||[0,0,1,2,3];
@@ -56,6 +56,26 @@ function addSectArts(arts,pool,ults,formName,ultName){
   }
   linkSameArts(arts);
 }
+// ---- v234 사부 로드맵 (사용자 2026-11-03): 정파·사파 문파마다 장로 사부 둘~셋, 사부마다 병기가 다른 하승→중승→상승→절정 무공 길 ----
+// 문파에 원래 있는 같은 병기·같은 등급의 일반 무공은 그 칸에 쓰고, 빈 칸은 사부의 비전 무공을 새로 만든다 (data/sabu.json, g_sabu.js)
+const SABU={};
+const sabuOn=s=>!!s&&(s.al==='jeong'||s.al==='sacheon');
+function addSabuArts(arts,pool,ults,formName,ultName){const D=GD.SABU;if(!D)return;const used=new Set(Object.values(arts).map(a=>a.n));
+  for(const s of Object.values(SECTS)){if(!sabuOn(s))continue;const r=rng(7717+s.i*131),pk=a=>a[Math.floor(r()*a.length)];
+    const top=s.tier==='small'?2:3,n=D.n[s.tier]||2,st=START[s.id]||{},cl=[st.w,...s.arts.map(a=>a.cls)].filter((c,i,a)=>c&&a.indexOf(c)===i&&CLS.includes(c));
+    for(const c of['검','도','권','창','봉'])if(cl.length<n&&!cl.includes(c))cl.push(c);
+    const el=(s.arts[0]||{}).el||'금',hoP=(D.ho[el]||D.ho.금).slice(),title=D.title[s.id]||D.title._,taken=new Set();SABU[s.id]=[];
+    for(let k=0;k<n;k++){const cls=cl[k];let ho=pk(hoP);hoP.splice(hoP.indexOf(ho),1);const path=[];
+      for(let g=0;g<=top;g++){const ex=s.arts.find(a=>a.cls===cls&&!a.hi&&!taken.has(a.id)&&artGradeOf(s,a)===g);
+        if(ex){taken.add(ex.id);path.push(ex.id);continue}
+        const id=`S_${s.id}_t${k}_${g}`,mul=GMUL[g];const cand=[g?ho+pk(D.mid[g])+D.suf[cls]:ho+D.suf0[cls],...[1,2,3].flatMap(j=>D.mid[j].map(w=>ho+w+D.suf[cls]))];const nm=cand.find(x=>!used.has(x))||ho+s.n.slice(0,2)+D.suf0[cls];used.add(nm);
+        const forms=pickForms(pool[cls],r,D.forms[g]).map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(g>=3?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
+        const u=ults[cls][(s.i+k+g)%ults[cls].length];
+        arts[id]=artFx({id,side:ALLY[s.al].side,cls,el,n:nm,forms,sect:s.id,sabu:k+1,grade:g,
+          ult:{n:ultName(),steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},
+          d:`${s.n} ${ho} ${title}의 ${AGR[g]} 독문 무공 · ${CLASS[cls].n}. 그 사부의 제자만 사부에게 직접 받는다. 초식 ${forms.length}개와 필살기.`});
+        path.push(id)}
+      SABU[s.id].push({k,ho,n:`${ho} ${title}`,cls,path,say:D.say[cls]||''})}}}
 // 같은 이름의 무공은 하나다 (사용자 2026-10-23): 정·사 계열 기본 무공(정도0 등)이 문파 무공(하북팽가 오호단문도 등)과 이름·성향·병기가 같으면
 // 문파 무공이 진짜다(고급 무공과 겹치던 기본 무공 태극혜검은 태청검법으로 이름을 바꿨다: 아무 데서나 절정 비급이 나오지 않게). 기본 번호는 문파 무공을 가리키는 별칭이 되어(열거되지 않게) 비급·무관·전리품이 모두 문파 무공 하나로 모인다.
 function linkSameArts(arts){
@@ -112,16 +132,16 @@ function allianceDlg(alId){
 function sectDetail(s,hq){
   const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=sideOk(s.al);
   const hi=s.arts.find(a=>a.hi);
-  const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member;
-    const mb=s.id==='cheonma'?mgArtBlock(a):'',kb=typeof kinBlock==='function'?kinBlock(A2,fi):'',why=!same?'':mb?mb:lock?'제자만':fi<0?'모두 익힘':kb?kb:rankIdx(s.id)<artNeedRank(a,fi)?`${rankName(s.id,artNeedRank(a,fi))} 이상`:m<c?`공적 ${c} 필요`:'';
+  const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member,jl=a.hi&&member&&typeof jmOk==='function'&&!jmOk(A2);
+    const mb=s.id==='cheonma'?mgArtBlock(a):'',kb=typeof kinBlock==='function'?kinBlock(A2,fi):'',why=!same?'':mb?mb:lock?'제자만':jl?'대제자만':fi<0?'모두 익힘':kb?kb:rankIdx(s.id)<artNeedRank(a,fi)?`${rankName(s.id,artNeedRank(a,fi))} 이상`:m<c?`공적 ${c} 필요`:'';
     return `<div class="it"><div style="color:rgb(${A2.ct})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   // 지난해에 맡아 아직 들고 있는 임무도 보고할 수 있다 (해가 바뀌어도 임무는 사라지지 않는다)
   // v182 우호도: 다른 성향의 문파도 경계 이상이면 객원으로 임무를 준다. 원한이 깊으면(repGrudge) 같은 성향이라도 주지 않는다
   const hire=!same&&typeof repSect==='function'&&repStageOf(repSect(s.id))>=1,misOn=same||hire,gr=typeof repGrudge==='function'?repGrudge(s.id):'';
   const mis=misOn?missionRows(sectMissions(s),{take:qi=>'stake:'+s.id+':'+qi,lbl:'공적',can:!gr,why:gr}):'',old=misOn?oldMissionRows(q=>q.sect===s.id,sectMissions(s),'공적'):'';
-  const membership=member?`<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓고 본산의 승급 시험에 붙으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${typeof sryCard==='function'?sryCard(true):''}${rankHtml(s)}${typeof mobilHtml==='function'?mobilHtml(s):''}${donateHtml(s)}${gycSectHtml(s)}`
-    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. 고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}${!jb&&typeof sangongTxt==='function'&&startSet(s).sim?` <b class="bad">${sangongTxt(SIM[startSet(s).sim].sc)}</b>`:''}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
+  const membership=member?`${typeof sabuCard==='function'?sabuCard(s,hq):''}<div class="row2"><span class="note">${s.n}의 ${rankName(s.id)}다. 공적을 쌓고 본산의 승급 시험에 붙으면 직위가 오르고 고급 무공의 다음 초식을 받는다.</span>${B('sleave','하산하기')}</div>${typeof sryCard==='function'?sryCard(true):''}${rankHtml(s)}${typeof mobilHtml==='function'?mobilHtml(s):''}${donateHtml(s)}${gycSectHtml(s)}`
+    :!same?'':hq?`<div class="row2"><span class="note">${jb||`가입하면 입문공 세트 ${startSetTxt(s)}을(를) 바로 익힌다. ${sabuOn(s)?`입문하면 동기 여섯과 서열을 겨뤄 사부를 고르거나 지명받는다. 장문절기 [${hi.n}]은 대제자만 받는다.`:`고급 무공 [${hi.n}]은 입문 뒤 공적으로 받는다.`}`}${!jb&&typeof sangongTxt==='function'&&startSet(s).sim?` <b class="bad">${sangongTxt(SIM[startSet(s).sim].sc)}</b>`:''}</span>${B('sjoin:'+s.id,`${s.n} 가입`,{pri:1,d:!!jb})}</div>`
     :`<div class="row2"><span class="note">${jb?jb+' ':''}가입은 본산 ${hqPlace(s)}에서 ${masterTitle(s)}에게 청한다. 역참 말로 갈 수 있다.</span>${B('goto:'+hqId(s),`${hqPlace(s)} 가기 · 은자 ${POST_FEE}`,{d:P.silver<POST_FEE||REG===hqId(s)})}</div>`;
   return `<div class="row2"><span class="note">${embImg(s.id,26)} <b>${s.n}</b> · ${ALLY[s.al].n} ${tierName(s)} · 공적 ${m}</span>${hq?'':B('sview:','← 목록')}</div><p class="note">${s.d}</p>${membership}${typeof repSectHtml==='function'?repSectHtml(s):''}${typeof loreSectHtml==='function'?loreSectHtml(s):''}${garbHtml(s)}
     <h4 style="margin:0">고유 무공</h4><div class="list">${arts}</div>
@@ -156,7 +176,7 @@ function sectActBase(a,x,y){
     case'stake':{const s=SECTS[x],q=sectMissions(s)[+y];if(typeof repGrudge==='function'&&repGrudge(x))return true;if(q&&P.quests.length<4&&!P.quests.some(o=>o.key===q.key)&&!qDone(q.key)){P.quests.push({...q,have:0});log(`임무 ${q.n}을(를) 맡았습니다.`,'sys')}return true}
     case'goto':postGo(x);return true;
     case'mbuy':{const a2=ARTS[x],s=artSect(x),meta=s.arts.find(q=>q.id===x),fi=+y,c=meritCost(meta,fi);
-      if(fi<0||(s.id==='cheonma'&&mgArtBlock(meta))||(typeof kinBlock==='function'&&kinBlock(a2,fi))||(meta.hi&&P.sect!==s.id)||rankIdx(s.id)<artNeedRank(meta,fi)||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
+      if(fi<0||(s.id==='cheonma'&&mgArtBlock(meta))||(typeof kinBlock==='function'&&kinBlock(a2,fi))||(meta.hi&&P.sect!==s.id)||(meta.hi&&typeof jmOk==='function'&&!jmOk(a2))||rankIdx(s.id)<artNeedRank(meta,fi)||(P.merit[s.id]||0)<c||P.bag.length>=24)return true;P.merit[s.id]-=c;P.bag.push(mkBook(x,fi));log(`${s.n}에서 [${a2.n} · ${a2.forms[fi].n}] 비급을 받았습니다. 행낭에서 읽으세요.`,'xp');return true}
   }
   return false}
 // 예전 저장: 무당파('정')·혈교('사') 제자는 새 문파로 옮긴다. 무림전도 개편으로 없어진 문파는 같은 세력의 새 문파로 옮긴다
