@@ -13,7 +13,7 @@ const sbMy=()=>{const s=sbSect();return s&&P.sabu.st==='disc'?sbMasters(s.id)[P.
 const sbPos=()=>P.sabu.ord.indexOf('@');
 const isDaeje=sid=>!!(P&&P.sabu&&P.sabu.sid===sid&&P.sabu.dj&&P.sect===sid);
 // 장문절기 비급을 받을 수 있나: 대제자이거나 이미 익힌 무공 (예전 저장)
-const jmOk=a=>!a||!a.hi||!sabuOn(SECTS[artSect(a.id).id])||isDaeje(artSect(a.id).id)||!!P.arts[a.id];
+const jmOk=a=>{if(!a||!a.hi||P.arts[a.id])return true;const s=artSect(a.id);if(s&&s.id==='geumgun')return P.sect==='geumgun'&&rankIdx('geumgun')>=rankTop('geumgun');if(s&&s.id==='cheonma')return P.sect==='cheonma'&&(!!P.sgj||(typeof isLeader==='function'&&isLeader()));return !sabuOn(s)||isDaeje(s.id)};   // v235 군부: 어림군 최고 무공은 대장군만 (g_gunbu.js) · v236 마교: 교주 독문무공은 소교주만 (g_imagok.js)
 const sbInHq=sid=>panel==='npc'&&panelArg&&panelArg.hq===sid;
 function sbStart(sid){const s=SECTS[sid];if(!sabuOn(s)||!sbMasters(sid).length)return;
   const pool=SB.coh.slice(),coh=[];for(let i=0;i<5;i++){const n=pool.splice(Math.floor(Math.random()*pool.length),1)[0];coh.push({n,cls:pick(sbMasters(sid)).cls})}
@@ -43,13 +43,13 @@ function sbGive(first){const b=P.sabu,M=sbMy();if(!M||(!first&&sbNextWhy()))retu
     P.arts[id]={p:0,f:a.forms.map((f,i)=>i===0)};b.step++;log(`${M.n}에게서 ${AGR[a.grade]} 무공 [${a.n} · ${a.forms[0].n}]을(를) 전수받았습니다. 다음 초식은 숙련이 닿으면 '가르침 청하기'로 받습니다.`,'xp');
     showBanner(`${AGR[a.grade]} 무공 전수`,`${M.n} · ${a.n}`);feat(`사부 ${M.n}에게서 [${a.n}]을(를) 받았다`);recalc();return}}
 // 예전 저장(이미 문파 제자)이나 다른 길로 든 제자: 서열 없이 공통 길로 시작한다 (늦은 지명은 그대로)
-hook('tick',()=>{if(!P||!playing||!P.sect||P.sect==='own')return;const s=SECTS[P.sect];if(!sabuOn(s)||!sbMasters(s.id).length||(P.sabu&&P.sabu.sid===s.id))return;
+hook('tick',()=>{if(!P||!playing||!P.sect||P.sect==='own')return;const s=SECTS[P.sect];if(!(sabuOn(s)||s&&s.id==='cheonma'&&!(typeof imkOn==='function'&&imkOn()))||!sbMasters(s.id).length||(P.sabu&&P.sabu.sid===s.id))return;
   const pool=SB.coh.slice(0,5);P.sabu={sid:s.id,coh:pool.map(n=>({n,cls:sbMasters(s.id)[0].cls})),ord:[...pool,'@'],st:'common',m:-1,off:-1,step:0,late:0,dj:0,djCool:0}});
 // 늦은 지명: 공통 길에서 직위가 오르면 한 번
 hook('tick',()=>{const s=sbSect();if(!s||P.sabu.st!=='common'||P.sabu.late||rankIdx(s.id)<SB.late)return;const b=P.sabu,M=sbMasters(s.id),cur=(art()||{}).cls;
   b.late=1;b.st='named';b.off=(M.find(m=>m.cls===cur)||M[0]).k;log(`${rankName(s.id)}에 오른 당신을 ${M[b.off].n}이(가) 눈여겨보고 제자로 지명했습니다. 본산 문파 창에서 받들지 정하세요.`,'xp');showBanner('늦은 지명',M[b.off].n)});
 // 대제자 선발을 청할 수 있나
-function djWhy(){const b=P.sabu,s=sbSect();if(!s)return'문파 제자만';if(b.dj)return'이미 대제자다';if(b.st==='rank'||b.st==='pick'||b.st==='named')return'입문 서열과 사부부터 정해야 한다';
+function djWhy(){const b=P.sabu,s=sbSect();if(!s)return'문파 제자만';if(s.id==='cheonma')return'마교는 대제자 대신 소교주를 뽑는다';if(b.dj)return'이미 대제자다';if(b.st==='rank'||b.st==='pick'||b.st==='named')return'입문 서열과 사부부터 정해야 한다';
   const need=b.st==='disc'?SB.dj.rank:SB.dj.rankCommon;if(rankIdx(s.id)<need)return`${rankName(s.id,need)} 이상${b.st==='disc'?'':' (사부가 없으면 한 단 더)'}`;
   if(realmIdx()<SB.dj.realm)return`${RANKS[SB.dj.realm]} 이상`;if(b.djCool&&realAge()<b.djCool)return`지난 선발에 져서 ${Math.max(1,Math.ceil((b.djCool-realAge())*12))}달 뒤`;if(G.duel||P.hp<=0)return'지금은 안 된다';return''}
 // ---- 그 자리 비무 (서열 비무 · 대제자 선발) ----
@@ -86,7 +86,7 @@ hook('sectAct',c=>{if(!/^sb/.test(c.a))return;c.done=true;c.r=true;const b=P.sab
 function sbPathHtml(M,mine){const b=P.sabu;return `<div class="sbpath">${M.path.map((id,i)=>{const a=ARTS[id],st=A(id),got=!!st,nx=mine&&i===b.step;
   return `<span class="sbstep${got?' got':nx?' next':''}">${gradeTag(a.grade)} ${esc(a.n)}${got?` <small class="good">${st.f.filter(Boolean).length}/${a.forms.length}</small>`:nx?' <small class="gold">다음</small>':''}</span>`}).join('<span class="dim"> → </span>')}</div>`}
 function sbOrdHtml(){const b=P.sabu;return `<p class="note">${b.ord.map((n,i)=>n==='@'?`<b class="gold">${i+1}.나</b>`:`<span class="dim">${i+1}.${esc(n)}</span>`).join(' · ')}</p>`}
-function sabuCard(s,hq){if(!P.sabu||P.sabu.sid!==s.id||!sabuOn(s))return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
+function sabuCard(s,hq){if(s.id==='geumgun'&&typeof gbCard==='function')return gbCard(s,hq);if(s.id==='cheonma'&&typeof imkCard==='function'&&imkOn())return imkCard();const on=sabuOn(s)||s.id==='cheonma';if(!P.sabu||P.sabu.sid!==s.id||!on)return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
   const b=P.sabu,M=sbMasters(s.id),here=hq?'':`<p class="note dim">비무와 사부 정하기는 본산 ${hqPlace(s)}의 ${masterTitle(s)} 창에서 한다.</p>`;let body='';
   const masters=(btn)=>`<div class="list">${M.map(m=>`<div class="it"><div><b>${esc(m.n)}</b> <small class="dim">${CLASS[m.cls].n}</small>${sbPathHtml(m,false)}<span>"${esc(m.say)}"</span></div><div class="ib">${btn(m)}</div></div>`).join('')}</div>`;
   if(b.st==='rank'){const pos=sbPos(),up=pos>0?b.ord[pos-1]:null;
@@ -97,7 +97,9 @@ function sabuCard(s,hq){if(!P.sabu||P.sabu.sid!==s.id||!sabuOn(s))return sabuOn(
   else if(b.st==='disc'){const m=sbMy(),why=sbNextWhy(),done=b.step>=m.path.length;
     body=`<p class="note">사부 <b>${esc(m.n)}</b> · ${CLASS[m.cls].n}. 앞 무공 숙련 ${SB.mast}과 직위(상승 ${rankName(s.id,SB.rank[2])}, 절정 ${rankName(s.id,SB.rank[3]??2)})가 되면 다음 무공을 받는다. 초식은 아래 '가르침 청하기'.</p>${sbPathHtml(m,true)}
       ${done?'':`<div class="row2"><span class="note">${why?`<small class="dim">${esc(why)}</small>`:`[${esc(ARTS[m.path[b.step]].n)}]을(를) 받을 수 있다`}</span>${hq?B('sbnext','다음 무공 청하기',{pri:!why,d:!!why}):''}</div>`}`}
+  else if(s.id==='cheonma')body=`<p class="note">사부 없이 장경각에서 비급을 열람하고 공적으로 배운다. ${b.late?'':`${rankName(s.id,SB.late)}에 오르거나 '사부의 가르침' 인연을 고르면 장로원 장로가 제자로 거둘 수 있다.`}</p>`;
   else body=`<p class="note">사부 없이 <b>공통 길</b>을 걷는다. 입문공과 공적 비급으로 배운다. ${b.late?'':`${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.`}</p>${sbOrdHtml()}`;
+  if(s.id==='cheonma')return `<div class="card sbcard"><div class="row2"><h4>장로원 사부와 소교주</h4><span class="tag">${b.st==='disc'?'장로의 제자':P.sgj?'소교주':'교도'}</span></div>${body}${here}${typeof sgjHtml==='function'?sgjHtml(s,hq):''}</div>`;
   const dw=djWhy(),hiN=s.arts.filter(a=>a.hi).map(a=>`[${ARTS[a.id].n}]`).join(' · ');
   const dj=b.dj?`<div class="row2"><span class="note"><b class="gold">${s.n} 대제자</b> · 장문절기 ${hiN}의 비급을 공적으로 받는다.</span></div>`
     :`<div class="row2"><span class="note">대제자가 되면 ${masterTitle(s)}이 장문절기 ${hiN}을(를) 전한다. ${dw?`<small class="dim">${esc(dw)}</small>`:'동기 수석과 선발 비무를 청할 수 있다.'}</span>${hq&&!dw?B('sbdj','대제자 선발 청하기',{pri:1}):''}</div>`;

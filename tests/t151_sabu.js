@@ -9,13 +9,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(600);
   // 1. 사부 로드맵: 정·사 문파마다 사부 2~3명, 병기가 다르고 등급이 하승→중승→상승→절정. 마교·군부는 없음
   const r0=await p.evaluate(()=>{const M=SABU.bukhae,o={n:M.length,cls:M.map(m=>m.cls),gr:M.map(m=>m.path.map(id=>ARTS[id].grade).join('')),names:M.map(m=>m.path.map(id=>ARTS[id].n).join('>')),
-    cm:!!SABU.cheonma,gb:!!SABU.geumgun,small:SABU.hyeongsan.length,sg:SABU.hyeongsan[0].path.map(id=>ARTS[id].grade).join(''),hi:ARTS[SECTS.bukhae.arts.find(a=>a.hi).id].grade,
+    cm:sabuOn(SECTS.cheonma),gb:sabuOn(SECTS.geumgun),small:SABU.hyeongsan.length,sg:SABU.hyeongsan[0].path.map(id=>ARTS[id].grade).join(''),hi:ARTS[SECTS.bukhae.arts.find(a=>a.hi).id].grade,
     uniq:new Set(Object.values(SABU).flatMap(M=>M.flatMap(m=>m.path))).size===Object.values(SABU).flatMap(M=>M.flatMap(m=>m.path)).length,
     st:SABU.bukhae.some(m=>m.path.includes(SECTS.bukhae.arts.find(a=>a.n==='빙백장').id))};return o});
   console.log(r0.names.join(' | '));
   ok(`북해빙궁 사부 3명 (${r0.cls}), 등급 ${r0.gr}`,r0.n===3&&new Set(r0.cls).size===3&&r0.gr.every(g=>g==='0123'));
   ok(`원래 무공(빙백장)도 로드맵에 쓰임, 무공이 겹치지 않음`,r0.st&&r0.uniq);
-  ok(`소문파 사부 ${r0.small}명 · 상승까지 (${r0.sg}), 마교·군부는 사부 없음`,r0.small===2&&r0.sg==='012'&&!r0.cm&&!r0.gb);
+  ok(`소문파 사부 ${r0.small}명 · 상승까지 (${r0.sg}), 마교·군부는 사부 없음(군부는 부대)`,r0.small===2&&r0.sg==='012'&&!r0.cm&&!r0.gb);
   ok(`중견문파 장문절기는 절정 (${r0.hi})`,r0.hi===3);
   // 2. 가입하면 입문 서열이 생기고 문파 창에 카드
   const r1=await p.evaluate(()=>{const s=SECTS.bukhae;enterRegion(hqId(s),20.5,30.5);P.reg=REG;mobs=[];P.realm=0;P.age=16;P.fame=60;P.evil=0;P.side='사';const n=hqNpc(hqId(s));openNpc(n);act('sjoin:bukhae');

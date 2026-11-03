@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 세력 구도: 군부가 네 번째 세력, 금군이 그 문파. 관군은 사파·마교와만 싸운다
   const f=await p.evaluate(()=>({al:!!ALLY.gunbu,sect:SECTS.geumgun&&SECTS.geumgun.al,fac:alFac('gunbu'),kinds:FAC_KIND['관'],
     foe:{jg:facFoe('정','관'),gj:facFoe('관','정'),sg:facFoe('사','관'),mg:facFoe('마','관'),gs:facFoe('관','사'),jm:facFoe('정','마'),js:facFoe('정','사')},ranks:SRANK.gunbu,mis:SMIS.gunbu.length}));
-  ok(`군부 세력 ${f.al} · 금군 ${f.sect} · 세력 무인 ${f.kinds} · 직위 ${f.ranks.join('→')} · 임무 ${f.mis}`,f.al&&f.sect==='gunbu'&&f.fac==='관'&&f.kinds[0]==='관군'&&f.ranks.length===5&&f.mis>=4);
+  ok(`군부 세력 ${f.al} · 금군 ${f.sect} · 세력 무인 ${f.kinds} · 직위 ${f.ranks.join('→')} · 임무 ${f.mis} (v235 맨 위 대장군)`,f.al&&f.sect==='gunbu'&&f.fac==='관'&&f.kinds[0]==='관군'&&f.ranks.length===6&&f.ranks[5]==='대장군'&&f.mis>=4);
   ok(`적대: 정↔관 ${f.foe.jg}/${f.foe.gj} (서로 안 건드림), 사↔관 ${f.foe.sg}/${f.foe.gs}, 마→관 ${f.foe.mg}, 정→사 ${f.foe.js}`,!f.foe.jg&&!f.foe.gj&&f.foe.sg&&f.foe.gs&&f.foe.mg&&f.foe.js&&f.foe.jm);
   // 2. 북경이 황성: 성내 포털 → 황성 금위영 → 황궁. 황궁 태화전에 황제와 대장군
   const w=await p.evaluate(()=>{const bj=Object.keys(REGIONS).find(id=>REGIONS[id].lm&&REGIONS[id].lm.n==='북경'),R=REGIONS[bj];
