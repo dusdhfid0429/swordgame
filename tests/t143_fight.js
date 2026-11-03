@@ -23,7 +23,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 2. 간파: 적이 칠 준비 중일 때 보법 → 그 수는 빗나가고, 시간이 느려지고, 다음 일격은 반격
   r=await p.evaluate(()=>{bobInit();const bk=Object.keys(BOBS).find(k=>BOBS[k].t!=='flank');P.bob={[bk]:1};P.bcur=bk;P.leap=null;P.kanpaCd=0;const e=mk('산적',1);e.maxHp=e.hp=99999;e.wind=.3;e.tgt=null;e.aggro=true;
     const s=bobeop();update(.02);const o={s,n:P.kanpaN||0,wind:e.wind,slow:fSlow,counter:P.kanpaC>time};
-    const h0=e.hp;P.leap=null;P.fcd=P.fcd.map(()=>0);P.gcd=0;e.def=0;hitE(mkX(P.cur,1),e,1,0,0);o.ct=P.kanpaC===0;o.dmg=h0-e.hp;return o});
+    const h0=e.hp;P.leap=null;P.fcd=P.fcd.map(()=>0);P.gcd=0;e.def=0;const R0=Math.random;Math.random=()=>.5;hitE(mkX(P.cur,1),e,1,0,0);Math.random=R0;   // 적 회피(무작위)로 피해 0이 나오던 것 (CI 2026-11-03)o.ct=P.kanpaC===0;o.dmg=h0-e.hp;return o});
   ok(`간파 ${r.n}번, 적의 수 끊김 ${r.wind===0}, 느려짐 ${r.slow}, 반격 일격 ${r.ct} (피해 ${r.dmg})`,r.s&&r.n===1&&r.wind===0&&r.slow<1&&r.counter&&r.ct&&r.dmg>0);
   await p.waitForTimeout(800);r=await p.evaluate(()=>fightK(.016));ok(`느린 시간은 실제 시간으로 풀린다 (${r})`,r===1);
   // 3. 우두머리 수: 예고 → 이름 외치기 → 돌진·회전·연환. 서 있으면 맞는다

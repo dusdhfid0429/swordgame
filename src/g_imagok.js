@@ -15,7 +15,9 @@ const imkOn=()=>!!(P&&P.imk&&P.imk.st==='trial'&&P.sect==='cheonma');
 const imkRooms=()=>caveRooms(IMK.size,IMK.size);
 {const W=IMK.size,c={pid:'hq_cheonma_4',kind:'trial',th:'blood',n:IMK.n,w:W,h:W,seed:IMK.seed},mid=Math.floor(W/2);
   REGIONS[IMK_ID]={name:IMK.n,in:1,cave:{dark:CAVE_TH.blood.dark,dk:CAVE_TH.blood.dk,kind:'trial',th:'blood',pid:c.pid},theme:'dark',size:W,gen:()=>genCave(c),bake:()=>bakeCave('blood'),zone:()=>IMK.n,
-    spawns:[],bosses:[],npcs:[],gates:[{x:mid+.5,y:W-1.6,to:c.pid,get tx(){return caveFallback(c.pid).x},get ty(){return caveFallback(c.pid).y},label:'혈마연무장(으)로',door:1,caveOut:1}]}}
+    spawns:[],bosses:[],npcs:[],gates:[{x:mid+.5,y:W-1.6,to:c.pid,tx:3.5,ty:20.5,label:'혈마연무장(으)로',door:1,caveOut:1}]};
+  // 혈마연무장 서쪽 끝의 곡 어귀: 시험 중에만 열린다 (나가면 탈락이라 다시 들어올 일은 시험 중 실수로 나갔다 돌아올 때뿐인데, 그때는 이미 탈락이다)
+  const H=REGIONS[c.pid];if(H)H.gates.push({x:1.2,y:20.5,to:IMK_ID,tx:mid+.5,ty:W-3.5,label:IMK.n,door:1,need:()=>imkOn()?null:'입마곡은 입교한 이들이 시험을 치를 때만 열린다.'})}
 // 입교 → 곡으로
 hook('sectActDone',c=>{if(c.a!=='sjoin'||c.x!=='cheonma'||P.sect!=='cheonma')return;
   const[a,b]=IMK.pool.tz;P.imk={st:'trial',stage:'pool',tz:Math.round((a+Math.random()*(b-a))*100)/100,t:0,hp:1,kills:0,bossT:0,score:0,y:Math.floor(realAge())};
