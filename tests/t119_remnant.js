@@ -10,7 +10,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
 
   // 1. 단리세가 멸문 → 잔당이 들판·산에 숨는다
   const a=await p.evaluate(()=>{mobs=[];G.mdead.danri={y:Math.floor(G.cal),life:P.lifeNo};popLose('danri',99999,'시험');remnSync();const r=G.remn.danri,R=REGIONS[r.reg];
-    return{reg:r.reg,left:r.left,lead:r.lead,known:r.known,wild:/^(pv_|lm_)/.test(r.reg)&&!R.city&&!R.hq,card:/단리세가/.test(remnCard())&&/어딘가로 숨었다|모른다/.test(remnCard())}});
+    return{reg:r.reg,left:r.left,lead:r.lead,known:r.known,wild:/^(pv_|lm_)/.test(r.reg)&&!R.city&&!R.hq,card:/단리세가/.test(remnCard())&&/비밀통로/.test(remnCard())}});
   ok(`멸문 → 잔당 ${a.left}명(전인 ${a.lead}) ${a.reg} 들판·산 ${a.wild} · 숨은 곳 모름 ${a.known===0} · 임무창 칸 ${a.card}`,a.left===4&&a.lead===1&&a.wild&&a.known===0&&a.card);
 
   // 2. 장경각(서재) 서가: 직접 전수를 뺀 무공을 모두 익힌다
@@ -51,8 +51,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
 
   // 5. 졸개를 다 쓰러뜨리면 전인이 달아난다. 놓치면 다른 곳으로 숨고, 달아나는 중에 쓰러뜨리면 그 자리에서 비전
   const f=await p.evaluate(()=>{for(const m of mobs.filter(m=>m.remn&&!m.remnLead)){m.hp=0;runHooks('kill',m)}const ld=mobs.find(m=>m.remnLead);runHooks('mobTick',ld,.05);const esc=ld.escT>0,reg0=REG;
-    ld.escT=.01;runHooks('mobTick',ld,.05);const r=G.remn.danri;return{esc,gone:!mobs.includes(ld),moved:r.reg!==reg0,left:r.left,lead:r.lead,known:r.known}});
-  ok(`전인 탈출 시도 ${f.esc} · 놓치면 사라짐 ${f.gone} 다른 맵으로 ${f.moved} · 다시 모은 잔당 ${f.left} 전인 ${f.lead} · 숨은 곳 모름 ${f.known===0}`,f.esc&&f.gone&&f.moved&&f.left===3&&f.lead===1&&f.known===0);
+    ld.escT=.01;runHooks('mobTick',ld,.05);const r=G.remn.danri,hole=nodes.find(n=>n.t==='tnexit'&&n.hole);let via=null;if(hole){const tr=window.travel;window.travel=o=>{via=o.to};tnExit(hole);window.travel=tr}r.known=0;return{esc,gone:!mobs.includes(ld),moved:r.reg!==reg0,left:r.left,lead:r.lead,known:r.known,hole:!!hole,via:via===r.reg,noProv:!/쪽으로 숨어든/.test($('log').innerText)}});
+  ok(`전인 탈출 시도 ${f.esc} · 놓치면 사라짐 ${f.gone} 다른 맵으로 ${f.moved} · 다시 모은 잔당 ${f.left} 전인 ${f.lead} · 숨은 곳 모름 ${f.known===0} · 지방 안 알림 ${f.noProv} · 땅굴 ${f.hole} → 새 은신처 ${f.via}`,f.hole&&f.via&&f.noProv&&f.esc&&f.gone&&f.moved&&f.left===3&&f.lead===1&&f.known===0);
   await p.evaluate(()=>{const r=G.remn.danri;mobs=[];enterRegion(r.reg,(REGIONS[r.reg].size||40)/2,(REGIONS[r.reg].h||REGIONS[r.reg].size||40)/2);tnArrive.call(null)});await p.waitForTimeout(300);
   for(let i=0;i<3;i++)await tick();
   const k=await p.evaluate(()=>{P.tnArr=1;tnArrive();const rm=mobs.filter(m=>m.remn==='danri');for(const m of rm.filter(m=>!m.remnLead)){m.hp=0;runHooks('kill',m)}

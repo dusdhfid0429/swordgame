@@ -85,9 +85,11 @@ hook('mobTick',(e,dt)=>{if(!e.remnLead||e.hp<=0)return;const r=G.remn&&G.remn[e.
     addText(e.x,e.y-.6,'이 비급만은 넘길 수 없다!','#ffb070');log(`${e.name}이(가) 문파의 절기를 품고 달아나려 한다! ${REMN.escape.t}초 안에 쓰러뜨려야 한다.`,'dmg');showBanner('탈출 시도',`${e.name}`)}
   const g=e.escG;e.escT-=dt;e.flee=.3;e.fleeFrom={x:2*e.x-g.x,y:2*e.y-g.y};e.stun=0;
   if(e.escT<=0||Math.hypot(g.x-e.x,g.y-e.y)<REMN.escape.gate)remnEscape(e,r)});
-function remnEscape(e,r){const s=SECTS[e.remn],i=mobs.indexOf(e);if(i>=0)mobs.splice(i,1);fx.push({t:'puff',x:e.x,y:e.y,life:.6});
-  const reg=remnSpot(s,r.reg)||r.reg;r.reg=reg;r.left=1+REMN.regroup;r.known=0;r.hint=remnProv(r);
-  log(`${e.name}이(가) 달아났다. 남은 무리를 모아 ${r.hint||'어딘가'} 쪽으로 숨어든 듯하다.`,'dmg')}
+function remnEscape(e,r){const s=SECTS[e.remn],i=mobs.indexOf(e),g0=e.escG||e;if(i>=0)mobs.splice(i,1);fx.push({t:'puff',x:e.x,y:e.y,life:.6});
+  const reg=remnSpot(s,r.reg)||r.reg;r.reg=reg;r.left=1+REMN.regroup;r.known=0;delete r.hint;
+  // v231 (사용자 2026-11-03): 숨은 지방은 알려 주지 않는다. 전인이 빠져나간 땅굴(이 맵에 남는다)이나 문주전 비밀통로로 뒤쫓는다 (출구 tnExit는 늘 지금 은신처로 잇는다)
+  const p=walkAt(e.x,e.y)?{x:e.x,y:e.y}:{x:g0.x,y:g0.y};nodes.push({t:'tnexit',hole:1,sect:s.id,x:p.x,y:p.y,cd:0});
+  log(`${e.name}이(가) 땅굴로 빠져나가 비밀통로로 숨어들었다. 남은 무리를 모아 새 은신처로 간 듯하다. 땅굴을 따라가거나 ${s.n} 문주전의 비밀통로로 뒤쫓을 수 있다.`,'dmg');showBanner('전인 도주','땅굴·비밀통로로 뒤쫓는다')}
 hook('kill',e=>{if(!e.remn)return;const r=G.remn&&G.remn[e.remn],s=SECTS[e.remn];if(!r||!s)return;r.left=Math.max(0,r.left-1);
   if(e.remnLead&&libArts(s.id,1).length){r.lead=0;const it=libBox(s.id,1);giveItem(it);addText(e.x,e.y-.6,it.name,'#ffd27a');
     log(`${e.name}을(를) 쓰러뜨리고 품에서 [${it.name}]을(를) 거두었다.${e.escT!=null?' 달아나기 직전이었다.':''} 행낭에서 펼치면 ${s.n}의 직접 전수 무공을 익힌다.`,'xp');feat(`${s.n}의 최후의 전인을 쓰러뜨렸다`)}
@@ -99,7 +101,7 @@ function remnEnd(s){remnInit();delete G.remn[s.id];G.gone[s.id]=1;if(G.pop)G.pop
 function remnRumor(){const L=Object.entries(remnInit()).filter(([sid,r])=>!r.known&&SECTS[sid]);if(!L.length)return'';const[sid,r]=pick(L);r.known=1;
   return `멸문한 ${SECTS[sid].n}의 잔당이 ${remnProv(r)} ${remnName(r)}에 숨어 지낸다더군.${r.lead?' 장문인의 절기를 이은 자가 하나 남았다던데.':''}`}
 function remnCard(){const L=Object.entries(remnInit()).filter(([sid])=>SECTS[sid]);if(!L.length)return'';
-  return `<div class="card"><h4>멸문 문파의 잔당 <small class="dim">모두 쓰러뜨리면 그 문파는 이번 판에서 사라진다</small></h4>${L.map(([sid,r])=>`<p class="note"><b>${SECTS[sid].n}</b> 잔당 ${r.left}명${r.lead?' · 최후의 전인':''} · ${r.known?`<span class="gold">${esc(remnProv(r))} ${esc(remnName(r))}</span>`:r.hint?`${esc(r.hint)} 어딘가로 숨었다`:'숨은 곳을 모른다 (장경각·객잔 소문)'}</p>`).join('')}</div>`}
+  return `<div class="card"><h4>멸문 문파의 잔당 <small class="dim">모두 쓰러뜨리면 그 문파는 이번 판에서 사라진다</small></h4>${L.map(([sid,r])=>`<p class="note"><b>${SECTS[sid].n}</b> 잔당 ${r.left}명${r.lead?' · 최후의 전인':''} · ${r.known?`<span class="gold">${esc(remnProv(r))} ${esc(remnName(r))}</span>`:'숨은 곳을 모른다 · 문주전 비밀통로를 지나면 은신처로 이어진다 (장경각·객잔 소문으로도 안다)'}</p>`).join('')}</div>`}
 
 // ================= 문주전 비밀 통로와 기관 지하도 (사용자 2026-10-26) =================
 // "문주전이나 특정 전각 안에 비밀통로를 배치하고 이용 시 지하터널을 통과, 지하터널에는 기관진식. 지하터널을 탈출하면 탈출한 세력이 도망간 지역으로 이동되어
@@ -163,7 +165,7 @@ function mechTurn(n){const s=SECTS[n.sect],st=tnSt(s.id);if(st.open){log('촛대
   addText(n.x,n.y-.6,'철컥','#e8d8a8');if(st.seq.length<want.length){log(`[${n.k}] 촛대가 철컥 돌아갔다.`,'info');return}
   st.open=1;st.seq=[];tnOpenDoor(s);log(`세 촛대가 맞물리자 왼쪽 벽 서가가 밀려나며 비밀 통로가 드러났다.`,'xp');showBanner('비밀 통로',`${s.n} 문주전`);feat(`${s.n} 문주전의 비밀 통로를 찾았다`)}
 function tnExit(n){const s=SECTS[n.sect],r=G.remn&&G.remn[s.id];let to=hqId(s);
-  if(r){r.known=1;to=r.reg;log(`좁은 굴을 빠져나오니 ${remnProv(r)} ${remnName(r)}이다. ${s.n}의 잔당이 이 길로 달아났다.`,'xp')}else log(`굴을 빠져나오니 ${s.n} 본산 근처다.`,'info');
+  if(r){r.known=1;to=r.reg;log(`${n.hole?'전인이 판 땅굴을 따라 비밀통로를 지나 ':'좁은 굴을 '}빠져나오니 ${remnProv(r)} ${remnName(r)}이다. ${s.n}의 잔당이 이 길로 달아났다.`,'xp')}else log(`굴을 빠져나오니 ${s.n} 본산 근처다.`,'info');
   const R=REGIONS[to],g=(R.gates||[]).find(q=>!q.door)||(R.gates||[])[0],W=R.size||40,H=R.h||W;
   P.tnArr=1;travel({to,tx:g?g.x+(W/2-g.x)*.15:W/2,ty:g?g.y+(H/2-g.y)*.15:H/2})}
 // 나온 자리가 막혀 있으면 가까운 걸을 칸으로
@@ -175,7 +177,7 @@ function remnNode(n){
   if(n.t==='lib'){P.chan={t:0,dur:REMN.lib.dur,label:'장경각 서가를 뒤진다',fn:()=>libLoot(n)};return true}
   if(n.t==='plaque'){plaqueRead(n);return true}
   if(n.t==='mech'){P.chan={t:0,dur:MECH.turn,label:`[${n.k}] 촛대를 돌린다`,fn:()=>mechTurn(n)};return true}
-  if(n.t==='tnexit'){P.chan={t:0,dur:TNC.exit,label:'출구를 밀어 연다',fn:()=>tnExit(n)};return true}
+  if(n.t==='tnexit'){P.chan={t:0,dur:TNC.exit,label:n.hole?'땅굴로 뒤쫓는다':'출구를 밀어 연다',fn:()=>tnExit(n)};return true}
   return false}
 function drawRemnNode(n){const p=toScreen(n.x,n.y),ready=n.cd<=0;ctx.save();ctx.translate(p.x,p.y);
   if(n.t==='lib'){ctx.fillStyle='#3a2a1c';ctx.fillRect(-12,-26,24,26);ctx.fillStyle='#6a4a2a';for(let i=0;i<3;i++)ctx.fillRect(-11,-24+i*8,22,2);
@@ -229,8 +231,8 @@ function lastStand(s){const L=STORY.POP.last||{n:5,elite:2,hp:1.3},fac=alFac(s.a
 hook('sectFall',sid=>{const s=SECTS[sid];if(!s||!P)return;const here=REG&&ruinSect(REGIONS[REG])===s;
   if(here){if(G.fall&&G.fall[sid])G.fall[sid].seen=1;const k=lastStand(s);if(k){addText(P.x,P.y-1,'최후의 결사대','#ff7a5a');log(`${s.n}의 남은 무인 ${k}명이 최후의 결사대를 이뤄 마지막 칼을 들고 달려든다!`,'dmg');showBanner(`${s.n} 최후의 결사대`,'문파의 마지막 싸움')}}
   else showBanner(`${s.n} 멸문`,G.fall&&G.fall[sid]&&G.fall[sid].why||'본산이 무너졌다');
-  remnSync();const r=G.remn&&G.remn[sid];if(!r)return;r.hint=remnProv(r);
-  log(`${here?'결사대가 시간을 버는 사이 ':''}${s.n}의 최후의 전인이 문파의 절기를 품고 문주전 뒤 비밀통로로 빠져나갔다.${r.hint?` ${r.hint} 쪽으로 숨어든 듯하다.`:''}`,'dmg')});
+  remnSync();const r=G.remn&&G.remn[sid];if(!r)return;   // 숨은 곳은 알려 주지 않는다: 문주전 비밀통로를 찾아 지나야 은신처에 닿는다
+  log(`${here?'결사대가 시간을 버는 사이 ':''}${s.n}의 최후의 전인이 문파의 절기를 품고 문주전 뒤 비밀통로로 빠져나갔다. 어디로 숨었는지는 비밀통로 끝에 가 봐야 안다.`,'dmg')});
 hook('kill',e=>{if(!e.last||mobs.some(m=>m!==e&&m.last===e.last&&m.hp>0))return;const s=SECTS[e.last];if(s)log(`${s.n}의 최후의 결사대가 모두 쓰러졌다. ${s.n}의 본산에는 이제 아무도 남지 않았다.`,'xp')});
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.dead||!P||!G.fall)return;const s=ruinSect(R),f=s&&G.fall[s.id];if(!f||f.seen)return;f.seen=1;
   log(`자리를 비운 사이 ${s.n}이(가) 멸문했다${f.why?` (${f.why})`:''}. 남은 무인들은 최후의 결사대를 이뤄 끝까지 싸우다 쓰러졌고, 최후의 전인은 비밀통로로 빠져나갔다고 한다.`,'info');showBanner(`${s.n} 폐허`,'멸문한 본산')});

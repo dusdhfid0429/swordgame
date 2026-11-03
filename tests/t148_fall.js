@@ -15,7 +15,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const f='정',w=wld();setPow(f,8);powAdd(f,-10);o.facLive=liveSects().filter(s=>alFac(s.al)===f&&s.id!==sid).every(s=>G.pop[s.id]>0);
     // 장문인 격살 → 남은 무인 하나 베면 멸문. 본산에 있으면 결사대
     G.mdead[sid]={y:Math.floor(G.cal),life:P.lifeNo};regionJump(hqId(SECTS[sid]),20,22);mobs=[];kill();o.dead=G.pop[sid];
-    o.last=mobs.filter(m=>m.last===sid).length;o.lastLog=$('log').innerText.includes('최후의 결사대');o.esc=$('log').innerText.includes('비밀통로로 빠져나갔다');o.remn=!!(G.remn&&G.remn[sid]);
+    o.last=mobs.filter(m=>m.last===sid).length;o.lastLog=$('log').innerText.includes('최후의 결사대');o.esc=$('log').innerText.includes('비밀통로로 빠져나갔다')&&!/쪽으로 숨어든/.test($('log').innerText);o.remn=!!(G.remn&&G.remn[sid]);
     for(const m of mobs.filter(m=>m.last===sid)){m.hp=0;runHooks('kill',m)}o.lastDone=$('log').innerText.includes('결사대가 모두 쓰러졌다');o.seenHere=!!G.fall[sid].seen;
     return o});
   ok(`장문인이 살아 있으면 인원 ${a.floor}에서 멈춤 · 존망의 기로 알림 ${a.brink} · 대전 패배에도 ${a.war}`,a.floor===1&&a.brink&&a.war===1);
