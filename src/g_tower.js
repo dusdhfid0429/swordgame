@@ -38,7 +38,8 @@ for(const[id,R]of Object.entries(REGIONS)){if(!R.city||!R.stage||!R.stage.builds
   R.stage.builds[0].fl=n;towerAdd(hallId(id,0),n)}
 towerAdd(hallId('gaebong',0),TOWER.floors.gaebong);
 // 꼭대기 층에 오르면 풍경 한 줄
-hook('regionLoaded',id=>{const R=REGIONS[id];if(!P||!R||!R.tower||R.tower.k!==R.tower.n)return;
+hook('regionLoaded',id=>{const R=REGIONS[id];if(!P||!R||!R.tower||R.tower.k!==R.tower.n||R.smFloor)return;   // 문파 전각은 g_sectmap.js가 따로
+  
   const out=REGIONS[R.outer];log(TOWER.view[Math.floor(time)%TOWER.view.length].replace('{city}',out?out.name:'성'),'sys')});
 // 맵을 옮기면 지난 맵 사람의 말풍선은 지운다 (객잔 1층 손님 말이 위층에 떠 있지 않게)
 hook('loadRegion',()=>{gycBub.length=0});

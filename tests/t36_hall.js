@@ -16,26 +16,26 @@ const path=require('path');
       const h=hqNpc(M);if(!h)bad.push(s.n+' 장문인 없음');else if(R.npcs.some(n=>n.hq))bad.push(s.n+' 장문인이 밖에');else inside++;
       if(s.id!=='cheonma'&&!R.stage&&(!R.halls||R.halls.length!==3||R.halls[0].n!==hallNames(s)[0]))bad.push(s.n+' 전각 '+(R.halls||[]).map(h=>h.n))}
     return{halls,inside,bad,hwasan:REGIONS.hq_hwasan.halls.map(h=>h.n),inN:Object.keys(REGIONS).filter(k=>k.startsWith('in_')).length}});
-  ok(`문파 전각 ${r1.halls}개, 내부 맵 ${r1.inN}개, 장문인 ${r1.inside}명 모두 전각 안 · 화산파 ${r1.hwasan.join('·')} ${r1.bad.slice(0,4).join(' / ')}`,r1.bad.length===0&&r1.inside===51&&r1.hwasan[0]==='자소궁'&&r1.inN>=200);
+  ok(`문파 전각 ${r1.halls}개, 내부 맵 ${r1.inN}개, 장문인 ${r1.inside}명 모두 전각 안 · 화산파 ${r1.hwasan.join('·')} ${r1.bad.slice(0,4).join(' / ')}`,r1.bad.length===0&&r1.inside===51&&r1.hwasan[0].startsWith('자소궁')&&r1.inN>=200);
   // 2) 전각 문(door 출입구)은 건물 앞면 가운데 바로 아래, 걸어갈 수 있는 칸
   const r2=await p.evaluate(()=>{loadRegion('hq_hwasan');const bad=[];for(const g of REGION().gates.filter(g=>g.door)){if(!walk(Math.floor(g.x),Math.floor(g.y)))bad.push(g.label+' 문 앞이 막힘')}
-    const h=REGIONS[REGION().halls[0].id];return{bad,w:h.size,h:h.h,theme:h.theme,gate:h.gates[0],npc:h.npcs.map(n=>n.n)}});
+    const h=REGIONS[REGION().halls[0].id],top=REGIONS[(h.floorIds||[]).slice(-1)[0]]||h;return{bad,w:h.size,h:h.h,theme:h.theme,gate:h.gates[0],npc:top.npcs.map(n=>n.n)}});   // v238: 장문인은 맨 위층 (g_sectmap.js)
   ok(`자소궁 안 ${r2.w}×${r2.h} ${r2.theme}, 안에 ${r2.npc.join(',')}, 나가는 문 → ${r2.gate.to} ${r2.bad.join('/')}`,r2.bad.length===0&&r2.theme==='hall'&&r2.gate.to==='hq_hwasan'&&r2.gate.door&&r2.npc.some(n=>n.includes('장문인')));
   // 3) 문 앞에 서면 들어가고, 안에서 아래 문으로 나오면 앞마당
   await go('hq_hwasan',20.5,9.5);
   await p.evaluate(()=>{P.path=[{x:20.5,y:7.5}]});await p.waitForFunction(()=>REG.startsWith('in_'),null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(600);
   const r3=await p.evaluate(()=>({reg:REG,walk:walkAt(P.x,P.y),zone:$('zone').textContent,npcs:npcsHere().map(n=>n.n),floor:map[Math.floor(P.y)][Math.floor(P.x)].g,wallN:objs.flat().filter(o=>o==='wall').length,mobs:mobs.filter(m=>!m.fixed).length}));   // v118: 전각 안 당원·시종(fixed)은 제외
-  ok(`문으로 들어감: ${r3.reg} (${r3.zone}) 바닥 ${r3.floor} 담 ${r3.wallN} ${r3.npcs.join(',')}`,r3.reg==='in_hq_hwasan_0'&&r3.walk&&r3.floor===13&&r3.wallN>30&&r3.npcs.some(n=>n.includes('장문인'))&&r3.mobs===0);
+  ok(`문으로 들어감: ${r3.reg} (${r3.zone}) 바닥 ${r3.floor} 담 ${r3.wallN} ${r3.npcs.join(',')}`,r3.reg==='in_hq_hwasan_0'&&r3.walk&&r3.floor===13&&r3.wallN>30&&r3.npcs.some(n=>/장문인|지객 장로/.test(n))&&r3.mobs===0);
   await p.screenshot({path:shot('hall_inside')});
-  await p.evaluate(()=>openNpc(npcsHere().find(n=>n.hq)));await p.waitForTimeout(150);
-  ok('전각 안에서 장문인에게 가입 청할 수 있다',await p.evaluate(()=>!!document.querySelector('[data-act="sjoin:hwasan"]')));
+  await p.evaluate(()=>openNpc(npcsHere().find(n=>n.hq||n.jigak)));   // v238: 대전의 지객 장로가 입문을 받는다await p.waitForTimeout(150);
+  ok('전각 대전에서 가입 청할 수 있다',await p.evaluate(()=>!!document.querySelector('[data-act="sjoin:hwasan"]')));
   await p.evaluate(()=>{closePanels();const g=REGION().gates[0];P.gateLock=0;P.path=[{x:g.x,y:g.y}]});await p.waitForFunction(()=>REG==='hq_hwasan',null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(400);
   const r4=await p.evaluate(()=>({reg:REG,y:P.y,walk:walkAt(P.x,P.y)}));
   ok(`문으로 나옴: ${r4.reg} y=${r4.y.toFixed(1)}`,r4.reg==='hq_hwasan'&&r4.walk&&r4.y>7&&r4.y<10);
   // 4) 외원 연무청에 총관, 객청에 제자; 마교 천마신전 대전(검은 벽)에 교주, 오당 전각에 당주
   const r5=await p.evaluate(()=>{const O=REGIONS.hq_hwasan_outer,st=findNpc('hq_hwasan_outer',n=>n.steward),dc=findNpc('hq_hwasan_outer',n=>n.disc);
     const T=REGIONS[REGIONS.hq_cheonma.halls[0].id],D=REGIONS.hq_cheonma_5;return{outer:O.halls.map(h=>h.n),st:!!st&&!O.npcs.includes(st),dc:!!dc,mg:T.theme,mgNpc:T.npcs.map(n=>n.n),dang:D.halls.map(h=>h.n),dangIn:D.halls.every(h=>REGIONS[h.id].npcs.some(n=>n.dang))}});
-  ok(`화산 외원 ${r5.outer.join('·')} 총관 안 ${r5.st} 제자 ${r5.dc} · 천마신전 ${r5.mg} ${r5.mgNpc} · 오당 ${r5.dang.length}전각 당주 안 ${r5.dangIn}`,r5.outer.length===2&&r5.st&&r5.dc&&r5.mg==='dark'&&r5.mgNpc.some(n=>n.includes('교주'))&&r5.dang.length===5&&r5.dangIn);
+  ok(`화산 외원 ${r5.outer.join('·')} 총관 안 ${r5.st} 제자 ${r5.dc} · 천마신전 ${r5.mg} ${r5.mgNpc} · 오당 ${r5.dang.length}전각 당주 안 ${r5.dangIn}`,r5.outer.length===3&&r5.st&&r5.mg==='dark'&&r5.mgNpc.some(n=>n.includes('교주'))&&r5.dang.length===5&&r5.dangIn);
   // 5) 성도: 성마다 하나, 가게 여덟 전각, 좌판·의뢰판·연락관·역참, 양민
   const r6=await p.evaluate(()=>{const caps=Object.entries(PROV).filter(([k,p])=>p.cap);const bad=[];for(const[k,p] of caps){const m=REGIONS[pvId(k)].marks.find(q=>q.n===p.cap),R=REGIONS[m.gate];
       if(R.city!=='cap'||(R.halls||[]).length!==8||!R.npcs.some(n=>n.id==='post')||!R.npcs.some(n=>n.board)||!(R.spawns||[]).some(s=>s[0]==='양민'))bad.push(p.cap)}

@@ -109,7 +109,7 @@ function masterState(H,hid,n,s,out){if(!s)return;if(typeof ldHall!=='undefined'&
   else if(!boss)H.npcs=H._npcsM}   // 강제공격으로 끌어낸 장문인은 싸움이 끝날 때까지 그대로
 function masterCheck(id){const R=REGIONS[id];if(!R||R.ruin)return;popInit();let any=false;
   const here=(R._npcsM||R.npcs||[]).find(x=>x.hq);if(here){any=true;masterState(R,id,here,SECTS[here.hq],null)}
-  for(const h of R.halls||[]){const H=REGIONS[h.id];if(!H||H.ruin)continue;const n=(H._npcsM||H.npcs||[]).find(x=>x.hq);if(!n)continue;any=true;masterState(H,h.id,n,SECTS[n.hq],{R,id,x:h.x,y:h.y+1.5})}
+  for(const h of R.halls||[])for(const fid of[h.id,...((REGIONS[h.id]||{}).floorIds||[])]){const H=REGIONS[fid];if(!H||H.ruin)continue;const n=(H._npcsM||H.npcs||[]).find(x=>x.hq);if(!n)continue;any=true;masterState(H,fid,n,SECTS[n.hq],{R,id,x:h.x,y:h.y+1.5})}   // v238: 장문인이 3층 내전에 있어도
   if(any)refreshNPCF()}
 hook('regionLoaded',masterCheck);
 hook('kill',e=>{if(e.sect&&e.d&&e.d.fac&&!e.master&&P&&REG)masterCheck(REG)});

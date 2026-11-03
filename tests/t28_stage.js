@@ -43,9 +43,9 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>{closePanels();travel(REGION().gates.find(g=>g.to==='hq_hwasan'))});await p.waitForTimeout(1200);
   const bk=await p.evaluate(()=>{const g=REGION().gates.find(q=>q.to==='hq_hwasan_back');P.gateLock=0;P.x=g.x;P.y=g.y;gateTick();const blocked=REG==='hq_hwasan';P.sect='hwasan';P.gateLock=0;P.x=g.x;P.y=g.y;gateTick(9);return{blocked}});
   await p.waitForTimeout(1200);
-  const bk2=await p.evaluate(()=>({reg:REG,elder:npcsHere().some(n=>n.elder==='hwasan')}));
+  const bk2=await p.evaluate(()=>({reg:REG,elder:npcsHere().some(n=>n.elder==='hwasan')||(REGION().halls||[]).some(h=>/장경각/.test(h.n))}));
   ok(`후산은 제자만: 막힘 ${bk.blocked}, 제자는 들어감 ${bk2.reg}`,bk.blocked&&bk2.reg==='hq_hwasan_back'&&bk2.elder);
-  await p.evaluate(()=>openNpc(findNpc(REG,n=>n.elder)));await p.waitForTimeout(200);
+  await p.evaluate(()=>openNpc(findNpc(REG,n=>n.elder)||findNpc(REG,n=>n.steward)));   // v238: 대문파 후산은 장경각 (g_sectmap.js)await p.waitForTimeout(200);
   ok('후산 장로 창에 패시브·보법',await p.evaluate(()=>{const t=$('wbody').textContent;return t.includes('패시브')||t.includes('보법')}));
   await p.evaluate(()=>{closePanels();P.x=20.5;P.y=12.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y});await p.waitForTimeout(800);await p.screenshot({path:shot('stage_back')});
   // 중견문파 황보세가: 산문 → 본산

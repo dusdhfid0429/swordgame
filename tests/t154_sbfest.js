@@ -8,7 +8,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(600);
   // 1. 정·사파 문파마다 대연무장, 장문인 맵과 양쪽으로 잇는다. 마교·군부는 없음
   const r0=await p.evaluate(()=>{const on=Object.values(SECTS).filter(s=>sabuOn(s)&&SABU[s.id]&&SABU[s.id].length);
-    return{n:on.length,all:on.every(s=>REGIONS['ar_'+s.id]&&REGIONS[hqId(s)].gates.some(g=>g.to==='ar_'+s.id)&&REGIONS['ar_'+s.id].gates.some(g=>g.to===hqId(s))),cm:!!REGIONS.ar_cheonma,gb:!!REGIONS.ar_geumgun}});
+    return{n:on.length,all:on.every(s=>{const A=REGIONS['ar_'+s.id],g=A&&A.gates[0],H=g&&REGIONS[g.to];return !!H&&(H.chain||[hqId(s)]).includes(g.to)&&H.gates.some(q=>q.to==='ar_'+s.id)}),cm:!!REGIONS.ar_cheonma,gb:!!REGIONS.ar_geumgun}});
   ok(`정·사파 ${r0.n}곳 모두 대연무장 + 본산 출입구 (마교·군부 없음)`,r0.n>20&&r0.all&&!r0.cm&&!r0.gb);
   // 2. 입문 → 본산 출입구를 지나 대연무장 → 행사가 열리고 관객이 가득
   const r1=await p.evaluate(()=>{const s=SECTS.bukhae;enterRegion(hqId(s),20.5,30.5);P.reg=REG;mobs=[];P.realm=0;P.age=16;P.fame=60;P.evil=0;P.side='사';openNpc(hqNpc(hqId(s)));act('sjoin:bukhae');closePanels();

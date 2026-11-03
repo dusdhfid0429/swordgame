@@ -9,7 +9,8 @@ function vaultInit(){if(G.vault)return;G.vault={};for(const s of Object.values(S
 const sectVault=sid=>{vaultInit();return Math.round(G.vault[sid]||0)};
 hook('newYear',()=>{vaultInit();for(const s of Object.values(SECTS)){const inc=vaultIncome(s);if(inc<=0)continue;const cap=inc*VAULT.cap;G.vault[s.id]=Math.min(cap,(G.vault[s.id]||0)+inc)}});
 // ---- 금고 자리: 장문인 전각(본산 첫 전각) 안 뒷벽 가까이 ----
-function vaultHall(s){const M=REGIONS[hqId(s)];if(!M)return null;if(M.halls&&M.halls.length)return M.halls[0].id;return hqId(s)};
+function vaultHall(s){const M=REGIONS[hqId(s)];if(!M)return null;if(M.vaultAt&&REGIONS[M.vaultAt])return M.vaultAt;   // v238: 재무각 금고 층 (g_sectmap.js)
+  if(M.halls&&M.halls.length)return M.halls[0].id;return hqId(s)};
 function vaultSpot(){for(let y=1;y<Math.min(5,NH-1);y++)for(let dx=0;dx<N;dx++){const x=Math.floor(N/2)+(dx%2?1:-1)*Math.ceil(dx/2);if(x>0&&x<N-1&&walk(x,y)&&!objs[y][x]&&!nodes.some(n=>Math.hypot(n.x-x-.5,n.y-y-.5)<1))return{x:x+.5,y:y+.5}}return null}
 hook('regionLoaded',id=>{const s=ruinSect(REGIONS[id]);if(!s||vaultHall(s)!==id)return;const p=vaultSpot();if(!p)return;nodes.push({t:'vault',sect:s.id,x:p.x,y:p.y,cd:0})});
 function vaultLabel(n){const s=SECTS[n.sect];return sectPop(s.id)<=0?'금고를 턴다':'몰래 턴다'}
@@ -22,8 +23,8 @@ function vaultOpen(n){const s=SECTS[n.sect];if(!s)return;vaultInit();const v=Mat
   const take=Math.max(1,Math.round(v*ST.frac));if(v<=0){log('금고가 비어 있다.','info');return}P.silver+=take;G.vault[s.id]=v-take;addText(P.x,P.y,`은자 ${take}`,'#e8c66e');
   log(`${s.n}의 금고에서 은자 ${take}을(를) 몰래 챙겼다. (들킬 확률 ${Math.round(det*100)}%)`,'xp');feat(`${s.n} 금고에 몰래 들어 은자 ${take}을(를) 가져갔다`)}
 // ---- 전각 NPC 처치와 순환 ----
-const npcRole=n=>!n?null:n.elder?'elder':n.steward?'steward':n.disc?'disc':n.id&&n.id.startsWith('dang_')?'dang':n.sfMaster!=null&&n.sfSid?'sabu':n.sfHost?'host':null;   // v237c: 대연무장·장로원 사부와 대연무장 교두(g_sbfest.js)
-const npcSect=n=>n.elder||n.steward||n.disc||(n.id&&n.id.startsWith('dang_')?'cheonma':null)||n.sfSid||n.sfHost||null;
+const npcRole=n=>!n?null:n.srole?n.srole:n.elder?'elder':n.steward?'steward':n.disc?'disc':n.id&&n.id.startsWith('dang_')?'dang':n.sfMaster!=null&&n.sfSid?'sabu':n.sfHost?'host':null;   // v237c: 대연무장·장로원 사부와 대연무장 교두(g_sbfest.js)
+const npcSect=n=>n.ssid||n.elder||n.steward||n.disc||(n.id&&n.id.startsWith('dang_')?'cheonma':null)||n.sfSid||n.sfHost||null;
 const npcKey=n=>`${npcSect(n)}/${n.id}`;
 const npcDead=n=>{const r=npcRole(n);if(!r)return false;return !!(G.ndead&&G.ndead[npcKey(n)])};
 const npcCanOut=n=>!!n&&(!!n.hq||!!npcRole(n));
@@ -33,7 +34,7 @@ function npcFight(n,quiet){const r=npcRole(n);if(!r)return null;const s=SECTS[np
   const live=mobs.find(m=>m.npcKey===key&&m.hp>0);if(live)return live;const R=REGION(),c=VAULT.npc[r];(R._npcsO=R._npcsO||[]).push(n);R.npcs=R.npcs.filter(x=>x!==n);   // 맵을 나갔다 오면 npcSync 가 되돌린다
   const e=mkFac(alFac(s.al),c.rank>=2?1:0,n.x,n.y,s.id);e.rank=c.rank;e.realm=Math.min(4,c.rank);if(typeof scaleMob==='function')scaleMob(e);e.maxHp=Math.round(e.maxHp*c.hp);e.hp=e.maxHp;e.atk=Math.round(e.atk*c.atk);
   e.npcKey=key;e.npcRole=r;e.npcRef=n;e.name=n.n;e.pal=n.pal||e.pal;e.home={x:n.x,y:n.y};mobs.push(e);refreshNPCF();if(!quiet)log(`${n.n}에게 칼을 겨눴다. ${s.n} 전체가 적이 된다.`,'info');return e}
-hook('kill',e=>{if(!e.npcKey)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name};
+hook('kill',e=>{if(!e.npcKey)return;const[sid]=e.npcKey.split('/'),s=SECTS[sid],c=VAULT.npc[e.npcRole]||{fame:5,title:''};G.ndead=G.ndead||{};G.ndead[e.npcKey]={y:Math.floor(G.cal),life:P.lifeNo,n:e.name,r:e.npcRole};
   P.fame+=c.fame;log(`${e.name}을(를) 쓰러뜨렸다. 명성 +${c.fame}. ${VAULT.revive}년 뒤 ${s?s.n:''}에 새 ${c.title}이(가) 선다.`,'xp');feat(`${e.name}을(를) 쓰러뜨렸다`)});
 // 공석인 자리는 맵에서 비우고(g_pop masterCheck 뒤에 돈다), 멸문 폐허(R.dead)는 g_ruin 이 이미 비웠다
 function npcSync(id){const R=REGIONS[id];if(!R||!R.npcs||R.dead)return;R._npcsD=R._npcsD||[];const back=[...R.npcs];for(const n of[...R._npcsD,...(R._npcsO||[])])if(!back.includes(n))back.push(n);R._npcsO=[];
@@ -41,7 +42,7 @@ function npcSync(id){const R=REGIONS[id];if(!R||!R.npcs||R.dead)return;R._npcsD=
   R._npcsD=back.filter(npcDead);R.npcs=back.filter(n=>!npcDead(n));refreshNPCF()}
 hook('regionLoaded',npcSync);
 hook('newYear',()=>{if(!G.ndead)return;const y=Math.floor(G.cal);for(const key in G.ndead){const d=G.ndead[key];if(y-d.y<VAULT.revive)continue;const[sid,nid]=key.split('/'),s=SECTS[sid];if(!s||sectPop(sid)<=0)continue;
-    const role=nid.startsWith('dang_')?'dang':nid,c=VAULT.npc[role]||{title:''},nm=`${s.n} ${c.title} ${pick(NAMES1)}${pick(NAMES2)}${pick(NAMES2)}`;G.nname=G.nname||{};G.nname[key]=nm;delete G.ndead[key];
+    const role=d.r||(nid.startsWith('dang_')?'dang':nid),c=VAULT.npc[role]||{title:''},nm=`${s.n} ${c.title} ${pick(NAMES1)}${pick(NAMES2)}${pick(NAMES2)}`;G.nname=G.nname||{};G.nname[key]=nm;delete G.ndead[key];
     log(`${s.n}에 새 ${c.title} ${nm.split(' ').pop()}이(가) 배정되었다.`,'info');if(P&&REG)npcSync(REG)}});
 // 문파 인원 카드에 금고·공석
 {const pc=popCard;popCard=function(){vaultInit();let h=pc();for(const s of Object.values(SECTS)){const v=sectVault(s.id);if(v<=0)continue;const dead=Object.keys(G.ndead||{}).filter(k=>k.startsWith(s.id+'/')).length;
