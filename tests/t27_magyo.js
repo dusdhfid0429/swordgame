@@ -30,7 +30,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   await p.evaluate(()=>openNpc(hqNpc(REG)));await p.waitForTimeout(200);
   const t0=await p.evaluate(()=>$('wbody').textContent);
   ok(`입교 전 마교도는 적(${f0}), 교주 창에 짜임과 '교도만'`,f0!==false&&t0.includes('천마신교의 짜임')&&t0.includes('교도만')&&t0.includes('부교주'));
-  await p.locator('[data-act="sjoin:cheonma"]').tap();await p.waitForTimeout(200);
+  await p.locator('[data-act="sjoin:cheonma"]').tap();await p.evaluate(()=>{P.imk.st='done'});await p.waitForTimeout(200);   // v236 입마곡은 t153에서 본다: 여기선 곡을 지난 것으로
   const j=await p.evaluate(()=>({sect:P.sect,dang:P.dang||null,foe:mobs.filter(e=>e.sect==='cheonma').some(m=>mobFoeP(m)),blk:mgArtBlock({id:'S_cheonma_0'})}));
   ok(`입교: 당 없음, 마교도와 같은 편, 일반 무공은 '${j.blk}'`,j.sect==='cheonma'&&!j.dang&&!j.foe&&j.blk==='당에 든 뒤');
   // 혈마당 입당

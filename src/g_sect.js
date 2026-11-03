@@ -60,15 +60,15 @@ function addSectArts(arts,pool,ults,formName,ultName){
 }
 // ---- v234 사부 로드맵 (사용자 2026-11-03): 정파·사파 문파마다 장로 사부 둘~셋, 사부마다 병기가 다른 하승→중승→상승→절정 무공 길 ----
 // 문파에 원래 있는 같은 병기·같은 등급의 일반 무공은 그 칸에 쓰고, 빈 칸은 사부의 비전 무공을 새로 만든다 (data/sabu.json, g_sabu.js)
-const SABU={};
+const SABU={};   // v236 마교(천마신교)도 장로원 장로가 인연 사부다 (g_imagok.js). 마교 당 무공은 당 규칙(mgArtBlock)을 따르므로 사부 길에 넣지 않는다
 const sabuOn=s=>!!s&&(s.al==='jeong'||s.al==='sacheon');
 function addSabuArts(arts,pool,ults,formName,ultName){const D=GD.SABU;if(!D)return;const used=new Set(Object.values(arts).map(a=>a.n));
-  for(const s of Object.values(SECTS)){if(!sabuOn(s))continue;const r=rng(7717+s.i*131),pk=a=>a[Math.floor(r()*a.length)];
+  for(const s of Object.values(SECTS)){if(!sabuOn(s)&&s.id!=='cheonma')continue;const r=rng(7717+s.i*131),pk=a=>a[Math.floor(r()*a.length)];
     const top=s.tier==='small'?2:3,n=D.n[s.tier]||2,st=START[s.id]||{},cl=[st.w,...s.arts.map(a=>a.cls)].filter((c,i,a)=>c&&a.indexOf(c)===i&&CLS.includes(c));
     for(const c of['검','도','권','창','봉'])if(cl.length<n&&!cl.includes(c))cl.push(c);
     const el=(s.arts[0]||{}).el||'금',hoP=(D.ho[el]||D.ho.금).slice(),title=D.title[s.id]||D.title._,taken=new Set();SABU[s.id]=[];
     for(let k=0;k<n;k++){const cls=cl[k];let ho=pk(hoP);hoP.splice(hoP.indexOf(ho),1);const path=[];
-      for(let g=0;g<=top;g++){const ex=s.arts.find(a=>a.cls===cls&&!a.hi&&!taken.has(a.id)&&artGradeOf(s,a)===g);
+      for(let g=0;g<=top;g++){const ex=s.id!=='cheonma'&&s.arts.find(a=>a.cls===cls&&!a.hi&&!taken.has(a.id)&&artGradeOf(s,a)===g);
         if(ex){taken.add(ex.id);path.push(ex.id);continue}
         const id=`S_${s.id}_t${k}_${g}`,mul=GMUL[g];const cand=[g?ho+pk(D.mid[g])+D.suf[cls]:ho+D.suf0[cls],...[1,2,3].flatMap(j=>D.mid[j].map(w=>ho+w+D.suf[cls]))];const nm=cand.find(x=>!used.has(x))||ho+s.n.slice(0,2)+D.suf0[cls];used.add(nm);
         const forms=pickForms(pool[cls],r,D.forms[g]).map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(g>=3?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
@@ -110,6 +110,7 @@ function joinBlock(s){
   if(typeof sectPop==='function'&&sectPop(s.id)<=0)return `${s.n}은(는) 멸문해 폐허만 남았다.`;
   if(G.mdead&&G.mdead[s.id])return `${s.n}은(는) ${masterTitle(s)} 자리가 비어 제자를 받지 않는다.`;
   if(G.occ&&G.occ[s.id])return `${s.n} 본산은 점령당해 ${masterTitle(s)}이 없다. 먼저 되찾아야 한다.`;
+  if(s.id==='cheonma'&&typeof imkJoinBlock==='function'&&imkJoinBlock())return imkJoinBlock();   // v236 입마곡 탈락
   if(P.sect===s.id)return '이미 이 문파의 제자다.';
   if(P.sect&&P.sect!=='own'&&SECTS[P.sect])return `이미 ${SECTS[P.sect].n}의 제자다. 먼저 하산(탈퇴)해야 한다.`;
   if(P.sect==='own')return '스스로 세운 문파의 문주다.';
@@ -146,7 +147,7 @@ function sectDetail(s,hq){
   const al=ALLY[s.al],m=P.merit[s.id]||0,member=P.sect===s.id,jb=joinBlock(s),same=sideOk(s.al);
   const hi=s.arts.find(a=>a.hi);
   const arts=s.arts.map(a=>{const A2=ARTS[a.id],st=A(a.id),fi=A2.forms.findIndex((f,i)=>!(st&&st.f[i])),c=fi>=0?meritCost(a,fi):0,lock=a.hi&&!member,jl=a.hi&&member&&typeof jmOk==='function'&&!jmOk(A2);
-    const mb=s.id==='cheonma'?mgArtBlock(a):'',kb=typeof kinBlock==='function'?kinBlock(A2,fi):'',why=!same?'':mb?mb:lock?'제자만':jl?(s.al==='gunbu'?'대장군만':'대제자만'):fi<0?'모두 익힘':kb?kb:rankIdx(s.id)<artNeedRank(a,fi)?`${rankName(s.id,artNeedRank(a,fi))} 이상`:m<c?`공적 ${c} 필요`:'';
+    const mb=s.id==='cheonma'?mgArtBlock(a):'',kb=typeof kinBlock==='function'?kinBlock(A2,fi):'',why=!same?'':mb?mb:lock?'제자만':jl?(s.al==='gunbu'?'대장군만':s.id==='cheonma'?'소교주만':'대제자만'):fi<0?'모두 익힘':kb?kb:rankIdx(s.id)<artNeedRank(a,fi)?`${rankName(s.id,artNeedRank(a,fi))} 이상`:m<c?`공적 ${c} 필요`:'';
     return `<div class="it"><div style="color:rgb(${A2.ct})">${A2.n} ${gradeTag(A2.grade)} <small class="dim">${a.hi?'고급':'일반'}</small><span>${CLASS[a.cls].n} · 초식 ${A2.forms.length}개${st?` · 익힌 초식 ${st.f.filter(Boolean).length}`:''}${fi>=0?` · 다음 [${A2.forms[fi].n}] 숙련 ${A2.forms[fi].req}`:''}</span></div>
       <div class="ib">${same?B(`mbuy:${a.id}:${fi}`,why||`비급 · 공적 ${c}`,{d:!!why||P.bag.length>=24}):''}</div></div>`}).join('');
   // 지난해에 맡아 아직 들고 있는 임무도 보고할 수 있다 (해가 바뀌어도 임무는 사라지지 않는다)
