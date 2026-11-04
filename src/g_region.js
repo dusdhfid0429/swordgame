@@ -81,7 +81,7 @@ function drawGate(g){
   const a=.45+.25*Math.sin(time*3);ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=2;
   for(let k=0;k<3;k++){const s=1-k*.25;ctx.beginPath();ctx.ellipse(0,0,26*s,13*s,0,0,7);ctx.stroke()}
   // 건물 문은 빛나는 자리와 이름만 (이정표 없이)
-  if(g.door){ctx.restore();ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,p.y-13);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,p.y-14);return}
+  if(g.door){ctx.restore();const ty=portalTagY(g);ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,ty+1);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,ty);return}
   // v218: 이정표 대신 목적지를 상징하는 건물·봉우리 (g_portal.js)
   ctx.restore();drawPortal(g);
 }
