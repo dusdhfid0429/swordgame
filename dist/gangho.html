@@ -5736,7 +5736,7 @@ function drawGate(g){
   const a=.45+.25*Math.sin(time*3);ctx.strokeStyle=`rgba(255,220,140,${a})`;ctx.lineWidth=2;
   for(let k=0;k<3;k++){const s=1-k*.25;ctx.beginPath();ctx.ellipse(0,0,26*s,13*s,0,0,7);ctx.stroke()}
   // 건물 문은 빛나는 자리와 이름만 (이정표 없이)
-  if(g.door){ctx.restore();ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,p.y-13);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,p.y-14);return}
+  if(g.door){ctx.restore();const ty=portalTagY(g);ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(g.label,p.x+1,ty+1);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,ty);return}
   // v218: 이정표 대신 목적지를 상징하는 건물·봉우리 (g_portal.js)
   ctx.restore();drawPortal(g);
 }
@@ -7515,9 +7515,16 @@ function drawPortal(g){const p=toScreen(g.x,g.y),o=g._pk||(g._pk=portalKind(g)),
   // 주인공이 그림 뒤(북쪽)에 서 있으면 비쳐 보이게
   let a=1;if(P){const q=toScreen(P.x,P.y);if(P.x+P.y<g.x+g.y&&Math.abs(q.x-p.x)<s.W*k*.4&&q.y<p.y&&q.y>p.y-s.top*k-10)a=.42}
   ctx.save();ctx.globalAlpha=a;ctx.drawImage(s.cv,p.x-s.W/2*k,p.y-(s.H-12)*k,s.W*k,s.H*k);ctx.restore();
-  // 이름은 작게, 꼭대기 위에
-  const ty=p.y-s.top*k-8;ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';const tw=ctx.measureText(g.label).width;
+  // 이름은 작게, 꼭대기 위에 (주인공이 가리면 머리 위로)
+  const ty=portalTagY(g);ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';const tw=ctx.measureText(g.label).width;
   ctx.fillStyle='rgba(10,8,6,.55)';ctx.fillRect(p.x-tw/2-4,ty-11,tw+8,15);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,ty)}
+// 출입구 이름표 글자 바닥 y (화면). 사용자 2026-11-04: 이름표가 곁에 선 주인공을 덮지 않게, 겹치면 주인공 머리 위로 올린다.
+// 무관 길잡이 화살표(acadMarks)도 이 자리 바로 위에 찍어 이름이 두 번 겹쳐 보이지 않게 한다
+function portalTagY(g){const p=toScreen(g.x,g.y);let ty;
+  if(g.door)ty=p.y-14;else{const s=portalSprite(g._pk||(g._pk=portalKind(g)));ty=p.y-s.top*PORTAL_K-8}
+  if(P&&!P.dead){const q=toScreen(P.x,P.y),hh=66*Math.min(1,heroAgeK());ctx.font='11px "Gowun Dodum",sans-serif';const tw=ctx.measureText(g.label||'').width;
+    if(Math.abs(q.x-p.x)<tw/2+20&&ty-12<q.y+4&&ty+4>q.y-hh)ty=q.y-hh-6}
+  return ty}
 
 // ================= 성 지도 나누기: 성 하나 = 40×40 맵 여러 장 =================
 // 사용자 결정(2026-10-09): 무림전도를 비율대로 줄이고, 맵 하나는 40×40, 성은 실제 크기에 따라 여러 맵으로 만든다.
@@ -8370,7 +8377,7 @@ function acadTrackHtml(){if(!acadOn())return'';const a=P.acad,gs=acadGoals(),g=a
 function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REGIONS[REG];if(!R)return[];
   const g=acadCur(),near=(list,l,h)=>{let b=null,bd=1e9;for(const o of list){const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;b=o}}return b?[{x:b.x,y:b.y,l,h}]:[]};
   const npc=(id,l)=>{const n=(R.npcs||[]).find(n=>n.id===id);return n?[{x:n.x,y:n.y,l:l||n.n,h:84,npc:1}]:[]};
-  const gate=to=>{const q=(R.gates||[]).find(q=>q.to===to);return q?[{x:q.x,y:q.y,l:q.label,h:56}]:[]};
+  const gate=to=>{const q=(R.gates||[]).find(q=>q.to===to);return q?[{x:q.x,y:q.y,l:q.label,h:toScreen(q.x,q.y).y-portalTagY(q)+14,tag:1}]:[]};   // 포털은 제 이름표가 있으니 화살표만 그 위에 (2026-11-04 겹침)
   const qs=P.quests.filter(q=>q.acad),qOpen=qs.filter(q=>!questProg(q).done);
   if(REG===acadField(P.side)){let w=[];
     if(g&&g.k==='boss')w=near(mobs.filter(m=>m.kind==='산적두목'&&m.hp>0),'산적두목',84);
@@ -8402,7 +8409,7 @@ function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p
   const k=(time*1.4)%1,b=Math.sin(time*4)*4,y=p.y-m.h+b;
   ctx.strokeStyle=`rgba(255,211,106,${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
   ctx.fillStyle='#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
-  if(m.l){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
+  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
   const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
