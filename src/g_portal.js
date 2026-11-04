@@ -135,6 +135,13 @@ function drawPortal(g){const p=toScreen(g.x,g.y),o=g._pk||(g._pk=portalKind(g)),
   // 주인공이 그림 뒤(북쪽)에 서 있으면 비쳐 보이게
   let a=1;if(P){const q=toScreen(P.x,P.y);if(P.x+P.y<g.x+g.y&&Math.abs(q.x-p.x)<s.W*k*.4&&q.y<p.y&&q.y>p.y-s.top*k-10)a=.42}
   ctx.save();ctx.globalAlpha=a;ctx.drawImage(s.cv,p.x-s.W/2*k,p.y-(s.H-12)*k,s.W*k,s.H*k);ctx.restore();
-  // 이름은 작게, 꼭대기 위에
-  const ty=p.y-s.top*k-8;ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';const tw=ctx.measureText(g.label).width;
+  // 이름은 작게, 꼭대기 위에 (주인공이 가리면 머리 위로)
+  const ty=portalTagY(g);ctx.font='11px "Gowun Dodum",sans-serif';ctx.textAlign='center';const tw=ctx.measureText(g.label).width;
   ctx.fillStyle='rgba(10,8,6,.55)';ctx.fillRect(p.x-tw/2-4,ty-11,tw+8,15);ctx.fillStyle='#ffe2a0';ctx.fillText(g.label,p.x,ty)}
+// 출입구 이름표 글자 바닥 y (화면). 사용자 2026-11-04: 이름표가 곁에 선 주인공을 덮지 않게, 겹치면 주인공 머리 위로 올린다.
+// 무관 길잡이 화살표(acadMarks)도 이 자리 바로 위에 찍어 이름이 두 번 겹쳐 보이지 않게 한다
+function portalTagY(g){const p=toScreen(g.x,g.y);let ty;
+  if(g.door)ty=p.y-14;else{const s=portalSprite(g._pk||(g._pk=portalKind(g)));ty=p.y-s.top*PORTAL_K-8}
+  if(P&&!P.dead){const q=toScreen(P.x,P.y),hh=66*Math.min(1,heroAgeK());ctx.font='11px "Gowun Dodum",sans-serif';const tw=ctx.measureText(g.label||'').width;
+    if(Math.abs(q.x-p.x)<tw/2+20&&ty-12<q.y+4&&ty+4>q.y-hh)ty=q.y-hh-6}
+  return ty}

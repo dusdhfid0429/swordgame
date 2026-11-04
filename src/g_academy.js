@@ -325,7 +325,7 @@ function acadTrackHtml(){if(!acadOn())return'';const a=P.acad,gs=acadGoals(),g=a
 function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REGIONS[REG];if(!R)return[];
   const g=acadCur(),near=(list,l,h)=>{let b=null,bd=1e9;for(const o of list){const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;b=o}}return b?[{x:b.x,y:b.y,l,h}]:[]};
   const npc=(id,l)=>{const n=(R.npcs||[]).find(n=>n.id===id);return n?[{x:n.x,y:n.y,l:l||n.n,h:84,npc:1}]:[]};
-  const gate=to=>{const q=(R.gates||[]).find(q=>q.to===to);return q?[{x:q.x,y:q.y,l:q.label,h:56}]:[]};
+  const gate=to=>{const q=(R.gates||[]).find(q=>q.to===to);return q?[{x:q.x,y:q.y,l:q.label,h:toScreen(q.x,q.y).y-portalTagY(q)+14,tag:1}]:[]};   // 포털은 제 이름표가 있으니 화살표만 그 위에 (2026-11-04 겹침)
   const qs=P.quests.filter(q=>q.acad),qOpen=qs.filter(q=>!questProg(q).done);
   if(REG===acadField(P.side)){let w=[];
     if(g&&g.k==='boss')w=near(mobs.filter(m=>m.kind==='산적두목'&&m.hp>0),'산적두목',84);
@@ -357,7 +357,7 @@ function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p
   const k=(time*1.4)%1,b=Math.sin(time*4)*4,y=p.y-m.h+b;
   ctx.strokeStyle=`rgba(255,211,106,${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
   ctx.fillStyle='#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
-  if(m.l){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
+  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
   const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
