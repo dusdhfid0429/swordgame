@@ -6,7 +6,7 @@
     "fight": {"hold": 2.5, "range": 7},
     "dimName": 0.28,
     "zoom": {"fight": 1.12, "in": 2.2, "out": 1.8},
-    "train": {"d": "v233 수련 창이 열리면 카메라를 zoom배로 당기고, 주인공 몸 가운데(발 위 body 단위)를 위 HUD 아래와 수련 창 위 사이의 at 비율 자리에 놓는다", "zoom": 2, "body": 34, "at": 0.55, "in": 3},
+    "train": {"d": "v233 수련 창이 열리면 카메라를 zoom배로 당기고, 주인공 몸 가운데(발 위 body 단위)를 위 HUD 아래와 수련 창 위 사이의 at 비율 자리에 놓는다", "zoom": 1.6, "body": 34, "at": 0.55, "in": 3},
     "num": {
       "out":  {"font": "15px", "col": "#f3e6c4"},
       "crit": {"font": "bold 24px", "col": "#ffd36a", "pop": 1.5},

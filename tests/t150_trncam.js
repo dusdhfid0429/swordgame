@@ -13,7 +13,7 @@ require('fs').mkdirSync(__dirname+'/shots',{recursive:true});
     await p.evaluate(()=>openTrain());await p.waitForTimeout(1600);
     const st=await p.evaluate(()=>{const cr=C.getBoundingClientRect(),r=TRN.getBoundingClientRect(),q=toScreen(P.x,P.y),sr=$('pstat').getBoundingClientRect();
       return{z:rdZ,feet:cr.top+q.y*S,head:cr.top+(q.y-READ.train.body*2)*S,top:r.top,hud:sr.bottom<cr.height*.4?sr.bottom:cr.top}});
-    ok(`${tag}: 수련 창을 열면 카메라가 당겨진다 (${z0} → ${st.z.toFixed(2)})`,st.z>z0+.5);
+    ok(`${tag}: 수련 창을 열면 카메라가 당겨진다 (${z0} → ${st.z.toFixed(2)})`,st.z>z0+.4);
     ok(`${tag}: 발이 수련 창보다 넉넉히 위 (발 ${st.feet|0}, 창 ${st.top|0})`,st.top-st.feet>60);
     ok(`${tag}: 머리는 위 HUD 아래 (머리 ${st.head|0}, HUD ${st.hud|0})`,st.head>st.hud);
     await p.screenshot({path:__dirname+`/shots/t150_${tag}.png`});
