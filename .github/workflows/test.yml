@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # ubuntu-latest가 26.04로 바뀌어 Playwright 1.56 chromium 설치가 막힌다 (2026-11-08)
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
