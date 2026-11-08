@@ -16,7 +16,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     loadRegion('gaebong');loadRegion(c.host);const g=REGION().gates.find(g=>g.gyc===0);return{a,w,same:c.x===a[0]&&c.y===a[1],g:[g.x,g.y],d:Math.hypot(c.x-c.ax,c.y-c.ay)}});
   ok(`입구 ${r2.a} (목표에서 ${r2.d.toFixed(1)}칸) 걸을 수 있음 ${r2.w} · 다시 열어도 같음 ${r2.same}`,r2.w&&r2.same&&r2.g[0]===r2.a[0]+.5);
   // 3. 말풍선: 입구가 있는 맵 근처 성도 NPC 곁에 가면 소문을 흘리고 임무창에 남는다
-  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;NPCF=[{n:'나무꾼',x:P.x+1,y:P.y,npc:1,d:{pal:'npc'}}];
+  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;NPCF=[npcFighter({n:'나무꾼',x:P.x+1,y:P.y,pal:PAL.hero})];   // 그려지는 진짜 모양 (예전 d:{pal:'npc'} 문자열은 다음 프레임 drawFighter에서 pal.skin 오류를 냈다)
     gycBT=0;gycBub.length=0;for(const k in gycTalked)delete gycTalked[k];   // 앞서 저절로 뜬 말풍선(다른 소문)이 남아 있으면 그것을 읽게 된다
     const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
     return{bub:gycBub.length&&gycBub[0].txt,heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
