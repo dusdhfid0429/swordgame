@@ -113,7 +113,7 @@ function bareShow(k){const c=k==='각'?'권':k,a=Object.values(ARTS).find(x=>x.c
 function bladeShow(r,f){place();const e=tgt();P.realm=r;P.bcd=0;P.gcd=0;P.bpT=P.mhT=time;basicStrike(e);f()(e)}
 // 경지 돌파 연출 (r_fx.js brkFx, data/brkfx.json): 이 빌드에 있을 때만
 const BRK=()=>typeof brkFx==='function'&&typeof BRK_FX!=='undefined'?BRK_FX.map((d,i)=>d&&[i,d]).filter(Boolean):[];
-function brk(i){place();P.realm=i;const d=brkFx(i);if(d&&d.n)showBanner(d.n,RANKS[i]||'')}
+function brk(i){place();P.realm=i;brkFx(i)}   // v241: 이름은 연출이 붓글씨로 직접 그린다
 const FLOW=()=>[
   ['기본 공격 (고른 경지의 병기 기운)',strike],
   ['경지 상승 (기본 금빛 고리)',()=>{place();fx.push({t:'lvl',x:P.x,y:P.y,z:0,life:2});shake=.25}],
