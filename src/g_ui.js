@@ -45,11 +45,11 @@ function sysMsg(t,c){
   requestAnimationFrame(()=>requestAnimationFrame(()=>p.classList.add('on')));
   p.t=setTimeout(()=>sysOut(p),2600+Math.min(1600,t.length*30))}
 function sysOut(p){p.classList.remove('on');p.classList.add('off');setTimeout(()=>{p.remove();if(!SYS.children.length)document.body.classList.remove('sys-on')},650)}
-function winNote(t,c){if(!$('win').hidden||trnOpen)sysMsg(t,c)}
+function winNote(t,c){if(typeof brkHold==='function'&&brkHold('sys',[t,c]))return;if(!$('win').hidden||trnOpen)sysMsg(t,c)}   // v241: 경지 돌파 연출 중에는 붙잡아 두었다가 끝나고 한 장으로 (r_brkshow.js)
 let bannerT;
-function showBanner(t,s){const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
+function showBanner(t,s){if(typeof brkHold==='function'&&brkHold('ban',[t,s]))return;const b=$('banner');b.innerHTML='';b.append(josa(t));if(s){const sm=document.createElement('small');sm.textContent=josa(s);b.append(sm)}b.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('on'),1700)}
 // v149 (사용자): 정세 사건은 창을 띄우지 않고 화면 가운데에 크게 박는다 (맵 이동 알림보다 세게, 터치는 통과)
-let sbanT;function storyBanner(t,s,k){const b=$('sban');if(!b)return;b.innerHTML=`<div class="bd"></div><div class="k">${esc(k||'강호 정세')}</div><div class="t">${esc(t)}</div>${s?`<div class="s">${esc(josa(s))}</div>`:''}`;
+let sbanT;function storyBanner(t,s,k){if(typeof brkHold==='function'&&brkHold('story',[t,s,k]))return;const b=$('sban');if(!b)return;b.innerHTML=`<div class="bd"></div><div class="k">${esc(k||'강호 정세')}</div><div class="t">${esc(t)}</div>${s?`<div class="s">${esc(josa(s))}</div>`:''}`;
   b.classList.remove('on');void b.offsetWidth;b.classList.add('on');clearTimeout(sbanT);sbanT=setTimeout(()=>b.classList.remove('on'),4300);shake=Math.max(shake||0,.25);if(typeof sfx==='function')sfx('ult')}
 function addText(x,y,t,c,k){texts.push({x,y,t:String(t),c,life:.9,k})}   // k: 피해 숫자 종류 out·crit·in·far (v219, g_read.js)
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

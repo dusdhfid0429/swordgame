@@ -207,10 +207,10 @@ function lightAt(x,y,r,a){if(a<=0)return;const g=lx.createRadialGradient(x,y,0,x
 // ================= 경지 돌파 연출 (v163): 폐관으로 벽을 깨는 순간, 오른 경지마다 다른 현상 =================
 // 운기(바깥 기운이 소용돌이치며 빨려듦)·본원진기와 겹치지 않게, 돌파는 몸 안의 길이 열리고 빛이 위로 솟는 모양을 바탕으로 한다.
 // 높은 경지일수록 길고 크다. 이름·글·색은 data/brkfx.json BRK_FX (경지 색인으로 읽고, 표보다 높은 경지는 마지막 줄)
-const BRK_FX=GD.BRK_FX||[],BRK_T=[0,2.4,2.8,3.2,3.6,4.6,5.2,5.4,6];
+const BRK_FX=GD.BRK_FX||[],BRK_T=[0,3.4,3.8,4.4,4.8,6,6.8,7,7.6];   // v241: 몸 밖 현상이 더해져 길어졌다
 const WUHAENG=['120,225,150','255,120,90','250,210,100','235,240,255','110,150,255'];   // 목·화·토·금·수
 function brkFx(r){const i=Math.min(r,BRK_FX.length-1),d=BRK_FX[i];if(!d||!P)return null;const L=BRK_T[Math.min(i,BRK_T.length-1)];
-  fx.push({t:'brk',r:i,x:P.x,y:P.y,z:P.z||0,life:L,max:L,glow:true,col:d.col});shake=Math.max(shake,.15+i*.06);return d}
+  const f={t:'brk',r:i,x:P.x,y:P.y,z:P.z||0,life:L,max:L,glow:true,col:d.col};fx.push(f);shake=Math.max(shake,.15+i*.06);if(typeof brkShowStart==='function')brkShowStart(f,d);return d}
 const cl01=x=>x<0?0:x>1?1:x,ez=x=>{x=cl01(x);return 1-(1-x)*(1-x)};
 // 진기 한 점과 꼬리: at(u)가 돌려주는 자리를 u에서 조금씩 거슬러 찍는다
 function brkMote(at,u,col,a,r=7,n=12,du=.012){for(let j=n;j>=0;j--){const q=at(u-j*du);if(q)glowDot(q[0],q[1],r*(1-j/n*.6),j?col:HI,a*(1-j/n))}}
@@ -218,7 +218,10 @@ function brkLotus(x,y,s,col,a,rot){if(s<=0)return;ctx.save();ctx.translate(x,y);
   for(let j=0;j<8;j++){const g=rot+j*Math.PI/4;ctx.fillStyle=rgba(col,.75*a);ctx.beginPath();ctx.ellipse(Math.cos(g)*s*.55,Math.sin(g)*s*.55,s*.55,s*.22,g,0,7);ctx.fill()}
   for(let j=0;j<6;j++){const g=-rot+j*Math.PI/3+.3;ctx.fillStyle=rgba(HI,.6*a);ctx.beginPath();ctx.ellipse(Math.cos(g)*s*.3,Math.sin(g)*s*.3-s*.15,s*.3,s*.13,g,0,7);ctx.fill()}
   ctx.restore();glowDot(x,y,s*1.3,col,a)}
-function drawBrk(f){if(P){f.x=P.x;f.y=P.y}
+// v241: 어린 몸(heroAgeK)이면 발밑을 축으로 연출 전체를 줄인다 (머리 위 현상이 머리에 맞게)
+function drawBrk(f){const k=typeof heroAgeK==='function'?heroAgeK():1;if(k>=.999)return drawBrk0(f);if(P){f.x=P.x;f.y=P.y}const p=toScreen(f.x,f.y);
+  ctx.save();ctx.translate(p.x,p.y);ctx.scale(k,k);ctx.translate(-p.x,-p.y);try{drawBrk0(f)}finally{ctx.restore()}}
+function drawBrk0(f){if(P){f.x=P.x;f.y=P.y}
   const p=toScreen(f.x,f.y),t=1-f.life/f.max,env=cl01(t/.1)*cl01((1-t)/.18),r=f.r,cx=p.x,c=f.col,PI2=Math.PI*2;
   if(!f.sd)f.sd=Array.from({length:36},()=>({a:rnd()*PI2,d:rnd(),s:rnd(),w:rnd()}));
   const end=k0=>{const k=cl01((t-k0)/(1-k0));if(k>0){const[rx,ry]=isoR(.6+k*(1+r*.35));shock(cx,p.y,rx,ry,c,(1-k)*.9)}};
@@ -251,12 +254,16 @@ function drawBrk(f){if(P){f.x=P.x;f.y=P.y}
     const k=cl01((t-.6)/.25);if(k>0){WUHAENG.forEach((cc,j)=>{const a=time*2+j*PI2/5;glowDot(cx+Math.cos(a)*14*(1-k),dy+Math.sin(a)*7*(1-k),14,cc,env)});glowDot(cx,dy,20+40*ez(k),c,env*(1-k*.4))}
     const k2=cl01((t-.62)/.3);if(k2>0)WUHAENG.forEach((cc,j)=>{const[rx,ry]=isoR(.5+k2*(2.6+j*.25));shock(cx,p.y,rx,ry,cc,(1-k2)*.7)});
     end(.85)}
-  else if(r===6){// 삼화취정: 정(하단전)·기(중단전)·신(상단전) 세 송이가 차례로 피고, 정수리 위로 모여 한 송이와 원광이 된다
-    const fl=[['255,170,190',p.y-22],['255,225,150',p.y-38],['200,220,255',p.y-54]],m=ez((t-.5)/.22),top=p.y-84;
-    fl.forEach(([cc,y],j)=>{const b=ez((t-.04-j*.14)/.18),yy=y+(top-y)*m;brkLotus(cx,yy,22*b*(1-m*.45),cc,env*(1-cl01((t-.72)/.05)),time*.8+j)});
-    const k=cl01((t-.7)/.15);if(k>0){brkLotus(cx,top,34*ez(k),c,env,time*.6);
-      ctx.strokeStyle=rgba(c,.7*env*k);ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,p.y-52,30*ez(k),0,PI2);ctx.stroke();glowDot(cx,p.y-52,30,c,.35*env*k);
-      for(let j=0;j<12;j++){const a=j*PI2/12+time*.3,L0=28,L1=28+(j%2?12:22)*k;ctx.strokeStyle=rgba(c,.6*env*k);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*L0,p.y-52+Math.sin(a)*L0);ctx.lineTo(cx+Math.cos(a)*L1,p.y-52+Math.sin(a)*L1);ctx.stroke()}}
+  else if(r===6){// 삼화취정 (v241): 정(하단전)·기(중단전)·신(상단전)에서 봉오리가 올라 머리 위 열한 시·열두 시·한 시 자리에서 차례로 피고,
+    // 정수리 위로 모여 큰 금빛 한 송이와 원광이 된다
+    const hc=p.y-50,R=40,fl=[['255,170,190',p.y-22,-2.36],['255,225,150',p.y-38,-1.5708],['200,220,255',p.y-54,-.785]],m=ez((t-.6)/.14),top=p.y-92;
+    fl.forEach(([cc,y0,ga],j)=>{const u=ez((t-.04-j*.1)/.16),sx=cx+Math.cos(ga)*R,sy=hc+Math.sin(ga)*R,bx=cx+(sx-cx)*u,by=y0+(sy-y0)*u,
+      x=bx+(cx-bx)*m,y=by+(top-by)*m,b=ez((t-.16-j*.1)/.14),fade=1-cl01((t-.74)/.04);
+      if(u>0&&u<1)brkMote(v=>[cx+(sx-cx)*ez(v),y0+(sy-y0)*ez(v)],u,cc,env*fade,6,10,.03);
+      brkLotus(x,y,19*b*(1-m*.3),cc,.8*env*fade,time*.8+j)});
+    const k=cl01((t-.72)/.14);if(k>0){const hy=p.y-52,RR=40*ez(k);brkLotus(cx,top,30*ez(k),c,.85*env,time*.6);
+      ctx.strokeStyle=rgba(c,.75*env*k);ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,hy,RR,0,PI2);ctx.stroke();ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(cx,hy,RR*.82,0,PI2);ctx.stroke();glowDot(cx,hy,RR*1.2,c,.35*env*k);
+      for(let j=0;j<16;j++){const a=j*PI2/16+time*.3,L0=RR,L1=RR+(j%2?12:26)*k;ctx.strokeStyle=rgba(c,.6*env*k);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*L0,hy+Math.sin(a)*L0);ctx.lineTo(cx+Math.cos(a)*L1,hy+Math.sin(a)*L1);ctx.stroke()}}
     end(.86)}
   else if(r===7){// 생사현관: 발밑에 음양이 돌고, 흰 기운은 오르고 검은 기운은 가라앉는다
     const[R,Ry]=isoR(1.7*ez(t/.25)),sp=time*1.3,mode=ctx.globalCompositeOperation;
@@ -277,4 +284,5 @@ function drawBrk(f){if(P){f.x=P.x;f.y=P.y}
       glowDot(x,y,7,cc,.5*env*Math.sin(ph*Math.PI));ctx.fillStyle=rgba(cc,env*Math.sin(ph*Math.PI));ctx.beginPath();ctx.ellipse(x,y,4.4,2,time*2+j,0,PI2);ctx.fill()});
     for(let j=0;j<3;j++){const kk=cl01((t-.15-j*.2)/.55);if(kk>0&&kk<1){const[rx,ry]=isoR(.5+kk*7);shock(cx,p.y,rx,ry,c,(1-kk)*.6)}}
     glowDot(cx,p.y-30,40,c,.5*env)}
+  if(typeof brkOuter==='function')brkOuter(f,cx,p.y,t,env)   // v241: 머리 위·주변·하늘의 몸 밖 현상 (r_brkshow.js)
 }

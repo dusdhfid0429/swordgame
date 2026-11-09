@@ -57,7 +57,9 @@ function pgStart(k){
   P.path=null;P.target=null;P.medit=false;P.chan=null;P.qiTraining=true;
   log(`${pgPlace()}에서 문을 걸어 잠그고 폐관에 들었습니다.`,'sys');trnBusy={k,t:0,dur:TRN_DUR[k]};renderTrain()}
 // 폐관을 마친다: 세월이 흐르고, 벽을 깨거나 주화입마에 빠진다
-function pgFinish(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
+// v241: 폐관이 끝나는 동안(세월이 흐르며 뜨는 정세 배너 포함) 알림을 붙잡는다. 벽을 깼으면 돌파 연출이 끝난 뒤 한 장으로, 아니면 바로 내보낸다
+function pgFinish(pill){if(typeof brkHoldBegin==='function')brkHoldBegin();try{pgFinish0(pill)}finally{if(typeof BRKS!=='undefined'&&!BRKS)brkHoldFlush(false)}}
+function pgFinish0(pill){P.qiTraining=false;const why=pgWhy();if(why){log(`폐관수련이 끊겼습니다: ${why}.`,'info');return}
   const r=realmIdx()+1,ch=pgChance(pill),yrs=pgYears();P.vit-=pgCost();if(pill)P.mats.소환단--;P.hob=0;
   if(!passYears(yrs))return;
   if(Math.random()<ch){P.realm=r;P.wallN=null;recalc();P.qi=P.maxQi;P.hp=P.maxHp;const bf=brkFx(r);if(!bf)fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);   // 경지마다 다른 돌파 연출 (r_fx.js, v163)
