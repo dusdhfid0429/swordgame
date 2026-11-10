@@ -2069,6 +2069,7 @@ function updateP(dt){
       if(e.hp<=0)P.target=null;
       else{const rr=P.mode==='auto'?autoReach():CLASS[hasWeaponFor(curCls())?curCls():'권'].reach;
         if(dist(e,P)<rr-.05&&(rr>=4?shotClear(P,e):!elevGap(P,e))){P.path=null;P.chs=0;face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
+        else if(heroAtkHold()){P.path=null;face(e.x,e.y)}   // v244 공격 동작 중에는 미끄러지지 않고 선다 → 동작이 끝나면 달려가 붙는다
         else{if(!P.path||!P.path.length||P.repath<=0){P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(e.x),Math.floor(e.y));P.repath=.35}
           chase={e,x:P.x,y:P.y}}
         P.repath-=dt}}
@@ -2088,6 +2089,13 @@ function updateP(dt){
 // 2) 벼랑 위·막힌 곳처럼 닿지 않는 적을 붙잡고 끝없이 서 있었다 → CHASE.stuck초 동안 한 걸음도 못 가면 놓고, 그 적은 CHASE.skip초 동안 자동으로 다시 고르지 않는다
 // 3) 활·암기는 나무·바위·담에 막힌 줄도 모르고 그쪽으로 계속 쏘아 동작만 하고 피해가 없었다 → 사이가 막혔으면 쏘지 않고 트인 데로 움직인다
 const CHASE={stuck:1.5,skip:6};
+// v244 (사용자 2026-11-10 "공격을 하면서 따라가니깐 아이스링크에서 스케이트 타는것 같아"): 적이 사거리 밖으로 빠지면
+// 공격 동작을 그대로 튼 채 미끄러져 쫓았다. 이제 동작의 앞부분(CHASE.hold까지)은 제자리에서 마치고, 남은 마무리는 끊고 달리는 동작으로 쫓아가 붙은 뒤 다시 친다.
+CHASE.hold=.55;
+function heroAtkHold(){
+  if(P.satk>0&&P.satkMax){if(1-P.satk/P.satkMax<CHASE.hold)return true;P.satk=0}
+  if(P.swing>0&&P.swingMax){if(1-P.swing/P.swingMax<CHASE.hold)return true;P.swing=0}
+  return false}
 function shotClear(a,b){if(P.perch)return true;const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy),n=Math.ceil(l/.05);
   for(let i=1;i<n;i++){const x=a.x+dx*i/n,y=a.y+dy*i/n;if(Math.hypot(x-b.x,y-b.y)<.42)break;if(blockedAt(x,y))return false}return true}
 function chaseStep(c,sp,dt){const e=c.e;
@@ -2159,12 +2167,12 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
   if(tg===P&&P.ride&&Math.random()<.002)tg=P;
   const dd=dist(e,tg),reach=e.reach;
   // v179: 높이가 다른 상대에게는 근접이 닿지 않는다: 계단으로 돌아 오르고, 길이 없으면 기다리다 돌아간다 (g_elev.js)
-  if(!d.ranged&&!e.wind&&!(e.slam>0)&&!P.perch&&elevGap(e,tg)&&elevChase(e,tg,dt,spd))return;
+  if(!d.ranged&&!e.wind&&!(e.slam>0)&&!(e.swing>0)&&!P.perch&&elevGap(e,tg)&&elevChase(e,tg,dt,spd))return;
   if(e.epath)e.epath=null;
   // 높은 곳의 사람에게는 맨손·병장기가 닿지 않는다: 아래에서 맴돌다 오래 못 닿으면 돌아간다
   if(tg===P&&P.perch&&!d.ranged&&!e.wind&&!(e.slam>0)){e.perchT=(e.perchT||0)+dt;
     if(e.perchT>6&&!d.boss){e.aggro=false;e.tgt=null;e.perchT=0;e.giveUp=time+10;e.goal={x:e.home.x,y:e.home.y};return}
-    if(dd>1.6)chase(e,tg,dt,spd);else{e.moving=false;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}return}
+    if(dd>1.6&&!(e.swing>0)){e.rec=0;chase(e,tg,dt,spd)}else{e.moving=false;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}return}
   if(tg===P&&!P.perch)e.perchT=0;
   // telegraphed heavy move for bosses and duelists
   // v215 (사용자 2026-10-31 "적 무공 이펙트는 오로지 심법에 영향을 받아"): 초식 연사·내려찍기의 색·보조색·재질은 그 적의 심법 것 (foeX, g_fxcol.js). 짐승은 예전 색
@@ -2181,7 +2189,8 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     return}
   e.cd-=dt;e.moving=false;
   if(dd<reach){if(e.cd<=0)e.wind=d.boss?.5:.4;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}
-  else chase(e,tg,dt,spd*(dd>9?1.3:1));
+  else if(e.swing>0){e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}   // v244 휘두르는 동안은 선 채로 마치고
+  else{e.rec=0;chase(e,tg,dt,spd*(dd>9?1.3:1))}   // 그다음 마무리 자세를 끊고 달려간다
   for(const o of mobs)if(o!==e&&o.hp>0){const q=dist(o,e);if(q<.6&&q>0)moveEnt(e,(e.x-o.x)/q*.02,(e.y-o.y)/q*.02)}
 }
 function updateEprojs(dt){
@@ -2202,7 +2211,7 @@ function updateAlly(a,dt){
   if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5){tg=m;break}
   if(G.duel)tg=null;
   if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=1.1;a.swing=.24;const dm=Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def));damage(tg,dm,.2,0,a);if(!tg.tgt||Math.random()<.3)tg.tgt=a}}
-    else chase(a,tg,dt,a.sp);return}
+    else if(a.swing>0)a.moving=false;else{a.rec=0;chase(a,tg,dt,a.sp)}return}
   const d=dist(a,P);if(d>12){a.x=P.x-P.fx;a.y=P.y-P.fy;if(!walkAt(a.x,a.y)){a.x=P.x;a.y=P.y}}
   if(d>2.2)chase(a,P,dt,Math.max(a.sp,moveSpd()*.95));else a.moving=false;
 }
