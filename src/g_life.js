@@ -56,23 +56,38 @@ function updateP(dt){
   else if(P.ultCast){P.path=null}   // v232 필살기 발동 연출 동안은 제자리에 선다 (g_ult.js)
   else if(P.perch){perchMove(kx,ky,sp)}
   else if(kx||ky){P.path=null;P.target=null;P.talk=null;const l=Math.hypot(kx,ky);P.fx=kx/l;P.fy=ky/l;moveEnt(P,P.fx*sp,P.fy*sp);P.moving=true}
-  else{
+  else{let chase=null;
     if(P.target){const e=P.target;
       if(e.hp<=0)P.target=null;
       else{const rr=P.mode==='auto'?autoReach():CLASS[hasWeaponFor(curCls())?curCls():'권'].reach;
-        if(dist(e,P)<rr-.05&&(rr>=4||!elevGap(P,e))){P.path=null;face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
-        else if(!P.path||!P.path.length||P.repath<=0){P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(e.x),Math.floor(e.y));P.repath=.35}
+        if(dist(e,P)<rr-.05&&(rr>=4?shotClear(P,e):!elevGap(P,e))){P.path=null;P.chs=0;face(e.x,e.y);if(P.mode==='auto')autoAttack(e);else basicStrike(e)}
+        else{if(!P.path||!P.path.length||P.repath<=0){P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(e.x),Math.floor(e.y));P.repath=.35}
+          chase={e,x:P.x,y:P.y}}
         P.repath-=dt}}
     if(P.talk&&dist(P.talk,P)<1.7){const n=P.talk;P.talk=null;P.path=null;openNpc(n)}
     if(P.goal&&dist(P.goal,P)<1.3){const g=P.goal;P.goal=null;P.path=null;interact(g)}
     if(P.path&&P.path.length>1){const a=P.path[0],b=P.path[1];if(Math.hypot(b.x-P.x,b.y-P.y)<Math.hypot(b.x-a.x,b.y-a.y))P.path.shift()}
     let left=sp;while(left>1e-4&&P.path&&P.path.length){const n=P.path[0],dx=n.x-P.x,dy=n.y-P.y,l=Math.hypot(dx,dy);
       if(l<1e-3){P.path.shift();continue}P.fx=dx/l;P.fy=dy/l;const m=Math.min(l,left);P.x+=P.fx*m;P.y+=P.fy*m;left-=m;P.moving=true;if(m>=l)P.path.shift()}
+    if(chase)chaseStep(chase,sp,dt);
   }
   if(P.moving){P.runT=.14;P.runPh=(P.runPh||0)+dt;P.medit=false;if(P.chan&&!P.chan.walk)P.chan=null}else if(P.runT<=0)P.runPh=0;
   if(P.ride){P.ride.x=P.x;P.ride.y=P.y;P.ride.fx=P.fx;P.ride.fy=P.fy;P.ride.moving=P.moving}
   if(G.duel&&!G.ldDuel&&!G.acadDuel&&!G.rtDuel&&!G.sryDuel&&!G.sbDuel&&!G.sgjDuel&&!G.mdDuel&&!G.hgDuel&&dist(P,ARENA)>ARENA.r+1.2){log('비무대를 벗어나 비무에서 졌습니다.','dmg');duelEnd(false)}   // ldDuel: 교주 비무는 신전 마당이 비무대 (g_magyo3.js)
 }
+// v242 쫓다가 멈추는 것 고침 (사용자 2026-11-10 "공격하다가 지형에 걸려 공격을 멈춘 채 가만히 있다"):
+// 1) 길찾기는 칸 단위라, 적이 같은 칸(또는 못 서는 칸 옆)에 있으면 빈 길이 나와 사거리 밖에서 그냥 서 있었다 → 길이 없으면 적 쪽으로 곧장 걷는다 (벽·높낮이는 moveEnt가 막는다)
+// 2) 벼랑 위·막힌 곳처럼 닿지 않는 적을 붙잡고 끝없이 서 있었다 → CHASE.stuck초 동안 한 걸음도 못 가면 놓고, 그 적은 CHASE.skip초 동안 자동으로 다시 고르지 않는다
+// 3) 활·암기는 나무·바위·담에 막힌 줄도 모르고 그쪽으로 계속 쏘아 동작만 하고 피해가 없었다 → 사이가 막혔으면 쏘지 않고 트인 데로 움직인다
+const CHASE={stuck:1.5,skip:6};
+function shotClear(a,b){if(P.perch)return true;const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy),n=Math.ceil(l/.05);
+  for(let i=1;i<n;i++){const x=a.x+dx*i/n,y=a.y+dy*i/n;if(Math.hypot(x-b.x,y-b.y)<.42)break;if(blockedAt(x,y))return false}return true}
+function chaseStep(c,sp,dt){const e=c.e;
+  if(!P.path||!P.path.length){const dx=e.x-P.x,dy=e.y-P.y,l=Math.hypot(dx,dy);if(l>.05){P.fx=dx/l;P.fy=dy/l;moveEnt(P,P.fx*Math.min(sp,l),P.fy*Math.min(sp,l))}}
+  const mv=Math.hypot(P.x-c.x,P.y-c.y);if(mv>sp*.3){P.moving=true;P.chs=0;return}
+  P.chs=(P.chs||0)+dt;if(P.chs<CHASE.stuck)return;
+  P.chs=0;e.noReach=time+CHASE.skip;P.target=null;P.path=null;log(`${e.name||e.kind}에게 닿을 길이 없어 손을 뗍니다.`,'info')}
+const reachable=e=>!(e.noReach>time);
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
   a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
 // 자동초식: chain the learned forms in order, falling back to a plain strike.
