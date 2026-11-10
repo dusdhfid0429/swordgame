@@ -6,7 +6,7 @@
 // - 자리: 북쪽 단상 앞에 장문인과 사부들, 서쪽 줄에 입문 동기, 동쪽은 문파원, 서쪽 끝과 남쪽은 관할 마을 주민. 비무는 가운데 SBFEST.ring
 // - 관객은 이름표 없이(noTag) 서 있다가 함성을 지른다(addText). 비무 중엔 더 자주, 승패가 나면 한꺼번에
 const SF=GD.SBFEST,sfId=sid=>'ar_'+sid;
-const sfHere=()=>!!(P&&P.sabu&&P.sect===P.sabu.sid&&REG===sfId(P.sabu.sid));
+const sfHere=()=>!!(P&&P.sabu&&P.sect===P.sabu.sid&&REG===sfId(P.sabu.sid)&&sectPop(P.sabu.sid)>0);
 const sfOpen=b=>b&&(b.st==='rank'||b.st==='pick'||b.st==='named'&&!b.late);   // 대회에서 정할 일이 남았다
 const sfLive=()=>sfHere()&&(P.sabu.ev===1||P.sabu.ev===2);
 const sfRing=()=>sfHere()?{x:SF.ring[0],y:SF.ring[1]}:null;
@@ -48,7 +48,7 @@ function sfNpcs0(s){const b=P.sabu,M=sbMasters(s.id),L=[],live=b&&b.sid===s.id&&
 let SF_KEY='';
 function sfSync(force){if(!REG||!REG.startsWith('ar_'))return;const s=SECTS[REG.slice(3)];if(!s)return;const b=P&&P.sabu&&P.sabu.sid===s.id?P.sabu:null;
   const k=b?[b.st,b.ev,b.off,b.ord.join(),G.sbDuel&&G.sbDuel.foe,Object.keys(b.taken||{}).length,mobs.filter(m=>m.npcKey&&m.hp>0).length].join('|'):'-'+mobs.filter(m=>m.npcKey&&m.hp>0).length;if(!force&&k===SF_KEY)return;SF_KEY=k;
-  REGION().npcs=sfNpcs(s);refreshNPCF()}
+  REGION().npcs=sectPop(s.id)<=0?[]:sfNpcs(s);refreshNPCF()}   // 멸문: 대연무장도 폐허, 사부·교두·제자·관객 없음 (user 2026-11-10)
 // 그리기: 관객은 이름표 없이, 마주 보는 쪽은 NPC마다 (g_draw.js npcFighter가 fx·fy·noTag를 옮긴다)
 // ---- 행사 진행 ----
 function sfShout(n,lines,col){if(!n)return;texts.push({x:n.x+(Math.random()-.5)*.3,y:n.y-.2,t:pick(lines),c:col,life:1.3})}
@@ -101,5 +101,5 @@ hook('npcDlg',c=>{if(c.html!=null)return;const n=c.n;
   else if(n.sfCrowd)c.html=`<p class="note">"${pick(n.sfCrowd==='sect'?SF.talkSect:SF.talkFolk)}"</p>`});
 // ---- 마교 장로원 사부 (v237b): SABU.cheonma 장로들이 장로원 마당에 선다. 지명(향주 또는 인연)을 받들고 무공·초식을 직접 받는 곳 ----
 const SF_CM_AT=[[15.5,22.5],[20.5,22.5],[24.5,22.5],[18,20.5],[23,20.5]];
-hook('regionLoaded',id=>{if(id!=='hq_cheonma_6')return;const R=REGIONS[id],M=sbMasters('cheonma');R.npcs=R.npcs.filter(n=>!n.sfMaster&&n.sfMaster!==0);
+hook('regionLoaded',id=>{if(id!=='hq_cheonma_6')return;const R=REGIONS[id],M=sbMasters('cheonma');R.npcs=R.npcs.filter(n=>!n.sfMaster&&n.sfMaster!==0);if(sectPop('cheonma')<=0)return;   // 멸문 폐허엔 장로 사부가 서지 않는다
   M.forEach((m,i)=>{if(G.ndead&&G.ndead['cheonma/sf_m'+m.k])return;const[x,y]=SF_CM_AT[i%SF_CM_AT.length];R.npcs.push({id:'sf_m'+m.k,sfSid:'cheonma',sfMaster:m.k,n:m.n,x,y,pal:(typeof sectPal==='function'&&sectPal('cheonma',4,m.cls,{}))||masterPal(SECTS.cheonma)})});refreshNPCF()});
