@@ -183,7 +183,7 @@ function mkMob(kind,x,y,extra){
   if(extra)Object.assign(m,extra.o||{});runHooks('mobMade',m,kind,extra);return m;
 }
 const foes=()=>mobs.filter(m=>m.hp>0&&!(m.d.villager&&!m.angry)&&!peaceful(m)&&!(G.duel&&!m.duel)||(m.hp>0&&m.duel));
-function nearest(r,from=P){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
+function nearest(r,from=P,ok){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.d.villager&&!peaceful(e)&&(!G.duel||e.duel)&&(!ok||ok(e))){const d=dist(e,from);if(d<bd){bd=d;b=e}}return b}
 // 큰 지역(64칸 넘게)은 몹을 사람 둘레 24칸 안에 내고, 44칸 넘게 멀어진 몹은 거둔다. 넓어도 비어 보이지 않고 몹 수도 늘지 않는다
 const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
