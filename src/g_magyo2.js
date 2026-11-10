@@ -51,7 +51,7 @@ const jailDue=()=>!!P&&P.sect==='cheonma'&&!P.jail&&(P.sin||0)>=J2.cap;
 hook('kill',e=>{if(P.sect==='cheonma'&&e&&e.sect==='cheonma'&&!e.duel&&!e.arrest&&!e.jailer)sinAdd(J2.ally,'같은 편 마교도 살해');
   if(e&&e.arrest&&!mobs.some(m=>m!==e&&m.arrest&&m.hp>0))sinAdd(J2.resist,'연행조를 물리침');
   if(e&&e.jailer)jailEscape()});
-hook('travel',c=>{if(P.sect==='cheonma'&&mobs.some(m=>m.hunt&&m.hp>0&&!m.arrest))sinAdd(J2.flee,'추살조에게서 달아남')});
+hook('travel',c=>{if(P.sect==='cheonma'&&mobs.some(m=>m.hunt&&m.hp>0&&!m.arrest&&!(typeof pursueFollows==='function'&&pursueFollows(m,c.g))))sinAdd(J2.flee,'추살조에게서 달아남')});
 hook('sectAct',c=>{if(c.a==='sleave'&&P.sect==='cheonma')P.mgLeaving=1});
 hook('sectActDone',c=>{if(c.a==='sleave'){if(P.mgLeaving&&!P.sect)P.mgLeft=1;P.mgLeaving=0}
   if(c.a==='sjoin'&&c.x==='cheonma'&&P.sect==='cheonma'&&P.mgLeft){P.mgLeft=0;P.sin=0;sinAdd(J2.rejoin,'배교했다가 다시 돌아옴');setTimeout(()=>{if(playing&&jailDue())jailEnter('"배교자는 옥을 거쳐야 교도다." 호법 둘이 양팔을 잡았다')},900)}});

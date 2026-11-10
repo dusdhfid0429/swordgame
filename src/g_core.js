@@ -187,7 +187,7 @@ function nearest(r,from=P,ok){let b=null,bd=r;for(const e of mobs)if(e.hp>0&&!e.
 // 큰 지역(64칸 넘게)은 몹을 사람 둘레 24칸 안에 내고, 44칸 넘게 멀어진 몹은 거둔다. 넓어도 비어 보이지 않고 몹 수도 늘지 않는다
 const BIG_N=64,NEAR_R=24,FAR_R=44;
 function spawnTick(){
-  const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
+  const big=N>BIG_N;if(big&&P)mobs=mobs.filter(m=>m.d.boss||m.kept||m.tomb||m.tombGuard||m.duel||Math.hypot(m.x-P.x,m.y-P.y)<FAR_R);
   for(const[k,cap0,test,mk]of REGION().spawns||SPAWNS){const cap=typeof facCap==='function'?facCap(k,cap0):cap0,n=mobs.filter(m=>m.kind===k&&m.hp>0&&!m.fixed).length;if(n>=cap)continue;   // facCap: 궁지 몰린 문파는 더 많이 낸다 (g_pop.js v113)
     if(typeof facSpawn==='function'&&facSpawn(k,cap,test,mk,n))continue;   // 세력 무인: 60%만 먼저 세우고, 죽으면 출입구에서 충원 (g_pop.js)
     for(let t=0;t<30;t++){const x=big?Math.max(1,Math.min(N-2,Math.floor(P.x+(Math.random()*2-1)*NEAR_R))):1+Math.floor(Math.random()*(N-2)),
@@ -212,6 +212,7 @@ function spawnTick(){
 //  duelStart(o,e) / duelEnd(c)  비무 시작·끝. c={win,e,o,was 이전 단계,me 내 경지}
 //  loadRegion(c) 맵을 열기 전, c.id를 바꿀 수 있다   regionLoaded(id)  맵을 연 뒤
 //  travel(c)     출입구로 가기 전, c.g를 바꿀 수 있다
+//  leaveRegion(c) 맵을 옮기며 몹을 비우기 전, c={from,to}   enteredRegion(id)  옮긴 뒤 (P 자리·카메라까지 정한 뒤) — g_pursue.js
 //  gate(c)       출입구 검사 전, c.stop=true면 막는다   gateDone()  출입구 검사 뒤
 //  npcDlg(c) / hqDlg(c)  사람·본산 대화. c.html을 채우면 그것을 쓴다 / 덧붙인다
 //  sectAct(c) / sectActDone(c)  문파 행동. c.done=true면 기본 행동을 건너뛴다

@@ -234,6 +234,6 @@ hook('sectFall',sid=>{const s=SECTS[sid];if(!s||!P)return;const here=REG&&ruinSe
   else showBanner(`${s.n} 멸문`,G.fall&&G.fall[sid]&&G.fall[sid].why||'본산이 무너졌다');
   remnSync();const r=G.remn&&G.remn[sid];if(!r)return;   // 숨은 곳은 알려 주지 않는다: 문주전 비밀통로를 찾아 지나야 은신처에 닿는다
   log(`${here?'결사대가 시간을 버는 사이 ':''}${s.n}의 최후의 전인이 문파의 절기를 품고 문주전 뒤 비밀통로로 빠져나갔다. 어디로 숨었는지는 비밀통로 끝에 가 봐야 안다.`,'dmg')});
-hook('kill',e=>{if(!e.last||mobs.some(m=>m!==e&&m.last===e.last&&m.hp>0))return;const s=SECTS[e.last];if(s)log(`${s.n}의 최후의 결사대가 모두 쓰러졌다. ${s.n}의 본산에는 이제 아무도 남지 않았다.`,'xp')});
+hook('kill',e=>{if(!e.last||mobs.some(m=>m!==e&&m.last===e.last&&m.hp>0)||typeof pursueAll==='function'&&pursueAll().some(m=>m!==e&&m.last===e.last))return;const s=SECTS[e.last];if(s)log(`${s.n}의 최후의 결사대가 모두 쓰러졌다. ${s.n}의 본산에는 이제 아무도 남지 않았다.`,'xp')});
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!R.dead||!P||!G.fall)return;const s=ruinSect(R),f=s&&G.fall[s.id];if(!f||f.seen)return;f.seen=1;
   log(`자리를 비운 사이 ${s.n}이(가) 멸문했다${f.why?` (${f.why})`:''}. 남은 무인들은 최후의 결사대를 이뤄 끝까지 싸우다 쓰러졌고, 최후의 전인은 비밀통로로 빠져나갔다고 한다.`,'info');showBanner(`${s.n} 폐허`,'멸문한 본산')});

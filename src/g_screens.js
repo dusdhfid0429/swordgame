@@ -22,7 +22,7 @@ function slotPanel(){const i=SLOT,s=slotInfo(i);
   return `<div class="card tcard" id="slotinfo">${body}${btns}</div>`}
 // 메뉴 → 저장 칸 고르기 (v139, 사용자 요청 2026-10-18): 지금 칸에 기록하고, 다른 칸을 이어 할 때 앞 판의 상태가 섞이지 않게 인물·세계를 비운다
 function toTitle(){if(!P)return;saveGame(true);closePanels();if(G.duel)G.duel=null;
-  P=null;G=G0();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
+  P=null;G=G0();if(typeof pursueClear==='function')pursueClear();allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
   for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
   showTitle()}
 // 메뉴 → 종료 (사용자 2026-10-26): '저장소 선택'은 toTitle, '완전 종료'는 기록하고 앱을 닫는다.
@@ -137,7 +137,7 @@ function beginLife(skip){
   if(skip&&!ACAD_OFF)acadSkipStart(CR.sim,CR.bob);
   if(heir){P.feats.push(`${G.lives}번째 생의 자식으로 가문을 이었다`)}else{G.house=null;G.storage={mats:{},bag:[]}}
   G.heir=null;G.bonusVit=0;G.bonusParts=null;G.wisCarry=0;G.board=null;
-  allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];
+  allies=[];mobs=[];drops=[];projs=[];eprojs=[];fx=[];texts=[];sched=[];if(typeof pursueClear==='function')pursueClear();
   for(const b of builds.filter(b=>b.home)){for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)objs[j][i]=null}builds=builds.filter(b=>!b.home);
   if(G.house&&G.house.built)buildHouse();
   startPlay(true);
