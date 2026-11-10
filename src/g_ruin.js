@@ -48,11 +48,14 @@ function drawGore(){const R=REGION();if(!R.dead||!R.gore)return;ctx.save();
   ctx.restore()}
 function drawBody(b){const p=toScreen(b.x,b.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(b.dir*Math.PI*.5);ctx.scale(1,.95);ctx.translate(-p.x,-p.y);drawFighter(b.e,false);ctx.restore()}
 // 멸문 본산은 길이 막히지 않고 폐허로 들어간다 (g_pop.js gate 훅이 sectPop<=0 이면 막지 않는다)
-hook('regionLoaded',id=>{const R=REGIONS[id];if(!R)return;goreMake(id);
+// v246: 맵에 있는 동안 멸문하면 g_decay.js 가 무너지는 연출 끝에 이 함수를 그 자리에서 부른다 (live)
+function ruinApply(id,live){const R=REGIONS[id];if(!R)return;goreMake(id);
   if(!R.dead&&G.looted&&G.looted[id])delete G.looted[id];
   if(R.hall){if(R.dead){if(!R._npcsH)R._npcsH=R.npcs||[];R.npcs=[]}else if(R._npcsH){R.npcs=R._npcsH;delete R._npcsH}}   // 살아 있을 땐 손대지 않는다 (g_pop masterCheck 가 장문인을 숨긴다)
   // 전각이 아닌 문파 맵(본산 사슬 밖의 대연무장·흑혈옥 등)도 폐허면 아무도 서 있지 않는다 (user 2026-11-10 "폐허인데 장로가 공격도 안 되고 가만히 서 있다").
   // R.hq 맵은 g_pop 훅이 R._npcs 로 되돌리므로 비우기만 하고, 다른 맵은 R._npcsR 에 맡겨 두었다가 살아나면 돌린다
   else if(R.dead){if(!R.hq&&!R._npcsR)R._npcsR=R.npcs||[];R.npcs=[];if(P&&P.jail&&id==='hq_cheonma_9'){P.jail=null;log('천마신교가 멸문해 흑혈옥을 지키는 이가 없다. 옥문을 밀고 나왔다.','xp')}}
   else if(R._npcsR){R.npcs=R._npcsR;delete R._npcsR}
-  if(R.dead){refreshNPCF();const s=ruinSect(R);if(!R.hall)log(`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}});
+  if(R.dead&&live&&R.hq){R.ruin=true;const own=FAC_KIND[alFac(SECTS[R.hq].al)];R.spawns=(R._sp2||R.spawns||[]).filter(([k])=>!own.includes(k))}
+  if(R.dead){refreshNPCF();const s=ruinSect(R);if(!R.hall)log(live?`${s.n} 본산의 마지막 전각까지 무너져 내렸다. 폐허에 핏자국과 시체만 남았다.`:`${s.n} 본산은 폐허가 되었다. 무너진 전각 사이에 핏자국과 시체만 남았다.`,'info')}}
+hook('regionLoaded',id=>ruinApply(id,false));
