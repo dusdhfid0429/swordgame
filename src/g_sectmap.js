@@ -87,6 +87,25 @@ function smSmall(s){const L=(smLook(s)||{}).small;if(!L||s.lt)return;const R=REG
   R.decal=L.decal;
   if(L.lamps===0){for(let i=lamps.length-1;i>=0;i--){const l=lamps[i],x=Math.floor(l.x),y=Math.floor(l.y);if(objs[y][x]==='lamp')objs[y][x]=null;lamps.splice(i,1)}}}
 for(const s of Object.values(SECTS)){const R=REGIONS[hqId(s)];if(!R||smOn(s)||!(smLook(s)||{}).small||R.smSmall)continue;const g0=R.gen;R.smSmall=1;R.gen=()=>{g0();smSmall(s)}}
+// 맵 한 장에 얹기 (v250, 소림·무당처럼 맵이 따로 있는 본산): look.map[맵 id] = {bs:{번호:{form..}}, add:[건물], arch:[{y,form,pad}] 길 위 패루·문루,
+//  ground:[[x0,y0,x1,y1,바닥]], scatter:[[소품,x0,y0,x1,y1,개수]] (배 boat 는 물 칸에만, 나머지는 물 밖), deco:[[x,y,소품]], decal}. 자리·출입구·NPC는 그대로, 높낮이(g_cliff)는 regionGen 에서 새 건물까지 맞춘다
+function smMap(id,L){const R=REGIONS[id],busy=new Set((R.npcs||[]).map(n=>Math.floor(n.x)+','+Math.floor(n.y))),rc=L.rc,r=rng((id.length*977+(L.seed|0))%2147483646+1);
+  const GS=(R.gates||[]).filter(g=>{const d=Object.getOwnPropertyDescriptor(g,'x');return d&&'value' in d}),nearGate=(x,y)=>GS.some(g=>{const m=g.door?1.6:3;return Math.abs(x+.5-g.x)<m&&Math.abs(y+.5-g.y)<m});   // 석굴 입구(g_cave)는 x가 맵을 다시 만드는 getter라 건너뛴다
+  const road=(x,y)=>map[y][x].g===1||map[y][x].g===3;
+  const free=(x,y)=>x>0&&y>0&&x<N-1&&y<NH-1&&objs[y][x]!=='B'&&objs[y][x]!=='lamp'&&!(objs[y][x]||'').startsWith('flag')&&objs[y][x]!=='cmouth'&&!road(x,y)&&!busy.has(x+','+y)&&!nearGate(x,y);
+  for(const i in L.bs||{})if(builds[i])Object.assign(builds[i],L.bs[i],rc&&!L.bs[i].rc?{rc}:{});
+  for(const[x0,y0,x1,y1,g]of L.ground||[])for(let y=Math.max(1,y0);y<=Math.min(NH-2,y1);y++)for(let x=Math.max(1,x0);x<=Math.min(N-2,x1);x++)if(free(x,y)||g===3&&map[y][x].g===2&&!nearGate(x,y)){map[y][x].g=g;if(objs[y][x]&&objs[y][x]!=='B')objs[y][x]=null}   // 물(2)·나루(3, 물 위 널판 길)·흙
+  for(const b of L.add||[]){let ok=true;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)if(!free(i,j))ok=false;if(!ok)continue;
+    for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push({rc,...b})}
+  for(const a of L.arch||[]){const y=a.y,xs=[];for(let x=1;x<N-1;x++)if(road(x,y))xs.push(x);if(!xs.length||xs.length>4)continue;const x0=xs[0]-(a.pad??1),x1=xs[xs.length-1]+(a.pad??1);
+    if(nearGate(x0,y)||nearGate(x1,y))continue;let ok=true;for(let x=x0;x<=x1;x++)if(objs[y][x]==='B'||busy.has(x+','+y))ok=false;if(!ok)continue;
+    for(let x=x0;x<=x1;x++)objs[y][x]=xs.includes(x)?null:'B';builds.push({rc,...a,x:x0,y,w:x1-x0+1,h:1,pass:xs})}
+  for(const[k,x0,y0,x1,y1,n]of L.scatter||[]){let put=0;for(let t=0;t<n*12&&put<n;t++){const x=x0+Math.floor(r()*(x1-x0+1)),y=y0+Math.floor(r()*(y1-y0+1));
+    if(!free(x,y)||(k==='boat')!==(map[y][x].g===2)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>objs[y+dy]&&objs[y+dy][x+dx]===k))continue;objs[y][x]=k;put++}}
+  for(const[x,y,k]of L.deco||[])if(free(x,y))objs[y][x]=k;
+  if(L.decal)R.decal=L.decal}
+function smMapWrap(){for(const id in SMAP.look&&SMAP.look.map||{}){const R=REGIONS[id];if(!R||!R.gen||R.gen.smMap)continue;const g0=R.gen,g=()=>{g0();smMap(id,SMAP.look.map[id])};g.smMap=1;R.gen=g}}
+smMapWrap();hook('sectGrown',()=>smMapWrap());   // 증축·되돌림(g_sgrow smBuild)이 gen 을 새로 만들면 다시 감싼다
 // ---- 새 역할 NPC 창 ----
 function smSay(n,i){const L=SMAP.say[n.srole]||[''],s=SECTS[n.ssid];return(L[i??Math.floor(time/7)%L.length]||'').replace('{s}',s.n).replace('{rank}',P.sect===s.id?rankName(s.id):'손님')}
 function smDlg(n){const s=SECTS[n.ssid],member=P.sect===s.id,r=n.srole;
