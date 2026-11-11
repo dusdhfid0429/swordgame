@@ -15,7 +15,7 @@ function smName(s,k){const o=(SMAP.names[s.id]||{})[k];if(o)return o;if(k==='mai
   return(SMAP.style[smStyle(s)]||{})[k]||SMAP.kinds[k].n}
 const smRank=r=>(GD.VAULT.npc[r]||{rank:1}).rank;
 // v248 갈래별 본산 모양 (SMAP.look): 개방 움막촌·녹림채 목책 산채 …
-function smLook(s){const L=(SMAP.look||{})[smStyle(s)];return L&&!(L.skip||[]).includes(s.id)?L:null}
+function smLook(s){const LK=SMAP.look||{},st=LK[smStyle(s)],own=LK[s.id],L=own?{...st,...own}:st;return L&&!(L.skip||[]).includes(s.id)?L:null}   // 문파 자기 틀(look[id])이 갈래 틀(직함·산문)을 덮는다
 function smNpc(s,f){const id=f.id||f.role,rk=smRank(f.role),tt=(smLook(s)||{}).titles||{},n={id,n:`${s.n} ${tt[f.t]||f.t}`,pal:(typeof sectPal==='function'&&sectPal(s.id,Math.min(4,rk),'검',rk>=4?{master:1}:{}))||masterPal(s)};
   if(f.role==='elder')n.elder=s.id;else if(f.role==='steward')n.steward=s.id;else{n.srole=f.role;n.ssid=s.id}
   if(f.role==='jigak')n.jigak=s.id;return n}
@@ -46,14 +46,14 @@ function smBuild(s){const L=smLook(s),T=L&&L[smT(s)]||SMAP.tiers[smT(s)].maps,hq
   const old=[hq,oid,bid].flatMap(smClear),keep={master:old.find(n=>n.hq===s.id)};
   for(const R of[REGIONS[oid],REGIONS[bid]])if(R)R.npcs=R.npcs.filter(n=>!n.elder&&!n.steward&&!n.disc);
   // 본산(장문 구역): genHQ 대신 genStage 틀로 — 마당·길·위로 나가는 길(topX)
-  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:t.topX!=null?1:0,topX:t.topX,yard:t.yard,yardG:t.yardG,fence:t.fence,deco:t.deco,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
+  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:t.topX!=null?1:0,topX:t.topX,yard:t.yard,yardG:t.yardG,fence:t.fence,deco:t.deco,ground:t.ground,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
     const st=GD.SECT_STYLE[s.id]||{};c.rc=st.roof;c.wc=st.wall;c.tree=st.tree;c.props=st.props;
     R.stage=c;R.gen=()=>genStage(c);if(t.topX!=null)R.topX=t.topX;const nm=smName(s,t.builds[0].k),[y0,y1]=[t.yard[1],t.yard[3]];
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=y0&&y<=y1?`${s.n} ${nm} 앞마당`:y>=31?`${hqPlace(s)} 어귀`:`${hqPlace(s)} 산길`;
     for(const g of R.gates)if(g.to===bid)g.x=t.topX+.5;const B=REGIONS[bid];if(B)for(const g of B.gates)if(g.to===hq)g.tx=t.topX+.5;
     c.builds.forEach((b,i)=>smHall(hq,i,b,s,keep))}
   // 외원(살림 구역)
-  if(REGIONS[oid]&&T.outer){const R=REGIONS[oid],c=R.stage,t=T.outer;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;c.flags=t.flags;
+  if(REGIONS[oid]&&T.outer){const R=REGIONS[oid],c=R.stage,t=T.outer;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;c.flags=t.flags;
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=t.yard[1]&&y<=t.yard[3]?`${s.n} 외원 마당`:`${hqPlace(s)} 외원`;
     c.builds.forEach((b,i)=>smHall(oid,i,b,s,keep));
     // 암기 문파(g_amgi)의 암기방 대장장이: 창고 한 채를 암기방으로
@@ -63,7 +63,7 @@ function smBuild(s){const L=smLook(s),T=L&&L[smT(s)]||SMAP.tiers[smT(s)].maps,hq
       for(const g of A.gates)if(g.to===hq){g.to=oid;g.tx=ax+1.8;g.ty=ay;g.label=R.name}
       const g0=R.gen;R.gen=()=>{g0();const yd=t.yard;for(let x=1;x<=yd[0];x++)for(const y of[Math.floor(ay),Math.floor(ay)-1]){objs[y][x]=null;if(map[y][x].g===2||map[y][x].g===6)map[y][x].g=1;else if(map[y][x].g!==4)map[y][x].g=1}}}}
   // 후산(비전 구역)
-  if(REGIONS[bid]&&T.back){const R=REGIONS[bid],c=R.stage,t=T.back;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;R.name=`${hqPlace(s)} 후산`;R.zone=()=>R.name;
+  if(REGIONS[bid]&&T.back){const R=REGIONS[bid],c=R.stage,t=T.back;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;R.name=`${hqPlace(s)} 후산`;R.zone=()=>R.name;
     c.builds.forEach((b,i)=>smHall(bid,i,b,s,keep))}
   // 산문 맵: 갈래의 담·망루 (녹림채 목책, 개방 무너진 흙담)
   {const G=REGIONS[`hq_${s.id}_gate`],g=L&&L.gate;if(G&&G.stage){G.stage.wallK=g&&g.wallK;G.stage.wallTower=g&&g.tower}}

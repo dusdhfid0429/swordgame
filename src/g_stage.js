@@ -56,7 +56,9 @@ function genStage(c){
   const bl=[...(c.builds||[])];
   for(const w of[].concat(c.wall||[])){const rx=road(w),pal=!!c.wallK;for(let y=w;y<=w+(pal?0:1);y++)for(let x=1;x<N-1;x++)if(Math.abs(x-rx-.5)>1.5){objs[y][x]=pal?c.wallK:'rock';if(map[y][x].g===2)map[y][x].g=6}else if(pal)objs[y][x]=null;
     bl.push({x:rx-4,y:w-1,w:2,h:2,form:c.wallTower},{x:rx+4,y:w-1,w:2,h:2,form:c.wallTower})}
-  for(const b0 of bl){const b={...b0,mg:c.mg,rc:b0.rc||c.rc,wc:b0.wc||c.wc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  // v248: 땅 고치기 c.ground [[x0,y0,x1,y1,g]] (못 2·다리 3·흙 7 …), 덮인 칸의 나무·바위는 걷는다
+  for(const[x0,y0,x1,y1,g]of c.ground||[])for(let y=Math.max(1,y0);y<=Math.min(NH-2,y1);y++)for(let x=Math.max(1,x0);x<=Math.min(N-2,x1);x++){map[y][x].g=g;if(g===2||g===3)objs[y][x]=null}
+  for(const b0 of bl){const b={...b0,mg:c.mg,rc:b0.rc||c.rc,wc:b0.wc||c.wc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){if(b.pass&&b.pass.includes(i)){objs[j][i]=null;continue}objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
   // v248 문파 특색: 목책 울타리(c.fence [{r:[x0,y0,x1,y1],k,gaps}]) · 소품(c.deco [[x,y,종류]])
   for(const f of c.fence||[]){const[x0,y0,x1,y1]=f.r,k=f.k||'pal',gap=(x,y)=>(f.gaps||[]).some(([gx,gy,gw=1,gh=1])=>x>=gx&&x<gx+gw&&y>=gy&&y<gy+gh);
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(x!==x0&&x!==x1&&y!==y0&&y!==y1)continue;if(x<1||y<1||x>N-2||y>NH-2||objs[y][x]==='B'||onRoad(x,y)||gap(x,y))continue;objs[y][x]=k;if(map[y][x].g===2)map[y][x].g=6}}

@@ -34,8 +34,18 @@ const {chromium}=require('playwright');
     loadRegion('hq_janggang');const jg=builds.some(b=>b.form);return{a,c,d,hw,hwT:hm.tower&&hm.tower.n,jg,gb:reach('hq_noklim_gate'),gg:reach('hq_gaebang_gate')}});
   ok(`산문: 녹림 ${JSON.stringify(r3.a)} 개방 ${JSON.stringify(r3.c)} 화산 ${JSON.stringify(r3.d)} · 화산 본산 새 형태 없음 ${!r3.hw} 장문전 ${r3.hwT}층 · 장강수로채 그대로 ${!r3.jg} · 막힘 ${[...r3.gb,...r3.gg].join(',')||'없음'}`,
     r3.a.ks.pal>20&&r3.a.tw.every(f=>f==='watch')&&r3.c.ks.mudw>20&&r3.c.tw.every(f=>f==='shack')&&r3.d.ks.rock>20&&r3.d.tw.every(f=>!f)&&!r3.hw&&r3.hwT===3&&!r3.jg&&!r3.gb.length&&!r3.gg.length);
+  // 3b. 세가: 집안마다 다른 장원 (담·문루·기와집채 + 집안 특색), 모든 세가 맵 길이 닿는다
+  const r3b=await p.evaluate(()=>{const cnt=(id,k)=>{loadRegion(id);let n=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(objs[y][x]===k)n++;return n},wat=id=>{loadRegion(id);let n=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===2)n++;return n};
+    const o={};for(const sid of['namgung','moyong','paeng','jegal','dang','sama','hwangbo']){const s=SECTS[sid],ids=REGIONS[hqId(s)].chain,bad=ids.flatMap(id=>reach(id).map(x=>id+':'+x));loadRegion(hqId(s));
+      o[sid]={bad,gh:builds.some(b=>b.form==='gatehouse'),giwa:builds.filter(b=>b.form==='giwa').length,wall:cnt(hqId(s),'cwall')}}
+    o.f={rack:cnt('hq_namgung','rack'),pond:wat('hq_moyong'),dummy:cnt('hq_paeng','dummy'),stone:cnt('hq_jegal','stone'),herb:cnt('hq_dang','herbbed')};
+    loadRegion(REGIONS.hq_namgung.halls[0].id);o.title=(REGIONS[REGIONS.hq_namgung.halls[0].id].npcs.find(q=>q.jigak)||{}).n;return o});
+  const cl=['namgung','moyong','paeng','jegal','dang','sama','hwangbo'];
+  ok(`세가 장원: ${cl.map(k=>`${k} 문루${r3b[k].gh?'O':'X'} 기와${r3b[k].giwa} 담${r3b[k].wall}`).join(' · ')} · 막힘 ${cl.flatMap(k=>r3b[k].bad).join(',')||'없음'}`,cl.every(k=>r3b[k].gh&&r3b[k].giwa>=2&&r3b[k].wall>40&&!r3b[k].bad.length));
+  ok(`세가 특색: 남궁 검 걸이 ${r3b.f.rack} · 모용 못 ${r3b.f.pond}칸 · 팽가 목인 ${r3b.f.dummy} · 제갈 진법 돌 ${r3b.f.stone} · 당가 독초 밭 ${r3b.f.herb} · 입문 ${r3b.title}`,
+    r3b.f.rack>=6&&r3b.f.pond>100&&r3b.f.dummy>=20&&r3b.f.stone>=20&&r3b.f.herb>=20&&/총관/.test(r3b.title));
   // 4. 그리기: 형태마다 오류 없이 그려지고 캐시 상자 안에 든다, 멸문 폐허에서도
-  const r4=await p.evaluate(async()=>{const out=[];for(const id of['hq_noklim','hq_noklim_outer','hq_gaebang','hq_gaebang_outer']){enterRegion(id,20.5,14);await new Promise(r=>setTimeout(r,250));for(const b of builds)if(b.form){try{drawBuild(b,1)}catch(e){out.push(id+' '+b.form+' '+e.message)}}}
+  const r4=await p.evaluate(async()=>{const out=[];for(const id of['hq_noklim','hq_noklim_outer','hq_gaebang','hq_gaebang_outer','hq_namgung','hq_moyong']){enterRegion(id,20.5,14);await new Promise(r=>setTimeout(r,250));for(const b of builds)if(b.form){try{drawBuild(b,1)}catch(e){out.push(id+' '+b.form+' '+e.message)}}}
     const s=SECTS.noklim;REGIONS.hq_noklim.dead=1;enterRegion('hq_noklim',20.5,14);await new Promise(r=>setTimeout(r,250));delete REGIONS.hq_noklim.dead;return out});
   ok(`형태 그리기 오류 ${r4.join(',')||'없음'}`,!r4.length);
   // 5. 증축·되돌림: 규모가 바뀌어도 갈래 모양을 따른다 (중견 틀)
