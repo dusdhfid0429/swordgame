@@ -4,7 +4,7 @@
 //            3 호법·당주 = 허리까지 오는 망토, 4 장로 = 땅에 끌리는 짙은 망토에 금테
 // 설계: docs/세력_문파_설계.md 12장
 // [글자, 마크 모양, 옷 색, 띠 색(마크 바탕), 테 색, 덧붙임]
-// 덧붙임: monk 민머리 승려, short 짧은 옷(산적·마적), band 머리띠, mask 복면, patch 기운 옷, taiji 태극, plum 매화
+// 덧붙임: monk 민머리 승려, short 짧은 옷(산적·마적), band 머리띠, mask 복면, patch 기운 옷, taiji 태극, plum 매화, gat 갓(장백파 조선)
 const LOOK=GD.LOOK;
 const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const rgbHex=c=>'#'+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
@@ -48,7 +48,7 @@ function sectPal(sid,rank,cls,o={}){rank=Math.min(4,rank);   // 마교 호법·�
   const robe=rankRobe(L,rank),W=CLASS[cls]||CLASS.검,monk=L.x==='monk',fac=alFac(SECTS[sid].al);
   PAL[k]={...PAL.hero,robe:[robe,cShade(robe,.55)],robeB:cShade(robe,.72),
     inner:rank>=1?L.accent:cShade(robe,.8),sash:rank>=1?L.accent:cShade(robe,.6),trim:rank>=2?L.trim:cShade(robe,.85),
-    hairband:monk?null:rank>=1?L.accent:null,tail:monk?0:1,hair:monk?'#c8987a':o.master?'#d8d4cc':PAL.hero.hair,
+    hairband:monk||L.x==='gat'?null:rank>=1?L.accent:null,gat:L.x==='gat'?1:0,tail:monk?0:1,hair:monk?'#c8987a':o.master?'#d8d4cc':PAL.hero.hair,
     weapon:o.master?'none':W.draw,anim:W.anim,jade:0,beard:o.master||o.elite?1:0,armor:o.elite&&fac!=='정'&&!monk&&!o.master?1:0,
     short:L.x==='short'&&!o.master?1:0,band:L.x==='band'||L.x==='short'&&rank<3?L.accent:null,mask:L.x==='mask'&&!o.master?'#14141c':null,patch:L.x==='patch'?1:0,
     cape:rank>=2?(rank>=4?cShade(L.robe,.45):L.accent):null,capeLen:rank>=2?rank-1:0,capeEdge:rank>=3?L.trim:null,emb:rank>=2?sid:null};

@@ -33,7 +33,7 @@ function realmQiMul(){return(realmAt(1)?1.3:1)*(realmAt(8)?GD.BEYOND.jayeon.medi
 const SCHOOL_OF=GD.SCHOOL_OF;
 const SCHOOL=GD.SCHOOL;
 function school(){const s=P.sect&&P.sect!=='own'?P.sect:null;
-  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return SECTS[s]&&SECTS[s].al==='sacheon'?'사공':'정종'}
+  if(s){for(const[k,l]of Object.entries(SCHOOL_OF))if(l.includes(s))return k;return SECTS[s]&&(SECTS[s].al==='sacheon'||SECTS[s].al==='seoe')?'사공':'정종'}
   return P.side==='사'?'사공':'불가'}
 
 // ---- 갑자: 120 내공 = 1갑자(60년 공력) ----

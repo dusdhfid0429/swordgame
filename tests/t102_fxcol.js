@@ -58,7 +58,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`초식 외침 글자 ${f.call}`,f.call===f.callWant);
   ok(`연사 ${f.vol.n}발 심법 색 ${f.vol.c}, 재질 꼬리 ${f.vol.trail}`,f.vol.n>=3&&f.vol.c&&f.vol.trail);
   // v216: 적 평타에도 그 적 심법 색·기운, 새 속성 적중 효과
-  const g2=await p.evaluate(()=>{const o={};mobs=[];fx=[];const e=mkFac('사',0,P.x+1,P.y,'mandok');e.aggro=true;e.tgt=P;e.wind=.01;mobs.push(e);
+  const g2=await p.evaluate(()=>{const o={};mobs=[];fx=[];const e=mkFac('외',0,P.x+1,P.y,'mandok');e.aggro=true;e.angry=1;e.tgt=P;e.wind=.01;mobs.push(e);
     for(let i=0;i<3;i++){time+=.03;updateMob(e,.03)}const X=foeX(e);o.strike=fx.some(f=>(f.t==='arc'||f.t==='thrust')&&f.col===X.art.c);o.rb=fx.some(f=>f.t==='el'&&f.el==='독');o.el=X.el;
     const t=mkMob('목인장',P.x+1,P.y,{hp:9999,atk:5,def:0,hm:0,sp:0,pal:'villager'});mobs=[t];const sm=simOf('dang')[0];P.sims[sm.id]=1;P.sim=sm.id;const XP=mkX(P.cur);
     for(let i=0;i<20&&!(t.burn>0);i++)hitE(XP,t,1,0,0);o.psn=t.burn>0&&t.weak>0&&t.burnC;const c={dm:100,src:t,hm:0};runHooks('hurt',c);o.weakDm=c.dm;

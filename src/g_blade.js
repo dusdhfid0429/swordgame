@@ -59,7 +59,7 @@ function swordShape(x,y,ang,len,col,a){   // 날·코등이·자루를 한 획�
   ctx.strokeStyle=rgba(HI,.95*a);ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(tip[0],tip[1]);ctx.lineTo(g[0],g[1]);ctx.stroke();
   ctx.strokeStyle=rgba(col,.9*a);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(g[0]+px*6,g[1]+py*6);ctx.lineTo(g[0]-px*6,g[1]-py*6);ctx.moveTo(g[0],g[1]);ctx.lineTo(hilt[0],hilt[1]);ctx.stroke()}
 // 든 병기 모양의 기운 그림자 (v211): 검·도·창·봉·권. 단도·절편은 검 모양
-function wpnShape(cls,x,y,ang,len,col,a){const c=Math.cos(ang),s=Math.sin(ang),px=-s,py=c,at=(u,v=0)=>[x+c*len*u+px*v,y+s*len*u+py*v];
+function wpnShape(cls,x,y,ang,len,col,a){cls=vcls(cls);const c=Math.cos(ang),s=Math.sin(ang),px=-s,py=c,at=(u,v=0)=>[x+c*len*u+px*v,y+s*len*u+py*v];
   const fill=(pts,al)=>{ctx.fillStyle=rgba(col,al*a);path(pts);ctx.fill()},line=(p0,p1,w,cc,al)=>{ctx.strokeStyle=rgba(cc,al*a);ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()};
   if(cls==='도'){fill([at(.62,1),at(-.22,2.5),at(-.22,-3),at(.15,-5.5),at(.45,-4)],.55);line(at(-.22,-3),at(.15,-5.5),1.4,HI,.9);line(at(.15,-5.5),at(.62,1),1.4,HI,.9);   // 등은 곧고 날이 배부른 넓은 칼
     ctx.fillStyle=rgba(col,.9*a);ctx.beginPath();ctx.arc(...at(-.25),3.2,0,7);ctx.fill();line(at(-.28),at(-.45),2.2,col,.9)}

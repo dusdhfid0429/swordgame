@@ -2589,6 +2589,11 @@
   ]
  },
  "SECT_STYLE": {
+  "jangbaek": {
+   "roof": "gray",
+   "wall": ["#eee8da", "#d2cab8"],
+   "tree": "pine"
+  },
   "geumgun": {
    "roof": "gold",
    "tree": "pine"

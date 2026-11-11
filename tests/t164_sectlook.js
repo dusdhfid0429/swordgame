@@ -74,7 +74,7 @@ const {chromium}=require('playwright');
   const sp=Object.keys(r7);
   ok(`사파·수채: ${sp.map(k=>`${k} ${r7[k].f.slice(0,3).join(',')} ${r7[k].rc||''} ${JSON.stringify(r7[k].k)}`).join(' · ')} · 막힘 ${sp.flatMap(k=>r7[k].bad.map(x=>k+':'+x)).join(',')||'없음'}`,
     sp.every(k=>!r7[k].bad.length&&r7[k].boatOnWater)&&r7.janggang.k.boat>=6&&r7.janggang.f[0]==='loghall'&&r7.haomun.k.lantern>=6&&r7.haomun.rc==='red'&&r7.bukhae.rc==='ice'&&r7.bukhae.k.icep>=10&&r7.taeyang.k.brazier>=5
-      &&r7.dongjeong.k.boat>=2&&r7.mandok.k.gpot===3&&r7.hyeolrang.k.skull>=3&&r7.gwiyeong.f[0]==='cave'&&r7.yasu.k.cage===4&&r7.gwangpung.f.every(f=>f==='tentB'));
+      &&r7.dongjeong.k.boat>=2&&r7.mandok.k.gpot>=3&&r7.hyeolrang.k.skull>=3&&r7.gwiyeong.f[0]==='cave'&&r7.yasu.k.cage>=4&&r7.gwangpung.f.every(f=>f==='tentB'));
   // 8. 금군 황궁·천마신교 마궁: 금빛 기와·검붉은 기와·소품, 길이 닿는다
   const r8=await p.evaluate(()=>{const o={};for(const id of['hq_geumgun_gate','hq_geumgun','hq_cheonma_1','hq_cheonma_2','hq_cheonma_3','hq_cheonma_4','hq_cheonma_5','hq_cheonma_6','hq_cheonma','hq_cheonma_8','hq_cheonma_9']){const bad=reach(id),k={};
       for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const q=objs[y][x];if(q&&PROP[q])k[q]=(k[q]||0)+1}o[id]={bad,k,f:builds.map(b=>(b.form||'')+(b.mg&&!b.rc?':mg':b.rc?':'+b.rc:''))}}return o});

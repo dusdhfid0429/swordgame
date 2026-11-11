@@ -105,7 +105,7 @@ function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.
 // 쓸어 치기 모양을 병기마다 (v212): 검은 가늘고 날카로운 반달 그대로, 도는 두껍고 무거운 반달, 봉은 땅 가까이 넓게 도는 둥근 띠,
 // 창은 자루 끝 창날이 그리는 가는 호, 권각은 날 없이 뭉툭하고 넓은 바람 띠, 단도·절편은 짧고 가는 반달이 엇갈려 두 번
 const SWP={도:{thick:1.7},봉:{flat:1,rk:1.2,h:14,lift:3,thick:1.4,spread:1.12},창:{thick:.45},권:{thick:2,soft:1,fast:.24},단:{thick:.65,dbl:1},편:{thick:.55,dbl:1}};
-function sweepFx(f,p,k){const s=SWP[f.wc];if(!s){ribbon(f,p,k);return}
+function sweepFx(f,p,k){const s=SWP[vcls(f.wc)];if(!s){ribbon(f,p,k);return}
   const o={...s,thick:(6+f.w*2.2)*s.thick,spread:f.spread*(s.spread||1)};ribbon(f,p,k,o);
   if(s.dbl){const k2=Math.min(1,k*1.25);if(k2<.98)ribbon(f,p,k2,{...o,rk:.72,dir:f.flip?1:-1})}}
 function drawGlow(f){

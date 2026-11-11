@@ -64,7 +64,7 @@ function gong(dst,t,f,vol,dec){[[1,1],[1.48,.6],[2.02,.45],[2.74,.3],[3.9,.18]].
 let sfxLast={};
 // v224 병기마다 다른 타격음 (개선 계획 5절): 검 쇳소리 울림 · 도 묵직하게 베는 소리 · 창 날카롭게 꿰는 소리 · 봉 나무 울림 · 권각 둔탁한 살 소리 · 암기류 짧은 쇳조각
 const HITCLS={검:1,도:1,창:1,봉:1,권:1,각:1,암:1,단:1,편:1,궁:1};
-function hitCls(D,t,c,v){if(!c||!HITCLS[c])return;switch(c){
+function hitCls(D,t,c,v){c=vcls(c);if(!c||!HITCLS[c])return;switch(c){
   case'검':tone(D,t+.005,3150,'sine',.07*v,.002,.32,3100);tone(D,t+.005,4720,'sine',.03*v,.002,.22,4700);break;
   case'도':noise(D,t,.32*v,.002,.12,'lowpass',1100,500,.9);tone(D,t,105,'triangle',.35*v,.002,.16,55);break;
   case'창':noise(D,t,.22*v,.001,.05,'highpass',3600,2400,1);tone(D,t,240,'sine',.2*v,.001,.06,120);break;
@@ -77,7 +77,7 @@ function sfx(k,o={}){
   const lim={hit:.04,crit:.06,swing:.05,ehit:.05,kill:.06,coin:.05,step:.1}[k]||.02;if(t-(sfxLast[k]||0)<lim)return;sfxLast[k]=t;
   const v=o.v==null?1:o.v;
   switch(k){
-    case'swing':{const c=o.cls||'검',hi=c==='검'?1:c==='창'||c==='봉'?.7:c==='도'?.8:c==='궁'?1.2:c==='암'?1.35:c==='단'||c==='편'?1.25:.5;
+    case'swing':{const c=vcls(o.cls||'검'),hi=c==='검'?1:c==='창'||c==='봉'?.7:c==='도'?.8:c==='궁'?1.2:c==='암'?1.35:c==='단'||c==='편'?1.25:.5;
       noise(D,t,.28*v,.01,.16,'bandpass',2600*hi,700*hi,1.2);if(c==='검')tone(D,t+.02,2800,'sine',.03*v,.002,.25,2700);break}
     case'bow':tone(D,t,180,'triangle',.25*v,.002,.12,90);noise(D,t,.15*v,.002,.25,'bandpass',3000,1200,2);break;
     case'hit':noise(D,t,.4*v,.001,.07,'bandpass',1800,600,.8);tone(D,t,150,'sine',.5*v,.002,.13,60);hitCls(D,t,o.cls,v);break;

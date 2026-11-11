@@ -4,7 +4,7 @@
 // 이번 생의 선택은 P.story에 적고, 죽을 때 강호사(G.history[].story)에 남겨 다음 생의 사건 창에 '전생의 흔적'으로 보인다.
 // 사건은 열리면 정세 창(N)이 뜨고, 고르지 않은 채 다음 사건이 오면 세 번째 선택(기본)으로 흘러간다. 설계: docs/스토리_설계.md
 const STORY=GD.STORY,SEV=STORY.EV,ST=STORY.T;
-const FAC4=['정','사','마','관'],FAC4N={정:'정파',사:'사파',마:'마교',관:'관군'};
+const FAC4=['정','사','마','관'],FAC4N={정:'정파',사:'사파',마:'마교',관:'관군',외:'세외'};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const wld=()=>{if(!G.W){G.W=clone(STORY.INIT);if(typeof popSync==='function')popSync()}if(!G.seal)G.seal={};if(!G.occ)G.occ={};if(!G.wars)G.wars=[];return G.W};
 const PS=()=>{if(!P.story)P.story={pick:{},open:null,done:{},flag:{}};return P.story};
