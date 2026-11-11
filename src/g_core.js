@@ -22,6 +22,7 @@ function newLife(o){
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
+  P.wu=typeof wuBorn==='function'?wuBorn():{};   // 병기 이해도 (g_wund.js): 전생에서 이어진 몫
   P.life=Math.round(58+P.st.end*.7+Math.random()*8);
   P.mats.비도=0;
   // 무관에서 시작한다(g_academy.js): 무기와 첫 비급은 무관 2단계에서 고른다. o.cls가 오면(?noacad) 옛 방식: 시작 무기와 그 계열 화 무공 첫 초식 비급
@@ -263,7 +264,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(from===P)runHooks('hitDone',c);
 }
 function gainMast(id,v){
-  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1));   // v220: 인연 '사부의 가르침'
+  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1)*(typeof wuMast==='function'?wuMast(id):1));   // v220: 인연 '사부의 가르침'
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
@@ -331,7 +332,7 @@ function engage(f){
 const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
 function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}
 function useForm(i,silent){
-  if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
+  if(P.hp<=0)return false;const a=art(),s=A(a.id);let f=a.forms[i];if(!f)return false;if(typeof bcForm==='function')f=bcForm(a.id,i,f);   // v247 변초 (g_chamo.js)
   if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. ${typeof acadOn==='function'&&acadOn()?'교두에게 전수받아야 합니다':typeof acadMainArt==='function'&&acadPast()&&acadMainArt()===a?'무관 병기 교두에게 전수받거나 비급을 읽어야 합니다':'비급을 읽거나 사부의 가르침을 받아야 합니다'}.`,'info');return false}
   if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;const q=formQi(f);if(P.qi<q){if(!silent)log('내공이 부족합니다.','info');return false}
@@ -364,7 +365,8 @@ function ultimate(){
 function ultFire(a,combo,e){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(!e||e.hp<=0)e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
   heroAtk('ult');const X=mkX(a.id,combo);P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
-  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)},e,X));
+  const jd=typeof jdUlt==='function'?jdUlt(a.id):1;   // v247 자득 (g_chamo.js)
+  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)*jd},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈
 const SPEC=GD.SPEC;
@@ -395,6 +397,7 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 
 // ================= 내공 수련, 기본기, 길들이기 =================
 function trainQi(){
+  {const cw=capWhy('ne');if(cw){log(`${cw}. 벽을 깨야 내공이 더 쌓인다.`,'info');return}}
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
   const done=()=>{P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
@@ -406,6 +409,7 @@ function trainQi(){
 }
 const statCost=k=>Math.round((12+Math.max(0,P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
 function trainStat(k){
+  const cw=capWhy(k);if(cw){log(`${cw}. 벽을 깨야 더 오른다.`,'info');return}   // v248 성장 상한 (g_hwadu.js)
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
 }

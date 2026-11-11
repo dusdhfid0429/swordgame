@@ -22,7 +22,7 @@ let qtrackKey='';
 $('qtrack').addEventListener('click',e=>{if(!playing||!P)return;if(e.target.closest('[data-iny]')){openPanel('npc',{id:'iny',n:'인연'});return}if(e.target.closest('[data-md]')){mdOpen();return}openPanel(e.target.closest('[data-story]')?'story':'quest')});   // v220: 인연·세월 넘기기 줄 (g_madi.js)
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const pr=questProg(q),have=pr.have,done=pr.done,g=qGoal(q),what=q.kind==='kill'?g.plain+' 처치':g.plain+' '+g.v;return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'')+(typeof sabuTrackHtml==='function'?sabuTrackHtml():'')+(typeof imkTrackHtml==='function'?imkTrackHtml():''),md=typeof mdTrackHtml==='function'?mdTrackHtml():'';   // 무관 과제 (g_academy.js)
+  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'')+(typeof sabuTrackHtml==='function'?sabuTrackHtml():'')+(typeof imkTrackHtml==='function'?imkTrackHtml():'')+(typeof hwTrackHtml==='function'?hwTrackHtml():''),md=typeof mdTrackHtml==='function'?mdTrackHtml():'';   // 무관 과제 (g_academy.js)
   // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
   const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
@@ -137,6 +137,7 @@ function pChar(){
     <p>공격력 ${atk()} · 현묘도 ${hmv()} · 받는 피해 -${Math.round(guard()*100)}% · 이동 ${moveSpd().toFixed(2)}</p>
     <p>문파 ${P.sect==='own'?esc(P.sectName)+' (문주)':P.sect&&SECTS[P.sect]?`<b class="gold">${esc(sectName())} ${rankName()}</b> · ${ALLY[SECTS[P.sect].al].n} · 누적 공적 ${(P.mtot||{})[P.sect]||0}`:'없음'}${typeof maengOf==='function'&&maengOf()?` · ${MAENG[maengOf()].short} <b class="gold">${maengRankName(maengOf())}</b> (맹 공적 ${(P.mpt||{})[maengOf()]||0})`:''}</p></div>
     ${realmCard(c)}
+    ${typeof wuCard==='function'?wuCard():''}
     <div class="card"><h4>기본기 <small class="dim">활력을 들여 언제든 다질 수 있다</small></h4><div class="list">${stats}</div><div class="row2"><span class="note">기본기와 내공은 수련 창에서 다진다. 수련 창은 화면 아래에 열려 캐릭터가 보인다.</span>${B('trainwin','수련하기'+(TOUCH?'':' (U)'),{pri:1})}</div></div>`],['업보·평판',`
     ${typeof maraHtml==='function'?maraHtml():''}${typeof sinHtml==='function'?sinHtml():''}${typeof diffHtml==='function'?diffHtml():''}
     <div class="card"><h4>업보와 명성</h4><p>선업 <span class="good">${P.good}</span> · 악업 <span class="bad">${P.evil}</span> · 명성 ${P.fame} · 처치 ${P.kills} · 우두머리 ${P.bosses}</p>
@@ -160,10 +161,10 @@ function forgetArt(id){if(forgetWhy(id))return false;const a=ARTS[id];delete P.a
   log(`[${a.n}]을(를) 잊었습니다. 익힌 무공 ${capArts().length}/${artCap()}`,'sys');return true}
 function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
-    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
+    const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n}${typeof bcTag==='function'?bcTag(id,i):''} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>
-      <p>${a.d}${typeof artMeanHtml==='function'?artMeanHtml(a):''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${typeof jdOn==='function'&&jdOn(id)?'자득 · ':''}${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>${typeof wuChip==='function'?wuChip(id):''}
+      <p>${a.d}${typeof artMeanHtml==='function'?artMeanHtml(a):''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>${typeof bcHtml==='function'?bcHtml(id):''}
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}
       ${forgetAsk===id?`<div class="card" id="forgetask"><p><b class="bad">[${a.n}]을(를) 잊을까요?</b> ${forgetNote(id)}</p><div class="center">${B('forgetok:'+id,'잊는다',{pri:1})} ${B('forgetno','그만둔다')}</div></div>`:''}</div>`}).join('');
@@ -196,7 +197,7 @@ function pBag(){
 // 행낭 한 줄. 물건 하나가 잘못돼도 행낭 전체가 안 열리는 일이 없게 pBag이 줄마다 감싼다
 function bagRow(it,sell){const read=it.slot==='book'||it.slot==='sbook'||it.slot==='tbook'||it.slot==='pbook'||it.slot==='bbook'||it.slot==='gbook'||it.slot==='gpage'||it.slot==='leaf'||it.slot==='lib'||it.slot==='bp'||it.slot==='wbook';
     return `<div class="it"><div><b style="color:${itemCol(it)}">${esc(itemLabel(it))}</b> <small class="dim">${SLOTN[it.slot]||''}</small><span>${itemDesc(it)}</span>${read&&readBlock(it)?`<span class="bad">${esc(readBlock(it))}</span>`:''}</div>
-      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':it.slot==='bp'||it.slot==='wbook'?'살펴보기':'읽기'):'장착')}${it.slot==='book'&&wbBooks(it.art)?B('wbind:'+it.art,'완본 엮기',{pri:1}):''}${!read&&MELEE[it.cls]&&beltOf()?B('beq:'+it.id,'요대에 차기'):''}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div></div>`}
+      <div class="ib">${B((read?'read:':'eq:')+it.id,read?(it.slot==='leaf'?'엮기':it.slot==='lib'?'펼치기':it.slot==='bp'||it.slot==='wbook'?'살펴보기':'읽기'):'장착')}${it.slot==='book'&&wbBooks(it.art)?B('wbind:'+it.art,'완본 엮기',{pri:1}):''}${typeof chBtn==='function'?chBtn(it):''}${!read&&MELEE[it.cls]&&beltOf()?B('beq:'+it.id,'요대에 차기'):''}${sell?B('sell:'+it.id,`팔기 ${it.price}`):''}${B('drop:'+it.id,'버리기')}</div>${typeof chAskHtml==='function'?chAskHtml(it):''}</div>`}
 function pAlly(){
   const pets=allies.filter(a=>a.kind==='pet').map(a=>`<div class="it"><div><b>${esc(a.name)}</b> <small class="dim">${a.k} · ${a.age}/${a.life}살</small><span>생명 ${Math.ceil(a.hp)}/${Math.round(a.maxHp)} · 공격 ${a.atk} · ${a.mode==='wait'?'기다리는 중 (빠르게 회복)':'따라오는 중'}${P.ride===a?' · 타는 중':''}</span></div>
     <div class="ib">${B('pmode:'+allies.indexOf(a),a.mode==='wait'?'따라와':'기다려')}${B('feed:'+allies.indexOf(a),'먹이 · 고기',{d:!(P.mats.고기>0)})}${B('rename:'+allies.indexOf(a),'이름')}${a.d.ride?B('ride','타기/내리기'):''}${B('free:'+allies.indexOf(a),'풀어주기')}</div></div>`).join('')||'<p class="note">길들인 짐승이 없습니다. 짐승을 오른쪽 클릭하거나 선택하고 F를 누르면 활력을 써서 길들인다. 성공률은 내공(갑자)에 달려 있다. 토끼와 양은 길들일 수 없다.</p>';
@@ -210,10 +211,10 @@ function pAlly(){
 function pLife(){
   const jobs=Object.entries(JOBS).map(([k,j])=>{const s=P.jobs[k],rs=RECIPES.filter(r=>r.job===k);
     return `<div class="card"><div class="row2"><h4>${j.n}</h4><span class="tag">${s.on?`수련도 ${Math.floor(s.lv)}`:'기술서 필요'}</span></div>
-      ${s.on?`<div class="list">${rs.map(r=>`<div class="it"><div>${r.n}<span>${Object.entries(r.need).map(([m,n])=>`${m} ${P.mats[m]||0}/${n}`).join(' · ')}${r.min?` · 수련도 ${r.min}`:''}${r.at?' · 대장간·집':''}</span></div><div class="ib">${B('craft:'+RECIPES.indexOf(r),'만들기',{d:!hasMats(r.need)||(r.min&&s.lv<r.min)})}</div></div>`).join('')}</div>`
+      ${s.on?`<div class="list">${rs.map(r=>`<div class="it"><div>${r.n}<span>${Object.entries(r.need).map(([m,n])=>`${m} ${P.mats[m]||0}/${n}`).join(' · ')}${r.min?` · 수련도 ${r.min}`:''}${r.at?' · 대장간·집':''} · 활력 ${craftVit(r)}</span></div><div class="ib">${B('craft:'+RECIPES.indexOf(r),'만들기',{d:!hasMats(r.need)||(r.min&&s.lv<r.min)||P.vit<craftVit(r)})}</div></div>`).join('')}</div>`
         :`<p>${k==='대장'?'대장장이':k==='직물'?'포목점':k==='요리'?'객잔 주인':'약방 의원'}에게서 기술서를 살 수 있다. 직업 선택에 제약이 없다.</p>`}</div>`}).join('');
   const crops=Object.entries(CROPS).map(([k,c])=>`${k}: ${c.d}`).join(' · ');
-  return `<p class="note">수련도가 높을수록 같은 물건도 품질(하품·중품·상품·명품)과 공격력·판매가가 오른다. 만들 때마다 수련도와 활력이 조금 오른다.</p>${jobs}
+  return `<p class="note">수련도가 높을수록 같은 물건도 품질(하품·중품·상품·명품)과 공격력·판매가가 오른다. 만들 때마다 활력을 쓰고 수련도가 오른다.</p>${jobs}
     <div class="card"><h4>농사 <small class="dim">${season()} · ${G.weather}</small></h4><p>서쪽 농지의 밭에서 F(또는 클릭)로 씨를 심고 거둔다. 날씨가 자람에 영향을 준다. ${crops}. 겨울 눈에는 보리 말고는 얼어 죽는다.</p>
       <p>채집: 약초·광석·목재는 들과 숲, 동굴 근처에서, 황하 잉어는 나루 남쪽 물가에서. 잉어는 개봉 특산 요리 재료다.</p></div>`;
 }

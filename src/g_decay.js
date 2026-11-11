@@ -15,18 +15,25 @@ function decSevNow(){const R=REGION();if(!R||R.dead||!P)return 0;const s=ruinSec
 const decName=(bi,b)=>{const h=(REGION().halls||[]).find(h=>h.bi===bi);return h&&h.n||(b.kind==='pavilion'?'정자':'전각')};
 // 건물 그림과 같은 처마·용마루 높이
 function decGeo(b){const pav=b.kind==='pavilion';if(b.fl>1&&typeof towerDims==='function'){const D=towerDims(b);return{H0:D.H0,RH:D.RH,S:D.s[D.n-1]}}const H0=(pav?34:38)+(pav?0:4);return{H0,RH:H0+10+8*Math.min(b.w,b.h),S:0}}
-function decSync(live){const sev=decSevNow(),R=REGION(),s=ruinSect(R),sd=(s&&s.i||1)*31;DEC_SEV=sev;let top=0;
-  builds.forEach((b,bi)=>{const lv=sev>0?decCl(sev*(1+DEC.jit)-hash(bi*13+7,sd)*DEC.jit,0,1):0,st=decStage(lv),was=b._dk||0;b._lv=lv;top=Math.max(top,st);
+// 5단계 잔해에서 빼는 전각: 장문인 전각(halls[0])·금고·장경각 (안에 들어가야 하는 곳)
+function decKeep(R,s){const keep=new Set(),H=R.halls||[];if(!s||!H.length)return keep;keep.add(H[0].bi);
+  const ids=[typeof vaultHall==='function'&&vaultHall(s),typeof libHall==='function'&&libHall(s)].filter(Boolean);
+  for(const h of H){const fl=(REGIONS[h.id]||{}).floorIds||[];if(ids.includes(h.id)||fl.some(f=>ids.includes(f)))keep.add(h.bi)}return keep}
+const decRaw=(sev,bi,sd)=>sev*(1+DEC.jit)-hash(bi*13+7,sd)*DEC.jit;
+function decSync(live){const R=REGION();if(R&&R.dead){DEC_SEV=0;for(const b of builds){b._rb=decRubbleDead(b);b._dk=0;b._tilt=0;b._tt=0;b._fire=0;b._ft=0;b._tv=0}return 0}
+  const sev=decSevNow(),s=ruinSect(R),sd=(s&&s.i||1)*31,keep=decKeep(R,s);DEC_SEV=sev;let top=0;
+  builds.forEach((b,bi)=>{const raw=sev>0?decRaw(sev,bi,sd):0,lv=decCl(raw,0,1),rb=raw>=DEC.rubble&&!keep.has(bi),st=rb?5:decStage(lv),was=b._dk||0;b._lv=lv;top=Math.max(top,st);b._rb=rb?1:0;
     if(b._lean==null)b._lean=hash(bi*5+1,sd+9)<.5?-1:1;
     const[t0,t1]=DEC.tilt,k3=decCl((lv-DEC.stage[2])/(1-DEC.stage[2]),0,1),k2=decCl((lv-DEC.stage[1])/(1-DEC.stage[1]),0,1);
-    b._tt=st>=3?b._lean*(t0+(t1-t0)*k3):0;b._ft=st>=2?.55+.45*k2:0;
+    b._tt=st>=3&&!rb?b._lean*(t0+(t1-t0)*k3):0;b._ft=rb?.4:st>=2?.55+.45*k2:0;
     if(!live||b._tilt==null){b._tilt=live?0:b._tt;b._fire=live?0:b._ft;b._tv=0}
     if(st!==was){b._dk=st;if(live&&st>was)decEvent(b,bi,st)}});
   return top}
 function decEvent(b,bi,st){decBurst(b,st);const nm=decName(bi,b);
   if(st===3){shake=Math.max(shake,DEC.shake.tilt);b._tv+=b._lean*.25}
   if(st===4){shake=Math.max(shake,DEC.shake.fall);b._tv+=b._lean*.45}
-  if(st>=2)addText(b.x+b.w/2,b.y+b.h,DEC.names[st],st>=4?'#ff7a5a':st===3?'#e0b070':'#ffa040');
+  if(st===5){shake=Math.max(shake,DEC.shake.ruin);b._tilt=0;b._tv=0}
+  if(st>=2)addText(b.x+b.w/2,b.y+b.h,DEC.names[st],st>=5?'#c8b8a0':st>=4?'#ff7a5a':st===3?'#e0b070':'#ffa040');
   if(st>=2&&time-DEC_LOG>DEC.logGap){DEC_LOG=time;log(DEC.live[st].replace('{b}',nm),st>=4?'dmg':'info')}}
 // 불티·먼지·기왓장 조각 (세계 좌표 x,y + 높이 z 픽셀)
 function decBurst(b,kind){const g=decGeo(b),R=Math.random;
@@ -37,9 +44,11 @@ function decBurst(b,kind){const g=decGeo(b),R=Math.random;
   if(kind>=3){const n=kind===3?6:kind===4?16:22;for(let i=0;i<n;i++)add('dust',base(),{vx:(R()-.5)*.9,vy:(R()-.5)*.5,vz:6+R()*12,l:1.4+R()*1.2,r:kind===3?.8:1.4});
     for(let i=0;i<n;i++)add('chip',roof(),{vx:(R()-.5)*2.2,vy:R()*1.6,vz:20+R()*40,l:1.8})}}
 // 멸문이 맵 안에서 일어났을 때: 연출이 끝나면 그 자리에서 폐허로
-function decRuin(id){for(const b of builds){decBurst(b,5);b._dk=0;b._tilt=0;b._tv=0;b._fire=0;b._ft=0;b._tt=0}shake=Math.max(shake,DEC.shake.ruin);ruinApply(id,true);DEC_SEV=0}
+function decRuin(id){for(const b of builds)decBurst(b,5);shake=Math.max(shake,DEC.shake.ruin);ruinApply(id,true);decSync(false)}
 hook('sectFall',sid=>{if(!P||!REG)return;const s=SECTS[sid];if(!s||ruinSect(REGIONS[REG])!==s||REGION().dead)return;
   DEC_FALL={id:REG,t:0,s0:DEC_SEV};log(DEC.fall.replace('{s}',s.n),'dmg')});
+// 멸문 폐허에서도 같은 전각이 잔해 더미 (인원 바닥에서 잔해가 된 전각과 같은 것)
+function decRubbleDead(b){const R=REGION(),s=ruinSect(R);if(!s||!R.dead||R.hall)return 0;const bi=builds.indexOf(b);return decRaw(1,bi,(s.i||1)*31)>=DEC.rubble&&!decKeep(R,s).has(bi)?1:0}
 hook('regionLoaded',id=>{if(DEC_FALL&&DEC_FALL.id!==id)DEC_FALL=null;DEC_P=[];DEC_T=.25;if(!P)return;const R=REGIONS[id];
   const top=decSync(false),s=ruinSect(R);if(top>=1&&s&&!R.hall&&!R.dead)log(DEC.enter[top].replace('{s}',s.n),top>=3?'dmg':'info')});
 hook('tick',dt=>{if(!P||!REG||!builds)return;
@@ -83,6 +92,8 @@ function decFlame(x,y,f,sd){ctx.globalCompositeOperation='source-over';const Z=D
 function decSmoke(x,y,a,sd){for(let i=0;i<DEC.smoke;i++){const q=(time*.2+i/DEC.smoke+hash(sd,i)*.1)%1,px=x+q*q*60+Math.sin(time*.8+i+sd)*8*q,py=y-q*170,r=7+q*36;
   ctx.fillStyle=`rgba(34,30,28,${a*(1-q)*.62})`;ctx.beginPath();ctx.arc(px,py,r,0,7);ctx.fill()}}
 function decDrawB(b,bi){GHB=gH(b.x+.5,b.y+.5);try{const g=decGeo(b),by=toScreen(b.x+b.w,b.y+b.h).y,tl=b._tilt||0,sh=p=>[p[0]+tl*(by-p[1]),p[1]],f=b._fire||0;
+  if(b._rb){const c=scr(b.x+b.w/2,b.y+b.h/2,20);decSmoke(c[0],c[1],REGION().dead?DEC.rubbleSmoke:.45,bi*7+3);   // 잔해: 타다 남은 연기, 무너지는 중엔 잔불
+    if(!REGION().dead&&f>.02)for(let i=0;i<3;i++){const q=scr(b.x+b.w*(.25+.25*i),b.y+b.h*(.35+.3*hash(bi,i+60)),8+10*hash(bi,i+61));decFlame(q[0],q[1],.45*f,bi*13+i)}return}
   const top=sh(scr(b.x+b.w/2,b.y+b.h/2,g.RH));decSmoke(top[0],top[1]-4,f>.02?.5+.5*f:.42,bi*7+3);
   if(b._dk>=4){const FA=scr(b.x,b.y+b.h),FB=scr(b.x+b.w,b.y+b.h);for(let i=0;i<2;i++){const q=sh(up(lerp2(FA,FB,.25+.5*i),24));decFlame(q[0],q[1],.55*f,bi*11+i)}}   // 4단계: 창으로도 불길
   if(f>.02){const n=Math.round(DEC.flames[0]+(DEC.flames[1]-DEC.flames[0])*Math.min(1,b.w*b.h/12)),m=Math.max(1,Math.ceil(n*f));
@@ -92,7 +103,7 @@ function decDrawP(){for(const p of DEC_P){const s=toScreen(p.x,p.y),y=s.y-p.z,k=
   else if(p.k==='chip'){ctx.save();ctx.translate(s.x,y);ctx.rotate(p.a);ctx.globalAlpha=Math.min(1,k*3);ctx.fillStyle='#2a2420';ctx.fillRect(-2.5,-1.5,5,3);ctx.restore()}
   else{ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,${150+Math.round(80*k)},60,${k})`;ctx.fillRect(s.x-1,y-1,2.2,2.2);ctx.globalCompositeOperation='source-over'}}}
 hook('drawList',list=>{if(!P||!builds)return;
-  if(!REGION().dead)builds.forEach((b,bi)=>{if(!(b._dk>=1)&&!(b._fire>.02))return;const l=scr(b.x,b.y+b.h)[0]-60,r=scr(b.x+b.w,b.y)[0]+60,bt=scr(b.x+b.w,b.y+b.h)[1];if(r<0||l>W||bt<-40||bt-700>H)return;
+  const dead=REGION().dead;builds.forEach((b,bi)=>{if(dead?!b._rb:!(b._dk>=1)&&!(b._fire>.02))return;const l=scr(b.x,b.y+b.h)[0]-60,r=scr(b.x+b.w,b.y)[0]+60,bt=scr(b.x+b.w,b.y+b.h)[1];if(r<0||l>W||bt<-40||bt-700>H)return;
     list.push({L:LY.ENT,d:b.x+b.w-1+b.y+b.h-1+1.01,f:()=>decDrawB(b,bi)})});
   if(DEC_P.length)list.push({L:LY.FX,d:9998,f:decDrawP})});
 // 맵 전체: 매캐한 연무와 날리는 재·불티 (전각 안도). 밤에는 불타는 전각이 둘레를 밝힌다
@@ -100,3 +111,26 @@ hook('afterDark',()=>{const sv=DEC_SEV;if(!P||!(sv>0)||REGION().dead)return;cons
   const n=Math.round(DEC.ash*sv);for(let i=0;i<n;i++){const sp=18+hash(i,5)*34,x=((hash(i,3)*W+Math.sin(time*.7+i)*24+time*10)%W+W)%W,y=H-((time*sp+hash(i,7)*(H+30))%(H+30));
     if(i%3){const fl=.5+.5*Math.sin(time*6+i);ctx.fillStyle=`rgba(255,${120+Math.round(70*fl)},40,${.35+.45*fl})`;ctx.fillRect(x,y,1.8,1.8)}else{ctx.fillStyle='rgba(70,64,60,.55)';ctx.fillRect(x,y,2.6,1.6)}}});
 hook('darkLights',()=>{if(!builds||REGION().dead)return;for(const b of builds)if(b._fire>.1){GHB=gH(b.x+.5,b.y+.5);try{const g=decGeo(b),q=scr(b.x+b.w/2,b.y+b.h/2,(g.H0+g.RH)/2);lightAt(q[0],q[1],90+70*b._fire*Math.min(1.6,b.w/3),.75*b._fire)}finally{GHB=null}}});
+
+// 5단계 잔해 더미 (사용자 2026-11-11 "완전 폐허가 된 건물도 추가해줘 무너져서 잔해만 있는"): 벽도 지붕도 없이 그을린 기단 위에 돌·기와 조각·탄 들보가 쌓이고 부러진 기둥 밑동만 남는다.
+// drawBuildVec 이 b._rb 면 이것만 그린다 (건물 그림 캐시에 굽는다)
+function drawRubbleVec(b,alpha){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=rng((x*73+y*151)|0),RC=b.rc&&GD.ROOF_PAL[b.rc]||(b.mg?['#3a1414','#321010','#4a1a18','#5e2420']:GD.ROOF_PAL.gray);
+  ctx.save();ctx.globalAlpha=alpha;
+  quad([scr(x-.35,y-.35),scr(X1+.35,y-.35),scr(X1+.35,Y1+.35),scr(x-.35,Y1+.35)],'rgba(18,13,10,.5)',null);   // 그을린 땅
+  const B=4;quad([scr(x,y,B),scr(X1,y,B),scr(X1,Y1,B),scr(x,Y1,B)],'#57514a');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,B),scr(x,Y1,B)],'#77716a');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,B),scr(X1,Y1,B)],'#625c55');   // 기단
+  const cx=x+w/2,cy=y+h/2,ph=22+8*Math.min(w,h),stumps=[[x+.25,Y1-.25],[X1-.25,Y1-.25],[X1-.25,y+.25],[x+.25,y+.25],[cx,Y1-.25]];
+  const items=[];
+  for(const[i,j]of stumps)if(r()<.7)items.push({d:i+j,f:()=>{const q=scr(i,j,B),hh=8+r()*18;quad([[q[0]-3.5,q[1]],[q[0]+3.5,q[1]],[q[0]+3.5,q[1]-hh+2],[q[0]+1,q[1]-hh],[q[0]-2,q[1]-hh+3],[q[0]-3.5,q[1]-hh+1]],'#5a2418','#1a1210');ctx.fillStyle='#1a1210';ctx.fillRect(q[0]-3.5,q[1]-hh,7,3)}});   // 부러진 기둥 밑동
+  const n=26+Math.round(w*h*6);
+  for(let k=0;k<n;k++){const a=r()*6.28,dd=Math.sqrt(r()),gx=cx+Math.cos(a)*dd*w*.5,gy=cy+Math.sin(a)*dd*h*.5,z=B+ph*(1-dd)*(.55+.45*r()),t=r(),sz=4+r()*6;
+    const col=t<.45?['#6a6258','#5d564d','#7a7268'][k%3]:t<.75?RC[k%4]:t<.9?'#2a1d14':'#3a3632';
+    items.push({d:gx+gy+z*.002,f:()=>{const q=scr(gx,gy,z),k2=sz*(.6+.4*Math.cos(a*3));quad([[q[0]-sz,q[1]],[q[0]-sz*.3,q[1]-k2*.7],[q[0]+sz*.8,q[1]-k2*.4],[q[0]+sz,q[1]+k2*.3],[q[0],q[1]+k2*.5]],col,'#1a1512')}})}
+  for(let k=0;k<3+Math.round(w*h/4);k++){const a=r()*6.28,gx=cx+Math.cos(a)*w*.15,gy=cy+Math.sin(a)*h*.15,l=.8+r()*Math.min(w,h)*.45,b2=r()*6.28,z0=B+ph*.5*r();   // 탄 들보: 더미에서 비스듬히 삐져나옴
+    items.push({d:gx+gy+.3,f:()=>{const p0=scr(gx,gy,z0),p1=scr(gx+Math.cos(b2)*l,gy+Math.sin(b2)*l,z0+6+r()*20);ctx.lineCap='round';ctx.strokeStyle='#1d140e';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(...p0);ctx.lineTo(...p1);ctx.stroke();ctx.strokeStyle='#4a3020';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p0[0],p0[1]-1.5);ctx.lineTo(p1[0],p1[1]-1.5);ctx.stroke();ctx.lineCap='butt'}})}
+  for(let k=0;k<2+Math.round(w*h/6);k++){const a=r()*6.28,dd=.3+r()*.5,gx=cx+Math.cos(a)*dd*w*.45,gy=cy+Math.sin(a)*dd*h*.45,z=B+ph*(1-dd)*.6,s2=.5+r()*.5,rot=r()*6.28,col=RC[k%4];   // 내려앉은 지붕 조각: 기와 결이 남은 큰 판
+    items.push({d:gx+gy+.2,f:()=>{const P4=[0,1,2,3].map(i=>{const an=rot+i*Math.PI/2+(i%2?.35:-.2);return scr(gx+Math.cos(an)*s2,gy+Math.sin(an)*s2*.8,z+(i<2?10:0)+r()*4)});quad(P4,col,'#15181c');
+      ctx.strokeStyle='rgba(15,18,24,.5)';ctx.lineWidth=1;for(let i=1;i<4;i++){const a1=lerp2(P4[0],P4[1],i/4),b1=lerp2(P4[3],P4[2],i/4);ctx.beginPath();ctx.moveTo(...a1);ctx.lineTo(...b1);ctx.stroke()}
+      ctx.fillStyle='rgba(14,10,8,.45)';const m=lerp2(P4[0],P4[2],.5);ctx.beginPath();ctx.ellipse(m[0],m[1],8,4,0,0,7);ctx.fill()}})}
+  items.sort((a,b2)=>a.d-b2.d).forEach(o=>o.f());
+  ctx.fillStyle='rgba(150,140,128,.45)';for(let k=0;k<14;k++){const q=scr(x+r()*w,y+r()*h,B+ph*.4*r());ctx.fillRect(q[0],q[1],2,1.2)}   // 재
+  ctx.restore()}

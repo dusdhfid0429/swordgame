@@ -10,10 +10,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const shot=async(name,frac)=>{await p.evaluate(f=>{paused=false;popInit();G.pop.hwasan=Math.max(1,popBase(SECTS.hwasan)*f);tod=.3;G.weather='맑음';regionJump('hq_hwasan',10,10);
     const R=REGIONS.hq_hwasan,h=R.halls[0];P.x=h.x+1.5;P.y=h.y+3.2;cam.x=iso(P.x,P.y).x;cam.y=iso(P.x,P.y).y;mobs=[];P.inv=99;P.hp=P.maxHp},frac);
     await p.waitForTimeout(1200);await p.evaluate(()=>{mobs=[]});await p.screenshot({path:require('path').resolve(__dirname,'shots/t163_'+name+'.png')})};
-  await shot('1_온전',.9);await shot('2_그을음',.42);await shot('3_불길',.25);await shot('4_기울어짐',.12);await shot('5_무너짐',.02);
+  await shot('1_온전',.9);await shot('2_그을음',.42);await shot('3_불길',.25);await shot('4_기울어짐',.12);await shot('5_무너짐',.02);await shot('6_잔해',.003);
   const r=await p.evaluate(()=>{paused=true;popInit();const o={},base=popBase(SECTS.hwasan),st=()=>builds.map(b=>b._dk||0);
     const at=f=>{G.pop.hwasan=Math.max(1,base*f);regionJump('hq_hwasan',10,10);return st()};
-    o.full=at(.9);o.half=at(.4);o.low=at(.15);o.vlow=at(.01);
+    o.full=at(.9);o.rbFloor=(at(.0034),builds.map((b,i)=>b._rb?i:-1).filter(i=>i>=0));o.keep0=!builds[REGIONS.hq_hwasan.halls[0].bi]._rb;o.half=at(.4);o.low=at(.15);o.vlow=at(.01);
     const sum=a=>a.reduce((x,y)=>x+y,0);o.mono=sum(o.full)===0&&sum(o.half)<sum(o.low)&&sum(o.low)<sum(o.vlow);
     // 맵에 있는 동안 인원이 준다
     at(.45);const before=sum(st());G.pop.hwasan=base*.08;for(let i=0;i<20;i++)runHooks('tick',.1);o.liveUp=sum(st())>before;o.anyFire=builds.some(b=>b._fire>.3);o.anyTilt=builds.some(b=>Math.abs(b._tilt)>.03);o.dead0=!!REGION().dead;
@@ -21,12 +21,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     // 멸문: 장문인 없음 + 마지막 무인을 벤다
     G.mdead.hwasan={y:0,life:P.lifeNo};G.pop.hwasan=.5;mobs=[];const e=mkFac('정',0,P.x+3,P.y,'hwasan');e.sect='hwasan';runHooks('kill',e);o.pop=G.pop.hwasan;o.fall=!!DEC_FALL;
     for(let i=0;i<30;i++)runHooks('tick',.1);o.midAll=builds.every(b=>(b._dk||0)>=3);o.midDead=!!REGION().dead;
-    for(let i=0;i<60;i++)runHooks('tick',.1);o.ruined=!!REGION().dead&&REGION().npcs.length===0&&!!REGION().gore;
+    for(let i=0;i<60;i++)runHooks('tick',.1);o.ruined=!!REGION().dead&&REGION().npcs.length===0&&!!REGION().gore;o.rbDead=builds.map((b,i)=>b._rb?i:-1).filter(i=>i>=0);regionJump('gaebong',20,20);regionJump('hq_hwasan',10,10);o.rbDead2=builds.map((b,i)=>b._rb?i:-1).filter(i=>i>=0);
     // 살아나면 다시 온전
-    delete G.mdead.hwasan;G.pop.hwasan=base;o.back=sum(at(1))===0&&!REGIONS.hq_hwasan.dead;return o});
+    delete G.mdead.hwasan;G.pop.hwasan=base;o.back=sum(at(1))===0&&!REGIONS.hq_hwasan.dead&&!builds.some(b=>b._rb);return o});
   ok(`인원별 단계 90% ${r.full} / 40% ${r.half} / 15% ${r.low} / 1% ${r.vlow}`,r.mono);
   ok(`맵에 있는 동안 인원이 줄면 그 자리에서 무너짐 (불 ${r.anyFire}, 기울기 ${r.tiltNow.slice(0,4)})`,r.liveUp&&r.anyFire&&r.anyTilt&&!r.dead0);
   ok(`맵에서 멸문 → 무너지는 연출(${r.fall}, 중간 전부 3단계↑ ${r.midAll}, 아직 폐허 아님 ${!r.midDead}) → 폐허 ${r.ruined}`,r.pop===0&&r.fall&&r.midAll&&!r.midDead&&r.ruined);
+  ok(`잔해 더미: 인원 바닥 ${r.rbFloor} = 폐허 ${r.rbDead} = 다시 들어와도 ${r.rbDead2}, 장문인 전각은 남김 ${r.keep0}`,r.rbFloor.length>0&&r.rbFloor.join()===r.rbDead.join()&&r.rbDead.join()===r.rbDead2.join()&&r.keep0);
   ok(`문파가 살아나면 온전한 본산 ${r.back}`,r.back);
   ok('오류 없음 '+errs.join(' | '),!errs.length);
   await b.close();

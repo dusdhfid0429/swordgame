@@ -55,6 +55,7 @@ function gsHtml(){if(!P||(typeof openOf==='function'&&!openOf('mk')))return'';  
   return `<div class="card"><h4>창안 재료 <small class="dim">같은 병기·같은 등급 다섯을 모으는 길</small></h4>
     <p class="note"><b>견식</b> 적이 초식을 펼치는 것을 보거나 맞거나 쓰러뜨리면 그 무공의 견식이 쌓인다. 다 차면 정리해 사본 비급으로 적는다. 그 적이 아는 초식까지만 적을 수 있다. 다른 계열의 사본도 읽을 수 있지만 정파는 악업이 쌓인다.</p>
     <div class="list">${rows||'<p class="note">아직 견식한 무공이 없다.</p>'}</div>
+    ${typeof chMatLine==='function'?chMatLine():''}
     <details><summary>낱장·완본·은거기인</summary><p class="note"><b>비급 낱장</b> 멸문 폐허·동굴 상자·기연동굴·표국 행렬에서 나온다. 같은 무공 낱장을 하승 ${LEAF.need[0]}·중승 ${LEAF.need[1]}·상승 ${LEAF.need[2]}·절정 ${LEAF.need[3]}장 모으면 행낭에서 엮는다.</p>
     <p class="note"><b>완본</b> 익히지 않은 무공의 사본·비급을 마지막 초식까지 모두 모으면 행낭에서 완본으로 엮는다. 오성 칸을 쓰지 않고, 다른 병기 같은 등급 무공을 창안할 때 재료 한 자리를 대신한다(다섯 중 ${MK_SUB}자리까지). 초식을 모두 익힌 다른 병기 무공도 숙련과 상관없이 그 자리를 채운다.</p>
     <p class="note"><b>은거기인</b> 산 정상에 숨어 사는 무소속 고수들이 중승 무공을 전한다. 객잔에서 소문을 들을 수 있다.${met.length?` 만난 기인: ${met.join(' · ')}`:''}</p></details></div>`}

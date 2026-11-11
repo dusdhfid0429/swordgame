@@ -48,7 +48,7 @@ function gainEnl(v,why){if(typeof enlMul==='function')v*=enlMul();v=Math.round(v
 const FAMOUS_PEAK=/^(태산|화산|아미산|숭산|황산|무당산|곤륜산|천산|형산|청성산|종남산)$/;
 const PEAK_MSG=GD.PEAK_MSG;
 function peakTick(dt){const R=REGIONS[REG];if(!P.medit||!R||!R.lm||R.lm.t!=='m'||P.y>9.5){P.peakT=0;return}
-  P.peakT=(P.peakT||0)+dt;if(P.peakT<8)return;P.peakT=0;
+  P.peakT=(P.peakT||0)+dt;if(P.peakT<8)return;P.peakT=0;runHooks('peakSat',R);
   P.peaks=P.peaks||{};const cap=FAMOUS_PEAK.test(R.name)?2:1,got=P.peaks[REG]||0;
   if(got>=cap){if(!P.peakFull||P.peakFull!==REG){P.peakFull=REG;log(`${R.name} 정상에서 얻을 깨달음은 이미 다 얻었습니다.`,'info')}return}
   const dawn=tod>.18&&tod<.3,v=Math.round(Math.min(cap-got,dawn?.2:.1)*100)/100;P.peaks[REG]=Math.round((got+v)*100)/100;
