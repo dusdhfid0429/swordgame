@@ -16,7 +16,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Playwright 설치
-        run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+        # apt 미러 이름 풀이가 잠깐 끊기면 설치가 죽는다 (2026-11-11). 세 번까지 다시 해 본다
+        run: |
+          npm i --no-save playwright@1.56.1
+          for i in 1 2 3; do
+            npx playwright install --with-deps chromium && exit 0
+            echo "설치 실패 ($i/3), 30초 뒤 다시"; sleep 30; sudo apt-get update || true
+          done
+          exit 1
       - name: 빌드
         run: python3 build.py
       - name: dist가 소스와 같은지
