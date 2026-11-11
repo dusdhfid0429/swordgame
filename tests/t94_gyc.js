@@ -9,25 +9,27 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(800);
   // 1. 배치: 다섯 곳, 서로 다른 성, 기연 무공 넷. 맵에 저절로 생기는 기연 터는 없다
   const r1=await p.evaluate(()=>{const L=G.gyc.list;G.gT=0;for(let i=0;i<20;i++)update(.1);
-    return{n:L.length,prov:new Set(L.map(c=>REGIONS[c.host].prov)).size,arts:L.filter(c=>c.art).length,regs:L.every(c=>REGIONS['gyc_'+c.i]&&REGIONS[c.host].gates.some(g=>g.gyc===c.i)),spot:G.giyeon}});
-  ok(`동굴 ${r1.n}곳 · 성 ${r1.prov}곳 · 기연 무공 ${r1.arts} · 지역·입구 ${r1.regs} · 기연 터 없음 ${r1.spot}`,r1.n===5&&r1.prov===5&&r1.arts===4&&r1.regs&&r1.spot==null);
+    return{n:L.length,prov:new Set(L.map(c=>REGIONS[c.host].prov)).size,arts:L.filter(c=>c.art).length,regs:L.every(c=>REGIONS['gyc_'+c.i]&&!REGIONS[c.host].gates.some(g=>g.gyc===c.i)),spot:G.giyeon}});
+  ok(`동굴 ${r1.n}곳 · 성 ${r1.prov}곳 · 기연 무공 ${r1.arts} · 지역·숨은 입구(v247) ${r1.regs} · 기연 터 없음 ${r1.spot}`,r1.n===5&&r1.prov===5&&r1.arts===4&&r1.regs&&r1.spot==null);
   // 2. 입구: 호스트 맵을 열면 걸어 닿는 칸에 놓이고, 다시 열어도 같은 자리
-  const r2=await p.evaluate(()=>{const c=G.gyc.list[0];enterRegion(c.host,arriveAt(c.host).x,arriveAt(c.host).y);const a=[c.x,c.y],w=walk(c.x,c.y);
+  const r2=await p.evaluate(()=>{const c=G.gyc.list[0];gyclFound(c,1);enterRegion(c.host,arriveAt(c.host).x,arriveAt(c.host).y);const a=[c.x,c.y],w=walk(c.x,c.y);
     loadRegion('gaebong');loadRegion(c.host);const g=REGION().gates.find(g=>g.gyc===0);return{a,w,same:c.x===a[0]&&c.y===a[1],g:[g.x,g.y],d:Math.hypot(c.x-c.ax,c.y-c.ay)}});
   ok(`입구 ${r2.a} (목표에서 ${r2.d.toFixed(1)}칸) 걸을 수 있음 ${r2.w} · 다시 열어도 같음 ${r2.same}`,r2.w&&r2.same&&r2.g[0]===r2.a[0]+.5);
-  // 3. 말풍선: 입구가 있는 맵 근처 성도 NPC 곁에 가면 소문을 흘리고 임무창에 남는다
-  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;NPCF=[npcFighter({n:'나무꾼',x:P.x+1,y:P.y,pal:PAL.hero})];   // 그려지는 진짜 모양 (예전 d:{pal:'npc'} 문자열은 다음 프레임 drawFighter에서 pal.skin 오류를 냈다)
-    gycBT=0;gycBub.length=0;for(const k in gycTalked)delete gycTalked[k];   // 앞서 저절로 뜬 말풍선(다른 소문)이 남아 있으면 그것을 읽게 된다
-    const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
-    return{bub:gycBub.length&&gycBub[0].txt,heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
-  ok(`말풍선 "${r3.bub}" · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,!!r3.bub&&r3.bub.includes(await p.evaluate(()=>REGIONS[G.gyc.list[0].host].name))&&/쪽에/.test(r3.bub)&&r3.heard===2&&r3.card.includes('기연 소문')&&r3.log>0);
+  // 3. v247: 다가가도 말풍선은 없다. 할 이야기가 있는 사람 머리 위 '!', 말을 걸면 대화창 맨 위에서 소문을 듣고 임무창에 남는다 (자세한 건 t164_gyclue)
+  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;
+    const n={id:'gen',n:'나무꾼',x:P.x+1,y:P.y,pal:'villager'};REGION().npcs.push(n);refreshNPCF();for(const k in gyclTopicC)delete gyclTopicC[k];
+    update(.05);const bub=gycBub.length,mark=gyclHasTalk(n);openNpc(n);const html=$('wbody').innerHTML,after=gyclHasTalk(n);closePanels();openPanel('quest');
+    REGION().npcs.splice(REGION().npcs.indexOf(n),1);refreshNPCF();
+    return{bub,mark,after,said:/소문/.test(html)&&html.includes('나무꾼'),heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
+  ok(`말풍선 없음 ${r3.bub===0} · '!' ${r3.mark} → 말 걸면 소문 ${r3.said} · 들은 뒤 '!' 사라짐 ${!r3.after} · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,r3.bub===0&&r3.mark&&r3.said&&!r3.after&&r3.heard>=0&&r3.card.includes('기연 소문')&&r3.log>0);
   await p.waitForTimeout(200);await p.evaluate(()=>closePanels());await p.screenshot({path:shot('gyc_bubble')});
   // 멀리 있는 동굴은 소문이 작으면 들리지 않는다
-  const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const none=gycRumorFor();
+  const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const g0=gycRumorFor(),none=g0&&REGIONS[g0.c.host].prov!=='henan'?g0:null;   // v247: 같은 성(하남)의 동굴은 소문이 작아도 그 성 사람들이 안다 (증인을 가리킨다)
     const far=G.gyc.list.find(o=>(regHops('gaebong')[o.host]??30)>2);return{h,none,far:!!far}});
   ok(`소문 0이면 먼 동굴(${r3b.h}곳 건너)은 들리지 않는다`,r3b.none===null);
   // 4. 동굴 안: 수호자가 지키고, 쓰러뜨리면 상자. 보상은 행낭(비급·영약)에 들어오고 바로 익히지 않는다
-  const r4=await p.evaluate(()=>{const c=G.gyc.list[0];enterRegion('gyc_0',22.5,40.3);const g=mobs.find(m=>m.gycGuard===0),box=nodes.find(n=>n.t==='gybox');
+  const r4=await p.evaluate(()=>{const c=G.gyc.list[0];c.form='box';enterRegion('gyc_0',22.5,40.3);   // v247: 벽화·기인이사 모습은 t164
+    const g=mobs.find(m=>m.gycGuard===0),box=nodes.find(n=>n.t==='gybox');
     P.x=box.x;P.y=box.y+.6;gycOpen(box);const blocked=!P.chan;g.hp=0;prune(mobs,m=>m.hp>0);gycOpen(box);P.chan.fn();
     const bk=P.bag.find(i=>i.art===c.art);return{dark:!!REGION().cave,guard:!!g,blocked,done:c.done,bk:!!bk,learned:!!P.arts[c.art],mats:['천년영지','청명단'].every(k=>P.mats[k]>0),again:(gycOpen(box),!P.chan||P.chan.fn===undefined)}});
   ok(`동굴(어둠 ${r4.dark}) 수호자 ${r4.guard} 막음 ${r4.blocked} → 열림 ${r4.done} · 비급 행낭 ${r4.bk}, 아직 안 익힘 ${!r4.learned} · 영약 행낭 ${r4.mats}`,r4.dark&&r4.guard&&r4.blocked&&r4.done&&r4.bk&&!r4.learned&&r4.mats);
