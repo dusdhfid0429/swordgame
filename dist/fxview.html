@@ -14117,7 +14117,9 @@ body.fxv #stage{grid-area:s;min-width:0;min-height:0}#fxv{grid-area:l}#fxai{grid
 /* 좁은 화면(휴대폰·작은 창): 양쪽 칸은 서랍. 막대의 단추로 하나씩 열고, 열린 칸은 화면 높이 안에서 스크롤된다 */
 @media (max-width:999px){#fxv,#fxai{position:fixed;top:0;bottom:var(--barh,92px);width:min(86vw,340px);z-index:40;transition:transform .22s;box-shadow:0 0 24px #000c}
   #fxv{left:0;transform:translateX(-105%)}#fxai{right:0;transform:translateX(105%)}body.fxv.dl #fxv,body.fxv.dr #fxai{transform:none}
-  #fxv .x,#fxai .x{display:inline-block}#fxv header p{display:none}}
+  #fxv .x,#fxai .x{display:inline-block}#fxv header p{display:none}
+  /* 서랍이 열리면 게임의 시스템 알림·기록 줄·경지 돌파 결과 장이 서랍 단추를 덮어 눌리지 않았다. 서랍 위로는 안 띄운다 */
+  body.fxv.dl :is(.sysmsg,#log,#brkcard),body.fxv.dr :is(.sysmsg,#log,#brkcard){visibility:hidden!important;pointer-events:none!important}body.fxv.dl :is(.sysmsg,#log,#brkcard) *,body.fxv.dr :is(.sysmsg,#log,#brkcard) *{visibility:hidden!important;pointer-events:none!important}}
 @media (min-width:1000px){body.fxv:not(.dl) #fxv,body.fxv:not(.dr) #fxai{display:none}}
 body[data-fxai=run] #fxvbar_r::after{content:' ⏳'}body[data-fxai=done] #fxvbar_r::after{content:' ✓';color:#a9c27a}body[data-fxai=fail] #fxvbar_r::after{content:' ✗';color:#e48a72}`;
 document.head.appendChild(css);document.body.classList.add('fxv');
