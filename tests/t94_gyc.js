@@ -28,7 +28,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const far=G.gyc.list.find(o=>(regHops('gaebong')[o.host]??30)>2);return{h,none,far:!!far}});
   ok(`소문 0이면 먼 동굴(${r3b.h}곳 건너)은 들리지 않는다`,r3b.none===null);
   // 4. 동굴 안: 수호자가 지키고, 쓰러뜨리면 상자. 보상은 행낭(비급·영약)에 들어오고 바로 익히지 않는다
-  const r4=await p.evaluate(()=>{const c=G.gyc.list[0];enterRegion('gyc_0',22.5,40.3);const g=mobs.find(m=>m.gycGuard===0),box=nodes.find(n=>n.t==='gybox');
+  const r4=await p.evaluate(()=>{const c=G.gyc.list[0];c.form='box';enterRegion('gyc_0',22.5,40.3);   // v247: 벽화·기인이사 모습은 t164
+    const g=mobs.find(m=>m.gycGuard===0),box=nodes.find(n=>n.t==='gybox');
     P.x=box.x;P.y=box.y+.6;gycOpen(box);const blocked=!P.chan;g.hp=0;prune(mobs,m=>m.hp>0);gycOpen(box);P.chan.fn();
     const bk=P.bag.find(i=>i.art===c.art);return{dark:!!REGION().cave,guard:!!g,blocked,done:c.done,bk:!!bk,learned:!!P.arts[c.art],mats:['천년영지','청명단'].every(k=>P.mats[k]>0),again:(gycOpen(box),!P.chan||P.chan.fn===undefined)}});
   ok(`동굴(어둠 ${r4.dark}) 수호자 ${r4.guard} 막음 ${r4.blocked} → 열림 ${r4.done} · 비급 행낭 ${r4.bk}, 아직 안 익힘 ${!r4.learned} · 영약 행낭 ${r4.mats}`,r4.dark&&r4.guard&&r4.blocked&&r4.done&&r4.bk&&!r4.learned&&r4.mats);
