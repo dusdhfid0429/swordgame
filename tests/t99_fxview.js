@@ -6,7 +6,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const c=await b.newContext({viewport:{width:vp.width,height:vp.height},isMobile:!!vp.isMobile,hasTouch:!!vp.hasTouch});const p=await c.newPage();
     p.on('pageerror',e=>errs.push('PE '+e.message));
     // 좁은 화면은 왼쪽 서랍을 열고 누른다 (재생 단추를 누르면 서랍이 닫힌다)
-    const cl=async sel=>{await p.evaluate(()=>{if(FXV.narrow())FXV.drawer('l',true)});if(sel){await p.waitForTimeout(260);await p.click(sel)}};p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
+    const cl=async sel=>{await p.evaluate(()=>{if(FXV.narrow()){FXV.drawer('l',true);log('날씨가 흐림으로 바뀌었습니다.','info')}});if(sel){await p.waitForTimeout(260);await p.click(sel)}};p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text())});
     await p.goto('file://'+require('path').resolve(__dirname,'../dist/fxview.html'));await p.waitForTimeout(1500);
     const st=await p.evaluate(()=>({reg:REG,play:playing,dummies:mobs.filter(m=>m.acadDummy).length,save:STORE.get(SAVE_KEY)}));
     ok(`${vp.width}px: 연무장(${st.reg})에서 시작, 목인장 ${st.dummies}개, 저장 없음`,st.reg==='fxv_arena'&&st.play&&st.dummies===6&&!st.save);
