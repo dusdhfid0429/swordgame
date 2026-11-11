@@ -260,7 +260,8 @@ function cvStep(cv,dt){const c=cv.cart;
   cv.mem=cv.mem.filter(m=>m.hp>0&&mobs.includes(m));cv.raid=cv.raid.filter(m=>m.hp>0&&mobs.includes(m));
   if(cv.raiding&&!cv.raid.length){cv.raiding=false;cvSaved(cv)}
   const far=cv.q&&!cv.robbed&&dist(P,c)>CARV.escort.wait;if(far&&!cv.waitN){cv.waitN=1;log(`${cv.name} 표행이 멈춰 당신을 기다립니다.`,'info')}if(!far)cv.waitN=0;
-  cv.stop=cv.raiding||cv.robbed||far;
+  const rest=cvRestMode(cv);if(rest!==cv.rest){if(rest){cv.told=new Set();log(rest==='camp'?`${cv.name} 행렬이 길가에 짐을 풀고 노숙한다. 모닥불가의 표사들에게 말을 걸 수 있다.`:`${cv.name} 행렬이 그늘에서 잠시 쉬어 간다. 쉬는 동안 표사들에게 말을 걸 수 있다.`,'info')}else if(cv.rest&&!cv.raiding&&!cv.robbed)log(`${cv.name} 행렬이 다시 길을 떠난다.`,'info');cv.rest=rest}
+  cv.stop=cv.raiding||cv.robbed||far||!!cv.rest;
   if(cv.amb&&!cv.ambDone&&cv.i>4&&dist(c,P)<CARV.ambush.near){cv.ambDone=1;cvAmbush(cv,false)}
   if(cv.waves.length&&!cv.raiding&&!cv.robbed&&cv.i/cv.len>=cv.waves[0]){cv.waves.shift();cvAmbush(cv,true)}
   if(cv.hate&&!cv.robbed&&dist(P,c)<CARV.rob.hateNear)cvRob(cv,true);
@@ -324,3 +325,24 @@ function cvRumor(){const N=(G.cvNews||[]).filter(n=>(G.cal||0)-n.y<2);
 // 문파 임무: 정파·군부는 표행 호위, 사파·마교는 표물 털기 (호위는 맡은 곳의 성 지도에서)
 SMIS.jeong.push({n:'표행 호위',kind:'escort',cnt:1,merit:18,silver:35});SMIS.gunbu&&SMIS.gunbu.push({n:'관물 호송',kind:'escort',cnt:1,merit:18,silver:35});
 SMIS.sacheon.push({n:'표물 털기',kind:'rob',cnt:1,merit:20,silver:40});SMIS.magyo.push({n:'상단 약탈',kind:'rob',cnt:1,merit:20,silver:40});
+
+// ---- 표행의 노숙·휴식과 표사와의 이야기 (v247, 동훈님 2026-11-11 "표행의 경우 밤이 되어 노숙을 하거나 낮에 휴식을 취하게 추가하고 그 경우에만 대화 가능") ----
+// 밤(tod<rest.night[0] 또는 >rest.night[1])엔 노숙(모닥불), 한낮엔 잠시 휴식. 그동안 행렬이 멈추고 표두·표사·상인 머리 위에 '!'. 눌러 말을 걸면
+// 먼 길을 다니는 사람들이라 기연 소문(더 먼 곳까지, g_gyclue.js)·행렬 소식·길 이야기를 한다. 따라나선 표행(호위)·습격·약탈 중엔 쉬지 않는다.
+function cvRestMode(cv){if(cv.q||cv.raiding||cv.robbed||cv.hate)return null;const R=CARV.rest;if(!R)return null;return tod<R.night[0]||tod>R.night[1]?'camp':tod>R.noon[0]&&tod<R.noon[1]?'rest':null}
+const cvTalkers=cv=>cv.mem.filter(m=>m.hp>0&&m.cvRole!=='cart').slice(0,3);
+function cvTalkTap(e){const cv=e&&e.cv;if(!cv||e.cvRole==='cart'||cv.robbed)return false;
+  if(!cv.rest){addText(e.x,e.y,'길을 재촉하는 중','#e8dcc0');return true}
+  const n={id:'cvtalk',cvm:e,n:e.name,x:e.x,y:e.y};if(dist(e,P)<1.9)openNpc(n);else{P.talk=n;P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(e.x),Math.floor(e.y))}return true}
+function cvTalkLine(e){const cv=e.cv,key='cv:'+cv.name+':'+e.name;
+  const g=typeof gycRumorFor==='function'&&Math.random()<.7?gycRumorFor(CARV.rest.boost,key):null;if(g){gyclHearRumor(g);return g.txt}
+  const t=Math.random()<.5&&cvRumor();return t||CARV.rest.talk[Math.floor(Math.random()*CARV.rest.talk.length)]}
+hook('npcDlg',c=>{if(c.html!=null||c.n.id!=='cvtalk')return;const e=c.n.cvm,cv=e&&e.cv;if(!cv||!cv.rest){c.html='<p class="note">"갈 길이 바쁘오."</p>';return}
+  if(!c.n.line){c.n.line=cvTalkLine(e);cv.told.add(e);log(`[표행] ${e.name}: "${c.n.line}"`,'info')}
+  c.html=`<p class="note">${esc(e.name)}: "${esc(c.n.line)}"</p><p class="note dim">${cv.rest==='camp'?'모닥불가에서 노숙하는 중':'잠시 쉬어 가는 중'} · ${esc(cv.name)} 행렬</p>`});
+hook('drawList',list=>{if(!playing)return;for(const cv of CVS){if(!cv.rest||!cv.cart||cv.cart.hp<=0)continue;const c=cv.cart;
+  if(cv.rest==='camp'){const fx0=c.x+.9,fy0=c.y+.9;list.push({L:LY.ENT,d:fx0+fy0,f:()=>{const p=toScreen(fx0,fy0);ctx.save();ctx.translate(p.x,p.y);
+    const gl=ctx.createRadialGradient(0,-6,2,0,-6,60);gl.addColorStop(0,'rgba(255,170,70,.35)');gl.addColorStop(1,'rgba(255,140,40,0)');ctx.fillStyle=gl;ctx.fillRect(-60,-66,120,120);
+    ctx.strokeStyle='#3a2414';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(9,-4);ctx.moveTo(-8,-4);ctx.lineTo(8,0);ctx.stroke();
+    for(let i=0;i<3;i++){const h=12+5*Math.sin(time*9+i*2),w=5-i;ctx.fillStyle=['#ff7a20','#ffb030','#fff0a0'][i];ctx.beginPath();ctx.moveTo(-w*1.4,-2);ctx.quadraticCurveTo(0,-h-6,w*1.4,-2);ctx.fill()}ctx.restore()}})}
+  if(cv.told)for(const m of cvTalkers(cv))if(!cv.told.has(m))list.push({L:LY.OVER,d:m.x+m.y+40,f:()=>{const p=toScreen(m.x,m.y),y=p.y-84+Math.sin(time*3+m.x)*2;ctx.save();ctx.font='bold 18px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText('!',p.x+1,y+1);ctx.fillStyle='#ffe2a0';ctx.fillText('!',p.x,y);ctx.restore()}})}});

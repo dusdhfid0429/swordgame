@@ -43,7 +43,7 @@ function gycGate(c){const R=REGIONS[c.host];if(!R||R.gates.some(g=>g.gyc===c.i))
   R.gates.push({x:(c.x??c.ax)+.5,y:(c.y??c.ay)+.5,to:gycId(c.i),tx:22.5,ty:40.3,label:c.name,gyc:c.i,door:1})}
 function gycDefine(c){const T=CAVE_TH[c.th],sp=GYC.spawns[c.th]||[];
   REGIONS[gycId(c.i)]={name:c.name,in:1,cave:{dark:T.dark,dk:T.dk},theme:'dark',size:44,gyc:c.i,
-    gen:()=>{genCave({th:c.th,w:44,h:44,seed:c.seed});for(const n of nodes)if(n.t==='chest'){n.t='gybox';n.gyc=c.i;n.cd=c.done?99999:0}},
+    gen:()=>{genCave({th:c.th,w:44,h:44,seed:c.seed});for(const n of nodes)if(n.t==='chest'){n.t='gybox';n.gyc=c.i;n.cd=c.done?99999:0;n.form=c.form||'box';REGIONS[gycId(c.i)].npcs=gyclHermitNpc(c,n)}},
     bake:()=>bakeCave(c.th),zone:()=>c.name,spawns:sp.map(([k,n,y])=>[k,n,(x,yy)=>yy<y]),bosses:[],npcs:[],
     gates:[{x:22.5,y:42.4,to:c.host,tx:(c.x??c.ax)+.5,ty:(c.y??c.ay)+1.6,label:'동굴 밖'}]}}
 // 호스트 맵을 처음 열 때 입구 칸을 정한다: 맵 출입구(없으면 가운데)에서 걸어 닿는 칸 가운데 목표에 가장 가깝고 다른 출입구와 떨어진 곳
@@ -65,11 +65,13 @@ hook('regionLoaded',id=>{gycWarDone=false;const c=gycOf(id);if(!c)return;
   e.maxHp=e.hp=Math.round(e.maxHp*gd.hp);e.atk=Math.round(e.atk*gd.atk);mobs.push(e)});
 function gycOpen(n){const c=G.gyc&&G.gyc.list[n.gyc];if(!c)return;
   if(c.done||n.cd>0){log(c.by&&c.by!=='me'?`비어 있다. ${SECTS[c.by]?SECTS[c.by].n:'누군가'}이(가) 먼저 휩쓸어 갔다.`:'이미 연 상자다. 이 동굴의 기연은 다했다.','info');return}
-  if(mobs.some(m=>m.gycGuard===c.i&&m.hp>0)){log(`${c.name} 수호자가 상자를 지키고 있다. 먼저 쓰러뜨려야 한다.`,'dmg');return}
-  P.chan={t:0,dur:1.6,label:'상자를 연다',fn:()=>gycLoot(c,n)}}
+  if(n.form==='hermit'){const h=npcsHere().find(q=>q.gyherm===c.i);if(h)openNpc(h);return}   // v247: 기인이사 (g_gyclue.js)
+  if(mobs.some(m=>m.gycGuard===c.i&&m.hp>0)){log(`${c.name} 수호자가 ${n.form==='mural'?'벽화':'상자'}를 지키고 있다. 먼저 쓰러뜨려야 한다.`,'dmg');return}
+  P.chan=n.form==='mural'?{t:0,dur:GYCL.forms.muralDur,label:'벽화를 베껴 적는다',fn:()=>gycLoot(c,n)}:{t:0,dur:1.6,label:'상자를 연다',fn:()=>gycLoot(c,n)}}
 function gycLoot(c,n){n.cd=99999;c.done=1;c.by='me';c.who=P.name;const got=[];
   const art=c.art&&ARTS[c.art]&&!P.arts[c.art]&&!gyInBag(c.art)&&!gycDonOwner(c.art)?c.art:typeof mkGyRoll==='function'?mkGyRoll('cave'):null;
-  if(art)got.push(gyGive(art).n+' 비급');
+  if(art){gyGive(art);const bk=P.bag[P.bag.length-1],F=n.form||'box';if(bk&&bk.art===art&&F!=='box')bk.name=`${ARTS[art].n} 비급 · ${F==='mural'?'벽화 필사본':'기인의 구결'}`;got.push(bk&&bk.art===art?bk.name:ARTS[art].n+' 비급')}
+  if(n.form==='mural')log(GYCL.forms.muralLog,'info');
   for(const[k,m]of GYC.loot){const kk=k==='주과'?null:k;for(let j=0;j<m;j++){const nm=kk||pick(Object.keys(GYC.fruits));addMat(nm);got.push(nm)}}
   {const id=leafPick({cls:myCls(),minG:2})||leafPick({minG:2});if(id){const n=R1(LEAF.gyc[0],LEAF.gyc[1]);giveLeaf(id,n,c.name);got.push(`${ARTS[id].n} 낱장 ${n}장`)}}   // 비급 낱장 (g_mkmat.js)
   if(!art){const b=randomBook();P.bag.push(b);got.push(b.name);const sg=pick(Object.keys(SHINGONG));P.bag.push(mkGPage(sg,2));got.push(`절세신공 잔결 ${sg}`)}
@@ -93,16 +95,10 @@ let gycHop=null,gycHopReg=null;
 function gycRumorFor(boost=1,key){if(!G.gyc)return null;if(gycHopReg!==REG){gycHop=regHops(REG);gycHopReg=REG}const here=gyclProv(REG);
   const ok=G.gyc.list.filter(c=>{const h=gycHop[c.host]??30;return c.rumor>=h*GYC.rumor.knowHop*boost||c.host===REG||(here&&REGIONS[c.host].prov===here)});if(!ok.length)return null;
   return gyclLine(ok,key)}
-// 말풍선: NPC·양민 곁(GYC.bubble.r칸)에 가면 소문을 흘린다. 같은 사람은 한동안 같은 말을 되풀이하지 않는다
-const gycBub=[],gycTalked={};let gycBT=0;
-hook('tick',dt=>{if(!P||!playing)return;if(gycG!==G||!G.gyc){if(!G.gyc)gycInit();else gycSync()}
-  if((gycBT-=dt)>0)return;gycBT=.5;gycWarTick();const B=GYC.bubble;
-  for(let i=gycBub.length-1;i>=0;i--)if(time>gycBub[i].end)gycBub.splice(i,1);if(gycBub.length>=2||P.hp<=0)return;
-  const near=[...NPCF.map(n=>({o:n,k:REG+':'+n.n,nm:n.n})),...mobs.filter(m=>m.d&&m.d.villager&&m.hp>0&&!m.angry).map(m=>({o:m,k:m,nm:'양민'}))].filter(q=>dist(q.o,P)<B.r);
-  for(const q of near){const key=typeof q.k==='string'?q.k:(q.o.gycK=q.o.gycK||'m'+Math.random());if(time<(gycTalked[key]||0))continue;gycTalked[key]=time+B.cd;
-    if(Math.random()>B.p||gycBub.some(b=>b.o===q.o)||gyclIsWit(q.nm))continue;const r=gycRumorFor(1,key);if(!r)continue;
-    gycBub.push({o:q.o,txt:r.txt,end:time+B.life});gyclHearRumor(r);
-    log(`[소문] ${q.nm}: "${r.txt}"`,'info');break}});
+// v247 (동훈님 2026-11-11 "근처만 가도 말풍선이 뜨게 하지 마. 대화할 주제가 있으면 느낌표, 말을 걸면 듣게"): 다가가면 뜨던 소문 말풍선은 없앴다.
+// 할 이야기가 있는 사람 머리 위에 '!'가 뜨고, 말을 걸면 대화창 맨 위에서 소문을 듣는다 (g_gyclue.js gyclTopic·gyclTalkHtml). gycBub은 그리기만 남는다
+const gycBub=[];
+hook('tick',dt=>{if(!P||!playing)return;if(gycG!==G||!G.gyc){if(!G.gyc)gycInit();else gycSync()}gycWarTick()});
 function gycWrap(s,n){const out=[];let cur='';for(const w of s.split(' ')){if((cur+' '+w).trim().length>n&&cur){out.push(cur);cur=w}else cur=(cur+' '+w).trim()}if(cur)out.push(cur);return out}
 hook('drawList',list=>{for(const b of gycBub){const o=b.o;list.push({L:LY.OVER,d:o.x+o.y+50,f:()=>{const p=toScreen(o.x,o.y),lines=gycWrap(b.txt,15),lh=15,w=Math.min(230,Math.max(...lines.map(l=>l.length))*12.5+16),h=lines.length*lh+10,x=p.x-w/2,y=p.y-92-h;
   const fade=Math.min(1,(b.end-time)/.6);ctx.save();ctx.globalAlpha=fade;ctx.fillStyle='rgba(250,244,228,.95)';ctx.strokeStyle='#5a4428';ctx.lineWidth=1.5;

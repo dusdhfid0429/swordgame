@@ -17,7 +17,8 @@ const gyclMyFac=()=>P.sect&&SECTS[P.sect]?alFac(SECTS[P.sect].al):P.side;
 function gyclEnsure(c){
   if(!c.k){const h=c.heard??-1,s=c.seen||c.mark?1:0;c.k={pv:h>=0||s?1:0,map:h>=1||s?1:0,sign:h>=1||s?1:0,dir:h>=2||s?1:0,trace:s};c.found=s;
     const old=c.hints||{};c.hints={};const ks=['pv','map','dir','trace'];for(const n of Object.keys(old))if(typeof old[n]==='string')c.hints[ks[Math.min(3,Math.floor(n/2))]]=old[n]}
-  if(!c.wit)c.wit=gyclWitGen(c)}
+  if(!c.wit)c.wit=gyclWitGen(c);
+  if(!c.form){const W=GYCL.forms.w,ks=Object.keys(W);let r=rng(c.seed+31)()*ks.reduce((a,k)=>a+W[k],0);c.form=ks[ks.length-1];for(const k of ks)if((r-=W[k])<0){c.form=k;break}}}
 function gyclWitGen(c){const r=rng(c.seed+977),host=c.host,pv=REGIONS[host].prov,used=new Set(),pk=a=>a[Math.floor(r()*a.length)];
   const ok=id=>{const R=REGIONS[id];return R&&!R.hq&&!R.in&&!R.hall&&!R.cave&&!R.acad&&!R.maeng&&!id.startsWith('gyc_')};
   const cities=Object.keys(REGIONS).filter(id=>REGIONS[id].city&&REGIONS[id].prov===pv&&id!==host).sort();
@@ -108,10 +109,24 @@ hook('tick',dt=>{if(!P||!playing||!G.gyc||P.hp<=0)return;
     if(Math.hypot(c.x+.5-P.x,c.y+.5-P.y)<GYCL.mouthR){gyclFound(c);continue}
     if(c.tx!=null&&c.k.map&&!P.chan&&!attacking()&&Math.hypot(c.tx-P.x,c.ty-P.y)<GYCL.traceR){P.chan={t:0,dur:1.5,label:'흔적을 살핀다',fn:()=>gyclFound(c)};continue}
     if(P.medit&&!c.k.dir){if((gyclMedT+=dt)>=GYCL.meditT){gyclMedT=0;const t=gyclFill(GYCL.meditTxt.replace('{th}',GYCL.thN[c.th]||'묘한'),c);gyclGive(c,['pv','map','dir'],t);log(t,'xp')}}else if(!P.medit)gyclMedT=0}});
-// 증인 머리 위 '?' (가리킴을 받았고 아직 듣지 못했을 때), 흔적 자리의 반짝임 (맵을 알 때)
-hook('drawList',list=>{if(!G.gyc||!P)return;
-  for(const n of npcsHere()){if(!n.gyw)continue;const[c,w]=gyclW(n);if(!w||w.ok||!w.kn||c.done)continue;
-    list.push({L:LY.OVER,d:n.x+n.y+40,f:()=>{const p=toScreen(n.x,n.y),y=p.y-84+Math.sin(time*3)*2;ctx.save();ctx.font='bold 18px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText('?',p.x+1,y+1);ctx.fillStyle='#ffd25a';ctx.fillText('?',p.x,y);ctx.restore()}})}
+// ---- 할 이야기가 있는 사람: 머리 위 '!' (동훈님 2026-11-11 "근처만 가도 말풍선이 뜨게는 하지 마. 대화가 가능한 주제가 있는 경우 느낌표 만들고 대화 시 들을 수 있게") ----
+// 소문을 아는 길 사람·가게 주인·객잔 손님은 '!'. 말을 걸면 대화창 맨 위에서 듣고, 같은 말이면 '!'가 사라진다(해가 바뀌면 할 말이 바뀐다).
+// 증인은 아직 이야기를 다 하지 않았으면 '!', 앞 증인이 가리킨 증인은 '?'를 더 크게.
+const GYCL_SKIP=n=>n.gyw||n.gyherm!=null||n.intel||n.board||n.hq||n.sect||n.srole||n.elder||n.steward||n.acad||n.hugi!=null||n.disc||n.emperor||n.lib||n.slib||n.jailer||n.prisoner||n.maeng||n.dang||n.id==='hgmeet'||n.id==='hgdown'||n.id==='lore'||n.id==='madi'||n.id==='iny'||n.id==='cvlead'||n.id==='cvtalk';
+const gyclTold={},gyclTopicC={};
+const gyclKey=n=>REG+':'+n.n+':'+Math.round((n.x||0)*2);
+function gyclTopic(n){if(!G.gyc||!n||GYCL_SKIP(n))return null;const k=gyclKey(n),C=gyclTopicC[k];if(C&&time-C.t<1)return C.r;
+  const r=n.patron?{txt:'객잔 손님의 이야기',patron:1}:gycRumorFor(1,k);gyclTopicC[k]={t:time,r};return r}
+const gyclNew=r=>{const c=r.c;if(!c)return true;if(r.pt!=null&&c.wit&&c.wit[r.pt]&&!c.wit[r.pt].kn)return true;if(!(r.ks&&r.ks.length))return !c.hints||c.hints.done!==r.txt;return r.ks.some(k=>!(c.k&&c.k[k]))};   // 들으면 새로 아는 게 있나
+const gyclHasTalk=n=>{const r=gyclTopic(n);return !!r&&gyclTold[gyclKey(n)]!==(r.patron?Math.floor(G.cal||0):r.txt)&&(r.patron||gyclNew(r))};
+function gyclTalkHtml(n){const r=gyclTopic(n);if(!r)return'';const k=gyclKey(n);
+  if(r.patron){gyclTold[k]=Math.floor(G.cal||0);return''}   // 손님은 원래 대화(innLine)가 이야기다
+  const first=gyclTold[k]!==r.txt;gyclTold[k]=r.txt;if(first){gyclHearRumor(r);log(`[소문] ${n.n}: "${r.txt}"`,'info')}
+  return `<p class="note"><small class="gold">소문</small> ${esc(n.n)}: "${esc(r.txt)}"</p>`}
+function gyclMark(n,ch,col){return{L:LY.OVER,d:n.x+n.y+40,f:()=>{const p=toScreen(n.x,n.y),y=p.y-84+Math.sin(time*3+n.x)*2;ctx.save();ctx.font='bold 18px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(ch,p.x+1,y+1);ctx.fillStyle=col;ctx.fillText(ch,p.x,y);ctx.restore()}}}
+hook('drawList',list=>{if(!G.gyc||!P||!playing)return;
+  for(const n of npcsHere()){if(n.x==null)continue;if(n.gyw){const[c,w]=gyclW(n);if(w&&!w.ok&&!c.done)list.push(gyclMark(n,w.kn?'?':'!',w.kn?'#ffd25a':'#f0e4c8'));continue}
+    if(gyclHasTalk(n))list.push(gyclMark(n,'!','#ffe2a0'))}
   for(const c of G.gyc.list){if(c.host!==REG||c.found||c.tx==null||!c.k||!c.k.map)continue;
     list.push({L:LY.BACK,d:c.tx+c.ty,f:()=>{const p=toScreen(c.tx,c.ty),a=.35+.3*Math.sin(time*2.4);ctx.save();const col=c.th==='lava'?'255,120,60':c.th==='ice'?'180,230,255':'130,200,255';
       const g=ctx.createRadialGradient(p.x,p.y-4,1,p.x,p.y-4,16);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.fillRect(p.x-16,p.y-20,32,32);
@@ -137,3 +152,26 @@ function gycCard(){if(!G.gyc)return'';const L=G.gyc.list.filter(c=>{gyclEnsure(c
     const hs=['trace','dir','sign','map','pv','done'].filter(h=>c.hints[h]).slice(0,2).map(h=>`<p class="note">"${esc(c.hints[h])}"</p>`).join('');
     const rv=c.done?'':`<p class="note dim">다른 정탐꾼들 ${Math.round(c.rumor)}% <small>(${GYC.rumor.war}%면 세력전, ${GYC.rumor.take}%면 빼앗긴다)</small></p>`;
     return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st} ${slots}${c.found||c.seen?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}</small>`:''}</p>${hs}${c.done?'':`<p class="note">다음: ${esc(gyclNext(c))}</p>`}${rv}`}).join('')}</div>`}
+// ---- 기연이 나오는 모습: 상자 / 동굴 벽화 / 기인이사 (동훈님 2026-11-11 "상자안에 비급의 형태 말고 동굴 벽에 그려진 벽화나 기인이사 npc를 만나거나 하는 다양성") ----
+// 벽화: 수호자를 물리치고 벽화를 베껴 적으면(3초) '벽화 필사본' 비급. 기인이사: 안쪽 방에 앉은 은자가 수호자를 물리친 사람에게 구결을 전하고 떠난다. 보상은 모두 행낭으로(그대로)
+const gyclHermitName=c=>GYCL.forms.hermits[c.seed%GYCL.forms.hermits.length];
+function gyclHermitNpc(c,n){return c.form==='hermit'&&!c.done?[{id:'gyherm',gyherm:c.i,n:gyclHermitName(c),x:n.x,y:n.y,pal:'taoist',fy:1}]:[]}
+hook('npcDlg',x=>{if(x.html!=null||x.n.gyherm==null)return;const c=G.gyc&&G.gyc.list[x.n.gyherm];if(!c)return;const q=s=>`<p class="note">${esc(x.n.n)}: "${esc(s)}"</p>`;
+  if(c.done){x.html=q(GYCL.forms.hermitGone);return}
+  if(mobs.some(m=>m.gycGuard===c.i&&m.hp>0)){x.html=q(GYCL.forms.hermitWait);return}
+  x.html=q(GYCL.forms.hermitHello)+`<div class="row2">${B('gyherm:'+c.i,'가르침을 받는다',{pri:1})}</div>`});
+hook('sectAct',x=>{if(x.a!=='gyherm')return;x.done=true;x.r=true;const c=G.gyc&&G.gyc.list[+x.x];if(!c||c.done||mobs.some(m=>m.gycGuard===c.i&&m.hp>0))return;
+  const n=nodes.find(q=>q.t==='gybox'&&q.gyc===c.i);if(!n)return;const nm=gyclHermitName(c);gycLoot(c,n);log(`${nm}: "${GYCL.forms.hermitBye}"`,'info');
+  const R=REGIONS[gycId(c.i)];if(R)R.npcs=[];fx.push({t:'puff',x:n.x,y:n.y,life:.8});refreshNPCF();closePanels()});
+function drawGyMural(n){const p=toScreen(n.x,n.y),c=G.gyc&&G.gyc.list[n.gyc],live=n.cd<=0;ctx.save();ctx.translate(p.x,p.y);
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,2,30,9,0,0,7);ctx.fill();
+  const g=ctx.createLinearGradient(-26,-70,26,0);g.addColorStop(0,'#6e665a');g.addColorStop(1,'#2e2a24');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-26,0);ctx.lineTo(-24,-62);ctx.quadraticCurveTo(0,-74,24,-62);ctx.lineTo(26,0);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#1e1a16';ctx.lineWidth=1.5;ctx.stroke();
+  const col=c&&c.th==='lava'?'255,150,90':c&&c.th==='ice'?'190,235,255':'150,210,255',a=live?.55+.3*Math.sin(time*2):.18;
+  ctx.strokeStyle=`rgba(${col},${a})`;ctx.lineWidth=1.6;ctx.lineCap='round';
+  const fig=(x,y,s,k)=>{ctx.beginPath();ctx.arc(x,y-14*s,2.6*s,0,7);ctx.moveTo(x,y-11*s);ctx.lineTo(x,y-3*s);ctx.moveTo(x,y-3*s);ctx.lineTo(x-4*s,y+3*s);ctx.moveTo(x,y-3*s);ctx.lineTo(x+4*s,y+3*s);
+    ctx.moveTo(x,y-9*s);ctx.lineTo(x+(k?7:-6)*s,y-(k?13:6)*s);ctx.moveTo(x,y-9*s);ctx.lineTo(x+(k?-5:6)*s,y-(k?5:12)*s);ctx.moveTo(x+(k?7:6)*s,y-(k?13:12)*s);ctx.lineTo(x+(k?14:13)*s,y-(k?20:17)*s);ctx.stroke()};
+  fig(-12,-30,1,0);fig(10,-34,1,1);fig(-2,-12,.8,1);
+  ctx.beginPath();ctx.arc(10,-50,10,Math.PI*.9,Math.PI*1.9);ctx.stroke();
+  if(live){const gl=ctx.createRadialGradient(0,-32,2,0,-32,40);gl.addColorStop(0,`rgba(${col},.18)`);gl.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=gl;ctx.fillRect(-40,-72,80,76)}
+  ctx.restore();if(dist(n,P)<4){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=live?'벽화':'벽화 (베낌)';ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y-79);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y-80)}}

@@ -75,8 +75,4 @@ function innLine(){const T=INTEL.chatter,r=Math.random();
   const weak=typeof sectPop==='function'?Object.values(SECTS).filter(s=>sectPop(s.id)>0).sort((a,c)=>sectPop(a.id)/popBase(a)-sectPop(c.id)/popBase(c))[0]:null;
   return josa(t.replace('{boss}',b).replace('{bossAt}',mobWhere(b)||'어딘가').replace('{fac}',FAC4N[f]).replace('{pow}',Math.round(w[f]||0)).replace('{weak}',weak?weak.n:'어느 문파')
     .replace('{season}',`${season()} ${G.weather}`).replace('{sect}',pick(liveSects()).n))}
-let innT=0;
-hook('tick',dt=>{if(!P||!playing||!INNS.includes(REG)||(innT-=dt)>0)return;innT=INTEL.chat;
-  const ps=NPCF.filter(n=>{const o=REGION().npcs.find(q=>q.n===n.n&&q.x===n.x);return o&&o.patron})
-    .filter(n=>!gycBub.some(b=>b.o===n));if(!ps.length||gycBub.length>=3)return;const n=pick(ps),txt=innLine();if(!txt)return;
-  gycBub.push({o:n,txt,end:time+INTEL.chat+1.5});log(`[객잔] ${n.n}: "${txt}"`,'info')});
+// v247: 손님들이 저절로 말풍선을 띄우던 객잔 수다는 없앴다. 손님 머리 위 '!'를 보고 말을 걸면 이야기를 듣는다 (g_gyclue.js)

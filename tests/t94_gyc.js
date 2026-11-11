@@ -15,14 +15,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r2=await p.evaluate(()=>{const c=G.gyc.list[0];gyclFound(c,1);enterRegion(c.host,arriveAt(c.host).x,arriveAt(c.host).y);const a=[c.x,c.y],w=walk(c.x,c.y);
     loadRegion('gaebong');loadRegion(c.host);const g=REGION().gates.find(g=>g.gyc===0);return{a,w,same:c.x===a[0]&&c.y===a[1],g:[g.x,g.y],d:Math.hypot(c.x-c.ax,c.y-c.ay)}});
   ok(`입구 ${r2.a} (목표에서 ${r2.d.toFixed(1)}칸) 걸을 수 있음 ${r2.w} · 다시 열어도 같음 ${r2.same}`,r2.w&&r2.same&&r2.g[0]===r2.a[0]+.5);
-  // 3. 말풍선: 입구가 있는 맵 근처 성도 NPC 곁에 가면 소문을 흘리고 임무창에 남는다
-  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;NPCF=[npcFighter({n:'나무꾼',x:P.x+1,y:P.y,pal:PAL.hero})];   // 그려지는 진짜 모양 (예전 d:{pal:'npc'} 문자열은 다음 프레임 drawFighter에서 pal.skin 오류를 냈다)
-    gycBT=0;gycBub.length=0;for(const k in gycTalked)delete gycTalked[k];   // 앞서 저절로 뜬 말풍선(다른 소문)이 남아 있으면 그것을 읽게 된다
-    const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
-    return{bub:gycBub.length&&gycBub[0].txt,heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
-  // v247: 같은 성 사람은 맵·방위를 바로 말하지 않고 성 이름(풍문)이나 아는 사람(증인)을 가리킨다 (자세한 건 t164_gyclue)
-  const pvn=await p.evaluate(()=>PROV[REGIONS[G.gyc.list[0].host].prov].n),wn=await p.evaluate(()=>G.gyc.list[0].wit.map(w=>w.n));
-  ok(`말풍선 "${r3.bub}" · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,!!r3.bub&&(r3.bub.includes(pvn)||wn.some(n=>r3.bub.includes(n)))&&r3.heard>=0&&r3.card.includes('기연 소문')&&r3.log>0);
+  // 3. v247: 다가가도 말풍선은 없다. 할 이야기가 있는 사람 머리 위 '!', 말을 걸면 대화창 맨 위에서 소문을 듣고 임무창에 남는다 (자세한 건 t164_gyclue)
+  const r3=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=65;for(const o of G.gyc.list)if(o!==c)o.rumor=0;loadRegion(c.host);P.reg=c.host;
+    const n={id:'gen',n:'나무꾼',x:P.x+1,y:P.y,pal:'villager'};REGION().npcs.push(n);refreshNPCF();for(const k in gyclTopicC)delete gyclTopicC[k];
+    update(.05);const bub=gycBub.length,mark=gyclHasTalk(n);openNpc(n);const html=$('wbody').innerHTML,after=gyclHasTalk(n);closePanels();openPanel('quest');
+    REGION().npcs.splice(REGION().npcs.indexOf(n),1);refreshNPCF();
+    return{bub,mark,after,said:/소문/.test(html)&&html.includes('나무꾼'),heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
+  ok(`말풍선 없음 ${r3.bub===0} · '!' ${r3.mark} → 말 걸면 소문 ${r3.said} · 들은 뒤 '!' 사라짐 ${!r3.after} · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,r3.bub===0&&r3.mark&&r3.said&&!r3.after&&r3.heard>=0&&r3.card.includes('기연 소문')&&r3.log>0);
   await p.waitForTimeout(200);await p.evaluate(()=>closePanels());await p.screenshot({path:shot('gyc_bubble')});
   // 멀리 있는 동굴은 소문이 작으면 들리지 않는다
   const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const none=gycRumorFor();

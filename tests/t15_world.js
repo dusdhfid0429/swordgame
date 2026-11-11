@@ -8,7 +8,8 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForTimeout(1500);
   await p.evaluate(()=>localStorage.clear());await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(400);
-  let PROV_N;const g=await p.evaluate(()=>{const bad=[];let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){if(R.tn)continue;n++;   // 문주전 비밀 지하도는 촛대를 풀어야 문주전 쪽 문이 생긴다 (t119_remnant)
+  let PROV_N;const g=await p.evaluate(()=>{if(G.gyc)for(const c of G.gyc.list)gyclFound(c,1);const bad=[];   // v247: 기연동굴 입구는 찾기 전엔 숨어 있으니 다 드러낸 뒤 잇기를 본다
+  let n=0;for(const[id,R]of Object.entries(REGIONS))for(const gt of R.gates){if(R.tn)continue;n++;   // 문주전 비밀 지하도는 촛대를 풀어야 문주전 쪽 문이 생긴다 (t119_remnant)
 const T=REGIONS[gt.to];const me=R.win?'pv_'+R.win.k:id;if(!T||!T.gates.some(b=>b.to===id||b.to===me))bad.push(id+'→'+gt.to)}
     const pv=Object.keys(PROV),sizes=pv.map(k=>PROV[k].size),placed=Object.values(SECTS).filter(s=>s.id!=='shaolin').every(s=>{const first=(REGIONS[hqId(s)].chain||[hqId(s)])[0];return Object.values(REGIONS).filter(R=>R.prov&&!R.hq&&!R.win&&R.gates.some(q=>q.to===first)).length===1});
     return{bad,n,pv:pv.length,mn:Math.min(...sizes),mx:Math.max(...sizes),themes:new Set(pv.map(k=>PROV[k].th)).size,placed,gae:REGIONS.gaebong.gates.map(q=>q.label).join('·')}});

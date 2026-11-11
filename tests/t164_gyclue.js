@@ -58,5 +58,23 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       gate:REGIONS[G.gyc.list[0].host].gates.some(g=>g.gyc===0),hid:!REGIONS[G.gyc.list[4].host].gates.some(g=>g.gyc===4)}});
   ok(`옛 저장 들은 단계 1 → ${JSON.stringify(r8.a.k)} 힌트 "${r8.a.hint}" 증인 ${r8.a.wit} · 들어가 본 동굴 드러남 ${r8.seen} · 불러오기 뒤 같음 ${r8.same} · 찾은 입구 남고 못 찾은 입구 숨음 ${r8.gate&&r8.hid}`,
     r8.a.k.pv&&r8.a.k.map&&r8.a.k.sign&&!r8.a.k.dir&&r8.a.hint==='옛 맵 소문'&&r8.a.wit===3&&r8.seen&&r8.same&&r8.gate&&r8.hid);
+  // 9. 기연이 나오는 모습: 상자 말고 동굴 벽화(베껴 적기)와 기인이사(수호자를 물리치면 구결을 전하고 떠난다)
+  const r9=await p.evaluate(()=>{const L=G.gyc.list.filter(c=>c.art),out={forms:G.gyc.list.map(c=>c.form).join()};
+    const a=L[0],b=L[1];for(const c of[a,b]){c.done=0;c.by=null;c.found=1;delete P.arts[c.art];P.bag=P.bag.filter(i=>i.art!==c.art)}a.form='mural';b.form='hermit';
+    enterRegion('gyc_'+a.i,22.5,40.3);let box=nodes.find(n=>n.t==='gybox');const g=mobs.find(m=>m.gycGuard===a.i);P.x=box.x;P.y=box.y+.6;gycOpen(box);out.mBlock=!P.chan;g.hp=0;prune(mobs,m=>m.hp>0);gycOpen(box);out.mLabel=P.chan&&P.chan.label;P.chan.fn();P.chan=null;
+    out.mBook=(P.bag.find(i=>i.art===a.art)||{}).name;out.mForm=box.form;
+    enterRegion('gyc_'+b.i,22.5,40.3);box=nodes.find(n=>n.t==='gybox');const h=npcsHere().find(n=>n.gyherm===b.i),g2=mobs.find(m=>m.gycGuard===b.i);openNpc(h);out.hWait=!/data-act="gyherm/.test($('wbody').innerHTML);
+    g2.hp=0;prune(mobs,m=>m.hp>0);openNpc(h);out.hBtn=/data-act="gyherm/.test($('wbody').innerHTML);sectAct('gyherm',String(b.i));
+    out.hBook=(P.bag.find(i=>i.art===b.art)||{}).name;out.hGone=!npcsHere().some(n=>n.gyherm===b.i);out.hDone=b.done;return out});
+  ok(`모습 ${r9.forms} · 벽화: 수호자 전엔 막힘 ${r9.mBlock} "${r9.mLabel}" → ${r9.mBook} · 기인이사: 수호자 전엔 기다림 ${r9.hWait} → 단추 ${r9.hBtn} → ${r9.hBook}, 떠남 ${r9.hGone}`,
+    r9.forms.split(',').every(f=>['box','mural','hermit'].includes(f))&&r9.mBlock&&r9.mLabel==='벽화를 베껴 적는다'&&/벽화 필사본/.test(r9.mBook)&&r9.hWait&&r9.hBtn&&/기인의 구결/.test(r9.hBook)&&r9.hGone&&r9.hDone===1);
+  await p.screenshot({path:shot('t164_hermit')});
+  // 10. 표행: 밤엔 노숙(모닥불)·한낮엔 휴식, 그때만 표사에게 말을 걸 수 있다 (머리 위 '!')
+  const r10=await p.evaluate(()=>{const id=Object.keys(REGIONS).find(k=>/^pv_henan/.test(k));enterRegion(id,arriveAt(id).x,arriveAt(id).y);tod=.3;let cv=null;for(let t=0;t<10&&!cv;t++)cv=cvSpawn('pyo');if(!cv)return{none:1};
+    update(.05);const moving=!cv.rest,m=cv.mem.find(q=>q.cvRole==='guard');P.x=m.x+1;P.y=m.y;const busy=(cvTalkTap(m),!$('wbody').innerHTML.includes('노숙'));
+    tod=.9;update(.05);const camp=cv.rest,stop=cv.stop;const L=[];runHooks('drawList',L);const marks=L.length;m.x=P.x-1;m.y=P.y;cvTalkTap(m);const html=$('wbody').textContent;closePanels();
+    const told=cv.told.has(m);tod=.5;update(.05);const noon=cv.rest;tod=.35;update(.05);return{moving,busy,camp,stop,marks,html:html.slice(0,80),told,noon,after:cv.rest}});
+  ok(`표행 낮엔 길 재촉 ${r10.moving}·말 안 됨 ${r10.busy} → 밤 ${r10.camp}(멈춤 ${r10.stop}) 말 걸면 "${r10.html}" · 들음 ${r10.told} · 한낮 ${r10.noon} · 다시 출발 ${r10.after}`,
+    !r10.none&&r10.moving&&r10.busy&&r10.camp==='camp'&&r10.stop&&r10.html.includes('노숙')&&r10.told&&r10.noon==='rest'&&r10.after==null);
   ok(`오류 없음 ${errs.join(' | ')}`,errs.length===0);
   await b.close()})();
