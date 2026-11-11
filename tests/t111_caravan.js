@@ -27,8 +27,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const n0=P.quests.length;act('pyojoin:gaebong:1');P.silver=100;return{reg:q&&q.reg,dst:q&&q.dst,me:r.me,h:h.includes('따라나서기로 했다'),twice:P.quests.length-n0,where:q&&questWhere(q),from:q&&questFrom(q).n}});
   ok(`참여: ${r3.reg} · ${r3.dst} 쪽 (${r3.from}), 두 표행은 못 따라감`,r3.reg==='pv_henan'&&r3.me===1&&r3.h&&r3.twice===0&&/출발까지/.test(r3.where));
   await p.evaluate(()=>{const g=REGIONS.gaebong.gates.find(g=>g.to==='pv_henan');travel(g)});await p.waitForTimeout(900);
-  const r4=await p.evaluate(()=>{const cv=CVS[0];return{reg:REG,n:CVS.length,esc:!!(cv&&cv.q&&cv.q.hired),went:cv&&cv.q.went,hire:cv&&cv.mem.filter(m=>m.name==='모집 표사').length,hands:cv&&cv.q.hands,mem:cv&&cv.mem.length,dest:cv&&cv.dest.label,tw:cv&&cvToward(cvExits(),cv.q.dst).map(g=>g.label),waves:cv&&cv.waves.length}});
-  ok(`하남성에 들어서면 표행 출발 (인원 ${r4.mem}, 모집 표사 ${r4.hire}/${r4.hands}, ${r4.dest} 길목, 습격 ${r4.waves}번 예정)`,r4.reg.startsWith('pv_henan')&&r4.esc&&r4.went&&r4.hire===r4.hands&&r4.mem>=3&&r4.waves===2);
+  const r4=await p.evaluate(()=>{const cv=CVS[0];return{reg:REG,n:CVS.length,esc:!!(cv&&cv.q&&cv.q.hired),went:cv&&cv.q.went,hire:cv&&cv.mem.filter(m=>m.name==='모집 표사').length,hands:cv&&cv.q.hands,mem:cv&&cv.mem.length,dest:cv&&cv.dest.label,tw:cv&&cvToward(cvExits(),cv.q.dst).map(g=>g.label),waves:cv&&cv.waves.length,legs:cv&&cv.q.legs}});
+  ok(`하남성에 들어서면 표행 출발 (인원 ${r4.mem}, 모집 표사 ${r4.hire}/${r4.hands}, ${r4.dest} 길목, 습격 ${r4.waves}번 예정)`,r4.reg.startsWith('pv_henan')&&r4.esc&&r4.went&&r4.hire===r4.hands&&r4.mem>=3&&r4.waves===(r4.legs>1?0:2));   // v247: 여러 맵 표행은 첫 맵엔 습격이 없고 둘째·셋째 맵에서 한 번씩 (t164)
   ok(`표행은 목적지 쪽 길목으로 간다 (${r4.dest} ∈ ${r4.tw.join('·')})`,!r4.tw.length||r4.tw.includes(r4.dest));
   // 4. 표행은 길을 따라 걷는다. 멀어지면 멈춰 기다린다
   await p.evaluate(()=>{for(const m of mobs)if(!m.cv){m.hp=0}mobs=mobs.filter(m=>m.cv);const cv=CVS[0];cv.waves=[];P.inv=999});
@@ -40,7 +40,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r6=await p.evaluate(()=>{const cv=CVS[0];P.x=cv.cart.x+15;P.y=cv.cart.y;cvStep(cv,.1);return cv.stop});
   ok(`호위하는 사람이 멀어지면 표행이 멈춤`,r6===true);
   // 5. 길목에 닿으면 표두가 그 자리에서 품삯을 준다 (표국에 돌아가 보고하지 않는다)
-  const r7=await p.evaluate(()=>{const cv=CVS[0],c=cv.cart,q=cv.q,s0=P.silver,f0=P.fame;c.x=cv.dest.x;c.y=cv.dest.y;P.x=c.x;P.y=c.y;cvStep(cv,.1);
+  const r7=await p.evaluate(()=>{const cv=CVS[0],c=cv.cart,q=cv.q,s0=P.silver,f0=P.fame;q.leg=(q.legs||1)-1;   // v247: 마지막 맵의 길목 (맵 넘어가기는 t164)
+    c.x=cv.dest.x;c.y=cv.dest.y;P.x=c.x;P.y=c.y;cvStep(cv,.1);
     return{left:CVS.length,silver:P.silver-s0,want:q.silver,fame:P.fame-f0,gone:!P.quests.includes(q),runGone:!G.pyoRuns.gaebong.some(r=>r.id===q.run),n:P.pyoN,pyo:P.pyo}});
   ok(`길목에 닿아 표행 완료: 그 자리에서 은자 +${r7.silver}, 명성 +${r7.fame}, 신용 같은 등급 없음`,r7.left===0&&r7.silver===r7.want&&r7.fame>0&&r7.gone&&r7.runGone&&r7.n===1&&r7.pyo===undefined);
   // 5-1. 출발 시각이 지나도 성문 밖에 오지 않으면 표행은 떠나고 의뢰가 사라진다

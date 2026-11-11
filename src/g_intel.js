@@ -49,7 +49,7 @@ function intelList(k){const out=[],L=G.gyc?G.gyc.list:[];
   out.push({g:4,key:'gyarts',t:'기연 무공의 행방',txt:Object.keys(GY_ARTS).map(id=>{const own=gycDonOwner(id),c=L.find(c=>c.art===id&&!c.done);return `${ARTS[id].n}: ${own?SECTS[own].n:c?`${gycHostName(c)}의 동굴`:'강호를 떠돈다'}`}).join(' / ')+'.'});
   return out}
 function gycDir(c){const R=REGIONS[c.host],S=R.size||40,H=R.h||S,sx=(c.ax-S/2)-(c.ay-H/2),sy=(c.ax-S/2)+(c.ay-H/2);return Math.hypot(sx,sy)<4?'한가운데':['동','남동','남','남서','서','북서','북','북동'][(Math.round(Math.atan2(sy,sx)/(Math.PI/4))+8)%8]}
-function gycHear(c,L,txt){if(L>c.heard)c.heard=L;c.hints[L*2]=txt}
+function gycHear(c,L,txt){gyclGive(c,[['pv'],['pv','map','sign'],['pv','map','sign','dir'],['pv','map','sign','dir','trace']][Math.max(0,Math.min(3,L))],txt);if(L>=3)gyclFound(c,1)}   // v247: 정보 단체의 등급이 단서 칸을 채운다 (g_gyclue.js)
 // ---- 정보 창구 창 ----
 function intelDlg(n){const k=n.intel,o=ORG[k],mem=orgMember(k),acc=intelAccess(),bought=P.intel||(P.intel=[]);
   if(o.members&&!mem)return `<p class="note">"${o.n}은(는) 본교 사람에게만 입을 연다. 썩 꺼져라."</p>`;
@@ -67,7 +67,7 @@ hook('sectAct',c=>{if(c.a!=='intel')return;c.done=true;c.r=true;const k=c.x,o=OR
 function intelCard(){const L=P.intel||[];if(!L.length)return'';return `<div class="card"><h4>들은 정보 <small class="dim">정보 단체(개방·하오문·천리당·동창)에게서</small></h4>${L.slice(0,6).map(b=>`<p class="note"><b>${esc(b.t)}</b> <small class="dim">${esc(b.org)}</small> ${esc(b.txt)}</p>`).join('')}</div>`}
 // ---- 객잔 손님들의 이야기 ----
 function innLine(){const T=INTEL.chatter,r=Math.random();
-  if(r<.45){const g=gycRumorFor(.4);if(g){gycHear(g.c,Math.min(2,Math.floor(g.L)),g.txt);return g.txt}}
+  if(r<.45){const g=gycRumorFor(.4);if(g){gyclHearRumor(g);return g.txt}}
   if(r>=.45&&r<.62&&typeof cvRumor==='function'){const t=cvRumor();if(t)return t}
   if(r>=.62&&r<.72&&typeof rcRumor==='function'){const t=rcRumor();if(t)return t}
   if(r>=.72&&r<.72+REMN.rumor&&typeof remnRumor==='function'){const t=remnRumor();if(t)return t}   // 멸문 문파 잔당이 숨은 곳 (g_remnant.js)   // 은거기인 소문 (g_mkmat.js)   // v176: 표국·상단 행렬 소식 (g_caravan.js)
@@ -75,8 +75,4 @@ function innLine(){const T=INTEL.chatter,r=Math.random();
   const weak=typeof sectPop==='function'?Object.values(SECTS).filter(s=>sectPop(s.id)>0).sort((a,c)=>sectPop(a.id)/popBase(a)-sectPop(c.id)/popBase(c))[0]:null;
   return josa(t.replace('{boss}',b).replace('{bossAt}',mobWhere(b)||'어딘가').replace('{fac}',FAC4N[f]).replace('{pow}',Math.round(w[f]||0)).replace('{weak}',weak?weak.n:'어느 문파')
     .replace('{season}',`${season()} ${G.weather}`).replace('{sect}',pick(liveSects()).n))}
-let innT=0;
-hook('tick',dt=>{if(!P||!playing||!INNS.includes(REG)||(innT-=dt)>0)return;innT=INTEL.chat;
-  const ps=NPCF.filter(n=>{const o=REGION().npcs.find(q=>q.n===n.n&&q.x===n.x);return o&&o.patron})
-    .filter(n=>!gycBub.some(b=>b.o===n));if(!ps.length||gycBub.length>=3)return;const n=pick(ps),txt=innLine();if(!txt)return;
-  gycBub.push({o:n,txt,end:time+INTEL.chat+1.5});log(`[객잔] ${n.n}: "${txt}"`,'info')});
+// v247: 손님들이 저절로 말풍선을 띄우던 객잔 수다는 없앴다. 손님 머리 위 '!'를 보고 말을 걸면 이야기를 듣는다 (g_gyclue.js)
