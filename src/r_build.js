@@ -29,6 +29,7 @@ function roofFace(eave0,eave1,r0,r1,fill,lines){
 }
 function curl(p,dx){ctx.strokeStyle='#22262c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...p);ctx.quadraticCurveTo(p[0]+dx*.6,p[1],p[0]+dx,p[1]-8);ctx.stroke()}
 function drawBuildVec(b,alpha){
+  if(b._rb&&typeof drawRubbleVec==='function')return drawRubbleVec(b,alpha);   // v247 잔해 더미 (g_decay.js)
   if(b.fl>1&&!REGION().dead)return drawTowerVec(b,alpha);
   const{x,y,w,h}=b,X1=x+w,Y1=y+h,pav=b.kind==='pavilion',ru=!!REGION().dead,WH=pav?(ru?22:34):(ru?26:38),o=.38;   // ru: 멸문 폐허 (g_ruin.js) - 낮고 그을린 담, 꺼진 지붕
   ctx.save();ctx.globalAlpha=alpha;
@@ -109,7 +110,7 @@ function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.gl
 const BCACHE=[],BC_MAX=24;
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
-function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}|${ru?0:b._dk||0}`;
+function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead,key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}|${ru?0:b._dk||0}|${b._rb?1:0}`;
   let c=BCACHE.find(o=>o.b===b);
   if(!c||c.key!==key){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=b.fl>1&&!ru?towerDims(b).RH:H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
     const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);
@@ -118,9 +119,9 @@ function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGIO
     if(c){c.key=key;c.cv=cv;c.ox=x0-a.x;c.oy=y0-a.y;c.w=cw/k;c.h=chh/k;BCACHE.splice(BCACHE.indexOf(c),1)}else c={b,key,cv,ox:x0-a.x,oy:y0-a.y,w:cw/k,h:chh/k};
     BCACHE.push(c);if(BCACHE.length>BC_MAX)BCACHE.shift()}finally{GHB=null}}
   const a=toScreen(b.x,b.y),px=Math.round((a.x+c.ox)*k)/k,py=Math.round((a.y+c.oy)*k)/k;
-  ctx.save();ctx.globalAlpha=alpha;const tl=!ru&&b._tilt||0;if(tl){const by=toScreen(b.x+b.w,b.y+b.h).y;ctx.translate(0,by);ctx.transform(1,0,-tl,1,0,0);ctx.translate(0,-by)}   // v246 기우는 전각: 밑동을 축으로 비스듬히 민다
+  ctx.save();ctx.globalAlpha=alpha;const tl=!ru&&!b._rb&&b._tilt||0;if(tl){const by=toScreen(b.x+b.w,b.y+b.h).y;ctx.translate(0,by);ctx.transform(1,0,-tl,1,0,0);ctx.translate(0,-by)}   // v246 기우는 전각: 밑동을 축으로 비스듬히 민다
   ctx.drawImage(c.cv,px,py,c.w,c.h);ctx.restore();
-  if(b.kind==='inn'&&!ru&&!(b._dk>=2)){GHB=gH(b.x+.5,b.y+.5);try{drawInnFlag(b,alpha)}finally{GHB=null}}}
+  if(b.kind==='inn'&&!ru&&!(b._dk>=2)&&!b._rb){GHB=gH(b.x+.5,b.y+.5);try{drawInnFlag(b,alpha)}finally{GHB=null}}}
 function drawStall(i,j){
   const c=map[j][i].cloth,x=i+.15,y=j+.15,X1=i+.85,Y1=j+.85;
   quad([scr(x,y,10),scr(X1,y,10),scr(X1,Y1,10),scr(x,Y1,10)],'#9a7048');quad([scr(x,Y1),scr(X1,Y1),scr(X1,Y1,10),scr(x,Y1,10)],'#6e4c2e');quad([scr(X1,Y1),scr(X1,y),scr(X1,y,10),scr(X1,Y1,10)],'#5a3c22');
