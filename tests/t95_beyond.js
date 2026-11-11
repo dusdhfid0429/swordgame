@@ -14,7 +14,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`경지 ${r1.n}단계 (${r1.top}), 문턱 외공 ${r1.oe} 내공 ${r1.ne} 무리 ${r1.mu}`,r1.n===9&&r1.top.join()==='생사경,자연경'&&r1.oe[1]>r1.oe[0]&&r1.oe[2]>r1.oe[1]&&r1.ne[2]>r1.ne[1]&&r1.mu[2]>r1.mu[1]&&r1.pg===9&&r1.fx===9&&r1.hs===9);
   // 2. 현경에서 벽에 닿으면 생사경 폐관이 열린다 (v164 계단식 벽: 생사경 문턱이 높아 수치를 올림)
   const r2=await p.evaluate(()=>{P.realm=6;realmFxSync();for(const k of['str','end','agi','qi'])P.st[k]=80;P.enl=400;P.qiX=5000;recalc();
-    return{wall:atWall(),nx:rk(7),ch:pgChance(),yrs:pgYears(),hob:hobCost()}});
+    hwFill(1);return{wall:atWall(),nx:rk(7),ch:pgChance(),yrs:pgYears(),hob:hobCost()}});
   ok(`현경 벽: ${r2.wall}, 다음 ${r2.nx}, 성공 ${Math.round(r2.ch*100)}%, ${r2.yrs}년, 호법 ${r2.hob}`,r2.wall&&r2.nx==='생사경'&&r2.ch>0&&r2.yrs===3.5&&r2.hob===4800);
   // 3. 생사경: 수명 +10, 한 해에 한 번 죽음을 버틴다
   const r3=await p.evaluate(()=>{const l0=P.life;P.realm=7;realmFxSync();const dl=P.life-l0;

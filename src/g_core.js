@@ -22,6 +22,7 @@ function newLife(o){
     x:20.5,y:20.5,hp:1,maxHp:1,qi:1,maxQi:1,fx:1,fy:1,path:null,target:null,fcd:[0,0,0,0,0,0],fmax:[1,1,1,1,1,1],gcd:0,bcd:0,ucd:0,scd:{암기:0,독공:0,점혈:0,신공:0},
     swing:0,swingMax:.24,inv:0,hit:0,lastHit:9,moving:false,repath:0,flash:0,flashCol:'255,255,255',jump:0,satk:0,satkMax:.34,sset:[13],sj:0,hc:0,palm:0,
     chain:{last:-1,t:-9,sum:0,n:0},buff:{atk:0,hm:0,crit:0,ult:0},poison:0,chan:null,ride:null,run:false,medit:false};
+  P.wu=typeof wuBorn==='function'?wuBorn():{};   // 병기 이해도 (g_wund.js): 전생에서 이어진 몫
   P.life=Math.round(58+P.st.end*.7+Math.random()*8);
   P.mats.비도=0;
   // 무관에서 시작한다(g_academy.js): 무기와 첫 비급은 무관 2단계에서 고른다. o.cls가 오면(?noacad) 옛 방식: 시작 무기와 그 계열 화 무공 첫 초식 비급
@@ -263,7 +264,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(from===P)runHooks('hitDone',c);
 }
 function gainMast(id,v){
-  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1));   // v220: 인연 '사부의 가르침'
+  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1)*(typeof wuMast==='function'?wuMast(id):1));   // v220: 인연 '사부의 가르침'
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
