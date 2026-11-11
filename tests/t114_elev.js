@@ -71,7 +71,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   ok(`경공으로 바위 언덕에 뛰어오른다 (${r7.l0}층 → ${r7.l1}층), 걸어서는 못 오른다`,!r7.none&&r7.l1>r7.l0&&!r7.walkUp);
   ok(`네 층 위로는 경공이 닿지 않는다`,r6.two&&r6.ok2);
   // 무당파 본산: 붉은 담과 전각 벽색, 그림
-  const r8=await p.evaluate(()=>{enterRegion('hq_mudang',20.5,36);draw();let w=0;for(let k=0;k<N*NH;k++)if(HWL[k])w++;return{w,wc:builds.map(b=>b.wc&&b.wc[0]),main:lvAt(20,6),yard:lvAt(20,14)}});
+  const r8=await p.evaluate(()=>{enterRegion('hq_mudang',20.5,36);draw();let w=0;for(let k=0;k<N*NH;k++)if(HWL[k])w++;return{w,wc:builds.filter(b=>!b.pass).map(b=>b.wc&&b.wc[0]),main:lvAt(20,6),yard:lvAt(20,14)}});
   ok(`무당파 본산: 붉은 담 ${r8.w}칸, 전각 벽 ${r8.wc[0]}, 본전 ${r8.main}층 > 마당 ${r8.yard}층`,r8.w>10&&r8.wc.every(c=>c==='#a8402a')&&r8.main>r8.yard);
   await p.evaluate(()=>{P.x=20.5;P.y=14.5;const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-gH(P.x,P.y)});await p.waitForTimeout(500);await p.screenshot({path:shot('elev_mudang')});
   // 메모리: 키운 바닥 그림은 원래보다 층 높이만큼만 크다

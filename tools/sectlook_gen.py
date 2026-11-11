@@ -294,5 +294,102 @@ for k, v in DAO_SMALL.items():
 L['buddha'] = {"titles": {"지객 장로": "지객승", "호법": "호법승", "장문 집사": "시자승", "장경각 서동": "사미승", "장경각 관리 제자": "장경각 지전", "수묘 제자": "탑원 사미", "의원": "약사승", "외원 집사": "원주승"}}
 for f in (namgung, moyong, paeng, jegal, dang, sama, hwangbo):
     L[f.__name__] = f()
+# 맵이 따로 있는 소림·무당 (v250): 맵 한 장마다 얹기 (g_sectmap.js smMap). 자리·출입구는 그대로
+GOLD = "gold"
+STONE = ["#b3ab9c", "#8f887a"]
+L['map'] = {
+ # 숭산 소림사: 대웅보전 기와 전각, 산길에 산문(문루)과 패루, 서쪽 숲에 승탑, 향로
+ "hq_shaolin": {"seed": 3, "bs": {"0": {"form": "giwa", "wh": 34}}, "arch": [{"y": 29, "form": "gatehouse", "k": "sm"}, {"y": 19, "form": "paifang", "k": "pf"}],
+                "deco": pts("censer", (20, 10)), "scatter": [["stupa", 2, 4, 11, 14, 8], ["stupa", 30, 4, 38, 14, 5]]},
+ # 나한당 연무장: 목인 줄·돌 추·병기 걸이
+ "hq_shaolin_yard": {"seed": 5, "deco": grid("dummy", [14, 16, 24, 26], [12, 18, 22]) + pts("stone", (17, 20), (23, 20), (17, 13), (23, 13)) + pts("rack", (13, 19), (27, 19))},
+ # 탑림: 가운데 칠층탑, 좌우 오층탑, 산비탈 가득 승탑
+ "hq_shaolin_tower": {"seed": 7, "bs": {"0": {"form": "pagoda", "tiers": 5, "th": 22, "rc": "gray", "wc": STONE}}, "add": [{"k": "pav", "x": 14, "y": 11, "w": 2, "h": 2, "form": "pagoda", "tiers": 4, "rc": "gray", "wc": STONE}, {"k": "pav", "x": 25, "y": 12, "w": 2, "h": 2, "form": "pagoda", "tiers": 4, "rc": "gray", "wc": STONE}],
+                      "scatter": [["stupa", 2, 15, 13, 34, 20], ["stupa", 24, 15, 37, 34, 20], ["stupa", 2, 3, 12, 13, 6], ["stupa", 29, 3, 37, 13, 6]]},
+ # 달마동: 정자 대신 바위 동굴, 면벽 바위
+ "hq_shaolin_cave": {"seed": 9, "bs": {"0": {"form": "cave"}}, "deco": pts("censer", (20, 12)), "scatter": [["grock", 13, 7, 28, 14, 5]]},
+ # 무당산 산문: 현악문 패루
+ "hq_mudang_gate": {"seed": 11, "arch": [{"y": 26, "form": "paifang", "k": "pf"}]},
+ # 외원(자소궁 층층 마당): 태극 마당·향로·단약 화로, 패루
+ "hq_mudang_outer": {"seed": 13, "decal": [[20.5, 19.5, "taiji", 2]], "arch": [{"y": 29, "form": "paifang", "k": "pf"}],
+                     "deco": pts("censer", (16, 19), (25, 19)) + pts("furnace", (14, 21), (27, 21))},
+ # 본산: 금전 태화궁(금빛 기와), 태극 마당, 향로, 패루
+ "hq_mudang": {"seed": 15, "bs": {"0": {"form": "giwa", "wh": 34, "rc": GOLD}}, "decal": [[20.5, 13.5, "taiji", 2]], "arch": [{"y": 20, "form": "paifang", "k": "pf"}],
+               "deco": pts("censer", (17, 9), (24, 9)) + pts("furnace", (15, 15), (26, 15))},
+ # 천주봉 금정: 금빛 작은 전각, 향로
+ "hq_mudang_back": {"seed": 17, "bs": {"0": {"form": "giwa", "rc": GOLD}}, "deco": pts("censer", (20, 12), (16, 12), (25, 12))},
+}
+# ---------------- v251 사파 비경·수채·하오문 ----------------
+# 소문파(genHQ 한 장, 건물 셋: 0 본채 19,5 3x2 · 1 14,8 · 2 25,8, 마당 x13-27 y4-16)
+def lair(bs, deco, **o):
+    return {"small": dict({"bs": bs, "lamps": 0, "deco": deco}, **o)}
+SAPA_SMALL = {
+ # 동정수로채: 호숫가 수채, 마당 한쪽이 물이고 널판 나루에 배가 묶였다
+ "dongjeong": lair([{"form": "loghall", "txt": 0}, {"form": "shack"}, {"form": "shack"}], pts("boat", (24, 14), (26, 12), (23, 16)) + pts("logs", (14, 13)) + pts("torch", (18, 8), (23, 8)) + pts("fire", (17, 13)),
+                   wall="pal", ground=[[22, 11, 27, 16, 2], [21, 13, 24, 13, 3]], add=[{"k": "bell", "x": 13, "y": 4, "w": 2, "h": 2, "form": "watch"}]),
+ # (동정수로채는 fort 틀의 skip 에 들어 있어 자기 틀에서 skip 을 비운다)
+ # 만독문: 늪 바닥, 움막, 독 가마·뱀 우리·독초 밭·해골
+ "mandok": lair([{"form": "hut"}, {"form": "hut"}, {"form": "hut"}], pts("gpot", (20, 11), (15, 13), (25, 13)) + pts("cage", (14, 5), (26, 5)) + pts("herbbed", (17, 15), (23, 15), (16, 11), (24, 11)) + pts("skull", (13, 16), (27, 16)) + pts("torch", (18, 8), (23, 8)),
+                yardG=9, wall="mudw"),
+ # 혈랑곡: 붉은 협곡의 늑대 무리, 천막과 가죽 걸이, 해골 더미, 모닥불
+ "hyeolrang": lair([{"form": "loghall", "txt": 0}, {"form": "tentB"}, {"form": "tentB"}], pts("fire", (20, 12)) + pts("skull", (14, 13), (26, 13), (16, 16)) + pts("hide", (15, 5), (25, 5)) + pts("rag", (13, 10), (27, 10)) + pts("cage", (24, 15)),
+                   yardG=7, wall="pal"),
+ # 귀영문: 어둠 속 은신처, 본채는 바위굴, 횃불·찢긴 깃발·잡동사니
+ "gwiyeong": lair([{"form": "cave"}, {"form": "shack"}, {"form": "shack"}], pts("torch", (18, 8), (23, 8), (15, 13), (25, 13)) + pts("rag", (14, 5), (26, 5)) + pts("junk", (17, 15), (24, 15)) + pts("grock", (13, 12), (27, 12)),
+                  yardG=11),
+ # 야수궁: 숲속 짐승 궁, 통나무 전각, 맹수 우리·가죽·해골
+ "yasu": lair([{"form": "loghall", "txt": 0}, {"form": "log"}, {"form": "log"}], pts("cage", (14, 12), (16, 12), (24, 12), (26, 12)) + pts("hide", (15, 5), (25, 5)) + pts("skull", (20, 11)) + pts("fire", (20, 14)),
+              yardG=7, wall="pal"),
+ # 광풍사: 사막 마적, 모래 마당에 천막, 흙담, 모닥불·깃발·해골
+ "gwangpung": lair([{"form": "tentB"}, {"form": "tentB"}, {"form": "tentB"}], pts("fire", (20, 12)) + pts("rag", (14, 5), (26, 5), (13, 12), (27, 12)) + pts("skull", (16, 15), (24, 15)) + pts("logs", (15, 11)),
+                   yardG=12, wall="mudw"),
+}
+for k, v in SAPA_SMALL.items():
+    L[k] = v
+L['dongjeong']['skip'] = []
+# 대문파·중견 본산 (마당 x9-31 y3-22: 0 본전 17,3 6x4 · 1 10,8 · 2 26,8 · 3 11,16 · 4 27,16 (+중견 5 14,20))
+EDGE = [(9, 12), (9, 18), (31, 12), (31, 18), (15, 12), (25, 12), (15, 20), (25, 20)]
+L['map'].update({
+ # 장강수로채: 물길 위 수채. 본산 좌우가 강이고 널판 나루로 마당과 잇는다, 배가 묶였다. 통나무 전각, 물가 망루
+ "hq_janggang": {"seed": 21, "bs": {"0": {"form": "loghall", "txt": 0}, "1": {"form": "log"}, "2": {"form": "log"}, "3": {"form": "log"}, "4": {"form": "log"}},
+                 "ground": [[2, 3, 7, 22, 2], [33, 3, 38, 22, 2], [2, 8, 8, 8, 3], [2, 15, 8, 15, 3], [32, 11, 38, 11, 3], [32, 18, 38, 18, 3]],
+                 "scatter": [["boat", 2, 3, 7, 22, 5], ["boat", 33, 3, 38, 22, 5]], "add": [{"k": "bell", "x": 7, "y": 24, "w": 2, "h": 2, "form": "watch"}, {"k": "drum", "x": 31, "y": 24, "w": 2, "h": 2, "form": "watch"}],
+                 "deco": pts("fire", (20, 14)) + pts("logs", (15, 20), (25, 20)) + pts("torch", (16, 8), (24, 8))},
+ # 하오문: 광주 뒷골목 문파, 붉은 기와와 홍등
+ "hq_haomun": {"seed": 23, "rc": "red", "bs": {str(i): {} for i in range(5)}, "deco": pts("lantern", *EDGE) + pts("well", (20, 18)) + pts("junk", (10, 21), (30, 21))},
+ # 태양궁: 화염산 붉은 궁, 불 화로
+ "hq_taeyang": {"seed": 25, "rc": "red", "bs": {str(i): {} for i in range(6)}, "deco": pts("brazier", (15, 11), (25, 11), (15, 18), (25, 18), (20, 12), (9, 22), (31, 22))},
+ # 북해빙궁: 얼음 지붕, 얼음 기둥
+ "hq_bukhae": {"seed": 27, "rc": "ice", "bs": {str(i): {} for i in range(6)}, "deco": pts("icep", (15, 11), (25, 11), (15, 18), (25, 18), (9, 22), (31, 22)),
+               "scatter": [["icep", 2, 3, 7, 22, 6], ["icep", 33, 3, 37, 22, 6]]},
+})
+# ---------------- v251 금군 황궁·천마신교 마궁 (맵 얹기) ----------------
+MG = {"form": "giwa", "mg": 1, "rc": ""}   # 원래 붉은 지붕(rc) 대신 마교 검붉은 지붕
+L['map'].update({
+ # 황성 금위영: 교장(군영) — 금빛 기와 병영, 병기 걸이·목인·북 망루
+ "hq_geumgun_gate": {"seed": 31, "rc": "gold", "bs": {str(i): {"form": "giwa"} for i in range(6)}, "arch": [{"y": 30, "form": "gatehouse", "k": "sm", "pad": 2}],
+                     "deco": pts("rack", (15, 13), (25, 13), (15, 19), (25, 19)) + grid("dummy", [16, 18, 22, 24], [16]) + pts("stone", (14, 22), (26, 22))},
+ # 황궁: 금빛 큰 기와 전각, 향로, 정문 문루
+ "hq_geumgun": {"seed": 33, "rc": "gold", "bs": dict({"0": {"form": "giwa", "wh": 38}}, **{str(i): {"form": "giwa"} for i in range(1, 9)}), "arch": [{"y": 19, "form": "gatehouse", "k": "sm", "pad": 2}],
+                "deco": pts("censer", (17, 9), (24, 9), (20, 12))},
+ # 십만대산 협곡: 해골 더미·횃불
+ "hq_cheonma_1": {"seed": 35, "scatter": [["skull", 10, 8, 30, 34, 6], ["torch", 12, 10, 28, 34, 5]]},
+ # 천마관: 검은 관문 문루, 화로
+ "hq_cheonma_2": {"seed": 37, "bs": {str(i): MG for i in range(4)}, "arch": [{"y": 20, "form": "gatehouse", "k": "sm", "mg": 1, "pad": 2}], "scatter": [["brazier", 10, 8, 30, 30, 4]]},
+ # 마교 성읍: 검붉은 기와, 홍등
+ "hq_cheonma_3": {"seed": 39, "bs": {"2": MG, "3": MG, "4": MG, "5": MG}, "scatter": [["lantern", 12, 12, 28, 30, 6]]},
+ # 혈마연무장: 목인·병기 걸이·화로·해골
+ "hq_cheonma_4": {"seed": 41, "bs": {str(i): MG for i in range(4)}, "scatter": [["dummy", 12, 12, 28, 26, 8], ["rack", 10, 8, 30, 30, 3], ["brazier", 10, 8, 30, 30, 4], ["skull", 8, 6, 32, 32, 2]]},
+ # 오당 광장: 다섯 당 앞 화로
+ "hq_cheonma_5": {"seed": 43, "bs": {str(i): MG for i in range(6)}, "scatter": [["brazier", 11, 8, 29, 30, 6]]},
+ # 장로원
+ "hq_cheonma_6": {"seed": 45, "bs": {str(i): MG for i in range(3)}, "scatter": [["brazier", 12, 8, 28, 26, 3], ["censer", 12, 8, 28, 26, 2]]},
+ # 천마신전: 거대한 검은 기와 신전, 화로 줄
+ "hq_cheonma": {"seed": 47, "bs": {"0": dict(MG, wh=40), "1": MG, "2": MG}, "deco": pts("brazier", (16, 10), (25, 10), (16, 14), (25, 14)), "scatter": [["skull", 8, 16, 32, 30, 3]]},
+ # 천마동: 정자 대신 바위굴
+ "hq_cheonma_8": {"seed": 49, "bs": {"0": {"form": "cave"}}, "scatter": [["torch", 13, 6, 28, 15, 3], ["skull", 10, 6, 30, 20, 3]]},
+ # 흑혈옥: 옥사 우리·해골
+ "hq_cheonma_9": {"seed": 51, "scatter": [["cage", 10, 6, 30, 26, 8], ["skull", 10, 6, 30, 30, 4], ["torch", 10, 6, 30, 30, 4]]},
+})
 json.dump(D, open(P, 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 print('ok', [f.__name__ for f in (namgung, moyong, paeng, jegal, dang, sama, hwangbo)])
