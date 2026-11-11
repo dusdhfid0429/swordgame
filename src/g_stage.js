@@ -39,7 +39,7 @@ function genStage(c){
     if(th==='peak'){if(hi>.62)g=6;if(y<=3)g=8}else if(th==='snow'){if(hi<.36)g=6}else if(th==='forest'){if(hi>.68)g=7}
     else if(th==='lake'){if(hi>.7&&!near)g=2}else if(th==='manor'){if(hi>.66)g=7}else if(th==='swamp'){if(hi>.66&&!near)g=2;else if(hi<.3)g=0}
     else if(th==='canyon'){if(hi>.6)g=6}else if(th==='dark'){if(hi>.63)g=6;else if(hi<.28)g=10}else if(th==='sand'){if(hi>.72)g=6}
-    if(inYard(x,y))g=4;if(rd)g=g===2?3:1;
+    if(inYard(x,y))g=c.yardG??4;if(rd)g=g===2?3:1;
     let o=null;const edge=x<=1||y<=1||x>=N-2||y>=NH-2;
     if(x===0||y===0||x===N-1||y===NH-1)o=r()<.6?tree:'rock';
     else if(edge&&g!==2)o=r()<.75?(r()<.65?tree:'rock'):null;
@@ -52,9 +52,15 @@ function genStage(c){
       else o=v<.08?'tree':v<.1?'rock':null}
     map[y][x]={g,v:r()};objs[y][x]=o}}
   // 산문 벽: 길만 터 두고 가로로 막는다. 길 양옆에 망루
-  for(const w of[].concat(c.wall||[])){const rx=road(w);for(let y=w;y<=w+1;y++)for(let x=1;x<N-1;x++)if(Math.abs(x-rx-.5)>1.5){objs[y][x]='rock';if(map[y][x].g===2)map[y][x].g=6}
-    c.builds=[...(c.builds||[]),{x:rx-4,y:w-1,w:2,h:2},{x:rx+4,y:w-1,w:2,h:2}]}
-  for(const b0 of c.builds||[]){const b={...b0,mg:c.mg,rc:b0.rc||c.rc,wc:b0.wc||c.wc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  // v248: c.wallK(소품 종류, 'pal' 목책·'mudw' 흙담)면 바위 대신 그 한 줄, 망루는 c.wallTower 형태 (녹림채 산문)
+  const bl=[...(c.builds||[])];
+  for(const w of[].concat(c.wall||[])){const rx=road(w),pal=!!c.wallK;for(let y=w;y<=w+(pal?0:1);y++)for(let x=1;x<N-1;x++)if(Math.abs(x-rx-.5)>1.5){objs[y][x]=pal?c.wallK:'rock';if(map[y][x].g===2)map[y][x].g=6}else if(pal)objs[y][x]=null;
+    bl.push({x:rx-4,y:w-1,w:2,h:2,form:c.wallTower},{x:rx+4,y:w-1,w:2,h:2,form:c.wallTower})}
+  for(const b0 of bl){const b={...b0,mg:c.mg,rc:b0.rc||c.rc,wc:b0.wc||c.wc};for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){objs[j][i]='B';if(map[j][i].g===2||map[j][i].g===1)map[j][i].g=4}builds.push(b)}
+  // v248 문파 특색: 목책 울타리(c.fence [{r:[x0,y0,x1,y1],k,gaps}]) · 소품(c.deco [[x,y,종류]])
+  for(const f of c.fence||[]){const[x0,y0,x1,y1]=f.r,k=f.k||'pal',gap=(x,y)=>(f.gaps||[]).some(([gx,gy,gw=1,gh=1])=>x>=gx&&x<gx+gw&&y>=gy&&y<gy+gh);
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){if(x!==x0&&x!==x1&&y!==y0&&y!==y1)continue;if(x<1||y<1||x>N-2||y>NH-2||objs[y][x]==='B'||onRoad(x,y)||gap(x,y))continue;objs[y][x]=k;if(map[y][x].g===2)map[y][x].g=6}}
+  for(const[x,y,k]of c.deco||[])if(x>0&&y>0&&x<N-1&&y<NH-1&&objs[y][x]!=='B'&&!onRoad(x,y)){objs[y][x]=k;if(map[y][x].g===2)map[y][x].g=7}
   for(const[x,y]of c.lamps||[])if(objs[y][x]==null&&!onRoad(x,y)){objs[y][x]='lamp';lamps.push({x:x+.5,y:y+.5,p:r()*6})}
   if(c.flags)placeFlags(c.s.id,c.flags);
   stageFlavor(c,r,{road,onRoad,inYard,yd,yEnd});
