@@ -93,11 +93,27 @@ hook('npcDlg',c=>{if(c.html!=null)return;const n=c.n;
   if(n.maeng){c.html=maengDlg(n);return}
   if(n.id==='jeong'||n.id==='sa'){const al=n.id==='jeong'?'jeong':'sacheon';c.html=allianceDlg(al)+maengBlock(al,false)}});
 // ---- 총단 맵: 성도 북쪽 포털로 들어간다 ----
-MAENG_IDS.forEach((al,idx)=>{const M=MAENG[al],id=maengId(al),f=alFac(al),[k0,k1]=FAC_KIND[f],pal=al==='jeong'?'taoist':'cultist';
-  const inYard=(x,y)=>x>=8&&x<=32&&y>=6&&y<=30;
-  const c={id,name:M.n,s:{id,n:M.short,al,tier:'big',i:90+idx},th:'manor',seed:8600+idx*53,top:0,yard:[8,6,32,30],
-    builds:[{x:18,y:7,w:5,h:3,kind:'hall'},{x:9,y:10,w:3,h:2,kind:'hall'},{x:28,y:10,w:3,h:2,kind:'hall'},{x:9,y:17,w:3,h:2},{x:28,y:17,w:3,h:2},{x:9,y:23,w:3,h:2},{x:28,y:23,w:3,h:2}],
-    lamps:[[15,12],[25,12],[15,27],[25,27],[18,30],[22,30]],
+// v252 (사용자 2026-11-11 "웅장해야 돼, 연합의 본진이니까"): 담을 두른 큰 궁성. 가운데 축에 외문 문루 → 광장 → 내문 → 대전, 좌우에 종루·고루,
+//  장로각·접객당·당 넷이 양쪽으로 늘어서고 축을 따라 등불(정의맹)·화로(사천맹)가 선다. 정의맹은 흰 담·금빛 대전·푸른 기와의 질서,
+//  사천맹은 목책 성채·망루·붉은 패왕전·검은 기와의 위압. 전각 번호(0 맹주전·1 장로각·2 접객당·3~6 당)는 그대로라 전각 안 맵·NPC는 같다
+const MG_LOOK={
+  jeong:{rc:'green',main:'gold',wall:'jwall',tower:{form:'pagoda',tiers:3,w:3,h:3},axis:'lamp',gate:'gatehouse',
+    deco:[[18,10,'censer'],[22,10,'censer'],[20,11,'furnace'],[13,19,'rack'],[13,21,'rack'],[27,19,'rack'],[27,21,'rack'],[14,24,'dummy'],[16,24,'dummy'],[24,24,'dummy'],[26,24,'dummy'],[14,26,'stone'],[26,26,'stone'],[12,14,'well']]},
+  sacheon:{rc:'brown',main:'red',wall:'pal',tower:{form:'watch',w:2,h:2},axis:'brazier',gate:'gatehouse',
+    deco:[[18,10,'brazier'],[22,10,'brazier'],[20,11,'fire'],[13,19,'rack'],[13,21,'rack'],[27,19,'rack'],[27,21,'rack'],[14,24,'cage'],[26,24,'cage'],[15,26,'logs'],[25,26,'logs'],[12,14,'lantern'],[28,14,'lantern'],[16,13,'lantern'],[24,13,'lantern']]}};
+MAENG_IDS.forEach((al,idx)=>{const M=MAENG[al],id=maengId(al),f=alFac(al),[k0,k1]=FAC_KIND[f],pal=al==='jeong'?'taoist':'cultist',L=MG_LOOK[al];
+  const YD=[6,3,34,30],inYard=(x,y)=>x>=YD[0]&&x<=YD[2]&&y>=YD[1]&&y<=YD[3],seed=8600+idx*53,road=y=>ST_PATH(y,seed%7*.9,YD[3],38,20);
+  const T=L.tower,rx31=road(31),rx35=road(35),gh=(x,y,w,pass,o={})=>({x,y,w,h:1,form:L.gate,pass,...o});
+  const builds=[{x:15,y:3,w:11,h:5,kind:'hall',form:'palace',wh:44,rc:L.main},{x:7,y:9,w:5,h:3,kind:'hall',form:'giwa',wh:34},{x:29,y:9,w:5,h:3,kind:'hall',form:'giwa',wh:34},
+    {x:7,y:16,w:4,h:2,form:'giwa'},{x:30,y:16,w:4,h:2,form:'giwa'},{x:7,y:22,w:4,h:2,form:'giwa'},{x:30,y:22,w:4,h:2,form:'giwa'},
+    {x:11,y:4,w:T.w,h:T.h,form:T.form,tiers:T.tiers,k:'bell'},{x:30-T.w+1,y:4,w:T.w,h:T.h,form:T.form,tiers:T.tiers,k:'drum'},   // 종루·고루 (사천맹은 망루)
+    gh(16,14,9,[19,20,21],{k:'inner'}),   // 내문: 광장과 대전 뜰을 가른다 (양옆은 트여 걷는다)
+    gh(rx31-2,31,6,[rx31,rx31+1],{k:'outer',wh:40}),   // 외문 문루 (담 줄 위)
+    ...(al==='jeong'?[{x:rx35-1,y:35,w:4,h:1,form:'paifang',pass:[rx35,rx35+1],k:'pf'}]:[{x:rx35-4,y:34,w:2,h:2,form:'watch'},{x:rx35+3,y:34,w:2,h:2,form:'watch'}])];
+  const axis=[];for(let y=16;y<=29;y+=3)axis.push([17,y,L.axis],[23,y,L.axis]);
+  const c={id,name:M.n,s:{id,n:M.short,al,tier:'big',i:90+idx},th:'manor',seed,top:0,yard:YD,rc:L.rc,builds,
+    fence:[{r:[5,2,35,31],k:L.wall,gaps:[[rx31-2,31,6,1]]}],deco:[...L.deco,...axis],
+    lamps:al==='jeong'?[[15,12],[25,12],[19,30],[22,30]]:[[19,30],[22,30]],
     zone:(x,y)=>inYard(x,y)?M.n:`${M.n} 문밖`,
     npcs:[{id:'mleader',maeng:al,role:'leader',n:M.leader,x:20.5,y:11.6,pal},
       ...M.elders.map((e,i)=>({id:'melder'+i,maeng:al,role:'elder',n:e,x:11.5+i,y:13.6,pal})),
