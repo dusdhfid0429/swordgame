@@ -279,7 +279,7 @@ function buy(id,i){
   else if(t==='tbook')P.bag.push(mkTBook(k.split(':')[1]));else if(t==='pbook')P.bag.push(mkPBook(k.split(':')[1]));else if(t==='bbook')P.bag.push(mkBBook(k.split(':')[1]));else if(t==='gbook')P.bag.push(mkGBook(k.split(':')[1]));else P.bag.push(mkSBook(k.split(':')[1]));
   log(`샀습니다. (은자 -${p})`,'sys');renderOpen();
 }
-function pNpc(n){const c={n,html:null};runHooks('npcDlg',c);return c.html??pNpcBase(n)}
+function pNpc(n){const c={n,html:null};runHooks('npcDlg',c);return (typeof gyclTalkHtml==='function'?gyclTalkHtml(n):'')+(c.html??pNpcBase(n))}   // v247: 할 이야기(소문)가 있으면 맨 위에 (g_gyclue.js)
 function pNpcBase(n){
   if(n.hq)return hqDlg(n);if(n.id==='post')return postDlg();
   const sellB=B('sellmode','물건 팔기 (행낭)');
