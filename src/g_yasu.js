@@ -12,6 +12,7 @@
 const YASU=GD.YASU,YS=YASU.split;
 const ybRealmOf=r=>clamp((r|0)-1,0,6);
 const ybRealm=()=>ybRealmOf(realmIdx());
+const ybRestTxt=()=>{const m=Math.round(YASU.rest*12);return m>=12?`${Math.round(m/12)}해쯤`:m>=6&&m%6===0?'반 해쯤':`${Math.max(1,m)}달쯤`};
 const ybOut=()=>allies.find(a=>a.kind==='yasu'&&a.hp>0);
 const ybIn=()=>!!(P&&P.sect===YASU.sect);
 const ybAtHq=()=>ybIn()&&sectRegs(YASU.sect).includes(REG);
@@ -50,15 +51,17 @@ function ybTake(sp){const why=ybWhy(sp);if(why){log(why+'.','info');return false
 function ybBack(){if(!P.yb)return;if(!ybAtHq()){log('본산의 맹수 우리 앞에서 돌려놓는다.','info');return}const a=ybOut();delete P.yb;if(a)ybDrop(a);log('맹수를 우리에 돌려놓았습니다.','sys')}
 hook('sectAct',c=>{const a=c.a||'';if(!a.startsWith('yb'))return;c.done=true;c.r=true;
   if(a.startsWith('ybtake:'))ybTake(a.slice(7));else if(a==='ybback')ybBack();else if(a==='ybsk'&&P.yb)P.yb.sk=P.yb.sk?0:1;renderOpen()});
-hook('allyDown',a=>{if(a.kind!=='yasu'||!P.yb)return;P.yb.rest=G.cal+YASU.rest;P.yb.hp=1;recalc();log(`${a.name}이(가) 크게 다쳐 우리로 돌아갔습니다. 반 해쯤 몸을 추스릅니다.`,'dmg')});
+hook('allyDown',a=>{if(a.kind!=='yasu'||!P.yb)return;P.yb.rest=G.cal+YASU.rest;P.yb.hp=1;recalc();log(`${a.name}이(가) 크게 다쳐 우리로 돌아갔습니다. ${ybRestTxt()} 몸을 추스릅니다.`,'dmg')});
 // ---- 6:4 피해: 내가 주는 피해는 own, 나머지 몫은 맹수에게 쌓인다 ----
 const ybMine=f=>f===P||(!!f&&!f.d&&!f.kind);
-hook('dmgOut',c=>{if(!P||!ybMine(c.from)||c.e.duel)return;const a=ybOut();if(!a)return;
+// 맹수가 그 적 곁(near칸 안)에 없으면 몫을 쓸 수 없으니 나누지 않는다 (멀리서 쏘거나 맹수가 다른 데 있으면 주인이 다 친다)
+hook('dmgOut',c=>{if(!P||!ybMine(c.from)||c.e.duel)return;const a=ybOut();if(!a||a.mode==='wait'||dist(a,c.e)>YASU.pool.near)return;
   const solo=c.d;c.d=Math.max(1,Math.round(solo*YS.own));a.pool=(a.pool||0)+solo*YS.beast});
 // 맹수가 물면 쌓인 몫을 낸다 (경지 차·방어는 주인이 칠 때 이미 셈했다)
-hook('allyHit',c=>{if(c.a.kind!=='yasu')return;c.dm=c.a.pool||0;c.a.pool=0});
-// 맞을 때는 주인처럼: 경지 차는 주인 경지로, 난이도 받는 피해, 몸 방어
-hook('allyHurt',c=>{if(c.a.kind!=='yasu'||!P)return;if(c.src&&c.src.d){c.dm*=rMul(rDiff(mobRealm(c.src),realmIdx()));if(typeof diffMul==='function')c.dm*=diffMul('taken')}c.dm=Math.max(1,Math.round(c.dm*(1-guard())))});
+hook('allyHit',c=>{if(c.a.kind!=='yasu')return;c.dm=c.a.pool||0;c.a.pool=0;c.noAggro=true});   // 물어도 적의 눈길을 끌지 않는다 (끄는 건 곰의 도발뿐)
+// 맞을 때는 주인처럼: 회피·경지 차는 주인 것으로, 난이도 받는 피해, 몸 방어
+hook('allyHurt',c=>{if(c.a.kind!=='yasu'||!P)return;if(c.src&&c.src.d&&Math.random()<clamp((hmv()-(c.src.hm||0))/200+.06,.03,.5)){c.miss=true;return}   // 회피도 주인의 것
+  if(c.src&&c.src.d){c.dm*=rMul(rDiff(mobRealm(c.src),realmIdx()));if(typeof diffMul==='function')c.dm*=diffMul('taken')}c.dm=Math.max(1,Math.round(c.dm*(1-guard())))});
 // 맹수 기술: 싸움 중 cd초마다 쌓인 몫을 한꺼번에 내며 종마다 효과가 붙는다 (피해는 더하지 않는다)
 function ybTg(a){const t=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;if(t)return t;
   for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5)return m;return null}
@@ -71,13 +74,13 @@ hook('allyTick',(a,dt)=>{if(a.kind!=='yasu')return;a.skT=(a.skT||0)-dt;const tg=
   const tgs=[tg];if(s.r)for(const m of mobs)if(m!==tg&&m.hp>0&&m.aggro&&!peaceful(m)&&!m.d.villager&&dist(m,tg)<s.r)tgs.push(m);
   const each=(a.pool||0)/tgs.length;a.pool=0;   // 쌓인 몫을 맞은 상대들이 나눠 받는다
   for(const e of tgs){let now=each;if(s.bleed){now=each/2;e.burn=Math.max(e.burn||0,s.bleed);e.burnD=Math.max(e.burnD||0,each/2/s.bleed);e.burnC='220,30,45'}   // 출혈: 몫의 절반을 나눠 흘린다
-    damage(e,Math.max(1,Math.round(now)),s.kb||.2,s.stun||0,a);if(s.slow)e.slow=Math.max(e.slow||0,s.slow);if(!e.tgt||Math.random()<.5)e.tgt=a}
+    damage(e,Math.max(1,Math.round(now)),s.kb||.2,s.stun||0,a);if(s.slow)e.slow=Math.max(e.slow||0,s.slow)}
   if(s.taunt)for(const m of mobs)if(m.hp>0&&m.aggro&&!peaceful(m)&&dist(m,a)<s.taunt){m.tgt=a;m.tauntT=time+s.tauntT}
   addText(a.x,a.y-.5,s.n,'#f0c070');a.fx=(tg.x-a.x)/(d||1);a.fy=(tg.y-a.y)/(d||1)});
 // 문파 창 카드 (g_sect.js membership)
 function ybHtml(s){if(!s||s.id!==YASU.sect||P.sect!==s.id)return'';const y=P.yb,a=ybOut(),r=ybRealm(),here=ybAtHq(),o=YS.own*10,b=YS.beast*10;
   const rest=y&&y.rest&&G.cal<y.rest?Math.max(1,Math.ceil((y.rest-G.cal)*12)):0;
-  const rule=`주인과 맹수는 한 사람 몫이다. 맹수가 곁에 있으면 내가 주는 피해와 최대 생명이 ${o}할, 맹수가 ${b}할을 갖는다. 내가 친 만큼 맹수 몫이 쌓이고 맹수가 물 때 나간다. 쓰러지면 반 해 동안 우리에서 추스른다.`;
+  const rule=`주인과 맹수는 한 사람 몫이다. 맹수가 곁에 있으면 내가 주는 피해와 최대 생명이 ${o}할, 맹수가 ${b}할을 갖는다. 내가 친 만큼 맹수 몫이 쌓이고 맹수가 물 때 나간다. 쓰러지면 ${ybRestTxt()} 우리에서 추스른다.`;
   const now=y?`<p class="note"><b>${esc(y.n||y.sp)}</b> · ${RANKS[r]}의 기세 · ${YASU.sp[y.sp].role}.${a?` 생명 ${Math.ceil(a.hp)}/${a.maxHp}`:''}${rest?` <b class="bad">우리에서 추스르는 중 · ${rest}달</b>`:''}</p>
     <p class="dim">기술 ${YASU.sp[y.sp].skill.n}: 싸움 중 ${YASU.skill.cd}초마다 쌓인 몫을 한꺼번에 낸다. ${rule}</p>`:`<p class="note">${rule}</p>`;
   const rows=Object.keys(YASU.sp).map(sp=>{const why=ybWhy(sp),cur=y&&y.sp===sp;
@@ -109,3 +112,8 @@ hook('mobAct',c=>{const e=c.e,o=e.ybOwner;if(!o)return;
   if(e.aggro&&(!e.tgt||e.tgt===P)&&!mobFoeP(o)){e.aggro=false;e.tgt=null}   // 주인이 덤비지 않는 상대에게는 덤비지 않는다
   if(!e.aggro&&o.aggro&&(o.tgt?o.tgt.hp>0:mobFoeP(o))){e.aggro=true;e.tgt=o.tgt&&o.tgt.hp>0?o.tgt:null}
   if(e.aggro)return;e.home={x:o.x,y:o.y};if(dist(e,o)>2.2){chase(e,o,c.dt,e.sp);c.stop=true}});
+// 적은 주인과 맹수 중 남은 생명 비율대로 노린다 (2~3초마다 다시 고름). 둘이 맞는 몫이 생명 몫을 따라가야 합이 혼자일 때와 같다. 곰의 도발 중에는 곰
+hook('mobAct',c=>{const e=c.e;if(!e.aggro||!P||!P.yb||e.ybOwner||e.duel)return;const a=ybOut();if(!a||a.mode==='wait')return;
+  if(e.tgt&&e.tgt!==P&&e.tgt!==a)return;if(e.tauntT>time){e.tgt=a;return}
+  e.ybRe=(e.ybRe||0)-c.dt;if(e.ybRe>0)return;e.ybRe=2+Math.random();
+  e.tgt=dist(e,a)<8&&Math.random()<a.hp/(a.hp+Math.max(1,P.hp))?a:null});

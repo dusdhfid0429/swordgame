@@ -35,7 +35,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     // 맹수 피해는 다시 나뉘지 않는다
     t.pool=0;h0=foe.hp;damage(foe,100,0,0,t);o.beastNoSplit=h0-foe.hp===100&&t.pool===0;
     // 맞을 때는 주인 경지로 경지 차
-    const h1={a:t,dm:100,src:mk(5)};runHooks('allyHurt',h1);const h2={a:t,dm:100,src:mk(4)};runHooks('allyHurt',h2);o.rhurt=h1.dm>h2.dm*1.2;
+    const R0=Math.random;Math.random=()=>.99;const h1={a:t,dm:100,src:mk(5)};runHooks('allyHurt',h1);const h2={a:t,dm:100,src:mk(4)};runHooks('allyHurt',h2);o.rhurt=!h1.miss&&h1.dm>h2.dm*1.2;
+    Math.random=()=>0;const h3={a:t,dm:100,src:mk(4)};runHooks('allyHurt',h3);Math.random=R0;o.dodge=!!h3.miss;const thp=t.hp;Math.random=()=>0;hurtAlly(t,50,mk(4));Math.random=R0;o.dodge=o.dodge&&t.hp===thp;
     // 기술: 쌓인 몫을 한꺼번에, 내공은 안 쓴다
     P.target=foe;t.x=foe.x-1;t.y=foe.y;t.skT=0;P.qi=P.maxQi=1000;t.pool=500;h0=foe.hp;runHooks('allyTick',t,.05);
     o.skill=P.qi===1000&&t.pool===0&&t.skT===Y.skill.cd&&h0-foe.hp===500;
@@ -74,6 +75,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok('둘의 합 = 혼자 몫',r.sum);
   ok('맹수 피해는 다시 안 나뉜다',r.beastNoSplit);
   ok('맞을 때 주인 경지로 경지 차',r.rhurt);
+  ok('회피도 주인 것',r.dodge);
   ok('기술은 몫을 한꺼번에, 내공 안 씀',r.skill);
   ok('기술 끄기',r.off);
   ok('칠 상대 없으면 몫이 준다',r.decay);
