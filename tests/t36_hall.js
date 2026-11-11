@@ -25,7 +25,7 @@ const path=require('path');
   await go('hq_hwasan',20.5,9.5);
   await p.evaluate(()=>{P.path=[{x:20.5,y:7.5}]});await p.waitForFunction(()=>REG.startsWith('in_'),null,{timeout:8000}).catch(()=>{});await p.waitForTimeout(600);
   const r3=await p.evaluate(()=>({reg:REG,walk:walkAt(P.x,P.y),zone:$('zone').textContent,npcs:npcsHere().map(n=>n.n),floor:map[Math.floor(P.y)][Math.floor(P.x)].g,wallN:objs.flat().filter(o=>o==='wall').length,mobs:mobs.filter(m=>!m.fixed).length}));   // v118: 전각 안 당원·시종(fixed)은 제외
-  ok(`문으로 들어감: ${r3.reg} (${r3.zone}) 바닥 ${r3.floor} 담 ${r3.wallN} ${r3.npcs.join(',')}`,r3.reg==='in_hq_hwasan_0'&&r3.walk&&r3.floor===13&&r3.wallN>30&&r3.npcs.some(n=>/장문인|지객 장로/.test(n))&&r3.mobs===0);
+  ok(`문으로 들어감: ${r3.reg} (${r3.zone}) 바닥 ${r3.floor} 담 ${r3.wallN} ${r3.npcs.join(',')}`,r3.reg==='in_hq_hwasan_0'&&r3.walk&&r3.floor===13&&r3.wallN>30&&r3.npcs.some(n=>/장문인|지객/.test(n))&&r3.mobs===0);
   await p.screenshot({path:shot('hall_inside')});
   await p.evaluate(()=>openNpc(npcsHere().find(n=>n.hq||n.jigak)));   // v238: 대전의 지객 장로가 입문을 받는다await p.waitForTimeout(150);
   ok('전각 대전에서 가입 청할 수 있다',await p.evaluate(()=>!!document.querySelector('[data-act="sjoin:hwasan"]')));

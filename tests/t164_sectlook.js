@@ -30,14 +30,14 @@ const {chromium}=require('playwright');
     r2.noklim.master&&!r2.noklim.floors&&r2.noklim.vault&&/군사/.test(r2.noklim.jigak)&&r2.noklim.lib===2&&r2.noklim.elders===2&&r2.noklim.names.some(x=>/대두령/.test(x)));
   // 3. 산문: 녹림채는 목책 한 줄·망루, 개방은 흙담·판자집. 다른 문파(화산·장강수로채)는 예전 그대로
   const r3=await p.evaluate(()=>{const row=id=>{loadRegion(id);const c=REGION().stage,ks={};for(let x=1;x<N-1;x++){const k=objs[c.wall][x];if(k)ks[k]=(ks[k]||0)+1}return{ks,tw:builds.filter(b=>b.y===c.wall-1).map(b=>b.form||'')}};
-    const a=row('hq_noklim_gate'),c=row('hq_gaebang_gate'),d=row('hq_hwasan_gate');loadRegion('hq_hwasan');const hw=builds.some(b=>b.form),hm=REGIONS[REGIONS.hq_hwasan.halls[0].id];
-    loadRegion('hq_janggang');const jg=builds.some(b=>b.form);return{a,c,d,hw,hwT:hm.tower&&hm.tower.n,jg,gb:reach('hq_noklim_gate'),gg:reach('hq_gaebang_gate')}});
-  ok(`산문: 녹림 ${JSON.stringify(r3.a)} 개방 ${JSON.stringify(r3.c)} 화산 ${JSON.stringify(r3.d)} · 화산 본산 새 형태 없음 ${!r3.hw} 장문전 ${r3.hwT}층 · 장강수로채 그대로 ${!r3.jg} · 막힘 ${[...r3.gb,...r3.gg].join(',')||'없음'}`,
-    r3.a.ks.pal>20&&r3.a.tw.every(f=>f==='watch')&&r3.c.ks.mudw>20&&r3.c.tw.every(f=>f==='shack')&&r3.d.ks.rock>20&&r3.d.tw.every(f=>!f)&&!r3.hw&&r3.hwT===3&&!r3.jg&&!r3.gb.length&&!r3.gg.length);
+    const a=row('hq_noklim_gate'),c=row('hq_gaebang_gate'),d=row('hq_hwasan_gate');loadRegion('hq_hwasan');const hw=builds.filter(b=>b.form).map(b=>b.form).join(),hm=REGIONS[REGIONS.hq_hwasan.halls[0].id];
+    loadRegion('hq_janggang');const jg=builds.some(b=>b.form);return{cave:!PROP.cwall,a,c,d,hw,hwT:hm.tower&&hm.tower.n,jg,gb:reach('hq_noklim_gate'),gg:reach('hq_gaebang_gate')}});
+  ok(`산문: 녹림 ${JSON.stringify(r3.a)} 개방 ${JSON.stringify(r3.c)} 화산 ${JSON.stringify(r3.d)} · 화산 도관 ${r3.hw} 장문전 ${r3.hwT}층 · 장강수로채 그대로 ${!r3.jg} · 막힘 ${[...r3.gb,...r3.gg].join(',')||'없음'}`,
+    r3.a.ks.pal>20&&r3.a.tw.every(f=>f==='watch')&&r3.c.ks.mudw>20&&r3.c.tw.every(f=>f==='shack')&&r3.d.ks.rock>20&&r3.d.tw.every(f=>!f)&&r3.hw==='paifang'&&r3.hwT===3&&r3.cave&&!r3.jg&&!r3.gb.length&&!r3.gg.length);
   // 3b. 세가: 집안마다 다른 장원 (담·문루·기와집채 + 집안 특색), 모든 세가 맵 길이 닿는다
   const r3b=await p.evaluate(()=>{const cnt=(id,k)=>{loadRegion(id);let n=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(objs[y][x]===k)n++;return n},wat=id=>{loadRegion(id);let n=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===2)n++;return n};
     const o={};for(const sid of['namgung','moyong','paeng','jegal','dang','sama','hwangbo']){const s=SECTS[sid],ids=REGIONS[hqId(s)].chain,bad=ids.flatMap(id=>reach(id).map(x=>id+':'+x));loadRegion(hqId(s));
-      o[sid]={bad,gh:builds.some(b=>b.form==='gatehouse'),giwa:builds.filter(b=>b.form==='giwa').length,wall:cnt(hqId(s),'cwall')}}
+      o[sid]={bad,gh:builds.some(b=>b.form==='gatehouse'),giwa:builds.filter(b=>b.form==='giwa').length,wall:cnt(hqId(s),'jwall')}}
     o.f={rack:cnt('hq_namgung','rack'),pond:wat('hq_moyong'),dummy:cnt('hq_paeng','dummy'),stone:cnt('hq_jegal','stone'),herb:cnt('hq_dang','herbbed')};
     loadRegion(REGIONS.hq_namgung.halls[0].id);o.title=(REGIONS[REGIONS.hq_namgung.halls[0].id].npcs.find(q=>q.jigak)||{}).n;return o});
   const cl=['namgung','moyong','paeng','jegal','dang','sama','hwangbo'];
@@ -49,8 +49,14 @@ const {chromium}=require('playwright');
     const s=SECTS.noklim;REGIONS.hq_noklim.dead=1;enterRegion('hq_noklim',20.5,14);await new Promise(r=>setTimeout(r,250));delete REGIONS.hq_noklim.dead;return out});
   ok(`형태 그리기 오류 ${r4.join(',')||'없음'}`,!r4.length);
   // 5. 증축·되돌림: 규모가 바뀌어도 갈래 모양을 따른다 (중견 틀)
-  const r5=await p.evaluate(()=>{const s=SECTS.heukpung,f0=(loadRegion(hqId(s)),builds.some(b=>b.form));G.slt={heukpung:'mid'};sgSync(true);const id=hqId(s);loadRegion(id);const f=builds.filter(b=>b.form).map(b=>b.form),bad=reach(id),gate=REGIONS[`hq_heukpung_gate`];
-    let gk=null;if(gate){loadRegion(gate.stage?`hq_heukpung_gate`:id);gk=REGION().stage&&REGION().stage.wallK}G.slt={};sgSync(true);loadRegion(hqId(s));return{f0,f,bad,gk,lt:s.lt||null,back:builds.some(b=>b.form)}});
-  ok(`흑풍채(소문파) 증축 → 중견: 처음 새 형태 ${r5.f0} → ${r5.f.join(',')} 산문 ${r5.gk} 막힘 ${r5.bad.join(',')||'없음'} · 되돌리면 ${r5.lt} ${r5.back}`,!r5.f0&&r5.f.includes('loghall')&&r5.f.includes('cave')&&r5.gk==='pal'&&!r5.bad.length&&!r5.lt&&!r5.back);
+  const r5=await p.evaluate(()=>{const s=SECTS.heukpung,f0=(loadRegion(hqId(s)),builds.filter(b=>b.form).map(b=>b.form).join());G.slt={heukpung:'mid'};sgSync(true);const id=hqId(s);loadRegion(id);const f=builds.filter(b=>b.form).map(b=>b.form),bad=reach(id),gate=REGIONS[`hq_heukpung_gate`];
+    let gk=null;if(gate){loadRegion(gate.stage?`hq_heukpung_gate`:id);gk=REGION().stage&&REGION().stage.wallK}G.slt={};sgSync(true);loadRegion(hqId(s));return{f0,f,bad,gk,lt:s.lt||null,back:builds.filter(b=>b.form).map(b=>b.form).join()}});
+  ok(`흑풍채(소문파) 산채 ${r5.f0} → 증축 중견: → ${r5.f.join(',')} 산문 ${r5.gk} 막힘 ${r5.bad.join(',')||'없음'} · 되돌리면 ${r5.lt} ${r5.back}`,r5.f0==='loghall,log,log,watch,watch'&&r5.f.includes('loghall')&&r5.f.includes('cave')&&r5.gk==='pal'&&!r5.bad.length&&!r5.lt&&r5.back===r5.f0);
+  // 5b. 소문파 세가 6곳: 본산 한 장에 담·문루·기와집채 + 집안 특색, 길이 닿는다
+  const r5b=await p.evaluate(()=>{const o={};for(const sid of['eon','ak','ungga','danri','sanggwan','danmok']){const s=SECTS[sid],id=hqId(s),bad=reach(id);let w=0,k={};for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const q=objs[y][x];if(q==='jwall')w++;else if(q&&PROP[q])k[q]=(k[q]||0)+1}
+      o[sid]={bad,w,k,f:builds.filter(b=>b.form).map(b=>b.form),wat:map.flat().filter(t=>t.g===2).length,pav:builds.some(b=>b.kind==='pavilion')}}return o});
+  const sm=['eon','ak','ungga','danri','sanggwan','danmok'];
+  ok(`소문파 세가: ${sm.map(k=>`${k} 담${r5b[k].w} ${JSON.stringify(r5b[k].k)}`).join(' · ')} · 막힘 ${sm.flatMap(k=>r5b[k].bad).join(',')||'없음'}`,
+    sm.every(k=>r5b[k].w>30&&r5b[k].f.includes('gatehouse')&&r5b[k].f.filter(f=>f==='giwa').length>=3&&!r5b[k].bad.length)&&r5b.eon.k.dummy>=6&&r5b.ak.k.rack>=6&&r5b.danmok.k.herbbed>=10&&r5b.danri.wat>=20&&r5b.ungga.pav&&r5b.sanggwan.f.length>=8);
   await p.evaluate(()=>{enterRegion('hq_noklim',20.5,13)});await p.waitForTimeout(800);await p.screenshot({path:require('path').resolve(__dirname,'shots/t160_noklim.png')}).catch(()=>{});
   console.log(errs.length?'ERRORS\n'+errs.slice(0,8).join('\n'):'오류 없음');await b.close()})();

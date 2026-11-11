@@ -1,16 +1,16 @@
 # v248 문파 특색 본산: 세가 집안마다 배치 (사용자 2026-11-11 '2번으로 진행해')
 # 이 스크립트가 data/sectmap.json 의 SECTMAP.look[문파 id]·look.clan 을 다시 쓴다. 손으로 고치지 말고 여기서 고친 뒤 돌린다:
 #   python3 tools/sectlook_gen.py
-# 맵 40×40, 길은 아래 가운데(x 20·21)로 들어와 마당 아랫줄(yard[3])에 닿는다. 담(cwall)은 마당을 두르고, 길이 닿는 곳에 문루(gatehouse, 가운데 두 칸은 지나간다).
+# 맵 40×40, 길은 아래 가운데(x 20·21)로 들어와 마당 아랫줄(yard[3])에 닿는다. 담(jwall)은 마당을 두르고, 길이 닿는 곳에 문루(gatehouse, 가운데 두 칸은 지나간다).
 # 건물 k 는 data/sectmap.json kinds 의 전각 종류(사람·층), form 은 r_bform.js 형태. 문 칸 = (x+w//2, y+h) 는 비워 둔다.
 import json, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P = os.path.join(ROOT, 'data', 'sectmap.json')
 
 def ring(yd, gaps=()):  # 마당을 두르는 담: 위는 yard[1]-1, 아래는 yard[3] (문루 줄)
-    return {"r": [yd[0]-1, yd[1]-1, yd[2]+1, yd[3]], "k": "cwall", "gaps": [list(g) for g in gaps]}
+    return {"r": [yd[0]-1, yd[1]-1, yd[2]+1, yd[3]], "k": "jwall", "gaps": [list(g) for g in gaps]}
 def wall(x0, y0, x1, y1, gaps=()):  # 안담 한 줄
-    return {"r": [x0, y0, x1, y1], "k": "cwall", "gaps": [list(g) for g in gaps]}
+    return {"r": [x0, y0, x1, y1], "k": "jwall", "gaps": [list(g) for g in gaps]}
 def gate(yd, **o):
     return dict({"k": "dorm", "x": 19, "y": yd[3], "w": 4, "h": 1, "form": "gatehouse", "pass": [20, 21]}, **o)
 def B(k, x, y, w, h, **o):
@@ -190,6 +190,92 @@ def hwangbo():
         "lamps": [[15, 8], [24, 8]], "flags": [[17, 25], [24, 25]]}
     return {"mid": {"hq": hq}}
 
+# ---------------- 소문파 (genHQ 한 장): 건물 0 본전(19,5 3×2, 문 20,7) · 1 왼채(14,8 2×2, 문 15,10) · 2 오른채(25,8, 문 26,10) · 장원 지형이면 3(10,22)·4(27,24) 바깥채 ----
+# 마당 x13~27 y4~16, 담은 x12·28·y3·17 (산길 자리는 문루)
+GIWA5 = [{"form": "giwa"}] * 5
+def small(deco, **o):
+    return {"small": dict({"bs": GIWA5, "wall": "jwall", "gate": "gatehouse", "deco": deco}, **o)}
+SMALL = {
+    # 진주언가: 권법 가문, 마당 가득 목인장과 단련석
+    "eon": small(grid("dummy", [15, 18, 23, 25], [12, 14]) + pts("stone", (14, 5), (16, 5), (24, 5), (26, 5))),
+    # 산동악가: 악비의 후예, 창 걸이와 정충보국 연무장
+    "ak": small(pts("rack", (14, 12), (16, 12), (24, 12), (26, 12), (15, 14), (25, 14)) + grid("dummy", [17, 23], [14]) + pts("well", (24, 5))),
+    # 사천운가: 구름 위 봉우리, 소나무 정원과 벼랑 정자
+    "ungga": small(pts("grock", (14, 13), (26, 13), (16, 5)) + pts("pine", (13, 15), (27, 15), (13, 11), (27, 11)),
+                   add=[{"k": "pav", "x": 23, "y": 4, "w": 2, "h": 2, "kind": "pavilion"}]),
+    # 단리세가: 남쪽 왕가풍, 못과 수각
+    "danri": small(pts("grock", (17, 15), (24, 12)), ground=[[13, 11, 17, 15, 2], [23, 13, 27, 15, 2]],
+                   add=[{"k": "pav", "x": 14, "y": 12, "w": 2, "h": 2, "kind": "pavilion"}]),
+    # 상관세가: 부유한 상가, 곳간 줄과 우물
+    "sanggwan": small(pts("well", (17, 13)) + pts("junk", (13, 14)),
+                      add=[G("store", 23, 12, 4, 2), G("store", 13, 12, 3, 2), G("store", 13, 4, 3, 2)]),
+    # 단목세가: 의술 가문, 약초 밭과 약재 말리는 걸이
+    "danmok": small(grid("herbbed", [14, 15, 16, 24, 25, 26], [12, 14]) + pts("well", (23, 5)) + pts("hide", (17, 5))),
+}
+FORT_SMALL = {"small": {"bs": [{"form": "loghall", "txt": 0}, {"form": "log"}, {"form": "log"}, {"form": "tentB"}, {"form": "tentB"}],
+              "wall": "pal", "yardG": 1, "lamps": 0,
+              "add": [{"k": "bell", "x": 13, "y": 4, "w": 2, "h": 2, "form": "watch"}, {"k": "drum", "x": 26, "y": 4, "w": 2, "h": 2, "form": "watch"}],
+              "deco": pts("fire", (20, 12)) + pts("logs", (14, 13), (26, 13)) + pts("torch", (18, 8), (23, 8)) + pts("cage", (26, 15))}}
+
+# ---------------- 도관 (도가 대문파): 기본 틀(지금 배치) 위에 패루·태극 마당·향로·단약 화로, 문파마다 나무 ----------------
+import copy
+def dao_big(D, trees=(), extra=None):
+    T = copy.deepcopy(D['SECTMAP']['tiers']['big']['maps'])
+    hq, out, bk = T['hq'], T['outer'], T['back']
+    for m in (hq, out, bk):
+        m['builds'].append({"k": "dorm", "x": 19, "y": m['yard'][3], "w": 4, "h": 1, "form": "paifang", "pass": [20, 21]})
+    hq['decal'] = [[20.5, 14.5, "taiji", 3]]
+    hq['deco'] = pts("censer", (20, 9)) + pts("furnace", (15, 19), (25, 19)) + [[x, y, t] for t, (x, y) in zip(list(trees) * 4, ((9, 14), (31, 14), (9, 20), (31, 20)))]
+    out['decal'] = [[20.5, 17.5, "taiji", 2]]
+    out['deco'] = pts("censer", (20, 12)) + grid("dummy", [13, 27], [14, 18]) + [[x, y, t] for t, (x, y) in zip(list(trees) * 4, ((8, 12), (32, 12), (8, 20), (32, 21)))]
+    bk['deco'] = pts("furnace", (24, 8)) + [[x, y, t] for t, (x, y) in zip(list(trees) * 4, ((13, 14), (16, 15), (24, 15), (27, 6)))]
+    if extra: extra(T)
+    return {"big": T, "titles": DAO_TITLES}
+DAO_TITLES = {"지객 장로": "지객 도인", "장경각 서동": "도동", "수묘 제자": "수묘 도인"}
+DAO_TREES = {"hwasan": ("plum",), "kunlun": ("pine",), "kongtong": ("rock",), "jeomchang": ("bamboo",), "cheongseong": ("bamboo",), "jongnam": ("pine",)}
+def kongtong_x(T):
+    T['hq']['deco'] += pts("grock", (12, 12), (28, 12))
+
+# ---------------- 사찰: 아미(대문파) 축선 + 쌍탑 + 탑림, 포달랍궁 흰 궁, 대뢰음사 둥근 지붕 ----------------
+def emei(D):
+    T = copy.deepcopy(D['SECTMAP']['tiers']['big']['maps'])
+    hq, out, bk = T['hq'], T['outer'], T['back']
+    hq['builds'] += [{"k": "pav", "x": 14, "y": 11, "w": 2, "h": 2, "form": "pagoda", "tiers": 5}, {"k": "pav", "x": 25, "y": 11, "w": 2, "h": 2, "form": "pagoda", "tiers": 5},
+                     {"k": "dorm", "x": 19, "y": hq['yard'][3], "w": 4, "h": 1, "form": "gatehouse", "pass": [20, 21]}]
+    hq['deco'] = pts("censer", (20, 10)) + pts("censer", (20, 15))
+    out['builds'].append({"k": "dorm", "x": 19, "y": out['yard'][3], "w": 4, "h": 1, "form": "gatehouse", "pass": [20, 21]})
+    out['deco'] = pts("censer", (20, 13)) + grid("dummy", [13, 27], [14, 18])
+    bk['builds'].append({"k": "pav", "x": 23, "y": 5, "w": 2, "h": 2, "form": "pagoda", "tiers": 7})
+    bk['deco'] = grid("stupa", [13, 15, 17], [12, 14]) + grid("stupa", [23, 25, 27], [12, 14]) + pts("censer", (20, 12))
+    return {"big": T}
+def podal(D):
+    T = copy.deepcopy(D['SECTMAP']['tiers']['mid']['maps'])
+    hq = T['hq']
+    for b in hq['builds']:
+        if b['k'] == 'main2': b.update(form="potala", tiers=3, fl=1)
+        elif b['k'] in ('lib2', 'treas1', 'elders1'): b.update(form="potala", tiers=2, fl=1)
+    hq['builds'].append({"k": "dorm", "x": 19, "y": hq['yard'][3], "w": 4, "h": 1, "form": "gatehouse", "pass": [20, 21]})
+    hq['deco'] = grid("stupa", [14, 26], [10, 17]) + pts("censer", (20, 11))
+    return {"mid": T}
+def daeroe(D):
+    T = copy.deepcopy(D['SECTMAP']['tiers']['mid']['maps'])
+    hq = T['hq']
+    for b in hq['builds']:
+        if b['k'] == 'main2': b.update(form="dome", fl=1)
+    hq['builds'] += [{"k": "pav", "x": 14, "y": 17, "w": 2, "h": 2, "form": "pagoda", "tiers": 5},
+                     {"k": "dorm", "x": 19, "y": hq['yard'][3], "w": 4, "h": 1, "form": "gatehouse", "pass": [20, 21]}]
+    hq['deco'] = pts("censer", (20, 10)) + pts("stupa", (25, 18), (27, 18))
+    return {"mid": T}
+
+# 도가 소문파: 패루·태극 마당·향로, 문파 나무
+def dao_small(tree, **o):
+    return {"small": dict({"gate": "paifang", "decal": [[20.5, 12.5, "taiji", 2]], "deco": pts("censer", (20, 10)) + pts("furnace", (15, 14)) + pts(tree, (13, 15), (27, 15), (13, 5), (27, 5))}, **o)}
+DAO_SMALL = {"hyeongsan": dao_small("maple"), "cheonsan": dao_small("pine"), "taesan": dao_small("pine", deco=pts("censer", (20, 10)) + pts("stone", (14, 13), (26, 13), (14, 5), (26, 5))),
+             "jeonjin": dao_small("pine"), "gomyo": dao_small("maple"), "seolsan": dao_small("pine"), "jangbaek": dao_small("pine"),
+             "mosan": dao_small("pine", deco=pts("furnace", (20, 10), (15, 14), (25, 14)) + pts("stone", (13, 5), (27, 5))), "nabu": dao_small("bamboo"), "haenam": dao_small("bamboo"),
+             "bota": {"small": {"gate": "gatehouse", "add": [{"k": "pav", "x": 23, "y": 12, "w": 2, "h": 2, "form": "pagoda", "tiers": 5}], "deco": pts("censer", (20, 10)) + pts("stupa", (14, 13), (16, 15))}},
+             "yangga": small(pts("rack", (14, 12), (16, 12), (24, 12), (26, 12)) + grid("dummy", [17, 23], [14]))}
+
 CLAN_TITLES = {"지객 장로": "총관", "총관": "장방 집사", "장부 집사": "장부 하인", "호법": "호위무사", "장문 집사": "가주 시종",
                "전공 장로": "가문 어른", "대장로": "큰 어른", "장로": "가문 어른", "집법 장로": "가법 어른", "장경각주": "서고 어른",
                "장경각 서동": "서동", "장경각 관리 제자": "서고지기", "수묘 제자": "사당지기", "외원 집사": "객청 집사", "의원": "가문 의원"}
@@ -197,6 +283,15 @@ CLAN_TITLES = {"지객 장로": "총관", "총관": "장방 집사", "장부 집
 D = json.load(open(P, encoding='utf8'))
 L = D['SECTMAP']['look']
 L['clan'] = {"titles": CLAN_TITLES}
+for k, v in SMALL.items():
+    L[k] = v
+L['fort'].update(FORT_SMALL)
+for k, t in DAO_TREES.items():
+    L[k] = dao_big(D, t, kongtong_x if k == 'kongtong' else None)
+L['emei'] = emei(D); L['podal'] = podal(D); L['daeroe'] = daeroe(D)
+for k, v in DAO_SMALL.items():
+    L[k] = v
+L['buddha'] = {"titles": {"지객 장로": "지객승", "호법": "호법승", "장문 집사": "시자승", "장경각 서동": "사미승", "장경각 관리 제자": "장경각 지전", "수묘 제자": "탑원 사미", "의원": "약사승", "외원 집사": "원주승"}}
 for f in (namgung, moyong, paeng, jegal, dang, sama, hwangbo):
     L[f.__name__] = f()
 json.dump(D, open(P, 'w', encoding='utf8'), ensure_ascii=False, indent=1)

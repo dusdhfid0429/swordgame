@@ -46,14 +46,14 @@ function smBuild(s){const L=smLook(s),T=L&&L[smT(s)]||SMAP.tiers[smT(s)].maps,hq
   const old=[hq,oid,bid].flatMap(smClear),keep={master:old.find(n=>n.hq===s.id)};
   for(const R of[REGIONS[oid],REGIONS[bid]])if(R)R.npcs=R.npcs.filter(n=>!n.elder&&!n.steward&&!n.disc);
   // 본산(장문 구역): genHQ 대신 genStage 틀로 — 마당·길·위로 나가는 길(topX)
-  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:t.topX!=null?1:0,topX:t.topX,yard:t.yard,yardG:t.yardG,fence:t.fence,deco:t.deco,ground:t.ground,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
+  {const R=REGIONS[hq],t=T.hq,c={id:hq,name:R.name,s,th,seed:7000+s.i*131,top:t.topX!=null?1:0,topX:t.topX,yard:t.yard,yardG:t.yardG,fence:t.fence,deco:t.deco,ground:t.ground,decal:t.decal,builds:t.builds.map(b=>({...b})),lamps:t.lamps,flags:t.flags,nodes:{herb:8,ore:6,wood:4}};
     const st=GD.SECT_STYLE[s.id]||{};c.rc=st.roof;c.wc=st.wall;c.tree=st.tree;c.props=st.props;
     R.stage=c;R.gen=()=>genStage(c);if(t.topX!=null)R.topX=t.topX;const nm=smName(s,t.builds[0].k),[y0,y1]=[t.yard[1],t.yard[3]];
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=y0&&y<=y1?`${s.n} ${nm} 앞마당`:y>=31?`${hqPlace(s)} 어귀`:`${hqPlace(s)} 산길`;
     for(const g of R.gates)if(g.to===bid)g.x=t.topX+.5;const B=REGIONS[bid];if(B)for(const g of B.gates)if(g.to===hq)g.tx=t.topX+.5;
     c.builds.forEach((b,i)=>smHall(hq,i,b,s,keep))}
   // 외원(살림 구역)
-  if(REGIONS[oid]&&T.outer){const R=REGIONS[oid],c=R.stage,t=T.outer;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;c.flags=t.flags;
+  if(REGIONS[oid]&&T.outer){const R=REGIONS[oid],c=R.stage,t=T.outer;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.decal=t.decal;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;c.flags=t.flags;
     R.zone=(x,y)=>x>=t.yard[0]&&x<=t.yard[2]&&y>=t.yard[1]&&y<=t.yard[3]?`${s.n} 외원 마당`:`${hqPlace(s)} 외원`;
     c.builds.forEach((b,i)=>smHall(oid,i,b,s,keep));
     // 암기 문파(g_amgi)의 암기방 대장장이: 창고 한 채를 암기방으로
@@ -63,12 +63,30 @@ function smBuild(s){const L=smLook(s),T=L&&L[smT(s)]||SMAP.tiers[smT(s)].maps,hq
       for(const g of A.gates)if(g.to===hq){g.to=oid;g.tx=ax+1.8;g.ty=ay;g.label=R.name}
       const g0=R.gen;R.gen=()=>{g0();const yd=t.yard;for(let x=1;x<=yd[0];x++)for(const y of[Math.floor(ay),Math.floor(ay)-1]){objs[y][x]=null;if(map[y][x].g===2||map[y][x].g===6)map[y][x].g=1;else if(map[y][x].g!==4)map[y][x].g=1}}}}
   // 후산(비전 구역)
-  if(REGIONS[bid]&&T.back){const R=REGIONS[bid],c=R.stage,t=T.back;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;R.name=`${hqPlace(s)} 후산`;R.zone=()=>R.name;
+  if(REGIONS[bid]&&T.back){const R=REGIONS[bid],c=R.stage,t=T.back;c.yard=t.yard;c.yardG=t.yardG;c.fence=t.fence;c.deco=t.deco;c.ground=t.ground;c.decal=t.decal;c.builds=t.builds.map(b=>({...b}));c.lamps=t.lamps;R.name=`${hqPlace(s)} 후산`;R.zone=()=>R.name;
     c.builds.forEach((b,i)=>smHall(bid,i,b,s,keep))}
   // 산문 맵: 갈래의 담·망루 (녹림채 목책, 개방 무너진 흙담)
   {const G=REGIONS[`hq_${s.id}_gate`],g=L&&L.gate;if(G&&G.stage){G.stage.wallK=g&&g.wallK;G.stage.wallTower=g&&g.tower}}
-  REGIONS[hq].smTier=smT(s)}
+  REGIONS[hq].smTier=smT(s);REGIONS[hq].decal=null}
 for(const s of Object.values(SECTS))if(smOn(s))smBuild(s);
+// ---- v248 소문파 본산 (genHQ 한 장)도 갈래·집안 모양으로: 건물 자리·문은 그대로 두고 형태만 바꾸고, 담·소품·땅을 얹는다 ----
+// look[id or 갈래].small = {bs:[건물 번호 순서대로 덮을 값], add:[더 세울 건물], yardG, ground, deco, wall:'jwall'|'pal'|'mudw', gate:문루 형태, lamps:0}
+// 마당은 genHQ 의 x13~27·y4~16. 산길이 마당 아랫줄 밑(y17)으로 들어온다. 증축하면(s.lt) smBuild 가 맡는다
+function smSmall(s){const L=(smLook(s)||{}).small;if(!L||s.lt)return;const R=REGION(),sd=s.i*.7,px=hqPath(17,sd),busy=new Set((R.npcs||[]).map(n=>Math.floor(n.x)+','+Math.floor(n.y)));
+  (L.bs||[]).forEach((o,i)=>{if(builds[i]&&o)Object.assign(builds[i],o)});
+  const path=new Set();for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(map[y][x].g===1||map[y][x].g===3)path.add(x+','+y);   // 산길 (마당 바닥을 흙으로 바꾸기 전에 찍어 둔다)
+  const free=(x,y)=>x>0&&y>0&&x<N-1&&y<NH-1&&objs[y][x]!=='B'&&objs[y][x]!=='lamp'&&!path.has(x+','+y)&&!busy.has(x+','+y);
+  if(L.yardG!=null)for(let y=4;y<=16;y++)for(let x=13;x<=27;x++)if(map[y][x].g===4&&objs[y][x]!=='B')map[y][x].g=L.yardG;
+  for(const[x0,y0,x1,y1,g]of L.ground||[])for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(free(x,y)||g===2&&objs[y][x]!=='B'){map[y][x].g=g;if(objs[y][x]&&objs[y][x]!=='B')objs[y][x]=null}
+  for(const b of L.add||[]){let ok=true;for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)if(!free(i,j))ok=false;if(!ok)continue;const nb={...b,rc:(GD.SECT_STYLE[s.id]||{}).roof};
+    for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++){if(nb.pass&&nb.pass.includes(i))continue;objs[j][i]='B';if(map[j][i].g===2)map[j][i].g=4}builds.push(nb)}
+  if(L.wall){const k=L.wall;for(let y=3;y<=17;y++)for(let x=12;x<=28;x++){if(x!==12&&x!==28&&y!==3&&y!==17)continue;if(y===17&&(x===px||x===px+1||(L.gate&&x>=px-1&&x<=px+2)))continue;if(free(x,y)){objs[y][x]=k;if(map[y][x].g===2)map[y][x].g=6}}
+}
+  if(L.gate){const g={x:px-1,y:17,w:4,h:1,form:L.gate,pass:[px,px+1],rc:(GD.SECT_STYLE[s.id]||{}).roof};for(const i of[px-1,px+2])objs[17][i]='B';for(const i of g.pass)objs[17][i]=null;builds.push(g)}
+  for(const[x,y,k]of L.deco||[])if(free(x,y))objs[y][x]=k;
+  R.decal=L.decal;
+  if(L.lamps===0){for(let i=lamps.length-1;i>=0;i--){const l=lamps[i],x=Math.floor(l.x),y=Math.floor(l.y);if(objs[y][x]==='lamp')objs[y][x]=null;lamps.splice(i,1)}}}
+for(const s of Object.values(SECTS)){const R=REGIONS[hqId(s)];if(!R||smOn(s)||!(smLook(s)||{}).small||R.smSmall)continue;const g0=R.gen;R.smSmall=1;R.gen=()=>{g0();smSmall(s)}}
 // ---- 새 역할 NPC 창 ----
 function smSay(n,i){const L=SMAP.say[n.srole]||[''],s=SECTS[n.ssid];return(L[i??Math.floor(time/7)%L.length]||'').replace('{s}',s.n).replace('{rank}',P.sect===s.id?rankName(s.id):'손님')}
 function smDlg(n){const s=SECTS[n.ssid],member=P.sect===s.id,r=n.srole;
