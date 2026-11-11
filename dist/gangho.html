@@ -6839,6 +6839,8 @@ function bakeDeco(g,o,TR){const{th,k,X0,Y0,x0,y0,C,CH,N,NH}=o,tileG=pixTile(o); 
     g.fillStyle=t===6&&TR&&TR.rock?`rgb(${TR.rock.map(v=>v*(.55+r()*.5)|0).join(',')})`:t===12?`hsl(38,35%,${52+r()*16}%)`:t===10?`hsl(14,40%,${30+r()*18}%)`:t===11?`hsl(0,4%,${14+r()*14}%)`:`hsl(210,6%,${t===8?62+r()*20:36+r()*22}%)`;g.beginPath();g.ellipse(x,y,s*1.4,s*.8,0,0,7);g.fill()}
 }
 const BAKE_PREVIEW=.2;   // 일꾼이 굽는 동안 깔 미리보기 배율
+// v248 (사용자 2026-11-11 '흐리게 하는걸로'): 줄여 구운 미리보기는 돌바닥 줄눈이 점박이로 뭉개지므로 늘려 깔 때 흐리게 한다 (미리보기 한 칸 크기의 이 비율만큼)
+const BAKE_BLUR=.9;
 // 지금 맵 칸 종류를 한 줄 배열로 (일꾼에게 넘긴다)
 // o.G(칸 배열)로 보는 tileG
 const pixTile=o=>{const{N,NH,G}=o;return(x,y)=>{x=Math.max(0,Math.min(N-1,Math.floor(x)));y=Math.max(0,Math.min(NH-1,Math.floor(y)));return G[y*N+x]}};
@@ -6863,7 +6865,7 @@ function pixDone(j,d){j.c.baking=0;j.fin(d);
 // 놀이 중이면 픽셀 함수 f를 일꾼에게 맡기고, 그동안 c에 줄여 구운 미리보기를 늘려 깐다. 다 되면 fin(d). 맡기지 못하면 false (부른 쪽이 동기로 굽는다)
 function pixLater(f,o,c,fin){if(!playing||window.BAKE_SYNC)return false;const w=bakeWorker();if(!w)return false;
   const q=BAKE_PREVIEW,o2={...o,k:(o.k||1)*q,gw:Math.max(1,Math.round(o.gw*q)),gh:Math.max(1,Math.round(o.gh*q))},t=document.createElement('canvas');t.width=o2.gw;t.height=o2.gh;
-  const tg=t.getContext('2d'),im=tg.createImageData(o2.gw,o2.gh);im.data.set(PIXF()[f](o2));tg.putImageData(im,0,0);{const cg=c.getContext('2d');cg.imageSmoothingQuality='high';cg.drawImage(t,0,0,o.gw,o.gh)}
+  const tg=t.getContext('2d'),im=tg.createImageData(o2.gw,o2.gh);im.data.set(PIXF()[f](o2));tg.putImageData(im,0,0);{const cg=c.getContext('2d');cg.imageSmoothingQuality='high';if('filter' in cg)cg.filter=`blur(${Math.max(1,BAKE_BLUR/q*(o.k||1)).toFixed(1)}px)`;cg.drawImage(t,0,0,o.gw,o.gh);cg.filter='none'}
   const id=++BAKE_N;BAKE_JOB.set(id,{f,o,c,fin});c.baking=1;w.postMessage({id,f,o});return true}
 // 큰 지역(성) 바닥: 한 장으로 구우면 휴대폰 메모리가 모자라서, 12×12칸 조각을 화면 가까이에서만 굽고 멀어진 조각은 버린다
 const CHUNK=12,CHUNK_K=.6,CHUNK_KEEP=64;
