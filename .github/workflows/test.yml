@@ -16,7 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Playwright 설치
-        run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+        # 러너의 우분투 패키지 서버 DNS가 끊기면(2026-11-11) 글꼴 추가 설치만 실패한다: 라이브러리는 이미 있으니 브라우저만 받고 이어간다
+        run: npm i --no-save playwright@1.56.1 && (npx playwright install --with-deps chromium || npx playwright install chromium)
       - name: 빌드
         run: python3 build.py
       - name: dist가 소스와 같은지

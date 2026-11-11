@@ -327,7 +327,10 @@ function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,
 // 게임 시간은 접속해 화면을 보는 동안만 흐른다 (사용자 2026-10-21): 한 프레임 최대 0.05초, 화면을 가리면 requestAnimationFrame이 멈추고, 꺼져 있던 시간은 불러올 때 셈하지 않는다. 창을 열면 paused
 let last=performance.now();
 // 발열·배터리 (g_power.js): 120Hz 화면에서도 정해진 장수만 그린다. 차례가 아닌 rAF는 그냥 넘긴다(dt는 그린 장 사이로 잰다)
-function loop(now){requestAnimationFrame(loop);if(!pwrDue(now))return;
+// 백그라운드 이중 안전장치 (사용자 2026-11-11 '백그라운드에 있어도 나이를 먹어?'): 보통은 숨겨지면 rAF가 멈추지만, 숨겨진 채 rAF를 띄엄띄엄 돌리는 웹뷰가 있어도
+// document.hidden이면 아무것도 흐르지 않게 하고, 다시 보일 때 시계를 지금으로 맞춰 첫 프레임이 밀린 시간을 받지 않게 한다
+document.addEventListener('visibilitychange',()=>{last=performance.now()});
+function loop(now){requestAnimationFrame(loop);if(document.hidden){last=now;return}if(!pwrDue(now))return;
   const dt=Math.min(.05,(now-last)/1000);last=now;const t0=performance.now();
   try{if(playing&&!paused)update(dt*fightK(dt));else time+=dt*.2;draw();if(playing){hud();drawMini()}}catch(err){console.error(err.stack||err);recoverFromError(err)}
   CRL.fr++;pwrFrame(performance.now()-t0)}
