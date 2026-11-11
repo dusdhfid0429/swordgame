@@ -9,8 +9,11 @@ const sryOn=()=>!!(P&&P.sry&&!P.sry.end&&P.sect===P.sry.sid&&SECTS[P.sect]);
 const srySt=()=>SRY[P.sry.m];
 const sryOpen=()=>sryOn()&&!!P.sry.open;
 const SRY_VAL={oe:()=>pillarVal('oe'),merit:()=>(P.mtot&&P.mtot[P.sry.sid])||0};
+// v247 (사용자 2026-11-11 "승급 퀘스트 전에 장로로 승급하면 진행이 막혀"): 직위 과제는 마디가 열린 뒤 오른 단수뿐 아니라
+// 이미 그 직위(g.at, 정식 제자 = 1단)에 올라 있거나 가장 높은 직위면 다 한 것으로 본다. 판정이 늘 지금 직위로 하므로 옛 저장도 그대로 풀린다
+function sryRankHave(g){const s=P.sry,i=rankIdx(s.sid);if(i>=(g.at??99)||i>=rankTop(s.sid))return g.v;return i-((s.base||{}).rank||0)}
 function sryProg(g){const s=P.sry,c=s.c;
-  let have=SRY_VAL[g.k]?SRY_VAL[g.k]()-((s.base||{})[g.k]||0):g.k==='rank'?rankIdx(s.sid)-(s.base.rank||0):Math.floor(c[g.k]||0);
+  let have=SRY_VAL[g.k]?SRY_VAL[g.k]()-((s.base||{})[g.k]||0):g.k==='rank'?sryRankHave(g):Math.floor(c[g.k]||0);
   have=Math.max(0,have);return{have:Math.min(have,g.v),need:g.v,done:have>=g.v}}
 const sryAllDone=()=>srySt().goals.every(g=>sryProg(g).done);
 function sryStart(sid){if(!P||P.sry||P.age>=SRY_END||!SECTS[sid])return;P.sry={sid,m:0,open:0,c:{},base:{}}}

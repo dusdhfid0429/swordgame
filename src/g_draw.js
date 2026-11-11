@@ -216,6 +216,7 @@ function draw(){
     if(ob==='tent'){list.push({d:i+j+1,f:()=>drawTent({x:i,y:j})});continue}
     if(ob==='board'){list.push({d:i+j+1,f:()=>drawBoard(i,j)});continue}
     if(ob==='wall'||ob==='pillar'||ob==='screen'){const mg=REGION().hall&&REGION().hall.mg,fn=ob==='wall'?drawWall:ob==='pillar'?drawPillar:drawScreen;list.push({d:i+j+1,f:()=>fn(i,j,mg)});continue}
+    if(PROP[ob]){list.push({d:i+j+1,f:()=>drawProp(ob,i,j)});continue}   // v248 맵 소품 (r_bform.js)
     if(FURN[ob]){const mg=REGION().hall&&REGION().hall.mg;list.push({d:i+j+1,f:()=>drawFurn(ob,i,j,mg)});continue}
     if(ob.startsWith('flag:')){if(REGION().dead)continue;list.push({d:i+j+1,f:()=>drawFlag(i,j,ob.slice(5))});continue}
     const{spr,L,snow,sa}=seaSpr(ob,i,j),tall=ob!=='rock';   // v173: 계절 그림(겹쳐 서서히 바뀜) + 쌓인 눈 겹
