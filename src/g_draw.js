@@ -241,7 +241,7 @@ function draw(){
   for(const c of corpses)if(vis(c.x,c.y))list.push({x:c.x,y:c.y,L:LY.BACK,d:c.x+c.y-.05,f:()=>drawCorpse(c)});
   if(REGION().dead&&REGION().gore)for(const b of REGION().gore)if(b.k==='body'&&vis(b.x,b.y))list.push({L:LY.BACK,d:b.x+b.y-.05,f:()=>drawBody(b)});
   for(const e of mobs)if(vis(e.x,e.y))list.push({x:e.x,y:e.y,d:e.x+e.y,f:()=>e.d.beast?drawBeast(e):e.ghost?drawGhost(e):drawFighter(e,false)});
-  for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({x:a.x,y:a.y,d:a.x+a.y,f:()=>a.kind==='pet'?drawBeast(a):drawFighter(a,false)})}
+  for(const a of allies)if(a!==P.ride&&vis(a.x,a.y)){a.ally=1;list.push({x:a.x,y:a.y,d:a.x+a.y,f:()=>a.kind==='pet'||a.kind==='yasu'?drawBeast(a):drawFighter(a,false)})}
   if(P.hp>0){const z=P.z||0,lt=P.leap&&P.leap.to;
     // 높은 곳에 있거나 그리로 뛰는 중이면 그 지붕·나무보다 나중에 그린다
     const pd=P.perch?perchD():lt&&P.leap.t/P.leap.dur>.45?(lt.k==='roof'?lt.b.x+lt.b.w+lt.b.y+lt.b.h-1+.6:lt.i+lt.j+1.1):P.leap&&P.leap.z0>0&&P.leap.t/P.leap.dur<.5?P.x+P.y+3:P.x+P.y;

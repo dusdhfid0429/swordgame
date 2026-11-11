@@ -31,7 +31,7 @@ function mobFormCall(e){const a=ARTS[e.art];if(!a||!e.known)return;const f=a.for
   const FX=foeX(e);texts.push({x:e.x,y:e.y,t:`${a.n} · ${f.n}`,c:`rgb(${FX?FX.art.ct:a.ct})`,life:.9,call:1});   // v215: 외치는 글자색도 그 적의 심법 색
   runHooks('formCall',e,f)}
 // 전리품
-function mobLoot(e){
+function mobLoot(e){if(e.noLoot)return;   // v252: 야수궁 무인의 맹수는 전리품이 없다 (g_yasu.js)
   const d=e.d,out=[];
   if(d.silver){const s=Math.round(R1(d.silver[0],d.silver[1])*worldMul('loot'));if(s>0){P.silver+=s;addText(P.x,P.y-.3,`은자 +${s}`,'#e8c66e')}}
   if(d.meat)out.push({mat:'고기',n:d.meat});if(d.hide)out.push({mat:'가죽',n:d.hide});
