@@ -395,6 +395,7 @@ function face(tx,ty){const dx=tx-P.x,dy=ty-P.y,l=Math.hypot(dx,dy);if(l>.01){P.f
 
 // ================= 내공 수련, 기본기, 길들이기 =================
 function trainQi(){
+  {const cw=capWhy('ne');if(cw){log(`${cw}. 벽을 깨야 내공이 더 쌓인다.`,'info');return}}
   const c=qiCost(P.side,P.qiN);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   if(inCombat()){log('싸움 중에는 운기할 수 없습니다.','info');return}
   const done=()=>{P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
@@ -406,6 +407,7 @@ function trainQi(){
 }
 const statCost=k=>Math.round((12+Math.max(0,P.st[k]-P.base[k])*6)*(P.hgt?BODY.hg.cost:1));   // 환골탈태한 몸은 -20% (g_body.js)
 function trainStat(k){
+  const cw=capWhy(k);if(cw){log(`${cw}. 벽을 깨야 더 오른다.`,'info');return}   // v248 성장 상한 (g_hwadu.js)
   const c=statCost(k);if(P.vit<c){log(`활력이 부족합니다. (필요 ${c})`,'info');return}
   P.vit-=c;P.st[k]++;recalc();log(`${STATS.find(s=>s.k===k).n}이(가) 1 올랐습니다.`,'sys');renderOpen();
 }

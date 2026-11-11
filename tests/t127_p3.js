@@ -19,8 +19,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const st=await p.evaluate(()=>{P.age=21;const h=pStory(),i=h.indexOf('세 · ');return{first:h.slice(0,120),ev:curEv().length,top:curEv().length?h.indexOf(evCard(curEv()[0]))===0:true,i}});
   ok(`정세 창 첫 칸이 사건 카드 (사건 ${st.ev}) ${st.top?'':st.first}`,st.top);
   // 폐관 성공률이 이미 최대면 소환단 단추를 감춘다
-  const pg=await p.evaluate(()=>{const o=pgChance,pw=pgWhy,st={...P.st},en=P.enl;for(const k in P.st)P.st[k]=999;P.enl=999;const qx=P.qiX;P.qiX=99999;P.mats.소환단=3;pgWhy=()=>'';pgChance=()=>.95;const w=atWall(),a=pgRow().includes('소환단 먹고');pgChance=x=>x?.6:.5;const c=pgRow().includes('소환단 먹고');pgChance=o;pgWhy=pw;P.st=st;P.enl=en;P.qiX=qx;return{a,c,w}});
-  ok(`95%면 소환단 단추 없음 (${pg.a}), 오르면 있음 (${pg.c}) 벽 ${pg.w}`,!pg.a&&pg.c);
+  const pg=await p.evaluate(()=>{const o=pgChance,pw=pgWhy,st={...P.st},en=P.enl;for(const k in P.st)P.st[k]=999;P.enl=999;const qx=P.qiX;P.qiX=99999;P.mats.소환단=3;pgWhy=()=>'';pgChance=()=>1;const w=atWall(),a=pgRow().includes('소환단 먹고');pgChance=x=>x?.6:.5;const c=pgRow().includes('소환단 먹고');pgChance=o;pgWhy=pw;P.st=st;P.enl=en;P.qiX=qx;return{a,c,w}});
+  ok(`깨달음이 차 반드시 성공하면(v248) 소환단 단추 없음 (${pg.a}), 덜 찼으면 있음 (${pg.c}) 벽 ${pg.w}`,!pg.a&&pg.c);
   // 바닥 그림은 지금 지역 것만 남는다
   const gk=await p.evaluate(()=>{loadRegion('gaebong');loadRegion('hq_hwasan');return Object.keys(GROUND)});
   ok(`바닥 그림은 지금 지역 것만 (${gk.join(',')})`,gk.length===1&&gk[0]==='hq_hwasan');

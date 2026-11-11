@@ -263,10 +263,11 @@ function useNearest(){
   if(t.npc)openNpc(t.npc);else if(t.house)openHouse();else if(t.spouse)familyTalk();else interact(t);
 }
 function plotAction(p){
-  if(p.crop&&p.g>=1){const c=CROPS[p.crop];let k=R1(2,4);if(c.season&&season()===c.season)k+=2;addMat(p.crop,k);log(`${p.crop} ${k}개를 거뒀습니다.`,'xp');gainVit(3);p.crop=null;p.g=0;return}
+  if(p.crop&&p.g>=1){const c=CROPS[p.crop];let k=R1(2,4);if(c.season&&season()===c.season)k+=2;k=Math.round(k*(1+farmLv()*GD.HWADU.life.farmYield));addMat(p.crop,k);log(`${p.crop} ${k}개를 거뒀습니다.`,'xp');p.crop=null;p.g=0;runHooks('lifeDone','farm');return}   // v248: 거둬도 활력은 오르지 않는다. 농사 숙련만큼 더 거둔다
   if(p.crop){log(`${p.crop}이(가) ${Math.floor(p.g*100)}% 자랐습니다. (${CROPS[p.crop].d})`,'info');return}
   const seeds=Object.keys(CROPS).filter(c=>P.mats[CROPS[c].seed]>0);
   if(!seeds.length){log('씨앗이 없습니다. 잡화상이나 포목점에서 사세요.','info');return}
+  {const vc=GD.HWADU.life.plant;if(P.vit<vc){log(`밭을 일굴 활력이 부족합니다. (필요 ${vc})`,'info');return}P.vit-=vc;P.farm=Math.min(100,farmLv()+GD.HWADU.life.farmGain*(1-farmLv()/115))}   // v248: 씨뿌리기는 활력을 쓰고 농사 숙련이 오른다
   const c=seeds.includes(P.lastSeed)?P.lastSeed:seeds[0];P.mats[CROPS[c].seed]--;p.crop=c;p.g=0;p.dead=0;P.lastSeed=c;log(`${c}을(를) 심었습니다. ${CROPS[c].d}.`,'sys');
 }
 function growPlot(p,dt){
@@ -274,15 +275,18 @@ function growPlot(p,dt){
   if(m===0){p.dead+=dt;if(p.dead>8){log(`${p.crop}이(가) 눈에 얼어 죽었습니다.`,'dmg');p.crop=null;p.g=0}return}
   p.g=Math.min(1,p.g+dt/c.t*m);if(p.g>=1&&dist({x:p.x,y:p.y},P)<12)log(`${p.crop}이(가) 다 자랐습니다.`,'info');
 }
+const craftVit=r=>GD.HWADU.life.job[r.job]??6;
+const farmLv=()=>P.farm||0;
 function craft(r){
   const j=P.jobs[r.job];if(!j.on){log(`${JOBS[r.job].n} 기술을 익히지 않았습니다.`,'info');return}
   if(r.min&&j.lv<r.min){log(`${JOBS[r.job].n} 수련도 ${r.min}이 필요합니다.`,'info');return}
   if(r.at==='smith'&&dist(npcAt('smith'),P)>5&&!(G.house&&G.house.built&&dist(houseDoor(),P)<4)){log('대장일은 대장간이나 내 집에서만 할 수 있습니다.','info');return}
   if(!hasMats(r.need)){log('재료가 부족합니다.','info');return}
+  const vc=craftVit(r);if(P.vit<vc){log(`활력이 부족합니다. (필요 ${vc})`,'info');return}   // v248: 제작은 활력을 쓴다
   if(r.make(1).item===undefined&&!r.make(1).mat&&P.bag.length>=24){log('행낭이 가득 찼습니다.','info');return}
   useMats(r.need);const q=clamp(.6+j.lv/100*.85+Math.random()*.2,.5,1.6),out=r.make(q);
   if(out.mat){addMat(out.mat,out.n);log(`${out.mat} ${out.n}개를 만들었습니다.`,'sys')}else{P.bag.push(out);log(`${itemLabel(out)}을(를) 만들었습니다.`,'xp')}
-  const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);gainVit(1);renderOpen();
+  const g=2.2*(1-j.lv/115);j.lv=Math.min(100,j.lv+g);P.vit-=vc;runHooks('lifeDone','craft');renderOpen();
 }
 function useCon(k){const c={k,done:false};runHooks('useCon',c);if(!c.done)useConBase(k)}
 function useConBase(k){
@@ -345,6 +349,7 @@ function duelStart(){
   runHooks('duelStart',o,e);
 }
 function duelEnd(win,e){
+  if(win)runHooks('duelWon',e);   // v248: 어떤 비무든 이기면 (화두, g_hwadu.js)
   if(G.acadDuel){acadDuelEnd(win,e);return}
   if(G.rtDuel){rtEnd(win,e);return}
   if(G.sryDuel){sryDuelEnd(win,e);return}

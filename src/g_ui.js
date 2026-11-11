@@ -22,7 +22,7 @@ let qtrackKey='';
 $('qtrack').addEventListener('click',e=>{if(!playing||!P)return;if(e.target.closest('[data-iny]')){openPanel('npc',{id:'iny',n:'인연'});return}if(e.target.closest('[data-md]')){mdOpen();return}openPanel(e.target.closest('[data-story]')?'story':'quest')});   // v220: 인연·세월 넘기기 줄 (g_madi.js)
 function questTrack(){const el=$('qtrack');if(!el)return;const qs=P.quests||[];
   const rows=qs.map(q=>{const pr=questProg(q),have=pr.have,done=pr.done,g=qGoal(q),what=q.kind==='kill'?g.plain+' 처치':g.plain+' '+g.v;return{n:q.n,s:`${q.n.includes(what)?'':what+' '}<b>${have}/${q.cnt}</b>`,done}});
-  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'')+(typeof sabuTrackHtml==='function'?sabuTrackHtml():'')+(typeof imkTrackHtml==='function'?imkTrackHtml():''),md=typeof mdTrackHtml==='function'?mdTrackHtml():'';   // 무관 과제 (g_academy.js)
+  const ac=acadTrackHtml()+(typeof sryTrackHtml==='function'?sryTrackHtml():'')+(typeof sabuTrackHtml==='function'?sabuTrackHtml():'')+(typeof imkTrackHtml==='function'?imkTrackHtml():'')+(typeof hwTrackHtml==='function'?hwTrackHtml():''),md=typeof mdTrackHtml==='function'?mdTrackHtml():'';   // 무관 과제 (g_academy.js)
   // v149: 정세(사건 선택·정세 임무)는 맨 위, 남은 시간과 함께. 정세 임무는 아래 일반 임무 줄에서 뺀다
   const sr=typeof storyRows==='function'?storyRows():[],sq=new Set(sr.map(r=>r.q).filter(Boolean)),rest=rows.filter((r,i)=>!sq.has(qs[i]));
   const st=sr.map(r=>`<div class="sq${r.done?' done':''}" data-story="1">${esc(r.n)}${r.prog?` <b>${r.prog}</b>`:''}${r.left!=null?` · <i>${r.lbl} ${fmtLeft(r.left)}</i>`:''}</div>`).join('');
@@ -210,10 +210,10 @@ function pAlly(){
 function pLife(){
   const jobs=Object.entries(JOBS).map(([k,j])=>{const s=P.jobs[k],rs=RECIPES.filter(r=>r.job===k);
     return `<div class="card"><div class="row2"><h4>${j.n}</h4><span class="tag">${s.on?`수련도 ${Math.floor(s.lv)}`:'기술서 필요'}</span></div>
-      ${s.on?`<div class="list">${rs.map(r=>`<div class="it"><div>${r.n}<span>${Object.entries(r.need).map(([m,n])=>`${m} ${P.mats[m]||0}/${n}`).join(' · ')}${r.min?` · 수련도 ${r.min}`:''}${r.at?' · 대장간·집':''}</span></div><div class="ib">${B('craft:'+RECIPES.indexOf(r),'만들기',{d:!hasMats(r.need)||(r.min&&s.lv<r.min)})}</div></div>`).join('')}</div>`
+      ${s.on?`<div class="list">${rs.map(r=>`<div class="it"><div>${r.n}<span>${Object.entries(r.need).map(([m,n])=>`${m} ${P.mats[m]||0}/${n}`).join(' · ')}${r.min?` · 수련도 ${r.min}`:''}${r.at?' · 대장간·집':''} · 활력 ${craftVit(r)}</span></div><div class="ib">${B('craft:'+RECIPES.indexOf(r),'만들기',{d:!hasMats(r.need)||(r.min&&s.lv<r.min)||P.vit<craftVit(r)})}</div></div>`).join('')}</div>`
         :`<p>${k==='대장'?'대장장이':k==='직물'?'포목점':k==='요리'?'객잔 주인':'약방 의원'}에게서 기술서를 살 수 있다. 직업 선택에 제약이 없다.</p>`}</div>`}).join('');
   const crops=Object.entries(CROPS).map(([k,c])=>`${k}: ${c.d}`).join(' · ');
-  return `<p class="note">수련도가 높을수록 같은 물건도 품질(하품·중품·상품·명품)과 공격력·판매가가 오른다. 만들 때마다 수련도와 활력이 조금 오른다.</p>${jobs}
+  return `<p class="note">수련도가 높을수록 같은 물건도 품질(하품·중품·상품·명품)과 공격력·판매가가 오른다. 만들 때마다 활력을 쓰고 수련도가 오른다.</p>${jobs}
     <div class="card"><h4>농사 <small class="dim">${season()} · ${G.weather}</small></h4><p>서쪽 농지의 밭에서 F(또는 클릭)로 씨를 심고 거둔다. 날씨가 자람에 영향을 준다. ${crops}. 겨울 눈에는 보리 말고는 얼어 죽는다.</p>
       <p>채집: 약초·광석·목재는 들과 숲, 동굴 근처에서, 황하 잉어는 나루 남쪽 물가에서. 잉어는 개봉 특산 요리 재료다.</p></div>`;
 }
