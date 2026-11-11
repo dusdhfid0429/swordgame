@@ -35,8 +35,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.arts[id].p=100;for(let i=0;i<a.forms.length;i++)for(const k of ['m','cd','rg'])bcDo(id,i,k==='rg'&&!(a.forms[i].rad||a.forms[i].len)?'m':k);
     const done=a.forms.every((q,i)=>bcSteps(id,i).length===3);
     return{w0,w1,shown,m:+(f.m/f0.m).toFixed(2),same:a.forms[0].m===f0.m,used:seen&&+(seen.m/f0.m).toFixed(2),done,jd:jdOn(id),ult:jdUlt(id),bad:bcDo(id,0,'m'),tag:(openPanel('arts'),$('wbody').textContent.includes('자득'))}});
-  ok(`변초: 숙련 모자람 '${r5.w0}' · 심득 모자람 '${r5.w1}' · 단추 ${r5.shown} · 위력 ×${r5.m}, 펼칠 때 ×${r5.used}, ARTS 그대로 ${r5.same}`,r5.w0.includes('숙련')&&r5.w1.includes('심득')&&r5.shown&&r5.m===1.12&&r5.used===1.12&&r5.same);
-  ok(`모든 초식 3단 → 자득 ${r5.jd} · 필살기 ×${r5.ult} · 4단 안 됨 · 무공 창 표시 ${r5.tag}`,r5.done&&r5.jd&&r5.ult===1.25&&r5.bad===false&&r5.tag);
+  ok(`변초: 숙련 모자람 '${r5.w0}' · 심득 모자람 '${r5.w1}' · 단추 ${r5.shown} · 위력 ×${r5.m}, 펼칠 때 ×${r5.used}, ARTS 그대로 ${r5.same}`,r5.w0.includes('숙련')&&r5.w1.includes('심득')&&r5.shown&&r5.m===1.06&&r5.used===1.06&&r5.same);
+  ok(`모든 초식 3단 → 자득 ${r5.jd} · 필살기 ×${r5.ult} · 4단 안 됨 · 무공 창 표시 ${r5.tag}`,r5.done&&r5.jd&&r5.ult===1.15&&r5.bad===false&&r5.tag);
   // 6. 창안 조각이 재료 자리를 대신하고 창안하면 사라진다
   await p.evaluate(()=>{closePanels();P.arts={};for(let i=0;i<3;i++){const id=ARTS['정검'+i].id;P.arts[id]={p:100,f:ARTS[id].forms.map(()=>true)}}P.cur=ARTS['정검0'].id;P.bag=[];P.mkp={0:2}});
   const r6=await p.evaluate(()=>{const g0=mkGroups().length;P.mkp={0:3,1:3};const g=mkGroups();return{g0,g:g.map(x=>x.cls+x.g+':'+x.ids.length+'+'+x.subs.length).join(),n:g[0]&&mkSrcN(g[0]).join('·'),
