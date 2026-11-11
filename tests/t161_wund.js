@@ -23,7 +23,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.arts[k1]={p:0,f:[true]};P.arts[k2]={p:0,f:[true]};recalc();const r={a:P.arts[k1].p,b:P.arts[k2].p};P.arts[k1].p=3;recalc();r.again=P.arts[k1].p;
     r.mm=wuMast(k1);r.mm0=wuMast(k2);return r});
   ok(`검 이해도 40으로 새 검법은 숙련 ${s.a}에서, 도법은 ${s.b}에서. 덤은 한 번만(${s.again}), 숙련 증가 ×${s.mm}/${s.mm0}`,s.a===10&&s.b===0&&s.again===3&&Math.abs(s.mm-1.08)<1e-9&&s.mm0===1);
-  const o=await p.evaluate(()=>{const k=Object.keys(ARTS).find(k=>ARTS[k].cls==='창'&&!ARTS[k].base);P.arts={base:P.arts.base};P.arts[k]={p:80,f:[true]};delete P.wu;P.realm=3;const u=wuOf('창');recalc();return{u,p:P.arts[k].p}});
+  const o=await p.evaluate(()=>{const k=Object.keys(ARTS).find(k=>ARTS[k].cls==='창'&&!ARTS[k].base);P.cur='base';P.arts={base:P.arts.base};P.arts[k]={p:80,f:[true]};delete P.wu;P.realm=3;const u=wuOf('창');recalc();return{u,p:P.arts[k].p}});
   ok(`옛 저장: 창법 숙련 80 → 창 이해도 ${o.u}, 숙련은 그대로 ${o.p}`,o.u===48&&o.p===80);
   const cy=await p.evaluate(()=>{P.wu={검:80,암:9,봉:1};const out=[];for(let d=0;d<5;d++){G.diff=d;runHooks('died',{},'t');out.push(G.wuCarry.검)}G.diff=1;runHooks('died',{},'t');const car={...G.wuCarry};const born=wuBorn();return{out,car,born,left:G.wuCarry}});
   ok(`윤회 이월 검 80 → 난이도별 ${cy.out.join('/')}, 보통 ${JSON.stringify(cy.car)}, 새 생이 받고 비운다`,cy.out.join()==='40,28,20,12,8'&&cy.car.암===3&&!('봉' in cy.car)&&cy.born.검===28&&cy.left===null);
