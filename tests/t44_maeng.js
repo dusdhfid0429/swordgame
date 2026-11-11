@@ -14,6 +14,13 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`총단 맵: ${r.map(x=>`${x.name}←${REGIONS_NAME(x.via)}`).join(', ')}`,r.length===2&&r[0].via==='lm_hubei_4'&&r[1].via==='lm_hunan_0'&&r.every(x=>x.portal&&x.halls===7&&x.npcs&&x.hq==null));
   function REGIONS_NAME(v){return v}
   // 2. 가장 가까운 성도
+  // v252 웅장한 총단: 기단 위 겹처마 대전, 담·외문 문루·내문, 종루/망루, 모든 전각 문에 걸어서 닿는다
+  const g=await p.evaluate(()=>['maeng_jeong','maeng_sacheon'].map(id=>{loadRegion(id);const R=REGION(),st=R.gates.find(g=>g.y>37),K=(x,y)=>x+','+y,seen=new Set,q=[[Math.floor(st.x),Math.floor(st.y)]];
+    while(q.length){const[x,y]=q.pop();if(seen.has(K(x,y)))continue;seen.add(K(x,y));for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(walk(x+dx,y+dy))q.push([x+dx,y+dy])}
+    let w=0;for(let y=0;y<NH;y++)for(let x=0;x<N;x++)if(objs[y][x]==='jwall'||objs[y][x]==='pal')w++;
+    return{f:builds.map(b=>b.form).join(),w,miss:R.gates.filter(g=>g.door&&!seen.has(K(Math.floor(g.x),Math.floor(g.y)))).map(g=>g.label)}}));
+  ok(`총단 모양: 정의맹 ${g[0].f} 담 ${g[0].w} · 사천맹 ${g[1].f} 담 ${g[1].w} · 못 가는 문 ${[...g[0].miss,...g[1].miss].join(',')||'없음'}`,
+    g.every(o=>o.f.startsWith('palace')&&o.f.includes('gatehouse')&&o.w>80&&!o.miss.length)&&g[0].f.includes('pagoda')&&g[0].f.includes('paifang')&&g[1].f.includes('watch'));
   const nc=await p.evaluate(()=>({kunlun:nearestCapital('hq_kunlun'),gae:nearestCapital('gaebong'),shaolin:nearestCapital('hq_shaolin'),pv:nearestCapital('pv_sichuan@0,0'),mj:nearestCapital('maeng_jeong')}));
   ok(`가장 가까운 성도: 곤륜→${nc.kunlun} 개봉→${nc.gae} 소림→${nc.shaolin} 사천 들판→${nc.pv} 정의맹 총단→${nc.mj}`,nc.kunlun==='lm_qinghai_2'&&nc.gae==='gaebong'&&nc.shaolin==='gaebong'&&nc.pv==='lm_sichuan_0'&&nc.mj==='lm_hubei_4');
   // 3. 역참으로 총단에 가서 총관에게 입맹·임무, 보고하면 맹 공적, 직위가 오르고 당에 들고 맹주의 하사를 받는다 (임무 목록은 나이에 따라 바뀌므로 13세로 맞춘다; 시작 나이는 8세)

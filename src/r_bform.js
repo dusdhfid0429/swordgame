@@ -87,8 +87,19 @@ function bfGiwa(b,WH){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=bfR(b),RC=bfRC(b),pl=b.wc
   const RH=WH+10+7*Math.min(w,h),G=bfGable(b,WH+3,RH,.38,{front:RC[3],back:RC[0],gable:pl[1],edge:'#22262c',ridge:'#22262c'},'tile',r,0,bfTimber);
   ctx.strokeStyle='#22262c';ctx.lineWidth=4.5;bfL(G.R1,G.R2);for(const[R,d]of[[G.R1,-1],[G.R2,1]]){ctx.beginPath();ctx.moveTo(R[0],R[1]);ctx.quadraticCurveTo(R[0]+d*3,R[1]-2,R[0]+d*6,R[1]-9);ctx.stroke()}
   curl(G.El,-8);curl(G.Eb,8);return G}
+// 궁전(맹 총단 대전·황궁): 두 단 돌 기단 + 앞 계단, 그 위에 처마가 두 겹인 큰 기와 전각
+function bfPalace(b){const{x,y,w,h}=b,X1=x+w,Y1=y+h,TH=b.th||14,RC=bfRC(b),st=['#cfc8b8','#a9a292','#e2dccd'];bfShadow(b,.35);
+  for(const[k,i0]of[[0,0],[1,.25]]){const h0=k*TH/2,h1=h0+TH/2,a=x+i0,c=X1-i0,d=y+i0,e=Y1-i0;
+    quad([scr(a,e,h0),scr(c,e,h0),scr(c,e,h1),scr(a,e,h1)],st[0],'rgba(60,50,40,.6)');quad([scr(c,e,h0),scr(c,d,h0),scr(c,d,h1),scr(c,e,h1)],st[1],'rgba(60,50,40,.6)');
+    quad([scr(a,d,h1),scr(c,d,h1),scr(c,e,h1),scr(a,e,h1)],st[2],'rgba(60,50,40,.4)')}
+  const mx=x+w/2;for(let q=0;q<4;q++){const hh=TH-q*TH/4,yy=Y1-.5+q*.12;quad([scr(mx-1,yy,hh-TH/4),scr(mx+1,yy,hh-TH/4),scr(mx+1,yy,hh),scr(mx-1,yy,hh)],q%2?'#bdb6a6':'#d6cfbf','rgba(60,50,40,.5)')}
+  const ins=.6,B={...b,x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2-.3},WH=b.wh||40;ctx.save();ctx.translate(0,-TH);
+  // 아래 처마(겹처마): 벽 가운데 높이에 두른 띠 지붕
+  bfGiwa(B,WH);const e=.42,lo=WH*.55;const A=scr(B.x-e,B.y+B.h+e,lo-6),C=scr(B.x+B.w+e,B.y+B.h+e,lo-6),D=scr(B.x+B.w+e,B.y-e,lo-6),I1=scr(B.x,B.y+B.h,lo+8),I2=scr(B.x+B.w,B.y+B.h,lo+8),I3=scr(B.x+B.w,B.y,lo+8);
+  roofFace(A,C,I1,I2,RC[3],6);roofFace(C,D,I2,I3,RC[2],6);curl(A,-7);curl(C,0);curl(D,7);ctx.restore()}
 const BFORM={
   giwa(b){bfGiwa(b,b.wh||30)},
+  palace:bfPalace,
   // 문루: 담에 난 대문. 가운데 칸(b.pass)은 걸어서 지난다 (genStage가 막지 않는다)
   gatehouse(b){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=bfR(b),RC=bfRC(b),WH=34,pl=b.wc||['#e4d9c0','#c3b69b'],m0=b.pass?b.pass[0]:x+(w-1)/2,m1=b.pass?b.pass[b.pass.length-1]+1:m0+1;bfShadow(b,.25);
     const box=(x0,x1)=>{quad([scr(x0,Y1),scr(x1,Y1),scr(x1,Y1,WH),scr(x0,Y1,WH)],pl[0]);quad([scr(x1,Y1),scr(x1,y),scr(x1,y,WH),scr(x1,Y1,WH)],pl[1]);ctx.strokeStyle='#5a2418';ctx.lineWidth=3;bfL(scr(x0,Y1),scr(x0,Y1,WH));bfL(scr(x1,Y1),scr(x1,Y1,WH))};
@@ -186,7 +197,7 @@ const BFORM={
     if(b.torch!==0){bfTorch(lerp2(D0,D1,-.6),1);bfTorch(lerp2(D0,D1,1.6),1)}},
 };
 // 캐시 상자 높이 (r_build.js drawBuild)
-function bformRH(b){const m=Math.min(b.w,b.h);switch(b.form){case'hut':return 18+10+7*m;case'shack':return 20+7+5*m;case'log':return 24+12+8*m+6;case'loghall':return 32+16+9*m+30;case'tentB':return 22+9*m;case'watch':return(b.ph||46)+50+4*m+20;case'cave':return 80;case'giwa':return(b.wh||30)+10+7*m+12;case'gatehouse':return 34+20+6*b.h+14;case'paifang':return 72;case'pagoda':return (b.tiers||5)*(b.th||17)+50;case'potala':return (b.tiers||3)*26+20;case'dome':return 30+Math.min(b.w,b.h)*TW*.42*1.55+30}return 120}
+function bformRH(b){const m=Math.min(b.w,b.h);switch(b.form){case'hut':return 18+10+7*m;case'shack':return 20+7+5*m;case'log':return 24+12+8*m+6;case'loghall':return 32+16+9*m+30;case'tentB':return 22+9*m;case'watch':return(b.ph||46)+50+4*m+20;case'cave':return 80;case'giwa':return(b.wh||30)+10+7*m+12;case'palace':return(b.th||14)+(b.wh||40)+10+7*Math.min(b.w,b.h)+20;case'gatehouse':return 34+20+6*b.h+14;case'paifang':return 72;case'pagoda':return (b.tiers||5)*(b.th||17)+50;case'potala':return (b.tiers||3)*26+20;case'dome':return 30+Math.min(b.w,b.h)*TW*.42*1.55+30}return 120}
 // 무너진 사당(ruin)은 r_build.js 폐허 그림을 쓰고, 그 위에 거적 덧댐·기댄 판자를 얹는다
 function bfRuinPatch(b,g){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=bfR(b),{R1,R2,Eb,El,H0,RH}=g;
   const p=[lerp2(R1,R2,.08),lerp2(R1,R2,.3),up(lerp2(Eb,El,.62),(RH-H0)*.35),up(lerp2(Eb,El,.85),(RH-H0)*.2)];quad(p,'#8a7646','rgba(40,28,10,.7)');
