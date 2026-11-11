@@ -6,7 +6,7 @@
 // 수치·문구는 data/open.json (OPEN, CALLOUT)
 const OPEN=GD.OPEN,CALLOUT=GD.CALLOUT;
 const OPEN_IF={
-  mk:()=>Object.keys(P.gs||{}).length>0||P.bag.some(i=>i.slot==='leaf'||i.slot==='wbook'||i.tu)||!!(G.rcMet&&Object.keys(G.rcMet).length)||Object.keys(G.made||{}).length>0,
+  mk:()=>Object.keys(P.gs||{}).length>0||P.bag.some(i=>i.slot==='leaf'||i.slot==='wbook'||i.tu)||Object.values(P.mkp||{}).some(n=>n>0)||(P.sd||0)>0||!!(G.rcMet&&Object.keys(G.rcMet).length)||Object.keys(G.made||{}).length>0,
   mu:()=>P.wallN!=null||realmIdx()>=1||(P.enl||0)>0};
 // 열렸는지. 처음 열리는 순간에만 알림 한 줄
 function openOf(k){if(!P)return false;P.opened=P.opened||{};if(P.opened[k])return true;if(!OPEN_IF[k]||!OPEN_IF[k]())return false;
