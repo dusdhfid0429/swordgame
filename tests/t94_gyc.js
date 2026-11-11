@@ -9,10 +9,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(800);
   // 1. 배치: 다섯 곳, 서로 다른 성, 기연 무공 넷. 맵에 저절로 생기는 기연 터는 없다
   const r1=await p.evaluate(()=>{const L=G.gyc.list;G.gT=0;for(let i=0;i<20;i++)update(.1);
-    return{n:L.length,prov:new Set(L.map(c=>REGIONS[c.host].prov)).size,arts:L.filter(c=>c.art).length,regs:L.every(c=>REGIONS['gyc_'+c.i]&&REGIONS[c.host].gates.some(g=>g.gyc===c.i)),spot:G.giyeon}});
-  ok(`동굴 ${r1.n}곳 · 성 ${r1.prov}곳 · 기연 무공 ${r1.arts} · 지역·입구 ${r1.regs} · 기연 터 없음 ${r1.spot}`,r1.n===5&&r1.prov===5&&r1.arts===4&&r1.regs&&r1.spot==null);
+    return{n:L.length,prov:new Set(L.map(c=>REGIONS[c.host].prov)).size,arts:L.filter(c=>c.art).length,regs:L.every(c=>REGIONS['gyc_'+c.i]&&!REGIONS[c.host].gates.some(g=>g.gyc===c.i)),spot:G.giyeon}});
+  ok(`동굴 ${r1.n}곳 · 성 ${r1.prov}곳 · 기연 무공 ${r1.arts} · 지역·숨은 입구(v247) ${r1.regs} · 기연 터 없음 ${r1.spot}`,r1.n===5&&r1.prov===5&&r1.arts===4&&r1.regs&&r1.spot==null);
   // 2. 입구: 호스트 맵을 열면 걸어 닿는 칸에 놓이고, 다시 열어도 같은 자리
-  const r2=await p.evaluate(()=>{const c=G.gyc.list[0];enterRegion(c.host,arriveAt(c.host).x,arriveAt(c.host).y);const a=[c.x,c.y],w=walk(c.x,c.y);
+  const r2=await p.evaluate(()=>{const c=G.gyc.list[0];gyclFound(c,1);enterRegion(c.host,arriveAt(c.host).x,arriveAt(c.host).y);const a=[c.x,c.y],w=walk(c.x,c.y);
     loadRegion('gaebong');loadRegion(c.host);const g=REGION().gates.find(g=>g.gyc===0);return{a,w,same:c.x===a[0]&&c.y===a[1],g:[g.x,g.y],d:Math.hypot(c.x-c.ax,c.y-c.ay)}});
   ok(`입구 ${r2.a} (목표에서 ${r2.d.toFixed(1)}칸) 걸을 수 있음 ${r2.w} · 다시 열어도 같음 ${r2.same}`,r2.w&&r2.same&&r2.g[0]===r2.a[0]+.5);
   // 3. 말풍선: 입구가 있는 맵 근처 성도 NPC 곁에 가면 소문을 흘리고 임무창에 남는다
@@ -20,7 +20,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     gycBT=0;gycBub.length=0;for(const k in gycTalked)delete gycTalked[k];   // 앞서 저절로 뜬 말풍선(다른 소문)이 남아 있으면 그것을 읽게 된다
     const R=Math.random;Math.random=()=>.1;update(.05);Math.random=R;openPanel('quest');
     return{bub:gycBub.length&&gycBub[0].txt,heard:c.heard,card:$('wbody').textContent,log:[...document.querySelectorAll('#log *')].map(e=>e.textContent).filter(t=>t.includes('[소문]')).length}});
-  ok(`말풍선 "${r3.bub}" · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,!!r3.bub&&r3.bub.includes(await p.evaluate(()=>REGIONS[G.gyc.list[0].host].name))&&/쪽에/.test(r3.bub)&&r3.heard===2&&r3.card.includes('기연 소문')&&r3.log>0);
+  // v247: 같은 성 사람은 맵·방위를 바로 말하지 않고 성 이름(풍문)이나 아는 사람(증인)을 가리킨다 (자세한 건 t164_gyclue)
+  const pvn=await p.evaluate(()=>PROV[REGIONS[G.gyc.list[0].host].prov].n),wn=await p.evaluate(()=>G.gyc.list[0].wit.map(w=>w.n));
+  ok(`말풍선 "${r3.bub}" · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,!!r3.bub&&(r3.bub.includes(pvn)||wn.some(n=>r3.bub.includes(n)))&&r3.heard>=0&&r3.card.includes('기연 소문')&&r3.log>0);
   await p.waitForTimeout(200);await p.evaluate(()=>closePanels());await p.screenshot({path:shot('gyc_bubble')});
   // 멀리 있는 동굴은 소문이 작으면 들리지 않는다
   const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const none=gycRumorFor();
