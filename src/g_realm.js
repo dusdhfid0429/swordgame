@@ -31,7 +31,7 @@ function pgPlace(){
   return null}
 const pgCost=()=>0;   // v248: 폐관에 활력은 들지 않는다. 벽은 화두로 채운 깨달음으로 깬다 (g_hwadu.js)
 const pgYears=()=>.5+.5*realmIdx();
-const hobeop=()=>inOwnSect()||inAcad()||!!P.hob||allies.some(a=>a.kind!=='pet'&&a.hp>0);
+const hobeop=()=>inOwnSect()||inAcad()||!!P.hob||allies.some(a=>a.kind!=='pet'&&a.kind!=='yasu'&&a.hp>0);
 // v153 (사용자): 호법을 은자로 고용한다. 다음 한 번의 폐관을 지킨다 (PG_HOB.cost[다음 경지])
 const hobCost=()=>GD.PG_HOB.cost[Math.min(GD.PG_HOB.cost.length-1,realmIdx()+1)];
 function hobHire(){if(hobeop()||!pgPlace())return;const c=hobCost();if(P.silver<c){log(`호법을 부를 은자가 모자랍니다 (${c}).`,'info');return}P.silver-=c;P.hob=1;log(`은자 ${c}로 호법을 불렀습니다. 다음 폐관 동안 곁을 지킵니다 (실패해도 가볍게 끝난다).`,'sys');renderTrain()}

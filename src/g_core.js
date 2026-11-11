@@ -274,6 +274,7 @@ function gainMast(id,v){
   runHooks('mastDone',{id,s,before});
 }
 function damage(e,d,kb,stun,from=P,crit){
+  {const c={e,d,from};runHooks('dmgOut',c);d=c.d}   // v252: 문파 규칙으로 주는 피해를 나눈다 (야수궁 맹수 6:4, g_yasu.js)
   e.hp-=d;e.hit=.12;e.hurtAt=time;{const mine=from===P||!!from&&!from.d&&!from.kind;addText(e.x,e.y,crit&&mine?d+'!':d,crit?'#ffd36a':'#f3e6c4',mine?crit?'crit':'out':'far')}   // v219: 내가 준 것·치명타·남이 준 것을 나눠 그린다 (g_read.js)
   if(kb&&!e.d.boss){const l=Math.hypot(e.x-from.x,e.y-from.y)||1;e.kb={x:(e.x-from.x)/l*kb,y:(e.y-from.y)/l*kb}}
   if(stun)e.stun=Math.max(e.stun||0,e.d.boss?stun*.4:stun);

@@ -172,12 +172,12 @@ function updateMob(e,dt){runHooks('mobTick',e,dt);
     if(d.ranged||(e.duel&&e.d.ranged)){const FX=foeX(e);for(let i=-1;i<=1;i++){const a=Math.atan2(tg.y-e.y,tg.x-e.x)+i*.25;eprojs.push({x:e.x,y:e.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,left:7,dmg:e.atk*.9,src:e,c:FX?FX.art.c:'255,200,140',c2:FX?FX.art.c2:null,X:FX})}}
     else{e.slam=1.1;e.slamAt={x:tg.x,y:tg.y};fx.push({t:'warn',x:tg.x,y:tg.y,r:2,life:1.1,max:1.1,src:e})}}}   // src: 나에게 닿을 내려찍기만 보인다 (g_danger.js warnShow)
   if(e.slam>0){e.slam-=dt;e.moving=false;if(e.slam<=0){const c=e.slamAt;fx.push({t:'puff',x:c.x,y:c.y,life:.6});shake=.25;{const FX=foeX(e);fRing(FX,c,2,FX?FX.art.c:'255,120,80',4,.35)}
-    if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6)}
+    if(hostP){if(dist(P,c)<2&&!P.perch)hurtP(e.atk*1.6,e);for(const a of allies)if(dist(a,c)<2)hurtAlly(a,e.atk*1.6,e)}
     if(d.fac)for(const o of mobs)if(o.hp>0&&o.d.fac&&facFoe(o.d.fac,d.fac)&&dist(o,c)<2)mobHurt(o,e.atk*1.6,e)}return}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){e.cd=d.boss?1.3:1.25;e.swing=.24;
       if(d.ranged){const ux=dd>1e-3?(tg.x-e.x)/dd:(e.fx||1),uy=dd>1e-3?(tg.y-e.y)/dd:(e.fy||0),FX=dist(e,P)<14?foeX(e):null;eprojs.push({x:e.x,y:e.y,vx:ux*10,vy:uy*10,left:reach+1,dmg:e.atk,src:e,c:FX?FX.art.c:'230,210,160',c2:FX&&FX.art.c2,X:FX})}   // 겹쳐 선 상대(dd 0)는 바라보는 쪽으로: NaN 화살 방지
       else foeStrike(e,tg);   // v216: 적 평타에도 그 적 심법의 색·기운 (g_fxcol.js)
-      if(!d.ranged&&dist(e,tg)<reach+.3&&!elevGap(e,tg)){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk)}}
+      if(!d.ranged&&dist(e,tg)<reach+.3&&!elevGap(e,tg)){if(tg===P)hurtP(e.atk,e);else if(tg.isMob)mobHurt(tg,e.atk,e);else hurtAlly(tg,e.atk,e)}}
     return}
   e.cd-=dt;e.moving=false;
   if(dd<reach){if(e.cd<=0)e.wind=d.boss?.5:.4;e.fx=(tg.x-e.x)/(dd||1);e.fy=(tg.y-e.y)/(dd||1)}
@@ -189,12 +189,12 @@ function updateEprojs(dt){
   for(const q of eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;if(!isFinite(q.x)||!isFinite(q.y)){q.left=0;continue}q.left-=Math.hypot(q.vx,q.vy)*dt;if(blockedAt(q.x,q.y)&&!(P.perch&&dist(q,P)<2.2))q.left=0;
     const sf=q.src&&q.src.d&&q.src.d.fac,hp=!sf||mobFoeP(q.src);
     if(hp&&q.left>0&&dist(q,P)<.45&&P.hp>0){q.left=0;hurtP(q.dmg,q.src)}
-    if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg)}
+    if(hp)for(const a of allies)if(q.left>0&&a!==P.ride&&dist(q,a)<.45){q.left=0;hurtAlly(a,q.dmg,q.src||q.from)}
     if(sf)for(const o of mobs)if(q.left>0&&o!==q.src&&o.hp>0&&o.d.fac&&facFoe(o.d.fac,sf)&&dist(q,o)<.45){q.left=0;mobHurt(o,q.dmg,q.src)}}
   eprojs=eprojs.filter(q=>q.left>0);
 }
 // ================= companions: tamed beasts and disciples =================
-function hurtAlly(a,dm){if(a.hp<=0||a===P.ride)return;a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1);runHooks('allyDown',a)}}
+function hurtAlly(a,dm,src){if(a.hp<=0||a===P.ride)return;{const c={a,dm,src};runHooks('allyHurt',c);dm=c.dm}a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1);runHooks('allyDown',a)}}
 function updateAlly(a,dt){
   if(a.hp<=0||a===P.ride)return;runHooks('allyTick',a,dt);if(a.hp<=0)return;a.hit=Math.max(0,a.hit-dt);if(a.swing>0&&a.swing<=dt)a.rec=.22;a.swing=Math.max(0,(a.swing||0)-dt);a.rec=Math.max(0,(a.rec||0)-dt);a.cd-=dt;
   if(a.mode==='wait'){a.moving=false;a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.04*dt);return}
@@ -202,7 +202,7 @@ function updateAlly(a,dt){
   let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
   if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5){tg=m;break}
   if(G.duel)tg=null;
-  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=1.1;a.swing=.24;const dm=Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def));damage(tg,dm,.2,0,a);if(!tg.tgt||Math.random()<.3)tg.tgt=a}}
+  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=a.acd||1.1;a.swing=.24;const c={a,tg,dm:Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def))};runHooks('allyHit',c);damage(tg,Math.max(1,Math.round(c.dm)),.2,0,a);if(!tg.tgt||Math.random()<.3)tg.tgt=a}}
     else if(a.swing>0)a.moving=false;else{a.rec=0;chase(a,tg,dt,a.sp)}return}
   const d=dist(a,P);if(d>12){a.x=P.x-P.fx;a.y=P.y-P.fy;if(!walkAt(a.x,a.y)){a.x=P.x;a.y=P.y}}
   if(d>2.2)chase(a,P,dt,Math.max(a.sp,moveSpd()*.95));else a.moving=false;
@@ -382,7 +382,7 @@ function saveGame(silent){
   if(!P)return;
   try{
     const p={...P};for(const k of['target','path','talk','goal','chan','leap','ride','qiTraining'])delete p[k];
-    const data={v:SAVE_VER,t:Date.now(),G,P:p,itemId,allies:allies.map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode,...(a.kind==='sect'?{pal:a.pal,sect:a.sect,rank:a.rank,realm:a.realm,elite:a.elite,left:a.left,def:a.def,reach:a.reach,sp:a.sp}:{})})),
+    const data={v:SAVE_VER,t:Date.now(),G,P:p,itemId,allies:allies.filter(a=>a.kind!=='yasu').map(a=>({kind:a.kind,k:a.k,name:a.name,hp:a.hp,maxHp:a.maxHp,atk:a.atk,age:a.age,life:a.life,lv:a.lv,xp:a.xp,mode:a.mode,...(a.kind==='sect'?{pal:a.pal,sect:a.sect,rank:a.rank,realm:a.realm,elite:a.elite,left:a.left,def:a.def,reach:a.reach,sp:a.sp}:{})})),
       plots:(GAE_PLOTS||plots).map(p=>({crop:p.crop,g:p.g})),alive:playing,tod};
     STORE.set(SAVE_KEY,JSON.stringify(data));if(!silent)log('기록했습니다.','info');
   }catch(e){}

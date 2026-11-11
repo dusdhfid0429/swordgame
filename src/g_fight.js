@@ -47,10 +47,10 @@ function bossStart(e){const m=(FIGHT_FORCE&&BM.moves.find(x=>x.k===FIGHT_FORCE))
 const inLine=(b,x,y)=>{const m=b.m,px=x-b.ox,py=y-b.oy,u=px*b.ux+py*b.uy,v=Math.abs(px*b.uy-py*b.ux);return u>-.3&&u<m.len&&v<m.w};
 function bossTick(e,dt){const b=e.bp,m=b.m;b.t+=dt;e.wind=0;
   if(m.k==='dash'){if(b.t>=m.warn&&!b.hit){b.hit=1;const ex=b.ox+b.ux*m.len,ey=b.oy+b.uy*m.len;
-      if(!b.miss&&!P.perch&&inLine(b,P.x,P.y))hurtP(e.atk*m.dm,e);for(const a of allies)if(inLine(b,a.x,a.y))hurtAlly(a,e.atk*m.dm);
+      if(!b.miss&&!P.perch&&inLine(b,P.x,P.y))hurtP(e.atk*m.dm,e);for(const a of allies)if(inLine(b,a.x,a.y))hurtAlly(a,e.atk*m.dm,e);
       const st=12;for(let i=1;i<=st;i++){const x=b.ox+b.ux*m.len*i/st,y=b.oy+b.uy*m.len*i/st;if(!walkAt(x,y))break;e.x=x;e.y=y}shake=Math.max(shake,.25);fx.push({t:'puff',x:e.x,y:e.y,life:.5})}
     if(b.t>=m.warn+.25)e.bp=null}
-  else if(m.k==='spin'){if(b.t>=m.warn&&!b.hit){b.hit=1;if(!b.miss&&!P.perch&&dist(P,e)<m.r)hurtP(e.atk*m.dm,e);for(const a of allies)if(dist(a,e)<m.r)hurtAlly(a,e.atk*m.dm);
+  else if(m.k==='spin'){if(b.t>=m.warn&&!b.hit){b.hit=1;if(!b.miss&&!P.perch&&dist(P,e)<m.r)hurtP(e.atk*m.dm,e);for(const a of allies)if(dist(a,e)<m.r)hurtAlly(a,e.atk*m.dm,e);
       shake=Math.max(shake,.3);const FX=foeX(e);fRing(FX,e,m.r,FX?FX.art.c:'255,150,90',5,.4)}if(b.t>=m.warn+.3)e.bp=null}
   else if(m.k==='rain'){while(b.marks.length<m.n3&&b.t>=b.marks.length*m.gap)b.marks.push({x:P.x,y:P.y,at:b.t,done:0});
     for(const k of b.marks)if(!k.done&&b.t>=k.at+m.warn){k.done=1;if(!b.miss&&!P.perch&&dist(P,k)<m.r)hurtP(e.atk*m.dm,e);fx.push({t:'puff',x:k.x,y:k.y,life:.5});shake=Math.max(shake,.15)}
