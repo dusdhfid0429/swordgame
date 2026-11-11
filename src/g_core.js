@@ -65,7 +65,7 @@ const realmIdx=()=>P.realm??qiRealm();
 // 주화입마로 경맥이 상하면 한동안 공격력과 운기조식 회복이 떨어진다
 const injMul=()=>P.inj>0?(P.injS>=2?.7:.85):1;
 const realmName=()=>rk(realmIdx());   // 화경·현경은 심법 계열마다 이름이 다르다 (g_realmfx.js)
-const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1)*(P.weakT>0?.8:1)*(P.binsa?GD.DANGER.binsa.sp:1);   // 혈마단 뒤 30초 둔화 (g_magyo2.js)
+const moveSpd=()=>(3+P.st.agi*.04+gear('spd'))*(1+pv('spd')+simTv('spd')/100)*(typeof ggSpdMul==='function'?ggSpdMul():1)*(P.ride?1.8:P.run?1.55:1)*(P.poison>0?.85:1)*(P.weakT>0?.8:1)*(P.binsa?GD.DANGER.binsa.sp:1)*(typeof magiSpd==='function'?magiSpd():1);   // 혈마단 뒤 30초 둔화 (g_magyo2.js)
 const cdMul=()=>1-Math.min(.35,P.st.agi*.01);
 // 내공은 운기조식(P.medit) 중에만 찬다(g_life.js). 아래 배율(운기 효율 패시브·순환 특색·경지)도 모두 운기조식 회복량에만 걸린다
 const qiRegen=()=>(2+baseQi()*.025)*(P.medit?5:1)*(1+pv('qreg')+simTv('qreg')/100)*injMul()*realmQiMul()*(P.thirst?.5:1);   // 마교 영약 중독의 갈증 (g_magyo2.js)
@@ -93,7 +93,7 @@ function recalc(){
 }
 const tierOf=p=>p>=80?3:p>=50?2:p>=25?1:0;
 const TIERS=GD.TIERS;
-function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t:tierOf(p),mul:1+p/100,combo}}
+function mkX(id=P.cur,combo=1){const a=ARTS[id],p=mast(id);return{art:a,key:id,t:tierOf(p),mul:GD.ARTBAL.base*(1+GD.ARTBAL.mast*p/100),combo}}   // v249: 숙련 덤은 극성에서 +30% (g_artbal.js)
 
 // ================= items =================
 const QN=q=>q>=1.35?'명품':q>=1.1?'상품':q>=.85?'중품':'하품';
@@ -233,11 +233,12 @@ const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
 // ================= combat =================
 function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
-  const c={X,e,from,m,def:e.def,hm:e.hm,hp0:e.hp};if(from===P)runHooks('hit',c);m=c.m;
+  const mine=from===P||!!from&&!from.d&&!from.kind;   // v249: 내 투사체(화살·암기·검기)는 from 이 날아온 자리라 예전에는 hit 훅(경지 차·이해도·심법 특색)을 모두 건너뛰었다
+  const c={X,e,from:mine?P:from,m,def:e.def,hm:e.hm,hp0:e.hp};if(mine)runHooks('hit',c);m=c.m;
   const pHit=clamp(.74+(hmv()-c.hm)/110,.25,.98);
   if(Math.random()>pHit){addText(e.x,e.y,'빗나감','#9a8d72');return}
   // v215: 무공에는 속성이 없다. 상극은 치는 사람의 심법 속성만 (적은 e.el = 그 적 심법)
-  const a=X.art,el=from===P?pEl():elOf(from);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
+  const a=X.art,el=mine?pEl():elOf(from);let d=atk()*m*X.mul*X.combo*(X.qm||1)*elMul(el,elOf(e),scOf(c.from),scOf(e))*(.92+Math.random()*.16)*(from===P&&(P.perch||elevAbove(P,e))?1.2:1);
   if(el==='혈'&&e.hp<e.maxHp*.5)d*=1.2;   // v216 혈기: 생명이 절반 아래인 적에게 피해 +20%
   const crit=P.buff.crit>0||Math.random()<.05+(el==='금'?.15:0)+pv('crit')+simTv('crit')/100;if(crit)d*=1.6;
   d=Math.max(1,Math.round(d-(el==='금'||el==='뇌'?0:c.def)));
@@ -261,7 +262,7 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e.acadDummy||mast(X.key)<25)gainMast(X.key,1);   // 무관 목인장으로는 소성까지만 (g_academy.js)
   const w=P.eq.weapon;if(w&&w.cls===a.cls&&Math.random()<.06&&w.dur>0){w.dur--;if(!w.dur)log(`${w.name}의 날이 상했습니다. 대장간에서 고치세요.`,'dmg')}
   if(echo&&X.t>=3)later(.15,()=>{if(e.hp>0){damage(e,Math.round(d*.3),0,0);fStar(X,e,'255,215,120',.7,.2)}});
-  if(from===P)runHooks('hitDone',c);
+  if(mine)runHooks('hitDone',c);
 }
 function gainMast(id,v){
   const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1)*(typeof wuMast==='function'?wuMast(id):1));   // v220: 인연 '사부의 가르침'

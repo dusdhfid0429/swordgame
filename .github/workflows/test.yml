@@ -16,8 +16,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Playwright 설치
-        # 러너의 우분투 패키지 서버 DNS가 끊기면(2026-11-11) 글꼴 추가 설치만 실패한다: 라이브러리는 이미 있으니 브라우저만 받고 이어간다
-        run: npm i --no-save playwright@1.56.1 && (npx playwright install --with-deps chromium || npx playwright install chromium)
+        # apt 미러 이름 풀이가 잠깐 끊기면 설치가 죽는다 (2026-11-11). 세 번까지 다시 해 보고, 그래도 안 되면 글꼴 추가 설치는 건너뛰고 브라우저만 받는다 (라이브러리는 이미 있다)
+        run: |
+          npm i --no-save playwright@1.56.1
+          for i in 1 2 3; do
+            npx playwright install --with-deps chromium && exit 0
+            echo "설치 실패 ($i/3), 30초 뒤 다시"; sleep 30; sudo apt-get update || true
+          done
+          npx playwright install chromium
       - name: 빌드
         run: python3 build.py
       - name: dist가 소스와 같은지
