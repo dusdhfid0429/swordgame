@@ -13,9 +13,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       hidden:!REGIONS[c.host].gates.some(g=>g.gyc===c.i),k:Object.values(c.k).every(v=>!v)}))});
   ok(`증인 셋·순서 맵/징조/방위·성읍 증인 같은 성·입구 숨음 ${JSON.stringify(r1.map(x=>x.r0+''+(x.pv0?1:0)+(x.hidden?1:0)))}`,r1.every(x=>x.n===3&&x.pcs==='map,sign,dir'&&x.r2&&x.pv0&&x.names===3&&x.hidden&&x.k));
   // 2. 사람마다 다른 소문: 먼 곳에선 성 이름(가끔 징조)만, 같은 사람은 같은 말, 사람마다 갈린다
-  const r2=await p.evaluate(()=>{for(const c of G.gyc.list)c.rumor=70;REG='gaebong';gycHopReg=null;const outs=[];
-    for(let i=0;i<40;i++){const r=gycRumorFor(1,'gaebong:사람'+i);outs.push(r?r.txt:null)}
-    const same=gycRumorFor(1,'gaebong:사람3'),hosts=G.gyc.list.map(c=>REGIONS[c.host].name);
+  const r2=await p.evaluate(()=>{for(const c of G.gyc.list)c.rumor=70;const cp=new Set(G.gyc.list.map(c=>REGIONS[c.host].prov));REG=Object.keys(REGIONS).find(k=>REGIONS[k].city&&!cp.has(REGIONS[k].prov));gycHopReg=null;const outs=[];   // 동굴이 없는 성의 성읍 (동굴이 있는 성이면 사람들이 증인을 가리킨다)
+    for(let i=0;i<40;i++){const r=gycRumorFor(1,REG+':사람'+i);outs.push(r?r.txt:null)}
+    const same=gycRumorFor(1,REG+':사람3'),hosts=G.gyc.list.map(c=>REGIONS[c.host].name);
     return{uniq:new Set(outs.filter(Boolean)).size,none:outs.filter(x=>!x).length,same:(same&&same.txt)===outs[3],
       leak:outs.filter(Boolean).some(t=>hosts.some(h=>t.includes(h))&&!/차지|얻었다/.test(t))}});
   ok(`사람 40명: 서로 다른 말 ${r2.uniq}가지, 모르는 사람 ${r2.none}, 같은 사람 같은 말 ${r2.same}, 먼 곳에서 맵 이름 안 샘 ${!r2.leak}`,r2.uniq>=5&&r2.same&&!r2.leak);
