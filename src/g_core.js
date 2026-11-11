@@ -331,7 +331,7 @@ function engage(f){
 const SLOTKEY=['Q','A','Z','E','D','C'],PADKEY=['7','4','1','9','6','3'];
 function formReady(i){const a=art(),f=a.forms[i],s=A(a.id);return f&&s&&s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f)&&P.gcd<=0&&hasWeaponFor(a.cls)}
 function useForm(i,silent){
-  if(P.hp<=0)return false;const a=art(),f=a.forms[i],s=A(a.id);if(!f)return false;
+  if(P.hp<=0)return false;const a=art(),s=A(a.id);let f=a.forms[i];if(!f)return false;if(typeof bcForm==='function')f=bcForm(a.id,i,f);   // v247 변초 (g_chamo.js)
   if(!s.f[i]){if(!silent)log(`[${f.n}]은(는) 아직 익히지 못했습니다. ${typeof acadOn==='function'&&acadOn()?'교두에게 전수받아야 합니다':typeof acadMainArt==='function'&&acadPast()&&acadMainArt()===a?'무관 병기 교두에게 전수받거나 비급을 읽어야 합니다':'비급을 읽거나 사부의 가르침을 받아야 합니다'}.`,'info');return false}
   if(!hasWeaponFor(a.cls)){if(!silent)log(wpnNeed(a.cls),'info');return false}
   if(P.fcd[i]>0||P.gcd>0)return false;const q=formQi(f);if(P.qi<q){if(!silent)log('내공이 부족합니다.','info');return false}
@@ -364,7 +364,8 @@ function ultimate(){
 function ultFire(a,combo,e){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
   if(!e||e.hp<=0)e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
   heroAtk('ult');const X=mkX(a.id,combo);P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
-  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)},e,X));
+  const jd=typeof jdUlt==='function'?jdUlt(a.id):1;   // v247 자득 (g_chamo.js)
+  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)*jd},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈
 const SPEC=GD.SPEC;
