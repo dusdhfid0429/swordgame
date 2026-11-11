@@ -107,7 +107,7 @@ function strike(){place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;basicStr
 const bladeNameFor=r=>(BLADE.names[V.cls]||BLADE.names['검'])[r-2];
 const BLADES=()=>typeof BLADE==='undefined'?[]:[[5,()=>bladeOrb],[6,()=>bladeFly],[7,()=>bladeMind],[8,()=>bladeRain]];
 // 내공이 바닥났을 때의 기본 공격 (g_bare.js, v214): 병기를 들고 내공을 0으로 비운 채 한 번 친다. 각은 권 기본 공격의 발차기 차례로 맞춘다
-const BAREW=['검','도','창','봉','권','각','단','편','궁','암'];
+const BAREW=['검','도','예','창','봉','권','각','단','편','궁','암'];
 function bareShow(k){const c=k==='각'?'권':k,a=Object.values(ARTS).find(x=>x.cls===c&&!x.base);if(!a)return;setWeapon(c);setAmmo();P.arts=P.arts||{};if(!P.arts[a.id])P.arts[a.id]={p:TIERP[V.tier],f:a.forms.map(()=>1)};
   P.cur=a.id;place();const e=tgt();P.realm=V.realm;P.bcd=0;P.gcd=0;if(c==='권')P.hc=k==='각'?0:1;P.qi=0;basicStrike(e)}
 function bladeShow(r,f){place();const e=tgt();P.realm=r;P.bcd=0;P.gcd=0;P.bpT=P.mhT=time;basicStrike(e);f()(e)}

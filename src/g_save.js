@@ -46,11 +46,18 @@ function seoeMigrate(d){const g=d.G,W=GD.SEOE_WAS||{},B=STORY.POP.base;
   if(g)for(const[sid,was]of Object.entries(W)){const k=(B[sid]||B.big)/(B[was]||60);
     for(const m of[g.pop,g.popPrev])if(m&&m[sid]>0)m[sid]=Math.round(m[sid]*k*10)/10;
     if(g.slt)delete g.slt[sid];if(g.sbuild)delete g.sbuild[sid]}
-  const p=d.P;if(p&&p.arts)for(const[id,x]of Object.entries(p.arts))if(/^S_jangbaek_\d+$/.test(id)&&ARTS[id]&&x){const k=(x.f||[]).filter(Boolean).length;x.f=ARTS[id].forms.map((_,i)=>i<k)}
+  jbFix(d);yedoGift(d);return d}
+// 장백파 무공 초식 칸과 비급 이름을 지금 무공(ARTS)에 맞춘다 (v11 세외오궁, v12 예도)
+function jbFix(d){const p=d.P,g=d.G;if(p&&p.arts)for(const[id,x]of Object.entries(p.arts))if(/^S_jangbaek_\d+$/.test(id)&&ARTS[id]&&x){const k=(x.f||[]).filter(Boolean).length;x.f=ARTS[id].forms.map((_,i)=>i<k)}
   const walk=o=>{if(!o||typeof o!=='object')return;if(Array.isArray(o)){o.forEach(walk);return}
     if(o.slot==='book'&&/^S_jangbaek_\d+$/.test(o.art||'')&&ARTS[o.art]){const a=ARTS[o.art];o.form=Math.min(o.form||0,a.forms.length-1);o.name=`${a.n} 비급 · ${a.forms[o.form].n}`}
     for(const k in o)walk(o[k])};
-  if(p)walk(p);if(g&&g.storage)walk(g.storage);
+  if(p)walk(p);if(g&&g.storage)walk(g.storage)}
+// v253 장백파 무공이 예도(조선의 외날 칼)를 쓰게 됐다: 장백파 예도 무공을 익혔는데 예도가 없으면 한 자루를 행낭에 넣는다
+function yedoGift(d){const p=d.P;if(!p||!p.arts)return d;
+  const has=Object.keys(p.arts).some(id=>/^S_jangbaek_\d+$/.test(id)&&ARTS[id]&&ARTS[id].cls==='예');
+  const own=[p.eq&&p.eq.weapon,...(p.bag||[])].some(w=>w&&w.slot==='weapon'&&w.cls==='예');
+  if(has&&!own){(p.bag=p.bag||[]).push(mkWeapon('예',1.1,0));d.notes.push('장백파 무공이 예도(조선의 외날 칼)를 쓰도록 바뀌었습니다. 행낭에 예도 한 자루를 넣었습니다.')}
   return d}
 // 옛 요대(slot belt)·유엽비도(암 병기) → 무기 칸의 요대. 공격력·내구는 유엽비도 것, 이름·등록 암기·근접 무기·현묘도는 요대 것
 function beltMigrate(d){const p=d.P;if(!p)return d;

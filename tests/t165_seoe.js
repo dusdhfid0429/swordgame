@@ -26,7 +26,7 @@ const {chromium}=require('playwright');
       for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const k=objs[y][x];if(k&&PROP[k])o.props[k]=(o.props[k]||0)+1;if(id.endsWith('_back')&&map[y][x].g===2)o.water++}}
     o.gat=!!PAL[sectPal('jangbaek',2,'검')].gat;o.hb=PAL[sectPal('jangbaek',2,'검')].hairband;return o});
   ok(`장백파 조선풍: ${r3.arts.join(' ')} · 주무기 ${r3.start} · ${JSON.stringify(r3.forms)} ${JSON.stringify(r3.props)} · 천지 ${r3.water}칸 · 갓 ${r3.gat} · 막힘 ${r3.bad.join(',')||'없음'}`,
-    r3.arts.join()==='본국검법:검,백두천지검:검,쌍수도법:도,수박권:권'&&r3.start==='검'&&r3.forms.giwa>=10&&r3.forms.hongsal>=2&&r3.props.jangseung>=2&&r3.props.sotdae>=2&&r3.props.onggi>=2&&r3.water>=20&&r3.gat&&!r3.hb&&!r3.bad.length);
+    r3.arts.join()==='조선세법:예,사신예도:예,현무신권:권,수박권:권'&&r3.start==='예'&&r3.forms.giwa>=10&&r3.forms.hongsal>=2&&r3.props.jangseung>=2&&r3.props.sotdae>=2&&r3.props.onggi>=2&&r3.water>=20&&r3.gat&&!r3.hb&&!r3.bad.length);
   // 3. 다른 넷: 특색 모양이 4장으로, 길이 다 닿고, 장문인·금고·입문 담당이 있다
   const r4=await p.evaluate(F=>{const o={};for(const sid of F){const s=SECTS[sid],H=REGIONS[hqId(s)],forms={},props={},bad=[];
       for(const id of H.chain){bad.push(...reach(id).map(x=>id+':'+x));for(const q of builds)if(q.form)forms[q.form]=(forms[q.form]||0)+1;for(let y=0;y<NH;y++)for(let x=0;x<N;x++){const k=objs[y][x];if(k&&k!=='B')props[k]=(props[k]||0)+1}}
@@ -41,9 +41,15 @@ const {chromium}=require('playwright');
   const r5=await p.evaluate(()=>{loadRegion('hq_mandok');for(let i=0;i<6;i++)spawnTick();const ds=mobs.filter(m=>m.sect==='mandok');return{n:ds.length,kind:ds[0]&&ds[0].kind,peace:ds.every(m=>peaceful(m))}});
   ok(`만독문 제자 ${r5.n}명(${r5.kind})은 정파 주인공에게 평화`,r5.n>=3&&r5.peace);
   // 5. 옛 저장: 인원을 새 기준 비율로, 증축 기록 지움, 장백파 초식 칸 맞춤
-  const r6=await p.evaluate(()=>{const d={v:10,G:{pop:{yasu:30,bukhae:150,podal:0,hwasan:280},popPrev:{yasu:30},slt:{yasu:'mid'},sbuild:{mandok:{t:'mid',y:3}}},P:{arts:{S_jangbaek_0:{p:40,f:[1,1,0,0,0,0,0]}},bag:[{slot:'book',art:'S_jangbaek_1',form:9}]},notes:[]};
-    const o=migrateSave(d);return{v:o.v,pop:o.G.pop,prev:o.G.popPrev,slt:o.G.slt.yasu,sb:o.G.sbuild.mandok,f:o.P.arts.S_jangbaek_0.f,flen:ARTS.S_jangbaek_0.forms.length,bk:o.P.bag[0].form,bkn:o.P.bag[0].name,blen:ARTS.S_jangbaek_1.forms.length}});
-  ok(`옛 저장 옮기기: ${JSON.stringify(r6)}`,r6.v>=11&&r6.pop.yasu===150&&r6.pop.bukhae===300&&r6.pop.podal===0&&r6.pop.hwasan===280&&r6.prev.yasu===150&&!r6.slt&&!r6.sb&&r6.f.length===r6.flen&&r6.f.filter(Boolean).length===2&&r6.bk<r6.blen&&/백두천지검/.test(r6.bkn));
+  const r6=await p.evaluate(()=>{const d={v:10,G:{pop:{yasu:30,bukhae:150,podal:0,hwasan:280},popPrev:{yasu:30},slt:{yasu:'mid'},sbuild:{mandok:{t:'mid',y:3}}},P:{arts:{S_jangbaek_0:{p:40,f:[1,1,0,0,0,0,0]}},eq:{weapon:{slot:'weapon',cls:'검',name:'철검'}},bag:[{slot:'book',art:'S_jangbaek_1',form:9}]},notes:[]};
+    const o=migrateSave(d);return{v:o.v,pop:o.G.pop,prev:o.G.popPrev,slt:o.G.slt.yasu,sb:o.G.sbuild.mandok,f:o.P.arts.S_jangbaek_0.f,flen:ARTS.S_jangbaek_0.forms.length,bk:o.P.bag[0].form,bkn:o.P.bag[0].name,blen:ARTS.S_jangbaek_1.forms.length,yd:o.P.bag.some(w=>w.slot==='weapon'&&w.cls==='예')&&o.notes.some(n=>/예도/.test(n))}});
+  ok(`옛 저장 옮기기: ${JSON.stringify(r6)}`,r6.v>=11&&r6.pop.yasu===150&&r6.pop.bukhae===300&&r6.pop.podal===0&&r6.pop.hwasan===280&&r6.prev.yasu===150&&!r6.slt&&!r6.sb&&r6.f.length===r6.flen&&r6.f.filter(Boolean).length===2&&r6.bk<r6.blen&&/사신예도/.test(r6.bkn)&&r6.yd);
+  // 6. 예도 (사용자 2026-11-11 "무기 타입에 조선의 예도를 추가해줘", "주력 무기는 예도와 권이야"): 새 병기 계열, 위력은 등급 예산 안, 특색은 사거리·방어·현묘도
+  const r7=await p.evaluate(()=>{const C=CLASS.예,o={cls:CLS.includes('예'),wund:WU.cls.includes('예'),reach:C.reach,dreach:CLASS.도.reach,greach:CLASS.검.reach,ad:C.atk*C.def,
+      basic:['정','사'].flatMap(s=>[0,1,2,3,4].map(i=>ARTS[s+'예'+i]&&ARTS[s+'예'+i].forms.length)),four:SECTS.jangbaek.arts[1].id,
+      fn:ARTS.S_jangbaek_1.forms.map(f=>f.n).join(','),wn:WNAME.예,sabu:(SABU.jangbaek||[]).map(x=>x.cls)};
+    const w=mkWeapon('예',1);P.eq.weapon=w;P.arts.정예0={p:0,f:[1,0,0,0,0]};P.cur='정예0';o.has=hasWeaponFor('예');o.hc=heroCls();o.blade=BLADE.names.예[0];return o});
+  ok(`예도 계열: ${JSON.stringify(r7)}`,r7.cls&&r7.wund&&r7.reach>r7.dreach&&r7.reach>r7.greach&&r7.ad<=1&&r7.basic.every(n=>n>=2)&&/청룡/.test(r7.fn)&&/현무/.test(r7.fn)&&r7.wn==='예도'&&r7.has&&r7.hc==='도'&&r7.blade==='예기');
   // 사진: 장백파 본산·후산, 다섯 장문인 옷
   for(const[id,y]of[['hq_jangbaek',14],['hq_jangbaek_back',12]]){await p.evaluate(([id,y])=>{loadRegion(id);P.x=20.5;P.y=y;mobs.length=0},[id,y]);await p.waitForTimeout(500);await p.screenshot({path:__dirname+`/shots/t165_${id}.png`})}
   console.log(errs.length?'ERRORS\n'+errs.slice(0,6).join('\n'):'no errors');await b.close()})();
