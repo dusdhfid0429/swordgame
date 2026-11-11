@@ -39,7 +39,7 @@ function mdGainTxt(w,y){const o=[`수련 활력 ${Math.round(mdVit()*y*w.vit)}`]
 const mdVit=()=>MADI.vitYr[Math.min(realmIdx(),MADI.vitYr.length-1)];
 // 활력 b를 가장 싼 수련부터 쓴다 (기본기 넷·내공). 수련 창의 값·비용을 그대로 쓴다
 function mdTrain(b){const got={str:0,end:0,agi:0,qi:0,ne:0};
-  for(let n=0;n<400;n++){const opt=STATS.map(({k})=>({k,c:statCost(k)}));if(!simCur().none)opt.push({k:'ne',c:qiCost(P.side,P.qiN)});
+  for(let n=0;n<400;n++){const opt=STATS.filter(({k})=>!capWhy(k)).map(({k})=>({k,c:statCost(k)}));if(!simCur().none&&!capWhy('ne'))opt.push({k:'ne',c:qiCost(P.side,P.qiN)});
     opt.sort((a,b)=>a.c-b.c);const o=opt[0];if(!o||o.c>b)break;b-=o.c;
     if(o.k==='ne'){const g=qiGain();qiAccAdd(g);P.qiN++;got.ne+=g}else{P.st[o.k]++;got[o.k]++}}
   recalc();P.hp=P.maxHp;P.qi=P.maxQi;return{got,left:b}}

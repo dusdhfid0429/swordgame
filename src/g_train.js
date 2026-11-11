@@ -22,10 +22,10 @@ function renderTrain(){
   if(!trnOpen)return;const c=qiCost(P.side,P.qiN),fight=inCombat();
   const rows=STATS.map(({k,n})=>{const v=P.st[k],cost=statCost(k);
     const desc=k==='str'?`공격력 +${v*2}`:k==='end'?`활력 최대 ${maxVit()}`:k==='agi'?`현묘도 +${v*2}`:`생명 +${v*10} · 수명 +${Math.floor(v*.5)}년`;
-    return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight,fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:'')}).join('');
+    const cw=capWhy(k);return trnRow(k,n,v,desc,cost,P.vit>=cost&&!fight&&!cw,cw||(fight?'싸움 중':P.vit<cost?`활력 ${cost} 필요`:''))}).join('');
   // 내용이 바뀔 때만 다시 그린다. 매번 갈아 끼우면 누르는 도중 버튼이 바뀌어 탭이 사라진다.
   const h=`<div class="thead"><span>수련 <small>활력 ${P.vit}/${maxVit()} · ${Math.floor(P.age)}세</small></span><button type="button" class="btn" data-tr="close">닫기</button></div>
-    <div class="tlist">${pgRow()}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong',`내공 심법 · ${simCur().n} ${AGR[simCur().g]}`,baseQi(),simCur().none?`${gapja(baseQi())} · 심법을 익혀야 내공을 쌓는다`:`${gapja(baseQi())} · ${simCur().sc} ${simCur().el} · 1회 +${simGain()}${simCur().tr&&simCur().tr.length?' · 특색 '+simTraitTxt(simCur()):''}`,c,P.vit>=c&&!fight&&!simCur().none,simCur().none?'심법 없음':fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:'')}${simRows()}</div>`;
+    <div class="tlist">${pgRow()}${atWall()?hwListHtml():''}${typeof mkRows==='function'?mkRows():''}${rows}${trnRow('neigong',`내공 심법 · ${simCur().n} ${AGR[simCur().g]}`,baseQi(),simCur().none?`${gapja(baseQi())} · 심법을 익혀야 내공을 쌓는다`:`${gapja(baseQi())} · ${simCur().sc} ${simCur().el} · 1회 +${simGain()}${simCur().tr&&simCur().tr.length?' · 특색 '+simTraitTxt(simCur()):''}`,c,P.vit>=c&&!fight&&!simCur().none&&!capWhy('ne'),simCur().none?'심법 없음':capWhy('ne')||(fight?'싸움 중':P.vit<c?`활력 ${c} 필요`:''))}${simRows()}</div>`;
   // v132 (사용자): 다시 그려도 목록 스크롤은 그대로. innerHTML을 갈면 스크롤이 맨 위로 가므로 자리를 재서 되돌린다
   if(h!==renderTrain.h){renderTrain.h=h;const l=TRN.querySelector('.tlist'),st=l?l.scrollTop:0;TRN.innerHTML=h;if(st){const l2=TRN.querySelector('.tlist');if(l2)l2.scrollTop=st}}
 }
@@ -39,6 +39,7 @@ function startTrain(k){
   if(trnBusy||P.hp<=0)return;if(inCombat()){log('싸움 중에는 수련할 수 없습니다.','info');return}
   const neo=k==='neigong',cost=neo?qiCost(P.side,P.qiN):statCost(k);
   if(neo&&simCur().none){log('익힌 심법이 없어 내공을 쌓을 수 없습니다.','info');return}
+  {const cw=capWhy(k);if(cw){log(`${cw}. 벽을 깨야 더 오른다.`,'info');return}}
   if(P.vit<cost){log(`활력이 부족합니다. (필요 ${cost})`,'info');return}
   P.path=null;P.target=null;P.medit=false;P.chan=null;
   trnBusy={k,t:0,dur:TRN_DUR[k]};if(neo){P.qiTraining=true;qfShowName()}else trainFx(k);renderTrain();
@@ -51,10 +52,10 @@ function trainTick(dt){
   const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
   if(b.t<b.dur)return;trnBusy=null;
   if(P.hp>0&&!inCombat()){
-    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c){P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
+    if(b.k==='neigong'){P.qiTraining=false;const c=qiCost(P.side,P.qiN);if(P.vit>=c&&!capWhy('ne')){P.vit-=c;const g=qiGain();qiAccAdd(g);P.qiN++;recalc();P.qi=P.maxQi;fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:1.2});
         addText(P.x,P.y,`내공 +${g}`,'#9db8e0');log(`운기조식으로 내공이 ${g} 늘었습니다. (${P.qiN}회차)`,'xp');
         qiTrained()}}
-    else{const c=statCost(b.k);if(P.vit>=c){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys');wallCheck()}}
+    else{const c=statCost(b.k);if(P.vit>=c&&!capWhy(b.k)){P.vit-=c;P.st[b.k]++;recalc();addText(P.x,P.y,`${TRN_FX[b.k]} +1`,`rgb(${TRN_COL[b.k]})`);log(`${TRN_FX[b.k]}이(가) 1 올랐습니다.`,'sys');wallCheck()}}
   }else{P.qiTraining=false;log('수련이 끊겼습니다.','info')}
   renderTrain();
 }

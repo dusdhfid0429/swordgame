@@ -19,7 +19,7 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
   const at=[0,.55,.5,.6,.5,.62,.84,.6,.55];
   for(let i=1;i<=8;i++){await p.evaluate(([i,t])=>{fx.length=0;brkFx(i);const f=fx.find(q=>q.t==='brk');f.life=f.max*(1-t)},[i,at[i]]);await p.waitForTimeout(120);await p.screenshot({path:shot('brk_'+i)})}
   // 폐관 성공 → 돌파 연출. v241: 수련 창을 내리고, 연출 동안 알림·배너를 붙잡았다가 끝나면 '돌파 결과' 한 장으로
-  const g=await p.evaluate(()=>{fx.length=0;BRKS=null;P.realm=0;P.rfx={};openTrain();const R=Math.random;pgWhy=()=>'';passYears=()=>true;Math.random=()=>0;pgFinish();Math.random=R;
+  const g=await p.evaluate(()=>{fx.length=0;BRKS=null;P.realm=0;P.rfx={};openTrain();const R=Math.random;pgWhy=()=>'';passYears=()=>true;pgChance=()=>1;Math.random=()=>0;pgFinish();Math.random=R;
     return{realm:P.realm,brk:fx.some(q=>q.t==='brk'&&q.r===1),show:!!BRKS,trn:trnOpen,on:document.body.classList.contains('brk-on'),sys:document.querySelectorAll('.sysmsg p').length,held:BRKH&&BRKH.sys.length,ban:document.getElementById('banner').classList.contains('on')}});
   ok(`폐관 성공: 경지 ${g.realm}, 연출 ${g.brk}, 수련 창 닫힘 ${!g.trn}, 화면 알림 ${g.sys}개·배너 ${g.ban} (붙잡은 줄 ${g.held})`,g.realm===1&&g.brk&&g.show&&!g.trn&&g.on&&g.sys===0&&!g.ban&&g.held>=2);
   await p.evaluate(()=>{paused=false});

@@ -45,7 +45,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     P.srank.hwasan=4;P.sry.c.pg=1;const all=sryAllDone();act('sryrep');return{pre,old,one,zero,all,end:P.sry.end}});
   ok(`장로로 먼저 오르면 승급 과제 완료 → 보고로 수련기 끝 (${JSON.stringify(r8b)})`,r8b.pre&&r8b.old&&r8b.one&&!r8b.zero&&r8b.all&&r8b.end===1);
   // 폐관 시도는 본산에서 pgFinish 한 번으로 센다
-  const r9=await p.evaluate(()=>{P.sry={sid:'hwasan',m:3,open:0,c:{},base:{}};P.age=17;sryActivate();P.st.str+=12;P.st.end+=6;P.qiAcc=400;for(const k in P.arts)P.arts[k].p=60;recalc();const wall=atWall();const r0=Math.random;Math.random=()=>.999;try{pgFinish(false)}catch(e){}Math.random=r0;return{pg:P.sry.c.pg||0,own:inOwnSect(),wall}});
+  const r9=await p.evaluate(()=>{P.sry={sid:'hwasan',m:3,open:0,c:{},base:{}};P.age=17;sryActivate();P.st.str+=12;P.st.end+=6;P.qiAcc=400;for(const k in P.arts)P.arts[k].p=60;recalc();const wall=atWall();hwFill(1);const r0=Math.random;Math.random=()=>.999;try{pgFinish(false)}catch(e){}Math.random=r0;return{pg:P.sry.c.pg||0,own:inOwnSect(),wall}});
   ok(`본산 폐관 시도 하나 센다 (${r9.pg}, 본산 ${r9.own})`,r9.own&&r9.wall&&r9.pg===1);
   // 20세 넘어 들어오면 수련기는 없다
   const r10=await p.evaluate(()=>{P.sry=null;P.sect=null;P.age=22;sryStart('hwasan');return P.sry});
