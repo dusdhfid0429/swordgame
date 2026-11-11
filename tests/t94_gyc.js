@@ -24,7 +24,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`말풍선 없음 ${r3.bub===0} · '!' ${r3.mark} → 말 걸면 소문 ${r3.said} · 들은 뒤 '!' 사라짐 ${!r3.after} · 들은 단계 ${r3.heard} · 임무창 기연 소문 · 기록 ${r3.log}`,r3.bub===0&&r3.mark&&r3.said&&!r3.after&&r3.heard>=0&&r3.card.includes('기연 소문')&&r3.log>0);
   await p.waitForTimeout(200);await p.evaluate(()=>closePanels());await p.screenshot({path:shot('gyc_bubble')});
   // 멀리 있는 동굴은 소문이 작으면 들리지 않는다
-  const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const none=gycRumorFor();
+  const r3b=await p.evaluate(()=>{const c=G.gyc.list[0];c.rumor=0;loadRegion('gaebong');REG='gaebong';const h=regHops('gaebong')[c.host];gycHopReg=null;for(const o of G.gyc.list)o.rumor=0;const g0=gycRumorFor(),none=g0&&REGIONS[g0.c.host].prov!=='henan'?g0:null;   // v247: 같은 성(하남)의 동굴은 소문이 작아도 그 성 사람들이 안다 (증인을 가리킨다)
     const far=G.gyc.list.find(o=>(regHops('gaebong')[o.host]??30)>2);return{h,none,far:!!far}});
   ok(`소문 0이면 먼 동굴(${r3b.h}곳 건너)은 들리지 않는다`,r3b.none===null);
   // 4. 동굴 안: 수호자가 지키고, 쓰러뜨리면 상자. 보상은 행낭(비급·영약)에 들어오고 바로 익히지 않는다

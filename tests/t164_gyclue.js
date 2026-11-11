@@ -76,5 +76,19 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const told=cv.told.has(m);tod=.5;update(.05);const noon=cv.rest;tod=.35;update(.05);return{moving,busy,camp,stop,marks,html:html.slice(0,80),told,noon,after:cv.rest}});
   ok(`표행 낮엔 길 재촉 ${r10.moving}·말 안 됨 ${r10.busy} → 밤 ${r10.camp}(멈춤 ${r10.stop}) 말 걸면 "${r10.html}" · 들음 ${r10.told} · 한낮 ${r10.noon} · 다시 출발 ${r10.after}`,
     !r10.none&&r10.moving&&r10.busy&&r10.camp==='camp'&&r10.stop&&r10.html.includes('노숙')&&r10.told&&r10.noon==='rest'&&r10.after==null);
+  // 11. 따라나선 표행: 수레는 천천히, 맵 여러 곳을 지나고(길목에 닿으면 함께 다음 맵으로), 노숙·휴식을 겪고 모닥불가에서 생명이 돈다. 마지막 맵 길목에서 품삯
+  const r11a=await p.evaluate(()=>{closePanels();CVS.slice().forEach(cv=>cvEnd(cv,true));tod=.3;const nb=PV_NB('henan').find(n=>n!=='henan'&&PROV[n]);
+    P.quests=[{n:'시험 표행',kind:'escort',cnt:1,have:0,hired:1,run:'t',reg:pvId('henan'),dst:nb,dep:nowS()+200,cargo:CARV.cargo[0].k,hands:1,legs:3,leg:0,silver:100,vit:10,fame:1,good:1,pyo:'gaebong',pyoN:'진원표국',pyoAt:'개봉'}];
+    const id=Object.keys(REGIONS).find(k=>/^pv_henan/.test(k)&&REGIONS[k].win);enterRegion(id,arriveAt(id).x,arriveAt(id).y);runHooks('regionLoaded',id);
+    let cv=null;for(let t=0;t<40&&!cv;t++){update(.05);cv=CVS.find(c=>c.q)}if(!cv)return{none:1};
+    const q=P.quests[0];return{sp:cv.cart.sp/cv.cart.d.sp,from:REG,legTxt:questWhere?questWhere(q):'',to:cv.dest.to,waves:cv.waves.length}});
+  ok(`표행 출발: 수레 걸음 ×${r11a.sp} · 첫 맵 습격 ${r11a.waves} · 다음 맵 ${r11a.to}`,!r11a.none&&r11a.sp===0.5&&/^pv_/.test(r11a.to||''));
+  await p.evaluate(()=>{const cv=CVS.find(c=>c.q);cvArrive(cv)});await p.waitForTimeout(900);
+  const r11=await p.evaluate(()=>{const q=P.quests[0];let cv=null;for(let t=0;t<40&&!cv;t++){update(.05);cv=CVS.find(c=>c.q)}if(!cv)return{none:1,reg:REG,q:JSON.stringify(q)};
+    const leg=q.leg,reg=REG,same=q.reg===pvBase(REG),walkOk=walkAt(P.x,P.y);tod=.9;update(.05);const camp=cv.rest;P.hp=P.maxHp*.5;P.x=cv.cart.x+.9;P.y=cv.cart.y+1.6;if(!walkAt(P.x,P.y)){P.x=cv.cart.x+.9;P.y=cv.cart.y+.9}
+    const h0=P.hp;for(let i=0;i<10;i++)update(.1);const heal=P.hp-h0;tod=.3;update(.05);
+    q.leg=q.legs-1;const s0=P.silver;cvArrive(cv);return{leg,reg,same,walkOk,camp,heal,paid:P.silver-s0,left:P.quests.length}});
+  ok(`다음 맵(${r11.reg})으로 함께 넘어감 · 맵 ${r11.leg+1}/3 · 걸을 수 있는 자리 ${r11.walkOk} · 따라나선 표행도 밤엔 ${r11.camp} · 모닥불가 생명 +${Math.round(r11.heal||0)} · 마지막 길목 품삯 ${r11.paid}`,
+    !r11.none&&r11.leg===1&&r11.same&&r11.walkOk&&r11.camp==='camp'&&r11.heal>0&&r11.paid===100&&r11.left===0);
   ok(`오류 없음 ${errs.join(' | ')}`,errs.length===0);
   await b.close()})();

@@ -58,8 +58,9 @@ function cvToward(ex,dst){if(!dst)return[];const hit=to=>!!to&&pvBase(to)===pvId
 // 출발을 앞둔 표행: 표국마다 CARV.recruit.runs개. 떠난 표행은 지우고 새 표행을 건다
 function pyoMkRun(p,dep){const RC=CARV.recruit,E=CARV.escort,lo=cvDanger(p.k),c=pick(CARV.cargo),nb=PV_NB(p.k).filter(n=>n!==p.k&&PROV[n]),dst=nb.length?pick(nb):null;
   const need=R1(RC.need[0],RC.need[1]),to=!c.nofac&&Math.random()<RC.facTo?pyoFacTo(dst):null;   // v194: 관아 세은은 세력 문파로 가지 않는다
-  return{id:`${p.id}:${Math.round(dep)}:${Math.floor(Math.random()*1e4)}`,cargo:c.k,dst,dep,t0:nowS(),need,got:R1(0,Math.max(0,need-3)),to,
-    silver:Math.round(R1(E.silver[0],E.silver[1])*(1+lo*.35)*c.mul*(to?RC.facMul:1)),vit:E.vit+lo*20,fame:E.fame,good:E.good}}
+  const TP=CARV.trip,legs=R1(TP.legs[0],TP.legs[1]);   // v247: 맵 여러 곳을 지나는 표행
+  return{id:`${p.id}:${Math.round(dep)}:${Math.floor(Math.random()*1e4)}`,cargo:c.k,dst,dep,t0:nowS(),need,got:R1(0,Math.max(0,need-3)),to,legs,
+    silver:Math.round(R1(E.silver[0],E.silver[1])*(1+lo*.35)*c.mul*(to?RC.facMul:1)*(1+(legs-1)*TP.payPer)),vit:E.vit+lo*20,fame:E.fame,good:E.good}}
 // 표물을 받는 곳이 세력의 문파나 맹이면(사용자 2026-10-27) 그 세력의 적 세력이 표행을 노린다. 표국은 여전히 어느 편도 아니다
 function pyoFacTo(dst){const L=[];for(const sid of(PROV[dst]&&PROV[dst].sects||[]))if(SECTS[sid])L.push({n:SECTS[sid].n,fac:alFac(SECTS[sid].al),sid});
   for(const al of Object.keys(ALLY))L.push({n:typeof MAENG!=='undefined'&&MAENG[al]?MAENG[al].n:ALLY[al].n,fac:alFac(al),al});
@@ -80,7 +81,8 @@ const dstN=k=>k&&PROV[k]?PROV[k].n:'이웃 성';
 // 표행 한 장: 출발까지 남은 시간·목적지·표물·일행·성공하면 받는 임금
 function pyoRunHtml(p,r,i){const c=cargoOf(r.cargo),T=CARV.types.pyo,left=r.dep-nowS(),why=r.me?'':pyoWhy(p,r);
   return `<div class="card pyorun"><div class="row2"><h4>${esc(c.n)} 표행 <small class="dim">${esc(p.town)} → ${esc(dstN(r.dst))}</small></h4><span class="tag">${left>0?`출발까지 <b>${fmtLeft(left)}</b>`:'<b class="bad">곧 떠난다</b>'}</span></div>
-    <p><b>목적지</b> ${esc(PROV[p.k].n)} 성 지도를 지나 ${esc(dstN(r.dst))} 쪽 길목까지. ${esc(p.town)} 성문 밖에서 모여 떠난다</p>
+    <p><b>목적지</b> ${esc(PROV[p.k].n)} 성 지도를 지나 ${esc(dstN(r.dst))} 쪽으로, 맵 <b>${r.legs||1}</b>곳을 지난다. ${esc(p.town)} 성문 밖에서 모여 떠난다</p>
+    <p class="note">수레 걸음에 맞춰 천천히 간다. 밤엔 길가에서 노숙하고 한낮엔 쉬어 간다. 쉬는 동안 표사들과 이야기하고, 모닥불가에서 몸을 추스른다</p>
     <p><b>표물</b> ${esc(c.d)} · ${r.to?`<b>${esc(r.to.n)}</b>(${FACN[r.to.fac]})에게`:`${esc(dstN(r.dst))}의 ${esc(c.to)}에게`}${c.boss?' · <b class="bad">값진 표물이라 산적두목이 노린다</b>':''}</p>
     ${r.to?`<p class="bad"><b>노리는 자</b> ${pyoFoes(r.to).map(f=>FACN[f]).join('·')} 무인이 ${esc(r.to.n)}에 가는 표물을 친다. 임금 ×${CARV.recruit.facMul}</p>`:''}
     ${pyoRiskHtml(r)}
@@ -98,7 +100,7 @@ function pyoDlg(n){const p=PYO[n.pyo];if(!p)return'';
 hook('npcDlg',c=>{if(c.html==null&&c.n.pyo)c.html=pyoDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='pyojoin')return;c.done=true;c.r=true;const p=PYO[c.x],L=p&&pyoRuns(p),r=L&&L[+c.y];if(!r||r.me||pyoWhy(p,r)||r.dep<=nowS())return;
   r.me=1;const cg=cargoOf(r.cargo);
-  P.quests.push({n:`${cg.n} 표행 · ${p.town} → ${dstN(r.dst)}`,kind:'escort',cnt:1,have:0,hired:1,run:r.id,reg:pvId(p.k),dst:r.dst,dep:r.dep,cargo:r.cargo,hands:Math.min(2,r.got),to:r.to||null,
+  P.quests.push({n:`${cg.n} 표행 · ${p.town} → ${dstN(r.dst)}`,kind:'escort',cnt:1,have:0,hired:1,run:r.id,reg:pvId(p.k),dst:r.dst,dep:r.dep,cargo:r.cargo,hands:Math.min(2,r.got),to:r.to||null,legs:r.legs||1,leg:0,
     silver:r.silver,vit:r.vit,fame:r.fame,good:r.good,pyo:p.id,pyoN:p.n,pyoAt:p.town,key:`pyo:${r.id}`});
   log(`[${p.n}] ${cg.n} 표행에 따라나서기로 했습니다. ${fmtLeft(r.dep-nowS())} 안에 ${p.town} 성문 밖 ${PROV[p.k].n} 성 지도로 나가세요.`,'info');
   {const k=pyoRisk(r);if(realmIdx()<k.need)log(`표두: "${rk(k.need)}도 못 된 몸으로 따라오겠다니, 습격이 오면 수레 뒤에 붙어 있으시오." (${k.t})`,'dmg')}});
@@ -110,7 +112,7 @@ hook('tick',dt=>{if(!P||!P.quests)return;for(const q of P.quests)if(q.kind==='es
   for(const q of P.quests.slice())if(q.hired&&!q.went&&t>q.dep+CARV.recruit.grace){P.quests.splice(P.quests.indexOf(q),1);pyoRunDone(q);log(`[${q.n}] 표행이 기다리다 떠났습니다. 품삯은 없습니다.`,'dmg')}});
 function cvEscTxt(q){if(q.cvLive)return'구해 준 행렬이 길목에 닿을 때까지';const R=REGIONS[q.reg];if(!R)return'맡은 곳 성 지도의 표행';
   if(q.hired&&!q.went){const left=q.dep-nowS();return `${R.name} 성 지도 · ${dstN(q.dst)} 쪽 길목까지 <small class="dim">${left>0?`출발까지 ${fmtLeft(left)}`:'출발 시각이 지났다, 서두르자'} · ${esc(q.pyoAt||'')} 성문 밖에서 모인다</small>`}
-  return `${R.name} 성 지도${q.dg?` · ${q.dg} 길목까지`:''} <small class="dim">그 성 지도에 들어서면 표행이 기다린다</small>`}
+  return `${R.name} 성 지도${q.dg?` · ${q.dg} 길목까지`:''}${(q.legs||1)>1?` · 맵 ${(q.leg||0)+1}/${q.legs}`:''} <small class="dim">그 성 지도에 들어서면 표행이 기다린다</small>`}
 // 옛 저장(v176~v187): 표국 신용·문파 표국 일감을 지우고, 맡아 둔 호위 일감은 따라나선 표행으로 바꾼다. 여러 번 불러도 같다
 function pyoFixSave(){if(!P)return;let n=0,mv=0;
   if(P.pyo!==undefined){delete P.pyo;n++}if(G.pyoJobs){delete G.pyoJobs;n++}
@@ -123,8 +125,9 @@ hook('afterLoad',pyoFixSave);
 function cvMk(cv,kind,x,y,role,name){const e=mkMob(kind,x,y);e.d={...e.d,fac:'상'};e.fixed='cv';e.cv=cv;e.cvRole=role;e.name=name;e.home={x,y};mobs.push(e);cv.mem.push(e);return e}
 const roadAt=(x,y)=>map[y]&&map[y][x]&&map[y][x].g===1;
 function cvRoute(o){
-  const ex=cvExits();
+  let ex=cvExits();
   if(o.escort){let sx=P.x+1.4,sy=P.y+.6;if(!walkAt(sx,sy)){sx=P.x;sy=P.y}
+    if(o.escort.hired&&(o.escort.legs||1)>1){const pv=ex.filter(g=>/^pv_/.test(g.to||'')&&g.to!==o.escort.from);if(pv.length)ex=pv}   // 여러 맵 표행: 성 지도로만, 온 길로는 되돌아가지 않는다
     const far=ex.sort((a,b)=>Math.hypot(b.x-sx,b.y-sy)-Math.hypot(a.x-sx,a.y-sy)).slice(0,4),tw=cvToward(ex,o.escort.dst);   // 따라나선 표행은 목적지 쪽 길목부터
     for(const g of[...tw,...far.filter(g=>!tw.includes(g))]){if(Math.hypot(g.x-sx,g.y-sy)<(tw.includes(g)?6:10))continue;
       const path=findPath(Math.floor(sx),Math.floor(sy),Math.floor(g.x),Math.floor(g.y),3000);if(path&&path.length>8)return{sx,sy,path,g}}
@@ -136,10 +139,11 @@ function cvRoute(o){
   return null}
 function cvSpawn(type,o={}){if(!onPv())return null;const T=CARV.types[type],rt=cvRoute(o);if(!T||!rt)return null;const k=cvProv(),lo=cvDanger(k);
   const name=type==='pyo'?(o.escort&&o.escort.pyoN||`${pick(CARV.pyoNames)}표국`):`${pick(T.names)} 상단`;
-  const cv={type,T,name,mem:[],raid:[],path:rt.path,i:0,len:rt.path.length,dest:{x:rt.g.x,y:rt.g.y,label:rt.g.label},help:0,
+  const cv={type,T,name,mem:[],raid:[],path:rt.path,i:0,len:rt.path.length,dest:{x:rt.g.x,y:rt.g.y,label:rt.g.label,to:rt.g.to},help:0,
     amb:!o.escort&&Math.random()<CARV.ambush.chance,waves:o.escort?CARV.ambush.escortAt.slice():[],q:o.escort||null,
     hate:!o.escort&&type==='pyo'&&(P.cvRob||0)>=2&&Math.random()<(P.cvRob||0)*CARV.rob.hate};
-  const c=cvMk(cv,T.cart,rt.sx,rt.sy,'cart',`${name} ${T.cart}`);c.maxHp=c.hp=Math.round(c.d.hp*(1+lo*.6));cv.cart=c;
+  const c=cvMk(cv,T.cart,rt.sx,rt.sy,'cart',`${name} ${T.cart}`);c.maxHp=c.hp=Math.round(c.d.hp*(1+lo*.6));cv.cart=c;c.sp=c.d.sp*CARV.trip.sp;   // v247: 수레는 천천히
+  {const q=o.escort;if(q&&q.hired&&(q.legs||1)>1){const i=q.leg||0,A=CARV.ambush.escortAt;cv.waves=i>=1&&i-1<A.length?[.5]:[];cv.wOff=i-1;if(q.cartHp)c.hp=Math.max(1,Math.round(c.maxHp*q.cartHp))}}
   const at=(i)=>{const a=i*2.1+.6;let x=rt.sx+Math.cos(a)*1.1,y=rt.sy+Math.sin(a)*1.1;if(!walkAt(x,y)){x=rt.sx;y=rt.sy}return[x,y]};
   let n=0;cvMk(cv,'표두',...at(n++),'guard',`${name} ${T.lead}`);
   for(let i=R1(T.nGuard[0],T.nGuard[1]);i>0;i--)cvMk(cv,T.guard,...at(n++),'guard',T.guard);   // 이름표가 겹치지 않게 호위·상인은 짧은 이름
@@ -161,7 +165,7 @@ function cvAmbush(cv,esc){const c=cv.cart,k=cvProv(),fs=[...new Set((PROV[k]&&PR
   const made=[];
   if(fac){for(let i=0;i<CARV.raid.facN;i++){const[x,y]=spot(),e=mkFac(fac,i===0?1:0,x,y);made.push(e)}}
   else{for(const[kind,n]of CARV.raid.bandit)for(let i=0;i<n;i++){const[x,y]=spot();made.push(mkMob(kind,x,y))}
-    const wave=esc?CARV.ambush.escortAt.length-cv.waves.length-1:0;if(esc?CARV.raid.escortBoss[wave]||cv.boss:Math.random()<CARV.raid.boss){const[x,y]=spot();made.push(mkMob('산적두목',x,y))}}
+    const wave=esc?(cv.curWave||0):0;if(esc?CARV.raid.escortBoss[wave]||cv.boss:Math.random()<CARV.raid.boss){const[x,y]=spot();made.push(mkMob('산적두목',x,y))}}
   for(const e of made){e.cvRaid=cv;e.fixed='cv';e.aggro=true;e.tgt=pick(cv.mem);e.home={x:e.x,y:e.y};mobs.push(e);cv.raid.push(e);fx.push({t:'puff',x:e.x,y:e.y,life:.5})}
   cv.raiding=true;const who=fac?`${FACN[fac]} 무리`:'산적 떼';cv.who=who;
   showBanner('행렬 습격',`${cv.name} · ${who}`);log(`${cv.name} 행렬이(가) ${who}에게 습격당했습니다! 거들면 사례를 받습니다.`,'dmg')}
@@ -186,7 +190,7 @@ hook('sectAct',c=>{if(c.a!=='cvacc'&&c.a!=='cvno')return;c.done=true;c.r=true;co
   else P.quests.push({...base,n:o.n,kind:'kill',mob:o.mob.slice(),cnt:o.cnt,pyo:'any',pyoN:'표국'});
   log(`[${o.n}] 의뢰를 맡았습니다.`,'info')});
 // 수레가 길목에 닿았다
-function cvArrive(cv){const q=cv.q;log(`${cv.name} 행렬이(가) 무사히 ${cv.dest.label} 길목에 닿았습니다.`,'info');
+function cvArrive(cv){const q=cv.q;if(q&&q.hired&&!q.fail&&(q.leg||0)+1<(q.legs||1)&&cv.dest.to&&cvNextLeg(cv))return;log(`${cv.name} 행렬이(가) 무사히 ${cv.dest.label} 길목에 닿았습니다.`,'info');
   if(q&&P.quests.includes(q)&&!q.fail){q.have=1;
     if(q.cvLive||q.hired){P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(P.quests.indexOf(q),1);
       if(q.hired){P.pyoN=(P.pyoN||0)+1;if(P.pyoN===1)feat(`${cv.name} 표행을 따라 ${cv.dest.label} 길목까지 표물을 지켰다`);pyoRunDone(q);runHooks('questDone',q);log(`${cv.name} ${cv.T.lead}: "수고했소. 약속한 품삯이오. 또 사람을 모을 때 들르시오."`,'info')}
@@ -263,7 +267,7 @@ function cvStep(cv,dt){const c=cv.cart;
   const rest=cvRestMode(cv);if(rest!==cv.rest){if(rest){cv.told=new Set();log(rest==='camp'?`${cv.name} 행렬이 길가에 짐을 풀고 노숙한다. 모닥불가의 표사들에게 말을 걸 수 있다.`:`${cv.name} 행렬이 그늘에서 잠시 쉬어 간다. 쉬는 동안 표사들에게 말을 걸 수 있다.`,'info')}else if(cv.rest&&!cv.raiding&&!cv.robbed)log(`${cv.name} 행렬이 다시 길을 떠난다.`,'info');cv.rest=rest}
   cv.stop=cv.raiding||cv.robbed||far||!!cv.rest;
   if(cv.amb&&!cv.ambDone&&cv.i>4&&dist(c,P)<CARV.ambush.near){cv.ambDone=1;cvAmbush(cv,false)}
-  if(cv.waves.length&&!cv.raiding&&!cv.robbed&&cv.i/cv.len>=cv.waves[0]){cv.waves.shift();cvAmbush(cv,true)}
+  if(cv.waves.length&&!cv.raiding&&!cv.robbed&&cv.i/cv.len>=cv.waves[0]){cv.waves.shift();cv.curWave=cv.curWave==null?(cv.wOff||0):cv.curWave+1;cvAmbush(cv,true)}
   if(cv.hate&&!cv.robbed&&dist(P,c)<CARV.rob.hateNear)cvRob(cv,true);
   if(!cv.robbed&&Math.hypot(c.x-cv.dest.x,c.y-cv.dest.y)<1.8)cvArrive(cv)}
 // 같은 맵을 다시 여는 경우(계절 바뀜 등)에는 몹이 남아 있으므로 행렬도 그대로 둔다
@@ -329,7 +333,7 @@ SMIS.sacheon.push({n:'표물 털기',kind:'rob',cnt:1,merit:20,silver:40});SMIS.
 // ---- 표행의 노숙·휴식과 표사와의 이야기 (v247, 동훈님 2026-11-11 "표행의 경우 밤이 되어 노숙을 하거나 낮에 휴식을 취하게 추가하고 그 경우에만 대화 가능") ----
 // 밤(tod<rest.night[0] 또는 >rest.night[1])엔 노숙(모닥불), 한낮엔 잠시 휴식. 그동안 행렬이 멈추고 표두·표사·상인 머리 위에 '!'. 눌러 말을 걸면
 // 먼 길을 다니는 사람들이라 기연 소문(더 먼 곳까지, g_gyclue.js)·행렬 소식·길 이야기를 한다. 따라나선 표행(호위)·습격·약탈 중엔 쉬지 않는다.
-function cvRestMode(cv){if(cv.q||cv.raiding||cv.robbed||cv.hate)return null;const R=CARV.rest;if(!R)return null;return tod<R.night[0]||tod>R.night[1]?'camp':tod>R.noon[0]&&tod<R.noon[1]?'rest':null}
+function cvRestMode(cv){if((cv.q&&!cv.q.hired)||cv.raiding||cv.robbed||cv.hate)return null;const R=CARV.rest;if(!R)return null;return tod<R.night[0]||tod>R.night[1]?'camp':tod>R.noon[0]&&tod<R.noon[1]?'rest':null}
 const cvTalkers=cv=>cv.mem.filter(m=>m.hp>0&&m.cvRole!=='cart').slice(0,3);
 function cvTalkTap(e){const cv=e&&e.cv;if(!cv||e.cvRole==='cart'||cv.robbed)return false;
   if(!cv.rest){addText(e.x,e.y,'길을 재촉하는 중','#e8dcc0');return true}
@@ -346,3 +350,16 @@ hook('drawList',list=>{if(!playing)return;for(const cv of CVS){if(!cv.rest||!cv.
     ctx.strokeStyle='#3a2414';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(9,-4);ctx.moveTo(-8,-4);ctx.lineTo(8,0);ctx.stroke();
     for(let i=0;i<3;i++){const h=12+5*Math.sin(time*9+i*2),w=5-i;ctx.fillStyle=['#ff7a20','#ffb030','#fff0a0'][i];ctx.beginPath();ctx.moveTo(-w*1.4,-2);ctx.quadraticCurveTo(0,-h-6,w*1.4,-2);ctx.fill()}ctx.restore()}})}
   if(cv.told)for(const m of cvTalkers(cv))if(!cv.told.has(m))list.push({L:LY.OVER,d:m.x+m.y+40,f:()=>{const p=toScreen(m.x,m.y),y=p.y-84+Math.sin(time*3+m.x)*2;ctx.save();ctx.font='bold 18px "Gowun Dodum",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText('!',p.x+1,y+1);ctx.fillStyle='#ffe2a0';ctx.fillText('!',p.x,y);ctx.restore()}})}});
+
+// ---- 따라나선 표행: 맵 여러 곳을 지난다 (v247, 동훈님 2026-11-11) ----
+// 수레가 이번 맵의 길목에 닿으면 표행과 함께 다음 맵으로 넘어가고(q.leg+1), 다음 맵에 들어서면 표행이 이어서 나타난다(cvEsc, q.reg). 마지막 맵 길목에서 품삯.
+function cvNextLeg(cv){const q=cv.q,d=cv.dest,to=d.to;if(!REGIONS[to]||P.traveling)return false;
+  let tx,ty,edge=0;const g=(REGION().gates||[]).find(g=>g.to===to);
+  if(g){tx=g.tx;ty=g.ty}else{const W=typeof PV_W==='number'?PV_W:40,side=d.x<2?'w':d.x>N-2?'e':d.y<2?'n':'s';edge=1;tx=side==='w'?W-1.5:side==='e'?1.5:d.x;ty=side==='n'?W-1.5:side==='s'?1.5:d.y}
+  q.leg=(q.leg||0)+1;q.cartHp=cv.cart?cv.cart.hp/cv.cart.maxHp:1;q.from=REG;q.reg=pvBase(to);q.fixPos=1;
+  log(`${cv.name} 표행이 ${d.label}(으)로 넘어간다. (맵 ${q.leg+1}/${q.legs})`,'info');cvEnd(cv,true);P.path=null;P.target=null;travel({to,tx,ty,edge});return true}
+hook('enteredRegion',()=>{if(!P||!P.quests)return;const q=P.quests.find(q=>q.fixPos);if(!q)return;q.fixPos=0;if(walkAt(P.x,P.y))return;
+  for(let r=1;r<8;r++)for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++)if(walkAt(P.x+i,P.y+j)){P.x+=i;P.y+=j;return}});
+// 노숙 모닥불가에서는 생명이 돈다 (내공은 운기조식으로만, 그대로)
+hook('tick',dt=>{if(!P||!playing||P.hp<=0)return;for(const cv of CVS){if(cv.rest!=='camp'||!cv.cart)continue;const c=cv.cart;
+  if(Math.hypot(c.x+.9-P.x,c.y+.9-P.y)<CARV.trip.fireR&&P.hp<P.maxHp){P.hp=Math.min(P.maxHp,P.hp+P.maxHp*CARV.trip.fireHeal*dt);if(!cv.warm){cv.warm=1;log('모닥불가에 앉아 몸을 녹인다. 생명이 천천히 돈다.','info')}}}});
