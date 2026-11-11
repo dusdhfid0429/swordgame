@@ -193,7 +193,7 @@ C.addEventListener('pointerdown',ev=>{
   if(!playing||paused||P.hp<=0)return;const h=pickAt(ev);P.medit=false;P.goal=null;P.talk=null;
   if(ev.button===2){if(h.kind==='mob'&&h.o.d.beast)tame(h.o);return}
   if(h.kind==='mob'){P.target=h.o;P.repath=0;P.path=null;return}
-  if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
+  if(h.kind==='vil'){if(ev.shiftKey||forceAtk){P.target=h.o;P.repath=0;P.path=null}else if(typeof cvTalkTap==='function'&&cvTalkTap(h.o))return;else addText(h.o.x,h.o.y,h.o.d.villager?'양민':h.o.name,'#e8dcc0');return}
   P.target=null;
   const go=(x,y)=>{P.path=findPath(Math.floor(P.x),Math.floor(P.y),Math.floor(x),Math.floor(y))};
   if(h.kind==='npc'){if(forceAtk&&(typeof npcCanOut==='function'?npcCanOut(h.o):h.o.hq)){const e=typeof npcOut==='function'?npcOut(h.o):masterOut(h.o);if(e){P.target=e;P.repath=0;P.path=null;return}}if(dist(h.o,P)<1.7)openNpc(h.o);else{P.talk=h.o;go(h.o.x,h.o.y)}return}

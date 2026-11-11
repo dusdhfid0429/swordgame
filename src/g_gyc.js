@@ -35,12 +35,15 @@ let gycG=null;
 function gycSync(){gycG=G;
   for(const id of Object.keys(REGIONS))if(id.startsWith('gyc_'))delete REGIONS[id];
   for(const R of Object.values(REGIONS))if(R.gates&&R.gates.some(g=>g.gyc!=null))R.gates=R.gates.filter(g=>g.gyc==null);
-  for(const c of(G.gyc?G.gyc.list:[])){const R=REGIONS[c.host];if(!R)continue;gycDefine(c);
-    R.gates.push({x:(c.x??c.ax)+.5,y:(c.y??c.ay)+.5,to:gycId(c.i),tx:22.5,ty:40.3,label:c.name,gyc:c.i,door:1})}
-  sectRegSync()}
+  for(const c of(G.gyc?G.gyc.list:[])){const R=REGIONS[c.host];if(!R)continue;gyclEnsure(c);gycDefine(c);if(gycShown(c))gycGate(c)}
+  gyclNpcSync();sectRegSync()}
+// v247: 입구는 단서를 다 모아 흔적을 찾거나(c.found), 이미 들어가 봤거나, 지도에 표시됐을 때만 보이고 쓸 수 있다 (g_gyclue.js)
+const gycShown=c=>!!(c.found||c.seen||c.mark);
+function gycGate(c){const R=REGIONS[c.host];if(!R||R.gates.some(g=>g.gyc===c.i))return;
+  R.gates.push({x:(c.x??c.ax)+.5,y:(c.y??c.ay)+.5,to:gycId(c.i),tx:22.5,ty:40.3,label:c.name,gyc:c.i,door:1})}
 function gycDefine(c){const T=CAVE_TH[c.th],sp=GYC.spawns[c.th]||[];
   REGIONS[gycId(c.i)]={name:c.name,in:1,cave:{dark:T.dark,dk:T.dk},theme:'dark',size:44,gyc:c.i,
-    gen:()=>{genCave({th:c.th,w:44,h:44,seed:c.seed});for(const n of nodes)if(n.t==='chest'){n.t='gybox';n.gyc=c.i;n.cd=c.done?99999:0}},
+    gen:()=>{genCave({th:c.th,w:44,h:44,seed:c.seed});for(const n of nodes)if(n.t==='chest'){n.t='gybox';n.gyc=c.i;n.cd=c.done?99999:0;n.form=c.form||'box';REGIONS[gycId(c.i)].npcs=gyclHermitNpc(c,n)}},
     bake:()=>bakeCave(c.th),zone:()=>c.name,spawns:sp.map(([k,n,y])=>[k,n,(x,yy)=>yy<y]),bosses:[],npcs:[],
     gates:[{x:22.5,y:42.4,to:c.host,tx:(c.x??c.ax)+.5,ty:(c.y??c.ay)+1.6,label:'동굴 밖'}]}}
 // 호스트 맵을 처음 열 때 입구 칸을 정한다: 맵 출입구(없으면 가운데)에서 걸어 닿는 칸 가운데 목표에 가장 가깝고 다른 출입구와 떨어진 곳
@@ -62,11 +65,13 @@ hook('regionLoaded',id=>{gycWarDone=false;const c=gycOf(id);if(!c)return;
   e.maxHp=e.hp=Math.round(e.maxHp*gd.hp);e.atk=Math.round(e.atk*gd.atk);mobs.push(e)});
 function gycOpen(n){const c=G.gyc&&G.gyc.list[n.gyc];if(!c)return;
   if(c.done||n.cd>0){log(c.by&&c.by!=='me'?`비어 있다. ${SECTS[c.by]?SECTS[c.by].n:'누군가'}이(가) 먼저 휩쓸어 갔다.`:'이미 연 상자다. 이 동굴의 기연은 다했다.','info');return}
-  if(mobs.some(m=>m.gycGuard===c.i&&m.hp>0)){log(`${c.name} 수호자가 상자를 지키고 있다. 먼저 쓰러뜨려야 한다.`,'dmg');return}
-  P.chan={t:0,dur:1.6,label:'상자를 연다',fn:()=>gycLoot(c,n)}}
+  if(n.form==='hermit'){const h=npcsHere().find(q=>q.gyherm===c.i);if(h)openNpc(h);return}   // v247: 기인이사 (g_gyclue.js)
+  if(mobs.some(m=>m.gycGuard===c.i&&m.hp>0)){log(`${c.name} 수호자가 ${n.form==='mural'?'벽화':'상자'}를 지키고 있다. 먼저 쓰러뜨려야 한다.`,'dmg');return}
+  P.chan=n.form==='mural'?{t:0,dur:GYCL.forms.muralDur,label:'벽화를 베껴 적는다',fn:()=>gycLoot(c,n)}:{t:0,dur:1.6,label:'상자를 연다',fn:()=>gycLoot(c,n)}}
 function gycLoot(c,n){n.cd=99999;c.done=1;c.by='me';c.who=P.name;const got=[];
   const art=c.art&&ARTS[c.art]&&!P.arts[c.art]&&!gyInBag(c.art)&&!gycDonOwner(c.art)?c.art:typeof mkGyRoll==='function'?mkGyRoll('cave'):null;
-  if(art)got.push(gyGive(art).n+' 비급');
+  if(art){gyGive(art);const bk=P.bag[P.bag.length-1],F=n.form||'box';if(bk&&bk.art===art&&F!=='box')bk.name=`${ARTS[art].n} 비급 · ${F==='mural'?'벽화 필사본':'기인의 구결'}`;got.push(bk&&bk.art===art?bk.name:ARTS[art].n+' 비급')}
+  if(n.form==='mural')log(GYCL.forms.muralLog,'info');
   for(const[k,m]of GYC.loot){const kk=k==='주과'?null:k;for(let j=0;j<m;j++){const nm=kk||pick(Object.keys(GYC.fruits));addMat(nm);got.push(nm)}}
   {const id=leafPick({cls:myCls(),minG:2})||leafPick({minG:2});if(id){const n=R1(LEAF.gyc[0],LEAF.gyc[1]);giveLeaf(id,n,c.name);got.push(`${ARTS[id].n} 낱장 ${n}장`)}}   // 비급 낱장 (g_mkmat.js)
   if(!art){const b=randomBook();P.bag.push(b);got.push(b.name);const sg=pick(Object.keys(SHINGONG));P.bag.push(mkGPage(sg,2));got.push(`절세신공 잔결 ${sg}`)}
@@ -85,26 +90,15 @@ function gycTake(c){const facs=c.facs||GYC.war.facs[0],w=G.W&&G.W.pow||{},rr=rng
   c.done=1;c.by=s?s.id:f;const art=c.art&&!(P&&P.arts[c.art])&&!gycDonOwner(c.art)?c.art:null;
   if(s&&art){(G.gyDon[s.id]=G.gyDon[s.id]||[]).push(art);sectRegSync()}
   log(`${c.name}의 기연은 ${s?s.n:FAC4N[f]}이(가) 차지했다.${s&&art?` 천고의 무공 [${ARTS[art].n}]이(가) ${s.n}의 무공이 되었다.`:''}`,'info')}
-// NPC가 아는 소문 하나 (없으면 null): 멀수록 소문이 커야 들린다
+// NPC가 아는 소문 하나 (없으면 null): 멀수록 소문이 커야 들린다. v247: 무엇을 말할지는 g_gyclue.js gyclLine이 사람마다 다르게 고른다
 let gycHop=null,gycHopReg=null;
-function gycRumorFor(boost=1){if(!G.gyc)return null;if(gycHopReg!==REG){gycHop=regHops(REG);gycHopReg=REG}
-  const ok=G.gyc.list.filter(c=>{const h=gycHop[c.host]??30;return c.rumor>=h*GYC.rumor.knowHop*boost||c.host===REG});if(!ok.length)return null;
-  const c=pick(ok),R=REGIONS[c.host],S=R.size||40,H=R.h||S,lv=GYC.rumor.lv,L=c.rumor>=lv[1]?2:c.rumor>=lv[0]?1:0,war=!c.done&&c.rumor>=GYC.rumor.war;
-  const sx=(c.ax-S/2)-(c.ay-H/2),sy=(c.ax-S/2)+(c.ay-H/2),a=Math.atan2(sy,sx),dir=Math.hypot(sx,sy)<4?'한가운데':['동','남동','남','남서','서','북서','북','북동'][(Math.round(a/(Math.PI/4))+8)%8];
-  const sect=SECTS[c.by],t=c.done?(c.by==='me'?GYC.sayMine:GYC.sayTaken):war?GYC.sayWar:GYC.say[L];
-  const txt=t.replace('{prov}',PROV[R.prov]?PROV[R.prov].n:R.name).replace('{map}',R.name).replace('{dir}',dir).replace('{sign}',GYC.sign[c.th]).replace('{facs}',(c.facs||[]).map(f=>FAC4N[f]).join('·'))
-    .replace('{sect}',sect?sect.n:FAC4N[c.by]||'누군가').replace('{who}',c.who||'누군가');
-  return{c,L:c.done?3:war?2.5:L,txt:josa(txt)}}
-// 말풍선: NPC·양민 곁(GYC.bubble.r칸)에 가면 소문을 흘린다. 같은 사람은 한동안 같은 말을 되풀이하지 않는다
-const gycBub=[],gycTalked={};let gycBT=0;
-hook('tick',dt=>{if(!P||!playing)return;if(gycG!==G||!G.gyc){if(!G.gyc)gycInit();else gycSync()}
-  if((gycBT-=dt)>0)return;gycBT=.5;gycWarTick();const B=GYC.bubble;
-  for(let i=gycBub.length-1;i>=0;i--)if(time>gycBub[i].end)gycBub.splice(i,1);if(gycBub.length>=2||P.hp<=0)return;
-  const near=[...NPCF.map(n=>({o:n,k:REG+':'+n.n,nm:n.n})),...mobs.filter(m=>m.d&&m.d.villager&&m.hp>0&&!m.angry).map(m=>({o:m,k:m,nm:'양민'}))].filter(q=>dist(q.o,P)<B.r);
-  for(const q of near){const key=typeof q.k==='string'?q.k:(q.o.gycK=q.o.gycK||'m'+Math.random());if(time<(gycTalked[key]||0))continue;gycTalked[key]=time+B.cd;
-    if(Math.random()>B.p||gycBub.some(b=>b.o===q.o))continue;const r=gycRumorFor();if(!r)continue;
-    gycBub.push({o:q.o,txt:r.txt,end:time+B.life});const c=r.c;if(r.L>c.heard)c.heard=r.L;c.hints[Math.floor(r.L*2)]=r.txt;
-    log(`[소문] ${q.nm}: "${r.txt}"`,'info');break}});
+function gycRumorFor(boost=1,key){if(!G.gyc)return null;if(gycHopReg!==REG){gycHop=regHops(REG);gycHopReg=REG}const here=gyclProv(REG);
+  const ok=G.gyc.list.filter(c=>{const h=gycHop[c.host]??30;return c.rumor>=h*GYC.rumor.knowHop*boost||c.host===REG||(here&&REGIONS[c.host].prov===here)});if(!ok.length)return null;
+  return gyclLine(ok,key)}
+// v247 (동훈님 2026-11-11 "근처만 가도 말풍선이 뜨게 하지 마. 대화할 주제가 있으면 느낌표, 말을 걸면 듣게"): 다가가면 뜨던 소문 말풍선은 없앴다.
+// 할 이야기가 있는 사람 머리 위에 '!'가 뜨고, 말을 걸면 대화창 맨 위에서 소문을 듣는다 (g_gyclue.js gyclTopic·gyclTalkHtml). gycBub은 그리기만 남는다
+const gycBub=[];
+hook('tick',dt=>{if(!P||!playing)return;if(gycG!==G||!G.gyc){if(!G.gyc)gycInit();else gycSync()}gycWarTick()});
 function gycWrap(s,n){const out=[];let cur='';for(const w of s.split(' ')){if((cur+' '+w).trim().length>n&&cur){out.push(cur);cur=w}else cur=(cur+' '+w).trim()}if(cur)out.push(cur);return out}
 hook('drawList',list=>{for(const b of gycBub){const o=b.o;list.push({L:LY.OVER,d:o.x+o.y+50,f:()=>{const p=toScreen(o.x,o.y),lines=gycWrap(b.txt,15),lh=15,w=Math.min(230,Math.max(...lines.map(l=>l.length))*12.5+16),h=lines.length*lh+10,x=p.x-w/2,y=p.y-92-h;
   const fade=Math.min(1,(b.end-time)/.6);ctx.save();ctx.globalAlpha=fade;ctx.fillStyle='rgba(250,244,228,.95)';ctx.strokeStyle='#5a4428';ctx.lineWidth=1.5;
@@ -123,17 +117,12 @@ function drawGycMouth(g){const p=toScreen(g.x,g.y),c=G.gyc&&G.gyc.list[g.gyc];ct
 // ---- 세력전: 소문이 다 퍼진 동굴 입구에 다가가면 세력 무사들이 서로 싸우고 있다 (한 번 들어올 때마다 한 판) ----
 let gycWarDone=false;
 function gycWarTick(){if(gycWarDone||!G.gyc||G.duel)return;const c=G.gyc.list.find(c=>c.host===REG&&!c.done&&c.rumor>=GYC.rumor.war&&c.x!=null);if(!c||Math.hypot(c.x-P.x,c.y-P.y)>GYC.war.near)return;
-  gycWarDone=true;c.facs=c.facs||pick(GYC.war.facs);const made=[];
+  gycWarDone=true;c.facs=c.facs||pick(GYC.war.facs);const made=[];gyclFound(c,1);
   c.facs.forEach((f,k)=>{const a=k/c.facs.length*Math.PI*2+Math.random();for(let i=0;i<GYC.war.band;i++){for(let t=0;t<40;t++){const r=2.5+Math.random()*3,b=t<20?a:Math.random()*Math.PI*2,x=c.x+.5+Math.cos(b)*r+(Math.random()-.5)*2,y=c.y+.5+Math.sin(b)*r+(Math.random()-.5)*2;
     if(!walkAt(x,y))continue;const e=mkFac(f,i===0?1:0,x,y);e.gycWar=c.i;e.fixed=1;mobs.push(e);made.push(e);break}}});
   for(const e of made){let b=null,bd=1e9;for(const o of made)if(alFac(SECTS[o.sect].al)!==alFac(SECTS[e.sect].al)){const q=dist(e,o);if(q<bd){bd=q;b=o}}e.tgt=b;e.aggro=!!b}
   log(`${c.name} 입구에서 ${c.facs.map(f=>FAC4N[f]).join('·')} 무사들이 기연을 두고 싸우고 있다!`,'dmg');showBanner('기연 쟁탈',`${c.facs.map(f=>FAC4N[f]).join(' 대 ')}`)}
-// ---- 임무창: 들은 소문 ----
-function gycCard(){if(!G.gyc)return'';const L=G.gyc.list.filter(c=>c.heard>=0);if(!L.length)return'';
-  return `<div class="card"><h4>기연 소문 <small class="dim">사람들 곁에 가면 소문을 흘린다 · 소문이 커질수록 자세해지고, 다 퍼지면 세력들이 몰려든다</small></h4>${L.map((c,k)=>{
-    const st=c.done?(c.by==='me'?'<small class="good">얻음</small>':`<small class="bad">${SECTS[c.by]?SECTS[c.by].n:'남'}이(가) 차지</small>`):c.rumor>=GYC.rumor.war?'<small class="bad">세력전</small>':'';
-    const hs=Object.keys(c.hints).sort((a,b)=>b-a).slice(0,2).map(h=>`<p class="note">"${esc(c.hints[h])}"</p>`).join('');
-    return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st}${c.seen||c.mark?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}${c.mark&&!c.seen?' · 지도에 표시':''}</small>`:''}</p>${hs}`}).join('')}</div>`}
+// ---- 임무창: 단서 수첩은 g_gyclue.js gycCard ----
 // ---- 문파 무공 등록: 기연 무공 기증과 창안 무공 전수 ----
 const gycDonOwner=id=>{for(const[sid,l]of Object.entries(G.gyDon||{}))if(l.includes(id))return sid;return null};
 // 문파가 본래 가진 무공(등록된 것 빼고)의 최고 등급, 등록된 무공의 최고 등급, 오른 등급
@@ -154,7 +143,7 @@ function gycSectHtml(s){const g0=sectTop0(s),up=sectTopReg(s)>g0?`<p class="note
   const row=(n,sub,btn)=>`<div class="it"><div>${n}<span>${sub}</span></div><div class="ib">${btn}</div></div>`;
   const rows=[...books.map(it=>{const a=ARTS[it.art];return row(`${a.n} ${gradeTag(a.grade)} <small class="dim">기연 비급</small>`,`기증하면 ${s.n}의 무공으로 기록된다(이번 판 동안) · 공적 +${GYC.donMerit}${a.grade>g0?` · 문파 무공 등급 ${AGR[g0]} → ${AGR[a.grade]}`:''}`,B('gydon:'+it.id,'기증하기',{pri:1}))}),
     ...made.map(d=>{const a=ARTS[d.id];return row(`${a.n} ${gradeTag(a.grade)} <small class="dim">창안 무공</small>`,`제자들에게 전수하면 ${s.n}의 무공으로 등록된다(이번 판 동안) · 공적 +${GYC.teachMerit[a.grade]||0}${a.grade>g0?` · 문파 무공 등급 ${AGR[g0]} → ${AGR[a.grade]}`:''}`,B('mkteach:'+d.id,'제자들에게 전수',{pri:1}))})];
-  return up+(rows.length?`<h4 style="margin:0">무공 기증·전수</h4><div class="list">${rows.join('')}</div>`:'')}
+  return up+gyclRepHtml(s)+(rows.length?`<h4 style="margin:0">무공 기증·전수</h4><div class="list">${rows.join('')}</div>`:'')}
 function gycRegNote(s,a,g0){if(a.grade>g0){log(`${s.n}의 무공 등급이 ${AGR[g0]}에서 ${AGR[a.grade]}(으)로 올랐다. 세력이 커진다.`,'xp');showBanner(`${s.n} 무공 ${AGR[a.grade]}`,a.n)}}
 hook('sectAct',c=>{if(c.a!=='gydon'&&c.a!=='mkteach')return;c.done=true;c.r=true;const s=SECTS[P.sect];if(!s)return;const g0=sectTop0(s);
   if(c.a==='gydon'){const it=P.bag.find(i=>i.id===+c.x);if(!it||!ARTS[it.art]||!ARTS[it.art].gy||gycDonOwner(it.art))return;const a=ARTS[it.art];
