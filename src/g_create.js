@@ -33,6 +33,7 @@ const wbDesc=it=>{const a=ARTS[it.art];return a?`${AGR[a.grade||0]} · ${CLASS[a
 function mkSubs(cls,g){const out=[],seen=new Set();
   for(const it of P.bag){const a=ARTS[it.art];if(it.slot!=='wbook'||!wbOk(a)||a.cls===cls||(a.grade||0)!==g||seen.has(a.id))continue;seen.add(a.id);out.push({it:it.id,art:a.id})}
   for(const id of learnedArts().slice().sort((x,y)=>A(x).p-A(y).p)){const a=ARTS[id];if(!wbOk(a)||a.cls===cls||(a.grade||0)!==g||seen.has(id)||!allLearned(id))continue;seen.add(id);out.push({art:id})}
+  if(typeof pcSlots==='function')out.push(...pcSlots(g,MK_SUB));   // v247 참오 창안 조각 (g_chamo.js): 같은 등급(모자라면 높은 등급) 조각 묶음 한 자리씩
   return out}
 // 재료가 될 수 있는 무공 묶음: {cls,g,ids,subs} (같은 병기 대성 무공 + 완본·다른 병기 무공 MK_SUB까지로 다섯)
 function mkGroups(){const by={};
@@ -42,13 +43,13 @@ function mkGroups(){const by={};
   for(const[k,L]of Object.entries(by)){const[cls,gs]=k.split(':'),g=+gs,ids=L.sort((x,y)=>A(y).p-A(x).p).slice(0,MK_N),need=MK_N-ids.length;
     if(need>MK_SUB)continue;const subs=need>0?mkSubs(cls,g).filter(x=>!ids.includes(x.art)).slice(0,need):[];if(subs.length<need)continue;out.push({cls,g,ids,subs})}
   return out}
-const mkSrcN=grp=>[...grp.ids.map(i=>ARTS[i].n),...(grp.subs||[]).map(x=>ARTS[x.art].n+(x.it?' 완본':''))];
+const mkSrcN=grp=>[...grp.ids.map(i=>ARTS[i].n),...(grp.subs||[]).map(x=>x.pc?pcName(x):ARTS[x.art].n+(x.it?' 완본':''))];
 const mkCost=g=>100+60*g,mkYears=g=>2+g,mkRealm=g=>MK_REALM;
 function mkChance(g){let c=.85;if(hobeop())c+=.1;if(realmIdx()>mkRealm(g))c+=.05;return Math.min(.95,c)}
 function mkWhy(g){if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
   if(realmIdx()<mkRealm(g))return`${rk(mkRealm(g))}의 경지 필요`;if(P.vit<mkCost(g))return`활력 ${mkCost(g)} 필요`;return''}
 function mkRows(){return mkGroups().map(({cls,g,ids,subs})=>{const k=`mk:${cls}:${g}`,why=mkWhy(g),busy=trnBusy&&trnBusy.k===k;
-  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>숙련 100인 ${CLASS[cls].n} ${ids.length===MK_N?'다섯':ids.length+'개'}${subs.length?`와 다른 병기 ${subs.length}개`:''}를 잊고 심득을 모은다 · ${mkSrcN({ids,subs}).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
+  return `<div class="trow"><div class="tname"><b>무공 창안</b> <span class="num gold">${AGR[g]} → ${AGR[g+1]}</span><small>숙련 100인 ${CLASS[cls].n} ${ids.length===MK_N?'다섯':ids.length+'개'}${subs.some(x=>!x.pc)?`와 다른 병기 ${subs.filter(x=>!x.pc).length}개`:''}${subs.some(x=>x.pc)?`${subs.some(x=>!x.pc)?',':'와'} 창안 조각 ${subs.filter(x=>x.pc).length}자리`:''}를 잊고 심득을 모은다 · ${mkSrcN({ids,subs}).join('·')} · ${mkYears(g)}년 · 성공 ${Math.round(mkChance(g)*100)}%${hobeop()?' · 호법':''}</small></div>
     <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="${k}"${why||trnBusy?' disabled':''}>${why||`창안 · 활력 ${mkCost(g)}`}<i class="tcd"></i></button></div>`}).join('')}
 function mkStart(k){const[,cls,g]=k.split(':'),grp=mkGroups().find(q=>q.cls===cls&&q.g===+g);
   if(trnBusy||P.hp<=0||!grp)return;const why=mkWhy(+g);if(why){log(`무공을 창안할 수 없습니다: ${why}.`,'info');return}
@@ -63,7 +64,7 @@ function mkFinish(k){P.qiTraining=false;const[,cls,gs]=k.split(':'),g=+gs,grp=mk
     feat(`${AGR[g+1]} ${CLASS[cls].n} 창안에 실패했다`);return}
   const srcN=mkSrcN(grp),a=mkCreate(grp);
   for(const id of grp.ids)delete P.arts[id];
-  for(const x of grp.subs||[]){if(x.it){const i=P.bag.findIndex(it=>it.id===x.it);if(i>=0)P.bag.splice(i,1)}else delete P.arts[x.art]}
+  for(const x of grp.subs||[]){if(x.pc)pcSpend(x);else if(x.it){const i=P.bag.findIndex(it=>it.id===x.it);if(i>=0)P.bag.splice(i,1)}else delete P.arts[x.art]}
   P.arts[a.id]={p:30,f:a.forms.map(()=>true)};if(!P.arts[P.cur])setArt(a.id);
   fx.push({t:'lvl',x:P.x,y:P.y,z:P.z||0,life:2});shake=Math.max(shake,.25);recalc();
   log(`${yrs}년의 폐관 끝에 ${srcN.join('·')}의 심득을 하나로 모아 ${AGR[g+1]} 무공 [${a.n}]을(를) 창안했습니다. 다섯 무공은 잊었습니다.`,'xp');
@@ -84,7 +85,7 @@ function mkCreate(grp){const srcs=grp.ids.map(i=>ARTS[i]),g=grp.g+1,n0=(G.madeN=
   // v157 (사용자 2026-10-20): 문파 제자라도 창안한 순간에는 등록하지 않는다. 문파 창에서 제자들에게 전수해야 그 문파 무공이 된다 (gycSectHtml, g_gyc.js). 무소속이면 예전처럼 기연에서 만나는 무공
   const member=P.sect&&P.sect!=='own'&&SECTS[P.sect];def.sect=null;def.key=mkKey(def);def.reg=member?0:1;
   G.made=G.made||{};for(const o of Object.values(G.made))if(o.reg&&o.key===def.key){o.reg=0;mkUnregister(o);log(`${o.n}은(는) 구성이 같아 ${n}(으)로 갈음합니다.`,'sys')}
-  if(grp.subs&&grp.subs.length){def.srcN=mkSrcN(grp);def.sub=grp.subs.map(x=>x.art)}
+  if(grp.subs&&grp.subs.length){def.srcN=mkSrcN(grp);def.sub=grp.subs.filter(x=>x.art).map(x=>x.art)}
   G.made[id]=def;const a=mkBuild(def);mkRegister(def);return a}
 const mkKey=def=>def.forms.map(x=>x.a+':'+x.i).sort().join(',')+'|'+def.ult.a;
 // 문파 무공 목록에 넣거나(문파 제자) 기연 무공으로 둔다(무소속)
