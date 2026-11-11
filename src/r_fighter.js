@@ -126,6 +126,11 @@ function drawFighter(e,isP){
     if(pal.band){ctx.fillStyle=pal.band;ctx.fillRect(hx-5.4,hy-3.6,10.8,2.2);seg([[hx-5.4,hy-2.6],[hx-9-trail*.5,hy+1+wv]],1.4,pal.band)}
     if(pal.mask&&!back){ctx.fillStyle=pal.mask;ctx.fillRect(hx-.5,hy+1.2,6.3,3.6)}
     if(pal.beard&&!back){ctx.fillStyle=pal.hair;ctx.beginPath();ctx.moveTo(hx-1,hy+3);ctx.lineTo(hx+5.5,hy+2);ctx.lineTo(hx+3,hy+10);ctx.closePath();ctx.fill()}
+    // 갓 (장백파, 조선): 검은 말총 갓. 넓은 챙(비쳐 보이게) + 높은 원통 모자 + 갓끈
+    if(pal.gat){const by=hy-4.6;if(!back){ctx.strokeStyle='rgba(20,14,10,.75)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(hx-4,by+1);ctx.quadraticCurveTo(hx-1,hy+6,hx+3.5,hy+6.5);ctx.stroke()}
+      ctx.fillStyle='rgba(16,14,14,.55)';ctx.beginPath();ctx.ellipse(hx-.3,by,10.5,2.8,-.05,0,7);ctx.fill();ctx.strokeStyle='#0c0a0a';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#141212';ctx.beginPath();ctx.moveTo(hx-3.6,by);ctx.lineTo(hx-3.2,by-7.5);ctx.quadraticCurveTo(hx-.3,by-9,hx+2.6,by-7.5);ctx.lineTo(hx+3,by);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(hx-2.6,by-7,1,6.4)}
   });
   if(back)tail();
   // weapon arm: sleeve, cuff, hand, weapon

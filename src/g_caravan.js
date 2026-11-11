@@ -63,7 +63,7 @@ function pyoMkRun(p,dep){const RC=CARV.recruit,E=CARV.escort,lo=cvDanger(p.k),c=
 // 표물을 받는 곳이 세력의 문파나 맹이면(사용자 2026-10-27) 그 세력의 적 세력이 표행을 노린다. 표국은 여전히 어느 편도 아니다
 function pyoFacTo(dst){const L=[];for(const sid of(PROV[dst]&&PROV[dst].sects||[]))if(SECTS[sid])L.push({n:SECTS[sid].n,fac:alFac(SECTS[sid].al),sid});
   for(const al of Object.keys(ALLY))L.push({n:typeof MAENG!=='undefined'&&MAENG[al]?MAENG[al].n:ALLY[al].n,fac:alFac(al),al});
-  return L.length?pick(L.filter(o=>FAC_FOE[o.fac])):null}
+  return L.length?pick(L.filter(o=>FAC_FOE[o.fac]&&FAC_FOE[o.fac].length)):null}
 // 습격할 세력: 받는 곳의 적 세력 가운데, 되도록 플레이어 편이 아닌 쪽. 관군은 표행을 노리지 않는다(사용자 2026-10-27)
 const pyoFoes=to=>{if(!to||!FAC_FOE[to.fac])return[];const all=FAC_FOE[to.fac].filter(x=>x!=='관'),f=pfac(),o=all.filter(x=>x!==f);return o.length?o:all};
 function pyoRuns(p){G.pyoRuns=G.pyoRuns||{};const RC=CARV.recruit,t=nowS();const L=(G.pyoRuns[p.id]||[]).filter(r=>r.me||r.dep>t);

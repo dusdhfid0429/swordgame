@@ -111,6 +111,18 @@ const BFORM={
     for(const[gx,hh]of P)pil(gx,hh);beam(x+.2,m0,26,5,'#6e2416');beam(m1,x+w-.2,26,5,'#6e2416');beam(m0,m1,36,6,'#6e2416');
     {const a=scr(m0+.15,cy+.13,38),b2=scr(m1-.15,cy+.13,38);quad([a,b2,up(b2,-11),up(a,-11)],'#241a12','#c9a14a');ctx.fillStyle='#e0b850';for(const t of[.3,.7]){const q=lerp2(a,b2,t);ctx.fillRect(q[0]-2,q[1]-9,4,6)}}
     roof(x+.2,m0,32,8);roof(m1,x+w-.2,32,8);roof(m0,m1,46,11)},
+  // 홍살문 (장백파, 조선): 붉은 두 기둥과 두 가로대, 위로 솟은 붉은 살, 가운데 태극. 지붕이 없다. 가운데 칸(b.pass)은 지난다
+  hongsal(b){const{x,y,w}=b,cy=y+.5,red='#b02a20',dk='#6e1a14',X0=x+.25,X1=x+w-.25,H=54;
+    for(const gx of[X0,X1]){const p=scr(gx,cy);ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(p[0],p[1],8,4,0,0,7);ctx.fill()}
+    const pil=gx=>{const a=scr(gx-.09,cy+.09),b2=scr(gx+.09,cy+.09),c=scr(gx+.09,cy-.09);quad([up(a,-2),up(b2,-2),up(b2,6),up(a,6)],'#6a645c');quad([a,b2,up(b2,H),up(a,H)],red);quad([b2,c,up(c,H),up(b2,H)],dk);
+      const tp=up(lerp2(a,c,.5),H);ctx.fillStyle='#2a2018';ctx.beginPath();ctx.ellipse(tp[0],tp[1],3.4,1.6,0,0,7);ctx.fill()};
+    const beam=hh=>{const a=scr(X0,cy+.07),b2=scr(X1,cy+.07);quad([up(a,hh),up(b2,hh),up(b2,hh+4),up(a,hh+4)],red,'rgba(40,10,6,.7)')};
+    pil(X0);pil(X1);beam(H-14);beam(H-4);
+    const n=Math.max(5,Math.round((X1-X0)*5));for(let k=1;k<n;k++){const t=k/n,g=scr(X0+(X1-X0)*t,cy+.07),mid=Math.abs(t-.5)<.08;if(mid)continue;
+      seg([up(g,H-14),up(g,H+10)],1.8,red);const tip=up(g,H+10);ctx.fillStyle=dk;ctx.beginPath();ctx.moveTo(tip[0]-2.2,tip[1]+3);ctx.lineTo(tip[0],tip[1]-3);ctx.lineTo(tip[0]+2.2,tip[1]+3);ctx.fill()}
+    {const m=up(scr((X0+X1)/2,cy+.07),H+4),R=7;ctx.fillStyle='#d8302a';ctx.beginPath();ctx.arc(m[0],m[1],R,Math.PI,0);ctx.arc(m[0]+R/2,m[1],R/2,0,Math.PI,true);ctx.arc(m[0]-R/2,m[1],R/2,0,Math.PI);ctx.fill();
+      ctx.fillStyle='#24408a';ctx.beginPath();ctx.arc(m[0],m[1],R,0,Math.PI);ctx.arc(m[0]-R/2,m[1],R/2,Math.PI,0,true);ctx.arc(m[0]+R/2,m[1],R/2,Math.PI,0);ctx.fill();
+      ctx.strokeStyle='#2a1a10';ctx.lineWidth=1;ctx.beginPath();ctx.arc(m[0],m[1],R,0,7);ctx.stroke()}},
   // 목탑·전탑: 층마다 처마, 위로 갈수록 좁아진다. 꼭대기 상륜(금빛 고리)
   pagoda(b){const{x,y,w,h}=b,r=bfR(b),RC=bfRC(b),n=b.tiers||5,TH=b.th||17,pl=b.wc||['#c9a77a','#a8865a'];bfShadow(b,.3);
     for(let k=0;k<n;k++){const ins=k*Math.min(w,h)*.07,x0=x+ins,y0=y+ins,x1=x+w-ins,y1=y+h-ins,h0=k*TH,h1=h0+TH-5;
@@ -186,7 +198,7 @@ const BFORM={
     if(b.torch!==0){bfTorch(lerp2(D0,D1,-.6),1);bfTorch(lerp2(D0,D1,1.6),1)}},
 };
 // 캐시 상자 높이 (r_build.js drawBuild)
-function bformRH(b){const m=Math.min(b.w,b.h);switch(b.form){case'hut':return 18+10+7*m;case'shack':return 20+7+5*m;case'log':return 24+12+8*m+6;case'loghall':return 32+16+9*m+30;case'tentB':return 22+9*m;case'watch':return(b.ph||46)+50+4*m+20;case'cave':return 80;case'giwa':return(b.wh||30)+10+7*m+12;case'gatehouse':return 34+20+6*b.h+14;case'paifang':return 72;case'pagoda':return (b.tiers||5)*(b.th||17)+50;case'potala':return (b.tiers||3)*26+20;case'dome':return 30+Math.min(b.w,b.h)*TW*.42*1.55+30}return 120}
+function bformRH(b){const m=Math.min(b.w,b.h);switch(b.form){case'hut':return 18+10+7*m;case'shack':return 20+7+5*m;case'log':return 24+12+8*m+6;case'loghall':return 32+16+9*m+30;case'tentB':return 22+9*m;case'watch':return(b.ph||46)+50+4*m+20;case'cave':return 80;case'giwa':return(b.wh||30)+10+7*m+12;case'gatehouse':return 34+20+6*b.h+14;case'paifang':case'hongsal':return 72;case'pagoda':return (b.tiers||5)*(b.th||17)+50;case'potala':return (b.tiers||3)*26+20;case'dome':return 30+Math.min(b.w,b.h)*TW*.42*1.55+30}return 120}
 // 무너진 사당(ruin)은 r_build.js 폐허 그림을 쓰고, 그 위에 거적 덧댐·기댄 판자를 얹는다
 function bfRuinPatch(b,g){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=bfR(b),{R1,R2,Eb,El,H0,RH}=g;
   const p=[lerp2(R1,R2,.08),lerp2(R1,R2,.3),up(lerp2(Eb,El,.62),(RH-H0)*.35),up(lerp2(Eb,El,.85),(RH-H0)*.2)];quad(p,'#8a7646','rgba(40,28,10,.7)');
@@ -196,7 +208,7 @@ function bfRuinPatch(b,g){const{x,y,w,h}=b,X1=x+w,Y1=y+h,r=bfR(b),{R1,R2,Eb,El,H
   const P0=lerp2(scr(x,Y1),scr(X1,Y1),.38),P1=lerp2(scr(x,Y1),scr(X1,Y1),.62);ctx.save();const m=up(lerp2(P0,P1,.5),H0-8);ctx.translate(m[0],m[1]);ctx.rotate(.12);ctx.translate(-m[0],-m[1]);
   quad([up(P0,H0-14),up(P1,H0-14),up(P1,H0-3),up(P0,H0-3)],'#2a1e14','#7a6440');ctx.restore()}
 // ---------------- 맵 소품 ----------------
-const PROP={pal:1,mudw:1,fire:1,pot:1,junk:1,logs:1,hide:1,rag:1,cage:1,torch:1,jwall:1,grock:1,dummy:1,herbbed:1,stone:1,well:1,rack:1,censer:1,furnace:1,boat:1,lantern:1,skull:1,icep:1,brazier:1,gpot:1};
+const PROP={jangseung:1,sotdae:1,onggi:1,pal:1,mudw:1,fire:1,pot:1,junk:1,logs:1,hide:1,rag:1,cage:1,torch:1,jwall:1,grock:1,dummy:1,herbbed:1,stone:1,well:1,rack:1,censer:1,furnace:1,boat:1,lantern:1,skull:1,icep:1,brazier:1,gpot:1};
 function propLine(i,j,k){const L=objs[j][i-1]===k,R=objs[j][i+1]===k,U=objs[j-1]&&objs[j-1][i]===k,D=objs[j+1]&&objs[j+1][i]===k,segs=[];
   if(L||R)segs.push([[L?i:i+.5,j+.5],[R?i+1:i+.5,j+.5]]);if(U||D)segs.push([[i+.5,U?j:j+.5],[i+.5,D?j+1:j+.5]]);if(!segs.length)segs.push([[i+.15,j+.5],[i+.85,j+.5]]);return segs}
 function drawProp(k,i,j){const r=rng(i*37+j*101+k.length),c=scr(i+.5,j+.5);
@@ -287,6 +299,26 @@ function drawProp(k,i,j){const r=rng(i*37+j*101+k.length),c=scr(i+.5,j+.5);
     ctx.fillStyle='#3a3a30';ctx.beginPath();ctx.ellipse(p[0],p[1]-17,12,4.5,0,0,7);ctx.fill();ctx.fillStyle='#5ab83a';ctx.beginPath();ctx.ellipse(p[0],p[1]-17,10,3.5,0,0,7);ctx.fill();
     for(let q=0;q<3;q++){const t=(time*.7+q/3)%1;ctx.fillStyle=`rgba(140,230,90,${.5*(1-t)})`;ctx.beginPath();ctx.arc(p[0]+(q-1)*5+Math.sin(t*5+q)*2,p[1]-20-t*26,2.5+t*4,0,7);ctx.fill()}
     ctx.strokeStyle='#7a6a4a';ctx.lineWidth=1.5;for(const d of[-1,1]){ctx.beginPath();ctx.arc(p[0]+d*13,p[1]-14,3,0,7);ctx.stroke()}break}
+  // 장승 (장백파): 나무 기둥 둘, 큰 눈·송곳니·관모, 몸통에 붉고 검은 글씨 자리
+  case'jangseung':{for(const[ox,oy,hat]of[[.3,.55,1],[.72,.42,0]]){const p=scr(i+ox,j+oy),hh=40;fshadow(i,j,10,4);
+      quad([[p[0]-4.5,p[1]],[p[0]+4.5,p[1]],[p[0]+4,p[1]-hh],[p[0]-4,p[1]-hh]],'#8a6a48','rgba(40,26,14,.8)');
+      ctx.fillStyle='rgba(255,230,190,.18)';ctx.fillRect(p[0]-3.5,p[1]-hh+2,2,hh-4);
+      ctx.fillStyle='#d8cdb4';ctx.beginPath();ctx.ellipse(p[0],p[1]-hh+9,5,6.5,0,0,7);ctx.fill();
+      ctx.fillStyle='#1a1410';for(const d of[-1,1]){ctx.beginPath();ctx.arc(p[0]+d*2.2,p[1]-hh+7,1.6,0,7);ctx.fill()}
+      ctx.fillStyle='#f4f0e6';for(const d of[-1,1])ctx.fillRect(p[0]+d*2-.8,p[1]-hh+12,1.6,2.6);
+      if(hat){quad([[p[0]-5,p[1]-hh+2],[p[0]+5,p[1]-hh+2],[p[0]+3.5,p[1]-hh-6],[p[0]-3.5,p[1]-hh-6]],'#1e1a18')}
+      else{ctx.fillStyle='#2a2420';ctx.beginPath();ctx.ellipse(p[0],p[1]-hh+1,6,2,0,0,7);ctx.fill()}
+      ctx.fillStyle=hat?'#a8281e':'#22223a';ctx.fillRect(p[0]-1.4,p[1]-hh+18,2.8,16)}break}
+  // 솟대: 긴 장대 끝의 나무 새
+  case'sotdae':{fshadow(i,j,6,3);const p=scr(i+.5,j+.5),hh=62;seg([p,up(p,hh)],2.2,'#6a4a2a');const t=up(p,hh);
+    ctx.fillStyle='#8a6a44';ctx.beginPath();ctx.ellipse(t[0],t[1]-2,6,2.6,-.1,0,7);ctx.fill();ctx.strokeStyle='rgba(30,20,10,.8)';ctx.lineWidth=.8;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(t[0]+5,t[1]-3);ctx.lineTo(t[0]+8,t[1]-7);ctx.lineTo(t[0]+11,t[1]-6);ctx.lineTo(t[0]+7,t[1]-3);ctx.fill();ctx.fillStyle='#e0b860';ctx.fillRect(t[0]+10,t[1]-6.5,2.4,1);break}
+  // 장독대: 돌 단 위 크고 작은 옹기
+  case'onggi':{fshadow(i,j,15,6);const c0=scr(i+.5,j+.5);quad([scr(i+.08,j+.92),scr(i+.92,j+.92),scr(i+.92,j+.92,5),scr(i+.08,j+.92,5)],'#8e887c');quad([scr(i+.08,j+.92,5),scr(i+.92,j+.92,5),scr(i+.92,j+.08,5),scr(i+.08,j+.08,5)],'#a8a294');
+    for(const[ox,oy,s]of[[.3,.32,.8],[.68,.3,.9],[.28,.7,1],[.7,.68,1.15]]){const p=up(scr(i+ox,j+oy),5),rw=7*s,rh=9*s;
+      ctx.fillStyle='#5a3418';ctx.beginPath();ctx.ellipse(p[0],p[1]-rh,rw,rh,0,0,7);ctx.fill();ctx.strokeStyle='rgba(20,10,4,.8)';ctx.lineWidth=.8;ctx.stroke();
+      ctx.fillStyle='rgba(255,220,170,.22)';ctx.beginPath();ctx.ellipse(p[0]-rw*.4,p[1]-rh*1.2,rw*.25,rh*.45,0,0,7);ctx.fill();
+      ctx.fillStyle='#3e2412';ctx.beginPath();ctx.ellipse(p[0],p[1]-rh*1.85,rw*.6,rw*.22,0,0,7);ctx.fill()}break}
   case'torch':bfTorch(scr(i+.5,j+.5),1);{const p=scr(i+.5,j+.5);ctx.fillStyle='#5a544c';ctx.beginPath();ctx.ellipse(p[0],p[1],5,2.5,0,0,7);ctx.fill()}break;
   }}
 

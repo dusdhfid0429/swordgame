@@ -9,7 +9,7 @@ const {chromium}=require('playwright');
   // 침입자 하나를 세운다 (그 문파의 적 세력 무인)
   await p.evaluate(()=>{window.invade=(s,o,d=3)=>{const f=['정','사','마','관'].find(f=>facFoe(f,alFac(s.al)));const e=mkFac(f,0,o.x+d,o.y+1,null);e.aggro=true;mobs.push(e);return e};spawnTick=()=>{};P.realm=3});
   // 1. 대연무장 사부: 적 세력 무인이 다가오면 무인으로 나서 맞서고, 물리치면 제자리로
-  const r1=await p.evaluate(()=>{const s=SECTS.bukhae;P.side='사';P.sect=null;enterRegion('ar_bukhae',20.5,30);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.sfMaster!=null);const foe=invade(s,n);return{n:n.n,id:n.id}});
+  const r1=await p.evaluate(()=>{const s=SECTS.taeyang;P.side='사';P.sect=null;enterRegion('ar_taeyang',20.5,30);P.reg=REG;mobs=[];const n=REGION().npcs.find(q=>q.sfMaster!=null);const foe=invade(s,n);return{n:n.n,id:n.id}});
   await step0(6);
   const r2=await p.evaluate(id=>{const e=mobs.find(m=>m.npcDef&&m.npcRef&&m.npcRef.id===id);return{out:!!e,gone:!REGION().npcs.some(q=>q.id===id),tgt:!!(e&&e.tgt&&e.tgt.d.fac),peace:e?peaceful(e)||!mobFoeP(e):null,draw:!NPCF.some(f=>f.n===(e&&e.name))}},r1.id);
   ok(`대연무장 사부 ${r1.n}: 침입자에 맞서 무인으로 나선다 (플레이어에겐 적이 아님)`,r2.out&&r2.gone&&r2.tgt&&r2.peace);
@@ -17,7 +17,7 @@ const {chromium}=require('playwright');
   const r3=await p.evaluate(id=>({back:REGION().npcs.some(q=>q.id===id),mob:mobs.some(m=>m.npcDef)}),r1.id);
   ok(`침입자가 없어지면 제자리 NPC로 돌아온다`,r3.back&&!r3.mob);
   // 2. 크게 다치면 물러난다 (무인끼리 싸우다 죽지 않는다)
-  const r4=await p.evaluate(()=>{const n=REGION().npcs.find(q=>q.sfHost);window._hid=n.id;invade(SECTS.bukhae,n);for(let i=0;i<6;i++)runHooks('tick',.1);   /* 한 번에: 사이에 게임 시간이 흐르면 교두가 이미 이기고 돌아와 있을 수 있다 */
+  const r4=await p.evaluate(()=>{const n=REGION().npcs.find(q=>q.sfHost);window._hid=n.id;invade(SECTS.taeyang,n);for(let i=0;i<6;i++)runHooks('tick',.1);   /* 한 번에: 사이에 게임 시간이 흐르면 교두가 이미 이기고 돌아와 있을 수 있다 */
     const e=mobs.find(m=>m.npcDef&&m.npcRef&&m.npcRef.id===_hid);if(!e)return{out:false};e.hp=e.maxHp*.1;for(let i=0;i<6;i++)runHooks('tick',.1);return{out:true,back:REGION().npcs.some(q=>q.id===_hid),mob:mobs.includes(e),again:mobs.some(m=>m.npcRef&&m.npcRef.id===_hid)}});
   ok(`교두도 나서고, 생명이 바닥나면 물러나 NPC로 (침입자가 남아 있어도 한동안 다시 나서지 않음)`,r4.out&&r4.back&&!r4.mob&&!r4.again);
   // 3. 문주: 장문인도 침입자에 맞선다

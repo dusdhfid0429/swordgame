@@ -4,7 +4,7 @@
 const ALLY=GD.ALLY;
 // [id, 이름, 세력, 등급(big/small/one), 소개, 무공들 [이름, 무기, 오행, 'n'일반|'h'고급]]
 const SECT_DATA=GD.SECT_DATA;
-const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h',mid:a[3]==='m'}))}});
+const SECTS={};SECT_DATA.forEach(([id,n,al,tier,d,arts],i)=>{SECTS[id]={id,n,al,tier,d,i,arts:arts.map((a,j)=>({id:`S_${id}_${j}`,n:a[0],cls:a[1],el:a[2],hi:a[3]==='h',mid:a[3]==='m',late:a[4]==='late'}))}});   // late: 나중에 더한 무공. 초식 이름 차례(formName)를 밀지 않게 맨 뒤에 만든다 (addSectArts)
 // 입문공 세트 (사용자 결정 2026-10-13): 가입하면 문파 주력 무기의 제일 낮은 등급 무공(첫 초식, 등급은 항상 하승 · addSectArts) + 제일 낮은 등급 보법·경공 + 문파 심법 1단계를 한 묶음으로 익힌다. 데이터 data/sects.json START.
 // 고급 무공은 더 이상 가입 선물이 아니라 입문 뒤 공적으로 비급을 받는다 (mbuy, 직위 HI_RANK).
 const START=GD.START||{};
@@ -25,9 +25,10 @@ function giveStartSet(s){const k=startSet(s),got=[];
   return got}
 const artSect=artId=>{const a=typeof ARTS!=='undefined'&&ARTS[artId];if(a&&(a.made||a.gy||a.sabu))return(a.sect&&SECTS[a.sect])||null;const m=/^S_(\w+)_\d+$/.exec(artId);return m?SECTS[m[1]]||null:null};
 // 중견문파(2026-10-08): 오대세가·사천당가, 새외 사대 세력. 본산이 두 맵이다 (g_stage.js)
-const TIERN=GD.TIERN,FIVE=GD.FIVE||[];   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
+const TIERN=GD.TIERN,FIVE=GD.FIVE||[],SEOE=GD.SEOE||[];   // 세외오궁(사용자 2026-11-11): 야수궁·북해빙궁·만독문·포달랍궁·장백파는 대문파
+const isSeoe=s=>!!s&&SEOE.includes(s.id);   // 오대세가(사용자 요청 2026-10-12): 정의맹 세가 다섯은 대문파 등급으로 친다
 const isFive=s=>(typeof LORE_ON!=='undefined'?loreFive():FIVE).includes(s.id),   // v213: 오대세가 다섯째 자리는 생마다 (g_lore.js)
-  tierName=s=>isFive(s)?'오대세가':TIERN[s.tier];
+  tierName=s=>isFive(s)?'오대세가':isSeoe(s)?'세외오궁':TIERN[s.tier];
 // 무공 등급: 대문파(9파1방·사천맹 4대문파·마교)는 일반 상승·고급 절정, 군소문파는 일반 중승·고급 상승. 문파 밖 무공은 하승.
 // 등급이 높을수록 초식·필살기가 세고 비급 공적이 비싸며, 숙련은 더디게 오른다. 설계: docs/세력_문파_설계.md 15장
 // 4번 천고는 기연으로만 얻는 무공의 등급이다 (g_giyeon.js)
@@ -44,7 +45,7 @@ const artNeedRank=(a,fi)=>{const v=Math.max(ART_RANK[Math.min(artGrade(a.id),ART
 const gradeTag=g=>`<small class="${AGR_C[g]}">${AGR[g]}</small>`;
 // buildArts에서 부른다: 문파 무공을 일반 무공과 같은 틀(초식 무늬 풀)로 만든다
 function addSectArts(arts,pool,ults,formName,ultName){
-  for(const s of Object.values(SECTS))for(const a of s.arts){
+  for(const late of[false,true])for(const s of Object.values(SECTS))for(const a of s.arts){if(!!a.late!==late)continue;
     const side=ALLY[s.al].side,k=a.hi?6:a.mid?5:Math.max(3,Math.min(4,FORMN[a.el])),r=rng(31+a.n.charCodeAt(0)*17+a.n.charCodeAt(a.n.length-1)*5+s.i);
     const pick=pickForms(pool[a.cls],r,k);
     // 입문공(START.art, 사용자 2026-10-14 v101)은 문파 등급과 상관없이 하승이다: 가입 때 받는 무공은 늘 제일 낮은 등급이어야 한다
@@ -61,7 +62,7 @@ function addSectArts(arts,pool,ults,formName,ultName){
 // ---- v234 사부 로드맵 (사용자 2026-11-03): 정파·사파 문파마다 장로 사부 둘~셋, 사부마다 병기가 다른 하승→중승→상승→절정 무공 길 ----
 // 문파에 원래 있는 같은 병기·같은 등급의 일반 무공은 그 칸에 쓰고, 빈 칸은 사부의 비전 무공을 새로 만든다 (data/sabu.json, g_sabu.js)
 const SABU={};   // v236 마교(천마신교)도 장로원 장로가 인연 사부다 (g_imagok.js). 마교 당 무공은 당 규칙(mgArtBlock)을 따르므로 사부 길에 넣지 않는다
-const sabuOn=s=>!!s&&(s.al==='jeong'||s.al==='sacheon');
+const sabuOn=s=>!!s&&(s.al==='jeong'||s.al==='sacheon'||s.al==='seoe');
 function addSabuArts(arts,pool,ults,formName,ultName){const D=GD.SABU;if(!D)return;const used=new Set(Object.values(arts).map(a=>a.n));
   for(const s of Object.values(SECTS)){if(!sabuOn(s)&&s.id!=='cheonma')continue;const r=rng(7717+s.i*131),pk=a=>a[Math.floor(r()*a.length)];
     const top=s.tier==='small'?2:3,n=D.n[s.tier]||2,st=START[s.id]||{},cl=[st.w,...s.arts.map(a=>a.cls)].filter((c,i,a)=>c&&a.indexOf(c)===i&&CLS.includes(c));
@@ -70,7 +71,7 @@ function addSabuArts(arts,pool,ults,formName,ultName){const D=GD.SABU;if(!D)retu
     for(let k=0;k<n;k++){const cls=cl[k];let ho=pk(hoP);hoP.splice(hoP.indexOf(ho),1);const path=[];
       for(let g=0;g<=top;g++){const ex=s.id!=='cheonma'&&s.arts.find(a=>a.cls===cls&&!a.hi&&!taken.has(a.id)&&artGradeOf(s,a)===g);
         if(ex){taken.add(ex.id);path.push(ex.id);continue}
-        const id=`S_${s.id}_t${k}_${g}`,mul=GMUL[g];const cand=[g?ho+pk(D.mid[g])+D.suf[cls]:ho+D.suf0[cls],...[1,2,3].flatMap(j=>D.mid[j].map(w=>ho+w+D.suf[cls]))];const nm=cand.find(x=>!used.has(x))||ho+s.n.slice(0,2)+D.suf0[cls];used.add(nm);
+        const id=`S_${s.id}_t${k}_${g}`,mul=GMUL[g];const cand=[g?ho+pk(D.mid[g])+D.suf[cls]:ho+D.suf0[cls],...[1,2,3].flatMap(j=>D.mid[j].map(w=>ho+w+D.suf[cls]))];const nm=cand.find(x=>!used.has(x))||[ho+s.n.slice(0,2)+D.suf0[cls],...Object.values(D.ho).flat().flatMap(h=>[h+D.suf0[cls],...[1,2,3].flatMap(j=>D.mid[j].map(w=>h+w+D.suf[cls]))])].find(x=>!used.has(x))||ho+s.n+D.suf0[cls];used.add(nm);   // 이름이 모자라면 다른 호(號)에서 빌린다 (세외오궁 대문파로 사부 무공이 늘어 v252)
         const forms=pickForms(pool[cls],r,D.forms[g]).map((f,i)=>({...f,n:formName(),req:REQ[i],cost:Math.round(COST[i]*(g>=3?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
         const u=ults[cls][(s.i+k+g)%ults[cls].length];
         arts[id]=artFx({id,side:ALLY[s.al].side,cls,el,n:nm,forms,sect:s.id,sabu:k+1,grade:g,
@@ -99,7 +100,7 @@ function linkSameArts(arts){
 const artAliases=()=>{const m={};for(const id of Object.getOwnPropertyNames(ARTS))if(ARTS[id]&&ARTS[id].id!==id)m[id]=ARTS[id].id;return m};
 // ---- 가입 조건 ----
 // 성향 문: 정의맹은 정파, 사천맹은 사파만. 마교는 정·사를 가리지 않는다 (사용자 2026-10-15 v102 "정파여도 마교에 가입할 수 있게").
-const sideOk=al=>al==='magyo'||P.side===ALLY[al].side;
+const sideOk=al=>al==='magyo'||al==='seoe'||P.side===ALLY[al].side;   // 세외오궁은 정·사 누구든 받는다
 // 무공의 정·사 계열 제한: 내 성향과 같거나, 내 문파(마교)의 무공이면 읽고 익힐 수 있다
 const artSideOk=a=>!a.side||a.side===P.side||(!!a.sect&&a.sect===P.sect);
 function joinBlock(s){

@@ -11,8 +11,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{n:on.length,all:on.every(s=>{const A=REGIONS['ar_'+s.id],g=A&&A.gates[0],H=g&&REGIONS[g.to];return !!H&&(H.chain||[hqId(s)]).includes(g.to)&&H.gates.some(q=>q.to==='ar_'+s.id)}),cm:!!REGIONS.ar_cheonma,gb:!!REGIONS.ar_geumgun}});
   ok(`정·사파 ${r0.n}곳 모두 대연무장 + 본산 출입구 (마교·군부 없음)`,r0.n>20&&r0.all&&!r0.cm&&!r0.gb);
   // 2. 입문 → 본산 출입구를 지나 대연무장 → 행사가 열리고 관객이 가득
-  const r1=await p.evaluate(()=>{const s=SECTS.bukhae;enterRegion(hqId(s),20.5,30.5);P.reg=REG;mobs=[];P.realm=0;P.age=16;P.fame=60;P.evil=0;P.side='사';openNpc(hqNpc(hqId(s)));act('sjoin:bukhae');closePanels();
-    const g=REGION().gates.find(q=>q.to==='ar_bukhae');enterRegion(g.to,g.tx,g.ty);P.reg=REG;return{st:P.sabu.st,walk:walkAt(g.tx,g.ty)}});
+  const r1=await p.evaluate(()=>{const s=SECTS.taeyang;enterRegion(hqId(s),20.5,30.5);P.reg=REG;mobs=[];P.realm=0;P.age=16;P.fame=60;P.evil=0;P.side='사';openNpc(hqNpc(hqId(s)));act('sjoin:taeyang');closePanels();
+    const g=REGION().gates.find(q=>q.to==='ar_taeyang');enterRegion(g.to,g.tx,g.ty);P.reg=REG;return{st:P.sabu.st,walk:walkAt(g.tx,g.ty)}});
   await p.waitForFunction(()=>P.sabu.ev===1,null,{timeout:8000}).catch(()=>{});
   const r2=await p.evaluate(()=>{const L=REGION().npcs;return{ev:P.sabu.ev,sect:L.filter(n=>n.sfCrowd==='sect').length,folk:L.filter(n=>n.sfCrowd==='folk').length,folkN:(L.find(n=>n.sfCrowd==='folk')||{}).n,
     host:!!L.find(n=>n.sfHost),m:L.filter(n=>n.sfMaster!=null).length,coh:L.filter(n=>n.sfCoh).length,tag:L.filter(n=>n.sfCrowd).every(n=>n.noTag),draw:NPCF.length,walk:L.every(n=>walk(Math.floor(n.x),Math.floor(n.y)))}});
@@ -34,7 +34,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok(`단상의 사부 창에서 '이 사부를 모신다' → 제자, 대회 끝 (동기 ${r6.taken}명도 사부에게)`,r6.btn&&r6.st==='disc'&&r6.m&&r6.ev===2&&r6.taken===2&&!/대연무장/.test(r6.track));
   await p.waitForTimeout(400);await p.screenshot({path:shot('t154_end')});
   // 5. 나가면 행사가 지나가고, 다시 오면 평소 대연무장 (교두와 연무하는 제자 몇)
-  const r7=await p.evaluate(()=>{const g=REGION().gates[0];enterRegion(g.to,g.tx,g.ty);P.reg=REG;const ev=P.sabu.ev;enterRegion('ar_bukhae',20.5,36.2);P.reg=REG;
+  const r7=await p.evaluate(()=>{const g=REGION().gates[0];enterRegion(g.to,g.tx,g.ty);P.reg=REG;const ev=P.sabu.ev;enterRegion('ar_taeyang',20.5,36.2);P.reg=REG;
     return{ev,n:REGION().npcs.length,crowd:REGION().npcs.filter(n=>n.noTag).length,m:REGION().npcs.filter(n=>n.sfMaster!=null).length}});
   ok(`행사가 지나간 뒤 대연무장은 조용하다 (사람 ${r7.n}), 사부들은 늘 단상 앞에 (${r7.m})`,r7.ev===3&&r7.n<=9&&r7.crowd===0&&r7.m===3);
   // 6. 다른 문파 사람이 와도 깨지지 않는다 (손님)

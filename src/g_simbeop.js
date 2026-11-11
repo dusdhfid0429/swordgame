@@ -43,7 +43,7 @@ function fxCol(a){if(artForeign(a))return SECT_FX[a.sect]?SECT_FX[a.sect][0]:elF
 const elN=e=>e?e+'기':'';
 const simElHtml=x=>`<b style="color:rgb(${textCol(SCHOOL_FX[x.sc]||'235,240,250')})">${x.sc}</b> · <b>${elN(x.el)}</b> ${EL[x.el]?EL[x.el].fx:''}`;
 // 심법 특색: 운용 중인 심법의 특색 k 값(SIM_TK 단위: %p 또는 현묘도 점수). 없으면 0
-function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&SECTS[sid].al==='sacheon'?'사공':'정종'}
+function simSchoolOf(sid){for(const[k,l]of Object.entries(GD.SCHOOL_OF||{}))if(l.includes(sid))return k;return SECTS[sid]&&(SECTS[sid].al==='sacheon'||SECTS[sid].al==='seoe')?'사공':'정종'}   // 세외오궁: 예전(사천맹 시절) 계열 그대로
 const simTraitVal=(x,k)=>x&&x.tr&&x.tr.includes(k)?SIM_TK[k].v*SIM_TQ[x.g]:0;
 const simTv=k=>simTraitVal(simCur(),k);
 const simTraits=x=>(x&&x.tr||[]).map(k=>({k,n:SIM_TK[k].n,v:simTraitVal(x,k),txt:SIM_TK[k].fmt.replace('{p}',Math.round(simTraitVal(x,k)))}));

@@ -391,5 +391,68 @@ L['map'].update({
  # 흑혈옥: 옥사 우리·해골
  "hq_cheonma_9": {"seed": 51, "scatter": [["cage", 10, 6, 30, 26, 8], ["skull", 10, 6, 30, 30, 4], ["torch", 10, 6, 30, 30, 4]]},
 })
+
+# ---------------- 세외오궁 대문파 본산 4장 (사용자 2026-11-11 '세외 5궁을 대문파로'). 소문파·중견 때 모양(small/mid)은 그대로 두고 big 을 더한다 ----------------
+import copy
+def seoe_big(D):
+    S = D['SECTMAP']; L = S['look']; fort = L['fort']['big']; emei_b = L['emei']['big']; T = S['tiers']['big']['maps']
+    def deco(m, add): m['deco'] = m.get('deco', []) + add
+    # 야수궁: 통나무 궁·목책·맹수 우리 (맹수 길들이기 스레드 부탁: 우리를 넉넉히)
+    y = copy.deepcopy(fort)
+    for m in y.values():
+        for b in m['builds']:
+            if b.get('form') == 'tentB': b['form'] = 'log'
+        m['yardG'] = 7
+    deco(y['hq'], pts("cage", (11, 21), (13, 21), (27, 21), (29, 21)) + pts("skull", (20, 20)) + pts("hide", (16, 13), (24, 12)))
+    deco(y['outer'], pts("cage", (11, 18), (13, 18), (30, 24)) + pts("skull", (19, 15)))
+    deco(y['back'], pts("cage", (14, 13)) + pts("skull", (25, 8)))
+    L['yasu'].update({"big": y, "gate": {"wallK": "pal", "tower": "watch"}, "titles": {"장로": "수왕 장로", "대장로": "대수왕", "전공 장로": "조련 장로", "의원": "수의"}})
+    # 만독문: 움막과 흙담, 독 항아리·약초밭, 후산 독지
+    m = copy.deepcopy(fort)
+    for mm in m.values():
+        for b in mm['builds']:
+            if b.get('form') in ('log', 'tentB', 'shack'): b['form'] = 'hut'
+        for fc in mm.get('fence', []): fc['k'] = 'mudw'
+        mm['yardG'] = 9
+        mm['deco'] = [d for d in mm.get('deco', []) if d[2] not in ('hide', 'logs', 'fire')]
+    deco(m['hq'], pts("gpot", (20, 14), (14, 13), (26, 13)) + pts("herbbed", (15, 10), (25, 10), (11, 15), (29, 15)) + pts("skull", (13, 21), (27, 21)) + pts("cage", (20, 20)))
+    deco(m['outer'], pts("gpot", (14, 19), (25, 18)) + pts("herbbed", (31, 16), (7, 12), (17, 8), (23, 8), (19, 18), (21, 18)))
+    deco(m['back'], pts("gpot", (20, 12), (16, 13), (24, 13)) + pts("herbbed", (26, 6)) + pts("skull", (14, 6)))
+    m['back']['ground'] = [[22, 13, 26, 15, 2]]
+    L['mandok'].update({"big": m, "gate": {"wallK": "mudw", "tower": "watch"}, "titles": {"의원": "약당 독의", "장경각주": "독경각주", "장로": "독장로", "대장로": "대독장로"}})
+    # 포달랍궁: 흰 벽 층층 궁전(potala)·금빛 둥근 지붕·초르텐 탑
+    pd = copy.deepcopy(emei_b)
+    for mm in pd.values():
+        for b in mm['builds']:
+            if b['k'] in ('main', 'elders', 'law', 'treas', 'lib', 'shrine', 'medic', 'guest'):
+                b['form'] = 'potala'; b['tiers'] = 3 if b['k'] in ('main', 'lib') else 2; b['fl'] = min(b.get('fl', 1), 3)
+            elif b.get('form') == 'pagoda': b['form'] = 'dome'
+    pd['hq']['deco'] = pts("censer", (20, 10), (20, 15)) + pts("stupa", (14, 17), (26, 17), (16, 20), (24, 20))
+    L['podal']['big'] = pd
+    L['podal']['titles'] = {"지객 장로": "지객 라마", "장로": "라마", "대장로": "대라마", "장경각주": "장경 라마", "의원": "약사 라마", "호법": "호법 라마", "전공 장로": "무승 라마", "집법 장로": "계율 라마"}
+    # 북해빙궁: 기본 틀 + 얼음 지붕(SECT_STYLE ice) + 얼음 기둥, 후산 얼음 못
+    bk = copy.deepcopy(T)
+    deco(bk['hq'], pts("icep", (14, 11), (25, 11), (15, 20), (25, 20), (8, 22), (32, 22)))
+    deco(bk['outer'], pts("icep", (13, 13), (27, 13), (13, 19), (27, 19)) + pts("brazier", (20, 13)))
+    deco(bk['back'], pts("icep", (14, 13), (16, 13), (24, 6), (26, 6)))
+    bk['back']['ground'] = [[22, 9, 27, 11, 2]]
+    L['bukhae'] = {"big": bk, "titles": {"장로": "빙궁 장로", "대장로": "대빙궁 장로", "의원": "한의", "지객 장로": "지객 궁녀장"}}
+    # 장백파 (조선): 흰 벽 기와집(giwa)·담장, 문루 대신 홍살문(hongsal), 장승·솟대·장독대, 후산에 천지 못
+    jb = copy.deepcopy(L['namgung']['big'])
+    jb['hq']['builds'][0].update({"form": "giwa", "fl": 2, "wh": 38})
+    for mm in jb.values():
+        for b in mm['builds']:
+            if mm is jb['hq'] and b['k'] in ('bell', 'drum'): b.update({"form": "giwa", "fl": 1})
+            if b.get('form') == 'gatehouse': b['form'] = 'hongsal'
+    jb['hq']['deco'] = pts("rack", (14, 11), (14, 13), (25, 11), (25, 13)) + pts("well", (15, 21)) + pts("onggi", (24, 21), (26, 21)) + pts("sotdae", (16, 16), (24, 16))
+    jb['outer']['deco'] = [d for d in jb['outer']['deco'] if d[2] != 'rack'] + pts("onggi", (12, 11), (28, 11)) + pts("jangseung", (17, 28), (24, 28))
+    jb['back']['builds'][0].update({"form": "giwa", "fl": 2, "wh": 36})
+    jb['back']['deco'] = pts("sotdae", (13, 13)) + pts("stone", (16, 6)) + pts("pine", (25, 5), (27, 7))
+    jb['back']['ground'] = [[22, 7, 27, 11, 2]]
+    L['jangbaek']['big'] = jb
+    L['jangbaek']['titles'] = {"지객 장로": "지객 원로", "장로": "원로", "대장로": "대원로", "장경각주": "장서각 교수", "장경각 서동": "서리", "의원": "의관", "호법": "무관", "전공 장로": "교련관",
+                               "집법 장로": "사헌 원로", "총관": "도총관", "장부 집사": "장부 서리", "금고지기": "창고 서리", "외원 집사": "외원 서리"}
+    S['names']['jangbaek'] = {"main": "백두전", "main2": "백두전", "elders": "원로청", "law": "사헌청", "treas": "호조각", "lib": "장서각", "shrine": "단군 사당", "guest": "객사", "medic": "약방", "pav": "천지 정자"}
+seoe_big(D)
 json.dump(D, open(P, 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 print('ok', [f.__name__ for f in (namgung, moyong, paeng, jegal, dang, sama, hwangbo)])

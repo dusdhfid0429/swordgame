@@ -3,7 +3,7 @@
 // 옛 저장을 새 형식으로 옮기는 일은 모두 여기 MIGRATE에서, 번호 순서대로 한 번씩만 한다.
 // 형식을 바꿀 때: SAVE_VER를 1 올리고 MIGRATE 끝에 "옛 번호 → 새 번호" 함수를 하나 더한다.
 // 옮기는 함수는 저장 자료(d)만 고친다. 게임 상태(P, G)는 건드리지 않는다. 테스트: tests/t34_save.js
-const SAVE_VER=10;
+const SAVE_VER=11;
 const MIGRATE=[
   // v0 → v1: 그동안 여러 파일에 흩어져 있던 옮기기를 한데 모음
   d=>{
@@ -39,7 +39,19 @@ const MIGRATE=[
   // v9 → v10: 요대가 무기 칸으로 (v192, g_amgi.js). 차고 있던 요대와 유엽비도는 요대 하나(암기 병기)로 합치고, 행낭·창고의 요대·유엽비도도 암기 병기 요대로.
   //   절편(단 계열이던 것)은 편 계열로
   d=>beltMigrate(d),
+  // v10 → v11: 세외오궁 대문파 (g_sect SEOE, 사용자 2026-11-11). 인원을 새 기준 인원 비율로 늘리고, 증축 기록을 지우고, 무공이 바뀐 장백파 초식 칸을 맞춘다
+  d=>seoeMigrate(d),
 ];
+function seoeMigrate(d){const g=d.G,W=GD.SEOE_WAS||{},B=STORY.POP.base;
+  if(g)for(const[sid,was]of Object.entries(W)){const k=(B[sid]||B.big)/(B[was]||60);
+    for(const m of[g.pop,g.popPrev])if(m&&m[sid]>0)m[sid]=Math.round(m[sid]*k*10)/10;
+    if(g.slt)delete g.slt[sid];if(g.sbuild)delete g.sbuild[sid]}
+  const p=d.P;if(p&&p.arts)for(const[id,x]of Object.entries(p.arts))if(/^S_jangbaek_\d+$/.test(id)&&ARTS[id]&&x){const k=(x.f||[]).filter(Boolean).length;x.f=ARTS[id].forms.map((_,i)=>i<k)}
+  const walk=o=>{if(!o||typeof o!=='object')return;if(Array.isArray(o)){o.forEach(walk);return}
+    if(o.slot==='book'&&/^S_jangbaek_\d+$/.test(o.art||'')&&ARTS[o.art]){const a=ARTS[o.art];o.form=Math.min(o.form||0,a.forms.length-1);o.name=`${a.n} 비급 · ${a.forms[o.form].n}`}
+    for(const k in o)walk(o[k])};
+  if(p)walk(p);if(g&&g.storage)walk(g.storage);
+  return d}
 // 옛 요대(slot belt)·유엽비도(암 병기) → 무기 칸의 요대. 공격력·내구는 유엽비도 것, 이름·등록 암기·근접 무기·현묘도는 요대 것
 function beltMigrate(d){const p=d.P;if(!p)return d;
   const fixMw=w=>{if(w&&w.slot==='weapon'&&w.cls==='단'&&w.name==='절편')w.cls='편';return w};
