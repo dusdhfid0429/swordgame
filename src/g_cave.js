@@ -90,7 +90,7 @@ function bakeCave(th){
     if(cell.g===6){const m=.6+n*.5;R=T.wall[0]*m;G=T.wall[1]*m;B=T.wall[2]*m}
     else if(liq>0&&T.lava){const f=fbm(gx*2,gy*2),hot=Math.min(1,liq*1.4)*(.5+f*.6),cr=fbm(gx*3.5,gy*3.5);
       R=150+105*hot;G=34+110*hot*hot;B=8+30*hot*hot*hot;if(cr>.55-liq*.12){const k=Math.min(1,(cr-.5)*6);R*=1-.75*k;G*=1-.8*k;B*=1-.8*k}if(liq<.12){R*=.6;G*=.5;B*=.5}}
-    else if(liq>0&&!T.ice){const dep=Math.min(1,liq*1.6),w=fbm(gx*2.5,gy*4);if(liq<.06){R=T.liq[0]+50;G=T.liq[1]+50;B=T.liq[2]+50}elseR=T.liq[0]*(1.25-dep*.6)+w*14;G=T.liq[1]*(1.25-dep*.6)+w*16;B=T.liq[2]*(1.25-dep*.5)+w*18}
+    else if(liq>0&&!T.ice){const dep=Math.min(1,liq*1.6),w=fbm(gx*2.5,gy*4);if(liq<.06){R=T.liq[0]+50;G=T.liq[1]+50;B=T.liq[2]+50}else{R=T.liq[0]*(1.25-dep*.6)+w*14;G=T.liq[1]*(1.25-dep*.6)+w*16;B=T.liq[2]*(1.25-dep*.5)+w*18}}
     else if(liq>0&&T.ice){const cr=Math.abs(vn(gx*3,gy*3)-.5)<.03||Math.abs(vn(gx*7+5,gy*7)-.5)<.02,w=fbm(gx*1.5,gy*3);R=172+w*40;G=212+w*30;B=236+w*16;if(cr){R=240;G=250;B=255}}
     else{const mx=fbm(gx*.35+11,gy*.35),t=Math.min(1,Math.max(0,(mx-.4)*3));R=T.floor[0]*(1-t)+T.floor2[0]*t;G=T.floor[1]*(1-t)+T.floor2[1]*t;B=T.floor[2]*(1-t)+T.floor2[2]*t;
       const m=.78+n*.4;R*=m;G*=m;B*=m;
