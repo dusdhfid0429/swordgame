@@ -85,7 +85,7 @@ function hud(){
   $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
-  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}${P.binsa?' · 빈사':''}${typeof magiTag==='function'?magiTag():''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);if(typeof qsHud==='function')qsHud();
+  $t('hpt',`생명 ${Math.ceil(P.hp)}/${P.maxHp}${P.poison>0?' · 중독':''}${P.tdok>0?' · 당가독':''}${P.binsa?' · 빈사':''}${typeof magiTag==='function'?magiTag():''}`);$t('qit',`내공 ${Math.floor(P.qi)}/${P.maxQi}`);if(typeof qsHud==='function')qsHud();
   $t('mst',`${a.n} 숙련 ${Math.floor(s.p)} · ${TIERS[tierOf(s.p)]}${hasWeaponFor(a.cls)?'':a.cls==='권'?' · 병기를 벗어야':' · 병기 없음'}`);
   $t('res',`활력 ${P.vit}/${maxVit()} · 은자 ${P.silver} · 명성 ${P.fame} · 업보 ${P.good-P.evil>=0?'+':''}${P.good-P.evil}`);
   $t('zone',regionAt(Math.floor(P.x),Math.floor(P.y))+(G.duel?' · 비무 중':''));
@@ -372,7 +372,7 @@ function act(s){
     case'craft':craft(RECIPES[n]);break;
     case'sellmode':shopMode=panelArg.id;openPanel('bag');return;
     case'buy':buy(x,+y);break;
-    case'sleep':if(P.silver>=10){P.silver-=10;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('객잔에서 하룻밤 묵었습니다.','sys');closePanels();return}break;
+    case'sleep':if(P.silver>=10){P.silver-=10;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.tdok=0;saveGame();log('객잔에서 하룻밤 묵었습니다.','sys');closePanels();return}break;
     case'rumor':log(`객잔 주인: "${pick(TIPS)}"`,'info');break;
     case'repair':{const w=P.eq.weapon,c=Math.ceil((w.maxDur-w.dur)*.6);if(P.silver>=c){P.silver-=c;w.dur=w.maxDur;log('무기를 고쳤습니다.','sys')}break}
     case'marry':{if(P.monk){log('출가한 몸이라 혼례를 올리지 못한다.','info');return}const v=prompt('배우자의 이름',pick(['연화','소혜','설아','월향','진운','하령','유경','백란']));if(!v)return;P.silver-=200;P.spouse={name:v.trim().slice(0,8)};
@@ -387,7 +387,7 @@ function act(s){
     case'sbuy':{const fi=+y,price=40*(fi+1);if(P.silver>=price){P.silver-=price;P.bag.push(mkBook(x,fi));log('비급을 샀습니다. 행낭에서 읽으세요.','sys')}break}
     case'found':{const v=prompt('문파의 이름',P.name[0]+'가장');if(!v)return;P.sect='own';P.sectName=v.trim().slice(0,10);log(`${P.sectName}을(를) 세웠습니다. 이제 제자를 받을 수 있습니다.`,'xp');showBanner('개파',P.sectName);P.fame+=20;feat(`${P.sectName}을(를) 세웠다`);break}
     case'disciple':{P.silver-=50;const nm=pick(['소운','청하','무진','백결','한솔','도현','진우','설화','유린']);const d=mkAlly('disciple',nm,P.x+.6,P.y+.4);allies.push(d);log(`${nm}을(를) 제자로 받았습니다.`,'xp');break}
-    case'rest':P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;saveGame();log('집에서 쉬었습니다.','sys');if(P.spouse)familyTalk();closePanels();return;
+    case'rest':P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.tdok=0;saveGame();log('집에서 쉬었습니다.','sys');if(P.spouse)familyTalk();closePanels();return;
     case'putm':for(const[k,v]of Object.entries(P.mats))if(v>0&&!CONSUME[k]&&k!=='비도'){G.storage.mats[k]=(G.storage.mats[k]||0)+v;P.mats[k]=0}break;
     case'takem':for(const[k,v]of Object.entries(G.storage.mats)){addMat(k,v);G.storage.mats[k]=0}break;
     case'put':{const i=P.bag.findIndex(i=>i.id===n);if(i>=0&&G.storage.bag.length<STORE_MAX)G.storage.bag.push(P.bag.splice(i,1)[0]);break}
