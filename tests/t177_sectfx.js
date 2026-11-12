@@ -18,8 +18,8 @@ const {chromium}=require('playwright');
     r2.ch===r2.x.chilsang&&r2.ch>1&&r2.sp===r2.x.songpung&&r2.sp0===1&&r2.kw===r2.x.kwae&&r2.kw0===1&&r2.jc===r2.x.jeoncho&&r2.jc0===1&&r2.jw===r2.x.jewang&&r2.jw0===1&&Math.abs(r2.zs-(20-r2.zv))<.11);
   // 3. 칠상: 내공 30% 밑이면 준 피해의 3%를 입는다 / 오신: 다섯 번째마다 치명타 버프 / 두전: 맞은 피해를 되돌린다
   const r3=await p.evaluate(()=>{const R=Math.random;const out={};ONLY("chilsang");P.hp=P.maxHp=1000;P.qi=1;P.maxQi=100;runHooks('hitDone',{e:{hp:0,d:{},x:P.x+1,y:P.y,maxHp:1000},hp0:1000});out.self=1000-P.hp;P.qi=100;P.hp=1000;runHooks('hitDone',{e:{hp:0,d:{},x:P.x+1,y:P.y,maxHp:1000},hp0:1000});out.self0=1000-P.hp;
-    ONLY('oshin');P.oshin=0;P.buff.crit=0;for(let i=0;i<4;i++)runHooks('hitDone',{e:{hp:1,d:{},x:P.x+1,y:P.y,maxHp:2},hp0:2});out.c4=P.buff.crit;runHooks('hitDone',{e:{hp:1,d:{},x:P.x+1,y:P.y,maxHp:2},hp0:2});out.c5=P.buff.crit;
+    ONLY('oshin');P.oshin=0;P.buff.crit=0;const oe={hp:1,d:{},x:P.x+1,y:P.y,maxHp:2,realm:9,hurtAt:time};for(let i=0;i<4;i++)runHooks('hit',{from:P,e:oe,m:1,hm:0});out.c4=P.buff.crit;runHooks('hit',{from:P,e:oe,m:1,hm:0});out.c5=P.buff.crit;P.buff.crit=0;runHooks('hit',{from:P,e:oe,m:1,hm:0});out.c6=P.buff.crit;
     ONLY('dujeon');Math.random=()=>0;const src={d:{},hp:500,maxHp:500,x:P.x+1,y:P.y};P.hp=900;runHooks('hurtDone',{src,hp0:1000});out.back=500-src.hp;Math.random=R;OFF();P.hp=P.maxHp;return out});
-  ok(`칠상 내공 낮음 -${r3.self}/넉넉 -${r3.self0} · 오신 4번째 ${r3.c4}/5번째 ${r3.c5} · 두전 되돌린 피해 ${r3.back}`,r3.self===30&&r3.self0===0&&r3.c4===0&&r3.c5>=1.5&&r3.back===100);
+  ok(`칠상 내공 낮음 -${r3.self}/넉넉 -${r3.self0} · 오신 4번째 ${r3.c4}/5번째 ${r3.c5}/6번째 ${r3.c6} · 두전 되돌린 피해 ${r3.back}`,r3.self===30&&r3.self0===0&&r3.c4===0&&r3.c5>0&&r3.c5<=.05&&r3.c6===0&&r3.back===100);
   if(errs.length){console.log('ERRORS');console.log(errs.slice(0,8).join('\n'))}else console.log('no console errors');
   await b.close()})();

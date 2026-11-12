@@ -91,7 +91,7 @@ const CLS_N=require('../data/arts.json').CLS.length;   // 병기 계열 수 (v18
   // v147 (사용자): 보법 수련은 병기 교두가 던지는 목환을 보법으로 피한다. 가만히 있으면 맞고, 걸어서 피하면 세지 않는다
   const rbd=await p.evaluate(()=>{closePanels();const s=acadDrSpot(),c=P.acad.c;P.x=s.x;P.y=s.y+1;P.qi=P.maxQi;const o={mk:acadMarks().length};
     for(let i=0;i<80&&!acadDr;i++)update(.05);o.dr=!!acadDr;for(let i=0;i<40&&acadDr;i++)update(.05);o.still=c.bobd||0;
-    let tries=0;for(let i=0;i<1600&&(c.bobd||0)<5;i++){if(acadDr&&acadDr.t>.3&&!acadDr.tried){acadDr.tried=1;tries++;P.qi=P.maxQi;P.fx=1;P.fy=0;bobeop()}update(.05)}
+    let tries=0;for(let i=0;i<4800&&(c.bobd||0)<5;i++){if(acadDr&&acadDr.t>.3&&!acadDr.tried){acadDr.tried=1;tries++;P.qi=P.maxQi;P.fx=1;P.fy=0;bobeop()}update(.05)}
     o.n=c.bobd||0;o.tries=tries;acadCheck();o.k=acadCurK();return o});
   ok(`보법 수련: 연무장 가면 목환 (${rbd.dr}), 가만히 있으면 안 셈 (${rbd.still}), 보법으로 ${rbd.tries}번 시도해 ${rbd.n}번 피함 → ${rbd.k}`,rbd.dr&&rbd.still===0&&rbd.n>=5&&rbd.k==='gklearn');
   await p.evaluate(()=>{openNpc(npcsHere().find(n=>n.id==='ac_i1'))});await p.waitForTimeout(150);

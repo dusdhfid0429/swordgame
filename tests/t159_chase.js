@@ -17,7 +17,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     window.run=(sec,f)=>{for(let t=0;t<sec;t+=1/30){update(1/30);if(f)f()}};
     window.learn=cls=>{const id=Object.keys(ARTS).find(k=>ARTS[k].cls===cls&&!ARTS[k].side);P.arts[id]={p:0,f:ARTS[id].forms.map(()=>false)};P.cur=id;P.eq.weapon=cls==='권'?null:mkWeapon(cls,1,0);recalc();return id}});
   // 1. 권법, 같은 칸 안 1.2칸 떨어진 적
-  let r=await p.evaluate(()=>{learn('권');const{cx,cy}=yard();const e=foe(cx+.95,cy+.95);P.target=e;const d0=dist(e,P);run(3);return{d0,d:dist(e,P),dmg:1e6-e.hp,tgt:P.target===e}});
+  let r=await p.evaluate(()=>{learn('권');const{cx,cy}=yard();const e=foe(cx+.95,cy+.95);P.target=e;const d0=dist(e,P);let md=d0;run(3,()=>{md=Math.min(md,dist(e,P))});return{d0,d:md,dmg:1e6-e.hp,tgt:P.target===e}});   // 가장 가까이 붙은 거리 (친 뒤 밀려난 적과의 마지막 거리는 그때그때 다르다)
   ok(`권법: 같은 칸 안 ${r.d0.toFixed(2)}칸 적에게 다가가 친다 (거리 ${r.d.toFixed(2)}, 피해 ${r.dmg})`,r.d0>1.05&&r.d<1.05&&r.dmg>0&&r.tgt);
   // 1b. 검으로도 같은 칸 귀퉁이에서 (사거리 1.5 안이라 바로 친다: 예전과 같음)
   r=await p.evaluate(()=>{learn('검');const{cx,cy}=yard();const e=foe(cx+.95,cy+.95);P.target=e;run(2);return{dmg:1e6-e.hp}});

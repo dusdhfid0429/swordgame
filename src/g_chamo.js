@@ -17,7 +17,7 @@ const chKey=it=>ARTS[it.art].id+':'+it.form;
 // 고를 수 있는 쓰임: [{k,n,d,why}] (why가 있으면 못 고른다)
 function chOpts(it){const a=ARTS[it.art],g=chG(a),L=[];
   if(g>=CHM.minG.pc)L.push({k:'pc',n:'창안 조각',d:`${AGR[g]} 조각 1장 (${AGR[g]} 창안 재료 한 자리 = ${CHM.pcNeed[Math.min(g,CHM.pcNeed.length-1)]}장)`,why:a.gy?'기연 무공은 창안 재료가 못 된다':''});
-  if(g>=CHM.minG.ms){const c=ARTS[P.cur],s=A(P.cur);L.push({k:'ms',n:'숙련',d:`펼치는 [${c?c.n:'-'}]의 숙련이 오른다`,why:!s?'펼치는 무공이 없다':s.p>=100?'펼치는 무공이 이미 극성이다':''})}
+  if(g>=CHM.minG.ms){const c=ARTS[P.cur],s=A(P.cur);L.push({k:'ms',n:'숙련',d:`펼치는 [${c?c.n:'-'}]의 숙련이 오른다`,why:!s?'펼치는 무공이 없다':s.p>=100?'펼치는 무공이 이미 극성이다':typeof kyulCap==='function'&&s.p>=kyulCap(P.cur)?`구결이 없어 숙련이 ${kyulCap(P.cur)}에서 멈춰 있다`:''})}
   if(g>=CHM.minG.en)L.push({k:'en',n:'깨달음',d:`깨달음 +${CHM.en[g]} (무리에 더해진다)`,why:P.chm&&P.chm[chKey(it)]?'이 초식에서 얻을 깨달음은 이미 얻었다':''});
   if(g>=CHM.minG.sd)L.push({k:'sd',n:'심득',d:`심득 +${CHM.sd[g]} (변초에 쓴다)`,why:''});
   return L}

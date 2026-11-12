@@ -13547,7 +13547,7 @@ const chKey=it=>ARTS[it.art].id+':'+it.form;
 // 고를 수 있는 쓰임: [{k,n,d,why}] (why가 있으면 못 고른다)
 function chOpts(it){const a=ARTS[it.art],g=chG(a),L=[];
   if(g>=CHM.minG.pc)L.push({k:'pc',n:'창안 조각',d:`${AGR[g]} 조각 1장 (${AGR[g]} 창안 재료 한 자리 = ${CHM.pcNeed[Math.min(g,CHM.pcNeed.length-1)]}장)`,why:a.gy?'기연 무공은 창안 재료가 못 된다':''});
-  if(g>=CHM.minG.ms){const c=ARTS[P.cur],s=A(P.cur);L.push({k:'ms',n:'숙련',d:`펼치는 [${c?c.n:'-'}]의 숙련이 오른다`,why:!s?'펼치는 무공이 없다':s.p>=100?'펼치는 무공이 이미 극성이다':''})}
+  if(g>=CHM.minG.ms){const c=ARTS[P.cur],s=A(P.cur);L.push({k:'ms',n:'숙련',d:`펼치는 [${c?c.n:'-'}]의 숙련이 오른다`,why:!s?'펼치는 무공이 없다':s.p>=100?'펼치는 무공이 이미 극성이다':typeof kyulCap==='function'&&s.p>=kyulCap(P.cur)?`구결이 없어 숙련이 ${kyulCap(P.cur)}에서 멈춰 있다`:''})}
   if(g>=CHM.minG.en)L.push({k:'en',n:'깨달음',d:`깨달음 +${CHM.en[g]} (무리에 더해진다)`,why:P.chm&&P.chm[chKey(it)]?'이 초식에서 얻을 깨달음은 이미 얻었다':''});
   if(g>=CHM.minG.sd)L.push({k:'sd',n:'심득',d:`심득 +${CHM.sd[g]} (변초에 쓴다)`,why:''});
   return L}
@@ -14040,7 +14040,7 @@ hook('hurtDone',c=>{if(!P||P.hp<=0||P.tdok>0||!dangSrc(c.src))return;if(typeof g
 hook('tick',dt=>{if(!P||!playing||!(P.tdok>0)||paused)return;P.tdok=Math.max(0,P.tdok-dt*(P.medit?DGT.meditMul:1));P.hp-=P.maxHp*DGT.drain*dt;
   if(P.hp<=0&&!G.duel){P.hp=0;die('당가독');return}if(!P.tdok)log('당가독이 빠졌습니다.','info')});
 // 해독단은 듣지 않는다 / 당가 해독제
-hook('useCon',c=>{if(c.k==='해독단'&&P.tdok>0&&!P.poison){c.done=true;log('해독단으로는 당가독이 풀리지 않습니다.','info')}
+hook('useCon',c=>{if(c.k==='해독단'&&P.tdok>0&&!P.poison&&!(typeof sgOn==='function'&&sgOn())){c.done=true;log('해독단으로는 당가독이 풀리지 않습니다.','info')}
   else if(c.k==='당가해독제'){c.done=true;if(!(P.mats['당가해독제']>0))return;if(!(P.tdok>0)&&!P.poison){log('중독되지 않았습니다.','info');return}P.mats['당가해독제']--;P.tdok=0;P.poison=0;log('당가 해독제로 독을 풀었습니다.','xp')}});
 // 은원 배율 (g_rep.js repAdd가 부른다)
 function dangRepMul(sid,dv){if(sid!==DGT.sid||!dv)return 1;return dv>0?DGT.rep.up:DGT.rep.down}
@@ -14103,6 +14103,8 @@ hook('sectAct',c=>{if(c.a==='pyojoin'){const q=P.quests[P.quests.length-1];if(q&
 // - 모용 두전(dujeon): 맞을 때 v% 확률로 그 피해를 고스란히 되돌린다 (이피지도 환시피신)
 // 무공 보정값(ARTK)은 건드리지 않는다. 테스트 tests/t177_sectfx.js
 hook('hit',c=>{if(c.from!==P||!c.e)return;const e=c.e;let m=0;
+  // 오신: 다섯 번째 공격만 치명타. 예전엔 1.5초 치명타 버프를 걸어 그동안의 모든 타격이 치명타가 되어 사실상 상시 치명타(초당 피해 +69%)였다
+  if(simTv('oshin')){P.oshin=(P.oshin||0)+1;if(P.oshin>=5){P.oshin=0;P.buff.crit=Math.max(P.buff.crit||0,.05)}}
   m+=simTv('chilsang');
   if(P.moving)m+=simTv('songpung');
   const kw=simTv('kwae');if(kw&&(time-(e.hurtAt??-99))>3)m+=kw;
@@ -14111,8 +14113,7 @@ hook('hit',c=>{if(c.from!==P||!c.e)return;const e=c.e;let m=0;
   if(m)c.m*=1+m/100;
   const zs=simTv('jwasu');if(zs)c.hm=Math.max(0,(c.hm||0)-zs)});
 hook('hitDone',c=>{if(!c.e)return;const d=Math.max(0,(c.hp0||0)-Math.max(0,c.e.hp));
-  if(simTv('chilsang')&&P.qi<P.maxQi*.3&&d>0&&P.hp>1){const self=Math.min(P.hp-1,Math.max(1,Math.round(d*.03)));P.hp-=self;addText(P.x,P.y-.4,`칠상 -${self}`,'#e0675a')}
-  if(simTv('oshin')){P.oshin=(P.oshin||0)+1;if(P.oshin>=5){P.oshin=0;P.buff.crit=Math.max(P.buff.crit||0,1.5)}}});   // 다음 공격(1.5초 안)이 치명타
+  if(simTv('chilsang')&&P.qi<P.maxQi*.3&&d>0&&P.hp>1){const self=Math.min(P.hp-1,Math.max(1,Math.round(d*.03)));P.hp-=self;addText(P.x,P.y-.4,`칠상 -${self}`,'#e0675a')}});
 hook('hurtDone',c=>{const v=simTv('dujeon'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(!v||d<=0||!src||!src.d||src.hp<=0||Math.random()*100>=v)return;
   damage(src,Math.round(d),0,0,P);addText(src.x,src.y-.5,'두전성이','#c8b0ff')});
 
@@ -14579,7 +14580,7 @@ function akinDlg(n){const k=n.akin,y=Math.floor(G.cal||0);
 hook('npcDlg',c=>{if(c.html==null&&c.n&&c.n.akin)c.html=akinDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='akin')return;c.done=true;c.r=true;if(REG!==AK_ID)return;
   if(c.x==='leaf'&&P.silver>=SP_A.leaf){const id=leafPick({sects:liveSects().filter(s=>s.al==='sacheon').map(s=>s.id)});if(!id)return;P.silver-=SP_A.leaf;giveLeaf(id,1,'악인곡 수법 장수')}
-  else if(c.x==='heal'&&P.silver>=SP_A.heal){P.silver-=SP_A.heal;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.sgT=0;if(P.dangPsn)P.dangPsn=0;log(`백골노가 독을 씻어 주었다. (은자 -${SP_A.heal})`,'xp')}
+  else if(c.x==='heal'&&P.silver>=SP_A.heal){P.silver-=SP_A.heal;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.sgT=0;P.tdok=0;log(`백골노가 독을 씻어 주었다. (은자 -${SP_A.heal})`,'xp')}
   else if(c.x==='test')akinTest()});
 function akinTest(){const y=Math.floor(G.cal||0);if(P.akTest===y||G.duel)return;P.akTest=y;const r=clamp(realmIdx(),0,8),T=SP_A.test,es=eliteStat(r,T.kh,T.ka),p=spSpot(2,3)||{x:P.x+2,y:P.y};
   closePanels();G.duel=true;G.akDuel={x:P.x,y:P.y};P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const cls=pick(['도','검','권']);
