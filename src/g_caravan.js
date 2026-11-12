@@ -160,7 +160,7 @@ function cvEnd(cv,rm){const i=CVS.indexOf(cv);if(i>=0)CVS.splice(i,1);if(rm)mobs
 // ---- 습격 ----
 function cvAmbush(cv,esc){const c=cv.cart,k=cvProv(),fs=[...new Set((PROV[k]&&PROV[k].sects||[]).map(s=>alFac(SECTS[s].al)))].filter(f=>f==='사'||f==='마');
   const fac=cv.foes&&cv.foes.length?pick(cv.foes):fs.length&&Math.random()<CARV.ambush.facChance*(typeof pyoFacMul==='function'?pyoFacMul(cv):1)?pick(fs):null;
-  if(esc&&!fac&&typeof pyoBanditFlee==='function'&&pyoBanditFlee(cv))return;   // v260 깃발: 산적은 길을 비킨다 (g_pyoflag.js)   // 세력에 가는 표물은 그 적 세력이 친다
+  if(esc&&!fac&&typeof pyoBanditFlee==='function'&&pyoBanditFlee(cv))return;   // v261 깃발: 산적은 길을 비킨다 (g_pyoflag.js)   // 세력에 가는 표물은 그 적 세력이 친다
   const ahead=cv.path[Math.min(cv.path.length-1,cv.i+6)]||c;
   const spot=()=>{for(let t=0;t<30;t++){const a=Math.random()*6.28,r=1.5+Math.random()*2.5,x=ahead.x+Math.cos(a)*r,y=ahead.y+Math.sin(a)*r;if(walkAt(x,y))return[x,y]}return[c.x+.5,c.y+.5]};
   const made=[];

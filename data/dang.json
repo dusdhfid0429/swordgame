@@ -1,4 +1,4 @@
 {
-  "_DANG": "v258 사천당가의 독과 해독 (동훈님 2026-11-12, 적용 계획 PR4): 당가 정예·우두머리에게 맞을 때 chance 확률로 당가독 dur초, 초마다 최대 생명의 drain(해독단 무효, 운기조식 중 meditMul배 빨리 빠짐). 해독제 값 price(우호)·중립은 priceMul배·경계 이하 안 팜. 당가 우호도 변화 배율 rep.up(오름)·rep.down(떨어짐). 코드 src/g_dang.js",
+  "_DANG": "v259 사천당가의 독과 해독 (동훈님 2026-11-12, 적용 계획 PR4): 당가 정예·우두머리에게 맞을 때 chance 확률로 당가독 dur초, 초마다 최대 생명의 drain(해독단 무효, 운기조식 중 meditMul배 빨리 빠짐). 해독제 값 price(우호)·중립은 priceMul배·경계 이하 안 팜. 당가 우호도 변화 배율 rep.up(오름)·rep.down(떨어짐). 코드 src/g_dang.js",
   "DANG": {"sid": "dang", "chance": 0.2, "dur": 15, "drain": 0.008, "meditMul": 3, "price": 40, "priceMul": 3, "rep": {"up": 2, "down": 3}}
 }

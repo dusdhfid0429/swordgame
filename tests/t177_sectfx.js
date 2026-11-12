@@ -1,4 +1,4 @@
-// v261 문파마다 한 가지 손맛 (동훈님 2026-11-12, 적용 계획 3단계 H): 정파 여덟 문파 심법 특색 (공동 칠상·청성 송풍·점창 쾌검·곤륜 전초·형산 오신·해남 좌수·남궁 제왕·모용 두전)
+// v262 문파마다 한 가지 손맛 (동훈님 2026-11-12, 적용 계획 3단계 H): 정파 여덟 문파 심법 특색 (공동 칠상·청성 송풍·점창 쾌검·곤륜 전초·형산 오신·해남 좌수·남궁 제왕·모용 두전)
 const {chromium}=require('playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
