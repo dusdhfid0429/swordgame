@@ -79,6 +79,19 @@ function addSabuArts(arts,pool,ults,formName,ultName){const D=GD.SABU;if(!D)retu
           d:`${s.n} ${ho} ${title}의 ${AGR[g]} 독문 무공 · ${CLASS[cls].n}. 그 사부의 제자만 사부에게 직접 받는다. 초식 ${forms.length}개와 필살기.`});
         path.push(id)}
       SABU[s.id].push({k,ho,n:`${ho} ${title}`,cls,path,say:D.say[cls]||''})}}
+  // v254 종남 세 검관 (data/jongnam.json, g_jongnam.js): 위에서 만든 사부 길을 계통에 맞게 다시 다듬는다. formName·ultName을 부르지 않아 다른 문파 초식 이름이 밀리지 않는다
+  const J=GD.JONGNAM,js=J&&SECTS[J.sid];if(js&&SABU[js.id]){const r=rng(7717+js.i*131+5);
+    for(const gw of J.gwan){const m=SABU[js.id][gw.k];if(!m)continue;Object.assign(m,{ho:gw.ho,hall:gw.hall,n:`${gw.hall}${gw.title||'주'}`,gd:gw.d});if(m.cls!==gw.cls){m.cls=gw.cls;m.say=D.say[gw.cls]||''}
+      const cls=gw.cls,el=(js.arts[0]||{}).el||'금',dd=g=>`${js.n} ${gw.hall}의 ${AGR[g]} 무공 · ${CLASS[cls].n}. ${gw.d}. 그 관주의 제자만 관주에게 직접 받는다.`;
+      m.path=m.path.map((id,g)=>{const a=arts[id],nm=gw.arts[g];if(a&&a.cls===cls){if(a.sabu){if(nm)a.n=nm;a.d=`${dd(g)} 초식 ${a.forms.length}개와 필살기.`}return id}
+        const nid=a&&a.sabu?id:`S_${js.id}_t${gw.k}_${g}`,mul=GMUL[g],forms=pickForms(pool[cls],r,D.forms[g]).map((f,i)=>({...f,n:`${gw.ho}${i+1}식`,req:REQ[i],cost:Math.round(COST[i]*(g>=3?1.2:1)),bonus:BONUS[i],qp:GD.QSTAR.pct[i],m:f.m*(1+.06*i)*mul}));
+        const u=ults[cls][(js.i+gw.k+g)%ults[cls].length],un=a&&a.sabu&&a.ult?a.ult.n:(gw.ult||{})[g]||`${gw.ho}귀일`;
+        arts[nid]=artFx({id:nid,side:ALLY[js.al].side,cls,el,n:nm||`${gw.ho}${D.suf0[cls]}`,forms,sect:js.id,sabu:gw.k+1,grade:g,
+          ult:{n:un,steps:[F('','circle',{rad:2.8,m:GULT[g][0],stun:.3}),...u.steps.map(x=>({...x,m:(x.m||1)*GULT[g][1],delay:(x.delay||0)+.18}))]},d:`${dd(g)} 초식 ${forms.length}개와 필살기.`});
+        return nid})}
+    for(const[id,nm]of Object.entries(J.rename||{}))if(arts[id]){arts[id].n=nm;const sa=js.arts.find(a=>a.id===id);if(sa)sa.n=nm}
+    for(const[id,L]of Object.entries(J.forms||{}))if(arts[id])arts[id].forms.forEach((f,i)=>{if(L[i])f.n=L[i]});
+    for(const a of Object.values(arts))if(a.cls==='검'&&(a.sect===js.id||js.arts.some(q=>q.id===a.id))&&J.pung&&!(a.d||'').includes('중검'))a.d=(a.d||'')+J.pung.d}
   // v235 군부: 병기마다 부대, 부대마다 하승→절정 무고 무공 (사부 대신 부대. g_gunbu.js)
   const GB=GD.GUNBU,gs=SECTS.geumgun;if(GB&&gs){const r=rng(9311),taken=new Set();SABU.geumgun=GB.units.map((u,k)=>{const path=[];
     for(let g=0;g<=3;g++){const ex=gs.arts.find(a=>a.cls===u.cls&&!a.hi&&!taken.has(a.id)&&artGradeOf(gs,a)===g);if(ex){taken.add(ex.id);path.push(ex.id);continue}
