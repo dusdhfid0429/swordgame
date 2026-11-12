@@ -13,8 +13,9 @@ const KY=GD.KYUL||{cap:60,cost:[150,300,600,1200,2400],rep:3};
 function kyulD(){return P.kyul||(P.kyul={})}
 // 구결이 있어야 cap을 넘는 무공인가 (구결을 이미 가졌으면 false)
 // 정·사 기본 계열 무공(정검0 같은 '성향+병기+번호')은 문파가 쓰더라도 무관·시작에서 누구나 배우는 공용이라 구결이 필요 없다
-const kyulOpen=id=>/^[정사].\d$/.test(id);
-function kyulNeed(id){const a=ARTS[id];if(!a||!a.sect||a.base||a.melee||a.gy||a.made||a.rc||kyulOpen(id))return false;if(P.sect===a.sect)return false;return !kyulD()[id]}
+let KY_OPEN=null;   // ARTS["정검0"] 같은 열쇠(숨은 속성)는 문파 무공(S_mudang_1 등)을 가리키기도 한다: 그 실제 id들을 모은다
+const kyulOpen=id=>{if(!KY_OPEN){KY_OPEN=new Set();for(const k of Object.getOwnPropertyNames(ARTS))if(/^[정사].\d$/.test(k))KY_OPEN.add(ARTS[k].id)}return KY_OPEN.has(id)};
+function kyulNeed(id){const a=ARTS[id];if(!a||!a.sect||a.base||a.melee||a.gy||a.made||a.rc||kyulOpen(a.id))return false;if(P.sect===a.sect)return false;return !kyulD()[id]}
 function kyulCap(id){return kyulNeed(id)?KY.cap:100}
 // 숙련을 바로 더하는 곳(세월 넘기기·수련기 보상)에서 쓴다: cap을 넘기지 않고, 이미 넘친 값은 깎지 않는다
 function kyulAdd(id,p,v){return Math.max(p,Math.min(kyulCap(id),p+v))}
