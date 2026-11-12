@@ -46,5 +46,48 @@ const {chromium}=require('playwright');
     smChallenge();duelEnd(false,mobs.find(m=>m.smChal));o.lost=rankIdx('sama');o.d=G.duel;P.sect='jongnam';o.other=rtWhy('jongnam',false)===''||true;return o});
   ok(`하극상: 공적 ${r5.raw}단계라도 도전 '${r5.why}' · 40%면 '${r5.why2.slice(0,20)}' · 창 ${r5.html} · ${r5.en} 이김 → ${r5.rank} 원한 ${r5.grudge} · 도전 ${r5.flag} ${r5.cn} 격퇴 ${r5.keep} · 패배 ${r5.lost}`,
     r5.raw===0&&r5.why===''&&r5.why2!==''&&r5.html&&r5.sama&&r5.rank===1&&r5.grudge===1&&r5.flag&&/사마세가/.test(r5.cn||'')&&r5.keep===1&&r5.lost===0&&!r5.d);
+  // 6. 청부: 목격자를 남기고 떠나면 들켜 수배(우호도 하락·추격대), 호위까지 치우면 깨끗하게 끝. 들키기 전엔 우호도 그대로
+  const r6=await run(()=>{const o={},go=(id,x=5,y=5)=>{enterRegion(id,x,y);P.reg=id};P.sect='haomun';P.srank={haomun:0};P.chb={};P.rep=null;go(INNS[1]);
+    const n=REGION().npcs.find(q=>q.intel==='haomun');openPanel('npc',n);o.offer=/은밀한 청부/.test(document.body.innerHTML);closePanels();
+    runHooks('sectAct',{a:'chb',x:'take'});const j=P.chb.job;o.foeSect=!!j&&facFoe(alFac(SECTS[j.sid].al),pfac());go(j.reg,20,20);sched.splice(0).forEach(s=>s.f());
+    const t=mobs.find(m=>m.chbT);o.w=mobs.filter(m=>m.chbW).length;const r0=repSect(j.sid);t.hp=1;damage(t,99999,0,0,P);o.same=repSect(j.sid)===r0;o.card=remnCard().includes('은밀한 청부');
+    go(INNS[2]);o.seen=chbHunted();o.drop=r0-repSect(j.sid);o.akin=akinWhy()==='';
+    P.chb={};go(INNS[1]);runHooks('sectAct',{a:'chb',x:'take'});const j2=P.chb.job;go(j2.reg,20,20);sched.splice(0).forEach(s=>s.f());for(const m of mobs.filter(m=>m.chbW)){m.hp=1;damage(m,99999,0,0,P)}
+    const s0=P.silver,h0=P.heuk||0;const t2=mobs.find(m=>m.chbT);t2.hp=1;damage(t2,99999,0,0,P);o.clean=!P.chb.job&&!chbHunted()&&P.silver>s0;o.heuk=(P.heuk||0)>h0;return o});
+  ok(`청부: 제안 ${r6.offer} 적 세력 ${r6.foeSect} 호위 ${r6.w} · 쓰러뜨려도 우호도 그대로 ${r6.same} 카드 ${r6.card} · 목격자 남기고 떠남 → 수배 ${r6.seen} 우호도 -${r6.drop} 악인곡 열림 ${r6.akin} · 깨끗한 청부 ${r6.clean} 흑도 ${r6.heuk}`,
+    r6.offer&&r6.foeSect&&r6.w===2&&r6.same&&r6.card&&r6.seen&&r6.drop>=15&&r6.akin&&r6.clean&&r6.heuk);
+  // 7. 산공독: 만독문 정예에게 맞으면 내공 손실·운기 멈춤·내공 약 안 들음, 해독단으로 풀림, 환골탈태 면역. 내 만독 고급 무공은 적의 피해를 줄인다
+  const r7=await run(()=>{const o={},rnd=Math.random;P.qi=P.maxQi;P.sgT=0;P.hgt=0;P.gang=0;const src={sect:'mandok',rank:3,d:{},name:'만독문 당주'};Math.random=()=>0;runHooks('hurt',{src,dm:10});Math.random=rnd;
+    o.sg=P.sgT;o.lost=P.qi<P.maxQi;P.medit=true;o.reg=qiRegen();P.medit=false;P.mats.소환단=2;const q0=P.qi;useCon('소환단');o.pot=P.qi===q0&&P.mats.소환단===2;P.mats.해독단=1;useCon('해독단');o.cure=!P.sgT&&P.mats.해독단===0;P.medit=true;o.reg2=qiRegen();P.medit=false;
+    const low={sect:'mandok',rank:0,d:{}};Math.random=()=>0;runHooks('hurt',{src:low,dm:10});o.low=!P.sgT;P.hgt=1;runHooks('hurt',{src,dm:10});Math.random=rnd;o.imm=!P.sgT;P.hgt=0;
+    const e={x:P.x+1,y:P.y,hp:1e6,maxHp:1e6,d:{},skT:0};Math.random=()=>0;runHooks('hitDone',{e,from:P,X:{art:ARTS.S_mandok_1}});Math.random=rnd;const h={src:e,dm:100};runHooks('hurt',h);const h0={src:{...e,sgT:0},dm:100};runHooks('hurt',h0);o.cut=Math.round(h.dm/h0.dm*100)/100;
+    const e2={x:0,y:0,hp:10,d:{},skT:0};Math.random=()=>0;runHooks('hitDone',{e:e2,from:P,X:{art:ARTS.S_mandok_0}});Math.random=rnd;o.basic=!e2.sgT;return o});
+  ok(`산공독: ${r7.sg}초 내공 손실 ${r7.lost} 운기 ${r7.reg}→해독 뒤 ${r7.reg2.toFixed(1)} 약 막힘 ${r7.pot} 해독 ${r7.cure} · 졸개는 안 걸림 ${r7.low} · 환골탈태 면역 ${r7.imm} · 만독탈혼장 산공 적 피해 ${r7.cut} 기본 무공은 없음 ${r7.basic}`,
+    r7.sg>5&&r7.lost&&r7.reg===0&&r7.reg2>0&&r7.pot&&r7.cure&&r7.low&&r7.imm&&r7.cut===.7&&r7.basic);
+  // 8. 악인곡: 악명·수배여야 들어가고(입구는 길이 닿는다), 중립지대라 추격이 끊기고, 안에서 선업이 오르지 않는다. 낱장·치료·곡주 시험
+  const r8=await run(()=>{const o={},go=(id,x,y)=>{enterRegion(id,x,y);P.reg=id};P.chb={};P.wanted=0;P.evil=0;P.good=0;P.heuk=0;o.closed=!!akinWhy();P.evil=100;o.open=akinWhy()==='';
+    const H=SP_A.host;loadRegion(H);const g0=REGIONS[H].gates.find(q=>q.to==='cv_akin'),seen=new Set(),K=(x,y)=>x+','+y,q=[[Math.floor(g0.x),Math.floor(g0.y)+1]];
+    while(q.length){const[x,y]=q.pop();if(seen.has(K(x,y)))continue;seen.add(K(x,y));for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(walk(x+dx,y+dy))q.push([x+dx,y+dy])}o.area=seen.size;
+    o.neutral=!!REGIONS.cv_akin.neutral;go('cv_akin',20.5,37);o.npc=npcsHere().length;P.good+=10;runHooks('tick',.01);o.good=P.good;P.silver=2000;P.hp=1;runHooks('sectAct',{a:'akin',x:'heal'});o.heal=P.hp===P.maxHp;
+    const b0=bagAll().filter(it=>it.slot==='leaf').reduce((a,it)=>a+it.n,0);runHooks('sectAct',{a:'akin',x:'leaf'});o.leaf=bagAll().filter(it=>it.slot==='leaf').reduce((a,it)=>a+it.n,0)-b0;
+    runHooks('sectAct',{a:'akin',x:'test'});const e=mobs.find(m=>m.duel);o.test=!!e;const f0=P.fame;duelEnd(true,e);o.fame=P.fame>f0;o.d=G.duel;runHooks('sectAct',{a:'akin',x:'test'});o.once=!G.duel;return o});
+  ok(`악인곡: 닫힘 ${r8.closed} 열림 ${r8.open} 입구 둘레 걸을 칸 ${r8.area} 중립 ${r8.neutral} 사람 ${r8.npc} 선업 ${r8.good} 치료 ${r8.heal} 낱장 +${r8.leaf} 시험 ${r8.test} 명성 ${r8.fame} 해마다 한 번 ${r8.once}`,
+    r8.closed&&r8.open&&r8.area>200&&r8.neutral&&r8.npc===4&&r8.good===0&&r8.heal&&r8.leaf===1&&r8.test&&r8.fame&&!r8.d&&r8.once);
+  // 9. 사천맹 이탈: 녹림채 우호가 높고 정파를 도왔으면 천하대전 때 녹림채가 사천맹을 떠난다(그 문파 무인은 나를 치지 않는다)
+  const r9=await run(()=>{const o={};P.sect=null;P.srank=null;P.rep=null;o.none=!(warPlan().defect);repAdd('noklim',0,60);repAdd(null,30,0,'정');const p=warPlan();o.def=p.defect;o.note=p.notes.join('/');
+    G.war={life:P.lifeNo,y:0,plan:p,round:0,rounds:[],won:null};const e=mkFac('사',0,P.x+3,P.y,'noklim');o.ally=e.warAlly===1&&!mobFoeP(e);G.war=null;return o});
+  ok(`사천맹 이탈: 평소 ${r9.none} · ${JSON.stringify(r9.def)} '${r9.note}' 그 문파 무인 ${r9.ally}`,r9.none&&r9.def&&r9.def.sid==='noklim'&&/녹림채/.test(r9.note)&&r9.ally);
+  // 10. 소맹주 다툼: 부맹주 → 후계 다툼 → 자객 두 번 → 맹주 앞 비무 → 소맹주(해마다 은자)
+  const r10=await run(()=>{const o={},rnd=Math.random;P.maeng='sacheon';P.mpt={sacheon:99999};P.realm=8;P.smjE=null;P.smj=null;o.vice=smjVice();Math.random=()=>0;newYear();Math.random=rnd;o.st0=P.smjE&&P.smjE.st;
+    const kill=()=>{for(const m of mobs.filter(m=>m.smjAss&&m.hp>0)){m.hp=1;damage(m,99999,0,0,P)}};
+    for(let i=0;i<2;i++){P.smjE.t=-1e9;Math.random=()=>0;enterRegion('pv_hubei@0,0',20,20);P.reg='pv_hubei@0,0';Math.random=rnd;sched.splice(0).forEach(s=>s.f());o['a'+i]=mobs.filter(m=>m.smjAss).length;kill()}
+    o.st=P.smjE.st;runHooks('sectAct',{a:'smj',x:'guard'});o.guard=P.smjE.guard;runHooks('sectAct',{a:'smj',x:'duel'});const d=mobs.find(m=>m.duel);o.dn=d&&d.name;duelEnd(true,d);o.smj=!!P.smj;const s0=P.silver;newYear();o.inc=P.silver-s0;return o});
+  ok(`소맹주: 부맹주 ${r10.vice} → ${r10.st0} 자객 ${r10.a0}·${r10.a1} → ${r10.st} 호위 ${r10.guard} 비무 ${r10.dn} → 소맹주 ${r10.smj} 해마다 +${r10.inc}`,r10.vice&&r10.st0==='open'&&r10.a0>=1&&r10.a1>=1&&r10.st==='ready'&&r10.guard===1&&!!r10.dn&&r10.smj&&r10.inc>=400);
+  // 11. 흑도 평판: 약탈·청부가 쌓이면 흑도(정파·관부 우호도↓), 손이 깨끗한 사파는 정파 우호도가 더 잘 오른다
+  const r11=await run(()=>{const o={};P.heuk=0;P.rep=null;const b0=repFacBase('정');o.white=heukWhite();const f0=repD().fac['정']||0;repAdd(null,10,0,'정');o.wv=(repD().fac['정']||0)-f0;
+    heukAdd('rob');heukAdd('rob');heukAdd('chb');o.tier=heukTier();o.pen=b0-repFacBase('정');o.html=repHtml().includes('흑도 평판');P.heuk=200;o.t2=heukTier();newYear();o.decay=P.heuk<200;P.heuk=0;return o});
+  ok(`흑도: 백도 사파 ${r11.white} 정파 우호 +${r11.wv} · 흑도 단계 ${r11.tier} 정파 바탕 -${r11.pen} 인물창 ${r11.html} · 이름난 흑도 ${r11.t2} 옅어짐 ${r11.decay}`,r11.white&&r11.wv===15&&r11.tier===1&&r11.pen===15&&r11.html&&r11.t2===2&&r11.decay);
+  // 12. 그림: 악인곡·산채 길목
+  await p.evaluate(()=>{P.evil=100;enterRegion('cv_akin',20.5,30);P.reg='cv_akin';closePanels()});await p.waitForTimeout(900);await p.screenshot({path:require('path').resolve(__dirname,'shots/t174_akin.png')});
   if(errs.length){console.log('ERRORS');console.log(errs.slice(0,8).join('\n'))}
   await b.close()})();
