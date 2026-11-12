@@ -79,7 +79,7 @@ function qiDeviation(r,soft){const roll=Math.random(),death=r>=4&&!soft?.05:0;  
   const m=`${heavy?'크게 ':''}주화입마에 빠졌습니다. 내공 -${Math.round(lost*qiGain())}${st}. 경맥이 상해 ${heavy?'한 달 반':'보름'} 동안 힘을 다 쓰지 못합니다.`;
   log(m,'dmg');showBanner('주화입마',heavy?'경맥이 크게 상했다':'기혈이 뒤틀렸다');feat(`${rk(r)}의 벽 앞에서 주화입마에 빠졌다`)}
 hook('trainTick',dt=>{
-  if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;log('상했던 경맥이 아물었습니다.','sys')}}
+  if(P&&P.inj>0){P.inj=Math.max(0,P.inj-dt);if(P.inj===0){P.injS=0;P.injK=null;log('상했던 경맥이 아물었습니다.','sys')}}
   const b=trnBusy;if(b&&b.k.startsWith('pg')){b.t+=dt;const el=TRN.querySelector(`[data-tr="${b.k}"] .tcd`);if(el)el.style.width=Math.min(100,b.t/b.dur*100)+'%';
     if(b.t>=b.dur){trnBusy=null;pgFinish(b.k==='pg2');renderTrain()}}});
 hook('mastDone',({s,before})=>{const t=p=>p>=100?4:tierOf(p);if(t(s.p)!==t(before))wallCheck()});
@@ -94,6 +94,6 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 외공과 내공은 다음 경지 문턱까지만 오르고, 벽을 깨야 다시 오른다.</p>
     ${realmCardExtra()}<div class="list">${bars}</div><p>${msg}</p>${wall?hwListHtml():''}
-    ${P.inj>0?`<p class="bad">주화입마의 후유증: 경맥이 상해 공격력과 운기조식 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
+    ${P.inj>0?`<p class="bad">${P.injK==='fight'?'싸움의 내상':'주화입마의 후유증'}: 경맥이 상해 공격력과 운기조식 회복 -${P.injS>=2?30:15}% (${Math.ceil(P.inj/DAY_SEC)}달 남음)</p>`:''}
     <p>내공 심법 <b class="gold">${simCur().n}</b> ${gradeTag(simCur().g)} · 수련 ${P.qiN}회 · 1회 +${simGain()} · 다음 수련에 활력 ${c}${simCur().tr&&simCur().tr.length?` · 특색 ${simTraitHtml(simCur())}`:''}</p>
     <div class="row2"><span class="note">기본기·내공·폐관수련은 수련 창에서 한다.</span>${B('trainwin',wall?'폐관수련하러 (U)':'수련 창에서 수련')}</div>${jwaHtml()}</div>`}
