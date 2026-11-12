@@ -33,6 +33,7 @@ function repFoe(e){const f=e.d.fac,pf=pfac();if(!REPF.includes(f))return facFoe(
 function repAdd(sid,fdv,sdv,f){if(!P)return;const r=repD(),s=SECTS[sid];f=f||(s&&alFac(s.al));if(!f||!REPF.includes(f))return;
   const f0=repStageOf(repFac(f)),s0=s?repStageOf(repSect(sid)):0,L=REP.lim;
   if(fdv)r.fac[f]=clamp(Math.round(((r.fac[f]||0)+fdv)*10)/10,-L,L);
+  if(sdv&&typeof dangRepMul==='function')sdv*=dangRepMul(sid,sdv);   // v259 당가: 은혜 두 배·원한 세 배 (g_dang.js)
   if(sdv&&s)r.sect[sid]=clamp(Math.round(((r.sect[sid]||0)+sdv)*10)/10,-L,L);
   const f1=repStageOf(repFac(f)),s1=s?repStageOf(repSect(sid)):0;
   if(f1!==f0)repNote(FACN[f],f0,f1);if(s&&s1!==s0&&(f1===f0||sdv))repNote(s.n,s0,s1)}
