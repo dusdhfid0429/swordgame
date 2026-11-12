@@ -96,8 +96,9 @@ function chaseStep(c,sp,dt){const e=c.e;
   P.chs=(P.chs||0)+dt;if(P.chs<CHASE.stuck)return;
   P.chs=0;e.noReach=time+CHASE.skip;P.target=null;P.path=null;log(`${e.name||e.kind}에게 닿을 길이 없어 손을 뗍니다.`,'info')}
 const reachable=e=>!(e.noReach>time);
+// v252c: autoAttack가 연속기에서 건너뛸 초식은 셈하지 않는다 (안 그러면 초식 거리에 서서 닿지 않는 평타만 휘두른다)
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
-  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
+  const ch=P.chain,live=ch&&time-ch.t<1.7;a.forms.forEach((f,i)=>{if(live&&i<=ch.last)return;if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
 // 자동초식: chain the learned forms in order, falling back to a plain strike.
 // 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){
@@ -194,15 +195,16 @@ function updateEprojs(dt){
   eprojs=eprojs.filter(q=>q.left>0);
 }
 // ================= companions: tamed beasts and disciples =================
-function hurtAlly(a,dm,src){if(a.hp<=0||a===P.ride)return;{const c={a,dm,src};runHooks('allyHurt',c);dm=c.dm}a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1);runHooks('allyDown',a)}}
+function hurtAlly(a,dm,src){if(a.hp<=0||a===P.ride)return;{const c={a,dm,src};runHooks('allyHurt',c);if(c.miss){addText(a.x,a.y,'회피','#9db8e0');return}dm=c.dm}a.hp-=dm;a.hit=.15;addText(a.x,a.y,Math.round(dm),'#e0a05a');if(a.hp<=0){a.hp=0;log(`${a.name}이(가) 쓰러졌습니다.`,'dmg');allies.splice(allies.indexOf(a),1);runHooks('allyDown',a)}}
 function updateAlly(a,dt){
   if(a.hp<=0||a===P.ride)return;runHooks('allyTick',a,dt);if(a.hp<=0)return;a.hit=Math.max(0,a.hit-dt);if(a.swing>0&&a.swing<=dt)a.rec=.22;a.swing=Math.max(0,(a.swing||0)-dt);a.rec=Math.max(0,(a.rec||0)-dt);a.cd-=dt;
   if(a.mode==='wait'){a.moving=false;a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.04*dt);return}
   a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.004*dt);
   let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
   if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5){tg=m;break}
+  {const c={a,tg};runHooks('allyTg',c);tg=c.tg}   // v252c: 야수궁 맹수가 노릴 상대를 고른다 (g_yasu.js)
   if(G.duel)tg=null;
-  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=a.acd||1.1;a.swing=.24;const c={a,tg,dm:Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def))};runHooks('allyHit',c);damage(tg,Math.max(1,Math.round(c.dm)),.2,0,a);if(!tg.tgt||Math.random()<.3)tg.tgt=a}}
+  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=a.acd||1.1;a.swing=.24;const c={a,tg,dm:Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def)),kb:.2};runHooks('allyHit',c);damage(tg,Math.max(1,Math.round(c.dm)),c.kb,0,a)}}   // 누구를 노릴지는 어그로가 정한다 (g_aggro.js)
     else if(a.swing>0)a.moving=false;else{a.rec=0;chase(a,tg,dt,a.sp)}return}
   const d=dist(a,P);if(d>12){a.x=P.x-P.fx;a.y=P.y-P.fy;if(!walkAt(a.x,a.y)){a.x=P.x;a.y=P.y}}
   if(d>2.2)chase(a,P,dt,Math.max(a.sp,moveSpd()*.95));else a.moving=false;
