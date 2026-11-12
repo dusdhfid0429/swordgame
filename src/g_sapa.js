@@ -242,7 +242,7 @@ function akinDlg(n){const k=n.akin,y=Math.floor(G.cal||0);
 hook('npcDlg',c=>{if(c.html==null&&c.n&&c.n.akin)c.html=akinDlg(c.n)});
 hook('sectAct',c=>{if(c.a!=='akin')return;c.done=true;c.r=true;if(REG!==AK_ID)return;
   if(c.x==='leaf'&&P.silver>=SP_A.leaf){const id=leafPick({sects:liveSects().filter(s=>s.al==='sacheon').map(s=>s.id)});if(!id)return;P.silver-=SP_A.leaf;giveLeaf(id,1,'악인곡 수법 장수')}
-  else if(c.x==='heal'&&P.silver>=SP_A.heal){P.silver-=SP_A.heal;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.sgT=0;if(P.dangPsn)P.dangPsn=0;log(`백골노가 독을 씻어 주었다. (은자 -${SP_A.heal})`,'xp')}
+  else if(c.x==='heal'&&P.silver>=SP_A.heal){P.silver-=SP_A.heal;P.hp=P.maxHp;P.qi=P.maxQi;P.poison=0;P.sgT=0;P.tdok=0;log(`백골노가 독을 씻어 주었다. (은자 -${SP_A.heal})`,'xp')}
   else if(c.x==='test')akinTest()});
 function akinTest(){const y=Math.floor(G.cal||0);if(P.akTest===y||G.duel)return;P.akTest=y;const r=clamp(realmIdx(),0,8),T=SP_A.test,es=eliteStat(r,T.kh,T.ka),p=spSpot(2,3)||{x:P.x+2,y:P.y};
   closePanels();G.duel=true;G.akDuel={x:P.x,y:P.y};P.path=null;P.target=null;P.hp=P.maxHp;P.qi=P.maxQi;const cls=pick(['도','검','권']);

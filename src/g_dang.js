@@ -13,7 +13,7 @@ hook('hurtDone',c=>{if(!P||P.hp<=0||P.tdok>0||!dangSrc(c.src))return;if(typeof g
 hook('tick',dt=>{if(!P||!playing||!(P.tdok>0)||paused)return;P.tdok=Math.max(0,P.tdok-dt*(P.medit?DGT.meditMul:1));P.hp-=P.maxHp*DGT.drain*dt;
   if(P.hp<=0&&!G.duel){P.hp=0;die('당가독');return}if(!P.tdok)log('당가독이 빠졌습니다.','info')});
 // 해독단은 듣지 않는다 / 당가 해독제
-hook('useCon',c=>{if(c.k==='해독단'&&P.tdok>0&&!P.poison){c.done=true;log('해독단으로는 당가독이 풀리지 않습니다.','info')}
+hook('useCon',c=>{if(c.k==='해독단'&&P.tdok>0&&!P.poison&&!(typeof sgOn==='function'&&sgOn())){c.done=true;log('해독단으로는 당가독이 풀리지 않습니다.','info')}
   else if(c.k==='당가해독제'){c.done=true;if(!(P.mats['당가해독제']>0))return;if(!(P.tdok>0)&&!P.poison){log('중독되지 않았습니다.','info');return}P.mats['당가해독제']--;P.tdok=0;P.poison=0;log('당가 해독제로 독을 풀었습니다.','xp')}});
 // 은원 배율 (g_rep.js repAdd가 부른다)
 function dangRepMul(sid,dv){if(sid!==DGT.sid||!dv)return 1;return dv>0?DGT.rep.up:DGT.rep.down}

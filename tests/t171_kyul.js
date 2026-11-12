@@ -46,5 +46,9 @@ const {chromium}=require('playwright');
   // 9. 저장했다 불러와도 남는다
   const r9=await p.evaluate(()=>{saveGame(true);const d=loadGame();return Object.keys(d.P.kyul||{}).length===Object.keys(P.kyul).length});
   ok(`저장·불러오기 ${r9}`,r9);
+  // 10. 참오 '숙련': 구결 없이 70에서 멈춘 무공에는 고를 수 없다 (책만 사라지고 숙련 +0 이던 것)
+  const r10=await p.evaluate(()=>{const id=Object.values(ARTS).find(a=>a.sect&&a.sect!==P.sect&&!a.gy&&!kyulOpen(a.id)&&!P.kyul[a.id]).id;P.arts[id]={p:70,f:ARTS[id].forms.map(()=>true)};P.cur=id;
+    const bk=Object.values(ARTS).find(a=>(a.grade||0)>=CHM.minG.ms&&!a.gy);const it={id:'chk',slot:'book',art:bk.id,form:0};const o=chOpts(it).find(q=>q.k==='ms');const why=o&&o.why;P.cur='base';return why||''});
+  ok(`참오 숙련 막음: '${r10}'`,/구결/.test(r10));
   if(errs.length){console.log('ERRORS');console.log(errs.slice(0,8).join('\n'))}else console.log('no console errors');
   await b.close()})();
