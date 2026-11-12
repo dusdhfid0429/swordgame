@@ -10,8 +10,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.goto(url+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');await p.evaluate(()=>{localStorage.clear();window.__noPrompt=1});
   await p.click('[data-s="new"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(800);
   // 1. 사용자 장면: 혈월광도 비급 · 천년영지 · 청명단 · 철골삼 · 풍령과를 받은 뒤 행낭을 연다
-  const r1=await p.evaluate(()=>{const c=G.gyc.list.find(c=>c.art)||G.gyc.list[0];c.art='gy_do';enterRegion('gyc_'+c.i,22.5,40.3);
-    for(const m of mobs)if(m.gycGuard!=null)m.hp=0;prune(mobs,m=>m.hp>0);const box=nodes.find(n=>n.t==='gybox');P.x=box.x;P.y=box.y+.6;
+  const r1=await p.evaluate(()=>{const c=G.gyc.list.find(c=>c.art)||G.gyc.list[0];c.art='gy_do';c.done=false;c.by=null;   // 세상에 따라 다른 문파가 먼저 휩쓸었거나 기인이사 동굴일 수 있다 → 연 적 없는 상자로 맞춘다
+    enterRegion('gyc_'+c.i,22.5,40.3);
+    for(const m of mobs)if(m.gycGuard!=null)m.hp=0;prune(mobs,m=>m.hp>0);const box=nodes.find(n=>n.t==='gybox');box.form=null;box.cd=0;P.x=box.x;P.y=box.y+.6;
     const R=Math.random;let k=0;Math.random=()=>[.1,.5][k++%2];gycOpen(box);P.chan.fn();Math.random=R;
     let e=null;try{openPanel('bag')}catch(x){e=x.message}const t=$('wbody').textContent;
     return{e,open:!$('win').hidden&&panel==='bag',book:t.includes('혈월광도 비급'),mats:['천년영지','청명단'].every(m=>t.includes(m)&&P.mats[m]>0),fr:Object.keys(GYC.fruits).filter(m=>P.mats[m]>0).length,side:t.includes('정사 공용')}});
