@@ -265,7 +265,8 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   if(mine)runHooks('hitDone',c);
 }
 function gainMast(id,v){
-  const s=A(id);if(!s||s.p>=100)return;const before=s.p;s.p=Math.min(100,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1)*(typeof wuMast==='function'?wuMast(id):1));   // v220: 인연 '사부의 가르침'
+  const s=A(id);if(!s||s.p>=100)return;const cap=typeof kyulCap==='function'?kyulCap(id):100;if(s.p>=cap){kyulWarn(id);return}   // v255 구결이 없으면 cap에서 멈춘다 (g_kyul.js)
+  const before=s.p;s.p=Math.min(cap,s.p+v*.3*wisMul()*(1-s.p/125)*GMAST[artGrade(id)]*(typeof inyMast==='function'?inyMast():1)*(typeof wuMast==='function'?wuMast(id):1));   // v220: 인연 '사부의 가르침'
   const a=ARTS[id];
   if(Math.floor(before/10)!==Math.floor(s.p/10))log(`${a.n} 숙련도 ${Math.floor(s.p)}`,'sys');
   if(tierOf(before)!==tierOf(s.p))showBanner(`${a.n} ${TIERS[tierOf(s.p)]}`,`숙련도 ${Math.floor(s.p)}`);
