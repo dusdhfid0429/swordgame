@@ -1,0 +1,4 @@
+{
+  "_PYOFLAG": "v260 표행의 깃발과 암표 (동훈님 2026-11-12, 적용 계획 PR6): 깃발은 산적 습격이 flag.bandit 확률로 길을 비키고 세력 습격 확률 ×flag.fac, 성공 시 명성 +flag.fame. 암표는 습격마다 hid.skip 확률로 건너뛰고 품삯 ×hid.pay. 코드 src/g_pyoflag.js",
+  "PYOFLAG": {"flag": {"bandit": 0.5, "fac": 1.5, "fame": 3}, "hid": {"skip": 0.3, "pay": 0.8}}
+}

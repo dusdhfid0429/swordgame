@@ -88,7 +88,7 @@ function pyoRunHtml(p,r,i){const c=cargoOf(r.cargo),T=CARV.types.pyo,left=r.dep-
     ${pyoRiskHtml(r)}
     <p><b>일행</b> ${T.lead} 1 · ${T.guard} ${T.nGuard[0]}~${T.nGuard[1]} · 모집 <b>${r.got+(r.me?1:0)}/${r.need}</b>명 · 가는 길에 습격 두 번쯤</p>
     <p><b>성공하면</b> 은자 <b class="gold">${r.silver}</b> · 활력 ${r.vit} · 명성 ${r.fame} · 선업 ${r.good} <small class="dim">길목에 닿으면 ${T.lead}가 그 자리에서 치른다. 수레가 부서지면 품삯은 없다</small></p>
-    <div class="row2"><span class="${why?'bad':'note'}">${r.me?'<b class="gold">따라나서기로 했다.</b> 성문 밖 성 지도로 나가면 바로 떠난다':why||'가입할 필요 없다. 이번 한 번 품을 판다'}</span>${r.me?'':B(`pyojoin:${p.id}:${i}`,'참여하기',{pri:!why,d:!!why})}</div></div>`}
+    <div class="row2"><span class="${why?'bad':'note'}">${r.me?'<b class="gold">따라나서기로 했다.</b> 성문 밖 성 지도로 나가면 바로 떠난다':why||'가입할 필요 없다. 이번 한 번 품을 판다'}</span>${r.me?'':B(`pyojoin:${p.id}:${i}`,'깃발을 걸고 참여',{pri:!why,d:!!why,t:'산적은 길을 비키기 쉽지만 세력 무인이 노린다. 무사히 닿으면 명성 더'})+B(`pyohid:${p.id}:${i}`,'암표로 참여',{d:!!why,t:'습격을 덜 만나지만 품삯이 준다'})}</div></div>`}
 function pyoDlg(n){const p=PYO[n.pyo];if(!p)return'';
   const mine=P.quests.map((q,i)=>[q,i]).filter(([q])=>!q.hired&&(q.pyo===p.id||q.pyo==='any'));
   const rows=mine.map(([q,i])=>`<div class="it"><div>${esc(q.n)}<span>${misSpan(q,q)} · 은자 ${q.silver}${q.fail?' · <b class="bad">실패</b>':''}</span></div><div class="ib">${B('qdone:'+i,questProg(q).done?'보고하기':'진행 중',{pri:questProg(q).done,d:!questProg(q).done})}</div></div>`).join('');
@@ -159,7 +159,8 @@ function cvEnd(cv,rm){const i=CVS.indexOf(cv);if(i>=0)CVS.splice(i,1);if(rm)mobs
 
 // ---- 습격 ----
 function cvAmbush(cv,esc){const c=cv.cart,k=cvProv(),fs=[...new Set((PROV[k]&&PROV[k].sects||[]).map(s=>alFac(SECTS[s].al)))].filter(f=>f==='사'||f==='마');
-  const fac=cv.foes&&cv.foes.length?pick(cv.foes):fs.length&&Math.random()<CARV.ambush.facChance?pick(fs):null;   // 세력에 가는 표물은 그 적 세력이 친다
+  const fac=cv.foes&&cv.foes.length?pick(cv.foes):fs.length&&Math.random()<CARV.ambush.facChance*(typeof pyoFacMul==='function'?pyoFacMul(cv):1)?pick(fs):null;
+  if(esc&&!fac&&typeof pyoBanditFlee==='function'&&pyoBanditFlee(cv))return;   // v260 깃발: 산적은 길을 비킨다 (g_pyoflag.js)   // 세력에 가는 표물은 그 적 세력이 친다
   const ahead=cv.path[Math.min(cv.path.length-1,cv.i+6)]||c;
   const spot=()=>{for(let t=0;t<30;t++){const a=Math.random()*6.28,r=1.5+Math.random()*2.5,x=ahead.x+Math.cos(a)*r,y=ahead.y+Math.sin(a)*r;if(walkAt(x,y))return[x,y]}return[c.x+.5,c.y+.5]};
   const made=[];
@@ -192,7 +193,7 @@ hook('sectAct',c=>{if(c.a!=='cvacc'&&c.a!=='cvno')return;c.done=true;c.r=true;co
 // 수레가 길목에 닿았다
 function cvArrive(cv){const q=cv.q;if(q&&q.hired&&!q.fail&&(q.leg||0)+1<(q.legs||1)&&cv.dest.to&&cvNextLeg(cv))return;log(`${cv.name} 행렬이(가) 무사히 ${cv.dest.label} 길목에 닿았습니다.`,'info');
   if(q&&P.quests.includes(q)&&!q.fail){q.have=1;
-    if(q.cvLive||q.hired){P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame;P.good+=q.good;P.quests.splice(P.quests.indexOf(q),1);
+    if(q.cvLive||q.hired){P.silver+=q.silver;gainVit(q.vit);P.fame+=q.fame+(q.flag==='flag'&&typeof PF!=='undefined'?PF.flag.fame:0);P.good+=q.good;P.quests.splice(P.quests.indexOf(q),1);
       if(q.hired){P.pyoN=(P.pyoN||0)+1;if(P.pyoN===1)feat(`${cv.name} 표행을 따라 ${cv.dest.label} 길목까지 표물을 지켰다`);pyoRunDone(q);runHooks('questDone',q);log(`${cv.name} ${cv.T.lead}: "수고했소. 약속한 품삯이오. 또 사람을 모을 때 들르시오."`,'info')}
       showBanner(q.hired?'표행 완료':'호위 완료',`은자 +${q.silver}`);log(`[${q.n}] 보상: 은자 ${q.silver}, 활력 ${q.vit}, 명성 ${q.fame}, 선업 ${q.good}`,'xp')}
     else{showBanner('호위 완료','의뢰처에 보고하자');log(`[${q.n}] 호위를 마쳤습니다. ${questFrom(q).at}에 보고하세요.`,'xp')}}
@@ -267,7 +268,7 @@ function cvStep(cv,dt){const c=cv.cart;
   const rest=cvRestMode(cv);if(rest!==cv.rest){if(rest){cv.told=new Set();log(rest==='camp'?`${cv.name} 행렬이 길가에 짐을 풀고 노숙한다. 모닥불가의 표사들에게 말을 걸 수 있다.`:`${cv.name} 행렬이 그늘에서 잠시 쉬어 간다. 쉬는 동안 표사들에게 말을 걸 수 있다.`,'info')}else if(cv.rest&&!cv.raiding&&!cv.robbed)log(`${cv.name} 행렬이 다시 길을 떠난다.`,'info');cv.rest=rest}
   cv.stop=cv.raiding||cv.robbed||far||!!cv.rest;
   if(cv.amb&&!cv.ambDone&&cv.i>4&&dist(c,P)<CARV.ambush.near){cv.ambDone=1;cvAmbush(cv,false)}
-  if(cv.waves.length&&!cv.raiding&&!cv.robbed&&cv.i/cv.len>=cv.waves[0]){cv.waves.shift();cv.curWave=cv.curWave==null?(cv.wOff||0):cv.curWave+1;cvAmbush(cv,true)}
+  if(cv.waves.length&&!cv.raiding&&!cv.robbed&&cv.i/cv.len>=cv.waves[0]){cv.waves.shift();cv.curWave=cv.curWave==null?(cv.wOff||0):cv.curWave+1;if(!(typeof pyoHidSkip==='function'&&pyoHidSkip(cv)))cvAmbush(cv,true)}
   if(cv.hate&&!cv.robbed&&dist(P,c)<CARV.rob.hateNear)cvRob(cv,true);
   if(!cv.robbed&&Math.hypot(c.x-cv.dest.x,c.y-cv.dest.y)<1.8)cvArrive(cv)}
 // 같은 맵을 다시 여는 경우(계절 바뀜 등)에는 몹이 남아 있으므로 행렬도 그대로 둔다
