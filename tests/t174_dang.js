@@ -1,4 +1,4 @@
-// v258 사천당가의 독과 해독 (동훈님 2026-11-12, 적용 계획 PR4): 당가 정예에게 당가독, 해독단 무효, 운기조식·쉬기·당가 해독제, 해독제 값과 우호도, 은원 두 배·세 배
+// v259 사천당가의 독과 해독 (동훈님 2026-11-12, 적용 계획 PR4): 당가 정예에게 당가독, 해독단 무효, 운기조식·쉬기·당가 해독제, 해독제 값과 우호도, 은원 두 배·세 배
 const {chromium}=require('playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);

@@ -1,4 +1,4 @@
-// v259 싸움의 내상과 운기요상 (동훈님 2026-11-12, 적용 계획 PR5): 우두머리 수·깊은 일격으로 내상, 졸개·비무는 없음, 운기요상·호법·쉬기로 낫는다
+// v260 싸움의 내상과 운기요상 (동훈님 2026-11-12, 적용 계획 PR5): 우두머리 수·깊은 일격으로 내상, 졸개·비무는 없음, 운기요상·호법·쉬기로 낫는다
 const {chromium}=require('playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);

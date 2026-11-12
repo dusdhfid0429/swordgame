@@ -1,4 +1,4 @@
-// v260 표행의 깃발과 암표 (동훈님 2026-11-12, 적용 계획 PR6): 참여 단추 둘, 깃발 = 산적 비킴·세력 ×1.5·명성, 암표 = 습격 건너뜀·품삯 0.8
+// v261 표행의 깃발과 암표 (동훈님 2026-11-12, 적용 계획 PR6): 참여 단추 둘, 깃발 = 산적 비킴·세력 ×1.5·명성, 암표 = 습격 건너뜀·품삯 0.8
 const {chromium}=require('playwright');
 (async()=>{
   const b=await chromium.launch();const errs=[];const ok=(name,v)=>console.log((v?'PASS ':'FAIL ')+name);
