@@ -201,8 +201,9 @@ function updateAlly(a,dt){
   a.hp=Math.min(a.maxHp,a.hp+a.maxHp*.004*dt);
   let tg=P.target&&P.target.hp>0&&!P.target.d.villager&&!peaceful(P.target)&&dist(P.target,a)<9?P.target:null;
   if(!tg)for(const m of mobs)if(m.hp>0&&m.aggro&&!m.d.villager&&!peaceful(m)&&dist(m,P)<5){tg=m;break}
+  {const c={a,tg};runHooks('allyTg',c);tg=c.tg}   // v252c: 야수궁 맹수가 노릴 상대를 고른다 (g_yasu.js)
   if(G.duel)tg=null;
-  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=a.acd||1.1;a.swing=.24;const c={a,tg,dm:Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def))};runHooks('allyHit',c);damage(tg,Math.max(1,Math.round(c.dm)),.2,0,a);if(!c.noAggro&&(!tg.tgt||Math.random()<.3))tg.tgt=a}}
+  if(tg){const d=dist(a,tg);if(d<a.reach){a.moving=false;a.fx=(tg.x-a.x)/d;a.fy=(tg.y-a.y)/d;if(a.cd<=0){a.cd=a.acd||1.1;a.swing=.24;const c={a,tg,dm:Math.max(1,Math.round(a.atk*(.9+Math.random()*.2)-tg.def)),kb:.2};runHooks('allyHit',c);damage(tg,Math.max(1,Math.round(c.dm)),c.kb,0,a)}}   // 누구를 노릴지는 어그로가 정한다 (g_aggro.js)
     else if(a.swing>0)a.moving=false;else{a.rec=0;chase(a,tg,dt,a.sp)}return}
   const d=dist(a,P);if(d>12){a.x=P.x-P.fx;a.y=P.y-P.fy;if(!walkAt(a.x,a.y)){a.x=P.x;a.y=P.y}}
   if(d>2.2)chase(a,P,dt,Math.max(a.sp,moveSpd()*.95));else a.moving=false;
