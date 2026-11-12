@@ -18,7 +18,7 @@ jobs:
       - name: Playwright 설치
         # apt 미러 이름 풀이가 잠깐 끊기면 설치가 죽는다 (2026-11-11). 세 번까지 다시 해 보고, 그래도 안 되면 글꼴 추가 설치는 건너뛰고 브라우저만 받는다 (라이브러리는 이미 있다)
         run: |
-          npm i --no-save playwright@1.56.1
+          npm i --no-save playwright@1.56.1 typescript@5.6.3   # 따로 npm i 하면 --no-save로 깔린 다른 쪽이 지워진다
           for i in 1 2 3; do
             npx playwright install --with-deps chromium && exit 0
             echo "설치 실패 ($i/3), 30초 뒤 다시"; sleep 30; sudo apt-get update || true
@@ -26,6 +26,8 @@ jobs:
           npx playwright install chromium
       - name: 빌드
         run: python3 build.py
+      - name: 타입 검사 (기준선에 없는 새 오류만 실패)
+        run: python3 tools/typecheck.py
       - name: dist가 소스와 같은지
         run: git diff --exit-code --stat dist/ || (echo "dist가 src와 다릅니다. python3 build.py 후 커밋하세요." && exit 1)
       - name: 테스트

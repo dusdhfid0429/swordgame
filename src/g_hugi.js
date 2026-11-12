@@ -59,10 +59,10 @@ function hugiCreate(h){const s=SECTS[h.sid];if(!s||!(sectPop(s.id)>0))return nul
   def.key=mkKey(def);G.made=G.made||{};G.made[id]=def;mkBuild(def);mkRegister(def);sectRegSync();h.art=id;h.elder=1;runHooks('hugiArt',h,id);
   log(`강호 소식: ${s.n}의 기재 ${h.n}이(가) 화경에 올라 절정 무공 [${n}]을(를) 창안했다. ${s.n}의 무공으로 전하고, ${h.n}은(는) 장로가 되었다.`,'xp');showBanner('절정 무공 창안',`${s.n} ${n}`);return id}
 // ---- 본산 마당의 정식 NPC ----
-function hgSpot(i){for(let t=0;t<80;t++){const a=i*2.1+t*.7,r=2+t*.12,x=Math.floor(20.5+Math.cos(a)*r*2.4),y=Math.floor(26.5+Math.sin(a)*r);if(x>1&&y>1&&x<N-2&&y<NH-2&&walk(x,y)&&!objs[y][x])return{x:x+.5,y:y+.5}}return{x:20.5,y:28.5}}
+function hgHallSpot(i){for(let t=0;t<80;t++){const a=i*2.1+t*.7,r=2+t*.12,x=Math.floor(20.5+Math.cos(a)*r*2.4),y=Math.floor(26.5+Math.sin(a)*r);if(x>1&&y>1&&x<N-2&&y<NH-2&&walk(x,y)&&!objs[y][x])return{x:x+.5,y:y+.5}}return{x:20.5,y:28.5}}
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!P)return;if(!G.hugi)hugiFill();if(R.npcs)R.npcs=R.npcs.filter(n=>n.hugi==null);if(R.dead||R.ruin||!R.npcs)return;
   const s=Object.values(SECTS).find(q=>hqId(q)===id);if(!s)return;let i=0;
-  for(const h of(G.hugi||[]))if(h.sid===s.id&&!h.dead&&(!h.old||h.elder)){const p=hgSpot(i++);
+  for(const h of(G.hugi||[]))if(h.sid===s.id&&!h.dead&&(!h.old||h.elder)){const p=hgHallSpot(i++);
     R.npcs.push({id:'hg'+h.id,srole:'hugi',ssid:s.id,hugi:h.id,n:`${h.elder?`${s.n} 장로 `:''}${h.n}`,x:p.x,y:p.y,pal:sectPal(s.id,Math.min(4,Math.max(1,h.rk)),h.w,{})||masterPal(s)})}
   refreshNPCF()});
 function hugiFight(e,n){const h=hugiById(n.hugi);if(!h)return;const d=h.rk-HUGI.npc.rank;e.realm=Math.min(8,h.rk);e.rank=Math.min(4,Math.max(1,h.rk));
