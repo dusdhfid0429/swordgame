@@ -39,6 +39,7 @@ function intelList(k){const out=[],L=G.gyc?G.gyc.list:[];
     const dir=gycDir(c),war=c.rumor>=GYC.rumor.war;
     out.push({g:3,key:`gyc${i}c`,t:`${n} · 입구 방위${war?' · 세력전':''}`,txt:`${gycHostName(c)} ${dir}쪽에 입구가 있다.${war?` 지금 ${(c.facs||[]).map(f=>FAC4N[f]).join('·')} 무사들이 입구 앞에서 다툰다.`:` 소문은 ${Math.round(c.rumor)}할쯤 퍼졌다.`}`,fn:()=>gycHear(c,2,`${gycHostName(c)} ${dir}쪽에 굴 입구가 있다`)});
     out.push({g:4,key:`gyc${i}x`,t:`${n} · 정확한 자리와 기연`,txt:`${gycHostName(c)}의 ${c.name}. 입구는 지도에 표시해 두었다. 안에는 ${c.art?`천고의 무공 [${ARTS[c.art].n}]의 비급`:'영약과 비급'}이 잠들어 있고 수호자가 지킨다.`,fn:()=>{c.mark=1;gycHear(c,3,`${gycHostName(c)}의 ${c.name} (지도 표시)`)}})});
+  if(typeof pastIntel==='function')out.push(...pastIntel());   // v256 전대 고수의 흔적 (g_past.js)
   const w=G.W&&G.W.pow;if(w)out.push({g:1,key:'pow',t:'천하 판도',txt:FAC4.map(f=>`${FAC4N[f]} ${Math.round(w[f]||0)}`).join(' · ')+'.'});
   const bs=Object.keys(MOBS).filter(m=>MOBS[m].boss).map(m=>`${m}: ${mobWhere(m)||'행방 모름'}`);out.push({g:1,key:'boss',t:'두목 출몰지',txt:bs.join(' / ')+'.'});
   if(typeof sectPop==='function'){const ss=Object.values(SECTS).filter(s=>sectPop(s.id)>0).map(s=>[s,sectPop(s.id)/popBase(s)]).sort((a,b)=>a[1]-b[1]).slice(0,3);

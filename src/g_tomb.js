@@ -40,6 +40,7 @@ function tombTick(){
 }
 function tombKill(e){
   const i=tombs().findIndex(t=>t.id===e.tomb);if(i<0)return;const t=tombs()[i];tombs().splice(i,1);
+  if(typeof pastKnowAll==='function'&&G.past&&t.life===G.past.life)pastKnowAll('전생의 무덤');   // v256 전생의 무덤 망령을 쓰러뜨리면 흔적이 드러난다 (g_past.js)
   const out=t.items.filter(it=>Math.random()<tombDropP(it));
   // 하나도 안 나오면 가장 흔한 물건 하나는 남긴다
   if(!out.length&&t.items.length)out.push(t.items.reduce((a,b)=>tombDropP(b)>tombDropP(a)?b:a));

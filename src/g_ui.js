@@ -81,7 +81,7 @@ const tip=(el,v)=>{if(el._ti!==v){el._ti=v;el.title=v}};
 const setW=(id,v)=>sty($(id),'width',clamp(v,0,1)*100+'%');
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $t('nm',P.byh?`${P.name} 「${P.byh}」`:P.name);$t('rank',`${realmName()} · ${facName()}`);
+  $t('nm',P.byh?`${P.dname||P.name} 「${P.byh}」`:(P.dname||P.name));   /* v257 출가하면 법명·도호 (g_samun.js) */$t('rank',`${realmName()} · ${facName()}`);
   $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
