@@ -76,7 +76,7 @@ hook('hqDlg',c=>{const s=SECTS[c.n.hq];if(!s||!pastOn()||c.html==null)return;con
   const rows=L.map(t=>{if(t.t==='요결'){const why=ygWhy(t),a=ARTS[t.id];
       return `<div class="it"><div>전대 ${esc(G.past.n)}의 요결 · ${a.n}<span>구결 + 숙련 ${ygHead(t.p)}에서 시작${why?` · <span class="bad">${esc(why)}</span>`:''}</span></div><div class="ib">${B(`ygread:${t.k.replace(/:/g,'~')}`,'펼친다',{d:!!why,pri:!why})}</div></div>`}
     const h=t.h,why=pupilWhy(h),met=pastK()['met:'+h.id];
-    return `<div class="it"><div>원로 ${esc(h.n)} <small class="dim">전대 ${esc(G.past.n)}의 제자</small><span>${met?'"사부님, 이번 생에는 제가 지켜 드리지요."':`"…자네, 어디서 본 듯하군."`}${why&&!met?` · <span class="dim">${esc(why)}</span>`:''}</span></div>
+    return `<div class="it"><div>원로 ${esc(h.n)}${P.sect===h.sid?' <small class="gold">사숙조</small>':''} <small class="dim">전대 ${esc(G.past.n)}의 제자${P.sect===h.sid?' · 내가 가르친 아이를 이제 윗대로 모신다':''}</small><span>${met?'"사부님, 이번 생에는 제가 지켜 드리지요."':`"…자네, 어디서 본 듯하군."`}${why&&!met?` · <span class="dim">${esc(why)}</span>`:''}</span></div>
       <div class="ib">${met?'':B(`pupil:${h.id}:show`,'옛 무공을 펼쳐 보인다',{d:!!why,pri:!why})}${B(`pupil:${h.id}:ask`,'옛 스승의 이야기를 묻는다')}${met?'':B(`pupil:${h.id}:bye`,'인사만 한다')}</div></div>`}).join('');
   c.html+=`<div class="card"><h4>전생의 흔적 <small class="dim">낯익은 것들</small></h4><div class="list">${rows}</div></div>`});
 // ---- 윤회 화면: 다음 생에 남는 흔적 ----

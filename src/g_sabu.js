@@ -101,11 +101,11 @@ function sbMineHtml(m){const b=P.sabu,why=sbNextWhy(),done=b.step>=m.path.length
 // ---- 화면: 문파 창 맨 위 '사부와 로드맵' 카드 ----
 function sbPathHtml(M,mine){const b=P.sabu;return `<div class="sbpath">${M.path.map((id,i)=>{const a=ARTS[id],st=A(id),got=!!st,nx=mine&&i===b.step;
   return `<span class="sbstep${got?' got':nx?' next':''}">${gradeTag(a.grade)} ${esc(a.n)}${got?` <small class="good">${st.f.filter(Boolean).length}/${a.forms.length}</small>`:nx?' <small class="gold">다음</small>':''}</span>`}).join('<span class="dim"> → </span>')}</div>`}
-function sbOrdHtml(){const b=P.sabu;return `<p class="note">${b.ord.map((n,i)=>n==='@'?`<b class="gold">${i+1}.나</b>`:`<span class="dim">${i+1}.${esc(n)}</span>`).join(' · ')}</p>`}
+function sbOrdHtml(){const b=P.sabu;return `<p class="note">${b.ord.map((n,i)=>n==='@'?`<b class="gold">${i+1}.나</b>`:`<span class="dim">${i+1}.${esc(n)}${typeof smCoh==='function'&&smCoh(n)?`(${smCoh(n)})`:''}</span>`).join(' · ')}</p>`}
 function sabuCard(s,hq){if(s.id==='geumgun'&&typeof gbCard==='function')return gbCard(s,hq);if(s.id==='cheonma'&&typeof imkCard==='function'&&imkOn())return imkCard();const on=sabuOn(s)||s.id==='cheonma';if(!P.sabu||P.sabu.sid!==s.id||!on)return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
   const b=P.sabu,M=sbMasters(s.id),fest=sfOpen(b)&&s.id!=='cheonma',far=fest&&!sfHere();if(far)hq=false;
   const here=far?`<p class="note"><b class="gold">사부 선정 대회</b>는 본산 <b>대연무장</b>에서 열린다. 문파원과 마을 사람들이 지켜보는 가운데 서열 비무를 벌이고 사부를 정한다. ${esc(hqPlace(s))} 아래 어귀 왼쪽 '대연무장' 출입구로 간다.</p>`:hq?'':`<p class="note dim">비무와 사부 정하기는 본산 ${hqPlace(s)}의 ${masterTitle(s)} 창에서 한다.</p>`;let body='';
-  const masters=(btn)=>`<div class="list">${M.map(m=>`<div class="it"><div><b>${esc(m.n)}</b> <small class="dim">${CLASS[m.cls].n}</small>${sbPathHtml(m,false)}<span>"${esc(m.say)}"</span></div><div class="ib">${btn(m)}</div></div>`).join('')}</div>`;
+  const masters=(btn)=>`<div class="list">${M.map(m=>`<div class="it"><div><b>${esc(m.n)}</b>${typeof smTag==='function'?smTag(smMaster(s.id,m.k)):''} <small class="dim">${CLASS[m.cls].n}</small>${sbPathHtml(m,false)}<span>"${esc(m.say)}"</span></div><div class="ib">${btn(m)}</div></div>`).join('')}</div>`;
   if(b.st==='rank'){const pos=sbPos(),up=pos>0?b.ord[pos-1]:null;
     body=`<p class="note">입문 동기 여섯의 서열. <b>1위</b>는 사부를 고르고, 그 아래는 위 동기들이 사부를 먼저 데려간 뒤 남은 사부가 지명한다. 바로 위 동기를 이기면 한 칸 오르고, 지면 서열이 굳는다.</p>${sbOrdHtml()}
       <div class="row2"><span class="note">${up?`다음 상대 <b>${esc(up)}</b> (${pos}위)`:''}</span><span>${hq&&up?B('sbduel',`서열 비무 · ${esc(up)}`,{pri:1,d:!!G.duel}):''}${B('sbstop','여기서 서열 굳히기')}</span></div>${masters(()=>'')}`}
