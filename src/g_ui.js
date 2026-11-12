@@ -81,7 +81,7 @@ const tip=(el,v)=>{if(el._ti!==v){el._ti=v;el.title=v}};
 const setW=(id,v)=>sty($(id),'width',clamp(v,0,1)*100+'%');
 function hud(){
   if(!P)return;const a=art(),s=A(a.id);
-  $t('nm',P.byh?`${P.name} 「${P.byh}」`:P.name);$t('rank',`${realmName()} · ${facName()}`);
+  $t('nm',P.byh?`${P.dname||P.name} 「${P.byh}」`:(P.dname||P.name));   /* v257 출가하면 법명·도호 (g_samun.js) */$t('rank',`${realmName()} · ${facName()}`);
   $t('sub',`${STATUS[P.status].n} · ${GEUNGOL[P.side][P.gg][0]} · 오성 ${P.wis} · ${Math.floor(P.age)}세${P.age<18?' (유아기)':''}${P.ban&&P.ban.yrs?` (살아온 해 ${Math.floor(realAge())}년)`:''}`);
   setW('hpb',P.hp/P.maxHp);setW('qib',P.qi/P.maxQi);setW('msb',s.p/100);
   if($('mag')){const ma=typeof isMa==='function'&&isMa();sty($('mag'),'display',ma?'':'none');if(ma){const tm=isTalma();$('mag').classList.toggle('tm',tm);setW('mab',(P.mara||0)/100);$t('mat',tm?`탈마 · 마성 ${Math.round(P.mara||0)}`:`마성 ${Math.round(P.mara||0)} · ${MARA_N[maraTier()]}${P.burst?' · 폭주':''}`)}}
@@ -163,7 +163,7 @@ function pArts(){
   const list=['base',...learnedArts()].map(id=>{const a=ARTS[id],s=A(id),on=P.cur===id;
     const forms=a.forms.map((f,i)=>`<li class="${s.f[i]?'':'off'}"><span class="key">${SLOTKEY[i]}·${PADKEY[i]}</span><span>${f.n}${typeof bcTag==='function'?bcTag(id,i):''} <small>${plabel(f)}</small></span><small>${s.f[i]?`내공 ${f.qp}%·${qsCur()}성 ${formQi(f)} · +${f.bonus}%`:a.base||a.gy?`숙련 ${f.req}에 열림`:`숙련 ${f.req} · 활력 ${f.cost}`}</small></li>`).join('')
       +`<li class="ult ${allLearned(id)?'':'off'}"><span class="key">S·5</span><span>${a.ult.n}</span><small>필살기 · 주변 범위</small></li>`;
-    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${typeof jdOn==='function'&&jdOn(id)?'자득 · ':''}${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}</span></div>${typeof wuChip==='function'?wuChip(id):''}
+    return `<div class="card"><div class="row2"><h3 style="color:rgb(${a.ct})">${a.n}</h3><span class="tag">${typeof jdOn==='function'&&jdOn(id)?'자득 · ':''}${a.gy?'기연 · ':a.made?'창안 · ':''}${a.base?'':AGR[a.grade||0]+' · '}${CLASS[a.cls].n} · 숙련 ${Math.floor(s.p)}/100 · ${TIERS[tierOf(s.p)]}${typeof kyulTag==='function'?kyulTag(id):''}</span></div>${typeof wuChip==='function'?wuChip(id):''}
       <p>${a.d}${typeof artMeanHtml==='function'?artMeanHtml(a):''}${hasWeaponFor(a.cls)?'':` <span class="bad">${a.cls==='권'?'맨손이거나 권갑을 차야 펼칠 수 있다.':`${a.cls}을(를) 차야 펼칠 수 있다.`}</span>`}</p><div class="mbar"><i style="width:${s.p}%"></i></div><ol class="forms">${forms}</ol>${typeof bcHtml==='function'?bcHtml(id):''}
       <div class="ib">${B('setart:'+id,on?'펼치는 중':'펼치기',{d:on,pri:!on})}${id==='base'?'':B('forget:'+id,'잊기',{d:!!forgetWhy(id)})}</div>
       ${id!=='base'&&forgetWhy(id)?`<p class="note dim">${forgetWhy(id)}.</p>`:''}

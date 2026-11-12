@@ -34,6 +34,7 @@ function libDlg(it){const s=SECTS[it.sect];if(!s)return '<p class="note">사라�
       <div class="ib">${B(`libl:${it.id}:${id}`,fi<0?'모두 익힘':st?'다음 초식 익히기':'익히기',{d:!!why,pri:!why})}</div></div>`}).join('');
   return `<p class="note">${it.hi?`${s.n}의 장문인이 제자에게 직접 전하던 절기다. 최후의 전인이 품고 있던 것을 거두었다.`:`멸문한 ${s.n}의 장경각에서 쓸어 담은 비급들이다. 장문인이 직접 전하던 절기는 여기 없다.`} 익히는 규칙은 비급과 같다 (숙련·활력·오성).</p><div class="list">${rows}</div>`}
 function libLearn(itId,id){const it=bagAll().find(q=>q.id===+itId&&q.slot==='lib');if(!it||!libArts(it.sect,it.hi).includes(id))return;const fi=libNext(id);if(fi<0)return;
+  if(it.hi&&typeof kyulSect==='function'&&ARTS[id].sect&&!(P.kyul&&P.kyul[id]))kyulSect(it.sect,`${SECTS[it.sect].n} 최후의 비전`);   // v255 최후의 비전에는 구결이 함께 있다 (g_kyul.js)
   const b={...libProbe(id,fi),id:-1};P.bag.push(b);readBook(b);const k=P.bag.indexOf(b);if(k>=0)P.bag.splice(k,1)}
 hook('sectAct',c=>{if(c.a!=='libl')return;c.done=true;c.r=true;libLearn(c.x,c.y)});
 hook('npcDlg',c=>{if(c.html==null&&c.n.lib){const it=bagAll().find(q=>q.id===c.n.lib);c.html=it?libDlg(it):'<p class="note">비급 묶음이 행낭에 없다.</p>'}});
