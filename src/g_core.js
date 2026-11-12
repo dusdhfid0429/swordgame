@@ -231,6 +231,12 @@ const hook=(k,f)=>(HOOKS[k]=HOOKS[k]||[]).push(f);
 const runHooks=(k,...a)=>{const l=HOOKS[k];if(l)for(const f of l)f(...a)};
 
 // ================= combat =================
+// 흡혈·흡정 상한 (동훈님 2026-11-12): 적중으로 되찾는 생명·내공은 초당 최대치의 LEECH.hp/qi까지만. 피해가 생명보다 훨씬 빨리 커져서
+// 혈랑곡·천마신교 흡혈이나 목·마기 속성의 생명 흡수가 같은 경지 보스를 무피해로 만들던 것 (시뮬: 손실 96% → 3%). 모든 적중 흡수가 이 한 통을 나눠 쓴다
+const LEECH=GD.LEECH||{hp:.01,qi:.01};
+function leech(k,v){if(!P||!(v>0))return 0;const max=k==='hp'?P.maxHp:P.maxQi,R=max*LEECH[k];if(!(R>0))return 0;
+  const b=P._lb||(P._lb={hp:0,qi:0,th:time-1,tq:time-1}),tk=k==='hp'?'th':'tq';b[k]=Math.min(R,(b[k]||0)+Math.max(0,time-(b[tk]??time))*R);b[tk]=time;
+  const g=Math.min(v,b[k],max-P[k]);if(g<=0)return 0;b[k]-=g;P[k]+=g;return g}
 function hitE(X,e,m,kb,stun,from=P,echo){
   if(!e||e.hp<=0)return;
   const mine=from===P||!!from&&!from.d&&!from.kind;   // v249: 내 투사체(화살·암기·검기)는 from 이 날아온 자리라 예전에는 hit 훅(경지 차·이해도·심법 특색)을 모두 건너뛰었다
@@ -247,12 +253,12 @@ function hitE(X,e,m,kb,stun,from=P,echo){
   damage(e,d,kb,stun?stun+(X.t>=1?.2:0):0,from,crit);
   if(el==='화')e.burn=Math.max(e.burn,3),e.burnD=Math.max(1,d*.07),e.burnC=null;
   if(el==='수')e.slow=Math.max(e.slow,2);
-  if(el==='목'&&P.hp>0)P.hp=Math.min(P.maxHp,P.hp+d*.1);
+  if(el==='목'&&from===P&&P.hp>0)leech('hp',d*.1);
   // 음양·뇌기 (심법 속성, 2026-10-13)
   if(el==='양'){e.burn=Math.max(e.burn,3);e.burnD=Math.max(1,d*.09);if(!e.d.boss&&from===P){const l=Math.hypot(e.x-P.x,e.y-P.y)||1;e.kb={x:(e.x-P.x)/l*.2,y:(e.y-P.y)/l*.2}}}
-  if(el==='음'){e.slow=Math.max(e.slow,2);if(from===P)P.qi=Math.min(P.maxQi,P.qi+d*.08)}
+  if(el==='음'){e.slow=Math.max(e.slow,2);if(from===P)leech('qi',d*.08)}
   // 마기 (마교 심법, 2026-10-14): 오행·음양 대신 검은 기운. 느려지고 생명·내공을 빨아들인다
-  if(el==='마'){e.slow=Math.max(e.slow||0,1.5);if(from===P&&P.hp>0){P.hp=Math.min(P.maxHp,P.hp+d*.08);P.qi=Math.min(P.maxQi,P.qi+d*.08)}}
+  if(el==='마'){e.slow=Math.max(e.slow||0,1.5);if(from===P&&P.hp>0){leech('hp',d*.08);leech('qi',d*.08)}}
   if(el==='뇌'&&Math.random()<.2){e.stun=Math.max(e.stun||0,e.d.boss?.15:.35);addText(e.x,e.y-.4,'뇌격','#cfe8ff')}
   // v216 (사용자 2026-10-31 "오행 음양 뇌 말고 심법 속성을 더 다양하게, 독 등등"): 독기·혈기·풍기·빙기
   if(el==='독'){e.burn=Math.max(e.burn,5);e.burnD=Math.max(1,d*.06);e.burnC='150,225,80';e.weak=Math.max(e.weak||0,5)}   // 중독: 독이 퍼지고 공격이 약해진다 (hurt 훅)

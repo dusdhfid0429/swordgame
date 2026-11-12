@@ -14,9 +14,9 @@ const {chromium}=require('playwright');
     reset();G.duel=true;P.hp=150;runHooks('hurtDone',{src:{rank:2,d:{}},hp0:400});G.duel=false;out.duel=P.inj;
     reset();P.inj=99;P.injS=2;P.hp=150;runHooks('hurtDone',{src:{rank:2,d:{}},hp0:400});out.keep=P.injS;Math.random=R;P.hp=P.maxHp;return out});
   ok(`걸림: 우두머리 수 빗나감 ${r1.bmMiss} · 맞음 ${r1.bm} · 깊은 일격 ${r1.deep} · 졸개 ${r1.minion} · 비무 ${r1.duel} · 무거운 후유증 그대로 ${r1.keep}`,r1.bmMiss===0&&r1.bm==='fight'&&r1.deep&&r1.minion===0&&r1.duel===0&&r1.keep===2);
-  // 2. 길이·위력: 세 달, 공격력 0.85배
+  // 2. 길이·위력: 한 달 (v263 동훈님: 석 달 → 한 달), 공격력 0.85배
   const r2=await p.evaluate(()=>{P.inj=0;nsHit('시험');return{m:P.inj/DAY_SEC,mul:injMul()}});
-  ok(`내상 ${r2.m}달 · 공격력 ×${r2.mul}`,r2.m===3&&r2.mul===.85);
+  ok(`내상 ${r2.m}달 · 공격력 ×${r2.mul}`,r2.m===1&&r2.mul===.85);
   // 3. 운기요상: 혼자 두 배, 호법(동료) 곁이면 다섯 배 (tick이 더하는 몫만 잰다)
   const r3=await p.evaluate(()=>{P.medit=true;const a0=allies;allies=[];P.hob=0;P.inj=300;runHooks('tick',1);const solo=300-P.inj;P.hob=1;P.inj=300;runHooks('tick',1);const hob=300-P.inj;P.hob=0;P.medit=false;allies=a0;return{solo,hob}});
   ok(`운기요상 1초에 더 줄어드는 몫: 혼자 ${r3.solo} · 호법 ${r3.hob}`,r3.solo===1&&r3.hob===4);
