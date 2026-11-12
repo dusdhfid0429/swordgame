@@ -85,6 +85,8 @@ function cvLeaf(where){const k=typeof cvProv==='function'?cvProv():null,ss=k&&PR
 
 // ================= 은거기인 =================
 const RC={};RCL.list.forEach(rc=>{RC[rc.id]=rc;PAL['rc_'+rc.id]={...(PAL[rc.pal]||PAL.taoist),weapon:CLASS[rc.cls].draw}});
+// v260 고침: 이 줄이 돌 때는 PAL.taoist 같은 바탕 팔레트가 아직 없어 은거기인 팔레트가 weapon만 남았다(skin이 없어 그리기에서 가끔 오류). 맵을 열 때 다시 채운다
+hook('regionLoaded',()=>{for(const rc of RCL.list){const k='rc_'+rc.id;if(PAL[k]&&!PAL[k].skin&&(PAL[rc.pal]||PAL.taoist))PAL[k]={...(PAL[rc.pal]||PAL.taoist),weapon:CLASS[rc.cls].draw}}});
 const rcArts=rc=>rc.arts.map((x,j)=>`${rc.id}_${j}`).filter(id=>ARTS[id]);
 const rcSt=id=>{P.rc=P.rc||{};return P.rc[id]||(P.rc[id]={k:0,tok:0})};
 {for(const rc of RCL.list){const R=REGIONS[rc.reg];if(!R)continue;R.npcs=R.npcs||[];R.npcs.push({id:'rc',rc:rc.id,n:`은거기인 ${rc.n}`,x:10.5,y:7.5,pal:'rc_'+rc.id})}}
