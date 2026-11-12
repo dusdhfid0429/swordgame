@@ -6,8 +6,8 @@ const {chromium}=require('playwright');
   await p.goto('file://'+require('path').resolve(__dirname,'../dist/gangho.html')+'?noacad');await p.waitForFunction(()=>typeof loadRegion==='function');await p.evaluate(()=>localStorage.clear());
   await p.click('[data-s="new"]');await p.click('[data-s="side:정"]');await p.click('[data-s="start"]');await p.waitForFunction(()=>playing);await p.waitForTimeout(400);
   // 준비: 정파 문파 둘 (내 문파 mine, 남의 문파 other), 각 문파의 무공 하나
-  await p.evaluate(()=>{const ss=Object.values(SECTS).filter(s=>sideOk(s.al)&&sectPop(s.id)>0&&Object.values(ARTS).some(a=>a.sect===s.id&&!a.gy));
-    window.T={mine:ss[0].id,other:ss[1].id};T.ma=Object.values(ARTS).find(a=>a.sect===T.mine&&!a.gy).id;T.oa=Object.values(ARTS).find(a=>a.sect===T.other&&!a.gy).id;
+  await p.evaluate(()=>{const ss=Object.values(SECTS).filter(s=>sideOk(s.al)&&sectPop(s.id)>0&&Object.values(ARTS).some(a=>a.sect===s.id&&!a.gy&&!kyulOpen(a.id)));
+    window.T={mine:ss[0].id,other:ss[1].id};const ok2=a=>!a.gy&&!kyulOpen(a.id);T.ma=Object.values(ARTS).find(a=>a.sect===T.mine&&ok2(a)).id;T.oa=Object.values(ARTS).find(a=>a.sect===T.other&&ok2(a)).id;
     P.sect=null;P.kyul={};P.kyulW={};P.wis=10;for(const id of[T.ma,T.oa])P.arts[id]={p:0,f:ARTS[id].forms.map(()=>true)}});
   // 1. 누가 구결이 필요한가
   const r1=await p.evaluate(()=>({cap:KY.cap,base:kyulNeed('base'),basic:kyulNeed('정검0'),other:kyulNeed(T.oa),gy:kyulNeed(Object.keys(ARTS).find(k=>ARTS[k].gy)),
@@ -21,7 +21,7 @@ const {chromium}=require('playwright');
   ok(`숙련: 남의 문파 ${r2.o.toFixed(1)} · 내 문파 ${r2.m.toFixed(1)} · 알림 ${r2.warn}번 · 내 문파 구결 적힘 ${r2.mk}`,r2.o===60&&r2.m===100&&r2.warn===1&&r2.mk);
   // 3. 세월 넘기기·수련기처럼 바로 더하는 곳: 넘기지 않고, 넘친 값은 깎지 않는다
   const r3=await p.evaluate(()=>({a:kyulAdd(T.oa,55,20),b:kyulAdd(T.oa,75,20),c:kyulAdd(T.ma,90,20)}));
-  ok(`바로 더하기: 55+20→${r3.a} · 75(옛 값)+20→${r3.b} · 내 문파 90+20→${r3.c}`,r3.a===60&&r3.b===75&&r3.c===110);
+  ok(`바로 더하기: 55+20→${r3.a} · 75(옛 값)+20→${r3.b} · 내 문파 90+20→${r3.c} (극성 100)`,r3.a===60&&r3.b===75&&r3.c===100);
   // 4. 문파를 떠나도 제자 때 적힌 구결은 남는다
   const r4=await p.evaluate(()=>{P.sect=null;return{need:kyulNeed(T.ma),tag:kyulTag(T.oa).includes('구결 없음'),tagMine:kyulTag(T.ma)}});
   ok(`떠난 뒤 옛 문파 무공 구결 필요 ${r4.need} · 무공 창 꼬리표 '구결 없음' ${r4.tag} · 옛 문파 꼬리표 '${r4.tagMine}'`,!r4.need&&r4.tag&&r4.tagMine==='');
@@ -39,8 +39,8 @@ const {chromium}=require('playwright');
     return{sect:s.n,need:L.filter(id=>kyulNeed(id)).length,all:Object.values(ARTS).filter(a=>a.sect===s.id).every(a=>P.kyul[a.id])}});
   ok(`최후의 비전(${r7.sect}): 남은 구결 필요 ${r7.need} · 그 문파 무공 모두 ${r7.all}`,!r7.none&&r7.need===0&&r7.all);
   // 8. 옛 저장: 이미 60을 넘긴 남의 문파 무공은 구결이 있는 것으로 (깎지 않는다)
-  const r8=await p.evaluate(()=>{const id=Object.values(ARTS).find(a=>a.sect&&a.sect!==T.mine&&a.sect!==T.other&&!a.gy&&!P.kyul[a.id]).id;P.sect=null;P.arts[id]={p:82,f:ARTS[id].forms.map(()=>true)};
-    const low=Object.values(ARTS).find(a=>a.sect&&a.sect!==T.mine&&a.sect!==T.other&&a.id!==id&&!a.gy&&!P.kyul[a.id]).id;P.arts[low]={p:40,f:[true]};
+  const r8=await p.evaluate(()=>{const id=Object.values(ARTS).find(a=>a.sect&&a.sect!==T.mine&&a.sect!==T.other&&!a.gy&&!kyulOpen(a.id)&&!P.kyul[a.id]).id;P.sect=null;P.arts[id]={p:82,f:ARTS[id].forms.map(()=>true)};
+    const low=Object.values(ARTS).find(a=>a.sect&&a.sect!==T.mine&&a.sect!==T.other&&a.id!==id&&!a.gy&&!kyulOpen(a.id)&&!P.kyul[a.id]).id;P.arts[low]={p:40,f:[true]};
     runHooks('afterLoad',{});return{hi:!!P.kyul[id],p:A(id).p,low:!!P.kyul[low]}});
   ok(`옛 저장: 82짜리 구결 ${r8.hi} 숙련 ${r8.p} · 40짜리 구결 ${r8.low}`,r8.hi&&r8.p===82&&!r8.low);
   // 9. 저장했다 불러와도 남는다

@@ -3,7 +3,7 @@
 // "비급으로 동작은 익혀도, 힘을 어디로 보내는지는 사람이 전해야 한다" (타구봉법의 동작과 구결, 영호충과 자하신공)
 // - 다른 문파의 무공(ARTS[id].sect가 있고 내 문파가 아님)은 구결이 없으면 숙련이 KYUL.cap에서 멈춘다.
 //   숙련 덤은 극성 1.30배, cap 60에서 1.18배라 위력 손해는 최대 약 9% (경지 > 등급 > 숙련 위계 안). 극성의 돈오(오성 +1)는 막힌다.
-// - 구결이 있는 것: 기본·공용·기연·창안·은거기인 무공, 내 문파 무공, P.kyul에 적힌 무공.
+// - 구결이 있는 것: 기본·공용(정·사 기본 계열 '정검0' 등, 문파가 쓰더라도)·기연·창안·은거기인 무공, 내 문파 무공, P.kyul에 적힌 무공.
 //   내 문파 무공은 문파 제자로 지내는 동안 P.kyul에 적혀(숙련이 오를 때·해마다) 문파를 떠나도 남는다.
 // - 구결 얻기: ① 그 문파 장문인에게 청한다 (우호도 KYUL.rep 단계 이상, 은자 KYUL.cost[무공 등급])
 //   ② 잔당 '최후의 비전'을 펼치면 그 문파 무공 모두 (g_remnant.js libLearn)  ③ 전생의 요결 (PR2, g_past.js)
@@ -12,7 +12,9 @@
 const KY=GD.KYUL||{cap:60,cost:[150,300,600,1200,2400],rep:3};
 function kyulD(){return P.kyul||(P.kyul={})}
 // 구결이 있어야 cap을 넘는 무공인가 (구결을 이미 가졌으면 false)
-function kyulNeed(id){const a=ARTS[id];if(!a||!a.sect||a.base||a.melee||a.gy||a.made||a.rc)return false;if(P.sect===a.sect)return false;return !kyulD()[id]}
+// 정·사 기본 계열 무공(정검0 같은 '성향+병기+번호')은 문파가 쓰더라도 무관·시작에서 누구나 배우는 공용이라 구결이 필요 없다
+const kyulOpen=id=>/^[정사].\d$/.test(id);
+function kyulNeed(id){const a=ARTS[id];if(!a||!a.sect||a.base||a.melee||a.gy||a.made||a.rc||kyulOpen(id))return false;if(P.sect===a.sect)return false;return !kyulD()[id]}
 function kyulCap(id){return kyulNeed(id)?KY.cap:100}
 // 숙련을 바로 더하는 곳(세월 넘기기·수련기 보상)에서 쓴다: cap을 넘기지 않고, 이미 넘친 값은 깎지 않는다
 function kyulAdd(id,p,v){return Math.max(p,Math.min(kyulCap(id),p+v))}
