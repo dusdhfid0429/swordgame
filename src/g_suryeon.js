@@ -58,7 +58,7 @@ function sryReport(){if(!sryOpen()||!sryAllDone())return;const s=P.sry,st=srySt(
   if(r.merit){addMerit(s.sid,r.merit);got.push(`공적 ${r.merit}`)}if(r.vit){gainVit(r.vit);got.push(`활력 ${r.vit}`)}
   const win=s.c.rivalWin,fame=(r.fame||0)+(win?r.winFame||0:0),enl=(r.enl||0)+(win?r.winEnl||0:0);
   if(fame){P.fame+=fame;got.push(`명성 ${fame}`)}if(enl){P.enl=(P.enl||0)+enl;got.push(`깨달음 ${enl}`)}
-  if(r.mast){const a=art(),m=a&&A(a.id);if(m&&a.id!=='base'){m.p=Math.min(100,m.p+r.mast);got.push(`[${a.n}] 숙련 +${r.mast}`)}}
+  if(r.mast){const a=art(),m=a&&A(a.id);if(m&&a.id!=='base'){m.p=kyulAdd(a.id,m.p,r.mast);got.push(`[${a.n}] 숙련 +${r.mast}`)}}
   for(const[k,v]of Object.entries(r.mats||{})){P.mats[k]=(P.mats[k]||0)+v;got.push(`${k} ${v}`)}
   allies=allies.filter(a=>!a.sry);recalc();
   log(`${masterTitle(S)}: "잘했다." 수련기 ${s.m+1}마디 [${st.n}]을(를) 마쳤습니다. ${got.join(', ')}.`,'xp');feat(`${S.n} 수련기 [${st.n}]을(를) 마쳤다`);

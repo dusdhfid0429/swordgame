@@ -51,7 +51,7 @@ function mdGo(k){const w=MADI.ways[k],{y}=mdYears();if(!w||!y)return;
   if(w.fame)P.fame+=w.fame*y;if(w.silver)P.silver+=w.silver*y;if(w.good)P.good+=w.good*y;
   if(w.enl)P.enl=Math.round(((P.enl||0)+w.enl*y)*100)/100;
   if(w.merit&&P.sect&&SECTS[P.sect])addMerit(P.sect,w.merit*y);
-  if(w.mast){const a=art();if(a&&a.id!=='base'&&A(a.id)){A(a.id).p=Math.min(100,A(a.id).p+w.mast*y)}}
+  if(w.mast){const a=art();if(a&&a.id!=='base'&&A(a.id)){A(a.id).p=kyulAdd(a.id,A(a.id).p,w.mast*y)}}
   if(w.book)for(let i=0;i<Math.ceil(y);i++)if(Math.random()<w.book){const b=inyBook();if(b){giveItem(b);extra.push(b.name)}}
   recalc();if(typeof wallCheck==='function')wallCheck();
   const news=logHist.slice(h0).filter(l=>l.c!=='info').map(l=>l.t).slice(-MADI.news);
