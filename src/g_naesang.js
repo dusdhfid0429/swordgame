@@ -7,7 +7,7 @@
 // - 길이 NAESANG.dur 달(하루 = 한 달 = DAY_SEC초). 운기조식 중이면 NAESANG.medit배, 곁에 호법(내 문파 안·무관·동료·고용 호법)이 있으면 NAESANG.heal배 빨리 낫는다.
 //   객잔·집에서 쉬면 싸움의 내상은 낫는다 (주화입마 후유증은 그대로)
 // 테스트 tests/t175_naesang.js
-const NSG=GD.NAESANG||{bm:.5,low:.2,dur:3,medit:2,heal:5};
+const NSG=GD.NAESANG||{bm:.5,low:.2,dur:1,medit:2,heal:5};
 const nsBig=src=>!!(src&&(src.rank>=2||src.d&&(src.d.boss||src.d.elite)));
 function nsHit(why){if(!P||P.inj>0||G.duel)return false;P.inj=DAY_SEC*NSG.dur;P.injS=1;P.injK='fight';
   log(`${why}: 내상을 입었다. 공격력과 운기조식 회복 -15%. 운기요상하면(곁에 호법이 있으면 더) 빨리 낫고, 객잔·집에서 쉬어도 낫는다.`,'dmg');

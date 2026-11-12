@@ -57,8 +57,8 @@ hook('hitDone',c=>{const e=c.e,d=c.hp0-e.hp;if(!e||d<=0||!(simCur().tr||[]).leng
   if(Math.random()*100<simTv('poison')){e.burn=Math.max(e.burn||0,4);e.burnD=Math.max(1,Math.round(d*.06));addText(e.x,e.y-.4,'중독','#9fd36a')}
   if(Math.random()*100<simTv('slow')){e.slow=Math.max(e.slow||0,2.5);addText(e.x,e.y-.4,'둔화','#9fc8ff')}
   if(Math.random()*100<simTv('stun')){e.stun=Math.max(e.stun||0,e.d&&e.d.boss?.25:.6);addText(e.x,e.y-.4,'경직','#ffd36a')}
-  const dr=simTv('drain');if(dr)P.qi=Math.min(P.maxQi,P.qi+d*dr/100);
-  const va=simTv('vamp');if(va&&P.hp>0)P.hp=Math.min(P.maxHp,P.hp+d*va/100)});
+  const dr=simTv('drain');if(dr)leech('qi',d*dr/100);
+  const va=simTv('vamp');if(va&&P.hp>0)leech('hp',d*va/100)});   // 상한: g_core.js leech
 hook('hurtDone',c=>{const v=simTv('reflect'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(v&&d>0&&src&&src.d&&src.hp>0&&src!==P)damage(src,Math.max(1,Math.round(d*v/100)),0,0,P)});
 const simOf=sid=>Object.values(SIM).filter(x=>x.sect===sid).sort((a,b)=>a.g-b.g);
 const simBase=()=>SIM['N_base_'+P.side];

@@ -24,3 +24,17 @@ hook('hitDone',c=>{if(!c.e)return;const d=Math.max(0,(c.hp0||0)-Math.max(0,c.e.h
   if(simTv('chilsang')&&P.qi<P.maxQi*.3&&d>0&&P.hp>1){const self=Math.min(P.hp-1,Math.max(1,Math.round(d*.03)));P.hp-=self;addText(P.x,P.y-.4,`칠상 -${self}`,'#e0675a')}});
 hook('hurtDone',c=>{const v=simTv('dujeon'),src=c.src,d=c.hp0-Math.max(0,P.hp);if(!v||d<=0||!src||!src.d||src.hp<=0||Math.random()*100>=v)return;
   damage(src,Math.round(d),0,0,P);addText(src.x,src.y-.5,'두전성이','#c8b0ff')});
+// ---- v263 큰 문파의 둘째 특색 (동훈님 2026-11-12 "모두 수정"): 작은 정파 여덟 곳만 둘이던 것을 맞춘다. 나머지 문파는 기존 특색 가운데 하나를 더 받았다 (data/simbeop.json SIM_TRAIT)
+// - 소림 나한(nahan): 곁 2.5칸의 적 하나마다 받는 피해 -v% (셋까지, 나한진)
+// - 무당 태극(taegeuk): 맞은 뒤 2초 안의 첫 일격 피해 +v% (이유극강)
+// - 화산 매화(maehwa): 같은 적을 1.5초 안에 이어 칠 때 피해 +v% (매화검의 연환)
+// - 아미 불심(bulsim): 생명이 절반 밑이면 받는 피해 -v%
+// - 개방 타구(tagu): 짐승·사파 무인에게 피해 +v% (타구봉법)
+hook('hit',c=>{if(c.from!==P||!c.e)return;const e=c.e;let m=0;
+  const tg=simTv('taegeuk');if(tg&&time-(P.tgkT??-9)<2){m+=tg;P.tgkT=-9}
+  const mh=simTv('maehwa');if(mh){if(P.mhE===e&&time-(P.mhT??-9)<1.5)m+=mh;P.mhE=e;P.mhT=time}
+  const tu=simTv('tagu');if(tu&&e.d&&(e.d.beast||e.d.fac==='사'))m+=tu;
+  if(m)c.m*=1+m/100});
+hook('hurt',c=>{const nh=simTv('nahan');if(nh){let n=0;for(const o of mobs)if(o.hp>0&&o.aggro&&Math.hypot(o.x-P.x,o.y-P.y)<2.5&&++n>=3)break;if(n)c.dm*=1-nh*n/100}
+  const bs=simTv('bulsim');if(bs&&P.hp<P.maxHp*.5)c.dm*=1-bs/100});
+hook('hurtDone',c=>{if(simTv('taegeuk')&&c.src&&c.hp0>P.hp)P.tgkT=time});
