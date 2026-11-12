@@ -4,7 +4,7 @@ build.py 의 PARTS 순서대로 src/ 조각을 한 파일로 이어 tsc --checkJ
 지금 있는 오류는 tools/tsc_baseline.json 에 '기준선'으로 적어 두고, 기준선에 없는 새 오류만 실패로 센다.
 오류 열쇠는 '파일|오류 번호|문구'라서 다른 줄을 고쳐 줄 번호가 밀려도 기준선이 깨지지 않는다.
 
-  npm i --no-save typescript@5.6.3
+  npm i --no-save playwright@1.56.1 typescript@5.6.3   # 따로 깔면 --no-save 쪽이 서로 지운다
   python3 tools/typecheck.py            # 새 오류가 있으면 exit 1
   python3 tools/typecheck.py --update   # 기준선을 지금 상태로 다시 쓴다 (오류를 고쳐 줄였을 때)
 """

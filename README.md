@@ -19,7 +19,7 @@ python3 build.py        # src/ 조각을 이어 dist/gangho.html 생성
 
 `src/` 파일은 한 스크립트로 이어 붙여지므로 전역 이름이 겹치지 않게 주의하세요. 순서는 `build.py` 의 `PARTS` 에 있습니다. 맨 앞 칸 `function`·`var` 이름이 두 파일에 겹치면 `build.py`가 멈춥니다(뒤의 것이 앞의 것을 말없이 덮기 때문, 2026-11-12).
 
-타입 검사(2026-11-12): 코드는 JS 그대로 두고 TypeScript 검사기로 봅니다. `npm i --no-save typescript@5.6.3` 후 `python3 tools/typecheck.py`. 지금 있는 오류는 `tools/tsc_baseline.json` 기준선에 있고, 그 밖의 새 오류만 실패입니다(CI도 같은 검사). 오류를 고쳐 줄였으면 `--update`로 기준선을 줄여 두세요.
+타입 검사(2026-11-12): 코드는 JS 그대로 두고 TypeScript 검사기로 봅니다. `npm i --no-save playwright@1.56.1 typescript@5.6.3`(따로 깔면 서로 지움) 후 `python3 tools/typecheck.py`. 지금 있는 오류는 `tools/tsc_baseline.json` 기준선에 있고, 그 밖의 새 오류만 실패입니다(CI도 같은 검사). 오류를 고쳐 줄였으면 `--update`로 기준선을 줄여 두세요.
 
 다른 파일의 함수에 규칙을 더할 때는 함수를 감싸 덮어쓰지 말고 `hook('이름', 함수)`로 등록하세요. 핵심 함수가 정해진 자리에서 `runHooks`로 부릅니다. 훅 이름과 넘기는 값은 `src/g_core.js`의 "훅" 주석에 있습니다. 소리(`g_audio.js`)만은 결과를 듣기만 하는 관찰자라 예외로 감싸기를 씁니다.
 
