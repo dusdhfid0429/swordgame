@@ -61,10 +61,11 @@ function teachWhy(s){const T=HWS.teach;if(P.sect!==s.id)return'문도만';if(ran
   if(typeof inOwnSect==='function'&&!inOwnSect())return'본산에서';if(inCombat())return'싸움 중';if(P.vit<T.vit)return`활력 ${T.vit} 필요`;return''}
 function sectTeach(s){if(teachWhy(s))return;const T=HWS.teach;P.vit-=T.vit;const was=sectPop(s.id),cap=popCap(s),to=Math.min(cap,was+T.pop);if(to>was)popSet(s.id,to,'teach');
   const up=(G.hugi||[]).filter(h=>h.sid===s.id&&!h.dead&&h.rk<realmIdx()&&hugiRoll(h,'teach'));
+  for(const h of up)h.tch={l:P.lifeNo,n:P.name};   // v256 가르친 제자는 다음 생의 흔적이 된다 (g_past.js)
   log(`${s.n}의 문도들을 모아 가르쳤다. ${to>was?`문파 인원 +${Math.round((to-was)*10)/10}`:'문파가 이미 가득 찼다'}${up.length?` · ${up.map(h=>h.n).join('·')}이(가) 한 단계 올라섰다`:''}.`,'xp');
   runHooks('lifeDone','teach');renderOpen()}
 function sectWrite(s,id){const a=ARTS[id],W=HWS.write;if(!a||P.sect!==s.id||!jsArts(s).includes(id))return;const g=artGrade(id),c=W.vit[g]??W.vit[W.vit.length-1];
-  if(P.vit<c){log(`저술할 활력이 부족합니다. (필요 ${c})`,'info');return}P.vit-=c;((G.sjs=G.sjs||{})[s.id]=G.sjs[s.id]||{})[id]=1;
+  if(P.vit<c){log(`저술할 활력이 부족합니다. (필요 ${c})`,'info');return}P.vit-=c;((G.sjs=G.sjs||{})[s.id]=G.sjs[s.id]||{})[id]=1;(P.sjsMine=P.sjsMine||[]).push([s.id,id]);   /* v256 이번 생에 쓴 요결 (g_past.js) */
   const was=sectPop(s.id),to=Math.min(popCap(s),was+W.pop[g]);if(to>was)popSet(s.id,to,'write');P.fame+=W.fame[g];
   log(`[${a.n}]의 요결을 책으로 엮어 ${s.n} 장경각에 올렸다. 배우러 오는 이가 늘어 문파 인원 +${Math.round((to-was)*10)/10}, 명성 +${W.fame[g]}.`,'xp');feat(`${a.n}의 요결을 저술해 ${s.n}에 남겼다`);
   runHooks('lifeDone','write');renderOpen()}
