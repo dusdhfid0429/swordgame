@@ -8,6 +8,18 @@ PARTS = ['g_gamedata.js', 'r_sheet.js', 'g_store.js', 'r_noise.js', 'r_proto_art
          'r_build.js', 'r_bform.js', 'r_furn.js', 'r_fx.js', 'r_brkshow.js', 'r_elfx.js', 'r_qiflow.js', 'g_screens.js', 'g_touch.js', 'g_train.js', 'g_realm.js', 'g_create.js', 'g_realmfx.js', 'g_blade.js', 'g_bare.js', 'g_body.js', 'g_beyond.js', 'g_save.js', 'g_tomb.js', 'g_region.js', 'g_garb.js', 'g_passive.js', 'g_simbeop.js', 'g_fxcol.js', 'g_faction.js', 'g_landmark.js', 'g_province.js', 'g_height.js', 'g_stage.js', 'g_magyo.js', 'g_mara.js', 'g_magyo2.js', 'g_magyo3.js', 'g_lmmap.js', 'g_portal.js', 'g_split.js', 'g_cliff.js', 'g_hall.js', 'g_city.js', 'g_gunbu.js', 'g_maeng.js', 'g_academy.js', 'g_bobeop.js', 'g_gyeong.js', 'g_sectmove.js', 'g_balance.js', 'g_diff.js', 'g_loot.js', 'g_amgi.js', 'g_caravan.js', 'g_ranktest.js', 'g_story2.js', 'g_story3.js', 'g_story4.js', 'g_story5.js', 'g_ruin.js', 'g_decay.js', 'g_vault.js', 'g_guard.js', 'g_mobil.js', 'g_yasu.js', 'g_aggro.js', 'g_suryeon.js', 'g_sabu.js', 'g_sbfest.js', 'g_npcdef.js', 'g_madi.js', 'g_rep.js', 'g_lore.js', 'g_gloss.js', 'g_brief.js', 'g_open.js', 'g_ult.js', 'g_fight.js', 'g_scene.js', 'g_scard.js', 'g_audio.js', 'g_terrain.js', 'g_season.js', 'g_cave.js', 'g_imagok.js', 'g_magyo4.js', 'g_gyc.js', 'g_intel.js', 'g_gyclue.js', 'g_artbal.js', 'g_magi.js', 'g_mkmat.js', 'g_chamo.js', 'g_remnant.js', 'g_kyul.js', 'g_past.js', 'g_samun.js', 'g_pursue.js', 'g_tower.js', 'g_jongnam.js', 'g_sapa.js', 'g_sectmap.js', 'g_sgrow.js', 'g_hugi.js', 'g_hugi2.js', 'g_hwadu.js', 'g_wund.js', 'g_danger.js', 'g_plate.js', 'g_read.js', 'g_crash.js', 'g_power.js', 'g_draw.js']
 rd = lambda p: open(os.path.join(SRC, p), encoding='utf8').read()
 js = '\n'.join(rd(p) for p in PARTS)
+
+# 2026-11-12: 조각들이 한 스크립트로 이어지므로 같은 이름 function·var 선언은 뒤의 것이 앞의 것을 말없이 덮는다 (hgSpot 사고). 맨 앞 칸 이름이 겹치면 멈춘다.
+# const·let·class 겹침은 브라우저가 문법 오류로 바로 멈추므로 여기서 보지 않는다 (일꾼 소스 같은 템플릿 글자 속 const를 잘못 잡지 않게)
+import re as _re
+_decl = _re.compile(r'^(?:async\s+)?(?:function\*?|var)\s+([A-Za-z_$][\w$]*)', _re.M)
+_seen = {}
+for p_ in PARTS:
+    for m_ in _decl.finditer(rd(p_)):
+        n_ = m_.group(1)
+        if n_ in _seen:
+            raise SystemExit(f'전역 이름 {n_} 가 {_seen[n_]} 와 {p_} 에 둘 다 선언되어 있습니다 (뒤의 것이 앞의 것을 덮습니다)')
+        _seen[n_] = p_
 os.makedirs(os.path.join(ROOT, 'dist'), exist_ok=True)
 
 # data/*.json: 표 이름이 겹치면 멈춘다. meta.json 은 _meta 로 들어간다
