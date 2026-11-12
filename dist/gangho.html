@@ -3427,7 +3427,8 @@ function atkIdx(u,n){const W=ANIM.atkWeight;if(n<=2)return Math.min(n-1,Math.flo
 // weapons painted in atlas pixels on top of the body frame, flat colours with a dark outline like the sprite
 function pxLine(a,b,w,col){ctx.lineCap='butt';ctx.strokeStyle='#14100c';ctx.lineWidth=w+2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
 function drawWeapon(kind,ln,lk,flash){
-  if(!ln)return;if(typeof sheetWeaponDraw==='function'&&sheetWeaponDraw(kind,ln,lk,flash))return;   // v125: 무기 파츠 시트가 있으면 그 그림을 손에 붙인다let h=[ln[0],ln[1]],t=[ln[2],ln[3]];const dx=t[0]-h[0],dy=t[1]-h[1],L=Math.hypot(dx,dy)||1,u=[dx/L,dy/L],n=[-u[1],u[0]];
+  if(!ln)return;if(typeof sheetWeaponDraw==='function'&&sheetWeaponDraw(kind,ln,lk,flash))return;   // v125: 무기 파츠 시트가 있으면 그 그림을 손에 붙인다
+  let h=[ln[0],ln[1]],t=[ln[2],ln[3]];const dx=t[0]-h[0],dy=t[1]-h[1],L=Math.hypot(dx,dy)||1,u=[dx/L,dy/L],n=[-u[1],u[0]];
   if(lk==='s'){u[0]=-u[0];u[1]=-u[1]}  // scabbard line runs hand -> back; weapons point forward from the hand
   const at=d=>[h[0]+u[0]*d,h[1]+u[1]*d],W=c=>flash?'#ffffff':c;
   if(kind==='창'){const back=lk==='s'?-95:lk==='p'?-64:-55,fwd=lk==='s'?40:lk==='p'?50:88,tip=at(fwd);pxLine(at(back),tip,4,W('#7b4a26'));
@@ -12464,7 +12465,7 @@ function bakeCave(th){
     if(cell.g===6){const m=.6+n*.5;R=T.wall[0]*m;G=T.wall[1]*m;B=T.wall[2]*m}
     else if(liq>0&&T.lava){const f=fbm(gx*2,gy*2),hot=Math.min(1,liq*1.4)*(.5+f*.6),cr=fbm(gx*3.5,gy*3.5);
       R=150+105*hot;G=34+110*hot*hot;B=8+30*hot*hot*hot;if(cr>.55-liq*.12){const k=Math.min(1,(cr-.5)*6);R*=1-.75*k;G*=1-.8*k;B*=1-.8*k}if(liq<.12){R*=.6;G*=.5;B*=.5}}
-    else if(liq>0&&!T.ice){const dep=Math.min(1,liq*1.6),w=fbm(gx*2.5,gy*4);if(liq<.06){R=T.liq[0]+50;G=T.liq[1]+50;B=T.liq[2]+50}elseR=T.liq[0]*(1.25-dep*.6)+w*14;G=T.liq[1]*(1.25-dep*.6)+w*16;B=T.liq[2]*(1.25-dep*.5)+w*18}
+    else if(liq>0&&!T.ice){const dep=Math.min(1,liq*1.6),w=fbm(gx*2.5,gy*4);if(liq<.06){R=T.liq[0]+50;G=T.liq[1]+50;B=T.liq[2]+50}else{R=T.liq[0]*(1.25-dep*.6)+w*14;G=T.liq[1]*(1.25-dep*.6)+w*16;B=T.liq[2]*(1.25-dep*.5)+w*18}}
     else if(liq>0&&T.ice){const cr=Math.abs(vn(gx*3,gy*3)-.5)<.03||Math.abs(vn(gx*7+5,gy*7)-.5)<.02,w=fbm(gx*1.5,gy*3);R=172+w*40;G=212+w*30;B=236+w*16;if(cr){R=240;G=250;B=255}}
     else{const mx=fbm(gx*.35+11,gy*.35),t=Math.min(1,Math.max(0,(mx-.4)*3));R=T.floor[0]*(1-t)+T.floor2[0]*t;G=T.floor[1]*(1-t)+T.floor2[1]*t;B=T.floor[2]*(1-t)+T.floor2[2]*t;
       const m=.78+n*.4;R*=m;G*=m;B*=m;
@@ -14193,10 +14194,10 @@ function hugiCreate(h){const s=SECTS[h.sid];if(!s||!(sectPop(s.id)>0))return nul
   def.key=mkKey(def);G.made=G.made||{};G.made[id]=def;mkBuild(def);mkRegister(def);sectRegSync();h.art=id;h.elder=1;runHooks('hugiArt',h,id);
   log(`강호 소식: ${s.n}의 기재 ${h.n}이(가) 화경에 올라 절정 무공 [${n}]을(를) 창안했다. ${s.n}의 무공으로 전하고, ${h.n}은(는) 장로가 되었다.`,'xp');showBanner('절정 무공 창안',`${s.n} ${n}`);return id}
 // ---- 본산 마당의 정식 NPC ----
-function hgSpot(i){for(let t=0;t<80;t++){const a=i*2.1+t*.7,r=2+t*.12,x=Math.floor(20.5+Math.cos(a)*r*2.4),y=Math.floor(26.5+Math.sin(a)*r);if(x>1&&y>1&&x<N-2&&y<NH-2&&walk(x,y)&&!objs[y][x])return{x:x+.5,y:y+.5}}return{x:20.5,y:28.5}}
+function hgHallSpot(i){for(let t=0;t<80;t++){const a=i*2.1+t*.7,r=2+t*.12,x=Math.floor(20.5+Math.cos(a)*r*2.4),y=Math.floor(26.5+Math.sin(a)*r);if(x>1&&y>1&&x<N-2&&y<NH-2&&walk(x,y)&&!objs[y][x])return{x:x+.5,y:y+.5}}return{x:20.5,y:28.5}}
 hook('regionLoaded',id=>{const R=REGIONS[id];if(!R||!P)return;if(!G.hugi)hugiFill();if(R.npcs)R.npcs=R.npcs.filter(n=>n.hugi==null);if(R.dead||R.ruin||!R.npcs)return;
   const s=Object.values(SECTS).find(q=>hqId(q)===id);if(!s)return;let i=0;
-  for(const h of(G.hugi||[]))if(h.sid===s.id&&!h.dead&&(!h.old||h.elder)){const p=hgSpot(i++);
+  for(const h of(G.hugi||[]))if(h.sid===s.id&&!h.dead&&(!h.old||h.elder)){const p=hgHallSpot(i++);
     R.npcs.push({id:'hg'+h.id,srole:'hugi',ssid:s.id,hugi:h.id,n:`${h.elder?`${s.n} 장로 `:''}${h.n}`,x:p.x,y:p.y,pal:sectPal(s.id,Math.min(4,Math.max(1,h.rk)),h.w,{})||masterPal(s)})}
   refreshNPCF()});
 function hugiFight(e,n){const h=hugiById(n.hugi);if(!h)return;const d=h.rk-HUGI.npc.rank;e.realm=Math.min(8,h.rk);e.rank=Math.min(4,Math.max(1,h.rk));

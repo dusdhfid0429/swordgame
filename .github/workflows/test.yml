@@ -26,6 +26,10 @@ jobs:
           npx playwright install chromium
       - name: 빌드
         run: python3 build.py
+      - name: 타입 검사 (기준선에 없는 새 오류만 실패)
+        run: |
+          npm i --no-save typescript@5.6.3
+          python3 tools/typecheck.py
       - name: dist가 소스와 같은지
         run: git diff --exit-code --stat dist/ || (echo "dist가 src와 다릅니다. python3 build.py 후 커밋하세요." && exit 1)
       - name: 테스트
