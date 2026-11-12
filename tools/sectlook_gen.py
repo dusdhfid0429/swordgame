@@ -233,6 +233,24 @@ def dao_big(D, trees=(), extra=None):
     return {"big": T, "titles": DAO_TITLES}
 DAO_TITLES = {"지객 장로": "지객 도인", "장경각 서동": "도동", "수묘 제자": "수묘 도인"}
 DAO_TREES = {"hwasan": ("plum",), "kunlun": ("pine",), "kongtong": ("rock",), "jeomchang": ("bamboo",), "cheongseong": ("bamboo",), "jongnam": ("pine",)}
+# v254 종남 (사용자 2026-11-12 '묘사된 종남파의 형태도 맵에'): 고파 영상의 종남검성 설정 — 외원은 시무관(새 제자 공통 기초) 마당, 본산 좌우에 은하관·유운관, 외원 아래 현무관.
+#  후산 밖에 중양궁 옛터(무너진 도관)와 누관 정자. 명소 표지·자오도는 g_jongnam.js (data/jongnam.json spots)
+def jongnam_x(T):
+    hq, out, bk = T['hq'], T['outer'], T['back']
+    hq['builds'] = [b for b in hq['builds'] if b['k'] not in ('bell', 'drum')] + [
+        B("gwan1", 10, 14, 4, 3, door=1, kind="temple"), B("gwan2", 26, 14, 4, 3, door=1, kind="temple")]
+    hq['deco'] += pts("rack", (15, 16), (25, 16))
+    out['builds'] = [b for b in out['builds'] if not (b['k'] == 'dorm' and b.get('form') != 'paifang') and b['k'] != 'kitchen'] + [
+        B("simu", 9, 15, 5, 3, door=1, fl=1), B("gwan0", 13, 23, 5, 3, door=1), B("kitchen", 30, 20, 3, 2), B("dorm", 30, 24, 3, 2)]
+    out['deco'] = pts("censer", (20, 10)) + grid("dummy", [14, 16, 24, 26], [13, 15, 17, 19]) + pts("rack", (13, 11), (27, 11)) + pts("pine", (8, 12), (32, 12), (32, 21))
+    out['decal'] = [[20.5, 16.5, "taiji", 2]]
+    bk['builds'] += [B("store", 31, 21, 3, 2, form="ruin"), B("pav", 9, 26, 2, 2, kind="pavilion")]
+    bk['deco'] += pts("stone", (30, 24), (34, 22), (8, 29)) + pts("pine", (11, 29), (33, 19))
+JONGNAM_KINDS = {
+    "simu": {"n": "시무관", "floors": [{"n": "", "kit": "hall", "npcs": [{"role": "simu", "t": "시무관 사범", "x": 0, "y": 3.6}]}]},
+    "gwan0": {"n": "현무관", "floors": [{"n": "", "kit": "hall", "npcs": [{"role": "gw0", "t": "현무관 사범", "x": 0, "y": 3.6}]}]},
+    "gwan1": {"n": "은하관", "floors": [{"n": "", "kit": "hall", "npcs": [{"role": "gw1", "t": "은하관 사범", "x": 0, "y": 3.6}]}]},
+    "gwan2": {"n": "유운관", "floors": [{"n": "", "kit": "hall", "npcs": [{"role": "gw2", "t": "유운관 사범", "x": 0, "y": 3.6}]}]}}
 def kongtong_x(T):
     T['hq']['deco'] += pts("grock", (12, 12), (28, 12))
 
@@ -287,7 +305,9 @@ for k, v in SMALL.items():
     L[k] = v
 L['fort'].update(FORT_SMALL)
 for k, t in DAO_TREES.items():
-    L[k] = dao_big(D, t, kongtong_x if k == 'kongtong' else None)
+    L[k] = dao_big(D, t, kongtong_x if k == 'kongtong' else jongnam_x if k == 'jongnam' else None)
+D['SECTMAP']['kinds'].update(JONGNAM_KINDS)
+D['SECTMAP']['names']['jongnam'] = {"simu": "시무관", "gwan0": "현무관", "gwan1": "은하관", "gwan2": "유운관"}
 L['emei'] = emei(D); L['podal'] = podal(D); L['daeroe'] = daeroe(D)
 for k, v in DAO_SMALL.items():
     L[k] = v

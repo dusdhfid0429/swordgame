@@ -6,7 +6,7 @@
    "황산": {"rock": [176, 172, 164], "grass": [38, 72, 46], "pat": "streak", "spire": "g", "spireN": 0.27, "edge": 0.5, "mist": [220, 224, 230], "cloud": 3},
    "무당산": {"rock": [100, 114, 104], "grass": [34, 72, 42], "pat": "streak", "spire": "m", "spireN": 0.16, "edge": 0.3, "mist": [196, 208, 204], "cloud": 2},
    "아미산": {"rock": [92, 95, 104], "grass": [32, 68, 48], "pat": "strata", "spire": "b", "spireN": 0.14, "edge": 0.35, "mist": [238, 238, 234], "cloud": 3},
-   "종남산": {"rock": [142, 152, 154], "grass": [52, 88, 66], "pat": "streak", "spire": "g", "spireN": 0.14, "edge": 0.25, "mist": [204, 214, 216], "cloud": 3},
+   "종남산": {"rock": [142, 152, 154], "grass": [52, 88, 66], "pat": "streak", "spire": "g", "spireN": 0.22, "edge": 0.32, "mist": [204, 214, 216], "cloud": 3},
    "형산": {"rock": [150, 154, 148], "grass": [48, 100, 58], "pat": "round", "mist": [212, 224, 228], "cloud": 2},
    "태산": {"rock": [156, 144, 128], "grass": [74, 88, 60], "pat": "streak", "spire": "t", "spireN": 0.16, "edge": 0.3},
    "숭산": {"rock": [170, 140, 100], "grass": [92, 100, 64], "pat": "strata", "spire": "q", "spireN": 0.2, "edge": 0.3},

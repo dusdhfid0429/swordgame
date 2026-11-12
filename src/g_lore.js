@@ -50,7 +50,7 @@ function relHtml(sid){const L=(REL[sid]||[]).filter(r=>SECTS[r.o]);if(!L.length)
 
 // ---- 4 세가는 혈연, 불문은 출가 ----
 const isBlood=sid=>!!LORE.blood[sid],isMonk=sid=>LORE.monk.includes(sid);
-const kinOk=sid=>isBlood(sid)?!!(P.kin&&P.kin[sid]):isMonk(sid)?!!P.monk:true;
+const kinOk=sid=>isBlood(sid)?!!(P.kin&&P.kin[sid]):isMonk(sid)?!!P.monk||!!(P.kinEx&&P.kinEx[sid]):true;   // v254: 섬서 논검을 이긴 종남 속가제자는 예외 (g_jongnam.js)
 const kinName=sid=>isBlood(sid)?(kinOk(sid)?'직계':'방계'):isMonk(sid)?(kinOk(sid)?'출가 제자':'속가 제자'):'';
 // artNeedRank(g_sect.js)에 더하는 직위
 function kinPen(a){if(!P||!a||!a.hi)return 0;const s=artSect(a.id);return s&&!kinOk(s.id)&&(isBlood(s.id)||isMonk(s.id))?KIN.pen:0}

@@ -13,7 +13,7 @@ const sbMy=()=>{const s=sbSect();return s&&P.sabu.st==='disc'?sbMasters(s.id)[P.
 const sbPos=()=>P.sabu.ord.indexOf('@');
 const isDaeje=sid=>!!(P&&P.sabu&&P.sabu.sid===sid&&P.sabu.dj&&P.sect===sid);
 // 장문절기 비급을 받을 수 있나: 대제자이거나 이미 익힌 무공 (예전 저장)
-const jmOk=a=>{if(!a||!a.hi||P.arts[a.id])return true;const s=artSect(a.id);if(s&&s.id==='geumgun')return P.sect==='geumgun'&&rankIdx('geumgun')>=rankTop('geumgun');if(s&&s.id==='cheonma')return P.sect==='cheonma'&&(!!P.sgj||(typeof isLeader==='function'&&isLeader()));return !sabuOn(s)||isDaeje(s.id)};   // v235 군부: 어림군 최고 무공은 대장군만 (g_gunbu.js) · v236 마교: 교주 독문무공은 소교주만 (g_imagok.js)
+const jmOk=a=>{if(!a||!a.hi||P.arts[a.id])return true;const s=artSect(a.id);if(s&&s.id==='geumgun')return P.sect==='geumgun'&&rankIdx('geumgun')>=rankTop('geumgun');if(s&&s.id==='cheonma')return P.sect==='cheonma'&&(!!P.sgj||(typeof isLeader==='function'&&isLeader()));if(s&&typeof jnHiOk==='function'){const j=jnHiOk(s.id);if(j!=null)return j}return !sabuOn(s)||isDaeje(s.id)};   // v235 군부: 어림군 최고 무공은 대장군만 (g_gunbu.js) · v236 마교: 교주 독문무공은 소교주만 (g_imagok.js)
 const sbInHq=sid=>panel==='npc'&&panelArg&&(panelArg.hq===sid||REG==='ar_'+sid);   // v237: 대연무장(g_sbfest.js) 사람들 창에서도
 // v237b (사용자 2026-11-03 "대제자나 소교주에게 전수하는 무공만 문주가 하고 사부의 무공은 사부 npc가 직접 전수"): 사부 NPC 창인가
 const sbAtMaster=(sid,k)=>panel==='npc'&&panelArg&&panelArg.sfSid===sid&&panelArg.sfMaster===k;

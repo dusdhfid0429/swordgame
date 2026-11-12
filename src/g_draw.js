@@ -94,6 +94,7 @@ function drawNode(n){
     if(ready&&SECTS[n.sect]&&sectPop(n.sect)<=0){ctx.strokeStyle=`rgba(255,225,150,${.5+.4*Math.sin(time*4)})`;ctx.lineWidth=1.5;ctx.strokeRect(-13,-19,26,16)}}
   else if(n.t==='lib'||n.t==='plaque'||n.t==='mech'||n.t==='tnexit'){ctx.restore();drawRemnNode(n);return}   // g_remnant.js
   else if(n.t==='stele'||n.t==='spot'){ctx.restore();drawLoreNode(n);return}   // g_lore.js
+  else if(n.t==='jnspot'){ctx.restore();drawJnNode(n);return}   // g_lore.js
   else if(n.t==='cchest'){ctx.restore();drawCaveChest(n);return}
   else if(n.t==='gybox'&&n.form&&n.form!=='box'){ctx.restore();if(n.form==='mural')drawGyMural(n);return}   // v247 기연 벽화·기인이사 (g_gyclue.js)
   else if(n.t==='chest'||n.t==='gybox'){const shut=n.t==='gybox'?n.cd>0:P.chest;if(!shut){const gl=ctx.createRadialGradient(0,-10,1,0,-10,30);gl.addColorStop(0,`rgba(255,220,120,${.35+.2*Math.sin(time*3)})`);gl.addColorStop(1,'rgba(255,200,80,0)');ctx.fillStyle=gl;ctx.fillRect(-30,-40,60,60)}
