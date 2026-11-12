@@ -96,8 +96,9 @@ function chaseStep(c,sp,dt){const e=c.e;
   P.chs=(P.chs||0)+dt;if(P.chs<CHASE.stuck)return;
   P.chs=0;e.noReach=time+CHASE.skip;P.target=null;P.path=null;log(`${e.name||e.kind}에게 닿을 길이 없어 손을 뗍니다.`,'info')}
 const reachable=e=>!(e.noReach>time);
+// v252c: autoAttack가 연속기에서 건너뛸 초식은 셈하지 않는다 (안 그러면 초식 거리에 서서 닿지 않는 평타만 휘두른다)
 function autoReach(){const a=art();if(!hasWeaponFor(a.cls))return CLASS.권.reach;const s=A(a.id);let r=CLASS[a.cls].reach;
-  a.forms.forEach((f,i)=>{if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
+  const ch=P.chain,live=ch&&time-ch.t<1.7;a.forms.forEach((f,i)=>{if(live&&i<=ch.last)return;if(s.f[i]&&P.fcd[i]<=0&&P.qi>=formQi(f))r=Math.max(r,Math.min(engage(f),5))});return Math.min(r,rangedCls(a.cls)?CLASS[a.cls].reach:3)}
 // 자동초식: chain the learned forms in order, falling back to a plain strike.
 // 필살기는 자동으로 안 쓴다 (사용자 요청 2026-10-13): S 키·터치 필살 버튼으로만. 연속기 끝에 직접 쓰는 손맛을 남긴다.
 function autoAttack(e){

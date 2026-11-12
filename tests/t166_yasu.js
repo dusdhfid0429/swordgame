@@ -63,6 +63,9 @@ const {chromium}=require(process.env.PWPATH||'playwright');
       aggroTaunt(am,b,1.5);act();o.agTaunt=am.tgt===b&&am.thr.get(b)>am.thr.get(P)*1.4;
       const v0=am.thr.get(b);act();o.agDecay=am.thr.get(b)<v0;
       am.tgt=null;am.thr.set(b,am.thr.get(P)*1.05);act();o.agMargin=am.tgt==null;
+      // 한 공격은 한 몫: 같은 공격이 주인과 맹수를 함께 맞히면 6:4
+      {const rr=Math.random;Math.random=()=>.99;P.inv=0;P.hp=P.maxHp;b.hp=b.maxHp;const p0=P.hp,b0=b.hp;const D=Math.round(Math.min(P.maxHp,b.maxHp/Y.split.beast)*.3);hurtP(D,am);const solo=p0-P.hp;hurtAlly(b,D,am);const pl=p0-P.hp,bl=b0-b.hp;
+       o.oneHit=Math.abs(pl+bl-solo)<=2&&Math.abs(bl-solo*Y.split.beast)<=2;time+=.1;const p1=P.hp,b1=b.hp;hurtAlly(b,D,am);o.oneHitSep=b1-b.hp>solo*.5&&P.hp===p1;Math.random=rr;P.hp=P.maxHp;b.hp=b.maxHp}
       mobs=[]}}
     // 폐관 호법이 아니다
     o.nohob=!allies.some(x=>x.kind!=='pet'&&x.kind!=='yasu'&&x.hp>0)&&!hobeop()||inOwnSect();
@@ -76,6 +79,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const m2=mkFac(f,0,22,14,'yasu');m2.rank=0;m2.realm=0;mobs.push(m2);ybNpcTick();
     const bs=mobs.filter(x=>x.ybOwner);o.npc64=Math.abs(m.maxHp-mh*Y.split.own)<=1&&Math.abs(bs[0].maxHp-mh*Y.split.beast)<=1&&Math.abs(m.atk-ma*Y.split.own)<=1&&Math.abs(bs[0].atk-ma*Y.split.beast)<=1;o.npc=bs.length===1&&bs[0].ybOwner===m&&bs[0].ybRk===3&&bs[0].noLoot&&!bs[0].sect&&bs[0].d.fac===f;
     ybNpcTick();o.npcOnce=mobs.filter(x=>x.ybOwner).length===1;
+    {time+=.1;const be0=bs[0],mh0=m.hp,bh0=be0.hp;damage(m,1000,0,0,P);damage(be0,1000,0,0,P);o.npcOne=Math.abs((mh0-m.hp)-1000*Y.split.own)<=1&&Math.abs((bh0-be0.hp)-1000*Y.split.beast)<=1;m.hp=mh0;be0.hp=bh0;time+=.1}
     const pop0=sectPop('yasu'),s0=P.silver,bag0=P.bag.length;const be=bs[0];be.hp=1;damage(be,5);o.npcBack=m.atk===ma&&m.maxHp===mh;o.npcLoot=sectPop('yasu')===pop0&&P.bag.length===bag0&&!drops.some(x=>x.it&&x.it.mat);
     return o});
   ok('야수궁 제자만',r.none);
@@ -103,6 +107,8 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   ok('어그로: 더 많이 친 쪽을 노린다',r.agP&&r.agB&&r.agBack);
   ok('도발은 어그로를 끌어올린다',r.agTaunt);
   ok('어그로는 잊히고, 조금 더 많다고 갈아타지 않는다',r.agDecay&&r.agMargin);
+  ok('한 공격은 한 몫: 함께 맞으면 6:4',r.oneHit&&r.oneHitSep);
+  ok('적도 함께 맞으면 6:4',r.npcOne);
   ok('폐관 호법이 아니다',r.nohob);
   ok('쓰러지면 반 해 우리에서',r.down&&r.stay&&r.restWhy);
   ok('추스르면 돌아온다',r.back);

@@ -60,7 +60,16 @@ hook('dmgOut',c=>{if(!P||!ybMine(c.from)||c.e.duel)return;const a=ybOut();if(!a|
 // 맹수가 물면 쌓인 몫을 낸다 (경지 차·방어는 주인이 칠 때 이미 셈했다)
 hook('allyHit',c=>{if(c.a.kind!=='yasu')return;c.dm=c.a.pool||0;c.a.pool=0;c.kb=0});   // 밀쳐내지 않는다: 밀면 주인이 쫓느라 칠 틈을 잃는다   // 적이 누구를 노릴지는 준 피해로 쌓인 어그로가 정한다 (g_aggro.js)
 // 맞을 때는 주인처럼: 회피·경지 차는 주인 것으로, 난이도 받는 피해, 몸 방어
-hook('allyHurt',c=>{if(c.a.kind!=='yasu'||!P)return;if(c.src&&c.src.d&&Math.random()<clamp((hmv()-(c.src.hm||0))/200+.06,.03,.5)){c.miss=true;return}   // 회피도 주인의 것
+// 한 공격은 한 몫 (사용자 2026-11-12): 적의 공격 한 번이 주인과 맹수를 함께 맞히면 둘이 6:4로 나눠 맞는다 (합 = 한 대)
+// 주인이 먼저 맞은 같은 프레임·같은 적의 공격이 맹수에게 닿으면, 주인이 실제로 잃은 생명의 맹수 몫을 주인에게 돌려주고 맹수가 그만큼 맞는다
+hook('hurtDone',c=>{const s=c.src;if(!s||!s.isMob||!ybOut())return;const lost=c.hp0-Math.max(0,P.hp);if(lost>0)s.ybAoeP={t:time,d:lost}});
+hook('allyHurt',c=>{if(c.a.kind!=='yasu'||!P)return;const h=c.src&&c.src.ybAoeP;if(h&&h.t===time){c.src.ybAoeP=null;const b=h.d*YS.beast;if(P.hp>0)P.hp=Math.min(P.maxHp,P.hp+b);c.dm=Math.max(1,Math.round(b));c.one=true;return}});
+// 적 야수궁도 같다: 플레이어(나 누구든) 공격 한 번이 적 주인과 그 맹수를 함께 맞히면 6:4
+const ybPair=e=>e.ybPet&&e.ybPet.hp>0?e.ybPet:e.ybOwner&&e.ybOwner.hp>0&&e.ybOwner.ybPet===e?e.ybOwner:null;
+hook('dmgOut',c=>{const e=c.e;if(!e||!e.isMob)return;const o=ybPair(e);if(!o)return;const h=o.ybAoe;
+  if(h&&h.t===time&&h.from===c.from){o.ybAoe=null;const k=e.ybPet?YS.own:YS.beast;c.d=Math.max(1,Math.round(h.d*k));o.hp=Math.min(o.maxHp,o.hp+c.d);return}   // 먼저 맞은 쪽이 몫을 넘는 만큼 돌려받는다
+  e.ybAoe={t:time,from:c.from,d:c.d}});
+hook('allyHurt',c=>{if(c.a.kind!=='yasu'||!P||c.one)return;if(c.src&&c.src.d&&Math.random()<clamp((hmv()-(c.src.hm||0))/200+.06,.03,.5)){c.miss=true;return}   // 회피도 주인의 것
   if(c.src&&c.src.d){c.dm*=rMul(rDiff(mobRealm(c.src),realmIdx()));if(typeof diffMul==='function')c.dm*=diffMul('taken')}c.dm=Math.max(1,Math.round(c.dm*(1-guard())))});
 // 맹수 기술: 싸움 중 cd초마다 쌓인 몫을 한꺼번에 내며 종마다 효과가 붙는다 (피해는 더하지 않는다)
 // 노릴 상대 (사용자 2026-11-12): ① 주인이 치는 상대가 늘 먼저 ② 없으면 주인을 치는 적 중 가장 가까운 것
@@ -75,6 +84,10 @@ function ybTg(a){if(!P||G.duel||a.mode==='wait')return null;
 hook('allyTg',c=>{if(c.a.kind==='yasu')c.tg=ybTg(c.a)});
 hook('allyTick',(a,dt)=>{if(a.kind!=='yasu')return;a.skT=(a.skT||0)-dt;const tg=G.duel||a.mode==='wait'?null:ybTg(a);
   if(!tg){a.pool=(a.pool||0)*Math.max(0,1-YASU.pool.decay*dt);return}
+  // 주인과 같은 상대를 치면 주인과 상대 사이를 막지 말고 옆으로 돈다 (상대가 맹수를 노려도 주인 칼끝 안에 머물게)
+  if(tg===P.target&&a.swing<=0&&dist(P,tg)<3&&dist(a,tg)<a.reach+.6){const ux=(P.x-tg.x)/(dist(P,tg)||1),uy=(P.y-tg.y)/(dist(P,tg)||1),sd=(a.x-tg.x)*uy-(a.y-tg.y)*ux>=0?1:-1,
+    ang=YASU.flank*sd,c=Math.cos(ang),sn=Math.sin(ang),gx=tg.x+(ux*c-uy*sn)*a.reach*.8,gy=tg.y+(ux*sn+uy*c)*a.reach*.8,dx=gx-a.x,dy=gy-a.y,l=Math.hypot(dx,dy);
+    if(l>.3){const st=Math.min(l,a.sp*dt);moveEnt(a,dx/l*st,dy/l*st);a.moving=true;a.fx=(tg.x-a.x)/(dist(a,tg)||1);a.fy=(tg.y-a.y)/(dist(a,tg)||1)}}
   if(a.skT>0||!P.yb||!P.yb.sk)return;
   const s=YASU.sp[a.k].skill,d=dist(a,tg),rng=s.leap||a.reach+.2;if(d>rng)return;
   a.skT=YASU.skill.cd;a.cd=Math.max(a.cd,a.acd||1.1);a.swing=.24;
