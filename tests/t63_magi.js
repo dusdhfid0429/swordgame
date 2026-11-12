@@ -10,7 +10,7 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     return{n:cm.length,allMa:cm.every(x=>x.el==='마'&&x.sc==='마공'),el:pEl(),sc:pSchool(),c:a.c,dark:isDark(a.c),ct:a.ct,elc:a.elc,fx:EL['마'].fx,beats:[elMul('마','양'),elMul('양','마'),elMul('마','금'),elMul('마','마'),elMul('마',null),elMul('마','금','마공','불가'),elMul('금','마','불가','마공'),elMul('마','금','마공','도가')],html:simElHtml(simCur())}});
   ok(`천마 심법 ${t.n}개 모두 마공·마 ${t.allMa}, 운용 중 ${t.sc}/${t.el}, 무공 색 ${t.c} (어두움 ${t.dark}), 글자색 ${t.ct}, 뇌기 ${t.elc}, 상극 ${t.beats.join(',')}`,t.allMa&&t.el==='마'&&t.sc==='마공'&&t.c==='28,6,40'&&t.dark&&t.ct==='150,40,190'&&t.elc===false&&t.beats.join()==='1.3,0.8,1.3,1,1,0.8,1.3,1.3'&&t.html.includes('150,40,190'));
   // 적중: 느려짐 + 생명·내공 흡수
-  const h=await p.evaluate(()=>{const e={x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:0,hm:0,el:null,burn:0,slow:0,d:{},isMob:true};P.hp=10;P.qi=10;P.maxHp=200;P.maxQi=200;const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;hitE(X,e,1,0,0);Math.random=window._rnd;
+  const h=await p.evaluate(()=>{const e={x:P.x+1,y:P.y,hp:5000,maxHp:5000,def:0,hm:0,el:null,burn:0,slow:0,d:{},isMob:true};P.hp=10;P.qi=10;P.maxHp=2000;P.maxQi=2000;P._lb=null;const X=mkX(P.cur);window._rnd=Math.random;Math.random=()=>.5;hitE(X,e,1,0,0);Math.random=window._rnd;
     return{slow:e.slow,d:5000-e.hp,hp:P.hp,qi:P.qi}});
   ok(`마기 적중: 느려짐 ${h.slow}초, 피해 ${h.d}, 생명 10→${h.hp.toFixed(1)} (흡혈 특색 포함), 내공 10→${h.qi.toFixed(1)}`,h.slow===1.5&&h.d>0&&h.hp-10>=h.d*.08-.01&&Math.abs(h.qi-10-h.d*.08)<.01);
   // 그리기: 초식·운기조식이 오류 없이 어두운 합성으로 그려진다
