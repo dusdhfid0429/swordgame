@@ -28,13 +28,39 @@ function loadRegion(id){
   ground=GROUND[id]||(GROUND[id]=R.bake());for(const k in GROUND)if(k!==id)delete GROUND[k];miniBase=null;
   refreshNPCF();
   runHooks('regionLoaded',id);
+  // 불러온 저장이 막힌 칸(담·가구·바위) 위나 갇힌 구석이면 가까운 열린 칸으로 (이미 끼인 저장 구출, 2026-11-13)
+  if(P&&P.reg===id&&!P.perch&&!(P.z>0)){const q=safeSpot(P.x,P.y);P.x=q.x;P.y=q.y}
 }
+// ---- 막힌 칸에 내려놓지 않기 (사용자 2026-11-13 "장백파 객사에 들어갔다 나오면 담에 껴") ----
+// 출입구 도착 자리·불러온 자리가 막힌 칸이거나 몇 칸짜리 갇힌 구석이면, 가장 가까운 '넓게 이어진' 열린 칸 가운데로 옮긴다.
+// anchor(그 맵에서 되돌아가는 출입구)가 있으면 그 출입구에서 걸어서 닿는 칸만 고른다 (담 너머로 떨어지지 않게).
+const SAFE_MIN=8;   // 이만큼 이어진 칸이 있어야 '갇히지 않은' 자리
+function safeStep(i,j,a,b){return walk(a,b)&&(typeof hpass!=='function'||hpass(i,j,a,b))}
+// (i0,j0)에서 걸어서 닿는 칸 (lim개까지). 시작 칸이 막혔으면 빈 목록
+function safeFlood(i0,j0,lim){const out=[];if(!walk(i0,j0))return out;const seen=new Set([j0*N+i0]),q=[[i0,j0]];
+  while(q.length&&out.length<lim){const[i,j]=q.shift();out.push([i,j]);
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+dx,b=j+dy,k=b*N+a;if(seen.has(k)||!safeStep(i,j,a,b))continue;seen.add(k);q.push([a,b])}}
+  return out}
+const safeOk=(i,j)=>safeFlood(i,j,SAFE_MIN).length>=SAFE_MIN;
+function safeSpot(x,y,anchor){
+  if(!(x>=0&&y>=0&&x<N&&y<NH)){x=clamp(x,.5,N-.5);y=clamp(y,.5,NH-.5)}
+  const i0=Math.floor(x),j0=Math.floor(y);if(safeOk(i0,j0))return{x,y};
+  const d2=(i,j)=>(i+.5-x)**2+(j+.5-y)**2;let best=null,bd=1e9;
+  if(anchor){   // 되돌아가는 출입구 칸과 그 둘레에서 걸어 닿는 칸 가운데 가장 가까운 곳
+    const ai=Math.floor(anchor.x),aj=Math.floor(anchor.y),seen=new Set();
+    for(let j=aj-1;j<=aj+1;j++)for(let i=ai-1;i<=ai+1;i++){if(seen.has(j*N+i))continue;const f=safeFlood(i,j,600);
+      for(const[a,b]of f)seen.add(b*N+a);if(f.length<SAFE_MIN)continue;for(const[a,b]of f){const d=d2(a,b);if(d<bd){bd=d;best=[a,b]}}}}
+  if(!best)for(let r=1;r<=14&&!best;r++)for(let j=j0-r;j<=j0+r;j++)for(let i=i0-r;i<=i0+r;i++){if(Math.max(Math.abs(i-i0),Math.abs(j-j0))!==r||i<0||j<0||i>=N||j>=NH)continue;
+    const d=d2(i,j);if(d<bd&&safeOk(i,j)){bd=d;best=[i,j]}}
+  return best?{x:best[0]+.5,y:best[1]+.5}:{x,y}}
 // 출입구를 지나 다른 지역으로 간다. 짐승·제자·말은 따라오고, 몹·떨어진 물건은 그 지역에 두고 간다. v243: 쫓던 결사대·추살조는 따라오고 잔당·두목은 그 맵에 남는다 (g_pursue.js)
 const FADE=document.createElement('div');FADE.className='fade';$('stage').appendChild(FADE);
 // 맵을 옮긴다: 지난 맵의 것을 비우고 플레이어·동료·카메라를 새 자리에 둔다 (출입구 travel과 출입구 없이 옮기는 regionJump가 같이 쓴다)
 function enterRegion(id,x,y){if(P)runHooks('leaveRegion',{from:REG,to:id});mobs=[];   // v243: 맵을 떠날 때 따라오거나 남을 몹을 고른다 (g_pursue.js)
   drops=[];eprojs=[];fx=[];G.giyeon=null;
-  loadRegion(id);P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
+  const from=REG;loadRegion(id);
+  {const R=REGIONS[id],bk=(R.gates||[]).filter(g=>g.to===from).sort((a,b)=>dist(a,{x,y})-dist(b,{x,y}))[0];const q=safeSpot(x,y,bk);x=q.x;y=q.y}   // 2026-11-13: 막힌 칸·갇힌 구석에 내리지 않는다
+  P.reg=id;P.x=x;P.y=y;P.path=null;P.target=null;P.goal=null;P.talk=null;P.gateLock=1;P.gateT=0;P.gateAt=null;P.perch=null;P.z=0;P.leap=null;P.jump=0;P.sj=0;P.roofGoal=null;   // 경공 도중에 문을 지나면 도약은 거기서 끝난다 (지난 맵의 지붕에 내려앉지 않게)
   allies.forEach((a,i)=>{a.x=P.x+(i%2?.8:-.8);a.y=P.y+.6+i*.3;a.path=null;a.tgt=null});
   const t=iso(P.x,P.y);cam.x=t.x;cam.y=t.y-gH(P.x,P.y)-camDY();runHooks('enteredRegion',id)}
 function travel(g){
