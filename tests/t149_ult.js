@@ -11,10 +11,11 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   // 1. 누르면 내공은 바로 들고 연출만 흐른다. 적은 아직 맞지 않는다
   let r=await p.evaluate(()=>{const e=prep();const q=P.qi;ultimate();const c=document.getElementById('callout');
     const o={cast:!!P.ultCast,spent:q-P.qi,hp:e.maxHp-e.hp,co:c&&c.classList.contains('on')&&c.classList.contains('ult'),fx:!!(c&&c._co),x:P.x};
-    P.fx=1;keys.arrowright=true;update(.3);keys.arrowright=false;o.moved=Math.abs(P.x-o.x);o.mid=e.maxHp-e.hp;o.form=useForm(0);return o});
+    P.fx=1;keys.arrowright=true;update(.3);keys.arrowright=false;o.moved=Math.abs(P.x-o.x);o.mid=e.maxHp-e.hp;o.form=useForm(0);paused=true;return o});   // 스크린샷을 찍는 동안 실제 시간 루프가 연출을 끝내고 적이 거닐어 빗나가지 않게 멈춘다 (CI에서 피해 0으로 실패)
   ok(`누르자 연출 시작 ${r.cast}, 내공 ${r.spent} 소모, 그 사이 적 피해 ${r.mid}, 제자리 ${r.moved.toFixed(3)}, 초식 막힘 ${r.form}, 속성 캔버스 ${r.fx}`,r.cast&&r.spent>0&&r.hp===0&&r.mid===0&&r.moved<.01&&r.form===false&&r.co&&r.fx);
   await p.waitForTimeout(500);await p.screenshot({path:require('path').resolve(__dirname,'shots/t149_cast.png')});
-  r=await p.evaluate(()=>{const e=P.target;for(let t=0;t<ULTC.cast+.3;t+=.05)update(.05);return{cast:!!P.ultCast,dm:e.maxHp-e.hp}});
+  r=await p.evaluate(()=>{const e=P.target;paused=false;const pin=()=>{e.x=P.x+1.2;e.y=P.y;e.path=null};   // 필살기 타격은 sched로 나뉘어 늦게 닿는다: 연출이 끝난 뒤 1.5초 더 돌리고, 어그로 없는 적이 거닐어 벗어나지 않게 붙든다
+    for(let t=0;t<ULTC.cast+.3&&P.ultCast;t+=.05){pin();update(.05)}for(let t=0;t<1.5&&e.maxHp-e.hp<=0;t+=.05){pin();update(.05)}return{cast:!!P.ultCast,dm:e.maxHp-e.hp}});
   ok(`연출이 끝나고 무공이 나감 (피해 ${r.dm})`,!r.cast&&r.dm>0);
   // 2. 약한 공격은 끊지 못한다
   r=await p.evaluate(()=>{const e=prep();ultimate();const s={atk:P.maxHp*.03,hm:-999};const R=Math.random;Math.random=()=>.99;hurtP(P.maxHp*.03,s);Math.random=R;return{cast:!!P.ultCast}});

@@ -61,7 +61,7 @@ function pupilAct(id,how){const h=(G.hugi||[]).find(q=>String(q.id)===String(id)
   if(how==='show'){if(pupilWhy(h))return;pastK()['met:'+h.id]=1;let n=0;
     for(const aid of pastArtIds())if(typeof kyulD==='function'&&!kyulD()[aid]){kyulD()[aid]=1;n++}
     P.fame+=PSD.fame;{P.hgr=P.hgr||{};const r=P.hgr[h.id]||(P.hgr[h.id]={v:0,f:0,w:0,l:0});r.v=Math.max(r.v,60)}
-    if(typeof hwGet==='function'&&hwGet()&&typeof hwFill==='function'){const h0=hwGet();const x=h0.l.find(q=>q.c<q.g);if(x){x.c=x.g;log(`화두 하나가 풀렸다: ${(hwDef(x.id)||{}).n||x.id}`,'xp')}}else P.pastHw=1;
+    if(typeof hwGet==='function'&&hwGet()&&typeof hwFill==='function'){const h0=hwGet();const x=h0.l.find(hwOpenX);if(x){x.c=x.g;hwSolve(x);log(`화두 하나가 풀렸다: ${(hwDef(x.id)||{}).n||x.id}`,'xp')}}else P.pastHw=1;
     log(`${h.n}의 눈이 커진다. "그 초식… 그 손목의 버릇… 사부님?" 늙은 제자가 무릎을 꿇는다. 전생 무공의 구결 ${n}가지를 되찾았고 명성 +${PSD.fame}.`,'xp');
     if(typeof showBanner==='function')showBanner('전생의 제자',h.n);feat(`전생의 제자 ${h.n}과(와) 다시 만났다`)}
   else if(how==='ask'){const yg=pastTraces().filter(t=>t.t==='요결');for(const t of yg)pastK()[t.k]=1;
