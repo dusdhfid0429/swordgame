@@ -24,20 +24,30 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   await p.evaluate(()=>{const ks=['str','end','agi','qi'];for(let i=0;i<400;i++){P.vit=99999;trainStat(ks[i%4])}P.arts.base.p=60;P.arts[Object.keys(ARTS)[0]]={p:30,f:[true,false,false]};wallCheck();openTrain()});await p.waitForTimeout(400);
   const w=await p.evaluate(()=>({wall:atWall(),btn:[...TRN.querySelectorAll('[data-tr="str"],[data-tr="neigong"]')].map(x=>x.disabled+':'+x.textContent.trim()),hw:P.hw&&P.hw.l.length,txt:TRN.textContent.includes('화두'),why:pgWhy(),ch:pgChance(),cost:pgCost()}));
   ok(`벽에 닿음, 수련 단추 막힘: ${w.btn.join(' / ')}`,w.wall&&w.btn.every(x=>x.startsWith('true')&&x.includes('벽에 막혔다')));
-  ok(`화두 ${w.hw}개가 열리고 수련 창에 보인다, 하나도 못 풀면 성공률 ${w.ch}, 활력 ${w.cost}`,w.hw===6&&w.txt&&w.ch===0&&w.cost===0);
+  ok(`화두 ${w.hw}개가 열리고 수련 창에 보인다, 하나도 못 풀면 성공률 ${w.ch}, 활력 ${w.cost}`,w.hw===4&&w.txt&&w.ch===0&&w.cost===0);
   // 화두를 푼다: 비무 승리·의뢰·제작
   const h=await p.evaluate(()=>{const ids=P.hw.l.map(x=>x.id),out={ids};const one=id=>{const x=P.hw.l.find(q=>q.id===id);if(!x)return null;for(let i=0;i<x.g;i++){if(id==='duel')runHooks('duelWon',{});if(id==='quest')runHooks('questDone',{});if(id==='life')runHooks('lifeDone','craft');if(id==='giyeon')runHooks('giyeonDone',{});if(id==='peak')runHooks('peakSat',{});if(id==='mast')runHooks('mastDone',{id:'base',s:{p:50},before:49})}return x.c>=x.g};
     out.r=['duel','quest','life','giyeon','peak','mast'].map(one).filter(v=>v!=null);out.done=hwDone();out.rate=hwRate();return out});
-  ok(`훅으로 화두가 풀린다: ${h.ids.join(',')} → ${h.done}개`,h.r.every(Boolean)&&h.done>=3&&h.rate===1);
+  ok(`훅으로 화두가 풀린다: ${h.ids.join(',')} → ${h.done}개`,h.r.every(Boolean)&&h.done>=2&&h.rate===1);
   // 적 처치 화두
   const k=await p.evaluate(()=>{P.hw=null;const hh=hwGet();hh.l=[{id:'over',c:0,g:1},{id:'elite',c:0,g:5}];const e=mkMob('산적두목',P.x+1,P.y);e.realm=realmIdx()+1;scaleMob(e);e.d={...e.d,boss:1};runHooks('kill',e);return{d:hwDone(),l:hh.l.map(x=>x.c)}});
   ok(`한 경지 위 우두머리를 잡으면 월반·강적 화두가 함께 풀린다 (${k.l})`,k.d===2);
-  // 덜 풀면 그 비율, 다 풀면 반드시 성공
-  const r=await p.evaluate(()=>{P.hw=null;hwGet();hwFill(1);const c1=pgChance();hwFill(2);const c2=pgChance();hwFill(3);const c3=pgChance();return{c1,c2,c3}});
-  ok(`성공률 ${r.c1.toFixed(2)} → ${r.c2.toFixed(2)} → ${r.c3}`,r.c1>0&&r.c1<r.c2&&r.c2<=.9&&r.c3===1);
-  // 폐관: 다 풀었으면 Math.random 이 무엇이든 벽을 깬다. 활력은 줄지 않는다
-  const g=await p.evaluate(()=>{const m=REGIONS.pv_shaanxi.marks.find(q=>q.n==='화산');P.reg=m.gate;loadRegion(m.gate);P.x=20.5;P.y=7.5;mobs=[];P.vit=50;const R=Math.random;Math.random=()=>.999;passYears=()=>true;const why=pgWhy();pgFinish();Math.random=R;return{why,r:realmIdx(),vit:P.vit,hw:P.hw,str:capWhy('str')}});
-  ok(`깨달음이 차면 반드시 벽을 깬다 (경지 ${g.r}, 활력 ${g.vit}), 화두는 비고 수련이 다시 열린다`,!g.why&&g.r===1&&g.vit===50&&!g.hw&&g.str==='');
+  // v266: 덜 풀면 그 비율, 다 풀어도 상한(이류 95%)까지
+  const r=await p.evaluate(()=>{P.hw=null;hwGet();hwFill(1);const c1=pgChance();hwFill(1);const c2=pgChance();hwFill(3);const c3=pgChance();return{c1,c2,c3,top:hwTop(1)}});
+  ok(`성공률 ${r.c1.toFixed(2)} → ${r.c2.toFixed(2)} → ${r.c3} (상한 ${r.top})`,r.c1>0&&r.c1<r.c2&&r.c2===r.top&&r.c3===r.top&&r.top<1);
+  // v266: 경지별 차등 — 화두 하나의 몫은 줄고 필요한 수·열리는 수·목표는 늘고, 상한은 낮아진다. 세력: 사·마는 초절정까지 빠르고 화경부터 어렵다
+  const t=await p.evaluate(()=>{const sc0=P.sim,ss0=P.sims;P.sims={...(P.sims||{})};row=()=>[1,2,3,4,5,6,7,8].map(r=>({n:hwNeedN(r),top:hwTop(r),open:hwAt('open',r),g:hwGoal(hwDef('elite'),r)}));const jeong=row();
+    const sa=Object.keys(SIM).find(k=>SIM[k].sc==='사공'),ma=Object.keys(SIM).find(k=>SIM[k].sc==='마공');P.sims[sa]=P.sims[ma]={g:1};P.sim=sa;const sap=row();P.sim=ma;const map=row();P.sim=sc0;P.sims=ss0;return{jeong,sap,map}});
+  const inc=(a,k)=>a.every((x,i)=>!i||x[k]>=a[i-1][k]),dec=(a,k)=>a.every((x,i)=>!i||x[k]<a[i-1][k]);
+  ok(`정: 필요 화두 ${t.jeong.map(x=>x.n)}, 상한 ${t.jeong.map(x=>Math.round(x.top*100))}%, 강적 목표 ${t.jeong.map(x=>x.g)}`,inc(t.jeong,'n')&&inc(t.jeong,'open')&&inc(t.jeong,'g')&&dec(t.jeong,'top')&&t.jeong[7].n>=3*t.jeong[0].n);
+  ok(`사공: 필요 ${t.sap.map(x=>x.n)} / 상한 ${t.sap.map(x=>Math.round(x.top*100))}%, 마공 상한 ${t.map.map(x=>Math.round(x.top*100))}%`,[0,1,2,3].every(i=>t.sap[i].n<=t.jeong[i].n)&&t.sap[3].n<t.jeong[3].n&&[4,5,6,7].every(i=>t.sap[i].n>t.jeong[i].n&&t.sap[i].top<t.jeong[i].top&&t.map[i].top<t.sap[i].top));
+  // v266: 화경 이상은 같은 화두를 한 번 더 (목표가 커져서) 풀 수 있다
+  const rp=await p.evaluate(()=>{const r0=P.realm;P.realm=4;P.hw={r:4,v:2,l:[{id:'quest',c:0,g:hwGoal(hwDef('quest'),5),k:0}]};const x=P.hw.l[0],g1=x.g;x.c=g1;hwSolve(x);const o={g1,k:x.k,g2:x.g,done:!!x.done};P.realm=r0;P.hw=null;return o});
+  ok(`화경 벽: 강호행 ${rp.g1}건 풀면 다시 열리고 목표 ${rp.g2}`,rp.k===1&&!rp.done&&rp.g2>rp.g1);
+  // v266: 옛 저장의 화두(셋이면 반드시 성공)는 푼 것을 남기고 새 규칙으로 맞춘다
+  const mg=await p.evaluate(()=>{P.hw={r:realmIdx(),l:[{id:'duel',c:1,g:1},{id:'peak',c:1,g:1},{id:'life',c:2,g:5}]};const h=hwGet();return{v:h.v,n:hwSolved(),len:h.l.length,g:h.l.find(x=>x.id==='life').g}});
+  ok(`옛 화두 이어받기: 푼 것 ${mg.n}, 열린 ${mg.len}, 평상심 목표 ${mg.g}`,mg.v===2&&mg.n===2&&mg.len===4&&mg.g>=5);
+  await p.evaluate(()=>{P.hw=null;hwGet();hwFill()});
   // 호법·소환단: 실패해도 가볍다
   const d=await p.evaluate(()=>{const q0=P.qiN=20;P.qiAcc=20*qiGain();const st={...P.st};const R=Math.random;Math.random=()=>.0;qiDeviation(5,true);Math.random=R;const alive=P.hp>0,same=Object.keys(st).every(k=>P.st[k]===st[k]),inj=P.injS;P.inj=0;P.injS=0;return{alive,same,inj}});
   ok(`호법·소환단이면 주화입마가 가볍다 (죽지 않음 ${d.alive}, 기본기 그대로 ${d.same}, 후유증 ${d.inj})`,d.alive&&d.same&&d.inj===1);

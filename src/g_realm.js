@@ -37,19 +37,20 @@ const hobCost=()=>GD.PG_HOB.cost[Math.min(GD.PG_HOB.cost.length-1,realmIdx()+1)]
 function hobHire(){if(hobeop()||!pgPlace())return;const c=hobCost();if(P.silver<c){log(`호법을 부를 은자가 모자랍니다 (${c}).`,'info');return}P.silver-=c;P.hob=1;log(`은자 ${c}로 호법을 불렀습니다. 다음 폐관 동안 곁을 지킵니다 (실패해도 가볍게 끝난다).`,'sys');renderTrain()}
 // 성공률: 다음 경지가 높을수록 낮다. 호법 +10%, 문턱을 20% 넘긴 기둥마다 +5%, 소환단 +10%. 심법 계열에 따른 가감은 g_realmfx.js. 최대 95%
 const PG_BASE=GD.PG_BASE;
-// v248 (사용자 2026-11-11): 성공률 = 푼 화두 / need. 다 풀면 반드시 성공. 덜 풀었으면 심법 계열 가감을 얹고 partMax까지. 호법·소환단은 실패했을 때 후유증을 덜어 준다 (qiDeviation)
-function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;const h=hwRate();if(h>=1)return 1;if(h<=0)return 0;
-  let c=h+pgSchoolAdj(r);if(typeof talmaBonus==='function')c+=talmaBonus(r);return clamp(c,.05,HW.partMax)}
+// v248 (사용자 2026-11-11): 성공률은 화두로 채운 깨달음이 정한다. 호법·소환단은 실패했을 때 후유증을 덜어 준다 (qiDeviation)
+// v266 (사용자 2026-11-13): 깨달음이 다 차도 반드시 성공하지 않는다. 성공 = 상한 top[다음 경지](심법 계열 가감 포함) × 깨달음. 탈마 덤은 그 위에 (g_mara.js)
+function pgChance(pill){const r=realmIdx()+1;if(r>=RANKS.length)return 0;const h=hwRate();if(h<=0)return 0;const top=hwTop(r);
+  let c=top*h;if(typeof talmaBonus==='function')c+=talmaBonus(r);return clamp(c,.05,Math.max(top,.05))}
 // 할 수 없는 까닭 (없으면 '')
 function pgWhy(){if(realmIdx()>=RANKS.length-1)return'더 오를 경지가 없다';if(!atWall())return'아직 벽에 닿지 않았다';
   if(inCombat())return'싸움 중';if(!pgPlace())return'문파·내 집·산 정상에서만';if(P.inj>0)return'경맥이 아직 상해 있다';
-  if(hwDone()<1)return'화두를 하나도 풀지 못했다';
+  if(hwSolved()<1)return'화두를 하나도 풀지 못했다';
   // 폐관 중 흐른 해에 천하대전이 지나가거나 강호의 사건이 저절로 정해지지 않게 막는다
   if(typeof warOn==='function'&&warOn())return'천하대전 중이다';
   if(typeof storyDueIn==='function'){const a=storyDueIn(pgYears());if(a!=null)return`${a}세에 강호에 일이 생긴다. 그 뒤에 폐관하라`}if(typeof talmaWhy==='function'){const w=talmaWhy(realmIdx()+1);if(w)return w}return''}
 function pgRow(){if(!atWall())return'';const why=pgWhy(),r=realmIdx()+1,pill=(P.mats.소환단||0)>0,busy=trnBusy&&trnBusy.k.startsWith('pg');
-  return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 깨달음 ${Math.min(hwDone(),HW.need)}/${HW.need} · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
-    <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||(pgChance()>=1?'벽 깨기':`무릅쓰고 벽 깨기 · ${Math.round(pgChance()*100)}%`)}<i class="tcd"></i></button>
+  return `<div class="trow"><div class="tname"><b>폐관수련</b> <span class="num gold">${rk(r)}</span><small>${pgPlace()||'안전한 곳 필요'} · ${pgYears()}년 · 깨달음 ${Math.round(hwRate()*100)}% · 성공 ${Math.round(pgChance()*100)}%${hobeop()?' · 호법':''}</small></div>
+    <button type="button" class="btn tbtn${busy?' busy':''}" data-tr="pg"${why||trnBusy?' disabled':''}>${why||(hwFull()?`벽 깨기 · ${Math.round(pgChance()*100)}%`:`무릅쓰고 벽 깨기 · ${Math.round(pgChance()*100)}%`)}<i class="tcd"></i></button>
     ${pill&&!why&&pgChance()<1?`<button type="button" class="btn tbtn" data-tr="pg2"${trnBusy?' disabled':''}>소환단 먹고 · 후유증 가볍게<i class="tcd"></i></button>`:''}
     ${!hobeop()&&pgPlace()?`<button type="button" class="btn tbtn" data-tr="hob"${trnBusy||P.silver<hobCost()?' disabled':''}>호법 고용 · 은자 ${hobCost()}</button>`:''}</div>`}
 function pgStart(k){
@@ -89,7 +90,7 @@ function realmCard(c){const ri=realmIdx(),r=ri+1,top=r>=RANKS.length,wall=atWall
     const w=top?100:clamp((v-lo)/Math.max(1,need-lo),0,1)*100;
     return `<div class="it"><div>${n} <b class="num ${ok?'good':'gold'}">${v}</b>${top?'':` <small class="dim">/ ${need}</small>`}<span>${d}</span><div class="mbar"><i style="width:${w}%"></i></div></div><div class="ib"></div></div>`}).join('');
   const lk=lacking();
-  const msg=top?'무학의 끝에 닿았다.':wall?`<b class="gold">벽에 막혔다.</b> 기본기와 내공은 더 오르지 않는다. 화두를 풀어 깨달음을 채운 뒤 문파·내 집·산 정상에서 폐관수련으로 ${rk(r)}의 벽을 깬다. 깨달음 ${Math.min(hwDone(),HW.need)}/${HW.need}`
+  const msg=top?'무학의 끝에 닿았다.':wall?`<b class="gold">벽에 막혔다.</b> 기본기와 내공은 더 오르지 않는다. 화두를 풀어 깨달음을 채운 뒤 문파·내 집·산 정상에서 폐관수련으로 ${rk(r)}의 벽을 깬다. 깨달음 ${Math.round(hwRate()*100)}% · 성공 ${Math.round(pgChance()*100)}%`
     :`${rk(r)}에 오르려면: ${lk.map(p=>`<span class="bad">${p.lack}</span>`).join(' · ')}`;
   return `<div class="card"><div class="row2"><h4>경지 ${realmName()}</h4><span class="num tag">${top?'최고 경지':`다음 ${rk(r)}`}</span></div>
     <p class="note">경지는 외공·내공·무리 세 기둥이 함께 차야 오른다. 외공과 내공은 다음 경지 문턱까지만 오르고, 벽을 깨야 다시 오른다.</p>
