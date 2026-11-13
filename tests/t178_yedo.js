@@ -13,10 +13,10 @@ const {chromium}=require(process.env.PWPATH||'playwright');
     const arc=fx.find(f=>f.t==='arc');
     // 그려 보기: 몇 프레임 동안 오류 없이 지나가는지
     await new Promise(z=>setTimeout(z,250));
-    return{arc:arc&&{wc:arc.wc,life:+arc.max.toFixed(3)},iseom:fx.some(f=>f.t==='iseom')||null,claw:fx.some(f=>f.t==='claw'),row:P.atkRow,satk:+P.satkMax.toFixed(3),swing:+P.swingMax.toFixed(3)}},cls);
+    return{arc:arc&&{wc:arc.wc,life:+arc.max.toFixed(3)},iseom:fx.some(f=>f.t==='iseom')||null,claw:fx.some(f=>f.t==='claw'),cleave:fx.some(f=>f.t==='cleave'),row:P.atkRow,satk:+P.satkMax.toFixed(3),swing:+P.swingMax.toFixed(3)}},cls);
   const d=await strike('도'),y=await strike('예');
   console.log(JSON.stringify({d,y}));
-  ok(`도 평타는 그대로 할퀸 자국 (${d.claw}) · 도 시트 줄 ${d.row}`,d.claw&&d.row==='도');
+  ok(`도 평타는 굵은 칼자국 (${d.cleave}) · 할퀸 자국 없음 · 도 시트 줄 ${d.row}`,d.cleave&&!d.claw&&d.row==='도');
   ok(`예도 평타 반달은 예도 계열(${y.arc&&y.arc.wc}), 할퀸 자국 없음`,y.arc&&y.arc.wc==='예'&&!y.claw);
   const y2=await p.evaluate(()=>{fx=[];const e=mkMob('강시',P.x+1,P.y);e.hp=e.maxHp=99999;fxHit(mkX(P.cur),e);return fx.some(f=>f.t==='iseom')});
   ok('예도 적중은 일섬 한 줄',y2);
