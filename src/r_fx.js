@@ -66,20 +66,21 @@ function shock(x,y,rx,ry,col,k,w){ctx.save();ctx.translate(x,y);ctx.scale(1,ry/r
 // crescent sword-qi ribbon swept along an iso ellipse; thick bright leading edge, streaky tail
 function ribbon(f,p,k,o={}){
   const flat=o.flat,rk=o.rk||1,rx=(flat?isoR(f.r)[0]:f.r*55)*rk,ry=(flat?isoR(f.r)[1]:f.r*32)*rk,th=Math.atan2(Math.sin(f.ang)*rx,Math.cos(f.ang)*ry),pr=1-k,sp=o.spread||f.spread,dir=o.dir??(f.flip?-1:1);
-  const head=Math.min(1,pr/(o.fast||.32)),tail=Math.max(0,(pr-.28)/.72)*.97,cy=p.y-(o.h??26),lift=(o.lift??8)*f.r,thick=(o.thick||(6+f.w*2.2))*(f.r>1.2?1.25:1);
+  const head=Math.min(1,pr/(o.fast||.32)),tail=Math.max(0,(pr-(o.lag??.28))/(1-(o.lag??.28)))*.97,cy=p.y-(o.h??26),lift=(o.lift??8)*f.r,thick=(o.thick||(6+f.w*2.2))*(f.r>1.2?1.25:1);
   if(head-tail<.02)return;const a0=(o.a0??th-dir*sp/2);
   const P2=(u,rr)=>{const a=a0+dir*sp*u;return[p.x+Math.cos(a)*rx*rr,cy+Math.sin(a)*ry*rr-lift*Math.sin(u*Math.PI)*(o.tilt??1)]};
   const n=26,outer=[],inner=[],mid=[];
   for(let i=0;i<=n;i++){const u=tail+(head-tail)*i/n,q=i/n,w=thick*Math.pow(q,.9)*Math.min(1,(1-q)*14+.25)/rx;outer.push(P2(u,1+w*.25));inner.push(P2(u,1-w));mid.push(P2(u,1-w*.35))}
-  const fade=Math.min(1,k*2.2);
+  const fade=Math.min(1,k*2.2)*(o.al??1);
+  if(o.ghost){const e=outer.slice(n*.2|0);ctx.strokeStyle=rgba(f.col,.5*fade);ctx.lineWidth=o.ghost;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.6*fade);ctx.lineWidth=o.ghost*.35;path(e);ctx.stroke();return outer}
   ctx.fillStyle=rgba(f.col,.22*fade);path([...outer,...inner.reverse()]);ctx.fill();inner.reverse();
   ctx.fillStyle=rgba(f.col,.38*fade);path([...outer.slice(n/3|0),...mid.slice(n/3|0).reverse()]);ctx.fill();
   if(!f.st)f.st=Array.from({length:9},()=>({rr:rnd(),s:rnd()*.7,w:.6+rnd()*1.6,c:rnd()<.35}));
   for(const s of f.st){const pts=[];for(let i=Math.floor(s.s*n);i<=n;i++){const a=outer[i],b=inner[i];pts.push([a[0]+(b[0]-a[0])*s.rr,a[1]+(b[1]-a[1])*s.rr])}
     ctx.strokeStyle=rgba(s.c?HI:f.col,(s.c?.5:.7)*fade);ctx.lineWidth=s.w;path(pts);ctx.stroke()}
   const e=outer.slice(n*.45|0);ctx.strokeStyle=rgba(f.col,.6*fade);ctx.lineWidth=5;path(e);ctx.stroke();ctx.strokeStyle=rgba(HI,.95*fade*(o.soft?.35:1));ctx.lineWidth=1.8;path(e);ctx.stroke();
-  const tip=outer[n];if(k>.5)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
-}
+  const tip=outer[n];if(k>.5&&!o.noTip)glowDot(tip[0],tip[1],14,f.col,(k-.5)*1.6);
+  return outer}
 // 찌르기·주먹 기운 (v211): 휘두르는 반달(ribbon)과 달리 바라보는 쪽으로 곧게 뻗는다. 길이는 반달과 같은 타원 반지름을 기준으로 mo마다 늘이고 줄인다
 const THR={thrust:1,punch:1,gust:1.1};   // v212: 끝이 병기 사거리에 닿는다 (fArc가 r을 병기 길이로 맞춘다)
 function thrustGeo(f){const rx=f.r*55,ry=f.r*32,c=Math.cos(f.ang),s=Math.sin(f.ang);return{ux:c,uy:s,L:rx*ry/Math.hypot(ry*c,rx*s)*(THR[f.mo]||THR.thrust)}}
@@ -105,13 +106,31 @@ function drawThrust(f,p,k){const{ux,uy,L}=thrustGeo(f),pr=1-k,nx=-uy,ny=ux,ox=p.
 // 쓸어 치기 모양을 병기마다 (v212): 검은 가늘고 날카로운 반달 그대로, 도는 두껍고 무거운 반달, 봉은 땅 가까이 넓게 도는 둥근 띠,
 // 창은 자루 끝 창날이 그리는 가는 호, 권각은 날 없이 뭉툭하고 넓은 바람 띠, 단도·절편은 짧고 가는 반달이 엇갈려 두 번
 const SWP={도:{thick:1.7},봉:{flat:1,rk:1.2,h:14,lift:3,thick:1.4,spread:1.12},창:{thick:.45},권:{thick:2,soft:1,fast:.24},단:{thick:.65,dbl:1},편:{thick:.55,dbl:1}};
-function sweepFx(f,p,k){const s=SWP[vcls(f.wc)];if(!s){ribbon(f,p,k);return}
+function sweepFx(f,p,k){if(f.wc==='예'){yedoFx(f,p,k);return}const s=SWP[vcls(f.wc)];if(!s){ribbon(f,p,k);return}
   const o={...s,thick:(6+f.w*2.2)*s.thick,spread:f.spread*(s.spread||1)};ribbon(f,p,k,o);
   if(s.dbl){const k2=Math.min(1,k*1.25);if(k2<.98)ribbon(f,p,k2,{...o,rk:.72,dir:f.flip?1:-1})}}
+// 예도 (v264, 사용자 2026-11-13 "예도가 도와 같아 구분이 안 된다, 날렵하고 도보다 빠르게"): 도의 두껍고 묵직한 반달 대신
+// 가늘고 길게 뻗은 칼날 한 줄이 아주 빨리 지나가고(머리 .13, 꼬리 바로 따라옴), 지나간 자리에 칼날 잔상 둘이 늦게 따라온다.
+// 끝에서는 칼끝을 지나 곧게 뻗는 섬광 한 줄('길게 베고 짧게 거둔다'). 색은 그대로 심법 색 — 모양·속도·결로만 다르다
+const YEDO={thick:.42,spread:1.12,rk:1.04,fast:.13,lag:.12,ghost:[[.13,.92,.45],[.26,.84,.25]],flash:46};
+function yedoFx(f,p,k){const Y=YEDO,sp=f.spread*Y.spread,base={spread:sp,rk:Y.rk,fast:Y.fast,lag:Y.lag,thick:(6+f.w*2.2)*Y.thick,noTip:1};
+  for(const[dk,rk,al]of Y.ghost){const k2=k+dk;if(k2<1)ribbon(f,p,k2,{...base,rk:Y.rk*rk,ghost:1.6,al})}   // 잔상: 조금 앞선 때의 칼날 끝선만, 안쪽으로 겹쳐
+  const out=ribbon(f,p,k,base);
+  const pr=1-k,u=(pr-Y.fast)/.32;if(!out||u<0||u>1)return;   // 칼이 다 지나가는 순간 칼끝에서 앞으로 뻗는 섬광
+  const a=out[out.length-1],b=out[out.length-3],dx=a[0]-b[0],dy=a[1]-b[1],l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,L=Y.flash*(.35+.65*Math.min(1,u*3))*(f.r>1.2?1.2:1),fa=1-u;
+  ctx.strokeStyle=rgba(f.col,.45*fa);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a[0]-ux*8,a[1]-uy*8);ctx.lineTo(a[0]+ux*L,a[1]+uy*L);ctx.stroke();
+  ctx.strokeStyle=rgba(HI,.95*fa);ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(a[0]-ux*6,a[1]-uy*6);ctx.lineTo(a[0]+ux*L*1.05,a[1]+uy*L*1.05);ctx.stroke();
+  glowDot(a[0],a[1],9,f.col,fa*.8)}
+// 예도 적중: 도의 세 줄 할퀸 자국 대신 대상을 비스듬히 가로지르는 가늘고 긴 한 줄(일섬)이 번쩍이고 곧 사라진다
+function drawIseom(f,p,k){const pr=1-k,L=40*(f.s||1),an=f.an,ux=Math.cos(an),uy=Math.sin(an),cx=p.x,cy=p.y-28,h=Math.min(1,pr/.25),x0=cx-ux*L,y0=cy-uy*L,x1=x0+ux*2*L*h,y1=y0+uy*2*L*h,fa=Math.min(1,k*1.8);
+  ctx.strokeStyle=rgba(f.col,.4*fa);ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
+  ctx.strokeStyle=rgba(HI,fa);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x0+ux*L*.2,y0+uy*L*.2);ctx.lineTo(x1,y1);ctx.stroke();
+  if(h>=1){const w=10*k;ctx.fillStyle=rgba(HI,.9*fa);path([[cx-ux*L*.5,cy-uy*L*.5],[cx-uy*w*.3,cy+ux*w*.3],[cx+ux*L*.5,cy+uy*L*.5],[cx+uy*w*.3,cy-ux*w*.3]]);ctx.fill();glowDot(cx,cy,14,f.col,fa*.7)}}
 function drawGlow(f){
   const p=toScreen(f.x,f.y),k=f.life/f.max;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=(f.dim||1)*(f.pw||1);
   if(f.t==='arc')sweepFx(f,p,k);
   else if(f.t==='thrust')drawThrust(f,p,k);
+  else if(f.t==='iseom')drawIseom(f,p,k);
   else if(f.t==='spin'){const a=-time*0;ribbon(f,p,k,{flat:1,spread:5.6,lift:3,h:16,fast:.45,a0:f.a0??(f.a0=rnd()*6.28)});ribbon(f,p,k,{flat:1,spread:5.6,lift:2,h:30,fast:.5,thick:5,a0:f.a0+3.14});
     if(!f.sp)f.sp=mkSparks(10,150,.3);sparks(f,p.x,p.y-16,f.col,k);shock(p.x,p.y,isoR(f.r)[0]*(1.1-k*.3),isoR(f.r)[1]*(1.1-k*.3),f.col,k)}
   else if(f.t==='ring2'){const[rx,ry]=isoR(f.r*(1-k*.6));shock(p.x,p.y,rx,ry,f.col,k);
@@ -189,6 +208,10 @@ function drawProj(q){
     ctx.fillStyle='#2a2622';ctx.beginPath();ctx.arc(0,0,4.2,0,7);ctx.fill();ctx.fillStyle='rgba(200,190,170,.55)';ctx.beginPath();ctx.arc(-1.4,-1.4,1.3,0,7);ctx.fill();
     ctx.strokeStyle='#8a6a40';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(1.5,-3.6);ctx.quadraticCurveTo(4,-7,2.5+fl,-9);ctx.stroke();
     glowDot(2.5+fl,-9,6+fl*1.5,'255,190,90',.9);ctx.fillStyle='#fff6d0';ctx.beginPath();ctx.arc(2.5+fl,-9,1.1,0,7);ctx.fill()}
+  else if(q.kind==='crescent'&&q.X.art&&q.X.art.cls==='예'){const r=Math.min(14*s,19);ctx.scale(.32,1);   // 예도 기운: 더 가늘고 긴 초승달, 뒤로 곧은 빛줄기
+    ctx.fillStyle=rgba(q.c,.45);ctx.beginPath();ctx.arc(-r*.3,0,r,-1.35,1.35);ctx.arc(-r*.75,0,r*1.02,1.15,-1.15,true);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=rgba(HI,.5);ctx.lineWidth=1;for(const y of[-.5,0,.5]){ctx.beginPath();ctx.moveTo(-r*.6,y*r);ctx.lineTo(-r*4.2,y*r*.7);ctx.stroke()}
+    ctx.strokeStyle=rgba(HI,.95);ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(-r*.3,0,r,-1.25,1.25);ctx.stroke()}
   else if(q.kind==='crescent'){const r=Math.min(12*s,16);ctx.scale(.55,1);
     ctx.fillStyle=rgba(q.c,.5);ctx.beginPath();ctx.arc(-r*.4,0,r,-1.3,1.3);ctx.arc(-r*1.1,0,r*1.05,1.05,-1.05,true);ctx.closePath();ctx.fill();
     for(let i=0;i<4;i++){const a=-.9+i*.6;ctx.strokeStyle=rgba(i%2?HI:q.c,.45);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.4+Math.cos(a)*r*.85,Math.sin(a)*r*.85);ctx.lineTo(-r*2.6,Math.sin(a)*r*.6);ctx.stroke()}

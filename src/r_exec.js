@@ -1,5 +1,6 @@
 let sched=[],projs=[];const later=(t,f)=>sched.push({t,f});
-function anim(d){P.swing=P.swingMax=d}
+const ANIM_K={예:.72};   // v264 예도는 도보다 빨리 휘두른다 (몸 동작만 짧게, 피해 시점·쿨다운은 그대로)
+function anim(d){const a=P&&ARTS[P.cur];d*=a&&ANIM_K[a.cls]||1;P.swing=P.swingMax=d}
 const front=k=>({x:P.x+P.fx*k,y:P.y+P.fy*k});
 const rot=(k,off)=>({x:P.x+(P.fx*Math.cos(off)-P.fy*Math.sin(off))*k,y:P.y+(P.fx*Math.sin(off)+P.fy*Math.cos(off))*k});
 const sang=()=>Math.atan2((P.fx+P.fy)*TH/2,(P.fx-P.fy)*TW/2);
@@ -34,7 +35,7 @@ const SWR={arc:1.07,circle:1.15},RADM={};
 const radMean=(c,p)=>{const k=c+p;if(RADM[k]==null){const v=[];for(const a of Object.values(ARTS))if(a.cls===c)for(const f of a.forms)if(f.p===p&&f.rad)v.push(f.rad);RADM[k]=v.length?v.reduce((a,b)=>a+b)/v.length:0}return RADM[k]};
 function meleeRad(X,f){const c=X&&X.art&&X.art.cls,m=radMean(c,f.p);return !m||!CLASS[c]||rangedCls(c)||!SWR[f.p]?f.rad:f.rad/m*CLASS[c].reach*SWR[f.p]}
 const strikeMo=X=>{const c=X&&X.art&&X.art.cls,a=c&&CLASS[c]&&CLASS[c].anim;return a==='thrust'?'thrust':a==='punch'?'punch':'swing'};
-const fArc=(X,r,spread,col,w,life,sweep)=>{const mo=sweep?'swing':strikeMo(X);if(!sweep)r*=wLen(X);const o={t:mo==='swing'?'arc':'thrust',mo,wc:X&&X.art&&X.art.cls,x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
+const fArc=(X,r,spread,col,w,life,sweep)=>{const mo=sweep?'swing':strikeMo(X);if(!sweep)r*=wLen(X);const o={t:mo==='swing'?'arc':'thrust',mo,wc:X&&X.art&&X.art.cls,x:P.x,y:P.y,ang:sang(),r,spread,col,w,life:X&&X.art&&X.art.cls==='예'?Math.max(.24,life*1.25):Math.max(.34,life*1.8),flip:(P.flipC=!P.flipC)};GL(o,X);const i1=fx.length;runHooks('slashFx',o);tagCast(X,i1,false)};   // 검기 겹은 이미 가늘어진 o.w로 그려지니 밝기만   // slashFx: 경지 검기·검사·검강 (g_realmfx.js)
 const fSpin=(X,c,r,col,w,life)=>GL({t:'spin',x:c.x,y:c.y,r,col,w,life},X);
 const fRing=(X,c,r,col,w,life)=>GL({t:'ring2',x:c.x,y:c.y,r,col,w,life},X);
 const fLine=(X,len,col,w,life,wavy,off=0)=>{const e=rot(len,off);GL({t:'line',x:P.x,y:P.y,ex:e.x,ey:e.y,col,w,life,wavy},X)};
@@ -48,7 +49,8 @@ const needleRain=(X,pt,c)=>{for(let i=0;i<3;i++)GL({t:'needle',x:pt.x+(Math.rand
 function fxHit(X,e,s=1){
   const c=X.art.c,w=vcls(X.art.cls);
   if(w==='단'||w==='편')dagHitFx(X,e);   // 단검술·절편술: 손에 쥔 단도가 휘둘러진다 (g_amgi.js)
-  if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
+  if(X.art.cls==='예')GL({t:'iseom',x:e.x,y:e.y,col:c,s,an:(Math.random()<.5?-1:1)*(.5+Math.random()*.35)+(Math.random()<.5?0:Math.PI),life:.2},X);   // 예도: 일섬 한 줄 (r_fx drawIseom)
+  else if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
   if(X.art.elc)GL({t:'crackle',x:e.x,y:e.y,col:c,life:.3},X);
   fParts(X,e,c,5,60,X.art.pt==='petal'||X.art.pt==='leaf'?'petal':'dot',.6);
 }
