@@ -103,3 +103,21 @@ hook('npcDlg',c=>{if(c.html!=null)return;const n=c.n;
 const SF_CM_AT=[[15.5,22.5],[20.5,22.5],[24.5,22.5],[18,20.5],[23,20.5]];
 hook('regionLoaded',id=>{if(id!=='hq_cheonma_6')return;const R=REGIONS[id],M=sbMasters('cheonma');R.npcs=R.npcs.filter(n=>!n.sfMaster&&n.sfMaster!==0);if(sectPop('cheonma')<=0)return;   // 멸문 폐허엔 장로 사부가 서지 않는다
   M.forEach((m,i)=>{if(G.ndead&&G.ndead['cheonma/sf_m'+m.k])return;const[x,y]=SF_CM_AT[i%SF_CM_AT.length];R.npcs.push({id:'sf_m'+m.k,sfSid:'cheonma',sfMaster:m.k,n:m.n,x,y,pal:(typeof sectPal==='function'&&sectPal('cheonma',4,m.cls,{}))||masterPal(SECTS.cheonma)})});refreshNPCF()});
+// ---- 대연무장 가는 길 (사용자 2026-11-13 "장백파 대연무장을 못찾겠어") ----
+// 대문파는 v238부터 대연무장 출입구가 외원 마당 서쪽 끝인데 안내 글은 '본산 아래 어귀 왼쪽'이라 했다. 글은 실제 출입구 자리를 읽고,
+// 대연무장에 볼일(서열 비무·사부 고르기·지명 받들기·다음 무공 청하기)이 있으면 본산 맵마다 갈 출입구에, 대연무장 안에선 그 사부에게 금빛 표시를 띄운다
+const sfHostMap=sid=>{const s=SECTS[sid],ch=s&&REGIONS[hqId(s)]&&REGIONS[hqId(s)].chain||[hqId(s)];return ch.find(id=>REGIONS[id]&&(REGIONS[id].gates||[]).some(g=>g.to===sfId(sid)))||hqId(s)};
+const sfOuter=sid=>/_outer$/.test(sfHostMap(sid));
+const sfWay=s=>sfOuter(s.id)?`${hqPlace(s)} 산문을 지나 외원 마당 서쪽(왼쪽) 끝 '대연무장' 출입구로 가세요.`:`${hqPlace(s)} 아래 어귀 왼쪽 '대연무장' 출입구로 가세요.`;
+const sfWhere=s=>sfOuter(s.id)?'외원 서쪽 대연무장':'본산 대연무장';
+function sfErrand(){const s=typeof sbSect==='function'&&sbSect(),b=P&&P.sabu;if(!s||!b||s.id==='cheonma'||!REGIONS[sfId(s.id)]||sectPop(s.id)<=0)return null;
+  if(sfOpen(b))return{s,k:b.st==='named'?b.off:null};
+  if(b.st==='named'&&b.late)return{s,k:b.off};
+  if(b.st==='disc'&&typeof sbNextWhy==='function'&&!sbNextWhy())return{s,k:b.m};
+  return null}
+function sfMarks(){const e=sfErrand();if(!e||!REG)return[];const R=REGIONS[REG];if(!R)return[];
+  if(REG===sfId(e.s.id)){if(e.k==null)return[];const n=(R.npcs||[]).find(n=>n.sfMaster===e.k);return n?[{x:n.x,y:n.y,l:n.n,h:84,npc:1}]:[]}
+  const ch=REGIONS[hqId(e.s)].chain||[hqId(e.s)],host=sfHostMap(e.s.id),ci=ch.indexOf(REG),hi=ch.indexOf(host);if(ci<0||hi<0)return[];
+  const to=ci===hi?sfId(e.s.id):ch[ci<hi?ci+1:ci-1],g=(R.gates||[]).find(q=>q.to===to);if(!g)return[];
+  return[{x:g.x,y:g.y,l:ci===hi?'대연무장':g.label,h:toScreen(g.x,g.y).y-(typeof portalTagY==='function'?portalTagY(g):toScreen(g.x,g.y).y-60)+14,tag:1}]}
+hook('drawList',list=>{if(!playing||typeof acadMarkDraw!=='function'||(typeof acadOn==='function'&&acadOn()))return;for(const m of sfMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});

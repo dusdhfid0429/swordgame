@@ -24,7 +24,7 @@ function sbStart(sid){const s=SECTS[sid];if(!sabuOn(s)||!sbMasters(sid).length)r
   const pool=SB.coh.slice(),coh=[];for(let i=0;i<5;i++){const n=pool.splice(Math.floor(Math.random()*pool.length),1)[0];coh.push({n,cls:pick(sbMasters(sid)).cls})}
   const ord=coh.map(c=>c.n);ord.splice(SB.start[Math.min(realmIdx(),SB.start.length-1)],0,'@');
   P.sabu={sid,coh,ord,st:'rank',m:-1,off:-1,step:0,late:0,dj:0,djCool:0};
-  log(`${s.n} 입문 동기 여섯이 모였습니다. 서열은 지금 ${sbPos()+1}위. 본산 대연무장에서 사부 선정 대회가 열립니다: 문파원과 마을 사람들 앞에서 서열 비무를 벌이고, 1위는 사부를 고르고 그 아래는 사부가 지명합니다. ${hqPlace(s)} 아래 어귀 왼쪽 '대연무장' 출입구로 가세요.`,'xp');
+  log(`${s.n} 입문 동기 여섯이 모였습니다. 서열은 지금 ${sbPos()+1}위. 대연무장에서 사부 선정 대회가 열립니다: 문파원과 마을 사람들 앞에서 서열 비무를 벌이고, 1위는 사부를 고르고 그 아래는 사부가 지명합니다. ${sfWay(s)}`,'xp');
   setTimeout(()=>showBanner('사부 선정 대회',`${s.n} 대연무장 · 지금 ${sbPos()+1}위`),1400)}
 hook('sectActDone',c=>{if(c.a==='sjoin'&&P.sect===c.x)sbStart(c.x)});
 // 서열을 굳힌다: 위 동기들이 사부를 먼저 데려가고, 남은 사부가 있으면 나를 지명한다
@@ -104,7 +104,7 @@ function sbPathHtml(M,mine){const b=P.sabu;return `<div class="sbpath">${M.path.
 function sbOrdHtml(){const b=P.sabu;return `<p class="note">${b.ord.map((n,i)=>n==='@'?`<b class="gold">${i+1}.나</b>`:`<span class="dim">${i+1}.${esc(n)}${typeof smCoh==='function'&&smCoh(n)?`(${smCoh(n)})`:''}</span>`).join(' · ')}</p>`}
 function sabuCard(s,hq){if(s.id==='geumgun'&&typeof gbCard==='function')return gbCard(s,hq);if(s.id==='cheonma'&&typeof imkCard==='function'&&imkOn())return imkCard();const on=sabuOn(s)||s.id==='cheonma';if(!P.sabu||P.sabu.sid!==s.id||!on)return sabuOn(s)?`<div class="card sbcard"><h4>사부와 로드맵</h4><p class="note">입문 서열이 이미 지나 공통 길을 걷는다. ${rankName(s.id,SB.late)}에 오르면 사부가 지명할 수 있다.</p></div>`:'';
   const b=P.sabu,M=sbMasters(s.id),fest=sfOpen(b)&&s.id!=='cheonma',far=fest&&!sfHere();if(far)hq=false;
-  const here=far?`<p class="note"><b class="gold">사부 선정 대회</b>는 본산 <b>대연무장</b>에서 열린다. 문파원과 마을 사람들이 지켜보는 가운데 서열 비무를 벌이고 사부를 정한다. ${esc(hqPlace(s))} 아래 어귀 왼쪽 '대연무장' 출입구로 간다.</p>`:hq?'':`<p class="note dim">비무와 사부 정하기는 본산 ${hqPlace(s)}의 ${masterTitle(s)} 창에서 한다.</p>`;let body='';
+  const here=far?`<p class="note"><b class="gold">사부 선정 대회</b>는 본산 <b>대연무장</b>에서 열린다. 문파원과 마을 사람들이 지켜보는 가운데 서열 비무를 벌이고 사부를 정한다. ${esc(sfWay(s).replace('가세요.','간다.'))} 대연무장에 볼일이 있으면 가는 출입구에 금빛 화살표가 뜬다.</p>`:hq?'':`<p class="note dim">비무와 사부 정하기는 본산 ${hqPlace(s)}의 ${masterTitle(s)} 창에서 한다.</p>`;let body='';
   const masters=(btn)=>`<div class="list">${M.map(m=>`<div class="it"><div><b>${esc(m.n)}</b>${typeof smTag==='function'?smTag(smMaster(s.id,m.k)):''} <small class="dim">${CLASS[m.cls].n}</small>${sbPathHtml(m,false)}<span>"${esc(m.say)}"</span></div><div class="ib">${btn(m)}</div></div>`).join('')}</div>`;
   if(b.st==='rank'){const pos=sbPos(),up=pos>0?b.ord[pos-1]:null;
     body=`<p class="note">입문 동기 여섯의 서열. <b>1위</b>는 사부를 고르고, 그 아래는 위 동기들이 사부를 먼저 데려간 뒤 남은 사부가 지명한다. 바로 위 동기를 이기면 한 칸 오르고, 지면 서열이 굳는다.</p>${sbOrdHtml()}
@@ -123,7 +123,7 @@ function sabuCard(s,hq){if(s.id==='geumgun'&&typeof gbCard==='function')return g
   return `<div class="card sbcard"><div class="row2"><h4>사부와 로드맵</h4><span class="tag">${b.dj?'대제자':b.st==='disc'?'사부의 제자':b.st==='common'?'공통 길':'입문 서열 '+(sbPos()+1)+'위'}</span></div>${body}${here}${dj}</div>`}
 // 임무 줄: 할 일이 있을 때만
 function sabuTrackHtml(){const s=sbSect();if(!s)return'';const b=P.sabu;
-  if(sfOpen(b)&&s.id!=='cheonma')return `<h5>사부 선정 대회 · ${esc(s.n)}</h5><div>${b.st==='rank'?`서열 ${sbPos()+1}위 · 서열 비무`:b.st==='pick'?'서열 1위 · 단상에서 사부 고르기':`${esc(sbMasters(s.id)[b.off].n)}의 지명`} <small class="dim">본산 대연무장</small></div>`;
+  if(sfOpen(b)&&s.id!=='cheonma')return `<h5>사부 선정 대회 · ${esc(s.n)}</h5><div>${b.st==='rank'?`서열 ${sbPos()+1}위 · 서열 비무`:b.st==='pick'?'서열 1위 · 단상에서 사부 고르기':`${esc(sbMasters(s.id)[b.off].n)}의 지명`} <small class="dim">${esc(sfWhere(s))}</small></div>`;
   const t=b.st==='rank'?`서열 ${sbPos()+1}위 · 서열 비무`:b.st==='pick'?'서열 1위 · 사부 고르기':b.st==='named'?`${sbMasters(s.id)[b.off].n}의 지명`:b.st==='disc'&&!sbNextWhy()?`사부 ${sbMy().n}에게 다음 무공 청하기`:!b.dj&&!djWhy()?'대제자 선발 청하기':'';
   const at=b.st==='named'||b.st==='disc'?sbWhere(s):masterTitle(s);
-  return t?`<h5>사부 · ${esc(s.n)}</h5><div>${t} <small class="dim">본산 ${esc(at)}</small></div>`:''}
+  return t?`<h5>사부 · ${esc(s.n)}</h5><div>${t} <small class="dim">${esc(at==='대연무장'?sfWhere(s):'본산 '+at)}</small></div>`:''}
