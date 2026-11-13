@@ -50,7 +50,7 @@ function fxHit(X,e,s=1){
   const c=X.art.c,w=vcls(X.art.cls);
   if(w==='단'||w==='편')dagHitFx(X,e);   // 단검술·절편술: 손에 쥔 단도가 휘둘러진다 (g_amgi.js)
   if(X.art.cls==='예')GL({t:'iseom',x:e.x,y:e.y,col:c,s,an:(Math.random()<.5?-1:1)*(.5+Math.random()*.35)+(Math.random()<.5?0:Math.PI),life:.2},X);   // 예도: 일섬 한 줄 (r_fx drawIseom)
-  else if(w==='도')fClaw(X,e,c);else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
+  else if(w==='도')GL({t:'cleave',x:e.x,y:e.y,col:c,s,an:((P.fx-P.fy)>=0?1:-1)*(.75+Math.random()*.25),life:.34},X);   // v265 도: 굵은 칼자국 하나 + 쿵 (r_fx drawCleave)else if(w==='봉')fRing(X,e,.6*s,c,3,.25);else fStar(X,e,c,(w==='권'?1.2:.9)*s,.2);
   if(X.art.elc)GL({t:'crackle',x:e.x,y:e.y,col:c,life:.3},X);
   fParts(X,e,c,5,60,X.art.pt==='petal'||X.art.pt==='leaf'?'petal':'dot',.6);
 }
