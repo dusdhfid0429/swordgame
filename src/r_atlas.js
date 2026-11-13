@@ -30,7 +30,7 @@ const a2i=(row,i)=>A2[row][0]+Math.min(i,A2[row][1]-1);
 // f: 쓰는 초식. 권 계열인데 이름이 발차기면 각법 줄을 쓴다 (각법 무공은 권 풀에 섞여 있다)
 const isKick=f=>!!f&&/각|퇴|족|발/.test(f.n||'');
 function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag'][P.hc]}
-  const w=heroCls();P.ss2=0;const row=P.atkRow=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w;
+  const w=heroCls();P.ss2=0;const row=P.atkRow=w==='권'&&(isKick(f)||(!f&&kind==='vert'))?'각':w==='도'&&P&&ARTS[P.cur]&&ARTS[P.cur].cls==='예'&&hasWeaponFor('예')&&ANIM.atk.wx&&ANIM.atk.wx.예?'예':w;   // v264 예도는 검 클립(가는 칼선) 줄
   // v123: 핸드오프 시트의 공격 클립이 그 줄에 바인딩돼 있고 시트가 읽혔으면 그 장 배열을 쓴다 (P.ssh = 시트 이름)
   // v167: 이펙트·무기 그림이 든 actfx 시트가 읽혔으면 그것, 아니면 act. v214: 내공이 바닥난 기본 공격(f 없음)은 이펙트 없는 act
   P.ssh=null;const wx=ANIM.atk.wx&&ANIM.atk.wx[row],sn=(wx&&wx.sheet?[wx.sheet]:ANIM.atk.wxSheet||[]).filter(n=>f||n!=='actfx'||!noQi()).find(n=>sheetOk(n)&&wx&&wx[kind]&&sheetClip(n,wx[kind]))||'act',wc=wx&&wx[kind]&&sheetClip(sn,wx[kind]);
@@ -38,7 +38,7 @@ function heroAtk(kind,f){if(!kind){P.hc=((P.hc|0)+1)%3;kind=['flat','vert','diag
   else if(w!=='검'&&hero2Ok()&&W2SET[row]){const s=W2SET[row][kind]||(kind==='palm'?W2SET.권.palm.map(i=>a2i('권',i)):null);
     if(s){P.sset=kind==='palm'&&!W2SET[row].palm?s:s.map(i=>a2i(row,i));P.ss2=1}}
   if(!P.ss2&&!P.ssh)P.sset=w==='검'?HSET[kind]:(WSET[w]||WSET.권)[kind];
-  P.satk=P.satkMax=kind==='ult'?.6:Math.max(.26,.1*P.sset.length)}
+  P.satk=P.satkMax=(kind==='ult'?.6:Math.max(.26,.1*P.sset.length))*(row==='예'?ANIM_K.예:1)}   // v264 예도 동작은 도보다 빠르다 (r_exec ANIM_K)
 // 클립 도구 (v122): 클립의 장 배열, 장 단위 시간 u로 장 고르기 (pp 왕복 / once 끝에서 멈춤 / 그 외 순환)
 function clipFrames(c){if(c.clip){const s=sheetClip(c.a,c.clip);return s?s.f:[]}if(c.f)return c.f;const r=A2[c.row],o=c.skip||0,n=c.max?Math.min(c.max,r[1]-o):r[1]-o,a=[];for(let i=0;i<n;i++)a.push(r[0]+o+i);return a}
 function clipAt(c,u){const f=clipFrames(c),n=f.length;if(c.pp){const k=Math.floor(u)%(2*n-2);return f[k<n?k:2*n-2-k]}if(c.once)return f[Math.min(n-1,Math.floor(u))];return f[Math.floor(u)%n]}

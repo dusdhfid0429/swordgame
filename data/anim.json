@@ -63,6 +63,8 @@
       "wxSheet": ["actfx", "act"],
       "wx": {
         "검": {"flat": "sword_thrust", "vert": "sword_slash", "diag": "sword_slash", "ult": "sword_slash"},
+        "_예": "예도(v264, 사용자 2026-11-13 '도와 같아 구분이 안 된다'): 도 시트의 넓고 푸른 반달 대신 검 클립의 가는 칼선·빠른 잔상 장을 쓴다 (예도는 도보다 가늘고 날렵하다)",
+        "예": {"flat": "sword_thrust", "vert": "sword_slash", "diag": "sword_slash", "ult": "sword_slash"},
         "도": {"flat": "saber_whirlwind", "vert": "saber_heavy", "diag": "saber_whirlwind", "ult": "saber_heavy"},
         "창": {"flat": "spear_1", "vert": "spear_2", "diag": "spear_2", "ult": "spear_1"},
         "봉": {"flat": "staff_1", "vert": "staff_2", "diag": "staff_2", "ult": "staff_2"},
