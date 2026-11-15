@@ -118,6 +118,9 @@ canvas#game{display:block;width:100%;height:100%;cursor:crosshair}
 .world circle{fill:#8a7454;stroke:#1a140c;stroke-width:2}.world text{fill:#e8d9a8;font:13px var(--body);text-anchor:middle;paint-order:stroke;stroke:#0b0a09;stroke-width:3px}
 .world .me circle,.world .me rect{fill:#ffd36a;stroke:#fff}.world .me text{fill:#ffd36a;font-weight:700}.world rect{fill:#c9b48a;stroke:#1a140c}
 .sndrow{display:flex;gap:8px;margin:10px 0}.sndrow .btn{flex:1}
+.world .gymk{cursor:pointer}.world .gymk path{fill:#3d6a86;stroke:#0b0a09;stroke-width:1.5}.world .gymk.on path{fill:#8cd6ff;stroke:#fff}
+.world .gyroute{fill:none;stroke:#8cd6ff;stroke-width:3;stroke-dasharray:7 5;animation:gyrt 1s linear infinite}@keyframes gyrt{to{stroke-dashoffset:-12}}
+.world .gypulse{fill:none;stroke:#8cd6ff;stroke-width:2.5;animation:gypl 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}@keyframes gypl{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.4)}}
 .world .pv{cursor:pointer}.world .hit{fill:transparent;stroke:none}.world .ring{fill:none;stroke:#ffd36a;stroke-width:2.5;stroke-dasharray:5 3}.world .sel text{fill:#fff;font-weight:700}
 /* 시스템 메시지: 화면 맨 위 레이어. 창 위에도 보이고, 상단 상태창·지도 아래 / 하단 조작 버튼 위에 뜬다 */
 .sysmsg{position:absolute;left:50%;top:104px;transform:translateX(-50%);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;z-index:30;pointer-events:none}
@@ -7361,7 +7364,7 @@ function pvInfo(k){
     const fac=NPCS.filter(n=>!n.board).map(n=>n.n.replace(/ [^ ]+씨$| 할멈$/,'')).join(' · ');
     return `<div class="card"><h4>개봉 <small class="dim">하남성 동쪽의 큰 마을 · 중립지대</small></h4>
       <p>${way}</p><p class="note">몬스터 없이 사슴·토끼·양·말·멧돼지 같은 짐승과 양민만 다닌다. 정파·사파·마교 누구도 여기서 싸우지 않는다.</p>
-      <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p><p class="note">이웃: ${nb}</p></div>`}
+      <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p>${typeof gytPvHtml==='function'?gytPvHtml(k):''}<p class="note">이웃: ${nb}</p></div>`}
   const p=PROV[k],R=REGIONS[pvId(k)],sects=(k==='henan'?['shaolin',...p.sects]:p.sects).map(sid=>SECTS[sid]);
   const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))];
   const fname={정:'<b class="wf-j">정파 무인</b>',사:'<b class="wf-s">사파 무인</b>',마:'<b class="wf-m">마교도</b>',관:'<b class="wf-g">관군</b>'};
@@ -7375,7 +7378,7 @@ function pvInfo(k){
     <h4 style="margin:6px 0 2px">문파 ${sects.length}곳</h4>${sects.length?`<p>${sl}</p>`:'<p class="note">이 성에는 문파 본산이 없다.</p>'}
     <p class="note">무인: ${fighters} · 산적</p><p class="note">짐승: ${beasts}</p>
     ${lairs?`<p class="note">소굴: ${lairs}</p>`:''}
-    ${lmInfo(R)}
+    ${lmInfo(R)}${typeof gytPvHtml==='function'?gytPvHtml(k):''}
     <p class="note">이웃 성: ${nb}</p></div>`}
 function pWorld(){
   const here=provHere(),cur0=REG==='gaebong'?'gaebong':here;
@@ -7386,7 +7389,7 @@ function pWorld(){
   const P0=PROV.henan.map,gx=X(P0[0])+18,gy=Y(P0[1]);
   const gae=`<g class="pv city${REG==='gaebong'?' me':''}${sel==='gaebong'?' sel':''}" data-act="wsel:gaebong"><circle class="hit" cx="${gx}" cy="${gy}" r="14"/>${sel==='gaebong'?`<circle class="ring" cx="${gx}" cy="${gy}" r="10"/>`:''}<rect x="${gx-4}" y="${gy-4}" width="8" height="8"/><text x="${gx+20}" y="${gy+16}">개봉</text></g>`;
   const cur=here?PROV[here]:null;
-  return `<div class="wmap"><svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg></div>
+  return `<div class="wmap"><svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}${typeof gytSvg==='function'?gytSvg(X,Y,cur0):''}</svg></div>
     <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''} · <span class="dim">지도에서 성을 누르면 그 지역 정보를 본다</span></p>
     ${pvInfo(sel)}
     <p class="note"><b class="wf-j">정파(정의맹)</b> · <b class="wf-s">사파(사천맹)</b> · <b class="wf-m">마교</b></p>
@@ -9100,12 +9103,12 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
 function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p.x<pad||p.x>W-pad||p.y-m.h<top||p.y>bot;ctx.save();
   ctx.font='bold 12px "Gowun Dodum"';ctx.textAlign='center';ctx.lineJoin='round';
   if(off){const pp=toScreen(P.x,P.y),x=clamp(p.x,pad,W-pad),y=clamp(p.y-m.h/2,top,bot),an=Math.atan2(p.y-pp.y,p.x-pp.x),k=.75+.25*Math.sin(time*5);
-    ctx.translate(x,y);ctx.save();ctx.rotate(an);ctx.fillStyle=`rgba(255,211,106,${k})`;ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-2,0);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-    if(m.l){const ty=y>H/2?-16:24;ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,0,ty);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,0,ty)}ctx.restore();return}
+    ctx.translate(x,y);ctx.save();ctx.rotate(an);ctx.fillStyle=`rgba(${m.rgb||'255,211,106'},${k})`;ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-2,0);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    if(m.l){const ty=y>H/2?-16:24,tw=ctx.measureText(m.l).width,tx=clamp(x,tw/2+6,W-tw/2-6)-x;ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,tx,ty);ctx.fillStyle=m.hex||'#ffd36a';ctx.fillText(m.l,tx,ty)}ctx.restore();return}
   const k=(time*1.4)%1,b=Math.sin(time*4)*4,y=p.y-m.h+b;
-  ctx.strokeStyle=`rgba(255,211,106,${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
-  ctx.fillStyle='#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
-  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
+  ctx.strokeStyle=`rgba(${m.rgb||'255,211,106'},${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
+  ctx.fillStyle=m.hex||'#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
+  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle=m.hex||'#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
   const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다
@@ -13438,7 +13441,7 @@ function gycCard(){if(!G.gyc)return'';const L=G.gyc.list.filter(c=>{gyclEnsure(c
     const slots=GYCL.slots.map(([s,n])=>c.k[s]?`<b class="gold">■${n}</b>`:`<span class="dim">□${n}</span>`).join(' ');
     const hs=['trace','dir','sign','map','pv','done'].filter(h=>c.hints[h]).slice(0,2).map(h=>`<p class="note">"${esc(c.hints[h])}"</p>`).join('');
     const rv=c.done?'':`<p class="note dim">다른 정탐꾼들 ${Math.round(c.rumor)}% <small>(${GYC.rumor.war}%면 세력전, ${GYC.rumor.take}%면 빼앗긴다)</small></p>`;
-    return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st} ${slots}${c.found||c.seen?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}</small>`:''}</p>${hs}${c.done?'':`<p class="note">다음: ${esc(gyclNext(c))}</p>`}${rv}`}).join('')}</div>`}
+    return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st} ${slots}${c.found||c.seen?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}</small>`:''}</p>${hs}${c.done?'':`<p class="note">다음: ${esc(gyclNext(c))}</p>`}${typeof gytBtn==='function'?gytBtn(c):''}${rv}`}).join('')}</div>`}
 // ---- 기연이 나오는 모습: 상자 / 동굴 벽화 / 기인이사 (동훈님 2026-11-11 "상자안에 비급의 형태 말고 동굴 벽에 그려진 벽화나 기인이사 npc를 만나거나 하는 다양성") ----
 // 벽화: 수호자를 물리치고 벽화를 베껴 적으면(3초) '벽화 필사본' 비급. 기인이사: 안쪽 방에 앉은 은자가 수호자를 물리친 사람에게 구결을 전하고 떠난다. 보상은 모두 행낭으로(그대로)
 const gyclHermitName=c=>GYCL.forms.hermits[c.seed%GYCL.forms.hermits.length];
@@ -13462,6 +13465,80 @@ function drawGyMural(n){const p=toScreen(n.x,n.y),c=G.gyc&&G.gyc.list[n.gyc],liv
   ctx.beginPath();ctx.arc(10,-50,10,Math.PI*.9,Math.PI*1.9);ctx.stroke();
   if(live){const gl=ctx.createRadialGradient(0,-32,2,0,-32,40);gl.addColorStop(0,`rgba(${col},.18)`);gl.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=gl;ctx.fillRect(-40,-72,80,76)}
   ctx.restore();if(dist(n,P)<4){ctx.font='12px "Gowun Dodum",sans-serif';ctx.textAlign='center';const s=live?'벽화':'벽화 (베낌)';ctx.fillStyle='#000';ctx.fillText(s,p.x+1,p.y-79);ctx.fillStyle='#ffe2a0';ctx.fillText(s,p.x,p.y-80)}}
+
+// ================= 기연 소문 길잡이 (v267, 동훈님 2026-11-15) =================
+// "기연의 경우도 파악된 정보 기준으로는 천하지도나 맵에서 추적을 할 경우 화살표 등의 표시를 해 줄 순 없어?"
+// 알아낸 만큼만 가리킨다. 모르는 단계의 자리는 드러내지 않는다:
+// - 성만 앎(pv)            → 천하 지도에 그 성 표시·가는 길. 다른 성에 있으면 맵마다 그 성 쪽 출입구/가장자리. 그 성 안에 들어오면 화살표 없음(사람들에게 묻기)
+// - 아는 사람(증인)을 들음   → 그 증인이 있는 맵까지 길, 그 맵에선 증인에게
+// - 맵 이름을 앎(map)       → 그 맵까지 길. 방위(dir)도 알면 그 맵에서 그 방위 쪽(정확한 흔적 자리 아님)
+// - 입구를 찾음(found)      → 입구까지
+// 추적할 소문은 임무창 '기연 소문' 칸의 '길잡이' 단추로 고른다(P.gyTrk). 고르지 않으면 지금 자리에서 가장 가까운 소문.
+// 표시는 무관 길잡이 그림(acadMarkDraw)을 하늘빛으로 쓴다(금빛 = 무관·대연무장 볼일과 구분). 미니맵에도 점.
+// 테스트: tests/t181_gytrack.js
+const GYT_RGB='140,214,255',GYT_HEX='#8cd6ff';
+// 소문 하나가 지금 가리키는 곳: {reg} 맵 또는 {pv} 성, 그 맵 안에서 가리킬 자리 pt
+function gytTarget(c){if(!c||c.done||!REGIONS[c.host])return null;gyclEnsure(c);const R=REGIONS[c.host];
+  if(c.found){return{reg:c.host,pt:c.x!=null?{x:c.x+.5,y:c.y+.5,l:c.name}:null,why:'입구'}}
+  const wi=gyclNextWit(c),w=wi>=0?c.wit[wi]:null;
+  if(w&&w.kn&&REGIONS[w.r])return{reg:w.r,pt:w.x!=null?{x:w.x,y:w.y,l:w.n,npc:1}:null,why:'아는 사람'};
+  if(c.k.map){let pt=null;if(c.k.dir&&c.ax!=null){const S=R.size||40,H=R.h||S,dx=c.ax-S/2,dy=c.ay-H/2,d=Math.hypot(dx,dy),r=Math.min(S,H)*.3,
+      x=d<4?S/2:S/2+dx/d*r,y=d<4?H/2:H/2+dy/d*r,dn=gycDir(c);pt={x,y,l:dn==='한가운데'?'맵 한가운데':`${dn}쪽`,area:1}}
+    return{reg:c.host,pt,why:'맵'}}
+  if(c.k.pv){const pv=gyclProv(c.host);return pv&&PROV[pv]?{pv,why:'성'}:null}
+  return null}
+const gytPvOf=t=>t?(t.pv||gyclProv(t.reg)||(t.reg==='gaebong'?'gaebong':null)):null;
+// 맵 사이 길 (너비 우선): 첫 걸음이 어느 출입구/가장자리인지
+function gytNb(id){const R=REGIONS[id];if(!R)return[];const o=[];
+  for(const g of R.gates||[]){if(g.gyc!=null)continue;let t=g.to;if(isPvFull(t))t=pvSplitAt(t,g.tx,g.ty).id;if(REGIONS[t])o.push({to:t,g})}
+  for(const[s,e]of Object.entries(R.edges||{}))if(e&&REGIONS[e])o.push({to:e,side:s});return o}
+function gytRoute(from,goal){if(!REGIONS[from])return null;if(goal(from))return{h:0};const first={},hop={[from]:0},q=[from];
+  for(let i=0;i<q.length;i++){const c=q[i];for(const n of gytNb(c)){if(n.to in hop)continue;hop[n.to]=hop[c]+1;first[n.to]=c===from?n:first[c];
+      if(goal(n.to)){const f=first[n.to];return{g:f.g||null,side:f.side||null,to:f.to,h:hop[n.to],dest:n.to}}q.push(n.to)}}
+  return null}
+const gytGoal=t=>t.reg?(id=>id===t.reg):(id=>!!REGIONS[id].win&&REGIONS[id].prov===t.pv);
+// 같은 자리·같은 목표면 다시 찾지 않는다 (맵을 옮기거나 2초 지나면 다시)
+const GYT_C={};
+function gytRouteC(t){const k=REG+'|'+(t.reg||'pv:'+t.pv),C=GYT_C[k];if(C&&time-C.t<2)return C.r;const r=gytRoute(REG,gytGoal(t));GYT_C[k]={t:time,r};return r}
+// 추적할 소문: 고른 것(P.gyTrk), 아니면 가장 가까운 것. -1이면 끔
+function gytActive(){if(!G.gyc||!P)return[];return G.gyc.list.filter(c=>{gyclEnsure(c);return !c.done&&gytTarget(c)})}
+function gytCur(){if(!G.gyc||!P||P.gyTrk===-1)return null;const L=gytActive();if(!L.length)return null;
+  if(P.gyTrk!=null){const c=L.find(c=>c.i===P.gyTrk);if(c)return c}
+  let best=null,bh=1e9;for(const c of L){const r=gytRouteC(gytTarget(c)),h=r?r.h:999;if(h<bh){bh=h;best=c}}return best}
+// 이 맵에서 그릴 표시
+function gytMarks(){if(!playing||!P||!REG||(typeof acadOn==='function'&&acadOn()))return[];const c=gytCur();if(!c)return[];const t=gytTarget(c),R=REGIONS[REG];if(!t||!R)return[];
+  const tag='기연 · ';
+  if(t.reg===REG||(t.pv&&gyclProv(REG)===t.pv&&!t.reg)){if(!t.pt)return[];const p=t.pt;if(p.area&&Math.hypot(p.x-P.x,p.y-P.y)<5)return[];
+    return[{x:p.x,y:p.y,l:tag+p.l,h:p.npc?84:p.area?40:60,rgb:GYT_RGB,hex:GYT_HEX,gy:c.i}]}
+  const r=gytRouteC(t);if(!r||!r.h)return[];
+  if(r.g){const g=r.g,ty=typeof portalTagY==='function'?portalTagY(g):toScreen(g.x,g.y).y-60;
+    const dup=typeof sfMarks==='function'&&sfMarks().some(m=>m.x===g.x&&m.y===g.y);
+    return[{x:g.x,y:g.y,l:tag+(REGIONS[r.to]?REGIONS[r.to].name:g.label),h:toScreen(g.x,g.y).y-ty+14+(dup?24:0),tag:1,rgb:GYT_RGB,hex:GYT_HEX,gy:c.i}]}
+  const S=N,H=NH,m=1.2,x=r.side==='w'?m:r.side==='e'?S-m:clamp(P.x,3,S-3),y=r.side==='n'?m:r.side==='s'?H-m:clamp(P.y,3,H-3);
+  return[{x,y,l:tag+REGIONS[r.to].name,h:40,rgb:GYT_RGB,hex:GYT_HEX,gy:c.i,edge:1}]}
+hook('drawList',list=>{if(!G.gyc||typeof acadMarkDraw!=='function')return;for(const m of gytMarks())list.push({L:LY.TOP,d:99991,f:()=>acadMarkDraw(m)})});
+function gytMini(g){for(const m of gytMarks()){const[x,y]=miniXY(m.x,m.y),k=.6+.4*Math.sin(time*5);g.fillStyle=`rgba(${GYT_RGB},${k})`;g.beginPath();g.moveTo(x,y-3.5);g.lineTo(x+3.5,y);g.lineTo(x,y+3.5);g.lineTo(x-3.5,y);g.closePath();g.fill()}}
+// 다음 할 일 한 줄 (임무 줄·지도 창)
+function gytWhere(c){const t=gytTarget(c);if(!t)return'';const pv=gytPvOf(t),pn=pv&&typeof pvName==='function'?pvName(pv):'';
+  if(t.reg){const rn=REGIONS[t.reg].name;return t.reg===REG?(t.pt?`이 맵 ${t.pt.l}`:'이 맵에서 찾아보자'):`${rn}${pn&&!rn.startsWith(pn)?` (${pn})`:''}`}
+  return provOfReg(REG)===pv?`${pn} 안에서 사람들에게 묻자`:`${pn} 어딘가`}
+// ---- 천하 지도: 소문의 성 표시, 추적하는 소문은 지금 성에서 가는 길 ----
+function gytSvg(X,Y,cur0){if(!G.gyc||!P)return'';const L=gytActive();if(!L.length)return'';const on=gytCur();
+  const P0=PROV.henan.map,pos=k=>k==='gaebong'?[X(P0[0])+18,Y(P0[1])]:PROV[k]?[X(PROV[k].map[0]),Y(PROV[k].map[1])]:null;
+  let out='';const at={};
+  for(const c of L){const pv=gytPvOf(gytTarget(c)),p=pv&&pos(pv);if(!p)continue;const n=at[pv]=(at[pv]||0)+1,me=on&&c.i===on.i;
+    const x=p[0]+12+(n-1)*12,y=p[1]-2;out+=`<g class="gymk${me?' on':''}" data-act="gytrk:${c.i}"><circle class="hit" cx="${x}" cy="${y}" r="10"/><path d="M${x} ${y-8}L${x+7} ${y}L${x} ${y+8}L${x-7} ${y}Z"/></g>`}
+  if(on){const pv=gytPvOf(gytTarget(on)),route=pv&&typeof pvRoute==='function'?pvRoute(cur0,pv):null;
+    if(route&&route.length>1){const pts=route.map(pos).filter(Boolean);out=`<polyline class="gyroute" points="${pts.map(p=>p.join(',')).join(' ')}"/>`+out}
+    const p=pv&&pos(pv);if(p)out+=`<circle class="gypulse" cx="${p[0]}" cy="${p[1]}" r="16"/>`}
+  return out}
+function gytPvHtml(k){if(!G.gyc||!P)return'';const on=gytCur(),L=gytActive().filter(c=>gytPvOf(gytTarget(c))===k);if(!L.length)return'';
+  return `<h4 style="margin:6px 0 2px;color:${GYT_HEX}">기연 소문 ${L.length}</h4>`+L.map(c=>`<p class="note">◆ ${esc(gyclNext(c))} <small class="dim">· 아는 만큼: ${GYCL.slots.filter(([s])=>c.k[s]).map(([,n])=>n).join('·')||'성'}</small> ${on&&on.i===c.i?`<small style="color:${GYT_HEX}">길잡이 중</small>`:B('gytrk:'+c.i,'길잡이')}</p>`).join('')}
+// 임무창 소문 칸의 단추
+function gytBtn(c){if(c.done||!gytTarget(c))return'';const on=gytCur();
+  return on&&on.i===c.i?`<span class="gytbtn"><small style="color:${GYT_HEX}">◆ 길잡이: ${esc(gytWhere(c))}</small> ${B('gytrk:-1','끄기')}</span>`:B('gytrk:'+c.i,'길잡이')}
+hook('sectAct',x=>{if(x.a!=='gytrk')return;x.done=true;x.r=true;const i=+x.x;if(i===-1){P.gyTrk=-1;log('기연 길잡이를 껐다.','info');return}
+  const c=G.gyc&&G.gyc.list.find(o=>o.i===i);if(!c||!gytTarget(c))return;P.gyTrk=i;log(`기연 길잡이: ${gytWhere(c)} 쪽을 하늘빛 화살표로 가리킨다.`,'info')});
 
 // ================= 무공 위력 위계 (v249, 사용자 2026-11-11 "경지 > 무공 등급 > 숙련") =================
 // 같은 조건에서 잰 무공별 초당 피해가 등급 목표(ARTBAL.grade)에 모이도록 무공마다 보정값 ARTK[id]를 곱한다.
@@ -15930,6 +16007,7 @@ function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,
   for(const g of REGION().gates){if(g.gyc!=null&&!gycSeen(g))continue;const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
   for(const t of tombs()){if((t.reg||'gaebong')!==REG)continue;const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
+  if(typeof gytMini==='function')gytMini(mctx);
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}
   const[x,y]=miniXY(P.x,P.y);mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(x,y,2.4,0,7);mctx.fill()}
 

@@ -151,7 +151,7 @@ function pvInfo(k){
     const fac=NPCS.filter(n=>!n.board).map(n=>n.n.replace(/ [^ ]+씨$| 할멈$/,'')).join(' · ');
     return `<div class="card"><h4>개봉 <small class="dim">하남성 동쪽의 큰 마을 · 중립지대</small></h4>
       <p>${way}</p><p class="note">몬스터 없이 사슴·토끼·양·말·멧돼지 같은 짐승과 양민만 다닌다. 정파·사파·마교 누구도 여기서 싸우지 않는다.</p>
-      <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p><p class="note">이웃: ${nb}</p></div>`}
+      <p class="note">시설: ${fac}</p><p class="note">역참 말로 모든 문파 본산과 바로 오간다(은자 20).</p>${typeof gytPvHtml==='function'?gytPvHtml(k):''}<p class="note">이웃: ${nb}</p></div>`}
   const p=PROV[k],R=REGIONS[pvId(k)],sects=(k==='henan'?['shaolin',...p.sects]:p.sects).map(sid=>SECTS[sid]);
   const facs=[...new Set(p.sects.map(sid=>alFac(SECTS[sid].al)))];
   const fname={정:'<b class="wf-j">정파 무인</b>',사:'<b class="wf-s">사파 무인</b>',마:'<b class="wf-m">마교도</b>',관:'<b class="wf-g">관군</b>'};
@@ -165,7 +165,7 @@ function pvInfo(k){
     <h4 style="margin:6px 0 2px">문파 ${sects.length}곳</h4>${sects.length?`<p>${sl}</p>`:'<p class="note">이 성에는 문파 본산이 없다.</p>'}
     <p class="note">무인: ${fighters} · 산적</p><p class="note">짐승: ${beasts}</p>
     ${lairs?`<p class="note">소굴: ${lairs}</p>`:''}
-    ${lmInfo(R)}
+    ${lmInfo(R)}${typeof gytPvHtml==='function'?gytPvHtml(k):''}
     <p class="note">이웃 성: ${nb}</p></div>`}
 function pWorld(){
   const here=provHere(),cur0=REG==='gaebong'?'gaebong':here;
@@ -176,7 +176,7 @@ function pWorld(){
   const P0=PROV.henan.map,gx=X(P0[0])+18,gy=Y(P0[1]);
   const gae=`<g class="pv city${REG==='gaebong'?' me':''}${sel==='gaebong'?' sel':''}" data-act="wsel:gaebong"><circle class="hit" cx="${gx}" cy="${gy}" r="14"/>${sel==='gaebong'?`<circle class="ring" cx="${gx}" cy="${gy}" r="10"/>`:''}<rect x="${gx-4}" y="${gy-4}" width="8" height="8"/><text x="${gx+20}" y="${gy+16}">개봉</text></g>`;
   const cur=here?PROV[here]:null;
-  return `<div class="wmap"><svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}</svg></div>
+  return `<div class="wmap"><svg class="world" viewBox="-20 -10 600 500" role="img" aria-label="천하 지도">${lines}${nodes}${gae}${typeof gytSvg==='function'?gytSvg(X,Y,cur0):''}</svg></div>
     <p class="note">지금 있는 곳: <b class="gold">${REGION().name}</b>${cur&&REGION().name!==cur.n?` (${cur.n})`:''} · <span class="dim">지도에서 성을 누르면 그 지역 정보를 본다</span></p>
     ${pvInfo(sel)}
     <p class="note"><b class="wf-j">정파(정의맹)</b> · <b class="wf-s">사파(사천맹)</b> · <b class="wf-m">마교</b></p>

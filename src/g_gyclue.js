@@ -151,7 +151,7 @@ function gycCard(){if(!G.gyc)return'';const L=G.gyc.list.filter(c=>{gyclEnsure(c
     const slots=GYCL.slots.map(([s,n])=>c.k[s]?`<b class="gold">■${n}</b>`:`<span class="dim">□${n}</span>`).join(' ');
     const hs=['trace','dir','sign','map','pv','done'].filter(h=>c.hints[h]).slice(0,2).map(h=>`<p class="note">"${esc(c.hints[h])}"</p>`).join('');
     const rv=c.done?'':`<p class="note dim">다른 정탐꾼들 ${Math.round(c.rumor)}% <small>(${GYC.rumor.war}%면 세력전, ${GYC.rumor.take}%면 빼앗긴다)</small></p>`;
-    return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st} ${slots}${c.found||c.seen?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}</small>`:''}</p>${hs}${c.done?'':`<p class="note">다음: ${esc(gyclNext(c))}</p>`}${rv}`}).join('')}</div>`}
+    return `<p style="margin:6px 0 0"><b>소문 ${k+1}</b> ${st} ${slots}${c.found||c.seen?` <small class="gold">${esc(c.name)} · ${esc(REGIONS[c.host].name)}</small>`:''}</p>${hs}${c.done?'':`<p class="note">다음: ${esc(gyclNext(c))}</p>`}${typeof gytBtn==='function'?gytBtn(c):''}${rv}`}).join('')}</div>`}
 // ---- 기연이 나오는 모습: 상자 / 동굴 벽화 / 기인이사 (동훈님 2026-11-11 "상자안에 비급의 형태 말고 동굴 벽에 그려진 벽화나 기인이사 npc를 만나거나 하는 다양성") ----
 // 벽화: 수호자를 물리치고 벽화를 베껴 적으면(3초) '벽화 필사본' 비급. 기인이사: 안쪽 방에 앉은 은자가 수호자를 물리친 사람에게 구결을 전하고 떠난다. 보상은 모두 행낭으로(그대로)
 const gyclHermitName=c=>GYCL.forms.hermits[c.seed%GYCL.forms.hermits.length];
