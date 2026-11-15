@@ -352,12 +352,12 @@ function acadMarks(){if(!acadOn())return[];const a=P.acad,A=acadOf(P.side),R=REG
 function acadMarkDraw(m){const p=toScreen(m.x,m.y),pad=26,top=60,bot=H-120,off=p.x<pad||p.x>W-pad||p.y-m.h<top||p.y>bot;ctx.save();
   ctx.font='bold 12px "Gowun Dodum"';ctx.textAlign='center';ctx.lineJoin='round';
   if(off){const pp=toScreen(P.x,P.y),x=clamp(p.x,pad,W-pad),y=clamp(p.y-m.h/2,top,bot),an=Math.atan2(p.y-pp.y,p.x-pp.x),k=.75+.25*Math.sin(time*5);
-    ctx.translate(x,y);ctx.save();ctx.rotate(an);ctx.fillStyle=`rgba(255,211,106,${k})`;ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-2,0);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-    if(m.l){const ty=y>H/2?-16:24;ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,0,ty);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,0,ty)}ctx.restore();return}
+    ctx.translate(x,y);ctx.save();ctx.rotate(an);ctx.fillStyle=`rgba(${m.rgb||'255,211,106'},${k})`;ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-2,0);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    if(m.l){const ty=y>H/2?-16:24,tw=ctx.measureText(m.l).width,tx=clamp(x,tw/2+6,W-tw/2-6)-x;ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,tx,ty);ctx.fillStyle=m.hex||'#ffd36a';ctx.fillText(m.l,tx,ty)}ctx.restore();return}
   const k=(time*1.4)%1,b=Math.sin(time*4)*4,y=p.y-m.h+b;
-  ctx.strokeStyle=`rgba(255,211,106,${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
-  ctx.fillStyle='#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
-  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle='#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
+  ctx.strokeStyle=`rgba(${m.rgb||'255,211,106'},${.9-k*.7})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,10+k*16,5+k*8,0,0,7);ctx.stroke();
+  ctx.fillStyle=m.hex||'#ffd36a';ctx.strokeStyle='#2a1a06';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-8,y-12);ctx.lineTo(p.x+8,y-12);ctx.lineTo(p.x,y);ctx.closePath();ctx.fill();ctx.stroke();
+  if(m.l&&!m.tag){ctx.lineWidth=3;ctx.strokeStyle='#120c04';ctx.strokeText(m.l,p.x,y-17);ctx.fillStyle=m.hex||'#ffd36a';ctx.fillText(m.l,p.x,y-17)}ctx.restore()}
 hook('drawList',list=>{if(!playing||!acadOn())return;for(const m of acadMarks())list.push({L:LY.TOP,d:99990,f:()=>acadMarkDraw(m)})});
 function acadUi(){const g=acadCur(),a=P.acad;if(!g)return['[data-act="acrep"]','[data-act="acgrad"]'];
   const tabs=TOUCH&&!DEV;   // v204: 터치 화면은 행낭·수련이 아래 탭바에 있다

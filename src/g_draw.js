@@ -321,6 +321,7 @@ function drawMini(){if(!P)return;if(!miniBase)bakeMini();mctx.clearRect(0,0,150,
   for(const g of REGION().gates){if(g.gyc!=null&&!gycSeen(g))continue;const[x,y]=miniXY(g.x,g.y);mctx.fillStyle='#ffe2a0';mctx.fillRect(x-2,y-2,4,4)}
   for(const n of NPCF){const[x,y]=miniXY(n.x,n.y);mctx.fillStyle='#e8c66e';mctx.fillRect(x-1,y-1,2,2)}
   for(const t of tombs()){if((t.reg||'gaebong')!==REG)continue;const[x,y]=miniXY(t.x,t.y);mctx.fillStyle='#b8a8ff';mctx.fillRect(x-2,y-2,4,4)}
+  if(typeof gytMini==='function')gytMini(mctx);
   if(G.giyeon){const[x,y]=miniXY(G.giyeon.x,G.giyeon.y);mctx.fillStyle='#fff3b0';mctx.fillRect(x-2,y-2,4,4)}
   const[x,y]=miniXY(P.x,P.y);mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(x,y,2.4,0,7);mctx.fill()}
 
