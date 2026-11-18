@@ -8,9 +8,12 @@
 //  - 전각: 검은 윤곽선을 흐리게, 기와·벽에 풍화 잡음·세로 때·밑동 그늘
 //  - 화면 전체: 살짝 낮은 채도와 따뜻한 색
 const LIN=(()=>{try{if(/[?&]tone=lin\b/.test(location.search)||window.GH_TONE==='lin')return true;return localStorage.getItem('gh-tone')==='lin'}catch(e){return false}})();
-if(LIN){
+// 섞는 판 (사용자 2026-11-18 '리니지풍은 폐기, 구조물·나무·지형·배경 느낌은 어느 정도 가져오고 싶어'): ?tone=mix — 인물·UI·화면 색은 지금 그대로, 바닥 결·나무·바위·건물 질감만 약하게
+const LMIX=(()=>{try{return /[?&]tone=mix\b/.test(location.search)||window.GH_TONE==='mix'||localStorage.getItem('gh-tone')==='mix'}catch(e){return false}})();
+const LF=LMIX?.45:1;
+if(LIN||LMIX){
   // ---------- 바닥 픽셀: bakePix·gaePix 끝(색을 다 정한 직후)에 질감 겹을 끼워 넣는다. 일꾼(Worker)이 함수 글을 그대로 옮기므로 글을 고쳐 다시 만든다 ----------
-  const LIN_PIX=`{const h1=hash(qx*1.7+3,qy*2.3+1),h2=hash((qx>>1)+91,(qy>>1)*3+7),h3=hash((qx>>2)+5,(qy>>2)+19),f1=vn(gx*16,gy*16),f2=vn(gx*6+11,gy*6+5),bl=fbm(gx*.32+40,gy*.32+13);
+  const LIN_PIX=`{const oR=R,oG=G,oB=B;const h1=hash(qx*1.7+3,qy*2.3+1),h2=hash((qx>>1)+91,(qy>>1)*3+7),h3=hash((qx>>2)+5,(qy>>2)+19),f1=vn(gx*16,gy*16),f2=vn(gx*6+11,gy*6+5),bl=fbm(gx*.32+40,gy*.32+13);
     const _tg=typeof tg!=='undefined'?tg:tileG,_st=typeof stair!=='undefined'&&stair;
     const dirtC=()=>{const tx=.8+f2*.2+(h1-.5)*.26+(h2-.5)*.18;let rr=(150+bl*16)*tx,gg=(131+bl*12)*tx,bb=(106+bl*8)*tx;
       if(hash(Math.floor(gx*15),Math.floor(gy*15)+3)>.962){rr+=30;gg+=28;bb+=26}else if(hash(Math.floor(gx*15)+1,Math.floor(gy*15))>.972){rr*=.62;gg*=.6;bb*=.58}return[rr,gg,bb]};
@@ -28,18 +31,19 @@ if(LIN){
     else if(t===4||t===13){const gm=fbm(gx*.7+17,gy*.7+3),m=.72+h1*.14+(f2-.5)*.22+f1*.1-(gm>.55?(gm-.55)*.9:0);R*=m;G*=m;B*=m;R=R*.9+8;G=G*.92+6;B=B*.86;
       if(gm>.62&&vn(gx*9,gy*9)>.55){R=R*.7+40*.3;G=G*.7+52*.3;B=B*.7+24*.3}}
     else{const m=.8+h1*.26+(f2-.5)*.18+(h2-.5)*.1;R*=m;G*=m;B*=m}
-    const Lm=(R+G+B)/3;R+=(Lm-R)*.14+5;G+=(Lm-G)*.14+1;B+=(Lm-B)*.14-5}`;
+    ${LMIX?'R=oR+(R-oR)*'+LF+';G=oG+(G-oG)*'+LF+';B=oB+(B-oB)*'+LF+';':'const Lm=(R+G+B)/3;R+=(Lm-R)*.14+5;G+=(Lm-G)*.14+1;B+=(Lm-B)*.14-5;'}}`;
   const linPatch=(f,anchor)=>{const s=f.toString(),i=s.indexOf(anchor);if(i<0){console.warn('lin: anchor 없음',f.name);return f}
     return(0,eval)('('+s.slice(0,i)+LIN_PIX+'\n'+s.slice(i)+')')};
   bakePix=linPatch(bakePix,'const i=(qy*gw+qx)*4,ed=');
   gaePix=linPatch(gaePix,'const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);');
 
   // ---------- 윤곽선: 전각·소품·가구·인물(코드로 그린 몸)의 먹선을 옅은 갈색 그늘선으로 (함수 글에서 바꿔 다시 만든다) ----------
-  window.LIN_OUT='rgba(36,28,20,.32)';window.LIN_EAVE='rgba(44,40,36,.6)';window.LIN_BARK='rgba(40,30,22,.5)';
+  window.LIN_OUT=LMIX?'rgba(24,18,12,.62)':'rgba(36,28,20,.32)';window.LIN_EAVE=LMIX?'rgba(34,32,30,.8)':'rgba(44,40,36,.6)';window.LIN_BARK='rgba(40,30,22,.5)';
   const linInk=name=>{try{const f=window[name];if(typeof f!=='function')return;const s0=f.toString(),s1=s0.replace(/\bOUT\b/g,'LIN_OUT').replace(/'#22262c'/g,'LIN_EAVE').replace(/'#1e140c'/g,'LIN_BARK');
     if(s1!==s0)window[name]=(0,eval)('('+s1+')')}catch(e){console.warn('lin ink',name,e)}};
-  for(const n of['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFighter','poly','seg','polearm','weapon','drawFurn'])linInk(n);
+  for(const n of LMIX?['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFurn']:['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFighter','poly','seg','polearm','weapon','drawFurn'])linInk(n);
 
+  if(!LMIX){   // 인물 쪽 바꿈은 리니지풍 판에서만
   // ---------- 새 인물 몸 (사용자 2026-11-18 "인물 시트도 새로 만들어봐") ----------
   // 주인공도 시트 그림 대신 코드로 그린 몸을 쓴다 (모든 인물이 같은 화풍). 머리를 작게, 몸을 길고 가늘게(7등신 쪽으로),
   // 팔다리는 먹선 없이 그늘·본색·빛 세 겹 원통으로, 몸판은 왼쪽 위 빛 그러데이션으로 칠한다
@@ -88,6 +92,7 @@ if(LIN){
       R=(L+(R-L)*.7)*.93+5;G=(L+(G-L)*.7)*.93+2;B=(L+(B-L)*.7)*.93-2;return'#'+[R,G,B].map(v=>f(v).toString(16).padStart(2,'0')).join('')};
     const walk=o=>{for(const k in o){const v=o[k];if(typeof v==='string')o[k]=mute(v);else if(v&&typeof v==='object')walk(v)}};try{walk(PAL)}catch(e){}}
 
+  }
   // ---------- 바닥 위 풀포기·그늘 점·자갈 ----------
   const _deco=bakeDeco;
   bakeDeco=function(g,o,TR){const{th,k,X0,Y0,x0,y0,C,CH,N,NH}=o,tileG2=pixTile(o);
@@ -95,7 +100,7 @@ if(LIN){
     for(let q=0;q<7000*A;q++){const gx=rx(),gy=ry(),t=tileG2(gx,gy);if(t!==0&&t!==9||gx<1||gy<1||gx>N-1||gy>NH-1)continue;const[x,y]=sp(gx,gy);
       g.fillStyle=`rgba(18,22,8,${.25+r()*.25})`;g.fillRect(x,y,(1+r()*2)*k,(1+r())*k)}
     for(let q=0;q<9000*A;q++){const gx=rx(),gy=ry(),t=tileG2(gx,gy);if(t!==0&&!(t===9&&r()<.5)||gx<1||gy<1||gx>N-1||gy>NH-1)continue;const[x,y]=sp(gx,gy),dry=r()<.3,nb=3+(r()*3|0);
-      g.lineWidth=.9*k;for(let b=0;b<nb;b++){const l=r();g.strokeStyle=`hsla(${dry?50+r()*12:62+r()*24},${dry?34:28+r()*16}%,${l<.4?14+r()*8:26+r()*20}%,.85)`;
+      g.lineWidth=.9*k;for(let b=0;b<nb;b++){const l=r();g.strokeStyle=LMIX?`hsla(${dry?62+r()*14:84+r()*26},${dry?34:34+r()*18}%,${l<.4?16+r()*8:30+r()*20}%,.75)`:`hsla(${dry?50+r()*12:62+r()*24},${dry?34:28+r()*16}%,${l<.4?14+r()*8:26+r()*20}%,.85)`;
         const a=-Math.PI/2+(r()-.5)*1.4,len=(2.5+r()*4)*k;g.beginPath();g.moveTo(x+(r()-.5)*2*k,y);g.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);g.stroke()}}
     for(let q=0;q<2200*A;q++){const gx=rx(),gy=ry(),t=tileG2(gx,gy);if(t!==1&&t!==6&&t!==8&&t!==10&&t!==11&&t!==12)continue;const[x,y]=sp(gx,gy),s=(.9+r()*2.4)*k;
       const base=t===1?[150,140,128]:t===6&&TR&&TR.rock?TR.rock:t===12?[190,170,130]:t===10?[120,80,60]:t===11?[60,56,56]:[120,118,114],m=.6+r()*.5;
@@ -165,21 +170,21 @@ if(LIN){
   function linGrade(c,sat=.7,amt=.22){const g=c.getContext('2d'),w=c.width,h=c.height,im=g.getImageData(0,0,w,h),d=im.data;
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(!d[i+3])continue;const L=(d[i]+d[i+1]+d[i+2])/3,m=1-amt/2+hash(x*1.3,y*1.7)*amt;
       d[i]=(L+(d[i]-L)*sat+4)*m;d[i+1]=(L+(d[i+1]-L)*sat)*m;d[i+2]=(L+(d[i+2]-L)*sat-4)*m}g.putImageData(im,0,0);return c}
-  const put=(arr,list)=>{arr.length=0;arr.push(...list)};
-  put(TREES,[mkLinTree(11,{hue:74,hs:26,sat:34}),mkLinTree(23,{hue:86,hs:22,lum:-3,sat:30}),mkLinTree(47,{hue:66,hs:26,lum:3,sat:38,sparse:.2})]);
+  const put=(arr,list)=>{arr.length=0;arr.push(...list)};const TM=o=>LMIX?{...o,hue:(o.hue||74)+10,sat:(o.sat||40)+10,lum:(o.lum||0)+3}:o;
+  put(TREES,[mkLinTree(11,TM({hue:74,hs:26,sat:34})),mkLinTree(23,TM({hue:86,hs:22,lum:-3,sat:30})),mkLinTree(47,TM({hue:66,hs:26,lum:3,sat:38,sparse:.2}))]);
   put(PINES,[mkLinPine(3),mkLinPine(19)]);put(ROCKS,[mkLinRock(5),mkLinRock(9)]);
   put(BARE,[mkLinBare(11),mkLinBare(23),mkLinBare(47)]);
   put(PLUMS,[mkLinTree(61,{hue:338,hs:14,sat:30,lum:10}),mkLinTree(67,{hue:345,hs:12,sat:28,lum:12})]);
   put(MAPLES,[mkLinTree(71,{hue:12,hs:20,sat:48,lum:2}),mkLinTree(73,{hue:24,hs:16,sat:46,lum:4})]);
-  for(const c of BAMBOO)linGrade(c,.62,.26);for(const c of STUPAS)linGrade(c,.6,.3);
+  if(!LMIX){for(const c of BAMBOO)linGrade(c,.62,.26);for(const c of STUPAS)linGrade(c,.6,.3)}
 
   // ---------- 전각: 윤곽선 흐리게 + 풍화 잡음 ----------
-  const _quad=quad;quad=function(pts,fill,stroke=OUT){_quad(pts,fill,stroke===OUT?'rgba(34,26,18,.38)':stroke)};
+  const _quad=quad;quad=function(pts,fill,stroke=OUT){_quad(pts,fill,stroke===OUT?(LMIX?'rgba(24,18,12,.62)':'rgba(34,26,18,.38)'):stroke)};
   function linWeather(cv,ofs=0,strong=0){const g=cv.getContext('2d'),w=cv.width,h=cv.height;if(w*h>9e6)return;const im=g.getImageData(0,0,w,h),d=im.data,colTop=new Int16Array(w).fill(-1);
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(d[i+3]<8)continue;if(colTop[x]<0)colTop[x]=y;
       const X=x+ofs,L=(d[i]+d[i+1]+d[i+2])/3,n=hash(X*1.31,y*2.17),blot=vn(X*.05,y*.05),streak=vn(X*.3,y*.025),m=(.84+n*.16+(blot-.5)*.2+(streak-.5)*.08)*(L>190?.84:.92);
       let mm=m;if(strong){mm*=.86+hash((X>>1)+7,(y>>1)+3)*.26;if(L<130){const row=y%5,col=(x+((y/5|0)%2)*4)%8;if(row===0)mm*=.72;else if(row===1)mm*=1.08;if(col===0&&row>0)mm*=.8}}
-      d[i]=(L+(d[i]-L)*.55+8)*mm;d[i+1]=(L+(d[i+1]-L)*.55+3)*mm;d[i+2]=(L+(d[i+2]-L)*.55-7)*mm}
+      if(LMIX){mm=1+(mm-1)*.5;d[i]=(L+(d[i]-L)*.85+3)*mm;d[i+1]=(L+(d[i+1]-L)*.85+1)*mm;d[i+2]=(L+(d[i+2]-L)*.85-3)*mm}else{d[i]=(L+(d[i]-L)*.55+8)*mm;d[i+1]=(L+(d[i+1]-L)*.55+3)*mm;d[i+2]=(L+(d[i+2]-L)*.55-7)*mm}}
     g.putImageData(im,0,0)}
   const _dbv=drawBuildVec;drawBuildVec=function(b,a){_dbv(b,a);try{if(ctx.canvas&&ctx.canvas.id!=='game')linWeather(ctx.canvas,0,1)}catch(e){}};
 
@@ -207,10 +212,12 @@ if(LIN){
     g.putImageData(im,0,0);LGP=ctx.createPattern(c,'repeat');return LGP};
   const linGrain=()=>{if(REGION().in||REGION().hall)return;const p=linGrainPat(),m=ctx.getTransform(),o=toScreen0(0,0),ox=m.a*o.x+m.e,oy=m.d*o.y+m.f;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);if(p.setTransform)p.setTransform(new DOMMatrix([1,0,0,1,Math.round(ox),Math.round(oy)]));
-    ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.55;ctx.fillStyle=p;ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.restore()};
+    ctx.globalCompositeOperation='overlay';ctx.globalAlpha=LMIX?.32:.55;ctx.fillStyle=p;ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.restore()};
   const _gore=drawGore;drawGore=function(){try{linGrain()}catch(e){}return _gore.apply(this,arguments)};
 
+  if(!LMIX){
   // ---------- 화면 전체 색 ----------
   addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent='#game{filter:saturate(.86) sepia(.07) contrast(1.04)}';document.head.appendChild(s)});
   {const s=document.createElement('style');s.textContent='#game{filter:saturate(.86) sepia(.07) contrast(1.04)}';(document.head||document.documentElement).appendChild(s)}
+  }
 }
