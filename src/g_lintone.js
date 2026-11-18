@@ -34,6 +34,36 @@ if(LIN){
   bakePix=linPatch(bakePix,'const i=(qy*gw+qx)*4,ed=');
   gaePix=linPatch(gaePix,'const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);');
 
+  // ---------- 윤곽선: 전각·소품·가구·인물(코드로 그린 몸)의 먹선을 옅은 갈색 그늘선으로 (함수 글에서 바꿔 다시 만든다) ----------
+  window.LIN_OUT='rgba(36,28,20,.32)';window.LIN_EAVE='rgba(44,40,36,.6)';window.LIN_BARK='rgba(40,30,22,.5)';
+  const linInk=name=>{try{const f=window[name];if(typeof f!=='function')return;const s0=f.toString(),s1=s0.replace(/\bOUT\b/g,'LIN_OUT').replace(/'#22262c'/g,'LIN_EAVE').replace(/'#1e140c'/g,'LIN_BARK');
+    if(s1!==s0)window[name]=(0,eval)('('+s1+')')}catch(e){console.warn('lin ink',name,e)}};
+  for(const n of['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFighter','poly','seg','polearm','weapon','drawFurn'])linInk(n);
+
+  // 코드로 그린 몸(poly)은 단색 대신 왼쪽 위가 밝고 오른쪽 아래가 어두운 그러데이션으로 칠해 부피를 준다
+  {const PC=new Map,shade=(c,k)=>{const m=/^#([0-9a-f]{6})$/i.exec(c);if(!m)return null;const v=parseInt(m[1],16),f=x=>Math.max(0,Math.min(255,Math.round(x)));return`rgb(${f((v>>16)*k)},${f((v>>8&255)*k)},${f((v&255)*k)})`};
+    const _poly=poly;poly=function(pts,fill){if(typeof fill!=='string'||pts.length<3)return _poly(pts,fill);let c=PC.get(fill);if(c===undefined){c=/^#[0-9a-f]{6}$/i.test(fill)?[shade(fill,1.22),shade(fill,.68)]:null;PC.set(fill,c)}
+      if(!c)return _poly(pts,fill);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of pts){if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1]}
+      const g=ctx.createLinearGradient(x0,y0,x1+(x1-x0)*.2,y1);g.addColorStop(0,c[0]);g.addColorStop(.45,fill);g.addColorStop(1,c[1]);return _poly(pts,g)}}
+
+  // ---------- 인물 시트(주인공·옛 그림·무기): 처음 불릴 때 한 번, 먹선을 주변 옷색의 그늘로 바꾸고 채도·대비를 낮춘다 ----------
+  function linSheet(img){const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(img,0,0);
+    const im=g.getImageData(0,0,w,h),d=im.data,src=new Uint8ClampedArray(d),Lu=i=>src[i]*.3+src[i+1]*.59+src[i+2]*.11;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(src[i+3]<40)continue;let R=src[i],G=src[i+1],B=src[i+2];const L=Lu(i);
+      if(L<58){let sr=0,sg=0,sb=0,n=0,edge=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){if(!dx&&!dy)continue;const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h){edge++;continue}const j=(yy*w+xx)*4;
+          if(src[j+3]<40){edge++;continue}if(Lu(j)>=58){sr+=src[j];sg+=src[j+1];sb+=src[j+2];n++}}
+        if(n){const k=edge?.5:.66;R=sr/n*k;G=sg/n*k;B=sb/n*k}if(edge)d[i+3]=Math.min(src[i+3],210)}
+      const Lm=(R+G+B)/3;R=(Lm+(R-Lm)*.72)*.92+6;G=(Lm+(G-Lm)*.72)*.92+3;B=(Lm+(B-Lm)*.72)*.92-2;
+      R=96+(R-96)*.9;G=92+(G-92)*.9;B=86+(B-86)*.9;d[i]=R;d[i+1]=G;d[i+2]=B}
+    g.putImageData(im,0,0);c.complete=true;c.naturalWidth=w;c.naturalHeight=h;return c}
+  for(const n in SHEETS){const S0=SHEETS[n],go=()=>{try{if(S0.img.naturalWidth&&!S0.img._lin){const c=linSheet(S0.img);c._lin=1;S0.img=c}}catch(e){console.warn('lin sheet',n,e)}};
+    if(S0.img.complete&&S0.img.naturalWidth)go();else S0.img.addEventListener('load',go,{once:true})}
+  // 코드로 그린 인물도 같은 색으로: 인물 색표(PAL)의 색을 채도·밝기만 살짝 낮춘다 (그릴 때 filter는 큰 시트에서 몹시 느려서 쓰지 않는다)
+  {const mute=c=>{if(typeof c!=='string')return c;const m=c.match(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i);if(!m)return c;let h=m[1];if(h.length===3)h=h.replace(/./g,x=>x+x);
+      let R=parseInt(h.slice(0,2),16),G=parseInt(h.slice(2,4),16),B=parseInt(h.slice(4,6),16);const L=(R+G+B)/3,f=v=>Math.max(0,Math.min(255,Math.round(v)));
+      R=(L+(R-L)*.7)*.93+5;G=(L+(G-L)*.7)*.93+2;B=(L+(B-L)*.7)*.93-2;return'#'+[R,G,B].map(v=>f(v).toString(16).padStart(2,'0')).join('')};
+    const walk=o=>{for(const k in o){const v=o[k];if(typeof v==='string')o[k]=mute(v);else if(v&&typeof v==='object')walk(v)}};try{walk(PAL)}catch(e){}}
+
   // ---------- 바닥 위 풀포기·그늘 점·자갈 ----------
   const _deco=bakeDeco;
   bakeDeco=function(g,o,TR){const{th,k,X0,Y0,x0,y0,C,CH,N,NH}=o,tileG2=pixTile(o);
@@ -121,12 +151,13 @@ if(LIN){
 
   // ---------- 전각: 윤곽선 흐리게 + 풍화 잡음 ----------
   const _quad=quad;quad=function(pts,fill,stroke=OUT){_quad(pts,fill,stroke===OUT?'rgba(34,26,18,.38)':stroke)};
-  function linWeather(cv,ofs=0){const g=cv.getContext('2d'),w=cv.width,h=cv.height;if(w*h>3e6)return;const im=g.getImageData(0,0,w,h),d=im.data,colTop=new Int16Array(w).fill(-1);
+  function linWeather(cv,ofs=0,strong=0){const g=cv.getContext('2d'),w=cv.width,h=cv.height;if(w*h>9e6)return;const im=g.getImageData(0,0,w,h),d=im.data,colTop=new Int16Array(w).fill(-1);
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(d[i+3]<8)continue;if(colTop[x]<0)colTop[x]=y;
       const X=x+ofs,L=(d[i]+d[i+1]+d[i+2])/3,n=hash(X*1.31,y*2.17),blot=vn(X*.05,y*.05),streak=vn(X*.3,y*.025),m=(.84+n*.16+(blot-.5)*.2+(streak-.5)*.08)*(L>190?.84:.92);
-      d[i]=(L+(d[i]-L)*.55+8)*m;d[i+1]=(L+(d[i+1]-L)*.55+3)*m;d[i+2]=(L+(d[i+2]-L)*.55-7)*m}
+      let mm=m;if(strong){mm*=.86+hash((X>>1)+7,(y>>1)+3)*.26;if(L<130){const row=y%5,col=(x+((y/5|0)%2)*4)%8;if(row===0)mm*=.72;else if(row===1)mm*=1.08;if(col===0&&row>0)mm*=.8}}
+      d[i]=(L+(d[i]-L)*.55+8)*mm;d[i+1]=(L+(d[i+1]-L)*.55+3)*mm;d[i+2]=(L+(d[i+2]-L)*.55-7)*mm}
     g.putImageData(im,0,0)}
-  const _dbv=drawBuildVec;drawBuildVec=function(b,a){_dbv(b,a);try{if(ctx.canvas&&ctx.canvas.id!=='game')linWeather(ctx.canvas)}catch(e){}};
+  const _dbv=drawBuildVec;drawBuildVec=function(b,a){_dbv(b,a);try{if(ctx.canvas&&ctx.canvas.id!=='game')linWeather(ctx.canvas,0,1)}catch(e){}};
 
   // ---------- 담장·기둥·병풍·난간·노점·소품·가구: 칸 하나를 따로 구워 풍화 겹을 입히고 저장해 두었다가 붙인다 ----------
   // 불·등불처럼 움직이는 소품은 그대로 둔다. 구운 그림은 지역·칸·배율로 기억하고, 오래 안 쓴 것부터 버린다
@@ -141,7 +172,7 @@ if(LIN){
   drawScreen=(i,j,mg)=>linCached(`s${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_scr(i,j,mg));
   drawRail=rl=>linCached(`r${rl.x},${rl.y}`,rl.x,rl.y+.5,()=>_rail(rl));
   drawStall=(i,j)=>linCached(`st${i},${j}`,i+.5,j+.5,()=>_stall(i,j));
-  drawProp=(kd,i,j)=>LIVE[kd]||kd==='pal'||kd==='jwall'||kd==='mudw'?_prop(kd,i,j):linCached(`pr${kd}${i},${j}`,i+.5,j+.5,()=>_prop(kd,i,j),[-70,-130,70,30]);
+  drawProp=(kd,i,j)=>LIVE[kd]?_prop(kd,i,j):linCached(`pr${kd}${i},${j}`,i+.5,j+.5,()=>_prop(kd,i,j),[-70,-130,70,30]);
   drawFurn=(kd,i,j,mg)=>kd==='forge'?_furn(kd,i,j,mg):linCached(`f${kd}${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_furn(kd,i,j,mg));
 
   // ---------- 화면 해상도 잔결: 바닥을 다 깐 직후 기기 픽셀 크기의 풀결 무늬를 겹친다 (줄여 구운 바닥이 늘어나 뭉개지는 것을 덮는다) ----------
