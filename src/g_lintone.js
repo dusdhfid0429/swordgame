@@ -40,11 +40,35 @@ if(LIN){
     if(s1!==s0)window[name]=(0,eval)('('+s1+')')}catch(e){console.warn('lin ink',name,e)}};
   for(const n of['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFighter','poly','seg','polearm','weapon','drawFurn'])linInk(n);
 
+  // ---------- 새 인물 몸 (사용자 2026-11-18 "인물 시트도 새로 만들어봐") ----------
+  // 주인공도 시트 그림 대신 코드로 그린 몸을 쓴다 (모든 인물이 같은 화풍). 머리를 작게, 몸을 길고 가늘게(7등신 쪽으로),
+  // 팔다리는 먹선 없이 그늘·본색·빛 세 겹 원통으로, 몸판은 왼쪽 위 빛 그러데이션으로 칠한다
+  window.LIN_BODY=!/[?&]body=old\b/.test(location.search);
+  if(LIN_BODY){try{let src=drawFighter.toString();
+    src=src.replace(/heroSprite\(\)/g,'(heroSprite()&&!LIN_BODY)').replace('ctx.scale(sc*side,sc);','ctx.scale(sc*side*.84,sc*1.07);')
+      .replace('ctx.ellipse(hx,hy,5.2,5.8,0,0,7)','ctx.ellipse(hx,hy,4.3,5.0,0,0,7)').replace("ctx.fillRect(.5,-49,3,4);","ctx.fillRect(.8,-48.5,2.4,3.6);")
+      .replace('seg([[0,11.2],[0,12.4]],7.6,Fc(pal.trim))','seg([[0,11.2],[0,12.4]],6,Fc(pal.trim))').replace('seg([hd,joint(hd,sa+.55,.5)],7.5,Fc(pal.robeB))','seg([hd,joint(hd,sa+.55,.5)],6,Fc(pal.robeB))')
+      .replace('seg([joint(fh,0,-1.2),joint(fh,0,.2)],7.4,Fc(pal.trim))','seg([joint(fh,0,-1.2),joint(fh,0,.2)],6,Fc(pal.trim))');
+    drawFighter=(0,eval)('('+src+')')}catch(e){console.warn('lin body',e)}
+    const SC=new Map,tone=(c,k)=>{const key=c+'|'+k;let v=SC.get(key);if(v!==undefined)return v;const m=/^#([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(c);v=null;
+      if(m){let h=m[1];if(h.length===3)h=h.replace(/./g,x=>x+x);const n=parseInt(h,16),f=x=>Math.max(0,Math.min(255,Math.round(x)));v=`rgb(${f((n>>16)*k)},${f((n>>8&255)*k)},${f((n&255)*k)})`}SC.set(key,v);return v};
+    const _seg=seg;seg=function(pts,w,col){const dk=typeof col==='string'?tone(col,.6):null;if(!dk)return _seg(pts,w,col);
+      ctx.lineCap='round';ctx.lineJoin='round';const path=(dx,dy)=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0]+dx,p[1]+dy):ctx.moveTo(p[0]+dx,p[1]+dy))};
+      path(0,0);ctx.strokeStyle=dk;ctx.lineWidth=w+.4;ctx.stroke();
+      path(-w*.1,-w*.1);ctx.strokeStyle=col;ctx.lineWidth=w*.74;ctx.stroke();
+      if(w>=2.5){path(-w*.24,-w*.26);ctx.strokeStyle=tone(col,1.28);ctx.globalAlpha*=.7;ctx.lineWidth=w*.26;ctx.stroke();ctx.globalAlpha/=.7}}}
+
+
   // 코드로 그린 몸(poly)은 단색 대신 왼쪽 위가 밝고 오른쪽 아래가 어두운 그러데이션으로 칠해 부피를 준다
   {const PC=new Map,shade=(c,k)=>{const m=/^#([0-9a-f]{6})$/i.exec(c);if(!m)return null;const v=parseInt(m[1],16),f=x=>Math.max(0,Math.min(255,Math.round(x)));return`rgb(${f((v>>16)*k)},${f((v>>8&255)*k)},${f((v&255)*k)})`};
-    const _poly=poly;poly=function(pts,fill){if(typeof fill!=='string'||pts.length<3)return _poly(pts,fill);let c=PC.get(fill);if(c===undefined){c=/^#[0-9a-f]{6}$/i.test(fill)?[shade(fill,1.22),shade(fill,.68)]:null;PC.set(fill,c)}
+    const folds=(pts)=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of pts){if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1]}FOLD(pts,x0,y0,x1,y1)};
+    const _poly=poly;poly=function(pts,fill){if(pts.length<3)return _poly(pts,fill);if(typeof fill!=='string'){_poly(pts,fill);return folds(pts)}let c=PC.get(fill);if(c===undefined){c=/^#[0-9a-f]{6}$/i.test(fill)?[shade(fill,1.22),shade(fill,.68)]:null;PC.set(fill,c)}
       if(!c)return _poly(pts,fill);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of pts){if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1]}
-      const g=ctx.createLinearGradient(x0,y0,x1+(x1-x0)*.2,y1);g.addColorStop(0,c[0]);g.addColorStop(.45,fill);g.addColorStop(1,c[1]);return _poly(pts,g)}}
+      const g=ctx.createLinearGradient(x0,y0,x1+(x1-x0)*.2,y1);g.addColorStop(0,c[0]);g.addColorStop(.45,fill);g.addColorStop(1,c[1]);_poly(pts,g);
+      FOLD(pts,x0,y0,x1,y1)}
+    function FOLD(pts,x0,y0,x1,y1){if(window.LIN_BODY&&(x1-x0)>5&&(y1-y0)>7){ctx.save();ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.clip();ctx.lineWidth=.7;
+        for(let x=x0+2.2;x<x1;x+=2.8){ctx.strokeStyle='rgba(0,0,0,.16)';ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x+(x-(x0+x1)/2)*.15,y1);ctx.stroke();ctx.strokeStyle='rgba(255,240,220,.07)';ctx.beginPath();ctx.moveTo(x+.8,y0);ctx.lineTo(x+.8+(x-(x0+x1)/2)*.15,y1);ctx.stroke()}
+        const sh=ctx.createLinearGradient(0,y0,0,y1);sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.22)');ctx.fillStyle=sh;ctx.fillRect(x0,y0,x1-x0,y1-y0);ctx.restore()}}}
 
   // ---------- 인물 시트(주인공·옛 그림·무기): 처음 불릴 때 한 번, 먹선을 주변 옷색의 그늘로 바꾸고 채도·대비를 낮춘다 ----------
   function linSheet(img){const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(img,0,0);
