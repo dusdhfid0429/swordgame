@@ -24,6 +24,7 @@ if(LIN){
       if(w3>.72){R+=26;G+=30;B+=30}
       const near=d=>[[d,0],[-d,0],[0,d],[0,-d]].some(([a,b])=>_tg(gx+a,gy+b)!==2);
       if(near(.22)){const k=.55+h1*.3;R=R*(1-k)+150*k;G=G*(1-k)+160*k;B=B*(1-k)+162*k}else if(near(.7)){R+=22;G+=34;B+=26}}
+    else if(t===3||t===5){const gr=vn(gx*3,gy*70)*.5+vn(gx*7,gy*140)*.5,Lm=(R+G+B)/3,m=.7+gr*.34+(h1-.5)*.12;R=(Lm+(R-Lm)*.55+6)*m;G=(Lm+(G-Lm)*.55+1)*m;B=(Lm+(B-Lm)*.55-6)*m;if(vn(gx*2+5,gy*2)>.7){R*=.8;G*=.8;B*=.78}}
     else if(t===4||t===13){const gm=fbm(gx*.7+17,gy*.7+3),m=.72+h1*.14+(f2-.5)*.22+f1*.1-(gm>.55?(gm-.55)*.9:0);R*=m;G*=m;B*=m;R=R*.9+8;G=G*.92+6;B=B*.86;
       if(gm>.62&&vn(gx*9,gy*9)>.55){R=R*.7+40*.3;G=G*.7+52*.3;B=B*.7+24*.3}}
     else{const m=.8+h1*.26+(f2-.5)*.18+(h2-.5)*.1;R*=m;G*=m;B*=m}
@@ -120,12 +121,28 @@ if(LIN){
 
   // ---------- 전각: 윤곽선 흐리게 + 풍화 잡음 ----------
   const _quad=quad;quad=function(pts,fill,stroke=OUT){_quad(pts,fill,stroke===OUT?'rgba(34,26,18,.38)':stroke)};
-  function linWeather(cv){const g=cv.getContext('2d'),w=cv.width,h=cv.height;if(w*h>3e6)return;const im=g.getImageData(0,0,w,h),d=im.data,colTop=new Int16Array(w).fill(-1);
+  function linWeather(cv,ofs=0){const g=cv.getContext('2d'),w=cv.width,h=cv.height;if(w*h>3e6)return;const im=g.getImageData(0,0,w,h),d=im.data,colTop=new Int16Array(w).fill(-1);
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(d[i+3]<8)continue;if(colTop[x]<0)colTop[x]=y;
-      const L=(d[i]+d[i+1]+d[i+2])/3,n=hash(x*1.31,y*2.17),blot=vn(x*.06,y*.06),streak=vn(x*.45,y*.02),m=(.8+n*.24+(blot-.5)*.34+(streak-.5)*.26)*.92;
+      const X=x+ofs,L=(d[i]+d[i+1]+d[i+2])/3,n=hash(X*1.31,y*2.17),blot=vn(X*.05,y*.05),streak=vn(X*.3,y*.025),m=(.84+n*.16+(blot-.5)*.2+(streak-.5)*.08)*(L>190?.84:.92);
       d[i]=(L+(d[i]-L)*.55+8)*m;d[i+1]=(L+(d[i+1]-L)*.55+3)*m;d[i+2]=(L+(d[i+2]-L)*.55-7)*m}
     g.putImageData(im,0,0)}
   const _dbv=drawBuildVec;drawBuildVec=function(b,a){_dbv(b,a);try{if(ctx.canvas&&ctx.canvas.id!=='game')linWeather(ctx.canvas)}catch(e){}};
+
+  // ---------- 담장·기둥·병풍·난간·노점·소품·가구: 칸 하나를 따로 구워 풍화 겹을 입히고 저장해 두었다가 붙인다 ----------
+  // 불·등불처럼 움직이는 소품은 그대로 둔다. 구운 그림은 지역·칸·배율로 기억하고, 오래 안 쓴 것부터 버린다
+  const LC=new Map,LC_MAX=160,LIVE={fire:1,torch:1,brazier:1,lantern:1,furnace:1,censer:1};
+  const linCached=(key,ax,ay,fn,bx=[-58,-118,58,26])=>{const dpr=C.width/Math.max(1,W*S),k=S*dpr,K=REG+'|'+key+'|'+k;let c=LC.get(K);const a=toScreen(ax,ay);
+    if(!c){const w=bx[2]-bx[0],h=bx[3]-bx[1],x0=a.x+bx[0],y0=a.y+bx[1],cv=document.createElement('canvas');cv.width=Math.ceil(w*k);cv.height=Math.ceil(h*k);const g=cv.getContext('2d');g.setTransform(k,0,0,k,-x0*k,-y0*k);
+      const keep=ctx;ctx=g;try{fn()}finally{ctx=keep}try{linWeather(cv,Math.round(a.x*k))}catch(e){}c={cv,ox:bx[0],oy:bx[1],w,h};if(LC.size>=LC_MAX)LC.delete(LC.keys().next().value)}else LC.delete(K);LC.set(K,c);
+    ctx.drawImage(c.cv,a.x+c.ox,a.y+c.oy,c.w,c.h)};
+  const _wall=drawWall,_pil=drawPillar,_scr=drawScreen,_rail=drawRail,_stall=drawStall,_prop=drawProp,_furn=drawFurn;
+  drawWall=(i,j,mg)=>linCached(`w${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_wall(i,j,mg));
+  drawPillar=(i,j,mg)=>linCached(`p${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_pil(i,j,mg));
+  drawScreen=(i,j,mg)=>linCached(`s${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_scr(i,j,mg));
+  drawRail=rl=>linCached(`r${rl.x},${rl.y}`,rl.x,rl.y+.5,()=>_rail(rl));
+  drawStall=(i,j)=>linCached(`st${i},${j}`,i+.5,j+.5,()=>_stall(i,j));
+  drawProp=(kd,i,j)=>LIVE[kd]||kd==='pal'||kd==='jwall'||kd==='mudw'?_prop(kd,i,j):linCached(`pr${kd}${i},${j}`,i+.5,j+.5,()=>_prop(kd,i,j),[-70,-130,70,30]);
+  drawFurn=(kd,i,j,mg)=>kd==='forge'?_furn(kd,i,j,mg):linCached(`f${kd}${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_furn(kd,i,j,mg));
 
   // ---------- 화면 해상도 잔결: 바닥을 다 깐 직후 기기 픽셀 크기의 풀결 무늬를 겹친다 (줄여 구운 바닥이 늘어나 뭉개지는 것을 덮는다) ----------
   let LGP=null;const linGrainPat=()=>{if(LGP)return LGP;const S2=256,c=document.createElement('canvas');c.width=c.height=S2;const g=c.getContext('2d'),im=g.createImageData(S2,S2),d=im.data,r=rng(4242);
