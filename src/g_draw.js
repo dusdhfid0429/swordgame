@@ -197,7 +197,7 @@ function draw(){
   ctx.setTransform(S*dpr,0,0,S*dpr,0,0);
   if(shake>0)ctx.translate((Math.random()-.5)*24*shake,(Math.random()-.5)*24*shake);
   ctx.fillStyle=terrBg();ctx.fillRect(-30,-30,W+60,H+60);
-  SM=P?seasonMix():null;SL_BUDGET=1;   // v173: 계절·날씨 (g_season.js)
+  SM=P?seasonMix():null;SL_BUDGET=1;bcFrame();   // v173: 계절·날씨 (g_season.js)
   const o=toScreen0(0,0);if(ground.chunked)drawChunks(ground,o);else if(ground.elev){const pw=ground.padW;ctx.drawImage(ground,o.x-NH*TW/2,o.y-pw,(N+NH)*TW/2,(N+NH)*TH/2+pw)}   // v179: 높낮이 맵은 위로 키운 바닥 그림 (g_elev.js)
   else{const gx=o.x-NH*TW/2,gw=(N+NH)*TW/2,gh=(N+NH)*TH/2;ctx.drawImage(ground,gx,o.y,gw,gh);seasonGround(ground,gx,o.y,gw,gh)}
   if(typeof drawGore==='function')drawGore();   // 멸문 폐허의 핏자국 (g_ruin.js)
