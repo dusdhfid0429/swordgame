@@ -110,15 +110,19 @@ function drawInnFlag(b,alpha){const f=scr(b.x-.15,b.y+b.h+.35);ctx.save();ctx.gl
 // v154 건물 그림 캐시 (사용자 2026-10-19 '8번 진행'): 건물은 카메라를 따라 평행이동만 하므로 한 번 벡터로 그린 그림을 재사용한다.
 // 밤 창문·등불 색(darkLvl>.25), 폐허, 화면 배율이 바뀌면 다시 그린다. 최근 BC_MAX채만 들고 있는다 (휴대폰 메모리)
 const BCACHE=[],BC_MAX=24;
+// v268 (동훈님 2026-11-19 "줌인·줌아웃·연출 때 끊김"): 카메라가 당겨지는 동안 S가 매 프레임 바뀌어 보이는 건물을 프레임마다 전부 새로 그렸다(캔버스 수백 장).
+// 이제 배율만 달라진 그림은 그대로 늘려 그리고, 배율이 BC_SETTLE ms 동안 멈춘 뒤 한 프레임에 BC_PER채씩 또렷하게 다시 굽는다
+const BC_SETTLE=150,BC_PER=1;let BC_K=0,BC_KT=0,BC_BUDGET=0;
+function bcFrame(){const k=S*(C.width/Math.max(1,W*S)),t=performance.now();if(Math.abs(k-BC_K)>1e-6){BC_K=k;BC_KT=t}BC_BUDGET=t-BC_KT>BC_SETTLE?BC_PER:0}
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
-function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead||b.form==='ruin',key=`${ru?1:0}${darkLvl()>.25?1:0}|${k}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}|${ru?0:b._dk||0}|${b.form||''}|${b._rb?1:0}`;
+function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead||b.form==='ruin',key=`${ru?1:0}${darkLvl()>.25?1:0}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}|${ru?0:b._dk||0}|${b.form||''}|${b._rb?1:0}`;
   let c=BCACHE.find(o=>o.b===b);
-  if(!c||c.key!==key){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=b.form&&BFORM[b.form]?bformRH(b):b.fl>1&&!ru?towerDims(b).RH:H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
+  if(!c||c.key!==key||c.k!==k&&BC_BUDGET>0&&BC_BUDGET--){GHB=gH(b.x+.5,b.y+.5);try{const pav=b.kind==='pavilion',H0=(pav?(ru?22:34):(ru?26:38))+(pav?0:4),RH=b.form&&BFORM[b.form]?bformRH(b):b.fl>1&&!ru?towerDims(b).RH:H0+10+8*Math.min(b.w,b.h),bx=buildBox(b,RH),a=toScreen(b.x,b.y);
     const x0=Math.floor(bx[0]*k)/k,y0=Math.floor(bx[1]*k)/k,cw=Math.ceil((bx[2]-x0)*k),chh=Math.ceil((bx[3]-y0)*k);
     const cv=c&&c.cv&&c.cv.width===cw&&c.cv.height===chh?c.cv:document.createElement('canvas');cv.width=cw;cv.height=chh;const g=cv.getContext('2d');g.clearRect(0,0,cw,chh);g.setTransform(k,0,0,k,-x0*k,-y0*k);
     const keep=ctx;ctx=g;try{drawBuildVec(b,1)}finally{ctx=keep}
-    if(c){c.key=key;c.cv=cv;c.ox=x0-a.x;c.oy=y0-a.y;c.w=cw/k;c.h=chh/k;BCACHE.splice(BCACHE.indexOf(c),1)}else c={b,key,cv,ox:x0-a.x,oy:y0-a.y,w:cw/k,h:chh/k};
+    if(c){c.key=key;c.k=k;c.cv=cv;c.ox=x0-a.x;c.oy=y0-a.y;c.w=cw/k;c.h=chh/k;BCACHE.splice(BCACHE.indexOf(c),1)}else c={b,key,k,cv,ox:x0-a.x,oy:y0-a.y,w:cw/k,h:chh/k};
     BCACHE.push(c);if(BCACHE.length>BC_MAX)BCACHE.shift()}finally{GHB=null}}
   const a=toScreen(b.x,b.y),px=Math.round((a.x+c.ox)*k)/k,py=Math.round((a.y+c.oy)*k)/k;
   ctx.save();ctx.globalAlpha=alpha;const tl=!ru&&!b._rb&&b._tilt||0;if(tl){const by=toScreen(b.x+b.w,b.y+b.h).y;ctx.translate(0,by);ctx.transform(1,0,-tl,1,0,0);ctx.translate(0,-by)}   // v246 기우는 전각: 밑동을 축으로 비스듬히 민다
