@@ -113,7 +113,7 @@ const BCACHE=[],BC_MAX=24;
 // v268 (동훈님 2026-11-19 "줌인·줌아웃·연출 때 끊김"): 카메라가 당겨지는 동안 S가 매 프레임 바뀌어 보이는 건물을 프레임마다 전부 새로 그렸다(캔버스 수백 장).
 // 이제 배율만 달라진 그림은 그대로 늘려 그리고, 배율이 BC_SETTLE ms 동안 멈춘 뒤 한 프레임에 BC_PER채씩 또렷하게 다시 굽는다
 const BC_SETTLE=150,BC_PER=1;let BC_K=0,BC_KT=0,BC_BUDGET=0;
-function bcFrame(){const k=S*(C.width/Math.max(1,W*S)),t=performance.now();if(Math.abs(k-BC_K)>1e-6){BC_K=k;BC_KT=t}BC_BUDGET=t-BC_KT>BC_SETTLE?BC_PER:0}
+function bcFrame(){const k=S*(/** @type {HTMLCanvasElement} */(C).width/Math.max(1,W*S)),t=performance.now();if(Math.abs(k-BC_K)>1e-6){BC_K=k;BC_KT=t}BC_BUDGET=t-BC_KT>BC_SETTLE?BC_PER:0}
 function buildBox(b,RH){const o=.9,pts=[];for(const gx of[b.x-o,b.x+b.w+o])for(const gy of[b.y-o,b.y+b.h+o])for(const hh of[0,RH+14])pts.push(scr(gx,gy,hh));
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-14,Math.min(...ys)-10,Math.max(...xs)+14,Math.max(...ys)+18]}
 function drawBuild(b,alpha){const dpr=C.width/Math.max(1,W*S),k=S*dpr,ru=!!REGION().dead||b.form==='ruin',key=`${ru?1:0}${darkLvl()>.25?1:0}|${b.w}x${b.h}|${b.kind}|${b.mg?1:0}|${b.rc||''}|${b.wc||''}|${b.fl||''}|${ru?0:b._dk||0}|${b.form||''}|${b._rb?1:0}`;
