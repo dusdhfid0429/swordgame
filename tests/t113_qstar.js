@@ -13,14 +13,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const c=await p.evaluate(()=>{const f={qp:20},o={},r0=P.realm;P.realm=0;P.maxQi=80;o.q12=formQi(f,12);o.q6=formQi(f,6);o.q1=formQi({qp:1},1);
     const X={};qsX(X,f,12);o.m12=X.qm;o.fs12=X.fs;qsX(X,f,6);o.m6=X.qm;o.fs6=X.fs;
     P.maxQi=320;o.big=formQi(f,12);qsX(X,f,12);o.mbig=X.qm;P.realm=5;P.maxQi=740;o.hw=formQi(f,12);qsX(X,f,12);o.mhw=X.qm;P.realm=r0;recalc();return o});
-  const ex=await p.evaluate(()=>({x:QS.exp,r0:QS.ref[0],e5:QS.eff[5]}));const pw=v=>Math.pow(v,ex.x),near=(a,b)=>Math.abs(a-b)<1e-6;
+  const ex=await p.evaluate(()=>({x:QS.exp,r0:QS.ref[0],e5:QS.eff[5],cap:qsCapR()}));/* v269: 여분 내공 덤 상한 (t183) */const pw=v=>Math.pow(v,ex.x),near=(a,b)=>Math.abs(a-b)<1e-6;
   ok(`삼류 내공 80: 12성 ${c.q12} · 6성 ${c.q6} · 1성 최소 ${c.q1} / 내공 320 12성 ${c.big} · 배율 ${c.m12.toFixed(2)}/${c.m6.toFixed(2)}/${c.mbig.toFixed(2)} · 화경 표준 내공 12성 ${c.hw} 배율 ${c.mhw.toFixed(2)}`,
-    c.q12===16&&c.q6===8&&c.q1===1&&c.big===64&&near(c.m12,pw(80/ex.r0))&&near(c.m6,pw(40/ex.r0))&&near(c.mbig,pw(320/ex.r0))&&c.fs12===1&&c.fs6===.5&&c.hw===Math.round(740*.2*ex.e5)&&Math.abs(c.mhw-1)<.02);
+    c.q12===16&&c.q6===8&&c.q1===1&&c.big===64&&near(c.m12,pw(80/ex.r0))&&near(c.m6,pw(40/ex.r0))&&near(c.mbig,pw(Math.min(320/ex.r0,ex.cap)))&&c.fs12===1&&c.fs6===.5&&c.hw===Math.round(740*.2*ex.e5)&&Math.abs(c.mhw-1)<.02);
   // 3. 실제 초식: 성을 낮추면 내공을 덜 쓰고 피해가 줄고, 이펙트가 옅다. [ ] 키와 HUD 단추로 바꾼다
   const u=await p.evaluate(()=>{const o={};const wp=P.eq.weapon;P.eq.weapon=null;P.cur='base';const go=s=>{P.qs=s;P.maxQi=P.qi=200;P.fcd=[0,0,0,0,0,0];P.gcd=0;P.chain={last:-1,t:-9,sum:0,n:0};
       const w=mkMob('늑대',P.x+1,P.y);w.hp=w.maxHp=1e6;w.def=0;w.hm=-999;mobs.push(w);P.target=w;const n0=fx.length;const q0=P.qi;Math.random=(r=>()=>.5)(Math.random);
       const used=useForm(0,true);const r={used,cost:q0-P.qi,dmg:1e6-w.hp,pw:fx.slice(n0).filter(f=>f.glow).map(f=>f.pw||1)};mobs=mobs.filter(m=>m!==w);P.target=null;return r};
-    const r0=Math.random;o.a=go(12);o.b=go(3);Math.random=r0;P.eq.weapon=wp;return o});
+    const r0=Math.random,cap0=QS.cap;QS.cap=99;o.a=go(12);o.b=go(3);QS.cap=cap0;Math.random=r0;/* 성 비율만 보려고 v269 여분 내공 상한을 잠시 끈다 */P.eq.weapon=wp;return o});
   const q=await p.evaluate(()=>{P.qs=12;const o={};document.dispatchEvent(new KeyboardEvent('keydown',{code:'BracketLeft',bubbles:true}));o.k=P.qs;
     P.qs=12;o.p=P.qs;const c=document.getElementById('qsc');c.click();o.open=!document.getElementById('qsr').hidden;document.querySelector('#qsr [data-q="4"]').click();o.d=P.qs;o.closed=document.getElementById('qsr').hidden;hud();o.t=c.textContent;o.on=document.querySelectorAll('#qsr button.on').length;o.char=typeof panel==='undefined'?null:panel;return o});
   ok(`12성 내공 ${u.a.cost} 피해 ${u.a.dmg} · 3성 내공 ${u.b.cost} 피해 ${u.b.dmg} · 이펙트 밝기 ${Math.max(...u.a.pw)}/${Math.max(...u.b.pw).toFixed(2)} · 키 ${q.k} · 성 글자 눌러 열림 ${q.open} → 4칸 ${q.d} 닫힘 ${q.closed} "${q.t}" 켠 칸 ${q.on} 인물창 안 열림 ${q.char!=='char'}`,
