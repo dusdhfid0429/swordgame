@@ -10,7 +10,7 @@ const bladeCol=r=>BLADE.col[Math.min(r,8)-2];
 const bladeFoes=(c,R,first)=>{const l=foes().filter(q=>q.hp>0&&!q.d.villager&&dist(q,P)<R).sort((a,b)=>dist(a,P)-dist(b,P));
   if(first&&first.hp>0&&l.includes(first)){l.splice(l.indexOf(first),1);l.unshift(first)}return l.slice(0,c)};
 function bladeCall(r,e){if(time-(P.bnT||-9)>4){P.bnT=time;addText(e.x,e.y-1,bladeName(r),`rgb(${bladeCol(r)})`)}}
-const bHit=(e,m)=>{if(e.hp>0)damage(e,Math.max(1,Math.round(atk()*m)),0,0,P)};
+const bHit=(e,m,noDef)=>procHit(e,m,noDef);   // v269: 경지 차·무공 보정값·이해도·방어를 탄다 (g_realmfx.js procHit). 예전엔 공격력 × m 그대로
 
 // 화경 검환: 강기 구슬이 몸 곁을 반 바퀴 돌고 날아가 터진다
 function bladeOrb(e){const q=BLADE.proc[5],col=bladeCol(5),L=.55;
@@ -24,7 +24,7 @@ function bladeFly(e){const q=BLADE.proc[6],col=bladeCol(6),l=bladeFoes(q.n,q.ran
       later(L*.85,()=>{bHit(o,q.m);fStar(null,o,col,.8,.2)})})}}
 // 생사경 심검: 날아가는 것 없이 뜻이 닿은 자리가 베인다
 function bladeMind(e){const q=BLADE.proc[7],col=bladeCol(7);
-  bladeFoes(q.n,q.range,e).forEach((o,i)=>later(i*.06,()=>{fx.push({t:'bt',k:'mind',cls:bladeCls(),glow:true,x:o.x,y:o.y,a0:Math.random()*3.14,col,life:.45,max:.45});later(.08,()=>bHit(o,q.m))}))}
+  bladeFoes(q.n,q.range,e).forEach((o,i)=>later(i*.06,()=>{fx.push({t:'bt',k:'mind',cls:bladeCls(),glow:true,x:o.x,y:o.y,a0:Math.random()*3.14,col,life:.45,max:.45});later(.08,()=>bHit(o,q.m,1))}))}
 // 자연경 무형검: 하늘에서 형체 없는 기검이 떨어진다
 function bladeRain(e){const q=BLADE.proc[8],col=bladeCol(8);
   bladeFoes(q.n,q.range,e).forEach((o,i)=>later(i*.09,()=>{const ox=(Math.random()-.5)*.3,oy=(Math.random()-.5)*.3,L=.42;

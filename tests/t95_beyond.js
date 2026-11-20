@@ -21,14 +21,14 @@ const shot=n=>__dirname+'/shots/'+n+'.png';
     const R=Math.random;Math.random=()=>.99;const hit=()=>{P.inv=0;P.hp=5;const e=mkMob('산적',P.x+1,P.y);hurtP(99999,e);return{hp:P.hp,alive:playing}};
     const a=hit(),b2=hit(),bs=!!P.binsa,b3=hit();Math.random=R;return{dl,a,b2,bs,b3,name:realmName()}});   // v172: 생사경이 버틴 뒤 같은 해 두 번째는 빈사, 빈사 중 세 번째에 쓰러진다
   ok(`생사경(${r3.name}) 수명 +${r3.dl}, 첫 치명타 뒤 생명 ${r3.a.hp}, 같은 해 두 번째는 빈사 ${r3.bs}(생명 ${r3.b2.hp}), 세 번째는 쓰러짐 ${!r3.b3.alive}`,r3.dl===10&&r3.a.alive&&r3.a.hp>1&&r3.bs&&r3.b2.hp===1&&!r3.b3.alive);
-  // 4. 새 판으로: 자연경 효과 (피해 +15%, 받는 피해 -10%, 운기 두 배)
+  // 4. 새 판으로: 자연경 효과 (피해 배율 REALM_DMG, 받는 피해 -10%, 운기 두 배)
   await p.evaluate(()=>localStorage.clear());await p.reload();await p.waitForTimeout(1500);
   await p.tap('[data-s="new"]');await p.tap('[data-s="side:정"]');await p.tap('[data-s="cls:검"]');await p.tap('[data-s="start"]');await p.waitForTimeout(500);
   const r4=await p.evaluate(()=>{mobs=[];P.sect='namgung';P.realm=7;realmFxSync();const q7=realmQiMul(),l0=P.life;
     const c1={m:1,def:0,e:mkMob('산적',P.x+1,P.y)},h1={dm:100,src:{d:{}}};runHooks('hit',c1);
     P.realm=8;realmFxSync();const c2={m:1,def:0,e:c1.e},h2={dm:100,src:{d:{}}};runHooks('hit',c2);
-    return{q:realmQiMul()/q7,life:P.life-l0,m:c2.m/c1.m,fx:fxOf(8).n}});
-  ok(`자연경(${r4.fx}): 운기 ×${r4.q}, 수명 +${r4.life}, 피해 ×${r4.m.toFixed(2)}`,r4.q===2&&r4.life===20&&Math.abs(r4.m-1.15)<.001);
+    return{q:realmQiMul()/q7,life:P.life-l0,m:c2.m/c1.m,want:GD.REALM_DMG[8]/GD.REALM_DMG[7],fx:fxOf(8).n}});   // v269: 경지 피해 배율 표 (생사경 1.37 → 자연경 1.44)
+  ok(`자연경(${r4.fx}): 운기 ×${r4.q}, 수명 +${r4.life}, 피해 ×${r4.m.toFixed(2)}`,r4.q===2&&r4.life===20&&Math.abs(r4.m-r4.want)<.001);
   // 5. 좌화: 인물창 경지 카드에서 두 번 눌러 윤회. 강호사에 '좌화'로 남는다
   await p.evaluate(()=>{P.realm=7;openPanel('char')});await p.waitForTimeout(200);
   const btn=await p.$('[data-act="jwa:1"]');ok('좌화 단추가 보인다',!!btn);

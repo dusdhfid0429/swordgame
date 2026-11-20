@@ -333,7 +333,8 @@ let last=performance.now();
 // document.hidden이면 아무것도 흐르지 않게 하고, 다시 보일 때 시계를 지금으로 맞춰 첫 프레임이 밀린 시간을 받지 않게 한다
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
 function loop(now){requestAnimationFrame(loop);if(document.hidden){last=now;return}if(!pwrDue(now))return;
-  const dt=Math.min(.05,(now-last)/1000);last=now;const t0=performance.now();
+  const dt=Math.max(0,Math.min(.05,(now-last)/1000));   // rAF 시각이 last(performance.now)보다 앞설 수 있어 첫 프레임 dt가 음수가 되면 time이 0 밑으로 내려가 대기 장 번호가 비었다 (t52)
+  last=now;const t0=performance.now();
   try{if(playing&&!paused)update(dt*fightK(dt));else time+=dt*.2;draw();if(playing){hud();drawMini()}}catch(err){console.error(err.stack||err);recoverFromError(err)}
   CRL.fr++;pwrFrame(performance.now()-t0)}
 // 한 프레임이 오류로 끊겨도 게임이 멈춰 버리지 않게: 어디서 났는지 적고, 좌표가 망가진 것들을 치운 뒤 다음 프레임을 돈다

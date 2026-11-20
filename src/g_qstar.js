@@ -11,7 +11,12 @@ function formQi(f,s=qsCur()){return Math.max(QS.min,Math.round(P.maxQi*formPct(f
 const formPct=f=>f.qp*qsEff();   // 지금 경지에서 12성일 때 최대 내공의 몇 %
 // 기준 = 지금 경지의 표준 내공(QS.ref[경지], 그 경지 내공 문턱)으로 12성을 쓸 때의 양. 같은 경지에서 내공이 많을수록 세고, 성을 낮추면 약하다
 const qsRef=()=>QS.ref[Math.min(realmIdx(),QS.ref.length-1)];
-const formPow=(q,f)=>Math.pow(q/(formPct(f)/100*qsRef()),QS.exp);
+// v269: 여분 내공의 덤은 단전 배율 × QS.cap 배까지 (예전엔 상한이 없어 내공 두 배 = 초식 1.62배)
+const qsCapR=()=>(typeof danMul==='function'?danMul():1)*(QS.cap||99);
+const formPow=(q,f)=>Math.pow(Math.min(qsCapR(),q/(formPct(f)/100*qsRef())),QS.exp);
+// 필살기 (v269): 내공은 최대 내공 × ult.pct%(기본 무공 base%) × 경지 효율, 위력은 12성 초식과 같은 내공 배율
+const ultQi=a=>Math.max(QS.min,Math.round(P.maxQi*(a&&a.base?QS.ult.base:QS.ult.pct)/100*qsEff()));
+const ultPow=()=>Math.pow(Math.min(qsCapR(),P.maxQi/qsRef()),QS.exp);
 // 초식 한 번의 X에 성·이펙트 세기·피해 배율을 싣는다. 돌려주는 값 = 이번에 쓸 내공(심법 절약 특색 전)
 function qsX(X,f,s=qsCur()){const q=formQi(f,s);X.qs=s;X.fs=s/QS.n;X.qm=formPow(q,f);return q}
 // 성이 낮은 시전의 이펙트: 옅게(pw), 가늘게, 입자 적게. 한 번만 (f.pw가 붙어 있으면 건너뛴다). thin=false면 밝기만
