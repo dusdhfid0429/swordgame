@@ -15734,7 +15734,7 @@ if(LIN||LMIX){
   gaePix=linPatch(gaePix,'const fade=Math.min(1,Math.min(gx,gy,N-gx,NH-gy)/1.6);');
 
 
-  window.LIN_OUT=LMIX?'rgba(28,20,14,.46)':'rgba(36,28,20,.32)';window.LIN_EAVE=LMIX?'rgba(38,34,30,.7)':'rgba(44,40,36,.6)';window.LIN_BARK='rgba(40,30,22,.5)';
+  Object.assign(window,{LIN_OUT:LMIX?'rgba(28,20,14,.46)':'rgba(36,28,20,.32)',LIN_EAVE:LMIX?'rgba(38,34,30,.7)':'rgba(44,40,36,.6)',LIN_BARK:'rgba(40,30,22,.5)'});
   const linInk=name=>{try{const f=window[name];if(typeof f!=='function')return;const s0=f.toString(),s1=s0.replace(/\bOUT\b/g,'LIN_OUT').replace(/'#22262c'/g,'LIN_EAVE').replace(/'#1e140c'/g,'LIN_BARK');
     if(s1!==s0)window[name]=(0,eval)('('+s1+')')}catch(e){console.warn('lin ink',name,e)}};
   for(const n of['quad','roofFace','curl','drawBuildVec','drawTowerVec','bfLogs','bfDoor','bfGiwa','bfPalace','drawProp','drawFurn'])linInk(n);
