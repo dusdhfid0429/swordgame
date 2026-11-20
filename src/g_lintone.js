@@ -186,14 +186,18 @@ if(LIN||LMIX){
       let mm=m;if(strong){mm*=.86+hash((X>>1)+7,(y>>1)+3)*.26;if(L<130){const row=y%5,col=(x+((y/5|0)%2)*4)%8;if(row===0)mm*=.72;else if(row===1)mm*=1.08;if(col===0&&row>0)mm*=.8}}
       if(LMIX){mm=(1+(mm-1)*1.15)*.97;d[i]=(L+(d[i]-L)*.62+7)*mm;d[i+1]=(L+(d[i+1]-L)*.62+3)*mm;d[i+2]=(L+(d[i+2]-L)*.62-6)*mm}else{d[i]=(L+(d[i]-L)*.55+8)*mm;d[i+1]=(L+(d[i+1]-L)*.55+3)*mm;d[i+2]=(L+(d[i+2]-L)*.55-7)*mm}}
     g.putImageData(im,0,0)}
+  // 풍화 겹은 굽는 값이 비싸다: 배율이 25% 넘게 달라졌을 때만 다시 굽고, 그보다 작은 줌(싸움 1.12배 등)은 있던 그림을 늘려 그린다
+  try{const s0=drawBuild.toString(),s1=s0.replace('c.k!==k&&BC_BUDGET>0&&BC_BUDGET--','Math.abs(c.k/k-1)>.25&&BC_BUDGET>0&&BC_BUDGET--');if(s1!==s0)drawBuild=(0,eval)('('+s1+')')}catch(e){console.warn('lin drawBuild',e)}
   const _dbv=drawBuildVec;drawBuildVec=function(b,a){_dbv(b,a);try{if(ctx.canvas&&ctx.canvas.id!=='game')linWeather(ctx.canvas,0,1)}catch(e){}};
 
   // ---------- 담장·기둥·병풍·난간·노점·소품·가구: 칸 하나를 따로 구워 풍화 겹을 입히고 저장해 두었다가 붙인다 ----------
   // 불·등불처럼 움직이는 소품은 그대로 둔다. 구운 그림은 지역·칸·배율로 기억하고, 오래 안 쓴 것부터 버린다
   const LC=new Map,LC_MAX=160,LIVE={fire:1,torch:1,brazier:1,lantern:1,furnace:1,censer:1};
-  const linCached=(key,ax,ay,fn,bx=[-58,-118,58,26])=>{const dpr=C.width/Math.max(1,W*S),k=S*dpr,K=REG+'|'+key+'|'+k;let c=LC.get(K);const a=toScreen(ax,ay);
-    if(!c){const w=bx[2]-bx[0],h=bx[3]-bx[1],x0=a.x+bx[0],y0=a.y+bx[1],cv=document.createElement('canvas');cv.width=Math.ceil(w*k);cv.height=Math.ceil(h*k);const g=cv.getContext('2d');g.setTransform(k,0,0,k,-x0*k,-y0*k);
-      const keep=ctx;ctx=g;try{fn()}finally{ctx=keep}try{linWeather(cv,Math.round(a.x*k))}catch(e){}c={cv,ox:bx[0],oy:bx[1],w,h};if(LC.size>=LC_MAX)LC.delete(LC.keys().next().value)}else LC.delete(K);LC.set(K,c);
+  // 2026-11-19 줌 끊김 (v268과 같은 규칙): 배율은 열쇠에 넣지 않는다. 배율만 바뀐 그림은 늘려 그리고, 배율이 멈춘 뒤 BC_BUDGET 안에서만 다시 굽는다
+  const linCached=(key,ax,ay,fn,bx=[-58,-118,58,26])=>{const dpr=C.width/Math.max(1,W*S),k=S*dpr,K=REG+'|'+key;const a=toScreen(ax,ay);if(a.x<-120||a.x>W+120||a.y<-60||a.y>H+180)return;   // 화면 밖은 굽지 않는다 (난간은 맵 전체가 매 프레임 불려 저장 칸이 넘쳐 늘 다시 구웠다)
+    let c=LC.get(K);
+    if(!c||Math.abs(c.k/k-1)>.25&&BC_BUDGET>0&&BC_BUDGET--){const w=bx[2]-bx[0],h=bx[3]-bx[1],x0=a.x+bx[0],y0=a.y+bx[1],cv=document.createElement('canvas');cv.width=Math.ceil(w*k);cv.height=Math.ceil(h*k);const g=cv.getContext('2d');g.setTransform(k,0,0,k,-x0*k,-y0*k);
+      const keep=ctx;ctx=g;try{fn()}finally{ctx=keep}try{linWeather(cv,Math.round(a.x*k))}catch(e){}c={cv,ox:bx[0],oy:bx[1],w,h,k};if(LC.size>=LC_MAX)LC.delete(LC.keys().next().value)}else LC.delete(K);LC.set(K,c);
     ctx.drawImage(c.cv,a.x+c.ox,a.y+c.oy,c.w,c.h)};
   const _wall=drawWall,_pil=drawPillar,_scr=drawScreen,_rail=drawRail,_stall=drawStall,_prop=drawProp,_furn=drawFurn;
   drawWall=(i,j,mg)=>linCached(`w${i},${j},${mg?1:0}`,i+.5,j+.5,()=>_wall(i,j,mg));
