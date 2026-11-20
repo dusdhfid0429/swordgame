@@ -363,7 +363,7 @@ function ultimate(){
   if(P.hp<=0||P.ultCast)return;const a=art();
   if(!allLearned(a.id)){log(`필살기는 ${a.n}의 초식을 모두 익혀야 쓸 수 있습니다.`,'info');return}
   if(!hasWeaponFor(a.cls)){log(wpnNeed(a.cls),'info');return}
-  const cost=Math.round((a.base?30:55)*(P.buff.ult>0?.3:1));if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
+  const cost=Math.round(ultQi(a)*(P.buff.ult>0?.3:1));   // v269: 최대 내공의 비율 × 경지 효율 (g_qstar.js ultQi). 예전 55 고정은 삼류에 69%, 자연경에 2.5%였다if(P.ucd>0)return;if(P.qi<cost){log('내공이 부족합니다.','info');return}
   const ch=P.chain,combo=time-ch.t<1.7?1+ch.sum/100:1;P.chain={last:-1,t:-9,sum:0,n:0};
   P.qi-=cost;P.ucd=8;const e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
   showBanner(a.ult.n,`${a.n} 필살기${combo>1?` · 공력 ${Math.round(combo*100)}%`:''}`);log(`필살기 [${a.ult.n}]!`,'sys');
@@ -371,11 +371,11 @@ function ultimate(){
   if(typeof ultCastStart==='function'&&ultCastStart(a,combo,e))return;
   if(typeof callout==='function')callout(a.ult.n,P.byh||P.name);ultFire(a,combo,e);
 }
-function ultFire(a,combo,e){P.ultT=time;   // 이기어검류 경지 효과가 필살기 직후 2.5초를 본다
+function ultFire(a,combo,e){P.ultT=time;   // v269: 현경 필살기 덤은 X.ult 가 붙은 필살기 타격에만 (g_realmfx.js)
   if(!e||e.hp<=0)e=P.target&&P.target.hp>0?P.target:nearest(6);if(e)face(e.x,e.y);
-  heroAtk('ult');const X=mkX(a.id,combo);P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
+  heroAtk('ult');const X=mkX(a.id,combo);X.ult=1;X.qm=ultPow();   // v269: 위력은 초식처럼 그 경지 표준 내공 대비 (예전 내공 수련 회차 ×1%는 자연경에서 ×2.6)P.flash=.5;P.flashCol=a.c;shake=.35;P.inv=Math.max(P.inv,.6);
   const jd=typeof jdUlt==='function'?jdUlt(a.id):1;   // v247 자득 (g_chamo.js)
-  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*(1+P.qiN*.01)*jd},e,X));
+  a.ult.steps.forEach(st=>exec({...st,m:st.m*(1+.1*X.t)*jd},e,X));
 }
 // 특수무공: 암기 · 독공 · 점혈
 const SPEC=GD.SPEC;

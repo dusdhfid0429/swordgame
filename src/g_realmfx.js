@@ -18,8 +18,8 @@ function rk(i){return i>=5&&i<=6&&P?summit(i).r:RANKS[i]}
 const stTxt=st=>STATS.map(({k,n})=>`${n} +${st[k]}`).join(', ');
 function fxOf(i){if(i<5||i>6)return REALM_FX[i];   // 생사경·자연경은 계열과 상관없다 (g_beyond.js)
 const c=SC(),s=summit(i);
-  return i===5?{n:`${s.n} · 환골탈태`,d:`${s.d}. 상단전이 열려 최대 내공 +${Math.round(c.q*100)}%, ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}`}
-    :{n:`반로환동 · ${s.n}`,d:`${s.d}: 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}, 몸이 ${BODY.ban.to}세까지 젊어진다`}}
+  return i===5?{n:`${s.n} · 환골탈태`,d:`${s.d}. 피해 +${Math.round((realmDmg(5)-1)*100)}%, 상단전이 열려 최대 내공 +${Math.round(c.q*100)}%, ${stTxt(c.st)}${c.l5?`, 수명 +${c.l5}년`:''}`}
+    :{n:`반로환동 · ${s.n}`,d:`${s.d}: 피해 +${Math.round((realmDmg(6)-1)*100)}%, 필살기 위력 +${Math.round(c.ult*100)}%${c.l6?`, 수명 +${c.l6}년`:''}, 몸이 ${BODY.ban.to}세까지 젊어진다`}}
 const sig=k=>realmIdx()>=5&&school()===k;
 const realmAt=r=>realmIdx()>=r;
 // 단전: 하단전 → 중단전(절정) → 상단전(화경)
@@ -66,8 +66,10 @@ function realmGain(r){P.rfx=P.rfx||{};if(P.rfx[r])return;P.rfx[r]=1;rankRealmUp(
 function realmFxSync(){P.rfx=P.rfx||{};for(let r=1;r<=realmIdx();r++)if(!P.rfx[r])realmGain(r);bodySync()}
 
 // ---- 전투: 검기·검강·검사, 호신강기, 이기어검 (화경부터의 검환·어검술·심검·무형검은 g_blade.js, 검사의 기 실은 거기서 끝난다) ----
+// v269 (사용자 2026-11-20): 경지 피해 배율은 data/realm.json REALM_DMG 한 줄 (예전 계단 1.1/1.25 + 자연경 ×1.15). 현경 필살기 덤은 필살기 타격에만 (예전엔 필살기 뒤 2.5초 모든 타격)
+const realmDmg=(r=realmIdx())=>(GD.REALM_DMG||[])[Math.min(r,8)]||1;
 hook('hit',c=>{const r=realmIdx();
-  if(r>=4)c.m*=1.25;else if(r>=2)c.m*=1.1;if(r>=6&&time-(P.ultT??-9)<2.5)c.m*=1+SC().ult;
+  c.m*=realmDmg(r);if(r>=6&&c.X&&c.X.ult)c.m*=1+SC().ult;
   if(sig('마공')&&P.hp<P.maxHp*.3)c.m*=1.25;
   if(r>=2)c.def=Math.round(c.def*.5)});
 hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
@@ -77,8 +79,13 @@ hook('hitDone',c=>{const r=realmIdx(),e=c.e;if(e.hp>=c.hp0)return;
   if(r>=4){fParts(null,e,RFX_COL.gang,8,80,'dot',.4);GL({t:'ring2',x:e.x,y:e.y,r:.75,col:RFX_COL.gang,w:4,life:.3})}
   else if(r===3)for(let i=0;i<2;i++)GL({t:'line',x:e.x+(Math.random()-.5)*.8,y:e.y+(Math.random()-.5)*.8,ex:e.x,ey:e.y,w:1,wavy:1,life:.22,col:RFX_COL.sa});
   else if(r===2)fParts(null,e,RFX_COL.gi,4,60,'dot',.35);
-  if(r>=3&&r<5&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile));
-    if(o){damage(o,Math.max(1,Math.round(atk()*.4)),0,0,P);for(let i=0;i<3;i++)GL({t:'line',x:P.x,y:P.y,ex:o.x+(i-1)*.15,ey:o.y,w:i===1?1.6:.8,wavy:1,life:.3,col:r>=4?RFX_COL.gang:RFX_COL.sa})}}});
+  if(r>=3&&r<5&&time-(P.saT??-9)>=.6&&Math.random()<.2){const o=mobs.find(q=>q!==e&&q.hp>0&&!q.d.villager&&!peaceful(q)&&dist(q,P)<4&&(q.aggro||q.d.hostile))||(e.hp>0?e:null);   // v269: 0.6초에 한 번, 곁에 적이 없으면 그 적에게
+    if(o){P.saT=time;procHit(o,.4);for(let i=0;i<3;i++)GL({t:'line',x:P.x,y:P.y,ex:o.x+(i-1)*.15,ey:o.y,w:i===1?1.6:.8,wavy:1,life:.3,col:r>=4?RFX_COL.gang:RFX_COL.sa})}}});
+// 병기 기운 덤 타격 (검사·검환·어검술·심검·무형검, v269 사용자 2026-11-20): 공격력 × m 에 경지 차·무공 보정값·병기 이해도를 곱하고 방어를 뺀다.
+// 방어는 일류부터 절반만 (검기), noDef(심검)면 빼지 않는다. 치명타·속성·내공 배율·경지 피해 배율은 붙지 않는다 (덤 타격이 덤 타격을 부르지 않게 hitE 를 거치지 않는다)
+function procHit(e,m,noDef){if(!e||e.hp<=0)return;const r=realmIdx(),a=ARTS[P.cur],cls=a&&a.cls;
+  let d=atk()*m*(typeof rMul==='function'?rMul(rDiff(r,mobRealm(e))):1)*(typeof artK==='function'?artK(P.cur):1)*(cls&&typeof wuMul==='function'?wuMul(cls):1);
+  if(!noDef)d-=(e.def||0)*(r>=2?.5:1);damage(e,Math.max(1,Math.round(d)),0,0,P)}
 // 베기마다: 검기는 칼날 너머로 뻗는 푸른 반달, 검사는 반달 끝에서 뻗는 은빛 실 셋, 검강은 굵고 무거운 금빛 반달 두 겹
 const RFX_COL={gi:'140,205,255',sa:'215,245,255',gang:'255,212,105'};
 // v211: 찌르기·주먹(o.t 'thrust')은 같은 세 단계를 곧은 모양으로. 창기=푸른 창끝, 창사=앞으로 곧게 뻗는 은빛 실 셋, 창강=굵은 금빛 창끝 두 겹 / 권기=푸른 기 덩어리, 권풍=밀려 나가는 바람 고리, 권강=금빛 기 덩어리 두 겹
