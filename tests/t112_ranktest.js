@@ -35,6 +35,14 @@ const {chromium}=require(process.env.PWPATH||'playwright');
   const r6=await p.evaluate(()=>{const d={v:5,G:{},P:{sect:'hwasan',mtot:{hwasan:RANK_PTS[3]+1},realm:1}};const m=migrateSave(d);const d2={v:5,G:{},P:{sect:null,mtot:{}}};
     return{SAVE_VER,sr:m.P.srank&&m.P.srank.hwasan,v:m.v,none:migrateSave(d2).P.srank}});
   ok(`옛 저장의 직위 유지 (공적 기준 3, 경지 상한 2 → ${r6.sr})`,r6.sr===2&&r6.v===r6.SAVE_VER&&r6.none===undefined);
+  // 7. (사용자 2026-11-27 "승급하기 버튼을 눌렀지만 반응이 없어") 세력마다 한 문파씩: 단추를 누르면 시험이 시작된다. 새외 문파는 대사가 없어 예외로 죽었다
+  const r7=await p.evaluate(()=>{const out=[];const by={};for(const s of Object.values(SECTS))if(!by[s.al])by[s.al]=s;
+    for(const s of Object.values(by)){closePanels();G.duel=false;G.rtDuel=null;mobs=[];enterRegion('hq_'+s.id,20.5,30.5);mobs=[];const n=hqNpc('hq_'+s.id);
+      P.sect=s.id;P.srank={[s.id]:0};P.mtot={[s.id]:RANK_PTS[1]+5};P.rtCool={};P.realm=8;P.hp=P.maxHp;openNpc(n);const btn=$('wbody').querySelector('[data-act^="rtest"]');
+      if(btn)btn.click();out.push(s.al+':'+(G.rtDuel?'ok':'x'));if(G.rtDuel)duelEnd(false)}
+    // 막힌 채로 청하면 까닭을 알린다
+    P.rtCool={[P.sect]:P.age+1};rtStart(P.sect);out.push($('log').textContent.includes('승급 시험을 청할 수 없다')?'why:ok':'why:x');return out});
+  ok(`세력마다 승급 시험 시작·막히면 까닭 알림 (${r7.join(' ')})`,r7.every(x=>/ok$/.test(x))&&r7.length>=6);
   await p.screenshot({path:shot('t112_ranktest')});
   console.log(errs.length?'ERRORS\n'+errs.join('\n'):'no console errors');await b.close();
 })();

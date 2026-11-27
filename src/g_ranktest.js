@@ -4,6 +4,7 @@
 // - 자격이 되면 알림이 한 번 뜨고, 본산의 문파 주인 창 직위 칸에 '승급 시험 청하기'가 켜진다. 본산 밖에서는 못 청한다.
 // - 시험은 비무 틀(G.duel)을 빌린다: 그 자리에서 시험관(다음 직위에 걸맞은 경지, 생명 ×2.2·공격 ×0.6)과 겨룬다. 목숨은 걸지 않는다.
 //   이기면 직위가 오르고, 지거나 RANK_TEST.ring칸 밖으로 나가면 떨어진다. 떨어지면 retry년(낮밤 세 바퀴쯤) 뒤에 다시 청할 수 있다.
+// 버그 (사용자 2026-11-27 "승급하기 버튼을 눌렀지만 반응이 없어"): 새외(seoe) 문파는 RT.say에 대사가 없어 rtStart가 예외로 죽었다. 대사 추가 + 없으면 정파 대사로
 // 데이터 data/ranktest.json, 테스트 tests/t112_ranktest.js
 const RT=GD.RANK_TEST;
 const rtNext=sid=>Math.min(rankIdx(sid)+1,rankTop(sid));
@@ -22,10 +23,11 @@ function rtNotice(sid){if(!P||!P.srank||P.sect!==sid||rtWhy(sid,false))return;co
 // 문파 창 직위 칸에 붙는 줄 (g_faction.js rankHtml)
 function rtHtml(s){if(P.sect!==s.id)return'';const i=rankIdx(s.id);if(i>=rankTop(s.id))return'';const why=rtWhy(s.id),to=i+1;
   return `<div class="row2"><span class="note">다음 직위 <b>${rankName(s.id,to)}</b>는 승급 시험에 붙어야 오른다.${why?` <small class="dim">${why}</small>`:' 시험관과 비무해 이기면 된다.'}</span>${B('rtest:'+s.id,'승급 시험 청하기',{pri:!why,d:!!why})}</div>`}
-function rtStart(sid){if(rtWhy(sid))return;const s=SECTS[sid],to=rtNext(sid),r=clamp(to-GD.RANK_CAP.plus,0,6);
+function rtStart(sid){const why=rtWhy(sid);if(why){log(`승급 시험을 청할 수 없다: ${why}`,'dmg');return}   // 막히면 조용히 끝내지 않고 까닭을 알린다
+  const s=SECTS[sid],to=rtNext(sid),r=clamp(to-GD.RANK_CAP.plus,0,6);
   const st=typeof startSet==='function'?startSet(s):null,cls=st&&st.w&&st.w!=='궁'?st.w:(s.arts.find(q=>q.cls!=='궁')||s.arts[0]).cls,ar=s.arts.find(q=>q.cls===cls&&!q.hi)||s.arts[0];
   const exr=Math.min(rankTop(sid),to+1),nm=`${s.n} 시험관`;
-  log(`${masterTitle(s)}: "${josa(RT.say[s.al].replace('{rank}',rankName(sid,to)))}"`,'info');
+  log(`${masterTitle(s)}: "${josa((RT.say[s.al]||RT.say.jeong).replace('{rank}',rankName(sid,to)))}"`,'info');
   closePanels();G.duel=true;G.rtDuel={sid,to,x:P.x,y:P.y};for(const o of mobs)if(o.aggro){o.aggro=false;o.tgt=null}
   P.path=null;P.target=null;P.leap=null;P.hp=P.maxHp;P.qi=P.maxQi;
   let ex=P.x+2.4,ey=P.y;if(!walkAt(ex,ey)){ex=P.x-2.4;if(!walkAt(ex,ey)){ex=P.x;ey=P.y+2.4}}
